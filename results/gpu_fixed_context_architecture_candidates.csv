@@ -1,0 +1,5 @@
+candidate,logical_context_budget_C,stage_space_Us,data_space_Ud,total_contexts,stage_role_granularity,current_status
+D256-S1,256,1,256,256,8-warps-one-stage-role,current-temporal-baseline
+D128-S2,256,2,128,256,4-warps-per-stage-role,planned
+D64-S4,256,4,64,256,2-warps-per-stage-role,planned
+D32-S8,256,8,32,256,1-warp-per-stage-role,planned

@@ -1,0 +1,10 @@
+backend,stage_handoff,stage_space,data_space_warps,stage_time_folds,trials,median_kernel_ms,median_Gbutterfly_s,speedup_vs_us1,speedup_vs_tile256
+tile256,atomic,0,0,0,5,0.277361,60.488735,1.000000,1.000000
+stage-pipeline,atomic,1,8,8,5,0.787364,21.308081,1.000000,0.352265
+stage-pipeline,atomic,2,4,4,5,0.484700,34.613608,1.624436,0.572232
+stage-pipeline,atomic,4,2,2,5,0.611922,27.417246,1.286706,0.453262
+stage-pipeline,atomic,8,1,1,5,0.862280,19.456808,0.913119,0.321660
+stage-pipeline,named-barrier,1,8,8,5,0.778045,21.563298,1.000000,0.356485
+stage-pipeline,named-barrier,2,4,4,5,0.425769,39.404503,1.827388,0.651435
+stage-pipeline,named-barrier,4,2,2,5,0.403589,41.570053,1.927815,0.687236
+stage-pipeline,named-barrier,8,1,1,5,0.436101,38.470941,1.784094,0.636002

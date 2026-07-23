@@ -1,0 +1,42 @@
+{
+  "name": "compact-stage-logN20",
+  "log_n": 20,
+  "word_bytes": 8,
+  "coefficients_per_thread": 2,
+  "root_representation_bytes": 16,
+  "kernels": [
+    {
+      "name": "compact_0",
+      "stage_begin": 0,
+      "stage_end": 5,
+      "block_x": 16,
+      "block_y": 16,
+      "grid_x_per_transform": 2048,
+      "grid_y_per_transform": 1,
+      "shared_bytes": 4096,
+      "registers_per_thread": 24
+    },
+    {
+      "name": "compact_1",
+      "stage_begin": 5,
+      "stage_end": 11,
+      "block_x": 8,
+      "block_y": 32,
+      "grid_x_per_transform": 64,
+      "grid_y_per_transform": 32,
+      "shared_bytes": 4096,
+      "registers_per_thread": 24
+    },
+    {
+      "name": "compact_2_native",
+      "stage_begin": 11,
+      "stage_end": 20,
+      "block_x": 256,
+      "block_y": 1,
+      "grid_x_per_transform": 1,
+      "grid_y_per_transform": 2048,
+      "shared_bytes": 4096,
+      "registers_per_thread": 32
+    }
+  ]
+}

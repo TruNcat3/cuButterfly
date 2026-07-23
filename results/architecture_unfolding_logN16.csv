@@ -1,0 +1,4 @@
+point,logN,stage_space_Us,stage_time_Ts,data_space_Ud,data_time_Td,stage_utilization,data_utilization,spatial_butterfly_cells,ideal_body_cycles,boundary_coefficient_words_per_cycle,interstage_coefficient_words_per_cycle,twiddle_words_per_cycle_upper_bound,feedback_coefficient_words_per_cycle
+stage-based-boundary,16,1,16,16,2048,1.0,1.0,16,32768,32,0,16,32
+hermes-hybrid,16,8,2,16,2048,1.0,1.0,128,4096,32,224,128,32
+pipeline-based-boundary,16,16,1,16,2048,1.0,1.0,256,2048,32,480,256,32

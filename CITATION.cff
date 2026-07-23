@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software or its experimental data, please cite it using the metadata below."
+title: "cuButterfly: Hardware-Mapped Space-Time Parallelism for Butterfly Computations on GPUs"
+type: software
+authors:
+  - name: "TruNcat3"
+repository-code: "https://github.com/TruNcat3/cuButterfly"
+url: "https://github.com/TruNcat3/cuButterfly"
+version: 0.1.0
+date-released: 2026-07-23
+keywords:
+  - butterfly computation
+  - GPU
+  - CUDA
+  - NTT
+  - FFT
+  - FWHT
+  - space-time parallelism
+license: BSD-3-Clause

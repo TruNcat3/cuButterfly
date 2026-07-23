@@ -1,0 +1,145 @@
+# Reproducibility
+
+## 1. Capture The Environment
+
+Record these before interpreting a result:
+
+```bash
+nvidia-smi
+nvcc --version
+cmake --version
+./build/cubutterfly_bench --list-capabilities
+./build/cuntt_hardware_microbench --help
+```
+
+The hardware capture script writes a machine-readable profile:
+
+```bash
+./scripts/benchmark_hardware_capabilities.sh
+```
+
+For a new GPU, copy `configs/hardware/gpu_profile_template.json`, fill measured
+fields, and leave the V100 profile unchanged.
+
+## 2. Correctness Before Timing
+
+```bash
+cmake --build build --target test
+compute-sanitizer --tool memcheck ./build/cubutterfly_tests
+```
+
+For any selected benchmark mapping, add `--verify`. Verification is intentionally
+outside repeated kernel timing.
+
+## 3. Timing Protocol
+
+- use Release builds and an explicit CUDA architecture;
+- keep the input, coefficients, and output resident for kernel timing;
+- report H2D and D2H separately;
+- use enough warmup to reach stable clocks;
+- record independent process trials and report the median;
+- keep total points approximately constant for multi-length comparisons;
+- never compare native bit-reversed output against required natural output
+  without charging the conversion.
+
+A representative common-operator sweep is:
+
+```bash
+python3 scripts/sweep_cubutterfly_designs.py \
+  --operators fwht fft xor-zeta \
+  --logNs 8 10 12 14 16 18 20 \
+  --target-points 4194304 --warmup 50 --repeat 100 --trials 5 \
+  --output results/reproduction_raw.csv
+
+python3 scripts/summarize_cubutterfly_designs.py \
+  results/reproduction_raw.csv \
+  --output results/reproduction_summary.csv
+```
+
+## 4. Generated Design Points
+
+The build invokes:
+
+```bash
+python3 scripts/generate_design_points.py \
+  --spec config/v100_design_points.json \
+  --output-dir /tmp/cubutterfly-generated
+```
+
+The generated manifest lists exact `(operator, core, precision, logN,
+tile_threads)` combinations. Unsupported points throw during plan construction.
+Do not treat a silently selected fallback as a measured generated core.
+
+## 5. External Baselines
+
+### Dao Fast Hadamard Transform
+
+```bash
+./scripts/install_external_fht.sh
+python3 scripts/benchmark_external_fht.py --sm70-patched \
+  --logNs 8 10 12 14 15 --dtypes fp16 bf16 fp32 \
+  --target-points 4194304 --warmup 50 --repeat 100 --trials 5 \
+  --output results/external_dao_fht_v100_raw.csv
+```
+
+The upstream revision and V100 gencode-only patch are recorded in the detailed
+large-results report and `patches/dao_fast_hadamard_sm70.patch`.
+
+### GPU-NTT
+
+The comparator is `benchmarks/gpuntt_merge_gap_bench.cu`. Its compile command,
+pinned revision, modulus, layout, and steady-clock protocol are in
+`gpu_ntt_gap_analysis.md`. Keep the external checkout outside this repository.
+
+### cuFFT
+
+cuFFT uses the same `cubutterfly_bench` process and timing interface:
+
+```bash
+./build/cubutterfly_bench --operator fft --backend cufft \
+  --precision fp32 --logN 20 --batch 4 \
+  --warmup 50 --repeat 100 --csv
+```
+
+## 6. Nsight Compute
+
+Administrator-enabled representative collection:
+
+```bash
+sudo -E ./scripts/profile_ncu.sh
+sudo -E ./scripts/profile_fft_units_ncu.sh
+sudo -E ./scripts/profile_fft_cta_mapping_ncu.sh
+sudo chown -R "$USER:$USER" results/ncu results/ncu_fft_units results/ncu_fft_cta_mapping
+```
+
+Reduce raw NCU CSV files with:
+
+```bash
+python3 scripts/summarize_ncu.py results/ncu/*.csv \
+  --output results/ncu_summary.csv
+```
+
+The parser locates the raw NCU header rather than assuming it is the first CSV
+line. Keep raw counters when publishing a performance claim.
+
+## 7. Nsight Systems
+
+```bash
+./scripts/profile_cubutterfly_fft_nsys.sh
+```
+
+Binary `.nsys-rep` and `.sqlite` files are ignored because they are
+machine/tool-version specific. Reduced kernel summaries and trace CSV files are
+tracked.
+
+## 8. Cross-GPU Protocol
+
+1. capture the new GPU profile and microbenchmarks;
+2. predict a reduced candidate set before inspecting the sweep winner;
+3. generate legal processing units for that architecture;
+4. run identical semantic shapes and external baselines;
+5. compare predicted and measured rankings;
+6. update `configs/hardware/cross_gpu_matrix.csv` from placeholder to measured.
+
+This protocol is necessary to demonstrate portability of the methodology. A
+successful build on another architecture is not cross-GPU validation.

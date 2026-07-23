@@ -1,0 +1,17 @@
+rank,operator,precision,direction,normalization,placement,logN,N,batch,element_stride,batch_stride,backend,compute_unit,stage_space,tile_threads,local_stages,reorder_columns,warp_stages,pipeline_warps,stage_handoff,trials,median_kernel_ms,min_kernel_ms,max_kernel_ms,median_Gbutterfly_s,slowdown_vs_best
+1,fft,fp32,forward,none,out-of-place,18,262144,16,1,262144,cufft,auto,0,0,0,0,0,0,named-barrier,5,0.211978,0.211487,0.212122,178.078352,1.000000
+2,fft,fp32,forward,none,out-of-place,18,262144,16,1,262144,online-reorder,radix4,0,256,10,4,0,0,named-barrier,5,0.446792,0.446730,0.446925,84.488449,2.107728
+3,fft,fp32,forward,none,out-of-place,18,262144,16,1,262144,online-reorder,radix4,0,256,9,1,0,0,named-barrier,5,0.466565,0.466432,0.466688,80.907752,2.201007
+4,fft,fp32,forward,none,out-of-place,18,262144,16,1,262144,online-reorder,radix4,0,256,10,1,0,0,named-barrier,5,0.472412,0.472351,0.472494,79.906363,2.228590
+5,fft,fp32,forward,none,out-of-place,18,262144,16,1,262144,hierarchical,radix4,0,256,10,0,0,0,named-barrier,5,0.812104,0.811981,0.812411,46.482659,3.831077
+6,fft,fp32,forward,none,out-of-place,18,262144,16,1,262144,hierarchical,radix4,0,256,9,0,0,0,named-barrier,5,0.896266,0.896051,0.900567,42.117772,4.228109
+1,fwht,fp32,forward,none,out-of-place,18,262144,16,1,262144,online-reorder,radix4,0,256,9,1,0,0,named-barrier,5,0.313856,0.313836,0.313876,120.274060,1.000000
+2,fwht,fp32,forward,none,out-of-place,18,262144,16,1,262144,online-reorder,radix4,0,256,10,1,0,0,named-barrier,5,0.315996,0.315935,0.316088,119.459484,1.006818
+3,fwht,fp32,forward,none,out-of-place,18,262144,16,1,262144,online-reorder,radix4,0,256,10,4,0,0,named-barrier,5,0.319621,0.319570,0.319703,118.104637,1.018368
+4,fwht,fp32,forward,none,out-of-place,18,262144,16,1,262144,hierarchical,radix4,0,256,10,0,0,0,named-barrier,5,0.400804,0.400763,0.400886,94.182572,1.277032
+5,fwht,fp32,forward,none,out-of-place,18,262144,16,1,262144,hierarchical,radix4,0,256,9,0,0,0,named-barrier,5,0.439900,0.439859,0.439931,85.812053,1.401598
+1,xor-zeta,uint32,forward,none,out-of-place,18,262144,16,1,262144,online-reorder,radix4,0,256,9,1,0,0,named-barrier,5,0.313876,0.313825,0.313907,120.266214,1.000000
+2,xor-zeta,uint32,forward,none,out-of-place,18,262144,16,1,262144,online-reorder,radix4,0,256,10,1,0,0,named-barrier,5,0.315843,0.315812,0.315873,119.517580,1.006267
+3,xor-zeta,uint32,forward,none,out-of-place,18,262144,16,1,262144,online-reorder,radix4,0,256,10,4,0,0,named-barrier,5,0.319386,0.319314,0.319416,118.191721,1.017555
+4,xor-zeta,uint32,forward,none,out-of-place,18,262144,16,1,262144,hierarchical,radix4,0,256,10,0,0,0,named-barrier,5,0.399790,0.399688,0.399811,94.421393,1.273720
+5,xor-zeta,uint32,forward,none,out-of-place,18,262144,16,1,262144,hierarchical,radix4,0,256,9,0,0,0,named-barrier,5,0.439204,0.439101,0.439388,85.948103,1.399291

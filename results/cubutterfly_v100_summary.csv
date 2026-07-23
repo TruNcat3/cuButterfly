@@ -1,0 +1,5 @@
+operator,value_bytes,has_twiddle,bit_reverse_input,best_stage_space,us1_kernel_ms,best_pipeline_ms,pipeline_speedup_vs_us1,baseline,baseline_ms,pipeline_efficiency_vs_baseline
+ntt64,8,1,1,4,0.778045,0.403589,1.927815,tile256,0.277361,0.687236
+fwht,4,0,0,4,0.353597,0.186604,1.894906,temporal-tile,0.055214,0.295889
+xor-zeta,4,0,0,4,0.353300,0.186481,1.894563,temporal-tile,0.051732,0.277412
+fft,8,1,1,4,0.753592,0.314122,2.399042,cufft,0.083773,0.266689

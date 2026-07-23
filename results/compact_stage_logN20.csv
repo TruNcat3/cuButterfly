@@ -1,0 +1,10 @@
+implementation,output_order,run,kernel_ms,correct
+cuNTT-compact-stage,bit-reversed,1,0.341064,1
+GPU-NTT-Merge,bit-reversed,1,0.396186,1
+cuNTT-compact-stage,bit-reversed,2,0.341320,1
+GPU-NTT-Merge,bit-reversed,2,0.396099,1
+cuNTT-compact-stage,bit-reversed,3,0.342124,1
+GPU-NTT-Merge,bit-reversed,3,0.396820,1
+cuNTT-compact-stage,natural,1,0.760494,1
+GPU-NTT-Merge-plus-reorder,natural,1,0.757181,1
+cuNTT-Hybrid2D,natural,1,0.429117,1

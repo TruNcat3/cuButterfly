@@ -1,0 +1,16 @@
+device,compute_capability,operator,precision,direction,normalization,placement,backend,compute_unit,logN,N,batch,trials,median_kernel_ms,min_kernel_ms,max_kernel_ms,median_Gbutterfly_s,max_roundtrip_error,correct
+Tesla V100-SXM2-16GB,7.0,fwht,bf16,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,10,1024,4096,5,0.026860,0.026849,0.026900,780.785375,0.007812,1
+Tesla V100-SXM2-16GB,7.0,fwht,bf16,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,12,4096,1024,5,0.028641,0.028549,0.028662,878.655668,0.007812,1
+Tesla V100-SXM2-16GB,7.0,fwht,bf16,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,14,16384,256,5,0.038615,0.037970,0.038656,760.328810,0.007812,1
+Tesla V100-SXM2-16GB,7.0,fwht,bf16,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,15,32768,128,5,0.045804,0.045752,0.045875,686.787417,0.007812,1
+Tesla V100-SXM2-16GB,7.0,fwht,bf16,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,8,256,16384,5,0.030362,0.030341,0.030413,552.580103,0.007812,1
+Tesla V100-SXM2-16GB,7.0,fwht,fp16,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,10,1024,4096,5,0.026624,0.026614,0.026644,787.692306,0.000977,1
+Tesla V100-SXM2-16GB,7.0,fwht,fp16,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,12,4096,1024,5,0.027341,0.027331,0.027372,920.449413,0.000977,1
+Tesla V100-SXM2-16GB,7.0,fwht,fp16,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,14,16384,256,5,0.036772,0.036669,0.036813,798.440523,0.000977,1
+Tesla V100-SXM2-16GB,7.0,fwht,fp16,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,15,32768,128,5,0.044360,0.044349,0.044411,709.141287,0.000977,1
+Tesla V100-SXM2-16GB,7.0,fwht,fp16,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,8,256,16384,5,0.030259,0.030249,0.030362,554.450100,0.000977,1
+Tesla V100-SXM2-16GB,7.0,fwht,fp32,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,10,1024,4096,5,0.043960,0.043940,0.044012,477.055688,0.000000,1
+Tesla V100-SXM2-16GB,7.0,fwht,fp32,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,12,4096,1024,5,0.044073,0.044052,0.044175,571.003694,0.000001,1
+Tesla V100-SXM2-16GB,7.0,fwht,fp32,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,14,16384,256,5,0.053617,0.053606,0.053780,547.593601,0.000001,1
+Tesla V100-SXM2-16GB,7.0,fwht,fp32,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,15,32768,128,5,0.063949,0.063918,0.064758,491.913545,0.000001,1
+Tesla V100-SXM2-16GB,7.0,fwht,fp32,forward,none,out-of-place,dao-fast-hadamard-transform-sm70-local,upstream-warp-register,8,256,16384,5,0.043172,0.043151,0.043244,388.614803,0.000000,1

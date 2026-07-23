@@ -1,0 +1,5 @@
+label,kernel_id,kernel_name,grid_size,block_size,time_us,dram_read_mib,dram_write_mib,dram_peak_pct,l2_hit_pct,l1_hit_pct,warp_instructions,integer_thread_instructions,fp32_thread_instructions,tensor_warp_instructions,tensor_active_pct,active_warps_pct,barrier_stall_pct,long_scoreboard_stall_pct,registers_per_thread,shared_mem_bytes
+cufft_fp32_logN3,0,void vector_fft<,16384,64,91.808,32.11187744140625,32.178009033203125,83.53,83.29,62.85,3670016.0,,62914560.0,0.0,0.0,88.84,6.52,19.06,30.0,2048.0
+scalar_radix8_fp32_logN3,0,"void cuntt::detail::hierarchical_prefix_kernel<cuntt::<unnamed>::FftOperator<cuntt::Complex32, float>,",524288,128,862.9440000000001,32.004852294921875,32.209503173828125,8.69,49.98,64.08,172490752.0,,60293120.0,0.0,0.0,45.65,61.56,9.24,48.0,64.0
+thread_dft8_fp32_logN3,0,void cuntt::detail::thread_fft_kernel<,4096,128,154.208,33.61358642578125,33.58758544921875,51.62,89.86,80.6,3260416.0,,58720256.0,0.0,0.0,65.57,0.0,5.73,34.0,0.0
+wmma_dft8_mixed_logN3,0,cuntt::detail::wmma_dft8_kernel,4096,256,89.152,32.00726318359375,31.290557861328125,82.66,49.97,0.0,11075584.0,,16777216.0,524288.0,2.92,83.45,7.5,59.41,32.0,12800.0

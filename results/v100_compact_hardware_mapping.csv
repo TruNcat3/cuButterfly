@@ -1,0 +1,5 @@
+kernel,stage_begin,stage_end,stage_count,block_x,block_y,threads,warps,tile_points,grid_x,grid_y,ctas_per_transform,ctas_batch4,shared_bytes,registers_per_thread,root_pairs_max,root_working_set_bytes,output_order
+compact_0,0,5,5,16,16,256,8,512,2048,1,2048,8192,4096,24,16,256,intermediate
+compact_1,5,11,6,8,32,256,8,512,64,32,2048,8192,4096,24,1024,16384,intermediate
+compact_2_native,11,20,9,256,1,256,8,512,1,2048,2048,8192,4096,32,524288,8388608,bit-reversed
+compact_2_natural,11,20,9,256,1,256,8,512,1,2048,2048,8192,4096,32,524288,8388608,natural-scatter

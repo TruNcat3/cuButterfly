@@ -1,0 +1,17 @@
+rank,operator,precision,direction,normalization,placement,logN,N,batch,element_stride,batch_stride,backend,compute_unit,stage_space,tile_threads,local_stages,reorder_columns,warp_stages,pipeline_warps,stage_handoff,trials,median_kernel_ms,min_kernel_ms,max_kernel_ms,median_Gbutterfly_s,slowdown_vs_best
+1,fft,fp32,forward,none,out-of-place,16,65536,64,1,65536,cufft,auto,0,0,0,0,0,0,named-barrier,5,0.179272,0.179180,0.179456,187.170843,1.000000
+2,fft,fp32,forward,none,out-of-place,16,65536,64,1,65536,online-reorder,radix4,0,256,10,8,0,0,named-barrier,5,0.420168,0.420035,0.420280,79.859621,2.343746
+3,fft,fp32,forward,none,out-of-place,16,65536,64,1,65536,online-reorder,radix4,0,256,8,1,0,0,named-barrier,5,0.448922,0.448266,0.449044,74.744527,2.504139
+4,fft,fp32,forward,none,out-of-place,16,65536,64,1,65536,online-reorder,radix4,0,256,10,1,0,0,named-barrier,5,0.521810,0.521677,0.521912,64.303935,2.910717
+5,fft,fp32,forward,none,out-of-place,16,65536,64,1,65536,hierarchical,radix4,0,256,10,0,0,0,named-barrier,5,0.627569,0.627415,0.627681,53.467353,3.500653
+6,fft,fp32,forward,none,out-of-place,16,65536,64,1,65536,hierarchical,radix4,0,256,8,0,0,0,named-barrier,5,0.785265,0.785050,0.785428,42.730092,4.380299
+1,fwht,fp32,forward,none,out-of-place,16,65536,64,1,65536,online-reorder,radix4,0,256,8,1,0,0,named-barrier,5,0.310149,0.310139,0.310159,108.188067,1.000000
+2,fwht,fp32,forward,none,out-of-place,16,65536,64,1,65536,hierarchical,radix4,0,256,10,0,0,0,named-barrier,5,0.314020,0.313989,0.314102,106.854501,1.012481
+3,fwht,fp32,forward,none,out-of-place,16,65536,64,1,65536,online-reorder,radix4,0,256,10,8,0,0,named-barrier,5,0.317153,0.317112,0.317225,105.798788,1.022583
+4,fwht,fp32,forward,none,out-of-place,16,65536,64,1,65536,online-reorder,radix4,0,256,10,1,0,0,named-barrier,5,0.351078,0.350956,0.355471,95.575319,1.131966
+5,fwht,fp32,forward,none,out-of-place,16,65536,64,1,65536,hierarchical,radix4,0,256,8,0,0,0,named-barrier,5,0.394301,0.394209,0.394322,85.098425,1.271328
+1,xor-zeta,uint32,forward,none,out-of-place,16,65536,64,1,65536,online-reorder,radix4,0,256,8,1,0,0,named-barrier,5,0.310630,0.310579,0.310723,108.020435,1.000000
+2,xor-zeta,uint32,forward,none,out-of-place,16,65536,64,1,65536,hierarchical,radix4,0,256,10,0,0,0,named-barrier,5,0.313037,0.312986,0.313190,107.190056,1.007749
+3,xor-zeta,uint32,forward,none,out-of-place,16,65536,64,1,65536,online-reorder,radix4,0,256,10,8,0,0,named-barrier,5,0.317512,0.317512,0.317614,105.679363,1.022155
+4,xor-zeta,uint32,forward,none,out-of-place,16,65536,64,1,65536,online-reorder,radix4,0,256,10,1,0,0,named-barrier,5,0.351580,0.351519,0.351611,95.438920,1.131829
+5,xor-zeta,uint32,forward,none,out-of-place,16,65536,64,1,65536,hierarchical,radix4,0,256,8,0,0,0,named-barrier,5,0.393994,0.393974,0.394076,85.164778,1.268371

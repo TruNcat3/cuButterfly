@@ -1,0 +1,9 @@
+rank,operator,precision,direction,normalization,placement,logN,N,batch,element_stride,batch_stride,backend,compute_unit,complex_multiply,local_exchange,fft_core,stage_space,tile_threads,local_stages,reorder_columns,warp_stages,pipeline_warps,stage_handoff,trials,median_kernel_ms,min_kernel_ms,max_kernel_ms,median_Gbutterfly_s,slowdown_vs_best
+1,fft,fp16-fp32,forward,inverse,out-of-place,3,8,524288,1,8,temporal-tile,radix8,four-mul,shared,wmma-dft8,0,256,0,0,0,0,named-barrier,5,0.089590,0.089549,0.089631,70.225169,1.000000
+1,fft,fp32,forward,inverse,out-of-place,3,8,524288,1,8,cufft,auto,four-mul,shared,scalar,0,0,0,0,0,0,named-barrier,5,0.086323,0.086241,0.086405,72.882561,1.000000
+2,fft,fp32,forward,inverse,out-of-place,3,8,524288,1,8,temporal-tile,radix8,four-mul,shared,cta-dft8,0,128,0,0,0,0,named-barrier,5,0.096645,0.096481,0.096686,65.098540,1.119574
+3,fft,fp32,forward,inverse,out-of-place,3,8,524288,1,8,temporal-tile,radix8,four-mul,shared,thread-dft8,0,128,0,0,0,0,named-barrier,5,0.131000,0.130877,0.131072,48.026262,1.517556
+4,fft,fp32,forward,inverse,out-of-place,3,8,524288,1,8,temporal-tile,radix8,four-mul,shared,scalar,0,32,0,0,0,0,named-barrier,5,0.743147,0.743004,0.861768,8.465959,8.608911
+5,fft,fp32,forward,inverse,out-of-place,3,8,524288,1,8,temporal-tile,radix8,four-mul,shared,scalar,0,64,0,0,0,0,named-barrier,5,0.743199,0.743147,0.743240,8.465375,8.609513
+6,fft,fp32,forward,inverse,out-of-place,3,8,524288,1,8,temporal-tile,radix8,four-mul,shared,scalar,0,128,0,0,0,0,named-barrier,5,0.744325,0.744315,0.744335,8.452565,8.622557
+7,fft,fp32,forward,inverse,out-of-place,3,8,524288,1,8,temporal-tile,radix8,four-mul,shared,scalar,0,256,0,0,0,0,named-barrier,5,1.333617,1.333606,1.333647,4.717590,15.449150

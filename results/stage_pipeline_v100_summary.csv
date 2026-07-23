@@ -1,0 +1,5 @@
+stage_space_Us,data_space_contexts_Ud,total_contexts,median_Gbutterfly_s,speedup_over_Us1,cross_Us_correct
+1,256,256,23.800462,1.000000,1
+2,128,256,34.336492,1.442682,1
+4,64,256,28.054793,1.178750,1
+8,32,256,19.820955,0.832797,1

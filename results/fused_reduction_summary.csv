@@ -1,0 +1,4 @@
+logN,batch,n1_log,rows_per_block,threads_per_block,fused_shoup_median_ms,fused_barrett_median_ms,barrett_latency_change_pct,shoup_fused_table_mib,barrett_fused_table_mib
+16,64,8,4,256,0.274565,0.293309,6.827,0.996,0.498
+18,16,9,4,512,0.342303,0.344704,0.701,3.992,1.996
+20,4,10,2,512,0.428867,0.435569,1.563,15.984,7.992

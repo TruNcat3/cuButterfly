@@ -1,0 +1,4 @@
+device,modulus,modulus_bits,logN,batch,cuntt_mapping,cuntt_kernel_ms,gpuntt_kernel_ms,cuntt_over_gpuntt_latency,cuntt_throughput_ratio
+Tesla V100-SXM2-16GB,576460756061519873,60,16,64,fused-radix4-n1log8-rows4-threads256,0.274104,0.291133,0.941508,1.062126
+Tesla V100-SXM2-16GB,576460756061519873,60,18,16,fused-radix4-n1log9-rows4-threads512,0.342482,0.355820,0.962515,1.038945
+Tesla V100-SXM2-16GB,576460756061519873,60,20,4,fused-radix4-n1log10-rows2-threads512,0.428129,0.395305,1.083035,0.923332

@@ -1,0 +1,6 @@
+logN,spatial_budget_C,stage_space_Us,data_space_Ud,stage_time_Ts,data_time_Td,ideal_body_cycles,boundary_coefficient_words_per_cycle,interstage_coefficient_words_per_cycle,twiddle_words_per_cycle_upper_bound,state_level_bytes_all_folds
+16,128,1,128,16,256,4096,256,0,128,16777216
+16,128,2,64,8,512,4096,128,128,128,8388608
+16,128,4,32,4,1024,4096,64,192,128,4194304
+16,128,8,16,2,2048,4096,32,224,128,2097152
+16,128,16,8,1,4096,4096,16,240,128,1048576

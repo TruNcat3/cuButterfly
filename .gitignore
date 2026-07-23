@@ -1,0 +1,20 @@
+/build/
+/Testing/
+/external/
+/.cache/
+**/__pycache__/
+*.py[cod]
+*.o
+*.a
+*.so
+*.so.*
+
+# Nsight binary reports are machine-specific; reduced CSV files remain tracked.
+*.nsys-rep
+*.sqlite
+
+# Local editor and OS files.
+.vscode/
+.idea/
+*~
+.DS_Store

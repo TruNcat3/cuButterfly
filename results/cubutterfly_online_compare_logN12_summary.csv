@@ -1,0 +1,11 @@
+rank,operator,precision,direction,normalization,placement,logN,N,batch,element_stride,batch_stride,backend,compute_unit,stage_space,tile_threads,local_stages,reorder_columns,warp_stages,pipeline_warps,stage_handoff,trials,median_kernel_ms,min_kernel_ms,max_kernel_ms,median_Gbutterfly_s,slowdown_vs_best
+1,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,cufft,auto,0,0,0,0,0,0,named-barrier,5,0.088740,0.088637,0.089047,283.591039,1.000000
+2,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,radix4,0,256,10,64,0,0,named-barrier,5,0.268708,0.268575,0.269322,93.654967,3.028037
+3,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,radix4,0,256,10,128,0,0,named-barrier,5,0.270162,0.270070,0.270275,93.150890,3.044422
+4,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,hierarchical,radix4,0,256,10,0,0,0,named-barrier,5,0.303084,0.298260,0.308654,83.032640,3.415416
+1,fwht,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,radix4,0,256,10,128,0,0,named-barrier,5,0.114145,0.114094,0.114237,220.471878,1.000000
+2,fwht,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,radix4,0,256,10,64,0,0,named-barrier,5,0.119921,0.119910,0.120003,209.853981,1.050602
+3,fwht,fp32,forward,none,out-of-place,12,4096,1024,1,4096,hierarchical,radix4,0,256,10,0,0,0,named-barrier,5,0.144374,0.144353,0.144445,174.310235,1.264830
+1,xor-zeta,uint32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,radix4,0,256,10,128,0,0,named-barrier,5,0.113910,0.113900,0.114074,220.927727,1.000000
+2,xor-zeta,uint32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,radix4,0,256,10,64,0,0,named-barrier,5,0.119183,0.106650,0.119583,211.152158,1.046291
+3,xor-zeta,uint32,forward,none,out-of-place,12,4096,1024,1,4096,hierarchical,radix4,0,256,10,0,0,0,named-barrier,5,0.139612,0.139510,0.139684,180.255253,1.225634

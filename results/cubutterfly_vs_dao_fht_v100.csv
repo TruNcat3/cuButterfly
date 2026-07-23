@@ -1,0 +1,6 @@
+logN,N,batch,external_backend,external_ms,external_Gbutterfly_s,cubutterfly_backend,cubutterfly_compute_unit,cubutterfly_local_stages,cubutterfly_tile_threads,cubutterfly_ms,cubutterfly_Gbutterfly_s,cubutterfly_vs_external_throughput,external_speedup
+8,256,16384,dao-fast-hadamard-transform-sm70-local,0.043172,388.614803,temporal-tile,radix4,0,128,0.051323,326.895444,0.841182,1.188803
+10,1024,4096,dao-fast-hadamard-transform-sm70-local,0.043960,477.055688,temporal-tile,radix4,0,256,0.056863,368.809632,0.773086,1.293517
+12,4096,1024,dao-fast-hadamard-transform-sm70-local,0.044073,571.003694,hierarchical,radix4,10,256,0.140534,179.073156,0.313611,3.188664
+14,16384,256,dao-fast-hadamard-transform-sm70-local,0.053617,547.593601,hierarchical,radix4,10,256,0.227369,129.129883,0.235815,4.240614
+15,32768,128,dao-fast-hadamard-transform-sm70-local,0.063949,491.913545,hierarchical,radix4,10,256,0.270643,116.231553,0.236285,4.232169

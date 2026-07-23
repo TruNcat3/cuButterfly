@@ -1,0 +1,14 @@
+rank,operator,precision,direction,normalization,placement,logN,N,batch,element_stride,batch_stride,backend,compute_unit,complex_multiply,local_exchange,stage_space,tile_threads,local_stages,reorder_columns,warp_stages,pipeline_warps,stage_handoff,trials,median_kernel_ms,min_kernel_ms,max_kernel_ms,median_Gbutterfly_s,slowdown_vs_best
+1,fwht,fp32,forward,inverse,out-of-place,10,1024,4096,1,1024,temporal-tile,radix2,four-mul,warp-register,0,128,0,0,0,0,named-barrier,5,0.044626,0.044595,0.044677,469.940308,1.000000
+2,fwht,fp32,forward,inverse,out-of-place,10,1024,4096,1,1024,temporal-tile,radix2,four-mul,shared,0,256,0,0,0,0,named-barrier,5,0.061481,0.061430,0.061532,341.105920,1.377695
+3,fwht,fp32,forward,inverse,out-of-place,10,1024,4096,1,1024,temporal-tile,radix2,four-mul,shared,0,128,0,0,0,0,named-barrier,5,0.065300,0.065270,0.065362,321.154150,1.463273
+4,fwht,fp32,forward,inverse,out-of-place,10,1024,4096,1,1024,temporal-tile,radix2,four-mul,shared,0,64,0,0,0,0,named-barrier,5,0.072673,0.072663,0.072694,288.572652,1.628490
+5,fwht,fp32,forward,inverse,out-of-place,10,1024,4096,1,1024,temporal-tile,radix2,four-mul,shared,0,32,0,0,0,0,named-barrier,5,0.104776,0.104714,0.104878,200.156382,2.347869
+1,fwht,fp32,forward,inverse,out-of-place,12,4096,1024,1,4096,temporal-tile,radix2,four-mul,warp-register,0,256,0,0,0,0,named-barrier,5,0.045199,0.045066,0.045220,556.773893,1.000000
+1,fwht,fp32,forward,inverse,out-of-place,14,16384,256,1,16384,temporal-tile,radix2,four-mul,warp-register,0,256,0,0,0,0,named-barrier,5,0.055992,0.055777,0.056064,524.359911,1.000000
+1,fwht,fp32,forward,inverse,out-of-place,15,32768,128,1,32768,temporal-tile,radix2,four-mul,warp-register,0,256,0,0,0,0,named-barrier,5,0.069243,0.069202,0.069294,454.303462,1.000000
+1,fwht,fp32,forward,inverse,out-of-place,8,256,16384,1,256,temporal-tile,radix2,four-mul,warp-register,0,32,0,0,0,0,named-barrier,5,0.043131,0.043090,0.043182,388.983870,1.000000
+2,fwht,fp32,forward,inverse,out-of-place,8,256,16384,1,256,temporal-tile,radix2,four-mul,shared,0,128,0,0,0,0,named-barrier,5,0.055828,0.055788,0.055849,300.513563,1.294382
+3,fwht,fp32,forward,inverse,out-of-place,8,256,16384,1,256,temporal-tile,radix2,four-mul,shared,0,64,0,0,0,0,named-barrier,5,0.058788,0.058696,0.058880,285.385815,1.363010
+4,fwht,fp32,forward,inverse,out-of-place,8,256,16384,1,256,temporal-tile,radix2,four-mul,shared,0,256,0,0,0,0,named-barrier,5,0.063468,0.063427,0.063488,264.343316,1.471517
+5,fwht,fp32,forward,inverse,out-of-place,8,256,16384,1,256,temporal-tile,radix2,four-mul,shared,0,32,0,0,0,0,named-barrier,5,0.072530,0.072499,0.072591,231.314417,1.681621

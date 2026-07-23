@@ -1,0 +1,2 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),GridXYZ,BlockXYZ,Name
+100.0,247358,2,123679.0,123679.0,122623,124735,1493.4, 512    1    1,   8   64    1,"void regular_fft<(unsigned int)1024, (unsigned int)16, (unsigned int)8, (unsigned int)1, (padding_t)0, (twiddle_t)0, (loadstore_modifier_t)2, (layout_t)1, unsigned int, float>(kernel_arguments_t<T9>)"

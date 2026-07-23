@@ -1,0 +1,3 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),GridXYZ,BlockXYZ,Name
+74.5,897401,10,89740.1,85135.5,84255,104127,7992.6,8192    1    1, 256    1    1,"void cuntt::detail::hierarchical_stage_kernel<cuntt::<unnamed>::FftOperator<cuntt::Complex32, float>>(const T1::Value *, T1::Value *, unsigned long, unsigned int, unsigned int, unsigned long, unsigned long, bool, T1)"
+25.5,307390,1,307390.0,307390.0,307390,307390,0.0,4096    1    1, 256    1    1,"void cuntt::detail::hierarchical_prefix_kernel<cuntt::<unnamed>::FftOperator<cuntt::Complex32, float>, (unsigned int)10, (bool)1>(const T1::Value *, T1::Value *, unsigned long, unsigned int, unsigned long, unsigned long, T1)"
