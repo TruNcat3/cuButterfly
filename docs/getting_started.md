@@ -13,11 +13,17 @@ The checked-in V100 profile was built with CUDA 11.8 and `sm_70`. Building for
 another GPU is supported, but the V100-selected mappings are not portable
 performance defaults.
 
+On hosts with multiple CUDA installations, CMake may otherwise find an older
+`/usr/bin/nvcc`. The published clean-clone validation uses CUDA 11.8 and GCC 11.
+CUDA 11.5 with GCC 11 fails in the standard library before compiling project
+code; select a compatible CUDA/host-compiler pair explicitly.
+
 ## Configure And Build
 
 ```bash
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_CUDA_COMPILER=/usr/local/cuda-11.8/bin/nvcc \
   -DCMAKE_CUDA_ARCHITECTURES=70
 cmake --build build -j
 ```
@@ -27,6 +33,7 @@ Select a different generated processing-unit specification with:
 ```bash
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_CUDA_COMPILER=/usr/local/cuda-11.8/bin/nvcc \
   -DCMAKE_CUDA_ARCHITECTURES=80 \
   -DCUNTT_DESIGN_SPEC="$PWD/config/v100_design_points.json"
 ```

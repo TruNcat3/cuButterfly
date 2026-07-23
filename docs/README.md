@@ -15,6 +15,9 @@ for the research idea, then move toward implementation and evidence.
 | [Reproducibility](reproducibility.md) | How are sweeps, external baselines, and profiler data reproduced? |
 | [Research Positioning](cubutterfly_positioning.md) | What is the intended contribution relative to prior work? |
 
+Repository maintenance and research priorities are documented in
+[`CONTRIBUTING.md`](../CONTRIBUTING.md) and [`ROADMAP.md`](../ROADMAP.md).
+
 ## Architecture And Mapping
 
 - [Hybrid2D GPU Mapping](hybrid2d_architecture.md): Cooley-Tukey/NTT

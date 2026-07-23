@@ -34,6 +34,7 @@ outside repeated kernel timing.
 ## 3. Timing Protocol
 
 - use Release builds and an explicit CUDA architecture;
+- record and explicitly select the CUDA and host compiler pair;
 - keep the input, coefficients, and output resident for kernel timing;
 - report H2D and D2H separately;
 - use enough warmup to reach stable clocks;

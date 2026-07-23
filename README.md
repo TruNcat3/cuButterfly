@@ -2,6 +2,10 @@
 
 **Hardware-mapped space-time parallelism for butterfly computations on GPUs.**
 
+[![Repository checks](https://github.com/TruNcat3/cuButterfly/actions/workflows/repository-checks.yml/badge.svg)](https://github.com/TruNcat3/cuButterfly/actions/workflows/repository-checks.yml)
+[![Release](https://img.shields.io/github/v/release/TruNcat3/cuButterfly)](https://github.com/TruNcat3/cuButterfly/releases/latest)
+[![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
+
 cuButterfly is a CUDA research prototype that generalizes the APPT/Hermes
 space-time parallel paradigm from NTT to regular layered transforms. It keeps
 the architecture-level mapping independent of the local arithmetic core, so
@@ -103,6 +107,7 @@ cd cuButterfly
 
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_CUDA_COMPILER=/usr/local/cuda-11.8/bin/nvcc \
   -DCMAKE_CUDA_ARCHITECTURES=70
 cmake --build build -j
 cmake --build build --target test
@@ -133,6 +138,10 @@ Detailed build, API, benchmark, profiler, and data-reduction commands are in
 [Getting Started](docs/getting_started.md) and
 [Reproducibility](docs/reproducibility.md).
 
+If several CUDA toolkits are installed, explicitly select the intended `nvcc`.
+CUDA 11.5 with GCC 11 is not a supported toolchain combination for this
+artifact; the clean-clone validation uses CUDA 11.8 with GCC 11.
+
 ## Repository Guide
 
 | Path | Purpose |
@@ -149,6 +158,8 @@ Detailed build, API, benchmark, profiler, and data-reduction commands are in
 Start with the [Documentation Index](docs/README.md). Candidate processing
 units and future implementation paths are catalogued in
 [Candidate Implementations](docs/implementation_candidates.md).
+Development priorities are tracked in [`ROADMAP.md`](ROADMAP.md), and evidence
+requirements for contributions are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Evidence Boundary
 
