@@ -38,6 +38,7 @@ void print_usage() {
         << "                    [--compute-unit auto|radix2|radix4|radix8]\n"
         << "                    [--complex-multiply four-mul|gauss3]\n"
         << "                    [--cross-twiddle table|recurrence]\n"
+        << "                    [--direct-boundary direct-strided|tiled-transpose]\n"
         << "                    [--local-exchange shared|warp-register]\n"
         << "                    [--fft-core scalar|thread-dft8|cta-dft8|wmma-dft8|cufftdx-block|cufftdx-direct|cufftdx-resident|turbofft-generated]\n"
         << "                    [--precision fp32|fp64|fp16-fp32|uint32]\n"
@@ -134,6 +135,8 @@ int main(int argc, char** argv) {
                 config.complex_multiply = cuntt::parse_complex_multiply(take_arg(index, argc, argv));
             } else if (arg == "--cross-twiddle") {
                 config.cross_twiddle = cuntt::parse_cross_twiddle_mode(take_arg(index, argc, argv));
+            } else if (arg == "--direct-boundary") {
+                config.direct_boundary = cuntt::parse_direct_boundary(take_arg(index, argc, argv));
             } else if (arg == "--local-exchange") {
                 config.local_exchange = cuntt::parse_local_exchange(take_arg(index, argc, argv));
             } else if (arg == "--fft-core") {
@@ -282,7 +285,7 @@ int main(int argc, char** argv) {
         const auto device = cuntt::current_device_info();
         std::cout << std::fixed << std::setprecision(6);
         if (csv) {
-            std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,auto_select,backend,compute_unit,complex_multiply,cross_twiddle,local_"
+            std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,auto_select,backend,compute_unit,complex_multiply,cross_twiddle,direct_boundary,local_"
                          "exchange,fft_core,stage_space,stage_handoff,tile_threads,prefix_threads,suffix_threads,prefix_ept,suffix_ept,prefix_units_per_cta,suffix_units_per_cta,local_stages,reorder_columns,warp_stages,pipeline_warps,logN,N,batch,element_stride,batch_"
                          "stride,warmup,repeat,h2d_ms,kernel_ms,d2h_ms,"
                          "transforms_s,Gbutterfly_s,points_s,max_error,correct\n";
@@ -293,6 +296,7 @@ int main(int argc, char** argv) {
                       << cuntt::butterfly_backend_name(config.backend) << ','
                       << cuntt::compute_unit_name(config.compute_unit) << ',' << cuntt::complex_multiply_name(config.complex_multiply) << ','
                       << cuntt::cross_twiddle_mode_name(config.cross_twiddle) << ','
+                      << cuntt::direct_boundary_name(config.direct_boundary) << ','
                       << cuntt::local_exchange_name(config.local_exchange) << ',' << cuntt::fft_core_name(config.fft_core) << ',' << config.stage_space << ','
                       << cuntt::stage_handoff_name(config.stage_handoff) << ',' << config.tile_threads << ','
                       << config.prefix_threads << ',' << config.suffix_threads << ',' << config.prefix_ept << ',' << config.suffix_ept << ','
@@ -314,6 +318,7 @@ int main(int argc, char** argv) {
                       << "compute_unit: " << cuntt::compute_unit_name(config.compute_unit) << "\n"
                       << "complex_multiply: " << cuntt::complex_multiply_name(config.complex_multiply) << "\n"
                       << "cross_twiddle: " << cuntt::cross_twiddle_mode_name(config.cross_twiddle) << "\n"
+                      << "direct_boundary: " << cuntt::direct_boundary_name(config.direct_boundary) << "\n"
                       << "local_exchange: " << cuntt::local_exchange_name(config.local_exchange) << "\n"
                       << "fft_core: " << cuntt::fft_core_name(config.fft_core) << "\n"
                       << "stage_space: " << config.stage_space << "\n"

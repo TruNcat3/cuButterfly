@@ -10,7 +10,7 @@ import subprocess
 OUTPUT_FIELDS = (
     "candidate_id", "group", "trial", "implementation", "reference", "static_score",
     "mapping_id", "processing_unit", "prefix_log_n", "suffix_log_n", "prefix_threads",
-    "suffix_threads", "prefix_ept", "suffix_ept", "cross_twiddle", "device",
+    "suffix_threads", "prefix_ept", "suffix_ept", "cross_twiddle", "direct_boundary", "device",
     "compute_capability", "operator", "precision", "direction", "normalization", "placement",
     "backend", "fft_core", "logN", "N", "batch", "warmup", "repeat", "kernel_ms",
     "points_s", "max_error", "correct",
@@ -40,6 +40,7 @@ def expand(document):
             "implementation": "cuFFT", "reference": True, "processing_unit": "vendor-baseline",
             "prefix_log_n": 0, "suffix_log_n": 0, "prefix_threads": 0, "suffix_threads": 0,
             "prefix_ept": 0, "suffix_ept": 0, "cross_twiddle": "none", "static_score": 0.0,
+            "direct_boundary": "none",
             "args": ["--operator", "fft", "--precision", seed["precision"], "--backend", "cufft",
                      "--placement", seed["placement"], "--normalization", seed["normalization"]],
         })
@@ -70,6 +71,7 @@ def case_metadata(case, trial):
         "suffix_log_n": case["suffix_log_n"], "prefix_threads": case["prefix_threads"],
         "suffix_threads": case["suffix_threads"], "prefix_ept": case["prefix_ept"],
         "suffix_ept": case["suffix_ept"], "cross_twiddle": case["cross_twiddle"],
+        "direct_boundary": case["direct_boundary"],
     }
 
 

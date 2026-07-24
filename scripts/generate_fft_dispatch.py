@@ -28,6 +28,7 @@ def select_dispatch(rows):
             entries.append({
                 "logN": log_n, "max_batch": max_batch,
                 "candidate_id": row["candidate_id"], "cross_twiddle": row["cross_twiddle"],
+                "direct_boundary": row.get("direct_boundary", "direct-strided"),
                 **{field: int(row[field]) for field in INTEGER_FIELDS},
                 **{field: float(row[field]) for field in FLOAT_FIELDS},
             })
@@ -58,11 +59,12 @@ def generate_header(path, document):
     for entry in document["entries"]:
         threshold = "true" if entry["max_batch"] is None else f"batch <= {int(entry['max_batch'])}ULL"
         recurrence = "true" if entry["cross_twiddle"] == "recurrence" else "false"
+        tiled_transpose = "true" if entry.get("direct_boundary") == "tiled-transpose" else "false"
         conditions.append(
             f"    if (log_n == {int(entry['logN'])}U && {threshold}) {{\n"
             f"        mapping = {{{int(entry['prefix_log_n'])}U, {int(entry['prefix_threads'])}U, "
             f"{int(entry['suffix_threads'])}U, {int(entry['prefix_ept'])}U, "
-            f"{int(entry['suffix_ept'])}U, {recurrence}}};\n"
+            f"{int(entry['suffix_ept'])}U, {recurrence}, {tiled_transpose}}};\n"
             f"        return true;\n    }}")
     body = "\n".join(conditions)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -79,6 +81,7 @@ struct GeneratedFftMapping {{
     std::uint32_t prefix_ept;
     std::uint32_t suffix_ept;
     bool recurrence_twiddle;
+    bool tiled_transpose;
 }};
 
 inline bool select_generated_fft_mapping(std::uint32_t log_n, std::size_t batch,

@@ -20,7 +20,8 @@ void launch_cufftdx_direct(std::uint32_t, const Complex32*, Complex32*, std::uin
 
 void launch_cufftdx_online_reorder(std::uint32_t, std::uint32_t, const Complex32*, Complex32*, Complex32*,
                                    const Complex32*, std::uint64_t, std::uint64_t, std::uint64_t, bool, bool,
-                                   CrossTwiddleMode, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t) {
+                                   CrossTwiddleMode, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t,
+                                   DirectBoundary) {
     throw std::runtime_error("cufftdx-block was not enabled at build time");
 }
 

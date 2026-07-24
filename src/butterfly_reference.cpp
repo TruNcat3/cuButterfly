@@ -96,6 +96,24 @@ CrossTwiddleMode parse_cross_twiddle_mode(const std::string& name) {
     throw std::invalid_argument("unknown cross twiddle mode: " + name);
 }
 
+const char* direct_boundary_name(DirectBoundary boundary) noexcept {
+    switch (boundary) {
+        case DirectBoundary::Strided:
+            return "direct-strided";
+        case DirectBoundary::TiledTranspose:
+            return "tiled-transpose";
+    }
+    return "unknown";
+}
+
+DirectBoundary parse_direct_boundary(const std::string& name) {
+    if (name == "direct-strided")
+        return DirectBoundary::Strided;
+    if (name == "tiled-transpose")
+        return DirectBoundary::TiledTranspose;
+    throw std::invalid_argument("unknown direct boundary: " + name);
+}
+
 const char* local_exchange_name(LocalExchange exchange) noexcept {
     switch (exchange) {
         case LocalExchange::SharedMemory:

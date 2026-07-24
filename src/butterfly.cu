@@ -494,6 +494,7 @@ class ButterflyPlan::Impl {
             config_.prefix_ept      = mapping.prefix_ept;
             config_.suffix_ept      = mapping.suffix_ept;
             config_.cross_twiddle   = mapping.recurrence_twiddle ? CrossTwiddleMode::Recurrence : CrossTwiddleMode::Table;
+            config_.direct_boundary = mapping.tiled_transpose ? DirectBoundary::TiledTranspose : DirectBoundary::Strided;
         }
         if (config_.backend == ButterflyBackend::TemporalTile && config_.local_exchange == LocalExchange::SharedMemory &&
             config_.log_n > 10 && config_.fft_core != FftCore::CufftDxDirect) {
@@ -560,6 +561,15 @@ class ButterflyPlan::Impl {
             }
             config_.prefix_units_per_cta = config_.prefix_threads * config_.prefix_ept / prefix_n;
             config_.suffix_units_per_cta = config_.suffix_threads * config_.suffix_ept / suffix_n;
+        }
+        if (config_.direct_boundary == DirectBoundary::TiledTranspose) {
+            const std::uint32_t suffix_log_n = config_.log_n - config_.local_stages;
+            if (config_.op != ButterflyOperator::Fft || config_.backend != ButterflyBackend::OnlineReorder ||
+                config_.fft_core != FftCore::CufftDxBlock ||
+                (suffix_log_n != 11 && suffix_log_n != 12)) {
+                throw std::invalid_argument(
+                    "tiled-transpose direct boundary currently requires an online cuFFTDx FFT with suffix logN=11 or 12");
+            }
         }
         if (config_.batch == 0) {
             throw std::invalid_argument("butterfly batch must be positive");
@@ -936,7 +946,8 @@ class ButterflyPlan::Impl {
                         device_scratch_.as<Complex32>(), device_twiddles_.as<Complex32>(), config_.batch,
                         config_.batch_stride, config_.element_stride, config_.inverse,
                         config_.inverse && config_.normalize_inverse, config_.cross_twiddle,
-                        config_.prefix_threads, config_.suffix_threads, config_.prefix_ept, config_.suffix_ept);
+                        config_.prefix_threads, config_.suffix_threads, config_.prefix_ept, config_.suffix_ept,
+                        config_.direct_boundary);
                 } else {
                     detail::launch_cufftdx_block(config_.log_n, device_input_.as<Complex32>(), result_buffer<Complex32>(), config_.batch,
                                                  config_.batch_stride, config_.element_stride, config_.inverse,

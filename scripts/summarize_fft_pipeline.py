@@ -7,7 +7,7 @@ import statistics
 
 CONFIG_FIELDS = ("candidate_id", "group", "implementation", "reference", "static_score", "mapping_id",
                  "processing_unit", "prefix_log_n", "suffix_log_n", "prefix_threads", "suffix_threads",
-                 "prefix_ept", "suffix_ept", "cross_twiddle", "operator", "precision", "direction",
+                 "prefix_ept", "suffix_ept", "cross_twiddle", "direct_boundary", "operator", "precision", "direction",
                  "normalization", "placement", "backend", "fft_core", "logN", "N", "batch")
 
 
@@ -29,7 +29,15 @@ def summarize(rows):
     for row in candidates:
         by_shape.setdefault(row["group"], []).append(row)
     output = []
-    for shape, shape_rows in sorted(by_shape.items()):
+    def shape_key(shape_rows):
+        first = shape_rows[0]
+        try:
+            return (int(first["logN"]), int(first["batch"]), first["group"])
+        except (KeyError, TypeError, ValueError):
+            return (0, 0, first["group"])
+
+    ordered_shapes = sorted(by_shape.values(), key=shape_key)
+    for shape_rows in ordered_shapes:
         reference = next(row for row in shape_rows if row["reference"] == "1")
         internal = sorted((row for row in shape_rows if row["reference"] != "1"),
                           key=lambda row: row["median_kernel_ms"])
@@ -58,12 +66,12 @@ def write_csv(path, rows):
 def write_markdown(path, rows):
     winners = [row for row in rows if row["rank"] == 1]
     lines = ["# Generated V100 FFT Pipeline Search", "",
-             "| logN | Batch | Split | Threads | EPT | Twiddle | Median ms | cuFFT ms | Throughput ratio |",
-             "|--:|--:|:--|:--|:--|:--|--:|--:|--:|"]
+             "| logN | Batch | Split | Threads | EPT | Twiddle | Boundary | Median ms | cuFFT ms | Throughput ratio |",
+             "|--:|--:|:--|:--|:--|:--|:--|--:|--:|--:|"]
     for row in winners:
         lines.append(f"| {row['logN']} | {row['batch']} | {row['prefix_log_n']}+{row['suffix_log_n']} | "
                      f"{row['prefix_threads']}+{row['suffix_threads']} | {row['prefix_ept']}+{row['suffix_ept']} | "
-                     f"{row['cross_twiddle']} | {row['median_kernel_ms']:.6f} | {row['cufft_median_ms']:.6f} | "
+                     f"{row['cross_twiddle']} | {row['direct_boundary']} | {row['median_kernel_ms']:.6f} | {row['cufft_median_ms']:.6f} | "
                      f"{row['throughput_vs_cufft']:.3f}x |")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines) + "\n")

@@ -97,6 +97,14 @@ enum class CrossTwiddleMode {
 const char*      cross_twiddle_mode_name(CrossTwiddleMode mode) noexcept;
 CrossTwiddleMode parse_cross_twiddle_mode(const std::string& name);
 
+enum class DirectBoundary {
+    Strided,
+    TiledTranspose,
+};
+
+const char*    direct_boundary_name(DirectBoundary boundary) noexcept;
+DirectBoundary parse_direct_boundary(const std::string& name);
+
 enum class LocalExchange {
     SharedMemory,
     WarpRegister,
@@ -149,6 +157,7 @@ struct ButterflyConfig {
     ComputeUnit        compute_unit      = ComputeUnit::Radix2;
     ComplexMultiply    complex_multiply  = ComplexMultiply::FourMul;
     CrossTwiddleMode   cross_twiddle     = CrossTwiddleMode::Table;
+    DirectBoundary     direct_boundary   = DirectBoundary::Strided;
     LocalExchange      local_exchange    = LocalExchange::SharedMemory;
     FftCore            fft_core          = FftCore::Scalar;
 };

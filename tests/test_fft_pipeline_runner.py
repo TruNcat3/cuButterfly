@@ -26,7 +26,7 @@ class FftPipelineRunnerTest(unittest.TestCase):
         document = json.loads((ROOT / "config" / "v100_fft_pipeline_candidates.json").read_text())
         cases = RUNNER.expand(document)
         self.assertEqual(sum(case["reference"] for case in cases), 6)
-        self.assertEqual(len(cases), 78)
+        self.assertEqual(len(cases), 90)
 
     def test_parser_skips_notices(self):
         text = "notice\ndevice,operator,kernel_ms,correct\nV100,fft,0.2,1\n"
@@ -45,6 +45,7 @@ class FftPipelineRunnerTest(unittest.TestCase):
         self.assertEqual(metadata["candidate_id"], case["id"])
         self.assertEqual(metadata["static_score"], case["static_score"])
         self.assertEqual(metadata["trial"], 3)
+        self.assertEqual(metadata["direct_boundary"], case["direct_boundary"])
 
     def test_summary_ranks_internal_and_compares_reference(self):
         header = "candidate_id,group,implementation,reference,kernel_ms,correct\n"

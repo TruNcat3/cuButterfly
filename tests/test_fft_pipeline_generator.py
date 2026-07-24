@@ -25,7 +25,8 @@ class FftPipelineGeneratorTest(unittest.TestCase):
             counts.setdefault((point["mapping_id"], point["batch"]), 0)
             counts[(point["mapping_id"], point["batch"])] += 1
         self.assertEqual(len(counts), 6)
-        self.assertTrue(all(value <= 12 for value in counts.values()))
+        self.assertTrue(all(value <= (16 if mapping == "fft20-fp32" else 12)
+                            for (mapping, _), value in counts.items()))
         self.assertTrue(all(point["selection_pool_size"] >= point["selection_limit"] for point in self.runnable))
 
     def test_fft18_contains_asymmetric_compiled_factorizations(self):
@@ -41,6 +42,14 @@ class FftPipelineGeneratorTest(unittest.TestCase):
         self.assertTrue(mixed)
         self.assertFalse(self.backlog)
 
+    def test_suffix_direct_points_include_both_boundary_realizations(self):
+        points = [point for point in self.runnable
+                  if point["mapping_id"] == "fft20-fp32" and point["suffix_log_n"] >= 11]
+        self.assertEqual({point["direct_boundary"] for point in points},
+                         {"direct-strided", "tiled-transpose"})
+        self.assertTrue(all(point["id"].endswith("_tx")
+                            for point in points if point["direct_boundary"] == "tiled-transpose"))
+
     def test_generated_runtime_arguments_keep_dimensions_independent(self):
         point = next(point for point in self.runnable if point["prefix_log_n"] != point["suffix_log_n"])
         args = point["args"]
@@ -48,6 +57,7 @@ class FftPipelineGeneratorTest(unittest.TestCase):
         self.assertIn("--suffix-threads", args)
         self.assertIn("--prefix-ept", args)
         self.assertIn("--suffix-ept", args)
+        self.assertIn("--direct-boundary", args)
 
     def test_each_shape_retains_measured_incumbent(self):
         expected_by_log_n = {18: [(9, 256, 256, 8, 8)],

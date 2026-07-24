@@ -75,6 +75,7 @@ def runtime_args(point):
         "--operator", "fft", "--precision", point["precision"], "--backend", "online-reorder",
         "--fft-core", "cufftdx-block", "--local-stages", str(point["prefix_log_n"]),
         "--reorder-columns", "1", "--cross-twiddle", point["cross_twiddle"],
+        "--direct-boundary", point["direct_boundary"],
         "--prefix-threads", str(point["prefix_threads"]), "--suffix-threads", str(point["suffix_threads"]),
         "--prefix-ept", str(point["prefix_ept"]), "--suffix-ept", str(point["suffix_ept"]),
         "--placement", point["placement"], "--normalization", point["normalization"],
@@ -83,8 +84,9 @@ def runtime_args(point):
 
 def candidate_id(point):
     twiddle = "rec" if point["cross_twiddle"] == "recurrence" else "tbl"
+    boundary = "_tx" if point["direct_boundary"] == "tiled-transpose" else ""
     return (f"{point['mapping_id']}_b{point['batch']}_p{point['prefix_log_n']}s{point['suffix_log_n']}_"
-            f"t{point['prefix_threads']}x{point['suffix_threads']}_e{point['prefix_ept']}x{point['suffix_ept']}_{twiddle}")
+            f"t{point['prefix_threads']}x{point['suffix_threads']}_e{point['prefix_ept']}x{point['suffix_ept']}_{twiddle}{boundary}")
 
 
 def matches_required(point, required):
@@ -94,6 +96,7 @@ def matches_required(point, required):
         "prefix_threads": required["prefix_threads"], "suffix_threads": required["suffix_threads"],
         "prefix_ept": required["prefix_ept"], "suffix_ept": required["suffix_ept"],
         "cross_twiddle": required["cross_twiddle"],
+        "direct_boundary": required.get("direct_boundary", "direct-strided"),
     }
     return all(point[field] == value for field, value in fields.items())
 
@@ -133,30 +136,35 @@ def enumerate_pipeline(document, architecture, codegen_points):
                     planned_shape.append(planned)
                     continue
                 twiddles = sorted(set(prefix_unit["cross_twiddle"]) & set(suffix_unit["cross_twiddle"]))
+                boundaries = suffix_unit.get("direct_boundaries", ["direct-strided"])
+                if suffix_log_n <= 10:
+                    boundaries = ["direct-strided"]
                 for twiddle in twiddles:
-                    for prefix_threads in prefix_unit["threads"]:
-                        for suffix_threads in suffix_unit["threads"]:
-                            for prefix_ept in prefix_unit["elements_per_thread"]:
-                                for suffix_ept in suffix_unit["elements_per_thread"]:
-                                    point = {
-                                        **{key: value for key, value in mapping.items() if key not in ("batches", "prefix_log_n", "required_candidates")},
-                                        "mapping_id": mapping["id"], "batch": batch,
-                                        "processing_unit": f"{prefix_unit['id']}+{suffix_unit['id']}",
-                                        "prefix_processing_unit": prefix_unit["id"],
-                                        "suffix_processing_unit": suffix_unit["id"], "prefix_log_n": prefix_log_n,
-                                        "suffix_log_n": suffix_log_n, "prefix_threads": prefix_threads,
-                                        "suffix_threads": suffix_threads, "prefix_ept": prefix_ept,
-                                        "suffix_ept": suffix_ept, "cross_twiddle": twiddle,
-                                    }
-                                    status, reason = classify_online_point(point, hardware, codegen_points)
-                                    if status != "compiled":
-                                        continue
-                                    point["status"] = status
-                                    point["reason"] = reason
-                                    score_candidate(point, hardware, prefix_unit, suffix_unit, document["selection"])
-                                    point["id"] = candidate_id(point)
-                                    point["args"] = runtime_args(point)
-                                    shape.append(point)
+                    for boundary in boundaries:
+                        for prefix_threads in prefix_unit["threads"]:
+                            for suffix_threads in suffix_unit["threads"]:
+                                for prefix_ept in prefix_unit["elements_per_thread"]:
+                                    for suffix_ept in suffix_unit["elements_per_thread"]:
+                                        point = {
+                                            **{key: value for key, value in mapping.items() if key not in ("batches", "prefix_log_n", "required_candidates")},
+                                            "mapping_id": mapping["id"], "batch": batch,
+                                            "processing_unit": f"{prefix_unit['id']}+{suffix_unit['id']}",
+                                            "prefix_processing_unit": prefix_unit["id"],
+                                            "suffix_processing_unit": suffix_unit["id"], "prefix_log_n": prefix_log_n,
+                                            "suffix_log_n": suffix_log_n, "prefix_threads": prefix_threads,
+                                            "suffix_threads": suffix_threads, "prefix_ept": prefix_ept,
+                                            "suffix_ept": suffix_ept, "cross_twiddle": twiddle,
+                                            "direct_boundary": boundary,
+                                        }
+                                        status, reason = classify_online_point(point, hardware, codegen_points)
+                                        if status != "compiled":
+                                            continue
+                                        point["status"] = status
+                                        point["reason"] = reason
+                                        score_candidate(point, hardware, prefix_unit, suffix_unit, document["selection"])
+                                        point["id"] = candidate_id(point)
+                                        point["args"] = runtime_args(point)
+                                        shape.append(point)
             # Preserve factorization/twiddle diversity before filling by score.
             selected = []
             for required in mapping.get("required_candidates", []):
@@ -166,12 +174,14 @@ def enumerate_pipeline(document, architecture, codegen_points):
                 selected.append(match)
             diversity = {}
             for point in sorted(shape, key=lambda item: item["static_score"]):
-                key = (point["prefix_log_n"], point["suffix_log_n"], point["cross_twiddle"])
+                key = (point["prefix_log_n"], point["suffix_log_n"], point["cross_twiddle"],
+                       point["direct_boundary"])
                 if key not in diversity:
                     diversity[key] = point
             selected_ids = {point["id"] for point in selected}
             selected.extend(point for point in diversity.values() if point["id"] not in selected_ids)
-            limit = int(document["selection"]["max_runnable_candidates_per_shape"])
+            limit = int(mapping.get("max_runnable_candidates_per_shape",
+                                    document["selection"]["max_runnable_candidates_per_shape"]))
             selected_ids = {point["id"] for point in selected}
             selected.extend(point for point in sorted(shape, key=lambda item: item["static_score"])
                             if point["id"] not in selected_ids)

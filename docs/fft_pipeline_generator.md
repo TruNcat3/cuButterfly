@@ -8,7 +8,9 @@ kernel implementation.
 1. **Processing unit** describes one local FFT: supported dimension, thread and
    element-per-thread choices, exchange method, twiddle method, and compiled
    availability. `cufftdx-online-shared` covers local `logN=3..10`, while
-   `cufftdx-large-online` adapts the direct unit for `logN=11..12`.
+   `cufftdx-large-online` adapts the direct unit for `logN=11..12`. A suffix
+   direct unit independently selects either a strided natural-order store or a
+   contiguous store followed by a padded tiled transpose.
 2. **Mapping** factors a transform into prefix and suffix dimensions. Each pass
    independently selects threads and elements per thread. The model derives
    units/CTA, grid blocks, shared storage, estimated resident CTAs, waves/SM,
@@ -27,9 +29,10 @@ mixed-unit candidates rather than aliases for `10+10`.
 
 ## V100 Search Result
 
-The current scan contains three randomized trials per point, 100 warmups and 50
-timed repetitions. Times are resident kernel times on the repository V100. A
-ratio above 1 means cuButterfly is faster.
+The current scan contains 270 samples: 90 cases, three randomized trials per
+case, 100 warmups, and 50 timed repetitions. Times are resident kernel times on
+the repository V100. A ratio above 1 means cuButterfly is faster. The boundary
+column is `direct-strided` for all current winners.
 
 | logN | Batch | Selected mapping | cuButterfly ms | cuFFT ms | Ratio |
 |--:|--:|:--|--:|--:|--:|
@@ -40,12 +43,27 @@ ratio above 1 means cuButterfly is faster.
 | 20 | 8 | `10+10`, `256/128`, EPT `16/16` | 0.450109 | 0.382157 | 0.849x |
 | 20 | 16 | `10+10`, `256/128`, EPT `16/16` | 0.883835 | 0.720855 | 0.816x |
 
-The best asymmetric mixed-unit point is `9+11`: it reaches 0.730x, 0.660x, and
-0.636x cuFFT throughput at batch 2, 8, and 16. The direct unit is competitive
-when applied to a contiguous whole transform, so this regression attributes the
-remaining problem to its cross-dimension strided boundary rather than its FFT
-arithmetic. The next target is therefore a tiled transpose or swizzled boundary
-for the large unit, not another arithmetic core.
+The boundary experiment compares the same `9+11`, 128/256-thread, EPT 16/8,
+recurrence point. Both rows include every launched kernel.
+
+| Batch | Direct-strided ms | Tiled-transpose ms | Tiled change | Tiled/cuFFT |
+|--:|--:|--:|--:|--:|
+| 2 | 0.169226 | 0.161690 | 4.66% faster | 0.764x |
+| 8 | 0.579461 | 0.583332 | 0.67% slower | 0.655x |
+| 16 | 1.133466 | 1.150116 | 1.47% slower | 0.627x |
+
+The tiled realization makes the suffix FFT write its contiguous scratch row in
+place, then launches a 32x32 shared-memory transpose with a 33-element pitch.
+It improves the low-batch point but does not change the selected `10+10`
+mapping. At saturated batch, the saved strided stores do not repay an extra
+full global read/write and third launch. The result isolates the next target:
+fuse the tiled permutation into an adjacent pass or retain a transposed layout
+across more work, instead of adding another standalone arithmetic core.
+
+`8+12` tiled recurrence reaches 0.170271, 0.611820, and 1.201418 ms at batch
+2, 8, and 16. Prefix-direct `11+9` and `12+8` still use the direct-strided
+realization because eliminating their strided input requires a different
+producer-side or two-boundary design.
 
 ## Commands
 

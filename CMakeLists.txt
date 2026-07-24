@@ -259,5 +259,11 @@ if(BUILD_TESTING)
                          --suffix-threads 256 --suffix-ept 8 --cross-twiddle recurrence
                          --placement in-place --normalization none --logN 20 --batch 1
                          --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_tiled_transpose_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --local-stages 9 --prefix-threads 256 --prefix-ept 8
+                         --suffix-threads 256 --suffix-ept 8 --cross-twiddle recurrence
+                         --direct-boundary tiled-transpose --placement in-place --normalization none
+                         --logN 20 --batch 1 --warmup 1 --repeat 1 --verify)
     endif()
 endif()

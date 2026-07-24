@@ -59,7 +59,7 @@
       "precision": ["fp32"],
       "cross_twiddle": ["table", "recurrence"],
       "dimension_log_n": {"min": 3, "max": 12},
-      "status": "compiled-direct-strided"
+      "status": "compiled-direct-strided-and-suffix-transpose"
     },
     {
       "name": "resident-composition",
