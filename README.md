@@ -6,7 +6,7 @@
 [![Release](https://img.shields.io/github/v/release/TruNcat3/cuButterfly)](https://github.com/TruNcat3/cuButterfly/releases/latest)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
-cuButterfly is a CUDA research prototype that generalizes the APPT/Hermes
+cuButterfly is a CUDA research prototype that generalizes the 
 space-time parallel paradigm from NTT to regular layered transforms. It keeps
 the architecture-level mapping independent of the local arithmetic core, so
 FFT, NTT, FWHT, and XOR-zeta can share one mapping vocabulary while selecting
