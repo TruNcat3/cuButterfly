@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "target": "v100-sm70",
+  "processing_units": [
+    {
+      "id": "cufftdx-online-shared",
+      "family": "cufftdx-online",
+      "core": "cufftdx-block",
+      "exchange": "shared",
+      "status": "compiled",
+      "dimension_log_n": {"min": 3, "max": 10},
+      "threads": [128, 256, 512],
+      "elements_per_thread": [4, 8, 16],
+      "cross_twiddle": ["recurrence", "table"],
+      "estimated_registers_per_thread": {"default": 48, "logN10": 52}
+    },
+    {
+      "id": "cufftdx-large-online",
+      "family": "cufftdx-large-online",
+      "core": "cufftdx-direct",
+      "exchange": "shared-swizzled",
+      "status": "requires-new-kernel",
+      "dimension_log_n": {"min": 11, "max": 12},
+      "threads": [256, 512, 1024],
+      "elements_per_thread": [4, 8, 16],
+      "cross_twiddle": ["recurrence", "table"]
+    }
+  ],
+  "mapping_spaces": [
+    {
+      "id": "fft18-fp32",
+      "operator": "fft", "precision": "fp32", "logN": 18,
+      "direction": "forward", "placement": "in-place", "normalization": "none",
+      "batches": [2, 16, 64], "prefix_log_n": {"min": 8, "max": 10},
+      "required_candidates": [
+        {"prefix_log_n": 9, "prefix_threads": 256, "suffix_threads": 256,
+         "prefix_ept": 8, "suffix_ept": 8, "cross_twiddle": "recurrence"}
+      ]
+    },
+    {
+      "id": "fft20-fp32",
+      "operator": "fft", "precision": "fp32", "logN": 20,
+      "direction": "forward", "placement": "in-place", "normalization": "none",
+      "batches": [2, 8, 16], "prefix_log_n": {"min": 8, "max": 12},
+      "required_candidates": [
+        {"prefix_log_n": 10, "prefix_threads": 512, "suffix_threads": 512,
+         "prefix_ept": 8, "suffix_ept": 8, "cross_twiddle": "recurrence"}
+      ]
+    }
+  ],
+  "selection": {
+    "max_runnable_candidates_per_shape": 12,
+    "retain_per_factorization_twiddle": 1,
+    "prefix_work_weight": 1.25,
+    "suffix_work_weight": 1.0,
+    "underfill_penalty": 0.5,
+    "imbalance_penalty": 0.1
+  },
+  "protocol": {"warmup": 100, "repeat": 50, "trials": 3, "seed": 20260724}
+}

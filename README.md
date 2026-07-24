@@ -75,6 +75,8 @@ the focused rows below retain their original experiment protocols. The newer
 [orthogonal length/batch scan](docs/v100_scaling_results.md) shows that parity
 is shape-dependent: the best processing unit and the relative library result
 can change as batch exposes additional hardware concurrency.
+The measured [FFT pipeline generator](docs/fft_pipeline_generator.md) turns
+that observation into a processing-unit, mapping, and runtime-dispatch flow.
 
 ### Same-Machine Library Comparisons
 

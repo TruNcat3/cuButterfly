@@ -24,6 +24,7 @@ void print_usage() {
         << "cubutterfly_bench [--operator fwht|fft|xor-zeta] [--backend temporal-tile|hierarchical|online-reorder|warp-hybrid|stage-pipeline|cufft]\n"
         << "                    [--logN 8] [--batch 16384] [--inverse]\n"
         << "                    [--normalization none|inverse]\n"
+        << "                    [--auto-select]\n"
         << "                    [--placement in-place|out-of-place]\n"
         << "                    [--batch-stride N]\n"
         << "                    [--element-stride N]\n"
@@ -143,6 +144,8 @@ int main(int argc, char** argv) {
                 config.placement = cuntt::parse_butterfly_placement(take_arg(index, argc, argv));
             } else if (arg == "--inverse") {
                 config.inverse = true;
+            } else if (arg == "--auto-select") {
+                config.auto_select = true;
             } else if (arg == "--normalization") {
                 const std::string mode = take_arg(index, argc, argv);
                 if (mode == "none")
@@ -279,14 +282,15 @@ int main(int argc, char** argv) {
         const auto device = cuntt::current_device_info();
         std::cout << std::fixed << std::setprecision(6);
         if (csv) {
-            std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,backend,compute_unit,complex_multiply,cross_twiddle,local_"
+            std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,auto_select,backend,compute_unit,complex_multiply,cross_twiddle,local_"
                          "exchange,fft_core,stage_space,stage_handoff,tile_threads,prefix_threads,suffix_threads,prefix_ept,suffix_ept,prefix_units_per_cta,suffix_units_per_cta,local_stages,reorder_columns,warp_stages,pipeline_warps,logN,N,batch,element_stride,batch_"
                          "stride,warmup,repeat,h2d_ms,kernel_ms,d2h_ms,"
                          "transforms_s,Gbutterfly_s,points_s,max_error,correct\n";
             std::cout << '"' << device.name << "\"," << device.compute_major << '.' << device.compute_minor << ','
                       << cuntt::butterfly_operator_name(config.op) << ',' << cuntt::butterfly_precision_name(config.precision) << ','
                       << (config.inverse ? "inverse" : "forward") << ',' << (config.normalize_inverse ? "inverse" : "none") << ','
-                      << cuntt::butterfly_placement_name(config.placement) << ',' << cuntt::butterfly_backend_name(config.backend) << ','
+                      << cuntt::butterfly_placement_name(config.placement) << ',' << static_cast<int>(config.auto_select) << ','
+                      << cuntt::butterfly_backend_name(config.backend) << ','
                       << cuntt::compute_unit_name(config.compute_unit) << ',' << cuntt::complex_multiply_name(config.complex_multiply) << ','
                       << cuntt::cross_twiddle_mode_name(config.cross_twiddle) << ','
                       << cuntt::local_exchange_name(config.local_exchange) << ',' << cuntt::fft_core_name(config.fft_core) << ',' << config.stage_space << ','
@@ -305,6 +309,7 @@ int main(int argc, char** argv) {
                       << "direction: " << (config.inverse ? "inverse" : "forward") << "\n"
                       << "normalization: " << (config.normalize_inverse ? "inverse" : "none") << "\n"
                       << "placement: " << cuntt::butterfly_placement_name(config.placement) << "\n"
+                      << "auto_select: " << (config.auto_select ? "yes" : "no") << "\n"
                       << "backend: " << cuntt::butterfly_backend_name(config.backend) << "\n"
                       << "compute_unit: " << cuntt::compute_unit_name(config.compute_unit) << "\n"
                       << "complex_multiply: " << cuntt::complex_multiply_name(config.complex_multiply) << "\n"

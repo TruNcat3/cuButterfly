@@ -132,6 +132,7 @@ struct ButterflyConfig {
     std::size_t        element_stride    = 1;
     bool               inverse           = false;
     bool               normalize_inverse = true;
+    bool               auto_select       = false;
     std::uint32_t      stage_space       = 0;
     StageHandoff       stage_handoff     = StageHandoff::NamedBarrier;
     std::uint32_t      tile_threads      = 128;

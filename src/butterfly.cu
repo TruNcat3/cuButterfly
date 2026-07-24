@@ -11,6 +11,7 @@
 
 #include "cuntt/butterfly.hpp"
 #include "external_fft_units.cuh"
+#include "generated_fft_dispatch.cuh"
 #include "generated_unit_api.cuh"
 #include "stage_pipeline.cuh"
 
@@ -463,6 +464,36 @@ class ButterflyPlan::Impl {
     explicit Impl(ButterflyConfig config) : config_(std::move(config)) {
         if (config_.log_n == 0 || config_.log_n > 20) {
             throw std::invalid_argument("butterfly log_n must be in [1, 20]");
+        }
+        if (config_.auto_select) {
+            const std::size_t contiguous_stride = std::size_t{1} << config_.log_n;
+            if (config_.op != ButterflyOperator::Fft || config_.precision != ButterflyPrecision::Fp32 ||
+                config_.inverse || config_.placement != ButterflyPlacement::InPlace || config_.normalize_inverse ||
+                config_.element_stride != 1 || (config_.batch_stride != 0 && config_.batch_stride != contiguous_stride)) {
+                throw std::invalid_argument(
+                    "generated FFT selection requires FP32 forward, in-place, contiguous, no-normalization semantics");
+            }
+            int device = 0;
+            cudaDeviceProp properties{};
+            CUB_CUDA_CHECK(cudaGetDevice(&device));
+            CUB_CUDA_CHECK(cudaGetDeviceProperties(&properties, device));
+            if (properties.major != 7 || properties.minor != 0) {
+                throw std::invalid_argument("generated FFT selection is calibrated only for V100 sm_70");
+            }
+            detail::GeneratedFftMapping mapping{};
+            if (!detail::select_generated_fft_mapping(config_.log_n, config_.batch, mapping)) {
+                throw std::invalid_argument("no generated V100 FFT mapping exists for this length and batch");
+            }
+            config_.backend         = ButterflyBackend::OnlineReorder;
+            config_.fft_core        = FftCore::CufftDxBlock;
+            config_.local_exchange  = LocalExchange::SharedMemory;
+            config_.local_stages    = mapping.local_stages;
+            config_.reorder_columns = 1;
+            config_.prefix_threads  = mapping.prefix_threads;
+            config_.suffix_threads  = mapping.suffix_threads;
+            config_.prefix_ept      = mapping.prefix_ept;
+            config_.suffix_ept      = mapping.suffix_ept;
+            config_.cross_twiddle   = mapping.recurrence_twiddle ? CrossTwiddleMode::Recurrence : CrossTwiddleMode::Table;
         }
         if (config_.backend == ButterflyBackend::TemporalTile && config_.local_exchange == LocalExchange::SharedMemory &&
             config_.log_n > 10 && config_.fft_core != FftCore::CufftDxDirect) {

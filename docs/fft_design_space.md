@@ -115,3 +115,6 @@ implementation queues are now explicit:
 
 Fine-grained performance search should operate only on `compiled` points after
 the desired `awaiting-codegen` subset has been emitted.
+
+The bounded candidate search and measured runtime selection built on this
+space are documented in [FFT Pipeline Generator](fft_pipeline_generator.md).

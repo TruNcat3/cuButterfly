@@ -34,18 +34,29 @@ set(CUBUTTERFLY_ARCHITECTURE_SPACE_SPEC "${CMAKE_CURRENT_SOURCE_DIR}/config/butt
     "Canonical operator-independent butterfly architecture-space specification")
 set(CUBUTTERFLY_FFT_CODEGEN_SPEC "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_fft_codegen.json" CACHE FILEPATH
     "Selected FFT template points compiled into this build")
+set(CUBUTTERFLY_FFT_PIPELINE_SPEC "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_fft_pipeline.json" CACHE FILEPATH
+    "FFT processing-unit and mapping search specification")
+set(CUBUTTERFLY_FFT_PIPELINE_CANDIDATES "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_fft_pipeline_candidates.json" CACHE FILEPATH
+    "Generated FFT pipeline candidate manifest")
+set(CUBUTTERFLY_FFT_DISPATCH_SPEC "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_fft_dispatch.json" CACHE FILEPATH
+    "Measured FFT mapping dispatch table")
 set(CUNTT_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CUNTT_DESIGN_SPEC}"
     "${CUBUTTERFLY_FFT_SPACE_SPEC}"
     "${CUBUTTERFLY_ARCHITECTURE_SPACE_SPEC}"
     "${CUBUTTERFLY_FFT_CODEGEN_SPEC}"
+    "${CUBUTTERFLY_FFT_PIPELINE_SPEC}"
+    "${CUBUTTERFLY_FFT_PIPELINE_CANDIDATES}"
+    "${CUBUTTERFLY_FFT_DISPATCH_SPEC}"
     "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_comprehensive_suite.json"
     "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_space.json"
     "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_suite.json"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/fft_design_space.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/butterfly_design_space.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_codegen.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_pipeline.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_dispatch.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_scaling_suite.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_design_points.py")
 file(MAKE_DIRECTORY "${CUNTT_GENERATED_DIR}")
@@ -96,6 +107,26 @@ execute_process(
     ERROR_VARIABLE CUBUTTERFLY_SCALING_SUITE_ERROR)
 if(NOT CUBUTTERFLY_SCALING_SUITE_RESULT EQUAL 0)
     message(FATAL_ERROR "cuButterfly scaling-suite validation failed: ${CUBUTTERFLY_SCALING_SUITE_ERROR}")
+endif()
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_pipeline.py"
+            --pipeline "${CUBUTTERFLY_FFT_PIPELINE_SPEC}"
+            --architecture "${CUBUTTERFLY_FFT_SPACE_SPEC}"
+            --codegen "${CUBUTTERFLY_FFT_CODEGEN_SPEC}"
+            --check "${CUBUTTERFLY_FFT_PIPELINE_CANDIDATES}"
+    RESULT_VARIABLE CUBUTTERFLY_FFT_PIPELINE_RESULT
+    ERROR_VARIABLE CUBUTTERFLY_FFT_PIPELINE_ERROR)
+if(NOT CUBUTTERFLY_FFT_PIPELINE_RESULT EQUAL 0)
+    message(FATAL_ERROR "cuButterfly FFT pipeline validation failed: ${CUBUTTERFLY_FFT_PIPELINE_ERROR}")
+endif()
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_dispatch.py"
+            --dispatch "${CUBUTTERFLY_FFT_DISPATCH_SPEC}"
+            --header "${CUNTT_GENERATED_DIR}/generated_fft_dispatch.cuh"
+    RESULT_VARIABLE CUBUTTERFLY_FFT_DISPATCH_RESULT
+    ERROR_VARIABLE CUBUTTERFLY_FFT_DISPATCH_ERROR)
+if(NOT CUBUTTERFLY_FFT_DISPATCH_RESULT EQUAL 0)
+    message(FATAL_ERROR "cuButterfly FFT dispatch generation failed: ${CUBUTTERFLY_FFT_DISPATCH_ERROR}")
 endif()
 include("${CUNTT_GENERATED_DIR}/design_points.cmake")
 
@@ -211,4 +242,16 @@ if(BUILD_TESTING)
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_external_baseline_suite.py")
     add_test(NAME scaling_ncu_analysis
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_scaling_ncu_analysis.py")
+    add_test(NAME fft_pipeline_generator
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_pipeline_generator.py")
+    add_test(NAME fft_pipeline_runner
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_pipeline_runner.py")
+    add_test(NAME fft_dispatch_generator
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_dispatch_generator.py")
+    if(CUBUTTERFLY_ENABLE_CUFFTDX)
+        add_test(NAME fft_auto_dispatch_correctness
+                 COMMAND cubutterfly_bench --auto-select --operator fft --precision fp32
+                         --placement in-place --normalization none --logN 18 --batch 2
+                         --warmup 1 --repeat 1 --verify)
+    endif()
 endif()
