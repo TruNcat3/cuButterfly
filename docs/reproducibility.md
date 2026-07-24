@@ -75,6 +75,26 @@ The current protocol fixes `N * batch = 2^22` for length comparisons. Do not
 use it to infer independent batch scaling; that requires holding `N` fixed and
 sweeping batch separately.
 
+Generate and run the orthogonal length/batch suite with:
+
+```bash
+python3 scripts/generate_scaling_suite.py \
+  --spec config/v100_scaling_space.json \
+  --output config/v100_scaling_suite.json
+
+python3 scripts/run_comprehensive_suite.py \
+  --manifest config/v100_scaling_suite.json --mode full \
+  --output results/v100_scaling_full_raw.csv
+
+python3 scripts/summarize_scaling_suite.py \
+  results/v100_scaling_full_raw.csv \
+  --output results/v100_scaling_full_summary.csv \
+  --markdown results/v100_scaling_full_report.md
+```
+
+Rows below the default 0.020 ms timing floor are retained for transparency but
+cannot define the reported peak or saturation batch.
+
 ## 4. Generated Design Points
 
 The build invokes:

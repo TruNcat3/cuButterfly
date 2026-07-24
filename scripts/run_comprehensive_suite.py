@@ -126,17 +126,24 @@ def load_manifest(path):
         groups.setdefault(case["group"], []).append(case)
     comparable_fields = ("operator", "precision", "direction", "normalization", "placement", "logN", "element_stride", "output_order")
     for group, cases in groups.items():
-        contracts = {tuple(expected_semantics(case)[field] for field in comparable_fields) for case in cases}
+        contracts = {
+            tuple(expected_semantics(case)[field] for field in comparable_fields)
+            + (str(case.get("batch", "")),)
+            for case in cases
+        }
         if len(contracts) != 1:
             raise ValueError(f"comparison group {group} mixes semantic contracts")
     return document
 
 
-def selected_cases(document, mode, filters):
+def selected_cases(document, mode, filters, exact=False):
     tiers = {"quick"} if mode == "quick" else {"quick", "full"}
     cases = [case for case in document["cases"] if case["tier"] in tiers]
     if filters:
-        cases = [case for case in cases if any(token in case["id"] or token in case["group"] for token in filters)]
+        if exact:
+            cases = [case for case in cases if case["id"] in filters or case["group"] in filters]
+        else:
+            cases = [case for case in cases if any(token in case["id"] or token in case["group"] for token in filters)]
     if not cases:
         raise ValueError("case selection is empty")
     return cases
@@ -223,6 +230,7 @@ def main():
     parser.add_argument("--manifest", type=pathlib.Path, default=pathlib.Path("config/v100_comprehensive_suite.json"))
     parser.add_argument("--mode", choices=("quick", "full"), default="quick")
     parser.add_argument("--only", nargs="+", help="Run case ids/groups containing any supplied token.")
+    parser.add_argument("--exact", action="store_true", help="Require --only tokens to equal a case id or group.")
     parser.add_argument("--output", "-o", type=pathlib.Path, default=pathlib.Path("results/comprehensive_v100_quick_raw.csv"))
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--skip-verify", action="store_true")
@@ -234,7 +242,7 @@ def main():
     output_path = args.output if args.output.is_absolute() else root / args.output
     document = load_manifest(manifest_path)
     protocol = document["protocols"][args.mode]
-    cases = selected_cases(document, args.mode, args.only)
+    cases = selected_cases(document, args.mode, args.only, args.exact)
     existing = read_existing(output_path) if args.resume else []
     complete = {(row["suite_case_id"], int(row["trial"])) for row in existing if row.get("trial", "").isdigit()}
     records = list(existing)
@@ -250,6 +258,7 @@ def main():
         return
 
     preflights = {}
+    preflight_cache = {}
     for case, _ in pending:
         if case["id"] in preflights:
             continue
@@ -258,11 +267,16 @@ def main():
             continue
         verify_batch = min(case_batch(case, protocol), int(protocol["verify_batch"]))
         command = build_command(root, document, case, protocol, verify_batch, True)
+        cache_key = tuple(command)
+        if cache_key in preflight_cache:
+            preflights[case["id"]] = preflight_cache[cache_key]
+            continue
         print(f"verify case={case['id']} batch={verify_batch}", flush=True)
         record = execute(command)
         validate_record(case, verify_batch, record)
         if record.get("correct") != "1":
             raise RuntimeError(f"correctness preflight failed for {case['id']}: {record}")
+        preflight_cache[cache_key] = record
         preflights[case["id"]] = record
 
     for run_index, (case, trial) in enumerate(pending, 1):

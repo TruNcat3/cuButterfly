@@ -41,9 +41,12 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CUBUTTERFLY_ARCHITECTURE_SPACE_SPEC}"
     "${CUBUTTERFLY_FFT_CODEGEN_SPEC}"
     "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_comprehensive_suite.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_space.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_suite.json"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/fft_design_space.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/butterfly_design_space.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_codegen.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_scaling_suite.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_design_points.py")
 file(MAKE_DIRECTORY "${CUNTT_GENERATED_DIR}")
 execute_process(
@@ -84,6 +87,15 @@ execute_process(
     ERROR_VARIABLE CUBUTTERFLY_FFT_CODEGEN_ERROR)
 if(NOT CUBUTTERFLY_FFT_CODEGEN_RESULT EQUAL 0)
     message(FATAL_ERROR "cuButterfly FFT code generation failed: ${CUBUTTERFLY_FFT_CODEGEN_ERROR}")
+endif()
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_scaling_suite.py"
+            --spec "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_space.json"
+            --check "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_suite.json"
+    RESULT_VARIABLE CUBUTTERFLY_SCALING_SUITE_RESULT
+    ERROR_VARIABLE CUBUTTERFLY_SCALING_SUITE_ERROR)
+if(NOT CUBUTTERFLY_SCALING_SUITE_RESULT EQUAL 0)
+    message(FATAL_ERROR "cuButterfly scaling-suite validation failed: ${CUBUTTERFLY_SCALING_SUITE_ERROR}")
 endif()
 include("${CUNTT_GENERATED_DIR}/design_points.cmake")
 
@@ -191,4 +203,6 @@ if(BUILD_TESTING)
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_butterfly_design_space.py")
     add_test(NAME comprehensive_suite
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_comprehensive_suite.py")
+    add_test(NAME scaling_suite
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_scaling_suite.py")
 endif()

@@ -2,6 +2,32 @@
 
 All notable repository and research-artifact changes are recorded here.
 
+## Unreleased
+
+### Added
+
+- An orthogonal 184-case V100 length/batch suite and generated manifest for
+  FFT, NTT, FWHT, and XOR-zeta.
+- Scaling summaries that identify timing quality, throughput saturation, and
+  mapping crossovers without using sub-0.020-ms rows as stable claims.
+- Targeted NCU collection for the FFT saturation gaps and FWHT processing-unit
+  crossover.
+
+### Changed
+
+- The comprehensive runner now supports exact case selection, validates batch
+  consistency within comparison groups, and caches identical correctness
+  preflights.
+- The next release is scoped around counter-calibrated mapping selection and
+  refreshed same-protocol external baselines.
+
+### Current Evidence Boundary
+
+- The new scaling evidence remains V100-only.
+- FP32 FFT matches or exceeds cuFFT at selected saturated shapes, but cuFFT has
+  a higher large-batch ceiling at `logN=18` and remains ahead at `logN=20`.
+- Cross-GPU portability and selector accuracy have not yet been measured.
+
 ## 0.2.0 - 2026-07-24
 
 ### Added

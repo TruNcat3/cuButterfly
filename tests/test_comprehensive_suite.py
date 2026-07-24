@@ -75,6 +75,11 @@ class ComprehensiveSuiteTest(unittest.TestCase):
         output = "notice\ndevice,kernel_ms,correct\n\"V100\",0.125,1\n"
         self.assertEqual(parse_csv_record(output)["kernel_ms"], "0.125")
 
+    def test_exact_case_filter_does_not_match_batch_prefix(self):
+        scaling = load_manifest(ROOT / "config" / "v100_scaling_suite.json")
+        cases = selected_cases(scaling, "full", ["fft8_cufft_b1"], exact=True)
+        self.assertEqual([case["id"] for case in cases], ["fft8_cufft_b1"])
+
     def test_summary_uses_declared_reference_and_group_fastest(self):
         base = {
             "suite_tier": "quick", "suite_runner": "butterfly", "trial": "1",

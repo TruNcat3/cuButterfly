@@ -3,17 +3,40 @@
 This roadmap separates implementation goals from evidence required for the
 research claim. Ordering may change after profiling or access to new hardware.
 
-## Near Term
+## v0.3.0 Target: Counter-Calibrated Mapping Selection
 
-- Run an orthogonal `(logN, batch)` sweep instead of coupling all comparisons
-  through constant total points; identify launch-limited, saturation, and
-  throughput regions for every operator.
+The next release turns the measured design space into a reproducible mapping
+method rather than adding another isolated kernel. Its primary question is:
+
+> Given an operator contract, transform length, batch, and GPU service profile,
+> which mapping family and processing unit should be selected, and why?
+
+The release is complete when all of the following are true:
+
+1. NCU counters explain the FFT `logN=14` concurrency threshold, the
+   `logN=18/20` throughput ceilings, and the FWHT `logN=15` mapping crossover.
+2. A selector consumes workload and hardware descriptors, returns a ranked
+   top-k candidate set, and reports the resource or service constraints behind
+   the ranking.
+3. Leave-one-shape-out validation records top-1/top-k accuracy and performance
+   regret against the exhaustive V100 measurements.
+4. Dao-AILab FHT and GPU-NTT are refreshed under the same correctness, clock,
+   trial, and semantic protocol as the internal candidates.
+5. One release command regenerates the scaling manifest, summaries, selector
+   evaluation, and the paper-facing tables without modifying raw measurements.
+
+See [Next Phase: v0.3.0](docs/next_phase_v0.3.md) for the execution order,
+artifacts, and decision gates.
+
+## Near Term Backlog
+
+- Extend the measured orthogonal `(logN, batch)` sweep across additional
+  precision, direction, stride, and normalization contracts, then train the
+  selector on the observed saturation and mapping-crossover boundaries.
 - Refresh Dao-AILab FHT and GPU-NTT under the comprehensive-suite clock,
   correctness, modulus, output-order, and trial protocol.
 - Profile the remaining FP32 `logN=20` and FP64 `logN=16` FFT gaps against
   cuFFT, separating local-core, permutation, coefficient, and launch costs.
-- Convert the measured architecture space into a calibrated selector and
-  evaluate top-k prediction accuracy before exhaustive timing.
 - Add a device-pointer and CUDA-stream execution API without weakening the
   current typed semantic contract.
 - Reduce template warning volume and record compiled resource envelopes as

@@ -71,7 +71,10 @@ precision, direction, layout, and warmup protocol. Ratios above `1.0x` mean
 cuButterfly has higher throughput. They must not be generalized to other GPUs.
 For the latest controlled cross-workload protocol and its complete evidence
 boundary, use the [V100 Comprehensive Results](docs/comprehensive_v100_results.md);
-the focused rows below retain their original experiment protocols.
+the focused rows below retain their original experiment protocols. The newer
+[orthogonal length/batch scan](docs/v100_scaling_results.md) shows that parity
+is shape-dependent: the best processing unit and the relative library result
+can change as batch exposes additional hardware concurrency.
 
 ### Same-Machine Library Comparisons
 
@@ -175,15 +178,18 @@ units and future implementation paths are catalogued in
 Development priorities are tracked in [`ROADMAP.md`](ROADMAP.md), and evidence
 requirements for contributions are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 Versioned changes are recorded in [`CHANGELOG.md`](CHANGELOG.md).
+The active research milestone and its acceptance criteria are in
+[Next Phase: v0.3.0](docs/next_phase_v0.3.md).
 
 ## Evidence Boundary
 
 - V100 is the only fully measured GPU generation in this revision. A100, H100,
   and RTX 4090 entries are placeholders, not performance claims.
-- FP32 FFT is at cuFFT parity for the measured `logN=8,14,18` shapes, but the
-  measured `logN=20` path and FP64 `logN=16` path remain behind. Tensor Core
-  DFT8 helps the local unit but does not remove layout, synchronization, and
-  composition costs.
+- FP32 FFT reaches cuFFT parity at selected `logN=8,14,18` shapes. At large
+  batch, cuFFT has a higher `logN=18` throughput ceiling; the measured
+  `logN=20` and FP64 `logN=16` paths remain behind. Tensor Core DFT8 helps the
+  local unit but does not remove layout, synchronization, and composition
+  costs.
 - FWHT closely tracks Dao FHT after importing its validated local register
   hierarchy. This demonstrates processing-unit reuse, not independent invention
   of that core.

@@ -191,3 +191,23 @@ capacity and bandwidth from modular-arithmetic cost.
 
 The script assumes two cuNTT kernels at all supported Hybrid2D lengths, two
 GPU-NTT kernels through `logN=16`, and three GPU-NTT kernels above it.
+
+## Length/Batch Crossover Targets
+
+The orthogonal V100 scaling sweep selects FFT `logN=14/18/20` and FWHT
+`logN=15` crossover points for counter attribution. Collect all selected
+low/intermediate/saturated batches with administrator-enabled counters:
+
+```bash
+sudo -E ./scripts/profile_scaling_crossovers_ncu.sh
+sudo chown -R "$USER:$USER" results/ncu_scaling_crossovers
+
+python3 scripts/summarize_ncu.py \
+  results/ncu_scaling_crossovers/*.csv \
+  --output results/ncu_scaling_crossovers/summary.csv
+```
+
+The script requests base profiling clocks. Compare grid waves, active warps,
+DRAM throughput, register/shared-memory limits, barrier stalls, and long
+scoreboard stalls across batch before comparing absolute NCU kernel time with
+the steady-state CUDA-event table.

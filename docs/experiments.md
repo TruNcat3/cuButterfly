@@ -18,6 +18,10 @@ the current authority for claims spanning multiple lengths, precisions,
 semantics, and runnable FFT libraries; the focused experiments below retain
 their original protocols.
 
+The follow-up [V100 Length/Batch Scaling](v100_scaling_results.md) experiment
+holds transform length fixed while varying batch, exposing saturation points
+and mapping crossovers hidden by constant-total-point comparisons.
+
 ### Common Mapping Across Operators
 
 At `N=256`, a controlled eight-warp stage pipeline selects the interior
@@ -88,6 +92,7 @@ separately.
 | Topic | Report | Primary records |
 |:--|:--|:--|
 | comprehensive V100 suite | `comprehensive_v100_results.md` | `comprehensive_v100_full_raw.csv`, `comprehensive_v100_full_summary.csv` |
+| orthogonal length/batch scaling | `v100_scaling_results.md` | `v100_scaling_full_raw.csv`, `v100_scaling_full_summary.csv` |
 | V100 NTT baseline | `v100_initial_results.md` | `hybrid2d_matrix*.csv` |
 | NTT vs GPU-NTT | `gpu_ntt_gap_analysis.md` | `fused_vs_gpuntt.csv`, `gpu_ntt_gap_same_modulus.csv` |
 | processing units | `processing_unit_design_space.md` | `processing_units_v100_*.csv` |
