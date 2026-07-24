@@ -18,11 +18,11 @@
       "id": "cufftdx-large-online",
       "family": "cufftdx-large-online",
       "core": "cufftdx-direct",
-      "exchange": "shared-swizzled",
-      "status": "requires-new-kernel",
+      "exchange": "direct-strided",
+      "status": "compiled",
       "dimension_log_n": {"min": 11, "max": 12},
       "threads": [256, 512, 1024],
-      "elements_per_thread": [4, 8, 16],
+      "elements_per_thread": [2, 4, 8, 16],
       "cross_twiddle": ["recurrence", "table"]
     }
   ],
@@ -44,7 +44,9 @@
       "batches": [2, 8, 16], "prefix_log_n": {"min": 8, "max": 12},
       "required_candidates": [
         {"prefix_log_n": 10, "prefix_threads": 512, "suffix_threads": 512,
-         "prefix_ept": 8, "suffix_ept": 8, "cross_twiddle": "recurrence"}
+         "prefix_ept": 8, "suffix_ept": 8, "cross_twiddle": "recurrence"},
+        {"prefix_log_n": 10, "prefix_threads": 256, "suffix_threads": 128,
+         "prefix_ept": 16, "suffix_ept": 16, "cross_twiddle": "recurrence"}
       ]
     }
   ],

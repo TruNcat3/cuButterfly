@@ -33,11 +33,13 @@ class FftPipelineGeneratorTest(unittest.TestCase):
                   if point["mapping_id"] == "fft18-fp32"}
         self.assertTrue({(8, 10), (9, 9), (10, 8)} <= splits)
 
-    def test_fft20_large_dimensions_are_explicit_backlog(self):
-        splits = {(point["prefix_log_n"], point["suffix_log_n"]) for point in self.backlog
-                  if point["mapping_id"] == "fft20-fp32"}
+    def test_fft20_large_dimensions_are_compiled_mixed_unit_points(self):
+        points = [point for point in self.runnable if point["mapping_id"] == "fft20-fp32"]
+        splits = {(point["prefix_log_n"], point["suffix_log_n"]) for point in points}
         self.assertTrue({(8, 12), (9, 11), (11, 9), (12, 8)} <= splits)
-        self.assertTrue(all(point["status"] == "requires-new-kernel" for point in self.backlog))
+        mixed = [point for point in points if point["prefix_processing_unit"] != point["suffix_processing_unit"]]
+        self.assertTrue(mixed)
+        self.assertFalse(self.backlog)
 
     def test_generated_runtime_arguments_keep_dimensions_independent(self):
         point = next(point for point in self.runnable if point["prefix_log_n"] != point["suffix_log_n"])
@@ -48,15 +50,17 @@ class FftPipelineGeneratorTest(unittest.TestCase):
         self.assertIn("--suffix-ept", args)
 
     def test_each_shape_retains_measured_incumbent(self):
-        expected_by_log_n = {18: (9, 256, 256, 8, 8), 20: (10, 512, 512, 8, 8)}
-        for log_n, expected in expected_by_log_n.items():
+        expected_by_log_n = {18: [(9, 256, 256, 8, 8)],
+                             20: [(10, 512, 512, 8, 8), (10, 256, 128, 16, 16)]}
+        for log_n, expected_points in expected_by_log_n.items():
             batches = {point["batch"] for point in self.runnable if point["logN"] == log_n}
             for batch in batches:
                 candidates = [point for point in self.runnable
                               if point["logN"] == log_n and point["batch"] == batch]
                 actual = {(point["prefix_log_n"], point["prefix_threads"], point["suffix_threads"],
                            point["prefix_ept"], point["suffix_ept"]) for point in candidates}
-                self.assertIn(expected, actual)
+                for expected in expected_points:
+                    self.assertIn(expected, actual)
 
 
 if __name__ == "__main__":

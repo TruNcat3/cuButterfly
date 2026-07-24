@@ -56,6 +56,30 @@ def execute(binary, case, protocol):
     return row
 
 
+def filter_existing(rows, cases):
+    valid_ids = {case["id"] for case in cases}
+    return [row for row in rows if row["candidate_id"] in valid_ids]
+
+
+def case_metadata(case, trial):
+    return {
+        "candidate_id": case["id"], "group": case["group"], "trial": trial,
+        "implementation": case["implementation"], "reference": int(case["reference"]),
+        "static_score": case["static_score"], "mapping_id": case["mapping_id"],
+        "processing_unit": case["processing_unit"], "prefix_log_n": case["prefix_log_n"],
+        "suffix_log_n": case["suffix_log_n"], "prefix_threads": case["prefix_threads"],
+        "suffix_threads": case["suffix_threads"], "prefix_ept": case["prefix_ept"],
+        "suffix_ept": case["suffix_ept"], "cross_twiddle": case["cross_twiddle"],
+    }
+
+
+def write_records(path, records):
+    with path.open("w", newline="") as destination:
+        writer = csv.DictWriter(destination, fieldnames=OUTPUT_FIELDS, extrasaction="ignore", lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(records)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Benchmark generated FFT mapping candidates and cuFFT.")
     parser.add_argument("--manifest", type=pathlib.Path, default=pathlib.Path("config/v100_fft_pipeline_candidates.json"))
@@ -72,31 +96,26 @@ def main():
     if args.resume and args.output.exists():
         with args.output.open() as source:
             existing = list(csv.DictReader(source))
+        existing = filter_existing(existing, cases)
+        cases_by_id = {case["id"]: case for case in cases}
+        for row in existing:
+            row.update(case_metadata(cases_by_id[row["candidate_id"]], int(row["trial"])))
     complete = {(row["candidate_id"], int(row["trial"])) for row in existing}
     pending = [(case, trial) for case in cases for trial in range(1, int(document["protocol"]["trials"]) + 1)
                if (case["id"], trial) not in complete]
     random.Random(int(document["protocol"]["seed"])).shuffle(pending)
     records = list(existing)
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    if args.resume:
+        write_records(args.output, records)
     for index, (case, trial) in enumerate(pending, 1):
         print(f"[{index}/{len(pending)}] {case['id']} trial={trial}", flush=True)
         measured = execute(args.binary, case, document["protocol"])
         record = {field: measured.get(field, "") for field in OUTPUT_FIELDS}
         # Generated metadata owns these fields; benchmark output owns the timing fields.
-        record.update({
-            "candidate_id": case["id"], "group": case["group"], "trial": trial,
-            "implementation": case["implementation"], "reference": int(case["reference"]),
-            "static_score": case["static_score"], "mapping_id": case["mapping_id"],
-            "processing_unit": case["processing_unit"], "prefix_log_n": case["prefix_log_n"],
-            "suffix_log_n": case["suffix_log_n"], "prefix_threads": case["prefix_threads"],
-            "suffix_threads": case["suffix_threads"], "prefix_ept": case["prefix_ept"],
-            "suffix_ept": case["suffix_ept"], "cross_twiddle": case["cross_twiddle"],
-        })
+        record.update(case_metadata(case, trial))
         records.append(record)
-        with args.output.open("w", newline="") as destination:
-            writer = csv.DictWriter(destination, fieldnames=OUTPUT_FIELDS, extrasaction="ignore", lineterminator="\n")
-            writer.writeheader()
-            writer.writerows(records)
+        write_records(args.output, records)
 
 
 if __name__ == "__main__":

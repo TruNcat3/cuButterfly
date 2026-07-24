@@ -253,5 +253,11 @@ if(BUILD_TESTING)
                  COMMAND cubutterfly_bench --auto-select --operator fft --precision fp32
                          --placement in-place --normalization none --logN 18 --batch 2
                          --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_mixed_direct_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --local-stages 9 --prefix-threads 256 --prefix-ept 8
+                         --suffix-threads 256 --suffix-ept 8 --cross-twiddle recurrence
+                         --placement in-place --normalization none --logN 20 --batch 1
+                         --warmup 1 --repeat 1 --verify)
     endif()
 endif()

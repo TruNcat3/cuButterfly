@@ -30,9 +30,10 @@ Generated FFT codelets add FP32 `thread-dft8` and mixed `fp16-fp32`
 Core operands to FP16 and accumulates into FP32. Generated availability is
 controlled by `config/v100_design_points.json`.
 
-When cuFFTDx is enabled, FP32 online-reorder can compose two local FFTs whose
-individual sizes are `logN=3..10`. The first pass fuses the cross twiddle and a
-transposed scratch store; the second pass restores natural order. Cross
+When cuFFTDx is enabled, FP32 online-reorder can compose block FFT dimensions
+at `logN=3..10` with direct-strided dimensions at `logN=11..12`. The first pass
+fuses the cross twiddle and scratch-layout conversion; the second pass restores
+natural order. Cross
 twiddles are independently selectable as table lookup or register recurrence,
 so this processing-unit choice remains subordinate to the architecture-level
 space/time schedule.
@@ -96,7 +97,7 @@ radix-2/radix-4/radix-8 FFT, FWHT, and XOR are checked in both directions at
 `logN=11`. Online-reorder additionally covers unequal stage groups, multiple
 columns per suffix CTA, FP64, strided/in-place execution, and verified
 `logN=20` execution in the large-length protocol.
-Optional cuFFTDx tests cover local `logN=3..10`, temporal and online-reorder
+Optional cuFFTDx tests cover local `logN=3..12`, temporal and online-reorder
 layouts, unequal long-FFT splits, table/recurrence cross twiddles, and forward
 and normalized inverse execution. Online-reorder also covers independent
 prefix/suffix EPT 4/8/16 and asymmetric thread/EPT mappings. Direct whole-transform tests cover every

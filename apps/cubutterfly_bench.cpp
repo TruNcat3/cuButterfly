@@ -30,7 +30,7 @@ void print_usage() {
         << "                    [--element-stride N]\n"
         << "                    [--stage-space 1|2|4|8]\n"
         << "                    [--stage-handoff atomic|named-barrier]\n"
-        << "                    [--tile-threads 32|64|128|256; resident also 512|1024] [--local-stages 5..10] [--reorder-columns power-of-two]\n"
+        << "                    [--tile-threads 32|64|128|256; resident also 512|1024] [--local-stages 5..10; cuFFTDx online 5..12] [--reorder-columns power-of-two]\n"
         << "                    [--prefix-threads 128|256|512|1024] [--suffix-threads 128|256|512|1024]\n"
         << "                    [--prefix-ept N] [--suffix-ept N]\n"
         << "                    [--warp-stages 0..5]\n"

@@ -45,12 +45,29 @@ class FftDesignSpaceTest(unittest.TestCase):
         status, reason = classify_online_point(point, self.hardware, self.compiled)
         self.assertEqual((status, reason), ("compiled", ""))
 
-    def test_large_dimension_requires_layout_kernel(self):
+    def test_direct_codegen_points_are_explicit(self):
+        self.assertIn((11, 256, 8), self.compiled)
+        self.assertIn((12, 512, 8), self.compiled)
+        self.assertNotIn((11, 256, 16), self.compiled)
+
+    def test_direct_online_dimension_is_compiled(self):
         point = self.point(prefix_log_n=4, suffix_log_n=12, prefix_threads=128,
                            suffix_threads=512, suffix_ept=8)
         status, reason = classify_online_point(point, self.hardware, self.compiled)
+        self.assertEqual((status, reason), ("compiled", ""))
+
+    def test_dimension_beyond_direct_online_requires_layout_kernel(self):
+        point = self.point(prefix_log_n=4, suffix_log_n=13, prefix_threads=128,
+                           suffix_threads=512, suffix_ept=16)
+        status, reason = classify_online_point(point, self.hardware, self.compiled)
         self.assertEqual(status, "requires-new-kernel")
         self.assertEqual(reason, "large-dimension-layout")
+
+    def test_direct_online_rejects_multiple_units_per_cta(self):
+        point = self.point(prefix_log_n=4, suffix_log_n=11, prefix_threads=128,
+                           suffix_threads=256, suffix_ept=16)
+        status, reason = classify_online_point(point, self.hardware, self.compiled)
+        self.assertEqual((status, reason), ("requires-new-kernel", "suffix-direct-single-unit"))
 
     def test_invalid_coverage_is_hardware_infeasible(self):
         point = self.point(prefix_threads=32, prefix_ept=4)
@@ -58,7 +75,7 @@ class FftDesignSpaceTest(unittest.TestCase):
         self.assertEqual(status, "hardware-infeasible")
 
     def test_enumerator_contains_compiled_and_future_points(self):
-        rows = list(enumerate_online(self.space, "v100-sm70", [18], [256], [2, 4, 8], ["recurrence"], self.compiled))
+        rows = list(enumerate_online(self.space, "v100-sm70", [18], [256], [2, 4, 8, 32], ["recurrence"], self.compiled))
         statuses = {row["status"] for row in rows}
         self.assertIn("compiled", statuses)
         self.assertIn("awaiting-codegen", statuses)

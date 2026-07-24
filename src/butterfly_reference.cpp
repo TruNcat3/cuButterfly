@@ -51,7 +51,7 @@ std::vector<ButterflyCapability> butterfly_capabilities() {
         {ButterflyBackend::Hierarchical, 6, 20, true, true, true, false, false, false, false, true, true, true, true, false, true, true, true,
          "local_stages=5..10 and local_stages<logN"},
         {ButterflyBackend::OnlineReorder, 6, 20, true, true, true, false, false, false, false, true, true, true, true, false, true, true, true,
-         "local_stages and remaining stages are each <=10"},
+         "scalar dimensions are <=10; cuFFTDx mixed block/direct dimensions are <=12"},
         {ButterflyBackend::WarpHybrid, 8, 8, true, false, false, false, false, false, false, true, true, true, true, false, true, true, true, "N=256"},
         {ButterflyBackend::StagePipeline, 8, 8, true, false, false, false, false, false, false, true, true, true, true, false, true, true, true,
          "FP64 complex exceeds V100 CTA shared memory"},

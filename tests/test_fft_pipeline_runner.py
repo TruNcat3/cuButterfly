@@ -32,6 +32,20 @@ class FftPipelineRunnerTest(unittest.TestCase):
         text = "notice\ndevice,operator,kernel_ms,correct\nV100,fft,0.2,1\n"
         self.assertEqual(RUNNER.parse_record(text)["kernel_ms"], "0.2")
 
+    def test_current_manifest_ids_can_filter_stale_resume_rows(self):
+        document = json.loads((ROOT / "config" / "v100_fft_pipeline_candidates.json").read_text())
+        cases = RUNNER.expand(document)
+        rows = [{"candidate_id": "fft20-fp32_b8_cufft"}, {"candidate_id": "removed-candidate"}]
+        self.assertEqual(RUNNER.filter_existing(rows, cases), rows[:1])
+
+    def test_case_metadata_refreshes_generated_fields(self):
+        document = json.loads((ROOT / "config" / "v100_fft_pipeline_candidates.json").read_text())
+        case = RUNNER.expand(document)[0]
+        metadata = RUNNER.case_metadata(case, 3)
+        self.assertEqual(metadata["candidate_id"], case["id"])
+        self.assertEqual(metadata["static_score"], case["static_score"])
+        self.assertEqual(metadata["trial"], 3)
+
     def test_summary_ranks_internal_and_compares_reference(self):
         header = "candidate_id,group,implementation,reference,kernel_ms,correct\n"
         text = header + "a,g,a,0,2.0,1\nb,g,b,0,1.0,1\nr,g,cuFFT,1,1.5,1\n"

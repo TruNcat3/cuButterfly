@@ -35,7 +35,7 @@ search the product of both spaces.
 | Operator | Stage group | Arithmetic/coefficient choices | Mapping support |
 |:--|:--|:--|:--|
 | FFT FP32/FP64 | radix-2, fused radix-4, fused radix-8 | four-multiply, Gauss three-multiply, FP32 thread-register DFT8 | temporal, hierarchical, online-reorder; generated DFT8 point |
-| FFT FP32 optional | cuFFTDx block FFT, TurboFFT generated FFT | imported local codelet transport and arithmetic | temporal full-local points; cuFFTDx `logN=3..10`, TurboFFT `logN=7..10` |
+| FFT FP32 optional | cuFFTDx block/direct FFT, TurboFFT generated FFT | imported local codelet transport and arithmetic | cuFFTDx online dimensions `logN=3..12`, TurboFFT `logN=7..10` |
 | FFT mixed | temporally fused DFT8 matrix | FP16 WMMA input with FP32 accumulation/output | generated temporal point |
 | FWHT FP32/FP64 | radix-2, fused radix-4, fused radix-8 | add/subtract; FP32 register-vector/XOR-swizzle exchange | temporal, hierarchical, online-reorder |
 | XOR-zeta uint32 | radix-2, fused radix-4, fused radix-8 | add/subtract modulo `2^32` | temporal, hierarchical, online-reorder |

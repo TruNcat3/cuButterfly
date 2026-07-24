@@ -510,20 +510,28 @@ class ButterflyPlan::Impl {
             (config_.local_stages < 5 || config_.local_stages > 10 || config_.local_stages >= config_.log_n)) {
             throw std::invalid_argument("hierarchical requires local_stages in [5, 10] and smaller than log_n");
         }
+        const std::uint32_t online_max_dimension = config_.fft_core == FftCore::CufftDxBlock ? 12U : 10U;
         if (config_.backend == ButterflyBackend::OnlineReorder &&
-            (config_.local_stages < 5 || config_.local_stages > 10 || config_.local_stages >= config_.log_n ||
-             config_.log_n - config_.local_stages > 10)) {
-            throw std::invalid_argument("online-reorder requires local and remaining stages in [1, 10], with local_stages >= 5");
+            (config_.local_stages < 5 || config_.local_stages > online_max_dimension ||
+             config_.local_stages >= config_.log_n || config_.log_n - config_.local_stages > online_max_dimension)) {
+            throw std::invalid_argument(
+                "online-reorder dimensions exceed the selected processing unit's supported range");
         }
         if (config_.backend == ButterflyBackend::OnlineReorder) {
-            const std::uint32_t local_n     = 1U << config_.local_stages;
-            const std::uint32_t remaining_n = 1U << (config_.log_n - config_.local_stages);
-            if (config_.reorder_columns == 0) {
-                config_.reorder_columns = std::min(local_n, 1024U / remaining_n);
-            }
-            if (config_.reorder_columns == 0 || config_.reorder_columns > local_n || config_.reorder_columns * remaining_n > 1024 ||
-                (config_.reorder_columns & (config_.reorder_columns - 1)) != 0) {
-                throw std::invalid_argument("online-reorder columns must be a power of two and retain at most 1024 values per CTA");
+            if (config_.fft_core == FftCore::CufftDxBlock) {
+                config_.reorder_columns = 1;
+            } else {
+                const std::uint32_t local_n     = 1U << config_.local_stages;
+                const std::uint32_t remaining_n = 1U << (config_.log_n - config_.local_stages);
+                if (config_.reorder_columns == 0) {
+                    config_.reorder_columns = std::min(local_n, 1024U / remaining_n);
+                }
+                if (config_.reorder_columns == 0 || config_.reorder_columns > local_n ||
+                    config_.reorder_columns * remaining_n > 1024 ||
+                    (config_.reorder_columns & (config_.reorder_columns - 1)) != 0) {
+                    throw std::invalid_argument(
+                        "online-reorder columns must be a power of two and retain at most 1024 values per CTA");
+                }
             }
         }
         if (config_.fft_core == FftCore::CufftDxBlock && config_.backend == ButterflyBackend::OnlineReorder) {
@@ -619,11 +627,14 @@ class ButterflyPlan::Impl {
             } else if (config_.fft_core == FftCore::CufftDxBlock) {
                 const bool supported = config_.backend == ButterflyBackend::TemporalTile
                                            ? detail::cufftdx_block_available(config_.log_n)
-                                           : detail::cufftdx_block_available(config_.local_stages) &&
-                                                 detail::cufftdx_block_available(config_.log_n - config_.local_stages);
+                                           : detail::cufftdx_online_available(config_.local_stages, config_.prefix_threads,
+                                                                              config_.prefix_ept) &&
+                                                 detail::cufftdx_online_available(config_.log_n - config_.local_stages,
+                                                                                  config_.suffix_threads,
+                                                                                  config_.suffix_ept);
                 if (config_.precision != ButterflyPrecision::Fp32 || !supported) {
                     throw std::invalid_argument(
-                        "cufftdx-block requires FP32 and local FFT dimensions in logN=3..10");
+                        "cufftdx-block requires FP32 and compiled online local FFT dimensions in logN=3..12");
                 }
             } else if (config_.fft_core == FftCore::CufftDxDirect) {
                 if (config_.precision != ButterflyPrecision::Fp32 || !detail::cufftdx_direct_available(config_.log_n) ||

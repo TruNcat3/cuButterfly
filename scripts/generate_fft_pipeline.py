@@ -50,11 +50,11 @@ def pass_resources(dimension_log_n, other_log_n, threads, ept, batch, hardware, 
     }
 
 
-def score_candidate(point, hardware, unit, selection):
+def score_candidate(point, hardware, prefix_unit, suffix_unit, selection):
     prefix = pass_resources(point["prefix_log_n"], point["suffix_log_n"], point["prefix_threads"],
-                            point["prefix_ept"], point["batch"], hardware, unit)
+                            point["prefix_ept"], point["batch"], hardware, prefix_unit)
     suffix = pass_resources(point["suffix_log_n"], point["prefix_log_n"], point["suffix_threads"],
-                            point["suffix_ept"], point["batch"], hardware, unit)
+                            point["suffix_ept"], point["batch"], hardware, suffix_unit)
     weighted_prefix = selection["prefix_work_weight"] * prefix["issued_thread_slots"]
     weighted_suffix = selection["suffix_work_weight"] * suffix["issued_thread_slots"]
     work = weighted_prefix + weighted_suffix
@@ -100,8 +100,16 @@ def matches_required(point, required):
 
 def enumerate_pipeline(document, architecture, codegen_points):
     hardware = architecture["hardware_profiles"][document["target"]]
-    compiled_unit = next(unit for unit in document["processing_units"] if unit["status"] == "compiled")
+    compiled_units = [unit for unit in document["processing_units"] if unit["status"] == "compiled"]
     planned_units = [unit for unit in document["processing_units"] if unit["status"] != "compiled"]
+
+    def find_unit(dimension_log_n):
+        matches = [unit for unit in compiled_units
+                   if unit["dimension_log_n"]["min"] <= dimension_log_n <= unit["dimension_log_n"]["max"]]
+        if len(matches) > 1:
+            raise ValueError(f"multiple compiled processing units cover logN={dimension_log_n}")
+        return matches[0] if matches else None
+
     runnable = []
     backlog = []
     for mapping in document["mapping_spaces"]:
@@ -112,9 +120,9 @@ def enumerate_pipeline(document, architecture, codegen_points):
                 suffix_log_n = mapping["logN"] - prefix_log_n
                 if suffix_log_n < 1:
                     continue
-                unit = compiled_unit
-                if not (unit["dimension_log_n"]["min"] <= prefix_log_n <= unit["dimension_log_n"]["max"]
-                        and unit["dimension_log_n"]["min"] <= suffix_log_n <= unit["dimension_log_n"]["max"]):
+                prefix_unit = find_unit(prefix_log_n)
+                suffix_unit = find_unit(suffix_log_n)
+                if prefix_unit is None or suffix_unit is None:
                     planned = {
                         **{key: value for key, value in mapping.items() if key not in ("batches", "prefix_log_n", "required_candidates")},
                         "mapping_id": mapping["id"], "batch": batch, "prefix_log_n": prefix_log_n,
@@ -124,15 +132,18 @@ def enumerate_pipeline(document, architecture, codegen_points):
                     }
                     planned_shape.append(planned)
                     continue
-                for twiddle in unit["cross_twiddle"]:
-                    for prefix_threads in unit["threads"]:
-                        for suffix_threads in unit["threads"]:
-                            for prefix_ept in unit["elements_per_thread"]:
-                                for suffix_ept in unit["elements_per_thread"]:
+                twiddles = sorted(set(prefix_unit["cross_twiddle"]) & set(suffix_unit["cross_twiddle"]))
+                for twiddle in twiddles:
+                    for prefix_threads in prefix_unit["threads"]:
+                        for suffix_threads in suffix_unit["threads"]:
+                            for prefix_ept in prefix_unit["elements_per_thread"]:
+                                for suffix_ept in suffix_unit["elements_per_thread"]:
                                     point = {
                                         **{key: value for key, value in mapping.items() if key not in ("batches", "prefix_log_n", "required_candidates")},
                                         "mapping_id": mapping["id"], "batch": batch,
-                                        "processing_unit": unit["id"], "prefix_log_n": prefix_log_n,
+                                        "processing_unit": f"{prefix_unit['id']}+{suffix_unit['id']}",
+                                        "prefix_processing_unit": prefix_unit["id"],
+                                        "suffix_processing_unit": suffix_unit["id"], "prefix_log_n": prefix_log_n,
                                         "suffix_log_n": suffix_log_n, "prefix_threads": prefix_threads,
                                         "suffix_threads": suffix_threads, "prefix_ept": prefix_ept,
                                         "suffix_ept": suffix_ept, "cross_twiddle": twiddle,
@@ -142,7 +153,7 @@ def enumerate_pipeline(document, architecture, codegen_points):
                                         continue
                                     point["status"] = status
                                     point["reason"] = reason
-                                    score_candidate(point, hardware, unit, document["selection"])
+                                    score_candidate(point, hardware, prefix_unit, suffix_unit, document["selection"])
                                     point["id"] = candidate_id(point)
                                     point["args"] = runtime_args(point)
                                     shape.append(point)

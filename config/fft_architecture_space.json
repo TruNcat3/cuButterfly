@@ -58,8 +58,8 @@
       "reorder": "direct-strided-or-transpose",
       "precision": ["fp32"],
       "cross_twiddle": ["table", "recurrence"],
-      "dimension_log_n": {"min": 3, "max": 14},
-      "status": "requires-new-kernel"
+      "dimension_log_n": {"min": 3, "max": 12},
+      "status": "compiled-direct-strided"
     },
     {
       "name": "resident-composition",

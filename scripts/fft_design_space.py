@@ -32,12 +32,18 @@ def load_space(path):
 
 def load_codegen_points(path):
     selection = json.loads(path.read_text())
-    family = selection.get("families", {}).get("cufftdx-online", {})
-    return {
+    expanded = {
         (log_n, threads, ept)
+        for family in selection.get("families", {}).values()
         for log_n in family.get("dimension_log_n", [])
         for threads, ept in family.get("thread_ept_pairs", [])
     }
+    explicit = {
+        tuple(point)
+        for family in selection.get("families", {}).values()
+        for point in family.get("points", [])
+    }
+    return expanded | explicit
 
 
 def classify_online_point(point, hardware, compiled_points=None):
@@ -62,8 +68,11 @@ def classify_online_point(point, hardware, compiled_points=None):
         return "hardware-infeasible", ";".join(reasons)
     if point["prefix_log_n"] < 3 or point["suffix_log_n"] < 3:
         return "requires-new-kernel", "mixed-small-dimension-core"
-    if point["prefix_log_n"] > 10 or point["suffix_log_n"] > 10:
+    if point["prefix_log_n"] > 12 or point["suffix_log_n"] > 12:
         return "requires-new-kernel", "large-dimension-layout"
+    for label in ("prefix", "suffix"):
+        if point[f"{label}_log_n"] >= 11 and point[f"{label}_units_per_cta"] != 1:
+            return "requires-new-kernel", f"{label}-direct-single-unit"
     compiled_points = compiled_points or set()
     prefix_key = (point["prefix_log_n"], point["prefix_threads"], point["prefix_ept"])
     suffix_key = (point["suffix_log_n"], point["suffix_threads"], point["suffix_ept"])
