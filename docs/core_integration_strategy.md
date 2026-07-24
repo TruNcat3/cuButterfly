@@ -3,14 +3,18 @@
 ## Separation of Concerns
 
 cuButterfly treats the layered parallel pattern as the contribution and keeps
-the arithmetic core replaceable. Evaluation therefore separates five objects:
+the arithmetic core replaceable. Evaluation uses the canonical seven-object
+model and treats an external library as a comparison role:
 
 ```text
 G: mathematical graph and exact transform semantics
-A: space-time mapping (Us, Ts, Ud, Td, handoff, residency)
+A: space-time mapping (Us/Ts, Ud/Td, Ub/Tb, handoff, residency)
 P: processing unit (radix, arithmetic algorithm, coefficient representation)
+L: global and intermediate layout
 F: hardware realization (kernel form, threads, warp boundary, pipeline warps)
-B: complete external library baseline
+Q: generation, candidate status, selection policy, and objective
+H: hardware hierarchy, capacities, and rates
+B: complete external library baseline (comparison role)
 ```
 
 An imported radix codelet, modular reduction, or matrix fragment belongs to
@@ -98,10 +102,19 @@ ranking.
   several length/layout combinations.
 - FFT has a same-process cuFFT baseline; the current best self kernel reaches
   75.9% of its throughput at FP32 `N=256`, batch 16,384. At `logN=12..20`,
-  online-reorder reaches 32.7%-47.4% of cuFFT throughput. It removes the
-  stage-by-stage global boundary, so the remaining gap is now attributed to
-  local-core efficiency, permutation transactions, twiddle traffic, and
-  occupancy rather than kernel count alone.
+  the generic online-reorder core reaches 32.7%-47.4% of cuFFT throughput.
+  Replacing its local unit with cuFFTDx while preserving the same two-pass
+  mapping raises this to 41.9%-88.8%; the best `logN=18` and `logN=20` points
+  reach 88.1% and 88.8%, respectively. The remaining gap is concentrated in
+  short-problem launch/transpose overhead, fixed FFTs-per-CTA packaging,
+  permutation transactions, twiddle traffic, and occupancy rather than the
+  architecture requiring a stage-by-stage global boundary.
+  At `logN=12`, eliminating the boundary with a composed resident 64x64 unit
+  reaches 73.7%. Whole-transform cuFFTDx units at `logN=11,12,14` reach
+  100.6%, 101.2%, and 102.9% of cuFFT throughput, while `logN=13` reaches
+  96.5%. This separates physical boundary cost, equivalent-unit granularity,
+  and CTA shape. The larger two-pass transforms have not yet inherited these
+  direct-unit gains.
 - FWHT now has both a same-V100 Dao-AILab baseline and a locally integrated
   `warp-register` unit using the same register/shuffle/XOR-swizzle hierarchy.
   It reaches 99.9%, 98.5%, 97.5%, 95.8%, and 92.4% of Dao FP32 throughput at

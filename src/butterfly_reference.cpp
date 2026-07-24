@@ -47,7 +47,7 @@ ButterflyPlacement parse_butterfly_placement(const std::string& name) {
 std::vector<ButterflyCapability> butterfly_capabilities() {
     return {
         {ButterflyBackend::TemporalTile, 1, 15, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-         "generated FWHT register and FFT thread/CTA/WMMA codelets have design-point-specific ranges"},
+         "generated and optional cuFFTDx/TurboFFT FFT cores have design-point-specific ranges"},
         {ButterflyBackend::Hierarchical, 6, 20, true, true, true, false, false, false, false, true, true, true, true, false, true, true, true,
          "local_stages=5..10 and local_stages<logN"},
         {ButterflyBackend::OnlineReorder, 6, 20, true, true, true, false, false, false, false, true, true, true, true, false, true, true, true,
@@ -78,6 +78,24 @@ ComplexMultiply parse_complex_multiply(const std::string& name) {
     throw std::invalid_argument("unknown complex multiply: " + name);
 }
 
+const char* cross_twiddle_mode_name(CrossTwiddleMode mode) noexcept {
+    switch (mode) {
+        case CrossTwiddleMode::Table:
+            return "table";
+        case CrossTwiddleMode::Recurrence:
+            return "recurrence";
+    }
+    return "unknown";
+}
+
+CrossTwiddleMode parse_cross_twiddle_mode(const std::string& name) {
+    if (name == "table")
+        return CrossTwiddleMode::Table;
+    if (name == "recurrence")
+        return CrossTwiddleMode::Recurrence;
+    throw std::invalid_argument("unknown cross twiddle mode: " + name);
+}
+
 const char* local_exchange_name(LocalExchange exchange) noexcept {
     switch (exchange) {
         case LocalExchange::SharedMemory:
@@ -106,6 +124,14 @@ const char* fft_core_name(FftCore core) noexcept {
             return "cta-dft8";
         case FftCore::WmmaDft8:
             return "wmma-dft8";
+        case FftCore::CufftDxBlock:
+            return "cufftdx-block";
+        case FftCore::CufftDxDirect:
+            return "cufftdx-direct";
+        case FftCore::CufftDxResident:
+            return "cufftdx-resident";
+        case FftCore::TurboFftGenerated:
+            return "turbofft-generated";
     }
     return "unknown";
 }
@@ -119,6 +145,14 @@ FftCore parse_fft_core(const std::string& name) {
         return FftCore::CtaDft8;
     if (name == "wmma-dft8")
         return FftCore::WmmaDft8;
+    if (name == "cufftdx-block")
+        return FftCore::CufftDxBlock;
+    if (name == "cufftdx-direct")
+        return FftCore::CufftDxDirect;
+    if (name == "cufftdx-resident")
+        return FftCore::CufftDxResident;
+    if (name == "turbofft-generated")
+        return FftCore::TurboFftGenerated;
     throw std::invalid_argument("unknown FFT core: " + name);
 }
 

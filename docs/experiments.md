@@ -12,6 +12,12 @@ with CUDA 11.8. Cross-GPU rows are placeholders until measured.
 
 ## 2. What The Results Establish
 
+The controlled full-suite cross-section and its evidence boundaries are
+reported in [V100 Comprehensive Results](comprehensive_v100_results.md). It is
+the current authority for claims spanning multiple lengths, precisions,
+semantics, and runnable FFT libraries; the focused experiments below retain
+their original protocols.
+
 ### Common Mapping Across Operators
 
 At `N=256`, a controlled eight-warp stage pipeline selects the interior
@@ -70,7 +76,7 @@ separately.
 
 | Area | Current boundary | Needed evidence or implementation |
 |:--|:--|:--|
-| long FFT | 32.7%-47.4% of cuFFT throughput at `logN=12..20` | better local long-FFT core, permutation transactions, twiddle reuse, occupancy analysis |
+| FFT | two-pass `logN=16..20` reaches 79.3%-88.8%; direct units at `logN=11,12,14` reach 1.006x-1.029x cuFFT while `logN=13` reaches 0.965x | compose larger units into long FFTs, NCU validation, automatic selection |
 | cross GPU | only V100 fully measured | predict and validate mappings on another GPU generation |
 | automatic selection | scripts rank measured candidates | calibrated cost model selecting before exhaustive sweep |
 | XOR-zeta baseline | internal comparisons only | pinned same-machine external implementation |
@@ -81,6 +87,7 @@ separately.
 
 | Topic | Report | Primary records |
 |:--|:--|:--|
+| comprehensive V100 suite | `comprehensive_v100_results.md` | `comprehensive_v100_full_raw.csv`, `comprehensive_v100_full_summary.csv` |
 | V100 NTT baseline | `v100_initial_results.md` | `hybrid2d_matrix*.csv` |
 | NTT vs GPU-NTT | `gpu_ntt_gap_analysis.md` | `fused_vs_gpuntt.csv`, `gpu_ntt_gap_same_modulus.csv` |
 | processing units | `processing_unit_design_space.md` | `processing_units_v100_*.csv` |

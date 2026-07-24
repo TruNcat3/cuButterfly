@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "model": "two-dimensional-space-time-butterfly",
+  "profile": "v100-sm70",
+  "selected_points": 179928,
+  "status_counts": {
+    "awaiting-codegen": 10878,
+    "compiled": 2048,
+    "hardware-infeasible": 156658,
+    "requires-new-kernel": 10344
+  },
+  "axes": {
+    "logNs": [
+      16,
+      18,
+      20
+    ],
+    "threads": [
+      32,
+      64,
+      128,
+      256,
+      512,
+      1024
+    ],
+    "ept": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32,
+      64
+    ],
+    "twiddles": [
+      "table",
+      "recurrence"
+    ]
+  }
+}

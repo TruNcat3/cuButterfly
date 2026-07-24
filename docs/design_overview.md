@@ -7,14 +7,18 @@ binary stages. For `N=2^m`, stage `s` contains `N/2` independent butterfly
 updates. FFT and NTT attach stage coefficients, FWHT uses add/subtract, and
 XOR-zeta changes the pair operator, but their dependency topology is shared.
 
-The project separates five objects:
+The project separates seven objects and treats a complete external library as
+a comparison role:
 
 ```text
 G: mathematical graph and exact transform semantics
 A: architecture-level space-time mapping
 P: replaceable processing unit
+L: global and intermediate layout
 F: concrete GPU kernel realization
-B: complete external library baseline
+Q: generation, selection state, and objective
+H: target hardware capacities and rates
+B: complete external library baseline (comparison role)
 ```
 
 This separation is essential. A faster complex multiply belongs to `P`; block
@@ -22,7 +26,7 @@ shape, state residency, and online layout conversion belong to `A` and `F`.
 cuFFT remains `B` unless a local unit can be isolated without importing its
 complete scheduler.
 
-## 2. Four Unfolding Factors
+## 2. Three Independent Unfolding Axes
 
 Let `S` be the number of stage positions and `D` the independent data work.
 The logical iteration space is factorized as:
@@ -30,6 +34,7 @@ The logical iteration space is factorized as:
 ```text
 S = Us * Ts
 D = Ud * Td
+Bbatch = Ub * Tb
 ```
 
 | Factor | Meaning | Typical GPU effect |
@@ -38,6 +43,8 @@ D = Ud * Td
 | `Ts` | stage-time folding | more dependent stages retained in registers/shared memory |
 | `Ud` | data-space unfolding | more lanes, warps, CTAs, and memory-level parallelism |
 | `Td` | data-time folding | more independent items reused by each physical worker |
+| `Ub` | batch-space unfolding | more independent transforms resident concurrently |
+| `Tb` | batch-time folding | repeated transforms on the same physical mapping |
 
 These factors are not fixed tile dimensions. Legal and efficient values depend
 on the current GPU's register file, shared-memory partition, barrier service,
@@ -49,7 +56,7 @@ The four factors alone cannot distinguish two mappings with different storage
 or handoff costs. cuButterfly uses:
 
 ```text
-M = (Us, Ts, Ud, Td, Hs, Rs, Rd, L, F, Q)
+M = (Us, Ts, Ud, Td, Ub, Tb, Hs, Rs, Rd, Rb, L, F, Q)
 ```
 
 | Field | Role |
@@ -57,6 +64,7 @@ M = (Us, Ts, Ud, Td, Hs, Rs, Rd, L, F, Q)
 | `Hs` | physical transport for a spatial stage edge: register, shuffle, shared memory, named barrier, or global handoff |
 | `Rs` | residence level across stage-time folds |
 | `Rd` | residence level across data-time folds |
+| `Rb` | residence and ownership across batch-time folds |
 | `L` | bank mapping, input order, intermediate permutation, and output order |
 | `F` | temporal tile, Hybrid2D, online reorder, stage pipeline, or another kernel family |
 | `Q` | threads, rows, local stages, radix, columns, warps, and generated-core selection |
@@ -121,7 +129,9 @@ choices.
 7. Record the selected mapping per GPU rather than promoting it to an
    architecture constant.
 
-The executable resource model and equations are detailed in
+The complete object/axis contract is in
+[Operator-Independent Butterfly Design Space](butterfly_design_space.md). The
+executable resource equations are detailed in
 [Hardware Mapping Methodology](hardware_mapping_methodology.md).
 
 ## 7. Current Research Claim

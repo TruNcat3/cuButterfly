@@ -41,6 +41,29 @@ cmake -S . -B build \
 For a new GPU, copy the JSON specification and GPU profile instead of editing
 the V100 records in place.
 
+### Optional FFT Processing Units
+
+cuFFTDx and TurboFFT are optional and the default build remains dependency
+free beyond the CUDA Toolkit. Install the pinned versions and enable both
+adapters with:
+
+```bash
+./scripts/install_cufftdx.sh
+./scripts/install_turbofft.sh
+
+cmake -S . -B build \
+  -DCMAKE_CUDA_COMPILER=/usr/local/cuda-11.8/bin/nvcc \
+  -DCMAKE_CUDA_ARCHITECTURES=70 \
+  -DCUBUTTERFLY_ENABLE_CUFFTDX=ON \
+  -DCUBUTTERFLY_ENABLE_TURBOFFT=ON
+cmake --build build -j
+```
+
+The cuFFTDx adapter supports FP32 forward/inverse local FFTs at `logN=3..10`,
+including strided and in-place plan semantics. The current TurboFFT artifact
+adapter supports the generated FP32 forward, contiguous, out-of-place kernels
+actually present upstream at `logN=7..10`.
+
 ## Test
 
 ```bash
@@ -108,6 +131,41 @@ Examples:
   --precision fp32 --fft-core cta-dft8 --compute-unit radix8 \
   --logN 8 --tile-threads 64 --batch 16384 --verify --csv
 
+# Imported cuFFTDx block processing unit
+./build/cubutterfly_bench --operator fft --backend temporal-tile \
+  --precision fp32 --fft-core cufftdx-block --logN 9 \
+  --tile-threads 32 --batch 8192 --verify --csv
+
+# Imported TurboFFT generated processing unit
+./build/cubutterfly_bench --operator fft --backend temporal-tile \
+  --precision fp32 --fft-core turbofft-generated --logN 9 \
+  --tile-threads 32 --batch 8192 --placement out-of-place \
+  --normalization none --verify --csv
+
+# Long two-pass cuFFTDx composition with register cross-twiddle recurrence
+./build/cubutterfly_bench --operator fft --backend online-reorder \
+  --precision fp32 --fft-core cufftdx-block --logN 20 \
+  --local-stages 10 --cross-twiddle recurrence \
+  --prefix-threads 512 --prefix-ept 8 \
+  --suffix-threads 512 --suffix-ept 8 \
+  --tile-threads 32 --reorder-columns 1 --batch 4 --verify --csv
+
+# Independently search both FFT dimensions on the current GPU
+./scripts/explore_fft_architecture.py --logNs 16 18 20 \
+  --target-points 4194304 \
+  --output-prefix results/fft_architecture_explore_v100
+
+# Fully resident 64x64 schedule: one CTA, one launch, no global scratch traffic
+./build/cubutterfly_bench --operator fft --backend online-reorder \
+  --precision fp32 --fft-core cufftdx-resident --logN 12 \
+  --local-stages 6 --cross-twiddle recurrence --tile-threads 1024 \
+  --reorder-columns 1 --batch 1024 --verify --csv
+
+# Whole-transform equivalent processing unit used by the same runtime
+./build/cubutterfly_bench --operator fft --backend temporal-tile \
+  --precision fp32 --fft-core cufftdx-direct --logN 12 \
+  --tile-threads 512 --batch 1024 --verify --csv
+
 # Long online-reorder FFT
 ./build/cubutterfly_bench --operator fft --backend online-reorder \
   --precision fp32 --compute-unit radix4 --logN 20 \
@@ -164,3 +222,11 @@ python3 scripts/summarize_cubutterfly_designs.py \
 
 Use `--verify` for individual development points. Full sweeps rely on the test
 suite and should be followed by targeted verification of selected mappings.
+
+With both optional FFT units enabled, reproduce the V100 local-unit comparison
+and derive the per-core medians with:
+
+```bash
+./scripts/benchmark_fft_processing_units.sh
+./scripts/benchmark_fft_cufftdx_long.sh
+```

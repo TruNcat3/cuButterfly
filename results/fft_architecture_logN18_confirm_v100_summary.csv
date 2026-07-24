@@ -1,0 +1,3 @@
+logN,batch,backend,local_stages,remaining_stages,cross_twiddle,prefix_threads,suffix_threads,trials,median_kernel_ms,min_kernel_ms,max_kernel_ms
+18,16,cufft,0,0,table,0,0,7,0.226877,0.226130,0.227144
+18,16,online-reorder,9,9,recurrence,256,256,7,0.212019,0.211784,0.212408

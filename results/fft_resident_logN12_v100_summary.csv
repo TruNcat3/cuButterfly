@@ -1,0 +1,7 @@
+rank,operator,precision,direction,normalization,placement,logN,N,batch,element_stride,batch_stride,backend,compute_unit,complex_multiply,cross_twiddle,local_exchange,fft_core,stage_space,tile_threads,local_stages,reorder_columns,warp_stages,pipeline_warps,stage_handoff,trials,median_kernel_ms,min_kernel_ms,max_kernel_ms,median_Gbutterfly_s,slowdown_vs_best
+1,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,cufft,auto,four-mul,table,shared,scalar,0,0,0,0,0,0,named-barrier,5,0.088832,0.088750,0.089006,283.296835,1.000000
+2,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,auto,four-mul,recurrence,shared,cufftdx-resident,0,32,6,1,0,0,named-barrier,5,0.145234,0.144896,0.145295,173.277875,1.634929
+3,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,auto,four-mul,table,shared,cufftdx-resident,0,32,6,1,0,0,named-barrier,5,0.151153,0.150508,0.151910,166.492784,1.701560
+4,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,auto,four-mul,table,shared,cufftdx-block,0,32,6,1,0,0,named-barrier,5,0.213228,0.213012,0.213586,118.023337,2.400351
+5,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,auto,four-mul,recurrence,shared,cufftdx-block,0,32,6,1,0,0,named-barrier,5,0.214077,0.213750,0.214200,117.554776,2.409909
+6,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,radix4,four-mul,table,shared,scalar,0,256,6,1,0,0,named-barrier,5,0.474296,0.448727,0.519885,53.059288,5.339247

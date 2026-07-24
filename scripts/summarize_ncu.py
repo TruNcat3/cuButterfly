@@ -13,6 +13,8 @@ METRICS = {
     "dram__throughput.avg.pct_of_peak_sustained_elapsed": ("dram_peak_pct", 1.0),
     "lts__t_sector_hit_rate.pct": ("l2_hit_pct", 1.0),
     "l1tex__t_sector_hit_rate.pct": ("l1_hit_pct", 1.0),
+    "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": ("shared_load_bank_conflicts", 1.0),
+    "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": ("shared_store_bank_conflicts", 1.0),
     "smsp__inst_executed.sum": ("warp_instructions", 1.0),
     "smsp__sass_thread_inst_executed_op_integer_pred_on.sum": ("integer_thread_instructions", 1.0),
     "smsp__sass_thread_inst_executed_op_fp32_pred_on.sum": ("fp32_thread_instructions", 1.0),
@@ -23,6 +25,10 @@ METRICS = {
     "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": ("long_scoreboard_stall_pct", 1.0),
     "launch__registers_per_thread": ("registers_per_thread", 1.0),
     "launch__shared_mem_per_block": ("shared_mem_bytes", 1.0),
+    "launch__waves_per_multiprocessor": ("waves_per_sm", 1.0),
+    "launch__occupancy_limit_registers": ("occupancy_register_block_limit", 1.0),
+    "launch__occupancy_limit_shared_mem": ("occupancy_shared_block_limit", 1.0),
+    "launch__occupancy_limit_warps": ("occupancy_warp_block_limit", 1.0),
 }
 
 
@@ -118,7 +124,8 @@ def main():
     fields = ["label", "kernel_id", "kernel_name", "grid_size", "block_size"] + [value[0] for value in METRICS.values()]
     output = args.output.open("w", newline="") if args.output else sys.stdout
     try:
-        writer = csv.DictWriter(output, fieldnames=fields, extrasaction="ignore")
+        writer = csv.DictWriter(
+            output, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         writer.writerows(records)
     finally:

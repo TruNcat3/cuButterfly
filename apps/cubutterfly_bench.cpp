@@ -29,13 +29,16 @@ void print_usage() {
         << "                    [--element-stride N]\n"
         << "                    [--stage-space 1|2|4|8]\n"
         << "                    [--stage-handoff atomic|named-barrier]\n"
-        << "                    [--tile-threads 32|64|128|256] [--local-stages 5..10] [--reorder-columns power-of-two]\n"
+        << "                    [--tile-threads 32|64|128|256; resident also 512|1024] [--local-stages 5..10] [--reorder-columns power-of-two]\n"
+        << "                    [--prefix-threads 128|256|512|1024] [--suffix-threads 128|256|512|1024]\n"
+        << "                    [--prefix-ept N] [--suffix-ept N]\n"
         << "                    [--warp-stages 0..5]\n"
         << "                    [--pipeline-warps 4|8]\n"
         << "                    [--compute-unit auto|radix2|radix4|radix8]\n"
         << "                    [--complex-multiply four-mul|gauss3]\n"
+        << "                    [--cross-twiddle table|recurrence]\n"
         << "                    [--local-exchange shared|warp-register]\n"
-        << "                    [--fft-core scalar|thread-dft8|cta-dft8|wmma-dft8]\n"
+        << "                    [--fft-core scalar|thread-dft8|cta-dft8|wmma-dft8|cufftdx-block|cufftdx-direct|cufftdx-resident|turbofft-generated]\n"
         << "                    [--precision fp32|fp64|fp16-fp32|uint32]\n"
         << "                    [--warmup 20] [--repeat 100] [--verify] [--csv]\n"
         << "                    [--list-capabilities]\n";
@@ -108,6 +111,14 @@ int main(int argc, char** argv) {
                 config.stage_handoff = cuntt::parse_stage_handoff(take_arg(index, argc, argv));
             } else if (arg == "--tile-threads") {
                 config.tile_threads = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--prefix-threads") {
+                config.prefix_threads = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--suffix-threads") {
+                config.suffix_threads = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--prefix-ept") {
+                config.prefix_ept = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--suffix-ept") {
+                config.suffix_ept = std::stoul(take_arg(index, argc, argv));
             } else if (arg == "--local-stages") {
                 config.local_stages = std::stoul(take_arg(index, argc, argv));
             } else if (arg == "--reorder-columns") {
@@ -120,6 +131,8 @@ int main(int argc, char** argv) {
                 config.compute_unit = cuntt::parse_compute_unit(take_arg(index, argc, argv));
             } else if (arg == "--complex-multiply") {
                 config.complex_multiply = cuntt::parse_complex_multiply(take_arg(index, argc, argv));
+            } else if (arg == "--cross-twiddle") {
+                config.cross_twiddle = cuntt::parse_cross_twiddle_mode(take_arg(index, argc, argv));
             } else if (arg == "--local-exchange") {
                 config.local_exchange = cuntt::parse_local_exchange(take_arg(index, argc, argv));
             } else if (arg == "--fft-core") {
@@ -266,8 +279,8 @@ int main(int argc, char** argv) {
         const auto device = cuntt::current_device_info();
         std::cout << std::fixed << std::setprecision(6);
         if (csv) {
-            std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,backend,compute_unit,complex_multiply,local_"
-                         "exchange,fft_core,stage_space,stage_handoff,tile_threads,local_stages,reorder_columns,warp_stages,pipeline_warps,logN,N,batch,element_stride,batch_"
+            std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,backend,compute_unit,complex_multiply,cross_twiddle,local_"
+                         "exchange,fft_core,stage_space,stage_handoff,tile_threads,prefix_threads,suffix_threads,prefix_ept,suffix_ept,prefix_units_per_cta,suffix_units_per_cta,local_stages,reorder_columns,warp_stages,pipeline_warps,logN,N,batch,element_stride,batch_"
                          "stride,warmup,repeat,h2d_ms,kernel_ms,d2h_ms,"
                          "transforms_s,Gbutterfly_s,points_s,max_error,correct\n";
             std::cout << '"' << device.name << "\"," << device.compute_major << '.' << device.compute_minor << ','
@@ -275,9 +288,12 @@ int main(int argc, char** argv) {
                       << (config.inverse ? "inverse" : "forward") << ',' << (config.normalize_inverse ? "inverse" : "none") << ','
                       << cuntt::butterfly_placement_name(config.placement) << ',' << cuntt::butterfly_backend_name(config.backend) << ','
                       << cuntt::compute_unit_name(config.compute_unit) << ',' << cuntt::complex_multiply_name(config.complex_multiply) << ','
+                      << cuntt::cross_twiddle_mode_name(config.cross_twiddle) << ','
                       << cuntt::local_exchange_name(config.local_exchange) << ',' << cuntt::fft_core_name(config.fft_core) << ',' << config.stage_space << ','
                       << cuntt::stage_handoff_name(config.stage_handoff) << ',' << config.tile_threads << ','
-                      << config.local_stages << ',' << config.reorder_columns << ',' << config.warp_stages << ',' << config.pipeline_warps << ','
+                      << config.prefix_threads << ',' << config.suffix_threads << ',' << config.prefix_ept << ',' << config.suffix_ept << ','
+                      << config.prefix_units_per_cta << ',' << config.suffix_units_per_cta << ',' << config.local_stages << ','
+                      << config.reorder_columns << ',' << config.warp_stages << ',' << config.pipeline_warps << ','
                       << config.log_n << ',' << n << ',' << config.batch << ',' << config.element_stride << ',' << config.batch_stride << ','
                       << warmup << ',' << repeat << ',' << stats.h2d_ms << ',' << stats.kernel_ms << ',' << stats.d2h_ms << ','
                       << stats.transforms_per_second << ',' << stats.butterflies_per_second / 1.0e9 << ',' << stats.points_per_second << ','
@@ -292,11 +308,18 @@ int main(int argc, char** argv) {
                       << "backend: " << cuntt::butterfly_backend_name(config.backend) << "\n"
                       << "compute_unit: " << cuntt::compute_unit_name(config.compute_unit) << "\n"
                       << "complex_multiply: " << cuntt::complex_multiply_name(config.complex_multiply) << "\n"
+                      << "cross_twiddle: " << cuntt::cross_twiddle_mode_name(config.cross_twiddle) << "\n"
                       << "local_exchange: " << cuntt::local_exchange_name(config.local_exchange) << "\n"
                       << "fft_core: " << cuntt::fft_core_name(config.fft_core) << "\n"
                       << "stage_space: " << config.stage_space << "\n"
                       << "stage_handoff: " << cuntt::stage_handoff_name(config.stage_handoff) << "\n"
                       << "tile_threads: " << config.tile_threads << "\n"
+                      << "prefix_threads: " << config.prefix_threads << "\n"
+                      << "suffix_threads: " << config.suffix_threads << "\n"
+                      << "prefix_ept: " << config.prefix_ept << "\n"
+                      << "suffix_ept: " << config.suffix_ept << "\n"
+                      << "prefix_units_per_cta: " << config.prefix_units_per_cta << "\n"
+                      << "suffix_units_per_cta: " << config.suffix_units_per_cta << "\n"
                       << "local_stages: " << config.local_stages << "\n"
                       << "reorder_columns: " << config.reorder_columns << "\n"
                       << "warp_stages: " << config.warp_stages << "\n"

@@ -57,6 +57,24 @@ python3 scripts/summarize_cubutterfly_designs.py \
   --output results/reproduction_summary.csv
 ```
 
+The controlled single-GPU cross-workload suite validates semantic grouping,
+runs correctness preflights, randomizes trial order, and persists each sample:
+
+```bash
+python3 scripts/run_comprehensive_suite.py --mode full \
+  --output results/comprehensive_v100_full_raw.csv
+
+python3 scripts/summarize_comprehensive_suite.py \
+  results/comprehensive_v100_full_raw.csv \
+  --output results/comprehensive_v100_full_summary.csv \
+  --markdown results/comprehensive_v100_full_report.md \
+  --require-stable
+```
+
+The current protocol fixes `N * batch = 2^22` for length comparisons. Do not
+use it to infer independent batch scaling; that requires holding `N` fixed and
+sweeping batch separately.
+
 ## 4. Generated Design Points
 
 The build invokes:

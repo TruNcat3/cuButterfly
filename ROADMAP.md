@@ -5,11 +5,15 @@ research claim. Ordering may change after profiling or access to new hardware.
 
 ## Near Term
 
-- Profile the generated CTA DFT8 mappings at representative local lengths and
-  attribute the `N>=128` crossover to barriers, bank conflicts, occupancy, and
-  coefficient traffic.
-- Compose an established long-FFT local core with cuButterfly online-reorder
-  scheduling instead of extending scalar butterflies indefinitely.
+- Run an orthogonal `(logN, batch)` sweep instead of coupling all comparisons
+  through constant total points; identify launch-limited, saturation, and
+  throughput regions for every operator.
+- Refresh Dao-AILab FHT and GPU-NTT under the comprehensive-suite clock,
+  correctness, modulus, output-order, and trial protocol.
+- Profile the remaining FP32 `logN=20` and FP64 `logN=16` FFT gaps against
+  cuFFT, separating local-core, permutation, coefficient, and launch costs.
+- Convert the measured architecture space into a calibrated selector and
+  evaluate top-k prediction accuracy before exhaustive timing.
 - Add a device-pointer and CUDA-stream execution API without weakening the
   current typed semantic contract.
 - Reduce template warning volume and record compiled resource envelopes as
@@ -40,6 +44,8 @@ portable across GPU generations.
 
 ## Paper Artifact
 
+- Preserve the V100 comprehensive suite as the single-GPU baseline and keep
+  focused historical protocols separate from its cross-workload tables.
 - Freeze a versioned multi-GPU measurement matrix.
 - Publish scripts and container/toolchain metadata for every main table.
 - Separate architecture ablations, core-only comparisons, resident transforms,

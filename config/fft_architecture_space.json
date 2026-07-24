@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "model": "two-dimensional-space-time-butterfly",
+  "hardware_profiles": {
+    "v100-sm70": {
+      "sm_count": 80,
+      "warp_size": 32,
+      "max_threads_per_cta": 1024,
+      "max_shared_bytes_per_cta": 98304,
+      "registers_per_sm": 65536,
+      "max_threads_per_sm": 2048,
+      "max_ctas_per_sm": 32
+    }
+  },
+  "axes": {
+    "log_n": {"min": 1, "max": 20},
+    "decomposition": ["single-unit", "two-dimensional", "multi-dimensional"],
+    "precision": ["fp16-fp32", "fp32", "fp64"],
+    "direction": ["forward", "inverse"],
+    "placement": ["out-of-place", "in-place"],
+    "boundary": ["none", "global-scratch", "shared-resident", "cooperative-grid"],
+    "reorder": ["direct-strided", "online-tiled", "transpose-kernel", "stockham-pingpong"],
+    "cross_twiddle": ["table", "recurrence", "fused-core", "generated"],
+    "dimension": {
+      "core": [
+        "scalar-radix2", "scalar-radix4", "scalar-radix8", "cta-dft8",
+        "wmma-dft8", "cufftdx-block", "cufftdx-direct", "turbofft-generated"
+      ],
+      "spatial_scope": ["thread", "warp", "cta", "multi-cta"],
+      "stage_fusion": [1, 2, 3, "full-dimension"],
+      "temporal_reuse": ["single-stage", "fused-stage-group", "resident-codelet", "full-dimension"],
+      "threads": [32, 64, 128, 256, 512, 1024],
+      "elements_per_thread": [1, 2, 4, 8, 16, 32, 64],
+      "units_per_cta": [1, 2, 4, 8, 16, 32, 64, 128],
+      "exchange": ["thread-register", "warp-shuffle", "shared", "imported-codelet"],
+      "shared_padding": [0, 1, 2],
+      "pipeline_buffers": [1, 2, 3]
+    }
+  },
+  "families": [
+    {
+      "name": "cufftdx-online",
+      "decomposition": "two-dimensional",
+      "prefix_core": "cufftdx-block",
+      "suffix_core": "cufftdx-block",
+      "boundary": "global-scratch",
+      "reorder": "online-tiled",
+      "precision": ["fp32"],
+      "cross_twiddle": ["table", "recurrence"],
+      "dimension_log_n": {"min": 3, "max": 10}
+    },
+    {
+      "name": "cufftdx-large-online",
+      "decomposition": "two-dimensional",
+      "prefix_core": "cufftdx-block-or-direct",
+      "suffix_core": "cufftdx-block-or-direct",
+      "boundary": "global-scratch",
+      "reorder": "direct-strided-or-transpose",
+      "precision": ["fp32"],
+      "cross_twiddle": ["table", "recurrence"],
+      "dimension_log_n": {"min": 3, "max": 14},
+      "status": "requires-new-kernel"
+    },
+    {
+      "name": "resident-composition",
+      "decomposition": "two-dimensional",
+      "boundary": "shared-resident",
+      "reorder": "online-tiled",
+      "precision": ["fp32"],
+      "status": "selected-design-points"
+    },
+    {
+      "name": "mixed-core-composition",
+      "decomposition": "two-dimensional",
+      "boundary": "global-scratch",
+      "reorder": "online-tiled-or-transpose",
+      "precision": ["fp16-fp32", "fp32", "fp64"],
+      "status": "requires-new-kernel"
+    },
+    {
+      "name": "single-whole-transform",
+      "decomposition": "single-unit",
+      "boundary": "none",
+      "reorder": "direct-strided",
+      "precision": ["fp32"],
+      "status": "selected-design-points"
+    }
+  ]
+}

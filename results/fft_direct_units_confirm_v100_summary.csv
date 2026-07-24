@@ -1,0 +1,16 @@
+rank,operator,precision,direction,normalization,placement,logN,N,batch,element_stride,batch_stride,backend,compute_unit,complex_multiply,cross_twiddle,local_exchange,fft_core,stage_space,tile_threads,local_stages,reorder_columns,warp_stages,pipeline_warps,stage_handoff,trials,median_kernel_ms,min_kernel_ms,max_kernel_ms,median_Gbutterfly_s,slowdown_vs_best
+1,fft,fp32,forward,none,out-of-place,11,2048,2048,1,2048,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,256,0,0,0,0,named-barrier,5,0.085617,0.085504,0.085709,269.441475,1.000000
+2,fft,fp32,forward,none,out-of-place,11,2048,2048,1,2048,cufft,auto,four-mul,table,shared,scalar,0,0,0,0,0,0,named-barrier,5,0.086231,0.086118,0.086313,267.521678,1.007171
+3,fft,fp32,forward,none,out-of-place,11,2048,2048,1,2048,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,512,0,0,0,0,named-barrier,5,0.088975,0.088893,0.089108,259.270335,1.039221
+4,fft,fp32,forward,none,out-of-place,11,2048,2048,1,2048,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,1024,0,0,0,0,named-barrier,5,0.108052,0.107909,0.108227,213.495063,1.262039
+1,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,512,0,0,0,0,named-barrier,5,0.089078,0.089057,0.089201,282.515245,1.000000
+2,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,256,0,0,0,0,named-barrier,5,0.089446,0.089385,0.089457,281.350878,1.004131
+3,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,cufft,auto,four-mul,table,shared,scalar,0,0,0,0,0,0,named-barrier,5,0.090030,0.089958,0.090092,279.526838,1.010687
+4,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,1024,0,0,0,0,named-barrier,5,0.093757,0.093686,0.093839,268.414167,1.052527
+1,fft,fp32,forward,none,out-of-place,13,8192,512,1,8192,cufft,auto,four-mul,table,shared,scalar,0,0,0,0,0,0,named-barrier,5,0.096573,0.096297,0.096758,282.303037,1.000000
+2,fft,fp32,forward,none,out-of-place,13,8192,512,1,8192,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,512,0,0,0,0,named-barrier,5,0.100157,0.100127,0.100178,272.201207,1.037112
+3,fft,fp32,forward,none,out-of-place,13,8192,512,1,8192,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,256,0,0,0,0,named-barrier,5,0.121672,0.121037,0.122194,224.070028,1.259897
+4,fft,fp32,forward,none,out-of-place,13,8192,512,1,8192,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,1024,0,0,0,0,named-barrier,5,0.122860,0.122286,0.122911,221.903659,1.272198
+1,fft,fp32,forward,none,out-of-place,14,16384,256,1,16384,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,1024,0,0,0,0,named-barrier,5,0.131707,0.131133,0.132014,222.920233,1.000000
+2,fft,fp32,forward,none,out-of-place,14,16384,256,1,16384,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,512,0,0,0,0,named-barrier,5,0.134400,0.134246,0.134482,218.453341,1.020447
+3,fft,fp32,forward,none,out-of-place,14,16384,256,1,16384,cufft,auto,four-mul,table,shared,scalar,0,0,0,0,0,0,named-barrier,5,0.135485,0.135209,0.135916,216.703196,1.028685

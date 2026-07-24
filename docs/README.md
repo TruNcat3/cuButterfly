@@ -9,9 +9,13 @@ for the research idea, then move toward implementation and evidence.
 |:--|:--|
 | [Design Overview](design_overview.md) | What is the reusable space-time parallel paradigm? |
 | [Hardware Mapping Methodology](hardware_mapping_methodology.md) | How do the unfolding factors translate into GPU resource demand? |
+| [Complete Butterfly Design Space](butterfly_design_space.md) | How are graph, architecture, processing unit, layout, realization, selection, and hardware separated? |
+| [FFT Design Space](fft_design_space.md) | Which semantic, two-dimensional, processing-unit, and hardware axes are enumerable? |
 | [Candidate Implementations](implementation_candidates.md) | Which processing units and kernel forms are implemented or planned? |
 | [Getting Started](getting_started.md) | How is the project built and used? |
 | [Experimental Results](experiments.md) | What has been measured, and where are the gaps? |
+| [Single-GPU Comprehensive Benchmark](comprehensive_benchmark.md) | How are lengths, precision, semantics, implementations, and external baselines compared together? |
+| [V100 Comprehensive Results](comprehensive_v100_results.md) | What does the controlled full-suite comparison currently establish? |
 | [Reproducibility](reproducibility.md) | How are sweeps, external baselines, and profiler data reproduced? |
 | [Research Positioning](cubutterfly_positioning.md) | What is the intended contribution relative to prior work? |
 
@@ -33,12 +37,14 @@ Repository maintenance and research priorities are documented in
 
 ## Measurement Reports
 
+- [V100 Comprehensive Results](comprehensive_v100_results.md)
 - [V100 Initial NTT Results](v100_initial_results.md)
 - [V100 NTT Parameter Matrix](v100_matrix_results.md)
 - [GPU-NTT Gap Analysis](gpu_ntt_gap_analysis.md)
 - [Cross-Operator Results](cubutterfly_cross_operator_results.md)
 - [Large-Length Results](cubutterfly_large_results.md)
 - [CTA DFT8 Space-Time Mapping](fft_cta_space_time_results.md)
+- [FFT Library Comparison](fft_library_comparison.md)
 - [Nsight Compute Profiling](ncu_profiling.md)
 - [Cross-GPU Experiment Matrix](cross_gpu_experiment.md)
 

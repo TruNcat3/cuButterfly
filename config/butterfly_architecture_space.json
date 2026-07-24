@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "model": "multidimensional-space-time-butterfly",
+  "objects": {
+    "G_graph_semantics": {
+      "operator": ["fft", "ntt", "fwht", "xor-zeta", "subset-mobius", "structured-butterfly"],
+      "log_n": {"min": 1, "max": 32},
+      "batch": {"min": 1},
+      "direction": ["forward", "inverse"],
+      "normalization": ["none", "inverse", "unitary", "operator-defined"],
+      "placement": ["out-of-place", "in-place"],
+      "input_order": ["natural", "bit-reversed", "digit-reversed", "operator-defined"],
+      "output_order": ["natural", "bit-reversed", "digit-reversed", "operator-defined"],
+      "element_stride": {"min": 1},
+      "batch_stride": {"min": 1}
+    },
+    "A_architecture": {
+      "factorization_rank": [1, 2, "multi"],
+      "dimension_stage_counts": "ordered positive integers summing to log_n",
+      "per_dimension_mapping": {
+        "stage_count": "positive integer",
+        "stage_space_Us": "positive integer",
+        "stage_time_Ts": "ceil(stage_count / stage_space_Us)",
+        "data_space_Ud": "positive integer",
+        "data_time_Td": "ceil(local independent work / data_space_Ud)",
+        "stage_handoff_Hs": "selected from stage_handoff_Hs",
+        "stage_time_residence_Rs": "selected from stage_time_residence_Rs",
+        "data_time_residence_Rd": "selected from data_time_residence_Rd",
+        "processing_unit": "one P_processing_unit point",
+        "local_layout": "one L_layout point",
+        "realization": "one F_realization point"
+      },
+      "between_dimension_mapping": {
+        "boundary": "selected from dimension_boundary",
+        "permutation": "selected from L_layout.intermediate_permutation",
+        "cross_coefficient_placement": ["none", "prefix-epilogue", "boundary-kernel", "suffix-prologue", "processing-core"],
+        "cross_coefficient_form": ["none", "native-table", "shoup", "barrett", "montgomery", "recurrence", "generated", "compressed", "operator-defined"],
+        "producer_units_per_cta": "positive integer",
+        "consumer_units_per_cta": "positive integer"
+      },
+      "stage_space_Us": "positive integer",
+      "stage_time_Ts": "ceil(log_n / stage_space_Us)",
+      "data_space_Ud": "positive integer",
+      "data_time_Td": "ceil((N/2) / data_space_Ud)",
+      "batch_space_Ub": "positive integer",
+      "batch_time_Tb": "ceil(batch / batch_space_Ub)",
+      "hierarchical_unfolding": {
+        "levels": ["lane", "thread", "warp", "cta", "cluster", "grid", "device", "node"],
+        "per_level_factors": ["Us_level", "Ud_level", "Ub_level"],
+        "composition": "Us, Ud, and Ub equal the products of their active per-level factors",
+        "ownership": ["private", "warp-shared", "cta-shared", "cluster-shared", "device-shared", "distributed"]
+      },
+      "stage_handoff_Hs": ["register", "warp-shuffle", "shared", "named-barrier", "global", "cluster-shared", "network"],
+      "stage_time_residence_Rs": ["register", "shared", "cluster-shared", "l1", "l2", "global", "distributed-memory"],
+      "data_time_residence_Rd": ["register", "shared", "cluster-shared", "l1", "l2", "global", "distributed-memory"],
+      "batch_time_residence_Rb": ["register", "shared", "cluster-shared", "l1", "l2", "global", "distributed-memory"],
+      "coefficient_supply": {
+        "residence": ["immediate", "register", "constant", "shared", "l1", "l2", "global", "generated", "distributed-memory"],
+        "sharing_scope": ["cell", "thread", "warp", "cta", "cluster", "grid"],
+        "schedule": ["preload", "stream", "prefetch", "recurrence", "fused-generate"]
+      },
+      "dimension_boundary": ["none", "register", "shared-resident", "global-scratch", "cooperative-grid", "distributed-exchange"],
+      "schedule": ["stage-major", "data-major", "wavefront", "persistent", "producer-consumer"],
+      "tail_policy": ["predicate", "padding", "specialized-remainder"]
+    },
+    "P_processing_unit": {
+      "stage_group": ["radix2", "radix4", "radix8", "mixed-radix", "full-codelet", "matrix-tile"],
+      "arithmetic_core": ["scalar", "vector", "tensor", "imported-codelet", "generated-codelet", "operator-defined"],
+      "coefficient_form": ["none", "native-table", "shoup", "barrett", "montgomery", "recurrence", "generated", "compressed", "operator-defined"],
+      "local_exchange": ["thread-register", "warp-shuffle", "shared", "tensor-fragment", "imported-codelet", "operator-defined"],
+      "word_bits": [16, 32, 64, 128, "operator-defined"],
+      "accumulator_bits": [16, 32, 64, 128, "operator-defined"],
+      "elements_per_thread": [1, 2, 4, 8, 16, 32, 64],
+      "units_per_cta": [1, 2, 4, 8, 16, 32, 64, 128]
+    },
+    "L_layout": {
+      "global_order": ["natural", "bit-reversed", "digit-reversed", "transposed", "blocked"],
+      "intermediate_permutation": ["none", "online-tiled", "direct-strided", "transpose-kernel", "stockham-pingpong", "xor-swizzle"],
+      "bank_mapping": ["linear", "padded", "xor-swizzle", "operator-defined"],
+      "shared_padding": [0, 1, 2, "generated"],
+      "vector_width_bytes": [4, 8, 16, 32],
+      "alignment_bytes": [4, 8, 16, 32, 64, 128]
+    },
+    "F_realization": {
+      "kernel_form": ["baseline", "tile256", "temporal-tile", "hierarchical", "online-reorder", "hybrid2d", "compact-stage", "warp-hybrid", "stage-pipeline", "resident", "direct", "cooperative", "vendor-baseline"],
+      "threads_per_cta": [32, 64, 128, 256, 512, 1024],
+      "warps_per_cta": [1, 2, 4, 8, 16, 32],
+      "ctas_per_work_unit": [1, 2, 4, 8, "generated"],
+      "pipeline_buffers": [1, 2, 3],
+      "pipeline_initiation_interval": "positive cycles",
+      "pipeline_depth": "positive cycles",
+      "async_copy": ["none", "global-to-shared", "tensor-memory"],
+      "synchronization": ["none", "warp", "cta-barrier", "named-barrier", "atomic", "grid", "cluster", "kernel-boundary", "network-collective"]
+    },
+    "Q_generation_selection": {
+      "specialization": ["runtime-generic", "compile-time", "generated", "external"],
+      "selection": ["manual", "exhaustive", "hierarchical-search", "analytic-model", "learned-model"],
+      "status": ["abstract", "compiled", "awaiting-codegen", "requires-new-kernel", "semantic-infeasible", "hardware-infeasible", "external-baseline"],
+      "objectives": ["latency", "steady-state-throughput", "batch-throughput", "global-traffic", "on-chip-traffic", "energy", "code-size", "compile-time", "numeric-error"]
+    },
+    "H_hardware": {
+      "execution": ["scalar-lanes", "simd", "tensor-core", "fpga-pipeline"],
+      "hierarchy": ["lane", "thread", "warp", "cta", "cluster", "grid", "device", "node"],
+      "transport": ["register", "shuffle", "shared", "cluster-shared", "cache", "global", "network"],
+      "capacity_fields": ["threads", "warps", "ctas", "registers", "shared-bytes", "cache-bytes", "global-bytes"],
+      "rate_fields": ["arithmetic", "boundary-bandwidth", "interstage-bandwidth", "feedback-bandwidth", "coefficient-bandwidth", "barrier-rate"]
+    }
+  },
+  "operator_projections": {
+    "fft": {
+      "precision": ["fp16-fp32", "fp32", "fp64"],
+      "cell": "complex weighted sum/difference",
+      "coefficient": ["native-table", "recurrence", "generated"],
+      "cores": ["scalar-radix2", "scalar-radix4", "scalar-radix8", "thread-dft8", "cta-dft8", "wmma-dft8", "cufftdx-block", "cufftdx-direct", "turbofft-generated"],
+      "traits": ["stage-coefficient", "symmetric-update", "floating-error"]
+    },
+    "ntt": {
+      "precision": ["uint32", "uint64"],
+      "cell": "modular weighted sum/difference",
+      "coefficient": ["native-table", "shoup", "barrett", "montgomery", "recurrence", "compressed"],
+      "cores": ["radix2", "radix4", "radix8", "shoup", "barrett", "compact-root"],
+      "traits": ["stage-coefficient", "symmetric-update", "exact-arithmetic", "modulus-contract"]
+    },
+    "fwht": {
+      "precision": ["fp16", "fp32", "fp64"],
+      "cell": "sum/difference",
+      "coefficient": ["none"],
+      "cores": ["scalar-radix2", "scalar-radix4", "scalar-radix8", "warp-register", "tensor-hadamard"],
+      "traits": ["coefficient-free", "symmetric-update"]
+    },
+    "xor-zeta": {
+      "precision": ["uint8", "uint16", "uint32", "uint64"],
+      "cell": "semiring pair update",
+      "coefficient": ["none"],
+      "cores": ["scalar-radix2", "scalar-radix4", "scalar-radix8", "packed-integer"],
+      "traits": ["coefficient-free", "asymmetric-update", "semiring-contract"]
+    },
+    "subset-mobius": {
+      "precision": ["operator-defined"],
+      "cell": "inverse semiring pair update",
+      "coefficient": ["none", "operator-defined"],
+      "cores": ["scalar-radix2", "packed-integer"],
+      "traits": ["asymmetric-update", "inverse-contract", "semiring-contract"],
+      "status": "candidate"
+    },
+    "structured-butterfly": {
+      "precision": ["operator-defined"],
+      "cell": "2x2 linear or semiring map",
+      "coefficient": ["native-table", "generated", "operator-defined"],
+      "cores": ["scalar", "vector", "tensor", "generated-codelet"],
+      "traits": ["operator-defined"],
+      "status": "candidate"
+    }
+  },
+  "processing_core_bindings": {
+    "fft": {
+      "scalar-radix2": {"stage_group": "radix2", "arithmetic_core": "scalar", "precision": ["fp32", "fp64"], "coefficient": ["native-table", "recurrence", "generated"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "scalar-radix4": {"stage_group": "radix4", "arithmetic_core": "scalar", "precision": ["fp32", "fp64"], "coefficient": ["native-table", "recurrence", "generated"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "scalar-radix8": {"stage_group": "radix8", "arithmetic_core": "scalar", "precision": ["fp32", "fp64"], "coefficient": ["native-table", "recurrence", "generated"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "thread-dft8": {"stage_group": "full-codelet", "arithmetic_core": "scalar", "precision": ["fp32"], "coefficient": ["generated"], "exchange": ["thread-register"]},
+      "cta-dft8": {"stage_group": "full-codelet", "arithmetic_core": "scalar", "precision": ["fp32"], "coefficient": ["generated"], "exchange": ["shared"]},
+      "wmma-dft8": {"stage_group": "matrix-tile", "arithmetic_core": "tensor", "precision": ["fp16-fp32"], "coefficient": ["generated"], "exchange": ["tensor-fragment", "shared"]},
+      "cufftdx-block": {"stage_group": "full-codelet", "arithmetic_core": "imported-codelet", "precision": ["fp32"], "coefficient": ["native-table", "recurrence"], "exchange": ["thread-register", "shared", "imported-codelet"]},
+      "cufftdx-direct": {"stage_group": "full-codelet", "arithmetic_core": "imported-codelet", "precision": ["fp32"], "coefficient": ["native-table", "generated"], "exchange": ["imported-codelet"]},
+      "turbofft-generated": {"stage_group": "full-codelet", "arithmetic_core": "generated-codelet", "precision": ["fp32"], "coefficient": ["generated"], "exchange": ["imported-codelet"]}
+    },
+    "ntt": {
+      "radix2": {"stage_group": "radix2", "arithmetic_core": "scalar", "coefficient": ["native-table", "shoup", "barrett", "montgomery", "recurrence"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "radix4": {"stage_group": "radix4", "arithmetic_core": "scalar", "coefficient": ["native-table", "shoup", "barrett", "montgomery", "recurrence"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "radix8": {"stage_group": "radix8", "arithmetic_core": "scalar", "coefficient": ["native-table", "shoup", "barrett", "montgomery", "recurrence"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "shoup": {"stage_group": "radix2", "arithmetic_core": "scalar", "coefficient": ["shoup"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "barrett": {"stage_group": "radix2", "arithmetic_core": "scalar", "coefficient": ["barrett"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "compact-root": {"stage_group": "radix2", "arithmetic_core": "scalar", "coefficient": ["compressed"], "exchange": ["thread-register", "shared"]}
+    },
+    "fwht": {
+      "scalar-radix2": {"stage_group": "radix2", "arithmetic_core": "scalar", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "scalar-radix4": {"stage_group": "radix4", "arithmetic_core": "scalar", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "scalar-radix8": {"stage_group": "radix8", "arithmetic_core": "scalar", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "warp-register": {"stage_group": "full-codelet", "arithmetic_core": "vector", "precision": ["fp32"], "coefficient": ["none"], "exchange": ["warp-shuffle", "thread-register"]},
+      "tensor-hadamard": {"stage_group": "matrix-tile", "arithmetic_core": "tensor", "precision": ["fp16"], "coefficient": ["none"], "exchange": ["tensor-fragment", "shared"]}
+    },
+    "xor-zeta": {
+      "scalar-radix2": {"stage_group": "radix2", "arithmetic_core": "scalar", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "scalar-radix4": {"stage_group": "radix4", "arithmetic_core": "scalar", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "scalar-radix8": {"stage_group": "radix8", "arithmetic_core": "scalar", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "packed-integer": {"stage_group": "radix2", "arithmetic_core": "vector", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle"]}
+    },
+    "subset-mobius": {
+      "scalar-radix2": {"stage_group": "radix2", "arithmetic_core": "scalar", "coefficient": ["none", "operator-defined"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "packed-integer": {"stage_group": "radix2", "arithmetic_core": "vector", "coefficient": ["none", "operator-defined"], "exchange": ["thread-register", "warp-shuffle"]}
+    },
+    "structured-butterfly": {
+      "scalar": {"stage_group": "radix2", "arithmetic_core": "scalar", "coefficient": ["native-table", "generated", "operator-defined"], "exchange": ["thread-register", "warp-shuffle", "shared", "operator-defined"]},
+      "vector": {"stage_group": "radix2", "arithmetic_core": "vector", "coefficient": ["native-table", "generated", "operator-defined"], "exchange": ["thread-register", "warp-shuffle", "shared", "operator-defined"]},
+      "tensor": {"stage_group": "matrix-tile", "arithmetic_core": "tensor", "coefficient": ["native-table", "generated", "operator-defined"], "exchange": ["tensor-fragment", "shared", "operator-defined"]},
+      "generated-codelet": {"stage_group": "full-codelet", "arithmetic_core": "generated-codelet", "coefficient": ["generated", "operator-defined"], "exchange": ["imported-codelet", "operator-defined"]}
+    }
+  },
+  "precision_bindings": {
+    "fft": {
+      "fp16-fp32": {"word_bits": [16], "accumulator_bits": [32]},
+      "fp32": {"word_bits": [32], "accumulator_bits": [32]},
+      "fp64": {"word_bits": [64], "accumulator_bits": [64]}
+    },
+    "ntt": {
+      "uint32": {"word_bits": [32], "accumulator_bits": [64]},
+      "uint64": {"word_bits": [64], "accumulator_bits": [128]}
+    },
+    "fwht": {
+      "fp16": {"word_bits": [16], "accumulator_bits": [16, 32]},
+      "fp32": {"word_bits": [32], "accumulator_bits": [32]},
+      "fp64": {"word_bits": [64], "accumulator_bits": [64]}
+    },
+    "xor-zeta": {
+      "uint8": {"word_bits": [16], "accumulator_bits": [16]},
+      "uint16": {"word_bits": [16], "accumulator_bits": [16]},
+      "uint32": {"word_bits": [32], "accumulator_bits": [32]},
+      "uint64": {"word_bits": [64], "accumulator_bits": [64]}
+    },
+    "subset-mobius": {
+      "operator-defined": {"word_bits": ["operator-defined"], "accumulator_bits": ["operator-defined"]}
+    },
+    "structured-butterfly": {
+      "operator-defined": {"word_bits": ["operator-defined"], "accumulator_bits": ["operator-defined"]}
+    }
+  },
+  "implementation_families": {
+    "baseline": {"Us": 1, "Rs": "global-between-stages", "boundary": "global-scratch"},
+    "tile256": {"Us": "tile-local stages", "Rs": "shared-within-tile", "boundary": "global-scratch"},
+    "temporal-tile": {"Us": "local_stages", "Rs": "shared-or-register", "Rd": "shared-or-register", "boundary": "none"},
+    "hierarchical": {"Us": 1, "Ts": "local-stages then global suffix", "Rs": "global-between-groups", "boundary": "global-scratch"},
+    "online-reorder": {"Us": "dimension codelet stages", "Ts": "dimension count", "Rs": "register/shared within dimension", "boundary": "global-scratch with online permutation"},
+    "hybrid2d": {"Us": "factor codelet stages", "Ts": 2, "Rs": "register/shared within factor", "boundary": "global-scratch with cross twiddle"},
+    "compact-stage": {"Us": "packed stage group", "Rs": "register/shared", "boundary": "global-scratch"},
+    "warp-hybrid": {"Us": "warp-local stages", "Hs": "shuffle then shared", "Rs": "register/shared", "boundary": "none"},
+    "stage-pipeline": {"Us": "stage_space", "Hs": "named-barrier-or-atomic", "schedule": "producer-consumer"},
+    "resident": {"Rs": "shared/register", "Rd": "shared/register", "boundary": "none"},
+    "direct": {"Us": "full transform", "Ts": 1, "boundary": "none"},
+    "vendor-baseline": {"specialization": "external", "status": "external-baseline"}
+  },
+  "runtime_bindings": {
+    "ntt_backends": {
+      "baseline": "baseline",
+      "tile256": "tile256",
+      "hybrid2d": "hybrid2d",
+      "compact-stage": "compact-stage",
+      "stage-pipeline": "stage-pipeline"
+    },
+    "butterfly_backends": {
+      "temporal-tile": "temporal-tile",
+      "hierarchical": "hierarchical",
+      "online-reorder": "online-reorder",
+      "warp-hybrid": "warp-hybrid",
+      "stage-pipeline": "stage-pipeline",
+      "cufft": "vendor-baseline"
+    }
+  },
+  "invariants": [
+    "Us * Ts >= log_n",
+    "Ud * Td >= N/2",
+    "Ub * Tb >= batch",
+    "Us, Ud, and Ub equal products of their active hardware-hierarchy factors",
+    "operator core and coefficient form belong to the selected operator projection",
+    "coefficient-free operators select coefficient form none",
+    "dimension_stage_counts sum to log_n",
+    "processing-unit semantics preserve the operator cell",
+    "layout mappings are bijective unless the operator contract says otherwise",
+    "reported performance preserves precision, direction, normalization, placement, strides, and output order"
+  ]
+}

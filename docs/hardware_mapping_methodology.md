@@ -1,5 +1,11 @@
 # Hardware-Mapped Space-Time NTT Methodology
 
+This document derives the original two graph-axis model in detail. The
+[operator-independent design-space contract](butterfly_design_space.md) adds
+ordered multi-dimensional graph factorization, the orthogonal batch unfolding,
+and explicit lane-to-node hierarchy mapping without changing this `2 x 2`
+graph invariant.
+
 ## 1. Two-dimensional iteration domain
 
 An `N=2^K` radix-2 NTT is a two-dimensional iteration domain:
@@ -176,7 +182,7 @@ response to these two different demands.
 Define the architecture, processing unit, and hardware realization separately:
 
 ```text
-Architecture A = (K, Us, Ts, Ud, Td, Hs, Rs, Rd)
+Architecture A = (K, Us, Ts, Ud, Td, Ub, Tb, Hs, Rs, Rd, Rb)
 Processing P   = (radix, reduction, root_representation, coefficient_width)
 Layout L       = (bank_mapping, global_order, output_order)
 Realization F  = (kernel_form, tile_threads, warp_stages, pipeline_warps)
@@ -455,7 +461,8 @@ output semantics held constant.
 
 ## 10. Portable architecture-selection procedure
 
-1. Enumerate architecture points `(Us, Ud)` and derive `Ts`, `Td`, utilization,
+1. Enumerate ordered graph factorizations and per-dimension `(Us, Ud)` points;
+   independently enumerate batch `(Ub,Tb)`. Derive `Ts`, `Td`, utilization,
    arithmetic cells, boundary bandwidth, inter-stage bandwidth, feedback
    bandwidth, and state capacity.
 2. Select candidate residency levels and reject points whose state or feedback
@@ -465,7 +472,8 @@ output semantics held constant.
    coefficient-width integer throughput.
 4. Calibrate small device microbenchmarks for 64/32-bit modular multiply,
    barriers, shared-memory access, coalesced bandwidth, and permutation stores.
-5. Map each surviving architecture point to legal stage pipelines, tile sizes,
+5. Factor logical `Us`, `Ud`, and `Ub` over lane, thread, warp, CTA, cluster,
+   grid, device, and node levels; map survivors to legal pipelines, tile sizes,
    block shapes, processing units, root forms, and layouts.
 6. Apply register, shared-memory, working-set, minimum-wave, and correctness
    constraints.

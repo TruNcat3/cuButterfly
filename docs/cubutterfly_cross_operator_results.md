@@ -82,11 +82,13 @@ temporal boundary stays in registers/shared memory or crosses a kernel and
 global memory. The expanded descriptor is:
 
 ```text
-M = (Us, Ts, Ud, Td, Hs, Rs, Rd, L, F, Q)
+M = (Us, Ts, Ud, Td, Ub, Tb, Hs, Rs, Rd, Rb, L, F, Q)
 
 Hs = physical service for a spatial stage edge
 Rs = residence level across stage-time folds
 Rd = residence level across data-time folds
+Ub/Tb = batch-space and batch-time unfolding
+Rb = residence and ownership across batch-time folds
 L  = input/intermediate/output layout and permutation policy
 F  = kernel realization family
 Q  = realization parameters such as compute_unit, tile_threads, warp_stages,

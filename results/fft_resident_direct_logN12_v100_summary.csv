@@ -1,0 +1,14 @@
+rank,operator,precision,direction,normalization,placement,logN,N,batch,element_stride,batch_stride,backend,compute_unit,complex_multiply,cross_twiddle,local_exchange,fft_core,stage_space,tile_threads,local_stages,reorder_columns,warp_stages,pipeline_warps,stage_handoff,trials,median_kernel_ms,min_kernel_ms,max_kernel_ms,median_Gbutterfly_s,slowdown_vs_best
+1,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,cufft,auto,four-mul,table,shared,scalar,0,0,0,0,0,0,named-barrier,5,0.088750,0.088678,0.088832,283.558327,1.000000
+2,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,512,0,0,0,0,named-barrier,5,0.088996,0.088914,0.089098,282.775295,1.002772
+3,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,256,0,0,0,0,named-barrier,5,0.089631,0.089590,0.089692,280.772321,1.009927
+4,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,temporal-tile,auto,four-mul,table,shared,cufftdx-direct,0,1024,0,0,0,0,named-barrier,5,0.092467,0.092457,0.092570,272.159457,1.041882
+5,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,auto,four-mul,recurrence,shared,cufftdx-resident,0,1024,6,1,0,0,named-barrier,5,0.120412,0.120156,0.120771,208.997371,1.356755
+6,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,auto,four-mul,table,shared,cufftdx-resident,0,1024,6,1,0,0,named-barrier,5,0.121641,0.121293,0.122931,206.886105,1.370603
+7,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,auto,four-mul,recurrence,shared,cufftdx-resident,0,512,6,1,0,0,named-barrier,5,0.128788,0.128717,0.128840,195.404300,1.451132
+8,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,auto,four-mul,table,shared,cufftdx-resident,0,512,6,1,0,0,named-barrier,5,0.136571,0.134994,0.136827,184.269318,1.538828
+9,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,auto,four-mul,recurrence,shared,cufftdx-resident,0,256,6,1,0,0,named-barrier,5,0.183276,0.183030,0.183388,137.311431,2.065082
+10,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,auto,four-mul,table,shared,cufftdx-resident,0,256,6,1,0,0,named-barrier,5,0.195983,0.195727,0.196147,128.407969,2.208259
+11,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,auto,four-mul,table,shared,cufftdx-block,0,32,6,1,0,0,named-barrier,5,0.213207,0.212972,0.213780,118.034679,2.402332
+12,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,auto,four-mul,recurrence,shared,cufftdx-block,0,32,6,1,0,0,named-barrier,5,0.214170,0.214047,0.214221,117.504188,2.413183
+13,fft,fp32,forward,none,out-of-place,12,4096,1024,1,4096,online-reorder,radix4,four-mul,table,shared,scalar,0,256,6,1,0,0,named-barrier,5,0.474358,0.448707,0.519823,53.052414,5.344879

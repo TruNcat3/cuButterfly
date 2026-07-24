@@ -89,6 +89,14 @@ enum class ComplexMultiply {
 const char*     complex_multiply_name(ComplexMultiply multiply) noexcept;
 ComplexMultiply parse_complex_multiply(const std::string& name);
 
+enum class CrossTwiddleMode {
+    Table,
+    Recurrence,
+};
+
+const char*      cross_twiddle_mode_name(CrossTwiddleMode mode) noexcept;
+CrossTwiddleMode parse_cross_twiddle_mode(const std::string& name);
+
 enum class LocalExchange {
     SharedMemory,
     WarpRegister,
@@ -102,6 +110,10 @@ enum class FftCore {
     ThreadDft8,
     CtaDft8,
     WmmaDft8,
+    CufftDxBlock,
+    CufftDxDirect,
+    CufftDxResident,
+    TurboFftGenerated,
 };
 
 const char* fft_core_name(FftCore core) noexcept;
@@ -123,12 +135,19 @@ struct ButterflyConfig {
     std::uint32_t      stage_space       = 0;
     StageHandoff       stage_handoff     = StageHandoff::NamedBarrier;
     std::uint32_t      tile_threads      = 128;
+    std::uint32_t      prefix_threads    = 0;
+    std::uint32_t      suffix_threads    = 0;
+    std::uint32_t      prefix_ept        = 8;
+    std::uint32_t      suffix_ept        = 8;
+    std::uint32_t      prefix_units_per_cta = 0;
+    std::uint32_t      suffix_units_per_cta = 0;
     std::uint32_t      local_stages      = 10;
     std::uint32_t      reorder_columns   = 1;
     std::uint32_t      warp_stages       = 5;
     std::uint32_t      pipeline_warps    = 8;
     ComputeUnit        compute_unit      = ComputeUnit::Radix2;
     ComplexMultiply    complex_multiply  = ComplexMultiply::FourMul;
+    CrossTwiddleMode   cross_twiddle     = CrossTwiddleMode::Table;
     LocalExchange      local_exchange    = LocalExchange::SharedMemory;
     FftCore            fft_core          = FftCore::Scalar;
 };

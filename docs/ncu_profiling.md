@@ -1,5 +1,45 @@
 # Nsight Compute Profiling
 
+## FFT resident mapping
+
+The `logN=12` FFT decomposition compares two-pass, resident 64x64, direct 4096,
+and cuFFT kernels:
+
+```bash
+sudo -E ./scripts/profile_fft_resident_ncu.sh
+sudo chown -R "$USER:$USER" results/ncu_fft_resident
+```
+
+The resulting counter analysis is recorded in
+`results/ncu_fft_resident_analysis.md`. The key distinction is between the
+two-pass external traffic boundary and the resident kernel's internal
+shared-exchange/control overhead.
+
+The new whole-transform `logN=14` winner can be compared directly with cuFFT:
+
+```bash
+sudo -E ./scripts/profile_fft_direct14_ncu.sh
+sudo chown -R "$USER:$USER" results/ncu_fft_direct14
+```
+
+This profiles the 1024-thread direct point and cuFFT with the same transform
+count and counter set. Non-admin runs on the current server fail with
+`ERR_NVGPUCTRPERM`.
+
+## FFT two-dimension mapping
+
+The `logN=18` architecture search selected a 256/256-thread `9+9` mapping over
+the previous fixed 512/512 point. Profile the tuned, fixed, asymmetric, and
+cuFFT cases with:
+
+```bash
+sudo -E ./scripts/profile_fft_architecture_ncu.sh
+sudo chown -R "$USER:$USER" results/ncu_fft_architecture
+```
+
+Override `LOG_N`, `BATCH`, and `LOCAL_STAGES` to reuse the script for another
+selected split.
+
 ## Purpose
 
 The profiling run compares three implementations under the same modulus,

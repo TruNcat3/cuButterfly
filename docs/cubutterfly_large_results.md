@@ -109,6 +109,25 @@ sudo -E ./scripts/profile_cubutterfly_fft.sh
 sudo chown -R "$USER:$USER" results/ncu_fft
 ```
 
+## Subsequent Processing-Core Composition
+
+The tables above preserve the original generic radix-4 online-reorder
+experiment. The same two-pass architecture now also embeds cuFFTDx block FFTs,
+a four-transform CTA staging tile, and an in-register cross-twiddle epilogue.
+The resulting `logN=12..20` throughput is 41.9%-88.8% of cuFFT, including
+0.235971 ms versus cuFFT's 0.209521 ms at `logN=20`. See
+`processing_unit_design_space.md` and
+`results/fft_cufftdx_long_v100_summary.csv` for the split and twiddle sweep.
+
+The later resident/direct granularity sweep distinguishes launch fusion from
+unit selection. At `logN=12`, a one-CTA 64x64 composition improves from
+0.213207 ms to 0.120412 ms by eliminating global scratch and using a padded
+shared tile. The contiguous whole-transform units reach 1.006x, 1.012x, 0.965x,
+and 1.029x cuFFT throughput at `logN=11..14`. At `logN=14`, the manual
+persistent 7+7 mapping is much slower than both the direct unit and cuFFT,
+demonstrating that temporal ownership alone does not prescribe the arithmetic
+core or CTA shape.
+
 ## External FWHT Baseline
 
 Dao-AILab `fast-hadamard-transform` commit

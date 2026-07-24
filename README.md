@@ -23,12 +23,13 @@ A regular butterfly graph exposes two logical dimensions: stage and independent
 data unit. cuButterfly unfolds both dimensions in space and time:
 
 ```text
-M = (Us, Ts, Ud, Td, Hs, Rs, Rd, L, F, Q)
+M = (Us, Ts, Ud, Td, Ub, Tb, Hs, Rs, Rd, Rb, L, F, Q)
 
 Us, Ts  stage-space and stage-time unfolding
 Ud, Td  data-space and data-time unfolding
+Ub, Tb  batch-space and batch-time unfolding
 Hs      physical service for spatial stage edges
-Rs, Rd  residence across stage-time and data-time folds
+Rs/Rd/Rb residence across stage, data, and batch folds
 L       input, intermediate, and output layout policy
 F, Q    kernel family and hardware realization parameters
 ```
@@ -42,7 +43,8 @@ The processing unit may change without changing the paradigm. Conversely, a
 good codelet does not determine its block shape, residency, permutation policy,
 or cross-kernel schedule. These are searched against the current GPU.
 
-Read [Design Overview](docs/design_overview.md) for the model and
+Read [Complete Butterfly Design Space](docs/butterfly_design_space.md) for the
+canonical model, [Design Overview](docs/design_overview.md) for the concise view, and
 [Hardware Mapping Methodology](docs/hardware_mapping_methodology.md) for the
 resource equations and counter-driven selection procedure.
 
@@ -67,21 +69,32 @@ All values below are resident kernel times measured on one Tesla
 V100-SXM2-16GB with CUDA 11.8. Each comparison matches the documented shape,
 precision, direction, layout, and warmup protocol. Ratios above `1.0x` mean
 cuButterfly has higher throughput. They must not be generalized to other GPUs.
+For the latest controlled cross-workload protocol and its complete evidence
+boundary, use the [V100 Comprehensive Results](docs/comprehensive_v100_results.md);
+the focused rows below retain their original experiment protocols.
 
 ### Same-Machine Library Comparisons
 
 | Workload | cuButterfly | Reference | Throughput ratio | Evidence |
 |:--|--:|--:|--:|:--|
 | FP32 DFT8, `2^22` total points | 0.093420 ms | cuFFT 0.086323 ms | 0.924x | generated CTA DFT8 |
+| FP32 FFT, `logN=12`, `2^22` total points | 0.088934 ms | cuFFT 0.089989 ms | 1.012x | contiguous cuFFTDx direct unit |
+| FP32 FFT, `logN=14`, `2^22` total points | 0.131543 ms | cuFFT 0.135383 ms | 1.029x | contiguous cuFFTDx direct unit |
+| FP32 FFT, `logN=18`, `2^22` total points | 0.212019 ms | cuFFT 0.226877 ms | 1.070x | `9+9`, independently tuned 256/256-thread dimensions |
+| FP32 FFT, `logN=20`, `2^22` total points | 0.235971 ms | cuFFT 0.209521 ms | 0.888x | cuFFTDx two-pass composition |
 | FP32 FWHT, `logN=8` | 0.043131 ms | Dao FHT 0.043172 ms | 1.001x | integrated register unit |
 | FP32 FWHT, `logN=15` | 0.069243 ms | Dao FHT 0.063949 ms | 0.924x | register-pressure boundary |
 | 60-bit NTT, `logN=16`, natural order | 0.274104 ms | GPU-NTT 0.291133 ms | 1.062x | fused Hybrid2D |
 | 60-bit NTT, `logN=20`, native bit-reversed | 0.341320 ms | GPU-NTT 0.396186 ms | 1.161x | compact-stage mapping |
 
-The FFT result is close only for the small generated codelet workload. For
-large resident FFTs, the current online-reorder path reaches 33.0%-47.4% of
-cuFFT throughput at `logN=12..20`. This remaining gap is an explicit research
-target, not hidden by the headline table.
+The generated local core and tiled two-pass composition raise long FFT
+throughput from 32.7%-47.4% to 41.9%-88.8% of cuFFT. Whole-transform cuFFTDx
+units at `logN=11..14` isolate the local-unit ceiling: the contiguous paths at
+`logN=11,12,14` reach 1.006x, 1.012x, and 1.029x cuFFT throughput, while
+`logN=13` reaches 0.965x. Independently tuning the two long-transform dimensions
+also raises `logN=18` from 0.881x in the fixed-512 mapping experiment to 1.070x.
+Processing-unit granularity and each dimension's CTA shape are therefore explicit
+hardware-mapping axes rather than fixed properties of the paradigm.
 
 ### Online Reorder at `logN=20`
 
@@ -89,6 +102,7 @@ target, not hidden by the headline table.
 |:--|--:|--:|--:|
 | FWHT FP32 | 0.488264 ms | 0.319795 ms | 1.527x |
 | FFT FP32 | 1.199616 ms | 0.640174 ms | 1.874x |
+| FFT FP32, cuFFTDx core | 1.199616 ms | 0.235971 ms | 5.084x |
 | XOR-zeta uint32 | 0.487004 ms | 0.319519 ms | 1.524x |
 
 The permutation is fused into an already-required boundary store. It is not
@@ -165,8 +179,10 @@ requirements for contributions are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 - V100 is the only fully measured GPU generation in this revision. A100, H100,
   and RTX 4090 entries are placeholders, not performance claims.
-- FFT does not yet match cuFFT for long transforms; Tensor Core DFT8 helps the
-  local unit but does not remove layout, synchronization, and composition costs.
+- FP32 FFT is at cuFFT parity for the measured `logN=8,14,18` shapes, but the
+  measured `logN=20` path and FP64 `logN=16` path remain behind. Tensor Core
+  DFT8 helps the local unit but does not remove layout, synchronization, and
+  composition costs.
 - FWHT closely tracks Dao FHT after importing its validated local register
   hierarchy. This demonstrates processing-unit reuse, not independent invention
   of that core.

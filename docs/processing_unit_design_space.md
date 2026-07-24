@@ -1,5 +1,11 @@
 # Processing-Unit Design Space
 
+The canonical operator-independent architecture and candidate-state contract is
+defined in [Complete Butterfly Design Space](butterfly_design_space.md). The
+[FFT Architecture Design Space](fft_design_space.md) is its validated FFT
+projection. This document focuses on implemented processing units and measured
+selections.
+
 ## Architectural Boundary
 
 cuButterfly owns the two-dimensional space-time mapping. A processing unit is
@@ -20,7 +26,7 @@ P = (stage_group, arithmetic_core, coefficient_form, local_exchange)
   codelet transport.
 
 The architectural mapping parameters remain
-`(local_stages, reorder_columns, tile_threads, backend, ...)`. Consequently a
+`(local_stages, reorder_columns, tile_threads, prefix_threads, suffix_threads, backend, ...)`. Consequently a
 core can be replaced without changing the mapping model, and each GPU can
 search the product of both spaces.
 
@@ -29,6 +35,7 @@ search the product of both spaces.
 | Operator | Stage group | Arithmetic/coefficient choices | Mapping support |
 |:--|:--|:--|:--|
 | FFT FP32/FP64 | radix-2, fused radix-4, fused radix-8 | four-multiply, Gauss three-multiply, FP32 thread-register DFT8 | temporal, hierarchical, online-reorder; generated DFT8 point |
+| FFT FP32 optional | cuFFTDx block FFT, TurboFFT generated FFT | imported local codelet transport and arithmetic | temporal full-local points; cuFFTDx `logN=3..10`, TurboFFT `logN=7..10` |
 | FFT mixed | temporally fused DFT8 matrix | FP16 WMMA input with FP32 accumulation/output | generated temporal point |
 | FWHT FP32/FP64 | radix-2, fused radix-4, fused radix-8 | add/subtract; FP32 register-vector/XOR-swizzle exchange | temporal, hierarchical, online-reorder |
 | XOR-zeta uint32 | radix-2, fused radix-4, fused radix-8 | add/subtract modulo `2^32` | temporal, hierarchical, online-reorder |
@@ -44,6 +51,160 @@ Query the compiled matrix with:
 ```bash
 build/cubutterfly_bench --list-capabilities
 ```
+
+The imported choices are selected through `fft_core=cufftdx-block` and
+`fft_core=turbofft-generated`. They deliberately use the same plan and timing
+contract as the in-tree units. cuFFTDx is also composable with the long
+`online-reorder` backend: each pass embeds a block FFT, retains per-thread
+fragments in registers, uses shared memory for exchange and a tiled transpose,
+and fuses the cross twiddle into the first-pass epilogue. TurboFFT remains a
+standalone generated global kernel and therefore needs a device-codelet form
+before the same composition is possible.
+
+## Imported FFT Unit Results
+
+The V100 comparison uses FP32 forward, contiguous out-of-place batches with
+`2^22` total points, 20 warmups, 100 timed repetitions, and five trials. Values
+are medians; throughput above 1 means faster than cuFFT for the same batch.
+
+| logN | cuFFT ms | CTA DFT8 ms | cuFFTDx ms | cuFFTDx / cuFFT | TurboFFT ms | TurboFFT / cuFFT |
+|--:|--:|--:|--:|--:|--:|--:|
+| 3 | 0.086313 | 0.090798 | 0.149279 | 0.578x | n/a | n/a |
+| 4 | 0.084265 | 0.102072 | 0.099113 | 0.850x | n/a | n/a |
+| 5 | 0.084746 | 0.099830 | 0.084808 | 0.999x | n/a | n/a |
+| 6 | 0.084122 | 0.092037 | 0.084019 | **1.001x** | n/a | n/a |
+| 7 | 0.084541 | 0.095672 | 0.084490 | **1.001x** | 0.087634 | 0.965x |
+| 8 | 0.084152 | 0.101601 | 0.084736 | 0.993x | 0.087388 | 0.963x |
+| 9 | 0.084920 | 0.101540 | 0.084756 | **1.002x** | 0.083702 | **1.015x** |
+| 10 | 0.085903 | 0.107971 | 0.084808 | **1.013x** | 0.186931 | 0.460x |
+
+cuFFTDx reaches parity at `logN=5..10` but is not a replacement for the
+specialized batched scheduling used by cuFFT at very small sizes. TurboFFT is
+competitive at `logN=7..9`; its T4-selected `logN=10` mapping is a poor V100
+point, confirming that imported arithmetic does not remove the need for a
+hardware-specific organization search. TurboFFT `logN=10` also measured about
+`2.4e-4` maximum absolute error on the targeted random test, so its automated
+unit test uses a documented `3e-4` FP32 threshold.
+
+Raw and derived records are
+`results/fft_processing_units_v100_{raw,summary}.csv`; reproduce them with
+`scripts/benchmark_fft_processing_units.sh`.
+
+## Long cuFFTDx Composition
+
+For `N=N1*N2`, the long path performs two local block FFT passes. The first
+pass reads the `N1` dimension, applies `W_N^(k1*n2)` in registers, and writes
+the transposed intermediate layout. The second pass transforms `N2` and writes
+natural order. The original point stages four large local FFTs together so the
+transpose edges use fully occupied 32-byte memory sectors. `cross_twiddle` selects either
+one table lookup per element or two initial lookups followed by a per-thread
+register recurrence.
+
+That four-FFT packaging is now a default rather than a constant. For the
+cuFFTDx path, `prefix_threads` and `suffix_threads` independently select
+128/256/512/1024-thread budgets, while each dimension independently selects
+EPT 4/8/16 from the current V100 codegen manifest. The architecture derives
+`FFTsPerBlock = threads*EPT/local_size` for each dimension. Invalid points
+whose budget cannot cover one local FFT are rejected before launch. This exposes
+the spatial width of both dimensions without changing the two-pass dataflow.
+
+The following V100 medians use `2^22` total FP32 complex points, 20 warmups,
+100 repetitions, and five trials:
+
+| logN | Best split | Cross twiddle | Generic online ms | cuFFTDx online ms | Speedup | cuFFT ms | cuFFTDx/cuFFT throughput |
+|--:|:--|:--|--:|--:|--:|--:|--:|
+| 12 | `6+6` | table | 0.448748 | 0.211917 | 2.118x | 0.088893 | 41.9% |
+| 14 | `5+9` | recurrence | 0.440914 | 0.203510 | 2.167x | 0.122757 | 60.3% |
+| 16 | `6+10` | recurrence | 0.445317 | 0.225987 | 1.971x | 0.179292 | 79.3% |
+| 18 | `10+8` | recurrence | 0.468081 | 0.240364 | 1.947x | 0.211661 | 88.1% |
+| 20 | `10+10` | recurrence | 0.639396 | 0.235971 | 2.710x | 0.209521 | 88.8% |
+
+The selected split and twiddle policy vary with length. This is the intended
+separation: the architecture selects the two-dimensional flow and hardware
+mapping, while an established processing core supplies each resident local
+transform. Reproduce the table with
+`scripts/benchmark_fft_cufftdx_long.sh`.
+
+### Independent two-dimension mapping
+
+A hierarchical search first ranks split and twiddle policy at the default
+512/512 mapping, expands both thread axes only for the leading splits, and then
+remeasures finalists. On the same V100 with `2^22` points it selects:
+
+| logN | Split | Twiddle | Prefix/suffix threads | cuButterfly ms | cuFFT ms | Throughput ratio |
+|--:|:--|:--|:--|--:|--:|--:|
+| 16 | `6+10` | recurrence | `128/512` | 0.212685 | 0.180702 | 0.850x |
+| 18 | `9+9` | recurrence | `256/256` | 0.212019 | 0.226877 | **1.070x** |
+| 20 | `10+10` | recurrence | `512/512` | 0.245180 | 0.223232 | 0.910x |
+
+The `logN=18` point was independently confirmed with seven trials of 20 warmups
+and 100 repetitions. More threads do not monotonically improve performance:
+they increase FFTs per CTA and shared-memory footprint while reducing the number
+of independently schedulable CTAs. The optimum therefore depends on both local
+dimension lengths and the transform batch.
+
+Reproduce the constrained search with:
+
+```bash
+./scripts/explore_fft_architecture.py \
+  --logNs 16 18 20 --target-points 4194304 \
+  --output-prefix results/fft_architecture_explore_v100
+```
+
+Primary records are `results/fft_architecture_explore_v100_{search,confirm,summary}.csv`
+and `results/fft_architecture_logN18_confirm_v100_{confirm,summary}.csv`.
+
+### Resident and direct granularity experiment
+
+At `logN=12`, one 4096-value transform fits in a V100 CTA. Three physical
+organizations were measured with the same `2^22`-point protocol:
+
+| Organization | Physical boundary | Best mapping | Median ms | Throughput vs cuFFT |
+|:--|:--|:--|--:|--:|
+| cuFFTDx two-pass 64x64 | two launches, global scratch | table | 0.213207 | 41.6% |
+| resident composed 64x64 | one launch, shared 64x65 tile | recurrence, 1024 threads | 0.120412 | 73.7% |
+| direct cuFFTDx 4096 | one launch, whole-transform unit | 512 threads | 0.088996 | 99.7% |
+| cuFFT | vendor plan | vendor selected | 0.088750 | 100.0% |
+
+The resident composed point proves that the intermediate global boundary is
+not required at this size. Its remaining gap is not launch overhead: replacing
+the 128 separately executed 64-point local FFTs with one 4096-point equivalent
+unit closes it. Equivalent-unit granularity is therefore a hardware-dependent
+architecture parameter alongside spatial width, temporal depth, CTA threads,
+tile pitch, and cross-twiddle policy.
+
+The direct-unit search was then extended to every `logN=11..14` whole-transform
+cuFFTDx specialization. A contiguous compile-time layout removes generic
+stride/tail address work. Independent five-trial runs produce 1.006x, 1.012x,
+0.965x, and 1.029x cuFFT throughput at `logN=11,12,13,14`, respectively. The
+best V100 CTA shapes are 256, 512, 512, and 1024 threads. `cuobjdump` reports 63
+registers/thread and no local-memory spill for the winning `logN=14` point;
+the 512-thread alternative uses about 90 registers/thread.
+
+The same ownership policy is not universally beneficial. A manually composed
+persistent 7+7 `logN=14` CTA reaches only 0.227922 ms, while the direct 16384
+unit reaches 0.131543 ms and cuFFT reaches 0.135383 ms in the final run.
+This separates the architecture decision (whole-transform temporal ownership)
+from the processing-core implementation (manual symmetric composition versus
+cuFFTDx). It also shows why the equivalent unit must remain selectable rather
+than fixed.
+
+Reproduce the searches with:
+
+```bash
+./scripts/benchmark_fft_resident_logN12.sh
+./scripts/benchmark_fft_persistent_logN14.sh
+./scripts/benchmark_fft_direct_units.sh
+```
+
+The privileged counter comparison is prepared in
+`scripts/profile_fft_resident_ncu.sh`.
+Its V100 result confirms that resident and direct have the same approximately
+64 MiB external traffic, while resident executes 46.4% more warp instructions,
+incurs 2.0x the shared-store conflicts, and has higher barrier stall. See
+`results/ncu_fft_resident_analysis.md`.
+The corresponding `logN=14` direct-versus-cuFFT capture is prepared in
+`scripts/profile_fft_direct14_ncu.sh`.
 
 ## V100 Selection Evidence
 

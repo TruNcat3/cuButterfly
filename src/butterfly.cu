@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "cuntt/butterfly.hpp"
+#include "external_fft_units.cuh"
 #include "generated_unit_api.cuh"
 #include "stage_pipeline.cuh"
 
@@ -463,7 +464,8 @@ class ButterflyPlan::Impl {
         if (config_.log_n == 0 || config_.log_n > 20) {
             throw std::invalid_argument("butterfly log_n must be in [1, 20]");
         }
-        if (config_.backend == ButterflyBackend::TemporalTile && config_.local_exchange == LocalExchange::SharedMemory && config_.log_n > 10) {
+        if (config_.backend == ButterflyBackend::TemporalTile && config_.local_exchange == LocalExchange::SharedMemory &&
+            config_.log_n > 10 && config_.fft_core != FftCore::CufftDxDirect) {
             throw std::invalid_argument("temporal-tile requires log_n in [1, 10]");
         }
         if (config_.local_exchange == LocalExchange::WarpRegister) {
@@ -493,6 +495,33 @@ class ButterflyPlan::Impl {
                 throw std::invalid_argument("online-reorder columns must be a power of two and retain at most 1024 values per CTA");
             }
         }
+        if (config_.fft_core == FftCore::CufftDxBlock && config_.backend == ButterflyBackend::OnlineReorder) {
+            if (config_.prefix_threads == 0)
+                config_.prefix_threads = 512;
+            if (config_.suffix_threads == 0)
+                config_.suffix_threads = 512;
+            const auto valid_threads = [](std::uint32_t threads) {
+                return threads == 128 || threads == 256 || threads == 512 || threads == 1024;
+            };
+            const std::uint32_t prefix_n = 1U << config_.local_stages;
+            const std::uint32_t suffix_n = 1U << (config_.log_n - config_.local_stages);
+            if (!valid_threads(config_.prefix_threads) || !valid_threads(config_.suffix_threads) ||
+                config_.prefix_threads * config_.prefix_ept < prefix_n ||
+                config_.suffix_threads * config_.suffix_ept < suffix_n ||
+                (config_.prefix_threads * config_.prefix_ept) % prefix_n != 0 ||
+                (config_.suffix_threads * config_.suffix_ept) % suffix_n != 0) {
+                throw std::invalid_argument(
+                    "online cuFFTDx thread/EPT products must cover an integer number of local FFTs");
+            }
+            if (!detail::cufftdx_online_available(config_.local_stages, config_.prefix_threads, config_.prefix_ept) ||
+                !detail::cufftdx_online_available(config_.log_n - config_.local_stages,
+                                                  config_.suffix_threads, config_.suffix_ept)) {
+                throw std::invalid_argument(
+                    "requested online cuFFTDx thread/EPT point is hardware-feasible but was not selected for this build");
+            }
+            config_.prefix_units_per_cta = config_.prefix_threads * config_.prefix_ept / prefix_n;
+            config_.suffix_units_per_cta = config_.suffix_threads * config_.suffix_ept / suffix_n;
+        }
         if (config_.batch == 0) {
             throw std::invalid_argument("butterfly batch must be positive");
         }
@@ -503,11 +532,17 @@ class ButterflyPlan::Impl {
             config_.stage_space != 8) {
             throw std::invalid_argument("butterfly stage_space must be 1, 2, 4, or 8");
         }
+        const bool standard_tile_threads = config_.tile_threads == 32 || config_.tile_threads == 64 ||
+                                           config_.tile_threads == 128 || config_.tile_threads == 256;
+        const bool resident_tile_threads = (config_.fft_core == FftCore::CufftDxResident ||
+                                            config_.fft_core == FftCore::CufftDxDirect) &&
+                                           (config_.tile_threads == 256 || config_.tile_threads == 512 ||
+                                            config_.tile_threads == 1024);
         if (config_.local_exchange == LocalExchange::SharedMemory &&
             (config_.backend == ButterflyBackend::TemporalTile || config_.backend == ButterflyBackend::Hierarchical ||
              config_.backend == ButterflyBackend::OnlineReorder) &&
-            config_.tile_threads != 32 && config_.tile_threads != 64 && config_.tile_threads != 128 && config_.tile_threads != 256) {
-            throw std::invalid_argument("butterfly tile_threads must be 32, 64, 128, or 256");
+            !standard_tile_threads && !resident_tile_threads) {
+            throw std::invalid_argument("butterfly tile_threads must be 32, 64, 128, or 256; cufftdx-resident also supports 512 or 1024");
         }
         if (config_.backend == ButterflyBackend::WarpHybrid && config_.warp_stages > 5) {
             throw std::invalid_argument("butterfly warp_stages must be in [0, 5]");
@@ -528,9 +563,12 @@ class ButterflyPlan::Impl {
             throw std::invalid_argument("uint32 precision requires xor-zeta");
         }
         if (config_.fft_core != FftCore::Scalar) {
-            if (config_.op != ButterflyOperator::Fft || config_.backend != ButterflyBackend::TemporalTile ||
-                config_.local_exchange != LocalExchange::SharedMemory) {
-                throw std::invalid_argument("generated FFT codelets require temporal-tile FFT with shared exchange");
+            const bool cufftdx_online = (config_.fft_core == FftCore::CufftDxBlock ||
+                                         config_.fft_core == FftCore::CufftDxResident) &&
+                                        config_.backend == ButterflyBackend::OnlineReorder;
+            if (config_.op != ButterflyOperator::Fft || config_.local_exchange != LocalExchange::SharedMemory ||
+                (config_.backend != ButterflyBackend::TemporalTile && !cufftdx_online)) {
+                throw std::invalid_argument("FFT codelets require temporal-tile or supported online-reorder FFT with shared exchange");
             }
             if (config_.fft_core == FftCore::ThreadDft8) {
                 if (config_.precision != ButterflyPrecision::Fp32 || !detail::generated_thread_dft8_available(config_.log_n)) {
@@ -542,11 +580,39 @@ class ButterflyPlan::Impl {
                     !detail::generated_cta_dft8_available(config_.log_n, config_.tile_threads)) {
                     throw std::invalid_argument("cta-dft8 requires a generated FP32 design point");
                 }
-            } else {
+            } else if (config_.fft_core == FftCore::WmmaDft8) {
                 if (config_.precision != ButterflyPrecision::Fp16Fp32 || !detail::generated_wmma_dft8_available(config_.log_n)) {
                     throw std::invalid_argument("wmma-dft8 requires a generated fp16-fp32 log_n=3 design point");
                 }
                 config_.tile_threads = 256;
+            } else if (config_.fft_core == FftCore::CufftDxBlock) {
+                const bool supported = config_.backend == ButterflyBackend::TemporalTile
+                                           ? detail::cufftdx_block_available(config_.log_n)
+                                           : detail::cufftdx_block_available(config_.local_stages) &&
+                                                 detail::cufftdx_block_available(config_.log_n - config_.local_stages);
+                if (config_.precision != ButterflyPrecision::Fp32 || !supported) {
+                    throw std::invalid_argument(
+                        "cufftdx-block requires FP32 and local FFT dimensions in logN=3..10");
+                }
+            } else if (config_.fft_core == FftCore::CufftDxDirect) {
+                if (config_.precision != ButterflyPrecision::Fp32 || !detail::cufftdx_direct_available(config_.log_n) ||
+                    !resident_tile_threads || (config_.log_n == 14 && config_.tile_threads == 256)) {
+                    throw std::invalid_argument(
+                        "cufftdx-direct requires FP32 logN=11..13 with 256/512/1024 threads, or logN=14 with 512/1024 threads");
+                }
+            } else if (config_.fft_core == FftCore::CufftDxResident) {
+                if (config_.precision != ButterflyPrecision::Fp32 ||
+                    !detail::cufftdx_resident_available(config_.log_n, config_.local_stages) ||
+                    !resident_tile_threads) {
+                    throw std::invalid_argument("cufftdx-resident requires FP32 logN=12/6+6 or logN=14/7+7 and 256, 512, or 1024 threads");
+                }
+            } else {
+                if (config_.precision != ButterflyPrecision::Fp32 || config_.inverse ||
+                    config_.placement != ButterflyPlacement::OutOfPlace || config_.element_stride != 1 ||
+                    !detail::turbofft_generated_available(config_.log_n)) {
+                    throw std::invalid_argument(
+                        "turbofft-generated requires an enabled FP32 forward, out-of-place, contiguous logN=7..10 build");
+                }
             }
         } else if (config_.precision == ButterflyPrecision::Fp16Fp32) {
             throw std::invalid_argument("fp16-fp32 precision requires the wmma-dft8 FFT core");
@@ -561,8 +627,11 @@ class ButterflyPlan::Impl {
         if (config_.compute_unit == ComputeUnit::Auto) {
             config_.compute_unit = config_.backend == ButterflyBackend::CuFft ? ComputeUnit::Auto : ComputeUnit::Radix2;
         }
-        if (config_.fft_core != FftCore::Scalar) {
+        if (config_.fft_core == FftCore::ThreadDft8 || config_.fft_core == FftCore::CtaDft8 || config_.fft_core == FftCore::WmmaDft8) {
             config_.compute_unit = ComputeUnit::Radix8;
+        } else if (config_.fft_core == FftCore::CufftDxBlock || config_.fft_core == FftCore::CufftDxDirect ||
+                   config_.fft_core == FftCore::CufftDxResident || config_.fft_core == FftCore::TurboFftGenerated) {
+            config_.compute_unit = ComputeUnit::Auto;
         }
         if (config_.local_exchange == LocalExchange::WarpRegister && config_.compute_unit != ComputeUnit::Radix2) {
             throw std::invalid_argument("warp-register exchange currently provides the radix2 arithmetic unit");
@@ -579,6 +648,11 @@ class ButterflyPlan::Impl {
         if (config_.complex_multiply != ComplexMultiply::FourMul &&
             (config_.op != ButterflyOperator::Fft || config_.backend == ButterflyBackend::CuFft)) {
             throw std::invalid_argument("Gauss complex multiplication requires a self-kernel FFT backend");
+        }
+        if (config_.cross_twiddle == CrossTwiddleMode::Recurrence &&
+            (config_.op != ButterflyOperator::Fft || config_.backend != ButterflyBackend::OnlineReorder ||
+             (config_.fft_core != FftCore::CufftDxBlock && config_.fft_core != FftCore::CufftDxResident))) {
+            throw std::invalid_argument("cross-twiddle recurrence currently requires an online-reorder cuFFTDx FFT");
         }
         if (config_.batch > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
             throw std::invalid_argument("butterfly batch exceeds backend integer limits");
@@ -613,6 +687,9 @@ class ButterflyPlan::Impl {
         }
         if (config_.batch_stride < transform_extent) {
             throw std::invalid_argument("butterfly batch_stride is smaller than one strided transform");
+        }
+        if (config_.fft_core == FftCore::TurboFftGenerated && config_.batch_stride != points_) {
+            throw std::invalid_argument("turbofft-generated requires contiguous batches");
         }
         if (config_.batch > 1 && config_.batch_stride > (kMaxSize - transform_extent) / (config_.batch - 1)) {
             throw std::invalid_argument("butterfly batch extent overflows size_t");
@@ -807,6 +884,45 @@ class ButterflyPlan::Impl {
                 detail::launch_generated_wmma_dft8(config_.log_n, device_input_.as<Complex32>(), result_buffer<Complex32>(), config_.batch,
                                                    config_.batch_stride, config_.element_stride, config_.inverse,
                                                    config_.inverse && config_.normalize_inverse);
+                CUB_CUDA_CHECK(cudaGetLastError());
+                return;
+            }
+            if (config_.fft_core == FftCore::CufftDxBlock) {
+                if (config_.backend == ButterflyBackend::OnlineReorder) {
+                    detail::launch_cufftdx_online_reorder(
+                        config_.log_n, config_.local_stages, device_input_.as<Complex32>(), result_buffer<Complex32>(),
+                        device_scratch_.as<Complex32>(), device_twiddles_.as<Complex32>(), config_.batch,
+                        config_.batch_stride, config_.element_stride, config_.inverse,
+                        config_.inverse && config_.normalize_inverse, config_.cross_twiddle,
+                        config_.prefix_threads, config_.suffix_threads, config_.prefix_ept, config_.suffix_ept);
+                } else {
+                    detail::launch_cufftdx_block(config_.log_n, device_input_.as<Complex32>(), result_buffer<Complex32>(), config_.batch,
+                                                 config_.batch_stride, config_.element_stride, config_.inverse,
+                                                 config_.inverse && config_.normalize_inverse);
+                }
+                CUB_CUDA_CHECK(cudaGetLastError());
+                return;
+            }
+            if (config_.fft_core == FftCore::CufftDxDirect) {
+                detail::launch_cufftdx_direct(config_.log_n, device_input_.as<Complex32>(), result_buffer<Complex32>(),
+                                              config_.batch, config_.batch_stride, config_.element_stride, config_.inverse,
+                                              config_.inverse && config_.normalize_inverse, config_.tile_threads);
+                CUB_CUDA_CHECK(cudaGetLastError());
+                return;
+            }
+            if (config_.fft_core == FftCore::CufftDxResident) {
+                detail::launch_cufftdx_resident(
+                    config_.log_n, config_.local_stages, device_input_.as<Complex32>(), result_buffer<Complex32>(),
+                    device_scratch_.as<Complex32>(), device_twiddles_.as<Complex32>(), config_.batch,
+                    config_.batch_stride, config_.element_stride,
+                    config_.inverse, config_.inverse && config_.normalize_inverse, config_.cross_twiddle,
+                    config_.tile_threads);
+                CUB_CUDA_CHECK(cudaGetLastError());
+                return;
+            }
+            if (config_.fft_core == FftCore::TurboFftGenerated) {
+                detail::launch_turbofft_generated(config_.log_n, device_input_.as<Complex32>(), result_buffer<Complex32>(), config_.batch,
+                                                   config_.batch_stride, config_.element_stride);
                 CUB_CUDA_CHECK(cudaGetLastError());
                 return;
             }

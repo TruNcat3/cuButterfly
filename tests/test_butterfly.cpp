@@ -5,6 +5,7 @@
 #include <random>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "cuntt/butterfly.hpp"
@@ -60,7 +61,10 @@ void test_fft(cuntt::ButterflyBackend backend, std::uint32_t stage_space, std::u
               bool inverse = false, bool normalize_inverse = true, std::uint32_t local_stages = 10, std::uint32_t reorder_columns = 1,
               cuntt::ComplexMultiply complex_multiply = cuntt::ComplexMultiply::FourMul,
               cuntt::FftCore fft_core = cuntt::FftCore::Scalar,
-              cuntt::ButterflyPrecision precision = cuntt::ButterflyPrecision::Fp32) {
+              cuntt::ButterflyPrecision precision = cuntt::ButterflyPrecision::Fp32,
+              cuntt::CrossTwiddleMode cross_twiddle = cuntt::CrossTwiddleMode::Table,
+              std::uint32_t prefix_threads = 0, std::uint32_t suffix_threads = 0,
+              std::uint32_t prefix_ept = 8, std::uint32_t suffix_ept = 8) {
     const std::size_t                     n = std::size_t{1} << log_n;
     std::mt19937                          random(0xff70U + stage_space);
     std::uniform_real_distribution<float> distribution(-1.0F, 1.0F);
@@ -84,6 +88,11 @@ void test_fft(cuntt::ButterflyBackend backend, std::uint32_t stage_space, std::u
     config.reorder_columns   = reorder_columns;
     config.fft_core          = fft_core;
     config.precision         = precision;
+    config.cross_twiddle     = cross_twiddle;
+    config.prefix_threads    = prefix_threads;
+    config.suffix_threads    = suffix_threads;
+    config.prefix_ept        = prefix_ept;
+    config.suffix_ept        = suffix_ept;
     cuntt::ButterflyPlan          plan(config);
     std::vector<cuntt::Complex32> output;
     plan.execute(input, output, 0, 1);
@@ -94,7 +103,11 @@ void test_fft(cuntt::ButterflyBackend backend, std::uint32_t stage_space, std::u
         for (std::size_t index = 0; index < n; ++index) {
             const auto& actual = output[transform * n + index];
             const float error  = std::hypot(expected[index].real - actual.real, expected[index].imag - actual.imag);
-            const float tolerance = precision == cuntt::ButterflyPrecision::Fp16Fp32 ? 1.0e-2F : 2.0e-4F;
+            const float tolerance = precision == cuntt::ButterflyPrecision::Fp16Fp32
+                                        ? 1.0e-2F
+                                        : (fft_core == cuntt::FftCore::TurboFftGenerated && log_n == 10
+                                               ? 3.0e-4F
+                                               : 2.0e-4F * std::sqrt(std::max(1.0F, static_cast<float>(n) / 1024.0F)));
             if (error > tolerance) {
                 throw std::runtime_error("FFT mismatch backend=" + std::string(cuntt::butterfly_backend_name(backend)) +
                                          " Us=" + std::to_string(stage_space) + " error=" + std::to_string(error));
@@ -199,7 +212,8 @@ void test_fp64(std::uint32_t log_n, bool inverse) {
     }
 }
 
-void test_layout(cuntt::ButterflyBackend backend, std::uint32_t log_n, cuntt::ButterflyPlacement placement) {
+void test_layout(cuntt::ButterflyBackend backend, std::uint32_t log_n, cuntt::ButterflyPlacement placement,
+                 cuntt::FftCore fft_core = cuntt::FftCore::Scalar, std::uint32_t local_stages = 10) {
     const std::size_t                     n              = std::size_t{1} << log_n;
     const std::size_t                     element_stride = 2;
     const std::size_t                     stride         = (n - 1) * element_stride + 1 + 13;
@@ -221,6 +235,10 @@ void test_layout(cuntt::ButterflyBackend backend, std::uint32_t log_n, cuntt::Bu
     config.element_stride = element_stride;
     config.placement      = placement;
     config.inverse        = placement == cuntt::ButterflyPlacement::InPlace;
+    config.fft_core       = fft_core;
+    config.local_stages   = local_stages;
+    if (fft_core == cuntt::FftCore::CufftDxResident || fft_core == cuntt::FftCore::CufftDxDirect)
+        config.tile_threads = 512;
     cuntt::ButterflyPlan          plan(config);
     std::vector<cuntt::Complex32> output;
     const bool                    repeated_in_place = placement == cuntt::ButterflyPlacement::InPlace;
@@ -284,6 +302,69 @@ int main() {
                 }
             }
         }
+#ifdef CUBUTTERFLY_TEST_CUFFTDX
+        for (std::uint32_t log_n = 3; log_n <= 10; ++log_n) {
+            for (const bool inverse : {false, true}) {
+                test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, 32, cuntt::ComputeUnit::Auto, log_n, inverse, true, 0, 0,
+                         cuntt::ComplexMultiply::FourMul, cuntt::FftCore::CufftDxBlock, cuntt::ButterflyPrecision::Fp32);
+            }
+        }
+        for (const auto placement : {cuntt::ButterflyPlacement::OutOfPlace, cuntt::ButterflyPlacement::InPlace}) {
+            test_layout(cuntt::ButterflyBackend::TemporalTile, 10, placement, cuntt::FftCore::CufftDxBlock);
+            test_layout(cuntt::ButterflyBackend::TemporalTile, 12, placement, cuntt::FftCore::CufftDxDirect);
+            test_layout(cuntt::ButterflyBackend::OnlineReorder, 12, placement, cuntt::FftCore::CufftDxBlock, 6);
+            test_layout(cuntt::ButterflyBackend::OnlineReorder, 12, placement, cuntt::FftCore::CufftDxResident, 6);
+            test_layout(cuntt::ButterflyBackend::OnlineReorder, 14, placement, cuntt::FftCore::CufftDxResident, 7);
+        }
+        for (const auto& point : {std::pair{12U, 6U}, std::pair{14U, 7U}}) {
+            for (const auto cross_twiddle : {cuntt::CrossTwiddleMode::Table, cuntt::CrossTwiddleMode::Recurrence}) {
+                for (const bool inverse : {false, true}) {
+                    test_fft(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 512, cuntt::ComputeUnit::Auto,
+                             point.first, inverse, true, point.second, 1, cuntt::ComplexMultiply::FourMul,
+                             cuntt::FftCore::CufftDxResident, cuntt::ButterflyPrecision::Fp32, cross_twiddle);
+                }
+            }
+        }
+        for (std::uint32_t log_n = 11; log_n <= 14; ++log_n) {
+            for (const std::uint32_t tile_threads : {256U, 512U, 1024U}) {
+                if (log_n == 14 && tile_threads == 256)
+                    continue;
+                test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, tile_threads, cuntt::ComputeUnit::Auto,
+                         log_n, false, true, 0, 0, cuntt::ComplexMultiply::FourMul,
+                         cuntt::FftCore::CufftDxDirect, cuntt::ButterflyPrecision::Fp32);
+            }
+            test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, 512, cuntt::ComputeUnit::Auto,
+                     log_n, true, true, 0, 0, cuntt::ComplexMultiply::FourMul,
+                     cuntt::FftCore::CufftDxDirect, cuntt::ButterflyPrecision::Fp32);
+        }
+        for (const auto& point : {std::pair{12U, 6U}, std::pair{16U, 6U}, std::pair{16U, 10U}}) {
+            for (const auto cross_twiddle : {cuntt::CrossTwiddleMode::Table, cuntt::CrossTwiddleMode::Recurrence}) {
+                for (const bool inverse : {false, true}) {
+                    test_fft(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 32, cuntt::ComputeUnit::Auto,
+                             point.first, inverse, true, point.second, 1, cuntt::ComplexMultiply::FourMul,
+                             cuntt::FftCore::CufftDxBlock, cuntt::ButterflyPrecision::Fp32, cross_twiddle);
+                }
+            }
+        }
+        for (const auto& threads : {std::pair{128U, 1024U}, std::pair{1024U, 128U}}) {
+            test_fft(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 32, cuntt::ComputeUnit::Auto,
+                     16, false, true, 8, 1, cuntt::ComplexMultiply::FourMul,
+                     cuntt::FftCore::CufftDxBlock, cuntt::ButterflyPrecision::Fp32,
+                     cuntt::CrossTwiddleMode::Recurrence, threads.first, threads.second);
+        }
+        for (const auto& ept : {std::pair{4U, 16U}, std::pair{16U, 4U}}) {
+            test_fft(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 256, cuntt::ComputeUnit::Auto,
+                     18, false, true, 9, 1, cuntt::ComplexMultiply::FourMul,
+                     cuntt::FftCore::CufftDxBlock, cuntt::ButterflyPrecision::Fp32,
+                     cuntt::CrossTwiddleMode::Recurrence, 256, 256, ept.first, ept.second);
+        }
+#endif
+#ifdef CUBUTTERFLY_TEST_TURBOFFT
+        for (std::uint32_t log_n = 7; log_n <= 10; ++log_n) {
+            test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, 32, cuntt::ComputeUnit::Auto, log_n, false, false, 0, 0,
+                     cuntt::ComplexMultiply::FourMul, cuntt::FftCore::TurboFftGenerated, cuntt::ButterflyPrecision::Fp32);
+        }
+#endif
         for (std::uint32_t log_n = 1; log_n <= 10; ++log_n) {
             for (const auto unit : {cuntt::ComputeUnit::Radix2, cuntt::ComputeUnit::Radix4, cuntt::ComputeUnit::Radix8}) {
                 for (const bool inverse : {false, true}) {
