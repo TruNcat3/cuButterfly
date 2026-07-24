@@ -205,6 +205,11 @@ sudo chown -R "$USER:$USER" results/ncu_scaling_crossovers
 python3 scripts/summarize_ncu.py \
   results/ncu_scaling_crossovers/*.csv \
   --output results/ncu_scaling_crossovers/summary.csv
+
+python3 scripts/analyze_scaling_ncu.py \
+  results/ncu_scaling_crossovers/summary.csv \
+  --output results/ncu_scaling_crossovers/attribution.csv \
+  --markdown results/ncu_scaling_crossovers/attribution.md
 ```
 
 The script requests base profiling clocks. Compare grid waves, active warps,

@@ -12,6 +12,9 @@ All notable repository and research-artifact changes are recorded here.
   mapping crossovers without using sub-0.020-ms rows as stable claims.
 - Targeted NCU collection for the FFT saturation gaps and FWHT processing-unit
   crossover.
+- A V100-calibrated mapping selector with held-out-shape evaluation and
+  explicit separation of mapping family from processing unit.
+- A matching-protocol 120-sample Dao FHT and GPU-NTT baseline refresh.
 
 ### Changed
 
@@ -20,6 +23,8 @@ All notable repository and research-artifact changes are recorded here.
   preflights.
 - The next release is scoped around counter-calibrated mapping selection and
   refreshed same-protocol external baselines.
+- Cross-GPU validation is deferred until the repository moves to a host with a
+  second GPU generation; it is not a `v0.3.0` release gate.
 
 ### Current Evidence Boundary
 

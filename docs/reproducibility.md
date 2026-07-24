@@ -95,6 +95,29 @@ python3 scripts/summarize_scaling_suite.py \
 Rows below the default 0.020 ms timing floor are retained for transparency but
 cannot define the reported peak or saturation batch.
 
+Evaluate the V100-calibrated selector without using the target shape's own
+timing:
+
+```bash
+python3 scripts/select_mapping.py --evaluate --top-k 3 \
+  --evaluation-output results/v100_mapping_selector_evaluation.csv \
+  --metrics-output results/v100_mapping_selector_metrics.json
+```
+
+Refresh matching-protocol external baselines with:
+
+```bash
+python3 scripts/run_external_baseline_suite.py --resume \
+  --fht-python /home/wt/.conda/envs/cubutterfly-baselines/bin/python \
+  --gpuntt-binary /tmp/gpuntt_merge_gap_bench \
+  --output results/v100_external_baselines_raw.csv
+
+python3 scripts/summarize_external_baseline_suite.py \
+  results/v100_external_baselines_raw.csv \
+  --output results/v100_external_baselines_summary.csv \
+  --markdown results/v100_external_baselines_report.md
+```
+
 ## 4. Generated Design Points
 
 The build invokes:

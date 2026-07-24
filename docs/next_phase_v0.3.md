@@ -19,8 +19,11 @@ hypothesis.
   used to infer saturation.
 - The scan establishes real mapping crossovers, including FWHT `logN=15`, and
   distinct FFT launch-limited and throughput-limited regions.
-- Cross-GPU rows are still placeholders and external NTT/FWHT results have not
-  yet been refreshed under the latest protocol.
+- Cross-GPU rows are still placeholders.
+- P1 is implemented over 49 internal multi-candidate shapes; it reaches 93.88%
+  top-1 accuracy and 1.0049x geometric-mean regret.
+- P2 is complete with 120 matching-protocol Dao FHT/GPU-NTT samples.
+- P0 awaits administrator-enabled NCU counter collection.
 
 ## Work Packages
 
@@ -66,9 +69,10 @@ process trials, and correctness result.
 XOR-zeta remains an internal architecture ablation until a maintained tuned
 external implementation with matching semantics is available.
 
-### P3: Cross-GPU Transfer
+### Future: Cross-GPU Transfer
 
-After P0-P2 are frozen on V100, capture one newer GPU profile, generate a
+This work is deferred until the repository moves to a newer GPU host. After
+P0-P2 are frozen on V100, capture one newer GPU profile, generate a
 reduced candidate set without using its timing results, and then measure it.
 The primary portability metric is prediction regret before recalibration; a
 second result may show regret after a small calibration set.
@@ -80,7 +84,8 @@ second result may show regret after a small calibration set.
 | G1: counters | bottlenecks explain observed batch trends | counters contradict the proposed resource model |
 | G2: selector | top-3 recall and regret meet the V100 target | exhaustive search remains necessary for common shapes |
 | G3: baselines | matching semantics and protocols are reproducible | library contracts cannot be aligned |
-| G4: transfer | rankings transfer with bounded regret | every GPU requires a full independent search |
+
+Cross-GPU transfer is intentionally not a `v0.3.0` decision gate.
 
 ## Deferred Scope
 
@@ -106,4 +111,9 @@ sudo chown -R "$USER:$USER" results/ncu_scaling_crossovers
 # The profiling script also emits this summary; rerun explicitly if needed
 python3 scripts/summarize_ncu.py results/ncu_scaling_crossovers/*.csv \
   --output results/ncu_scaling_crossovers/summary.csv
+
+python3 scripts/analyze_scaling_ncu.py \
+  results/ncu_scaling_crossovers/summary.csv \
+  --output results/ncu_scaling_crossovers/attribution.csv \
+  --markdown results/ncu_scaling_crossovers/attribution.md
 ```

@@ -22,6 +22,11 @@ The follow-up [V100 Length/Batch Scaling](v100_scaling_results.md) experiment
 holds transform length fixed while varying batch, exposing saturation points
 and mapping crossovers hidden by constant-total-point comparisons.
 
+The [V100 Mapping Selector](v100_mapping_selector.md) performs
+leave-one-complete-shape-out validation over the internal multi-candidate rows.
+The [matching-protocol external refresh](v100_external_baselines.md) is the
+current authority for Dao FHT and GPU-NTT comparisons with matching semantics.
+
 ### Common Mapping Across Operators
 
 At `N=256`, a controlled eight-warp stage pipeline selects the interior
@@ -93,6 +98,8 @@ separately.
 |:--|:--|:--|
 | comprehensive V100 suite | `comprehensive_v100_results.md` | `comprehensive_v100_full_raw.csv`, `comprehensive_v100_full_summary.csv` |
 | orthogonal length/batch scaling | `v100_scaling_results.md` | `v100_scaling_full_raw.csv`, `v100_scaling_full_summary.csv` |
+| calibrated V100 selector | `v100_mapping_selector.md` | `v100_mapping_selector_evaluation.csv`, `v100_mapping_selector_metrics.json` |
+| refreshed external baselines | `v100_external_baselines.md` | `v100_external_baselines_raw.csv`, `v100_external_baselines_summary.csv` |
 | V100 NTT baseline | `v100_initial_results.md` | `hybrid2d_matrix*.csv` |
 | NTT vs GPU-NTT | `gpu_ntt_gap_analysis.md` | `fused_vs_gpuntt.csv`, `gpu_ntt_gap_same_modulus.csv` |
 | processing units | `processing_unit_design_space.md` | `processing_units_v100_*.csv` |

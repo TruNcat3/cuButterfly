@@ -63,4 +63,7 @@ done
 
 python3 "$ROOT/scripts/summarize_ncu.py" "$OUTPUT_DIR"/*.csv \
     --output "$OUTPUT_DIR/summary.csv"
+python3 "$ROOT/scripts/analyze_scaling_ncu.py" "$OUTPUT_DIR/summary.csv" \
+    --output "$OUTPUT_DIR/attribution.csv" \
+    --markdown "$OUTPUT_DIR/attribution.md"
 printf 'NCU summary: %s\n' "$OUTPUT_DIR/summary.csv"

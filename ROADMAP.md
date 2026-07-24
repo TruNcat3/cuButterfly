@@ -43,7 +43,10 @@ artifacts, and decision gates.
   generated metadata.
 - Add focused sanitizer jobs on an available self-hosted GPU runner.
 
-## Cross-GPU Validation
+## Future: Cross-GPU Validation
+
+This work starts only after the repository is migrated to a machine with a
+second GPU generation. It is not a `v0.3.0` release gate.
 
 - Capture A100/H100/RTX 4090 hardware service profiles using the checked-in
   schema.

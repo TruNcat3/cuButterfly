@@ -10,6 +10,8 @@ artifacts.
 |:--|:--|:--|:--|
 | comprehensive suite | controlled cross-operator baseline for `v0.2.0` | `comprehensive_v100_full_raw.csv` | `comprehensive_v100_full_summary.csv`, `comprehensive_v100_full_report.md` |
 | orthogonal scaling | independent length/batch saturation and crossover scan | `v100_scaling_full_raw.csv` | `v100_scaling_full_summary.csv`, `v100_scaling_full_report.md` |
+| calibrated selector | held-out-shape mapping prediction | `v100_mapping_selector_evaluation.csv` | `v100_mapping_selector_metrics.json` |
+| external baseline refresh | matching-protocol Dao FHT and GPU-NTT pairs | `v100_external_baselines_raw.csv` | `v100_external_baselines_summary.csv`, `v100_external_baselines_report.md` |
 | hardware capabilities | V100 service and resource profile | `hardware_capabilities_raw.csv` | `hardware_capabilities_v100.json` |
 
 The `quick` files are protocol smoke tests. Files containing `confirm` retain

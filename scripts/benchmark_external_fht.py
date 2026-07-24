@@ -10,6 +10,7 @@ def main():
     parser.add_argument("--logNs", nargs="+", type=int, default=(8, 10, 12, 15))
     parser.add_argument("--dtypes", nargs="+", choices=("fp16", "bf16", "fp32"), default=("fp16", "bf16", "fp32"))
     parser.add_argument("--target-points", type=int, default=1 << 24)
+    parser.add_argument("--batch", type=int, help="Use one explicit batch for every requested length.")
     parser.add_argument("--warmup", type=int, default=20)
     parser.add_argument("--repeat", type=int, default=100)
     parser.add_argument("--trials", type=int, default=5)
@@ -35,7 +36,9 @@ def main():
         if not 3 <= log_n <= 15:
             raise ValueError("upstream power-of-two FWHT supports logN in [3, 15]")
         n = 1 << log_n
-        batch = max(1, args.target_points // n)
+        batch = args.batch if args.batch is not None else max(1, args.target_points // n)
+        if batch < 1:
+            raise ValueError("batch must be positive")
         scale = 1.0 / n if args.normalization == "inverse" else 1.0
         for dtype_name in args.dtypes:
             values = torch.randn((batch, n), device="cuda", dtype=dtype_map[dtype_name])
