@@ -6,7 +6,7 @@
 [![Release](https://img.shields.io/github/v/release/TruNcat3/cuButterfly)](https://github.com/TruNcat3/cuButterfly/releases/latest)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
-cuButterfly is a CUDA research prototype that generalizes the 
+cuButterfly is a CUDA research prototype that generalizes the
 space-time parallel paradigm from NTT to regular layered transforms. It keeps
 the architecture-level mapping independent of the local arithmetic core, so
 FFT, NTT, FWHT, and XOR-zeta can share one mapping vocabulary while selecting
@@ -174,6 +174,7 @@ units and future implementation paths are catalogued in
 [Candidate Implementations](docs/implementation_candidates.md).
 Development priorities are tracked in [`ROADMAP.md`](ROADMAP.md), and evidence
 requirements for contributions are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Versioned changes are recorded in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Evidence Boundary
 
@@ -203,7 +204,7 @@ software release as:
   author  = {TruNcat3},
   title   = {cuButterfly: Hardware-Mapped Space-Time Parallelism for Butterfly Computations on GPUs},
   year    = {2026},
-  version = {0.1.0},
+  version = {0.2.0},
   url     = {https://github.com/TruNcat3/cuButterfly}
 }
 ```

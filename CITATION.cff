@@ -6,8 +6,8 @@ authors:
   - name: "TruNcat3"
 repository-code: "https://github.com/TruNcat3/cuButterfly"
 url: "https://github.com/TruNcat3/cuButterfly"
-version: 0.1.0
-date-released: 2026-07-23
+version: 0.2.0
+date-released: 2026-07-24
 keywords:
   - butterfly computation
   - GPU
