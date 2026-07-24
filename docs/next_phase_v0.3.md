@@ -23,7 +23,8 @@ hypothesis.
 - P1 is implemented over 49 internal multi-candidate shapes; it reaches 93.88%
   top-1 accuracy and 1.0049x geometric-mean regret.
 - P2 is complete with 120 matching-protocol Dao FHT/GPU-NTT samples.
-- P0 awaits administrator-enabled NCU counter collection.
+- P0 is complete with 22 profiled implementation-shape pairs and 37 kernels;
+  the attribution separates grid coverage, residency, and useful work/warp.
 
 ## Work Packages
 
@@ -104,7 +105,7 @@ Cross-GPU transfer is intentionally not a `v0.3.0` decision gate.
 cmake --build build -j
 /usr/bin/ctest --test-dir build --output-on-failure
 
-# Administrator-enabled profiler collection
+# Recollect counters only when an administrator-enabled run is required
 sudo -E ./scripts/profile_scaling_crossovers_ncu.sh
 sudo chown -R "$USER:$USER" results/ncu_scaling_crossovers
 
@@ -116,4 +117,7 @@ python3 scripts/analyze_scaling_ncu.py \
   results/ncu_scaling_crossovers/summary.csv \
   --output results/ncu_scaling_crossovers/attribution.csv \
   --markdown results/ncu_scaling_crossovers/attribution.md
+
+# Regenerate every derived V100 analysis from immutable raw records
+./scripts/reproduce_v100_analysis.sh
 ```

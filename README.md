@@ -113,6 +113,13 @@ assumed free: the destination transaction pattern and suffix residency are
 measured separately. See [Experimental Results](docs/experiments.md) and the
 [raw results directory](results/).
 
+Targeted [V100 counter attribution](docs/v100_ncu_attribution.md) shows why
+occupancy alone is insufficient: the long online FFT paths expose as many or
+more active warps than cuFFT, but execute 1.60x-2.00x the warp instructions and
+about 9.4x-9.5x the shared-memory bank conflicts at the measured large-batch
+points. The mapping method therefore separates grid coverage, residency, and
+useful work per resident warp.
+
 ## Quick Start
 
 Requirements: Linux, CMake 3.20+, a C++17 compiler, and the CUDA Toolkit.

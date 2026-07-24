@@ -459,6 +459,20 @@ This is a pruning and interpretation model, not a cycle-accurate predictor.
 Final selection uses measured steady-state CUDA-event time with correctness and
 output semantics held constant.
 
+The targeted V100 length/batch experiment validates that the categories above
+must remain separate:
+
+| Case | Coverage/residency | Useful-work evidence | Diagnosis |
+|:--|:--|:--|:--|
+| FFT `logN=14`, batch 16 | direct: 0.20 waves/SM, one 1024-thread CTA/SM | strong local cuFFTDx core | `Ub` grid underfill |
+| FFT `logN=18`, batch 64 | online: 60.6% active warps | 1.60x cuFFT warp instructions, 9.50x bank conflicts | exchange/synchronization ceiling |
+| FFT `logN=20`, batch 16 | equal aggregate waves to cuFFT | 2.00x warp instructions; first pass is 61.8% of time | prefix/core/layout imbalance |
+| FWHT `logN=15`, batch 4/16 | warp-register: 0.05/0.20 waves/SM | at batch 16, 0.07x online warp instructions | `Ud` decomposition to `Td` residence crossover |
+
+Thus `active_warps` is not an optimization objective by itself. Grid coverage,
+residency, and useful work per active warp are independent selector features.
+See [V100 Counter Attribution](v100_ncu_attribution.md) for the complete data.
+
 ## 10. Portable architecture-selection procedure
 
 1. Enumerate ordered graph factorizations and per-dimension `(Us, Ud)` points;

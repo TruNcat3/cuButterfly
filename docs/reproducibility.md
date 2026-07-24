@@ -95,6 +95,13 @@ python3 scripts/summarize_scaling_suite.py \
 Rows below the default 0.020 ms timing floor are retained for transparency but
 cannot define the reported peak or saturation batch.
 
+After all raw records are present, regenerate the V100 scaling, selector,
+external-baseline, and NCU analyses together without modifying raw data:
+
+```bash
+./scripts/reproduce_v100_analysis.sh
+```
+
 Evaluate the V100-calibrated selector without using the target shape's own
 timing:
 

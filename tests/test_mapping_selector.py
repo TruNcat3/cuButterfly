@@ -28,6 +28,16 @@ class MappingSelectorTest(unittest.TestCase):
         self.assertAlmostEqual(predicted, 1.0)
         self.assertEqual(confidence, "extrapolated-high")
 
+    def test_counter_evidence_reports_grid_underfill(self):
+        row = {"operator": "fwht", "logN_int": 15, "batch": 4,
+               "processing_unit": "warp-register", "parameters": {}}
+        counters = [{"operator": "fwht", "logN": "15", "batch": "4", "implementation": "warp",
+                     "total_waves_per_sm": "0.05", "registers_per_thread": "255",
+                     "barrier_stall_pct": "1", "long_scoreboard_stall_pct": "6"}]
+        evidence = MODULE.counter_evidence(row, counters)
+        self.assertIn("grid underfills", evidence)
+        self.assertIn("register-limited", evidence)
+
     def test_v100_evaluation_covers_multiple_operators(self):
         cases = MODULE.load_cases(ROOT / "config" / "v100_scaling_suite.json")
         rows = MODULE.load_rows(ROOT / "results" / "v100_scaling_full_summary.csv", cases)

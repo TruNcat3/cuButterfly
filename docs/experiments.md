@@ -26,6 +26,8 @@ The [V100 Mapping Selector](v100_mapping_selector.md) performs
 leave-one-complete-shape-out validation over the internal multi-candidate rows.
 The [matching-protocol external refresh](v100_external_baselines.md) is the
 current authority for Dao FHT and GPU-NTT comparisons with matching semantics.
+Targeted [V100 counter attribution](v100_ncu_attribution.md) explains the
+length/batch saturation and FWHT mapping crossover in hardware-service terms.
 
 ### Common Mapping Across Operators
 
@@ -99,6 +101,7 @@ separately.
 | comprehensive V100 suite | `comprehensive_v100_results.md` | `comprehensive_v100_full_raw.csv`, `comprehensive_v100_full_summary.csv` |
 | orthogonal length/batch scaling | `v100_scaling_results.md` | `v100_scaling_full_raw.csv`, `v100_scaling_full_summary.csv` |
 | calibrated V100 selector | `v100_mapping_selector.md` | `v100_mapping_selector_evaluation.csv`, `v100_mapping_selector_metrics.json` |
+| scaling-crossover counters | `v100_ncu_attribution.md` | `ncu_scaling_crossovers/summary.csv`, `ncu_scaling_crossovers/attribution.csv` |
 | refreshed external baselines | `v100_external_baselines.md` | `v100_external_baselines_raw.csv`, `v100_external_baselines_summary.csv` |
 | V100 NTT baseline | `v100_initial_results.md` | `hybrid2d_matrix*.csv` |
 | NTT vs GPU-NTT | `gpu_ntt_gap_analysis.md` | `fused_vs_gpuntt.csv`, `gpu_ntt_gap_same_modulus.csv` |

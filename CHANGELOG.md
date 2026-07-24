@@ -15,6 +15,8 @@ All notable repository and research-artifact changes are recorded here.
 - A V100-calibrated mapping selector with held-out-shape evaluation and
   explicit separation of mapping family from processing unit.
 - A matching-protocol 120-sample Dao FHT and GPU-NTT baseline refresh.
+- Targeted NCU attribution over 22 FFT/FWHT implementation-shape pairs and 37
+  kernels, plus one command that regenerates all derived V100 analyses.
 
 ### Changed
 

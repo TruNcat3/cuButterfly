@@ -18,6 +18,7 @@ for the research idea, then move toward implementation and evidence.
 | [V100 Comprehensive Results](comprehensive_v100_results.md) | What does the controlled full-suite comparison currently establish? |
 | [V100 Length/Batch Scaling](v100_scaling_results.md) | How do saturation and the best mapping change when length and batch are swept independently? |
 | [V100 Mapping Selector](v100_mapping_selector.md) | How accurately can the measured V100 mappings be selected with a held-out shape? |
+| [V100 Counter Attribution](v100_ncu_attribution.md) | Which hardware services explain the observed saturation and mapping crossovers? |
 | [V100 External Baselines](v100_external_baselines.md) | What do matching-protocol Dao FHT and GPU-NTT comparisons establish? |
 | [Next Phase: v0.3.0](next_phase_v0.3.md) | What is the next falsifiable goal, execution order, and definition of done? |
 | [Reproducibility](reproducibility.md) | How are sweeps, external baselines, and profiler data reproduced? |
@@ -44,6 +45,7 @@ Repository maintenance and research priorities are documented in
 - [V100 Comprehensive Results](comprehensive_v100_results.md)
 - [V100 Length/Batch Scaling](v100_scaling_results.md)
 - [V100 Mapping Selector](v100_mapping_selector.md)
+- [V100 Counter Attribution](v100_ncu_attribution.md)
 - [V100 Matching-Protocol External Baselines](v100_external_baselines.md)
 - [V100 Initial NTT Results](v100_initial_results.md)
 - [V100 NTT Parameter Matrix](v100_matrix_results.md)

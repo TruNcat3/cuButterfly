@@ -145,7 +145,40 @@ def explanation(row, context, confidence):
     return "; ".join(factors)
 
 
-def rank_shape(target_rows, all_rows, hardware, excluded_shape=None):
+def ncu_implementation(row):
+    if row["operator"] == "fft":
+        return "direct" if row["parameters"].get("fft_core") == "cufftdx-direct" else "online"
+    if row["operator"] == "fwht":
+        return "warp" if row["processing_unit"] == "warp-register" else "online"
+    return ""
+
+
+def counter_evidence(row, ncu_rows):
+    implementation = ncu_implementation(row)
+    match = next((item for item in ncu_rows
+                  if item["operator"] == row["operator"]
+                  and int(item["logN"]) == row["logN_int"]
+                  and item["implementation"] == implementation
+                  and int(item["batch"]) == row["batch"]), None)
+    if match is None:
+        return ""
+    waves = float(match["total_waves_per_sm"])
+    registers = float(match["registers_per_thread"])
+    barrier = float(match["barrier_stall_pct"])
+    scoreboard = float(match["long_scoreboard_stall_pct"])
+    factors = [f"NCU {waves:.2f} waves/SM"]
+    if waves < 1.0:
+        factors.append("grid underfills the GPU")
+    if registers >= 200:
+        factors.append(f"register-limited at {registers:.0f} registers/thread")
+    if barrier >= 10.0:
+        factors.append(f"barrier stalls {barrier:.1f}%")
+    if scoreboard >= 20.0:
+        factors.append(f"scoreboard stalls {scoreboard:.1f}%")
+    return ", ".join(factors)
+
+
+def rank_shape(target_rows, all_rows, hardware, excluded_shape=None, ncu_rows=()):
     ranked = []
     for target in target_rows:
         training = [row for row in all_rows
@@ -156,13 +189,17 @@ def rank_shape(target_rows, all_rows, hardware, excluded_shape=None):
         context = hardware_context(target, hardware)
         if not context["legal"] or predicted_ms is None:
             continue
+        reason = explanation(target, context, confidence)
+        counters = counter_evidence(target, ncu_rows)
+        if counters:
+            reason += "; " + counters
         ranked.append({
             "implementation": target["implementation"],
             "mapping_family": target["mapping_family"],
             "processing_unit": target["processing_unit"],
             "predicted_kernel_ms": predicted_ms,
             "confidence": confidence,
-            "reason": explanation(target, context, confidence),
+            "reason": reason,
             "parameters": target["parameters"],
         })
     ranked.sort(key=lambda row: row["predicted_kernel_ms"])
@@ -238,6 +275,8 @@ def main():
     parser.add_argument("--summary", type=pathlib.Path, default=pathlib.Path("results/v100_scaling_full_summary.csv"))
     parser.add_argument("--manifest", type=pathlib.Path, default=pathlib.Path("config/v100_scaling_suite.json"))
     parser.add_argument("--hardware", type=pathlib.Path, default=pathlib.Path("configs/hardware/v100_sxm2_16gb.json"))
+    parser.add_argument("--ncu-attribution", type=pathlib.Path,
+                        default=pathlib.Path("results/ncu_scaling_crossovers/attribution.csv"))
     parser.add_argument("--top-k", type=int, default=3)
     parser.add_argument("--include-external", action="store_true")
     parser.add_argument("--evaluate", action="store_true")
@@ -271,7 +310,11 @@ def main():
                   and row["batch"] == args.batch]
     if not candidates:
         raise ValueError("workload is outside the calibrated manifest; measurement is required")
-    ranked = rank_shape(candidates, rows, hardware, excluded_shape=shape_key(candidates[0]))
+    ncu_rows = []
+    if args.ncu_attribution.exists():
+        with args.ncu_attribution.open() as source:
+            ncu_rows = list(csv.DictReader(source))
+    ranked = rank_shape(candidates, rows, hardware, excluded_shape=shape_key(candidates[0]), ncu_rows=ncu_rows)
     print(json.dumps({"hardware": hardware["name"], "candidates": ranked[:args.top_k]}, indent=2))
 
 
