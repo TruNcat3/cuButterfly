@@ -25,7 +25,7 @@ class FftPipelineGeneratorTest(unittest.TestCase):
             counts.setdefault((point["mapping_id"], point["batch"]), 0)
             counts[(point["mapping_id"], point["batch"])] += 1
         self.assertEqual(len(counts), 6)
-        self.assertTrue(all(value <= (16 if mapping == "fft20-fp32" else 12)
+        self.assertTrue(all(value <= (20 if mapping == "fft20-fp32" else 12)
                             for (mapping, _), value in counts.items()))
         self.assertTrue(all(point["selection_pool_size"] >= point["selection_limit"] for point in self.runnable))
 
@@ -49,6 +49,14 @@ class FftPipelineGeneratorTest(unittest.TestCase):
                          {"direct-strided", "tiled-transpose"})
         self.assertTrue(all(point["id"].endswith("_tx")
                             for point in points if point["direct_boundary"] == "tiled-transpose"))
+
+    def test_prefix_direct_points_include_both_boundary_realizations(self):
+        points = [point for point in self.runnable
+                  if point["mapping_id"] == "fft20-fp32" and point["prefix_log_n"] >= 11]
+        self.assertEqual({point["direct_boundary"] for point in points},
+                         {"direct-strided", "prefix-tiled-transpose"})
+        self.assertTrue(all(point["id"].endswith("_ptx")
+                            for point in points if point["direct_boundary"] == "prefix-tiled-transpose"))
 
     def test_generated_runtime_arguments_keep_dimensions_independent(self):
         point = next(point for point in self.runnable if point["prefix_log_n"] != point["suffix_log_n"])

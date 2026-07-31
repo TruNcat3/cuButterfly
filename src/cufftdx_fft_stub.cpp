@@ -18,7 +18,7 @@ void launch_cufftdx_direct(std::uint32_t, const Complex32*, Complex32*, std::uin
     throw std::runtime_error("cufftdx-direct was not enabled at build time");
 }
 
-void launch_cufftdx_online_reorder(std::uint32_t, std::uint32_t, const Complex32*, Complex32*, Complex32*,
+void launch_cufftdx_online_reorder(std::uint32_t, std::uint32_t, const Complex32*, Complex32*, Complex32*, Complex32*,
                                    const Complex32*, std::uint64_t, std::uint64_t, std::uint64_t, bool, bool,
                                    CrossTwiddleMode, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t,
                                    DirectBoundary) {

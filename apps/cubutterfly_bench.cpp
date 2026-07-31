@@ -38,7 +38,7 @@ void print_usage() {
         << "                    [--compute-unit auto|radix2|radix4|radix8]\n"
         << "                    [--complex-multiply four-mul|gauss3]\n"
         << "                    [--cross-twiddle table|recurrence]\n"
-        << "                    [--direct-boundary direct-strided|tiled-transpose]\n"
+        << "                    [--direct-boundary direct-strided|tiled-transpose|prefix-tiled-transpose]\n"
         << "                    [--local-exchange shared|warp-register]\n"
         << "                    [--fft-core scalar|thread-dft8|cta-dft8|wmma-dft8|cufftdx-block|cufftdx-direct|cufftdx-resident|turbofft-generated]\n"
         << "                    [--precision fp32|fp64|fp16-fp32|uint32]\n"

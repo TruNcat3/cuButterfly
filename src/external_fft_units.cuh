@@ -16,7 +16,8 @@ void launch_cufftdx_direct(std::uint32_t log_n, const Complex32* input, Complex3
                            std::uint64_t transforms, std::uint64_t batch_distance, std::uint64_t element_stride,
                            bool inverse, bool normalize, std::uint32_t tile_threads);
 void launch_cufftdx_online_reorder(std::uint32_t log_n, std::uint32_t local_log_n, const Complex32* input,
-                                   Complex32* output, Complex32* scratch, const Complex32* twiddles,
+                                   Complex32* output, Complex32* scratch, Complex32* workspace,
+                                   const Complex32* twiddles,
                                    std::uint64_t transforms, std::uint64_t batch_distance,
                                    std::uint64_t element_stride, bool inverse, bool normalize,
                                    CrossTwiddleMode cross_twiddle, std::uint32_t prefix_threads,

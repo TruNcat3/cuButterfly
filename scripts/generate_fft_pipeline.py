@@ -84,7 +84,9 @@ def runtime_args(point):
 
 def candidate_id(point):
     twiddle = "rec" if point["cross_twiddle"] == "recurrence" else "tbl"
-    boundary = "_tx" if point["direct_boundary"] == "tiled-transpose" else ""
+    boundary_suffixes = {"direct-strided": "", "tiled-transpose": "_tx",
+                         "prefix-tiled-transpose": "_ptx"}
+    boundary = boundary_suffixes[point["direct_boundary"]]
     return (f"{point['mapping_id']}_b{point['batch']}_p{point['prefix_log_n']}s{point['suffix_log_n']}_"
             f"t{point['prefix_threads']}x{point['suffix_threads']}_e{point['prefix_ept']}x{point['suffix_ept']}_{twiddle}{boundary}")
 
@@ -136,9 +138,11 @@ def enumerate_pipeline(document, architecture, codegen_points):
                     planned_shape.append(planned)
                     continue
                 twiddles = sorted(set(prefix_unit["cross_twiddle"]) & set(suffix_unit["cross_twiddle"]))
-                boundaries = suffix_unit.get("direct_boundaries", ["direct-strided"])
-                if suffix_log_n <= 10:
-                    boundaries = ["direct-strided"]
+                boundaries = ["direct-strided"]
+                if suffix_log_n >= 11 and "tiled-transpose" in suffix_unit.get("direct_boundaries", []):
+                    boundaries.append("tiled-transpose")
+                if prefix_log_n >= 11 and "prefix-tiled-transpose" in prefix_unit.get("direct_boundaries", []):
+                    boundaries.append("prefix-tiled-transpose")
                 for twiddle in twiddles:
                     for boundary in boundaries:
                         for prefix_threads in prefix_unit["threads"]:

@@ -102,6 +102,8 @@ const char* direct_boundary_name(DirectBoundary boundary) noexcept {
             return "direct-strided";
         case DirectBoundary::TiledTranspose:
             return "tiled-transpose";
+        case DirectBoundary::PrefixTiledTranspose:
+            return "prefix-tiled-transpose";
     }
     return "unknown";
 }
@@ -111,6 +113,8 @@ DirectBoundary parse_direct_boundary(const std::string& name) {
         return DirectBoundary::Strided;
     if (name == "tiled-transpose")
         return DirectBoundary::TiledTranspose;
+    if (name == "prefix-tiled-transpose")
+        return DirectBoundary::PrefixTiledTranspose;
     throw std::invalid_argument("unknown direct boundary: " + name);
 }
 

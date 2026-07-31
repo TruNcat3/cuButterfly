@@ -494,7 +494,10 @@ class ButterflyPlan::Impl {
             config_.prefix_ept      = mapping.prefix_ept;
             config_.suffix_ept      = mapping.suffix_ept;
             config_.cross_twiddle   = mapping.recurrence_twiddle ? CrossTwiddleMode::Recurrence : CrossTwiddleMode::Table;
-            config_.direct_boundary = mapping.tiled_transpose ? DirectBoundary::TiledTranspose : DirectBoundary::Strided;
+            config_.direct_boundary = mapping.prefix_tiled_transpose
+                                          ? DirectBoundary::PrefixTiledTranspose
+                                          : (mapping.suffix_tiled_transpose ? DirectBoundary::TiledTranspose
+                                                                            : DirectBoundary::Strided);
         }
         if (config_.backend == ButterflyBackend::TemporalTile && config_.local_exchange == LocalExchange::SharedMemory &&
             config_.log_n > 10 && config_.fft_core != FftCore::CufftDxDirect) {
@@ -569,6 +572,14 @@ class ButterflyPlan::Impl {
                 (suffix_log_n != 11 && suffix_log_n != 12)) {
                 throw std::invalid_argument(
                     "tiled-transpose direct boundary currently requires an online cuFFTDx FFT with suffix logN=11 or 12");
+            }
+        }
+        if (config_.direct_boundary == DirectBoundary::PrefixTiledTranspose) {
+            if (config_.op != ButterflyOperator::Fft || config_.backend != ButterflyBackend::OnlineReorder ||
+                config_.fft_core != FftCore::CufftDxBlock ||
+                (config_.local_stages != 11 && config_.local_stages != 12)) {
+                throw std::invalid_argument(
+                    "prefix-tiled-transpose direct boundary currently requires an online cuFFTDx FFT with prefix logN=11 or 12");
             }
         }
         if (config_.batch == 0) {
@@ -765,6 +776,9 @@ class ButterflyPlan::Impl {
         if (config_.backend == ButterflyBackend::Hierarchical || config_.backend == ButterflyBackend::OnlineReorder) {
             device_scratch_.allocate(data_bytes_);
         }
+        if (config_.direct_boundary == DirectBoundary::PrefixTiledTranspose) {
+            device_workspace_.allocate(data_bytes_);
+        }
 
         if (config_.op == ButterflyOperator::Fft && config_.backend != ButterflyBackend::CuFft) {
             constexpr double kPi = 3.141592653589793238462643383279502884;
@@ -943,7 +957,8 @@ class ButterflyPlan::Impl {
                 if (config_.backend == ButterflyBackend::OnlineReorder) {
                     detail::launch_cufftdx_online_reorder(
                         config_.log_n, config_.local_stages, device_input_.as<Complex32>(), result_buffer<Complex32>(),
-                        device_scratch_.as<Complex32>(), device_twiddles_.as<Complex32>(), config_.batch,
+                        device_scratch_.as<Complex32>(), device_workspace_.as<Complex32>(),
+                        device_twiddles_.as<Complex32>(), config_.batch,
                         config_.batch_stride, config_.element_stride, config_.inverse,
                         config_.inverse && config_.normalize_inverse, config_.cross_twiddle,
                         config_.prefix_threads, config_.suffix_threads, config_.prefix_ept, config_.suffix_ept,
@@ -1042,6 +1057,7 @@ class ButterflyPlan::Impl {
     DeviceBuffer    device_input_;
     DeviceBuffer    device_output_;
     DeviceBuffer    device_scratch_;
+    DeviceBuffer    device_workspace_;
     DeviceBuffer    device_twiddles_;
     cufftHandle     cufft_plan_ = 0;
 };

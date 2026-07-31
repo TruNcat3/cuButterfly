@@ -22,6 +22,7 @@ class FftDispatchGeneratorTest(unittest.TestCase):
             {"rank": "1", "logN": "18", "batch": "16", "candidate_id": "mid", "prefix_log_n": "9",
              "suffix_log_n": "9", "prefix_threads": "128", "suffix_threads": "128", "prefix_ept": "16",
              "suffix_ept": "16", "cross_twiddle": "table", "median_kernel_ms": "1",
+             "direct_boundary": "prefix-tiled-transpose",
              "cufft_median_ms": "1", "throughput_vs_cufft": "1"},
             {"rank": "2", "logN": "18", "batch": "16", "candidate_id": "loser", "prefix_log_n": "9",
              "suffix_log_n": "9", "prefix_threads": "256", "suffix_threads": "256", "prefix_ept": "8",
@@ -41,7 +42,8 @@ class FftDispatchGeneratorTest(unittest.TestCase):
             MODULE.generate_header(path, document)
             text = path.read_text()
             self.assertIn("log_n == 18U && batch <= 4ULL", text)
-            self.assertIn("mapping = {8U, 256U, 128U, 8U, 16U, true, true}", text)
+            self.assertIn("mapping = {8U, 256U, 128U, 8U, 16U, true, true, false}", text)
+            self.assertIn("mapping = {9U, 128U, 128U, 16U, 16U, false, false, true}", text)
 
 
 if __name__ == "__main__":

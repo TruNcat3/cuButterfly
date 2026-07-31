@@ -10,7 +10,8 @@ kernel implementation.
    availability. `cufftdx-online-shared` covers local `logN=3..10`, while
    `cufftdx-large-online` adapts the direct unit for `logN=11..12`. A suffix
    direct unit independently selects either a strided natural-order store or a
-   contiguous store followed by a padded tiled transpose.
+   contiguous store followed by a padded tiled transpose. A prefix direct unit
+   can instead transpose input into a workspace and consume contiguous rows.
 2. **Mapping** factors a transform into prefix and suffix dimensions. Each pass
    independently selects threads and elements per thread. The model derives
    units/CTA, grid blocks, shared storage, estimated resident CTAs, waves/SM,
@@ -29,7 +30,7 @@ mixed-unit candidates rather than aliases for `10+10`.
 
 ## V100 Search Result
 
-The current scan contains 270 samples: 90 cases, three randomized trials per
+The current scan contains 306 samples: 102 cases, three randomized trials per
 case, 100 warmups, and 50 timed repetitions. Times are resident kernel times on
 the repository V100. A ratio above 1 means cuButterfly is faster. The boundary
 column is `direct-strided` for all current winners.
@@ -61,9 +62,27 @@ fuse the tiled permutation into an adjacent pass or retain a transposed layout
 across more work, instead of adding another standalone arithmetic core.
 
 `8+12` tiled recurrence reaches 0.170271, 0.611820, and 1.201418 ms at batch
-2, 8, and 16. Prefix-direct `11+9` and `12+8` still use the direct-strided
-realization because eliminating their strided input requires a different
-producer-side or two-boundary design.
+2, 8, and 16.
+
+The prefix-side experiment uses the same padded transpose before the direct
+prefix, a dedicated workspace, and the existing twiddle/scratch epilogue. It
+therefore measures the cost of converting strided input into a contiguous
+processing-unit contract without changing arithmetic:
+
+| Split | Batch | Direct-strided ms | Prefix transpose ms | Prefix change |
+|:--|--:|--:|--:|--:|
+| `11+9` | 2 | 0.173691 | 0.197345 | 13.62% slower |
+| `11+9` | 8 | 0.675103 | 0.733348 | 8.63% slower |
+| `11+9` | 16 | 1.370194 | 1.480540 | 8.05% slower |
+| `12+8` | 2 | 0.181473 | 0.213893 | 17.86% slower |
+| `12+8` | 8 | 0.655667 | 0.856842 | 30.68% slower |
+| `12+8` | 16 | 1.314959 | 1.944105 | 47.84% slower |
+
+The negative result is useful: coalescing one direct-unit boundary does not
+justify a standalone full-array pass. A profitable realization must fuse the
+permutation with a producer/consumer or preserve the transposed layout across
+additional work. Neither directional transpose changes the current measured
+dispatch winners.
 
 ## Commands
 

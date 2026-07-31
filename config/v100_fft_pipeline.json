@@ -19,7 +19,7 @@
       "family": "cufftdx-large-online",
       "core": "cufftdx-direct",
       "exchange": "direct-strided",
-      "direct_boundaries": ["direct-strided", "tiled-transpose"],
+      "direct_boundaries": ["direct-strided", "tiled-transpose", "prefix-tiled-transpose"],
       "status": "compiled",
       "dimension_log_n": {"min": 11, "max": 12},
       "threads": [256, 512, 1024],
@@ -43,7 +43,7 @@
       "operator": "fft", "precision": "fp32", "logN": 20,
       "direction": "forward", "placement": "in-place", "normalization": "none",
       "batches": [2, 8, 16], "prefix_log_n": {"min": 8, "max": 12},
-      "max_runnable_candidates_per_shape": 16,
+      "max_runnable_candidates_per_shape": 20,
       "required_candidates": [
         {"prefix_log_n": 10, "prefix_threads": 512, "suffix_threads": 512,
          "prefix_ept": 8, "suffix_ept": 8, "cross_twiddle": "recurrence"},

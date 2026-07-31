@@ -36,8 +36,10 @@ fuses the cross twiddle and scratch-layout conversion; the second pass restores
 natural order. For suffix-direct `8+12` and `9+11`,
 `--direct-boundary tiled-transpose` instead performs a contiguous in-place
 suffix write and an explicit 32x32 padded transpose to natural order. The
-default `direct-strided` remains available as a measured alternative; tiled
-prefix-direct boundaries are not yet implemented. Cross
+`--direct-boundary prefix-tiled-transpose` alternative first transposes natural
+input into a dedicated workspace so a direct `11/12`-bit prefix reads a
+contiguous row. The default `direct-strided` remains available as a measured
+alternative. Cross
 twiddles are independently selectable as table lookup or register recurrence,
 so this processing-unit choice remains subordinate to the architecture-level
 space/time schedule.
@@ -103,9 +105,9 @@ columns per suffix CTA, FP64, strided/in-place execution, and verified
 `logN=20` execution in the large-length protocol.
 Optional cuFFTDx tests cover local `logN=3..12`, temporal and online-reorder
 layouts, unequal long-FFT splits, table/recurrence cross twiddles, and forward
-and normalized inverse execution. The suffix-direct tiled boundary is checked
-in natural order, and a manual regression covers normalized inverse,
-out-of-place, element-stride-two execution. Online-reorder also covers independent
+and normalized inverse execution. Both directional tiled boundaries are checked
+in natural order, and manual regressions cover normalized inverse, out-of-place,
+element-stride-two execution. Online-reorder also covers independent
 prefix/suffix EPT 4/8/16 and asymmetric thread/EPT mappings. Direct whole-transform tests cover every
 valid `logN=11..14` CTA shape, normalized inverse, strided layout, and in-place
 execution.

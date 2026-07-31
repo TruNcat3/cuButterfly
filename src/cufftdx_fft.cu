@@ -256,7 +256,7 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_sec
     }
 }
 
-template <class FFT>
+template <class FFT, bool ContiguousInput>
 __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_direct_first_kernel(
     const Complex32* input, Complex32* scratch, const Complex32* twiddles, std::uint32_t log_n,
     std::uint32_t local_log_n, std::uint64_t batch_distance,
@@ -273,7 +273,9 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_dir
     std::uint32_t n1 = threadIdx.x;
 #pragma unroll
     for (unsigned int item = 0; item < FFT::storage_size; ++item) {
-        const std::uint64_t logical = static_cast<std::uint64_t>(n1) * remaining_n + n2;
+        const std::uint64_t logical = ContiguousInput
+                                          ? static_cast<std::uint64_t>(n2) * FFT::input_length + n1
+                                          : static_cast<std::uint64_t>(n1) * remaining_n + n2;
         const Complex32 value = input[base + logical * element_stride];
         thread_data[item] = Value{value.real, value.imag};
         n1 += FFT::stride;
@@ -378,6 +380,19 @@ __global__ void transpose_complex32_kernel(const Complex32* input, Complex32* ou
             output[base + (static_cast<std::uint64_t>(output_row) * rows + output_column) * element_stride] =
                 tile[threadIdx.x][threadIdx.y + offset];
     }
+}
+
+void launch_transpose_complex32(const Complex32* input, Complex32* output, std::uint32_t rows,
+                                std::uint32_t columns, std::uint64_t transforms,
+                                std::uint64_t batch_distance, std::uint64_t element_stride) {
+    const std::uint64_t tiles_x = (columns + 31U) / 32U;
+    const std::uint64_t tiles_y = (rows + 31U) / 32U;
+    const std::uint64_t tiles_per_transform = tiles_x * tiles_y;
+    const std::uint64_t blocks = transforms * tiles_per_transform;
+    if (blocks > 0x7fffffffULL)
+        throw std::invalid_argument("tiled transpose grid exceeds the CUDA grid.x limit");
+    transpose_complex32_kernel<<<static_cast<unsigned int>(blocks), dim3(32, 8)>>>(
+        input, output, rows, columns, tiles_per_transform, batch_distance, element_stride);
 }
 
 template <class FFT>
@@ -664,7 +679,8 @@ void launch_online_second(std::uint32_t log_n, std::uint32_t local_log_n, const 
     }
 }
 
-template <unsigned int Size, unsigned int Threads, unsigned int Ept, cufftdx::fft_direction Direction>
+template <unsigned int Size, unsigned int Threads, unsigned int Ept, cufftdx::fft_direction Direction,
+          bool ContiguousInput>
 void launch_online_direct_first(std::uint32_t log_n, std::uint32_t local_log_n, const Complex32* input,
                                 Complex32* scratch, const Complex32* twiddles, std::uint64_t transforms,
                                 std::uint64_t batch_distance, std::uint64_t element_stride,
@@ -673,10 +689,10 @@ void launch_online_direct_first(std::uint32_t log_n, std::uint32_t local_log_n, 
         using FFT = DirectFft<Size, Ept, Direction>;
         static_assert(FFT::block_dim.x == Threads);
         if constexpr (FFT::shared_memory_size > 48U * 1024U)
-            cudaFuncSetAttribute(cufftdx_online_direct_first_kernel<FFT>, cudaFuncAttributeMaxDynamicSharedMemorySize,
+            cudaFuncSetAttribute(cufftdx_online_direct_first_kernel<FFT, ContiguousInput>, cudaFuncAttributeMaxDynamicSharedMemorySize,
                                  FFT::shared_memory_size);
         const auto blocks = static_cast<unsigned int>(transforms << (log_n - local_log_n));
-        cufftdx_online_direct_first_kernel<FFT><<<blocks, FFT::block_dim, FFT::shared_memory_size>>>(
+        cufftdx_online_direct_first_kernel<FFT, ContiguousInput><<<blocks, FFT::block_dim, FFT::shared_memory_size>>>(
             input, scratch, twiddles, log_n, local_log_n, batch_distance, element_stride, recurrence_twiddle);
     } else {
         throw std::invalid_argument("cuFFTDx direct prefix requires exactly one FFT per CTA");
@@ -703,21 +719,39 @@ void launch_online_direct_second(std::uint32_t log_n, std::uint32_t local_log_n,
     }
 }
 
+template <unsigned int Size, cufftdx::fft_direction Direction, bool ContiguousInput>
+void dispatch_online_direct_first_threads_impl(std::uint32_t threads, std::uint32_t ept, std::uint32_t log_n,
+                                               std::uint32_t local_log_n, const Complex32* input, Complex32* scratch,
+                                               const Complex32* twiddles, std::uint64_t transforms,
+                                               std::uint64_t batch_distance, std::uint64_t element_stride,
+                                               bool recurrence_twiddle) {
+    switch ((ept << 16) | threads) {
+        case (2U << 16) | 1024U: launch_online_direct_first<Size, 1024, 2, Direction, ContiguousInput>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case (4U << 16) | 512U: launch_online_direct_first<Size, 512, 4, Direction, ContiguousInput>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case (4U << 16) | 1024U: launch_online_direct_first<Size, 1024, 4, Direction, ContiguousInput>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case (8U << 16) | 256U: launch_online_direct_first<Size, 256, 8, Direction, ContiguousInput>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case (8U << 16) | 512U: launch_online_direct_first<Size, 512, 8, Direction, ContiguousInput>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case (16U << 16) | 256U: launch_online_direct_first<Size, 256, 16, Direction, ContiguousInput>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        default: throw std::invalid_argument("unsupported cuFFTDx direct prefix thread/EPT point");
+    }
+}
+
 template <unsigned int Size, cufftdx::fft_direction Direction>
 void dispatch_online_direct_first_threads(std::uint32_t threads, std::uint32_t ept, std::uint32_t log_n,
                                           std::uint32_t local_log_n, const Complex32* input, Complex32* scratch,
                                           const Complex32* twiddles, std::uint64_t transforms,
                                           std::uint64_t batch_distance, std::uint64_t element_stride,
-                                          bool recurrence_twiddle) {
-    switch ((ept << 16) | threads) {
-        case (2U << 16) | 1024U: launch_online_direct_first<Size, 1024, 2, Direction>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case (4U << 16) | 512U: launch_online_direct_first<Size, 512, 4, Direction>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case (4U << 16) | 1024U: launch_online_direct_first<Size, 1024, 4, Direction>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case (8U << 16) | 256U: launch_online_direct_first<Size, 256, 8, Direction>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case (8U << 16) | 512U: launch_online_direct_first<Size, 512, 8, Direction>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case (16U << 16) | 256U: launch_online_direct_first<Size, 256, 16, Direction>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        default: throw std::invalid_argument("unsupported cuFFTDx direct prefix thread/EPT point");
-    }
+                                          bool recurrence_twiddle, bool contiguous_input) {
+    if (contiguous_input)
+        dispatch_online_direct_first_threads_impl<Size, Direction, true>(threads, ept, log_n, local_log_n,
+                                                                         input, scratch, twiddles, transforms,
+                                                                         batch_distance, element_stride,
+                                                                         recurrence_twiddle);
+    else
+        dispatch_online_direct_first_threads_impl<Size, Direction, false>(threads, ept, log_n, local_log_n,
+                                                                          input, scratch, twiddles, transforms,
+                                                                          batch_distance, element_stride,
+                                                                          recurrence_twiddle);
 }
 
 template <unsigned int Size, cufftdx::fft_direction Direction, bool ContiguousOutput>
@@ -782,20 +816,21 @@ template <cufftdx::fft_direction Direction>
 void dispatch_online_first(std::uint32_t log_n, std::uint32_t local_log_n, const Complex32* input,
                            Complex32* scratch, const Complex32* twiddles, std::uint64_t transforms,
                            std::uint64_t batch_distance, std::uint64_t element_stride, bool recurrence_twiddle,
-                           std::uint32_t threads, std::uint32_t ept) {
+                           std::uint32_t threads, std::uint32_t ept, bool contiguous_input) {
     switch (local_log_n) {
-        case 3: dispatch_online_first_threads<8, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 4: dispatch_online_first_threads<16, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 5: dispatch_online_first_threads<32, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 6: dispatch_online_first_threads<64, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 7: dispatch_online_first_threads<128, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 8: dispatch_online_first_threads<256, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 9: dispatch_online_first_threads<512, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 10: dispatch_online_first_threads<1024, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 11: dispatch_online_direct_first_threads<2048, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 12: dispatch_online_direct_first_threads<4096, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 3: if (contiguous_input) break; dispatch_online_first_threads<8, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 4: if (contiguous_input) break; dispatch_online_first_threads<16, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 5: if (contiguous_input) break; dispatch_online_first_threads<32, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 6: if (contiguous_input) break; dispatch_online_first_threads<64, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 7: if (contiguous_input) break; dispatch_online_first_threads<128, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 8: if (contiguous_input) break; dispatch_online_first_threads<256, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 9: if (contiguous_input) break; dispatch_online_first_threads<512, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 10: if (contiguous_input) break; dispatch_online_first_threads<1024, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 11: dispatch_online_direct_first_threads<2048, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, contiguous_input); return;
+        case 12: dispatch_online_direct_first_threads<4096, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, contiguous_input); return;
         default: throw std::invalid_argument("cufftdx online first pass supports logN=3..12");
     }
+    throw std::invalid_argument("prefix tiled transpose requires a direct prefix in logN=11..12");
 }
 
 template <cufftdx::fft_direction Direction>
@@ -803,18 +838,6 @@ void dispatch_online_second(std::uint32_t log_n, std::uint32_t local_log_n, Comp
                             Complex32* output, std::uint64_t transforms, std::uint64_t batch_distance,
                             std::uint64_t element_stride, bool normalize, std::uint32_t threads, std::uint32_t ept,
                             bool tiled_transpose) {
-    const auto launch_transpose = [&] {
-        const std::uint32_t rows = 1U << local_log_n;
-        const std::uint32_t columns = 1U << (log_n - local_log_n);
-        const std::uint64_t tiles_x = (columns + 31U) / 32U;
-        const std::uint64_t tiles_y = (rows + 31U) / 32U;
-        const std::uint64_t tiles_per_transform = tiles_x * tiles_y;
-        const std::uint64_t blocks = transforms * tiles_per_transform;
-        if (blocks > 0x7fffffffULL)
-            throw std::invalid_argument("tiled transpose grid exceeds the CUDA grid.x limit");
-        transpose_complex32_kernel<<<static_cast<unsigned int>(blocks), dim3(32, 8)>>>(
-            scratch, output, rows, columns, tiles_per_transform, batch_distance, element_stride);
-    };
     switch (log_n - local_log_n) {
         case 3: if (tiled_transpose) break; dispatch_online_second_threads<8, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
         case 4: if (tiled_transpose) break; dispatch_online_second_threads<16, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
@@ -828,13 +851,19 @@ void dispatch_online_second(std::uint32_t log_n, std::uint32_t local_log_n, Comp
             dispatch_online_direct_second_threads<2048, Direction>(threads, ept, log_n, local_log_n, scratch, output,
                                                                    transforms, batch_distance, element_stride, normalize,
                                                                    tiled_transpose);
-            if (tiled_transpose) launch_transpose();
+            if (tiled_transpose)
+                launch_transpose_complex32(scratch, output, 1U << local_log_n,
+                                           1U << (log_n - local_log_n), transforms,
+                                           batch_distance, element_stride);
             return;
         case 12:
             dispatch_online_direct_second_threads<4096, Direction>(threads, ept, log_n, local_log_n, scratch, output,
                                                                    transforms, batch_distance, element_stride, normalize,
                                                                    tiled_transpose);
-            if (tiled_transpose) launch_transpose();
+            if (tiled_transpose)
+                launch_transpose_complex32(scratch, output, 1U << local_log_n,
+                                           1U << (log_n - local_log_n), transforms,
+                                           batch_distance, element_stride);
             return;
         default: throw std::invalid_argument("cufftdx online second pass supports logN=3..12");
     }
@@ -995,28 +1024,39 @@ void launch_cufftdx_direct(std::uint32_t log_n, const Complex32* input, Complex3
 }
 
 void launch_cufftdx_online_reorder(std::uint32_t log_n, std::uint32_t local_log_n, const Complex32* input,
-                                   Complex32* output, Complex32* scratch, const Complex32* twiddles,
+                                   Complex32* output, Complex32* scratch, Complex32* workspace,
+                                   const Complex32* twiddles,
                                    std::uint64_t transforms, std::uint64_t batch_distance,
                                    std::uint64_t element_stride, bool inverse, bool normalize,
                                    CrossTwiddleMode cross_twiddle, std::uint32_t prefix_threads,
                                    std::uint32_t suffix_threads, std::uint32_t prefix_ept,
                                    std::uint32_t suffix_ept, DirectBoundary direct_boundary) {
     const bool recurrence_twiddle = cross_twiddle == CrossTwiddleMode::Recurrence;
-    const bool tiled_transpose = direct_boundary == DirectBoundary::TiledTranspose;
+    const bool suffix_tiled_transpose = direct_boundary == DirectBoundary::TiledTranspose;
+    const bool prefix_tiled_transpose = direct_boundary == DirectBoundary::PrefixTiledTranspose;
+    const Complex32* prefix_input = input;
+    if (prefix_tiled_transpose) {
+        if (workspace == nullptr)
+            throw std::invalid_argument("prefix tiled transpose requires a workspace buffer");
+        launch_transpose_complex32(input, workspace, 1U << local_log_n,
+                                   1U << (log_n - local_log_n), transforms,
+                                   batch_distance, element_stride);
+        prefix_input = workspace;
+    }
     if (inverse) {
-        dispatch_online_first<cufftdx::fft_direction::inverse>(log_n, local_log_n, input, scratch, twiddles,
+        dispatch_online_first<cufftdx::fft_direction::inverse>(log_n, local_log_n, prefix_input, scratch, twiddles,
                                                                transforms, batch_distance, element_stride, recurrence_twiddle,
-                                                               prefix_threads, prefix_ept);
+                                                               prefix_threads, prefix_ept, prefix_tiled_transpose);
         dispatch_online_second<cufftdx::fft_direction::inverse>(log_n, local_log_n, scratch, output, transforms,
                                                                 batch_distance, element_stride, normalize, suffix_threads, suffix_ept,
-                                                                tiled_transpose);
+                                                                suffix_tiled_transpose);
     } else {
-        dispatch_online_first<cufftdx::fft_direction::forward>(log_n, local_log_n, input, scratch, twiddles,
+        dispatch_online_first<cufftdx::fft_direction::forward>(log_n, local_log_n, prefix_input, scratch, twiddles,
                                                                transforms, batch_distance, element_stride, recurrence_twiddle,
-                                                               prefix_threads, prefix_ept);
+                                                               prefix_threads, prefix_ept, prefix_tiled_transpose);
         dispatch_online_second<cufftdx::fft_direction::forward>(log_n, local_log_n, scratch, output, transforms,
                                                                 batch_distance, element_stride, false, suffix_threads, suffix_ept,
-                                                                tiled_transpose);
+                                                                suffix_tiled_transpose);
     }
 }
 

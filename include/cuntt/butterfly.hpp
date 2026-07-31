@@ -100,6 +100,7 @@ CrossTwiddleMode parse_cross_twiddle_mode(const std::string& name);
 enum class DirectBoundary {
     Strided,
     TiledTranspose,
+    PrefixTiledTranspose,
 };
 
 const char*    direct_boundary_name(DirectBoundary boundary) noexcept;

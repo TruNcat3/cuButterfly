@@ -59,12 +59,14 @@ def generate_header(path, document):
     for entry in document["entries"]:
         threshold = "true" if entry["max_batch"] is None else f"batch <= {int(entry['max_batch'])}ULL"
         recurrence = "true" if entry["cross_twiddle"] == "recurrence" else "false"
-        tiled_transpose = "true" if entry.get("direct_boundary") == "tiled-transpose" else "false"
+        suffix_tiled_transpose = "true" if entry.get("direct_boundary") == "tiled-transpose" else "false"
+        prefix_tiled_transpose = "true" if entry.get("direct_boundary") == "prefix-tiled-transpose" else "false"
         conditions.append(
             f"    if (log_n == {int(entry['logN'])}U && {threshold}) {{\n"
             f"        mapping = {{{int(entry['prefix_log_n'])}U, {int(entry['prefix_threads'])}U, "
             f"{int(entry['suffix_threads'])}U, {int(entry['prefix_ept'])}U, "
-            f"{int(entry['suffix_ept'])}U, {recurrence}, {tiled_transpose}}};\n"
+            f"{int(entry['suffix_ept'])}U, {recurrence}, {suffix_tiled_transpose}, "
+            f"{prefix_tiled_transpose}}};\n"
             f"        return true;\n    }}")
     body = "\n".join(conditions)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -81,7 +83,8 @@ struct GeneratedFftMapping {{
     std::uint32_t prefix_ept;
     std::uint32_t suffix_ept;
     bool recurrence_twiddle;
-    bool tiled_transpose;
+    bool suffix_tiled_transpose;
+    bool prefix_tiled_transpose;
 }};
 
 inline bool select_generated_fft_mapping(std::uint32_t log_n, std::size_t batch,

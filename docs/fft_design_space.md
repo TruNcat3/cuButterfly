@@ -106,8 +106,9 @@ Completing the model does not imply every family is implemented. The major
 implementation queues are now explicit:
 
 - optionally emit the remaining cuFFTDx online EPT 1/2/32/64 points selected by a target profile;
-- fuse the implemented suffix-direct tiled transpose into an adjacent pass, and
-  add producer-side or two-boundary realizations for prefix-direct units;
+- fuse the implemented directional tiled transposes into adjacent work or retain
+  their layouts across multiple dimensions; standalone prefix and suffix
+  transpose kernels are measured but do not win at saturated batch;
 - allow different cores on the two dimensions;
 - add shared-resident and cooperative-grid boundaries beyond selected points;
 - generate padding and multi-buffer pipeline variants;
