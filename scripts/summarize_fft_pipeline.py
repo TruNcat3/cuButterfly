@@ -6,7 +6,8 @@ import statistics
 
 
 CONFIG_FIELDS = ("candidate_id", "group", "implementation", "reference", "static_score", "mapping_id",
-                 "processing_unit", "prefix_log_n", "suffix_log_n", "prefix_threads", "suffix_threads",
+                 "decomposition_count", "stages_per_decomposition", "processing_unit", "prefix_log_n", "suffix_log_n",
+                 "prefix_threads", "suffix_threads",
                  "prefix_ept", "suffix_ept", "cross_twiddle", "direct_boundary", "operator", "precision", "direction",
                  "normalization", "placement", "backend", "fft_core", "logN", "N", "batch")
 

@@ -465,6 +465,10 @@ class ButterflyPlan::Impl {
         if (config_.log_n == 0 || config_.log_n > 20) {
             throw std::invalid_argument("butterfly log_n must be in [1, 20]");
         }
+        const bool explicit_stage_partition = !config_.stage_partition.empty();
+        if (config_.auto_select && explicit_stage_partition) {
+            throw std::invalid_argument("auto-select owns the stage partition");
+        }
         if (config_.auto_select) {
             const std::size_t contiguous_stride = std::size_t{1} << config_.log_n;
             if (config_.op != ButterflyOperator::Fft || config_.precision != ButterflyPrecision::Fp32 ||
@@ -498,6 +502,26 @@ class ButterflyPlan::Impl {
                                           ? DirectBoundary::PrefixTiledTranspose
                                           : (mapping.suffix_tiled_transpose ? DirectBoundary::TiledTranspose
                                                                             : DirectBoundary::Strided);
+            config_.stage_partition = {mapping.local_stages, config_.log_n - mapping.local_stages};
+        }
+        if (!config_.stage_partition.empty()) {
+            std::uint32_t stage_sum = 0;
+            for (const auto stages : config_.stage_partition) {
+                if (stages == 0 || stages > config_.log_n || stage_sum > config_.log_n - stages)
+                    throw std::invalid_argument("stage partition must contain positive values summing to log_n");
+                stage_sum += stages;
+            }
+            if (stage_sum != config_.log_n)
+                throw std::invalid_argument("stage partition must sum to log_n");
+            if (config_.backend != ButterflyBackend::OnlineReorder) {
+                if (explicit_stage_partition)
+                    throw std::invalid_argument("explicit stage partitions currently require online-reorder");
+            } else {
+                if (config_.stage_partition.size() != 2)
+                    throw std::invalid_argument(
+                        "multi-pass runtime is not implemented for stage partitions with decomposition_count != 2");
+                config_.local_stages = config_.stage_partition.front();
+            }
         }
         if (config_.backend == ButterflyBackend::TemporalTile && config_.local_exchange == LocalExchange::SharedMemory &&
             config_.log_n > 10 && config_.fft_core != FftCore::CufftDxDirect) {
@@ -734,6 +758,12 @@ class ButterflyPlan::Impl {
             config_.reorder_columns = 0;
         if (config_.backend != ButterflyBackend::WarpHybrid) {
             config_.warp_stages = 0;
+        }
+        if (config_.stage_partition.empty()) {
+            config_.stage_partition = config_.backend == ButterflyBackend::OnlineReorder
+                                          ? std::vector<std::uint32_t>{config_.local_stages,
+                                                                       config_.log_n - config_.local_stages}
+                                          : std::vector<std::uint32_t>{config_.log_n};
         }
 
         points_ = std::size_t{1} << config_.log_n;

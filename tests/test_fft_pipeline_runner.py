@@ -26,7 +26,7 @@ class FftPipelineRunnerTest(unittest.TestCase):
         document = json.loads((ROOT / "config" / "v100_fft_pipeline_candidates.json").read_text())
         cases = RUNNER.expand(document)
         self.assertEqual(sum(case["reference"] for case in cases), 6)
-        self.assertEqual(len(cases), 102)
+        self.assertEqual(len(cases), 138)
 
     def test_parser_skips_notices(self):
         text = "notice\ndevice,operator,kernel_ms,correct\nV100,fft,0.2,1\n"

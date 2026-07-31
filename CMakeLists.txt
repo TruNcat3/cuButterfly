@@ -255,7 +255,7 @@ if(BUILD_TESTING)
                          --warmup 1 --repeat 1 --verify)
         add_test(NAME fft_mixed_direct_correctness
                  COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
-                         --fft-core cufftdx-block --local-stages 9 --prefix-threads 256 --prefix-ept 8
+                         --fft-core cufftdx-block --stage-partition 9,11 --prefix-threads 256 --prefix-ept 8
                          --suffix-threads 256 --suffix-ept 8 --cross-twiddle recurrence
                          --placement in-place --normalization none --logN 20 --batch 1
                          --warmup 1 --repeat 1 --verify)
@@ -267,9 +267,15 @@ if(BUILD_TESTING)
                          --logN 20 --batch 1 --warmup 1 --repeat 1 --verify)
         add_test(NAME fft_prefix_tiled_transpose_correctness
                  COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
-                         --fft-core cufftdx-block --local-stages 11 --prefix-threads 256 --prefix-ept 8
+                         --fft-core cufftdx-block --stage-partition 11,9 --prefix-threads 256 --prefix-ept 8
                          --suffix-threads 128 --suffix-ept 16 --cross-twiddle recurrence
                          --direct-boundary prefix-tiled-transpose --placement in-place --normalization none
                          --logN 20 --batch 1 --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_multisegment_runtime_rejection
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 6,6,8
+                         --placement in-place --normalization none --logN 20 --batch 1
+                         --warmup 1 --repeat 1 --verify)
+        set_tests_properties(fft_multisegment_runtime_rejection PROPERTIES WILL_FAIL TRUE)
     endif()
 endif()

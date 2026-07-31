@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "target": "v100-sm70",
   "processing_units": [
     {
@@ -32,23 +32,37 @@
       "id": "fft18-fp32",
       "operator": "fft", "precision": "fp32", "logN": 18,
       "direction": "forward", "placement": "in-place", "normalization": "none",
-      "batches": [2, 16, 64], "prefix_log_n": {"min": 8, "max": 10},
+      "batches": [2, 16, 64],
+      "decomposition_space": {
+        "decomposition_count": {"min": 2, "max": 4},
+        "stages_per_decomposition": {"min": 3, "max": 12},
+        "compiled_decomposition_counts": [2]
+      },
+      "max_runnable_candidates_per_shape": 24,
       "required_candidates": [
-        {"prefix_log_n": 9, "prefix_threads": 256, "suffix_threads": 256,
-         "prefix_ept": 8, "suffix_ept": 8, "cross_twiddle": "recurrence"}
+        {"stage_partition": [9, 9],
+         "segment_mappings": [{"threads": 256, "ept": 8}, {"threads": 256, "ept": 8}],
+         "cross_twiddle": "recurrence"}
       ]
     },
     {
       "id": "fft20-fp32",
       "operator": "fft", "precision": "fp32", "logN": 20,
       "direction": "forward", "placement": "in-place", "normalization": "none",
-      "batches": [2, 8, 16], "prefix_log_n": {"min": 8, "max": 12},
+      "batches": [2, 8, 16],
+      "decomposition_space": {
+        "decomposition_count": {"min": 2, "max": 4},
+        "stages_per_decomposition": {"min": 3, "max": 12},
+        "compiled_decomposition_counts": [2]
+      },
       "max_runnable_candidates_per_shape": 20,
       "required_candidates": [
-        {"prefix_log_n": 10, "prefix_threads": 512, "suffix_threads": 512,
-         "prefix_ept": 8, "suffix_ept": 8, "cross_twiddle": "recurrence"},
-        {"prefix_log_n": 10, "prefix_threads": 256, "suffix_threads": 128,
-         "prefix_ept": 16, "suffix_ept": 16, "cross_twiddle": "recurrence"}
+        {"stage_partition": [10, 10],
+         "segment_mappings": [{"threads": 512, "ept": 8}, {"threads": 512, "ept": 8}],
+         "cross_twiddle": "recurrence"},
+        {"stage_partition": [10, 10],
+         "segment_mappings": [{"threads": 256, "ept": 16}, {"threads": 128, "ept": 16}],
+         "cross_twiddle": "recurrence"}
       ]
     }
   ],

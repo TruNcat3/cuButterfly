@@ -9,7 +9,7 @@ from fft_design_space import classify_online_point, load_codegen_points, load_sp
 
 def load_pipeline(path):
     document = json.loads(path.read_text())
-    if document.get("schema_version") != 1:
+    if document.get("schema_version") != 2:
         raise ValueError("unsupported FFT pipeline schema")
     for field in ("target", "processing_units", "mapping_spaces", "selection", "protocol"):
         if field not in document:
@@ -17,11 +17,61 @@ def load_pipeline(path):
     ids = [unit["id"] for unit in document["processing_units"]]
     if len(ids) != len(set(ids)):
         raise ValueError("duplicate processing-unit id")
+    for mapping in document["mapping_spaces"]:
+        decomposition = mapping.get("decomposition_space", {})
+        for field in ("decomposition_count", "stages_per_decomposition", "compiled_decomposition_counts"):
+            if field not in decomposition:
+                raise ValueError(f"mapping {mapping['id']} lacks decomposition_space.{field}")
     return document
 
 
 def ceil_div(numerator, denominator):
     return (numerator + denominator - 1) // denominator
+
+
+def stage_partitions(log_n, decomposition_count, minimum, maximum):
+    def visit(remaining, decompositions_left, prefix):
+        if decompositions_left == 0:
+            if remaining == 0:
+                yield tuple(prefix)
+            return
+        lower = max(minimum, remaining - maximum * (decompositions_left - 1))
+        upper = min(maximum, remaining - minimum * (decompositions_left - 1))
+        for stages in range(lower, upper + 1):
+            yield from visit(remaining - stages, decompositions_left - 1, [*prefix, stages])
+
+    yield from visit(log_n, decomposition_count, [])
+
+
+def mapping_stage_partitions(mapping, compiled_only=False):
+    decomposition = mapping["decomposition_space"]
+    count_range = decomposition["decomposition_count"]
+    stage_range = decomposition["stages_per_decomposition"]
+    compiled_counts = set(decomposition["compiled_decomposition_counts"])
+    for decomposition_count in range(count_range["min"], count_range["max"] + 1):
+        if compiled_only and decomposition_count not in compiled_counts:
+            continue
+        for stages in stage_partitions(mapping["logN"], decomposition_count,
+                                       stage_range["min"], stage_range["max"]):
+            yield stages
+
+
+def enumerate_decomposition_topologies(document):
+    topologies = []
+    for mapping in document["mapping_spaces"]:
+        compiled_counts = set(mapping["decomposition_space"]["compiled_decomposition_counts"])
+        for stages in mapping_stage_partitions(mapping):
+            decomposition_count = len(stages)
+            compiled = decomposition_count in compiled_counts
+            topologies.append({
+                "id": f"{mapping['id']}_d{decomposition_count}_" + "x".join(map(str, stages)),
+                "mapping_id": mapping["id"], "logN": mapping["logN"],
+                "decomposition_count": decomposition_count, "stages_per_decomposition": list(stages),
+                "boundary_count": decomposition_count - 1,
+                "status": "compiled-runtime" if compiled else "requires-multi-pass-runtime",
+                "reason": "" if compiled else "decomposition-count-not-implemented",
+            })
+    return topologies
 
 
 def pass_resources(dimension_log_n, other_log_n, threads, ept, batch, hardware, unit):
@@ -73,7 +123,8 @@ def score_candidate(point, hardware, prefix_unit, suffix_unit, selection):
 def runtime_args(point):
     return [
         "--operator", "fft", "--precision", point["precision"], "--backend", "online-reorder",
-        "--fft-core", "cufftdx-block", "--local-stages", str(point["prefix_log_n"]),
+        "--fft-core", "cufftdx-block", "--stage-partition",
+        ",".join(map(str, point["stages_per_decomposition"])),
         "--reorder-columns", "1", "--cross-twiddle", point["cross_twiddle"],
         "--direct-boundary", point["direct_boundary"],
         "--prefix-threads", str(point["prefix_threads"]), "--suffix-threads", str(point["suffix_threads"]),
@@ -92,11 +143,13 @@ def candidate_id(point):
 
 
 def matches_required(point, required):
-    suffix_log_n = required.get("suffix_log_n", point["logN"] - required["prefix_log_n"])
+    if len(required["stage_partition"]) != 2 or len(required["segment_mappings"]) != 2:
+        raise ValueError("current runtime incumbent must describe exactly two decomposition segments")
+    prefix, suffix = required["segment_mappings"]
     fields = {
-        "prefix_log_n": required["prefix_log_n"], "suffix_log_n": suffix_log_n,
-        "prefix_threads": required["prefix_threads"], "suffix_threads": required["suffix_threads"],
-        "prefix_ept": required["prefix_ept"], "suffix_ept": required["suffix_ept"],
+        "stages_per_decomposition": required["stage_partition"],
+        "prefix_threads": prefix["threads"], "suffix_threads": suffix["threads"],
+        "prefix_ept": prefix["ept"], "suffix_ept": suffix["ept"],
         "cross_twiddle": required["cross_twiddle"],
         "direct_boundary": required.get("direct_boundary", "direct-strided"),
     }
@@ -121,15 +174,21 @@ def enumerate_pipeline(document, architecture, codegen_points):
         for batch in mapping["batches"]:
             shape = []
             planned_shape = []
-            for prefix_log_n in range(mapping["prefix_log_n"]["min"], mapping["prefix_log_n"]["max"] + 1):
-                suffix_log_n = mapping["logN"] - prefix_log_n
-                if suffix_log_n < 1:
+            for stages in mapping_stage_partitions(mapping, compiled_only=True):
+                if len(stages) != 2:
+                    planned_shape.append({
+                        "mapping_id": mapping["id"], "batch": batch,
+                        "decomposition_count": len(stages), "stages_per_decomposition": list(stages),
+                        "status": "requires-multi-pass-runtime",
+                        "reason": "compiled candidate lowering currently supports decomposition_count=2",
+                    })
                     continue
+                prefix_log_n, suffix_log_n = stages
                 prefix_unit = find_unit(prefix_log_n)
                 suffix_unit = find_unit(suffix_log_n)
                 if prefix_unit is None or suffix_unit is None:
                     planned = {
-                        **{key: value for key, value in mapping.items() if key not in ("batches", "prefix_log_n", "required_candidates")},
+                        **{key: value for key, value in mapping.items() if key not in ("batches", "decomposition_space", "required_candidates")},
                         "mapping_id": mapping["id"], "batch": batch, "prefix_log_n": prefix_log_n,
                         "suffix_log_n": suffix_log_n, "status": "requires-new-kernel",
                         "reason": "large-dimension-processing-unit",
@@ -150,8 +209,10 @@ def enumerate_pipeline(document, architecture, codegen_points):
                                 for prefix_ept in prefix_unit["elements_per_thread"]:
                                     for suffix_ept in suffix_unit["elements_per_thread"]:
                                         point = {
-                                            **{key: value for key, value in mapping.items() if key not in ("batches", "prefix_log_n", "required_candidates")},
+                                            **{key: value for key, value in mapping.items() if key not in ("batches", "decomposition_space", "required_candidates")},
                                             "mapping_id": mapping["id"], "batch": batch,
+                                            "decomposition_count": 2,
+                                            "stages_per_decomposition": [prefix_log_n, suffix_log_n],
                                             "processing_unit": f"{prefix_unit['id']}+{suffix_unit['id']}",
                                             "prefix_processing_unit": prefix_unit["id"],
                                             "suffix_processing_unit": suffix_unit["id"], "prefix_log_n": prefix_log_n,
@@ -211,10 +272,11 @@ def main():
     architecture = load_space(args.architecture)
     codegen = load_codegen_points(args.codegen)
     runnable, backlog = enumerate_pipeline(document, architecture, codegen)
+    topologies = enumerate_decomposition_topologies(document)
     output = {
-        "schema_version": 1, "target": document["target"], "protocol": document["protocol"],
+        "schema_version": 2, "target": document["target"], "protocol": document["protocol"],
         "processing_units": document["processing_units"], "runnable_candidates": runnable,
-        "backlog_candidates": backlog,
+        "backlog_candidates": backlog, "decomposition_topologies": topologies,
     }
     rendered = json.dumps(output, indent=2) + "\n"
     if args.check:

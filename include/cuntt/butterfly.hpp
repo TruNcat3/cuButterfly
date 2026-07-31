@@ -136,6 +136,8 @@ struct ButterflyConfig {
     ButterflyPrecision precision         = ButterflyPrecision::Fp32;
     ButterflyPlacement placement         = ButterflyPlacement::OutOfPlace;
     std::uint32_t      log_n             = 8;
+    // Ordered stage counts for each algorithmic decomposition segment.
+    std::vector<std::uint32_t> stage_partition;
     std::size_t        batch             = 1;
     std::size_t        batch_stride      = 0;
     std::size_t        element_stride    = 1;

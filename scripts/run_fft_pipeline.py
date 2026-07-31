@@ -9,7 +9,8 @@ import subprocess
 
 OUTPUT_FIELDS = (
     "candidate_id", "group", "trial", "implementation", "reference", "static_score",
-    "mapping_id", "processing_unit", "prefix_log_n", "suffix_log_n", "prefix_threads",
+    "mapping_id", "decomposition_count", "stages_per_decomposition", "processing_unit",
+    "prefix_log_n", "suffix_log_n", "prefix_threads",
     "suffix_threads", "prefix_ept", "suffix_ept", "cross_twiddle", "direct_boundary", "device",
     "compute_capability", "operator", "precision", "direction", "normalization", "placement",
     "backend", "fft_core", "logN", "N", "batch", "warmup", "repeat", "kernel_ms",
@@ -40,7 +41,7 @@ def expand(document):
             "implementation": "cuFFT", "reference": True, "processing_unit": "vendor-baseline",
             "prefix_log_n": 0, "suffix_log_n": 0, "prefix_threads": 0, "suffix_threads": 0,
             "prefix_ept": 0, "suffix_ept": 0, "cross_twiddle": "none", "static_score": 0.0,
-            "direct_boundary": "none",
+            "direct_boundary": "none", "decomposition_count": 0, "stages_per_decomposition": [],
             "args": ["--operator", "fft", "--precision", seed["precision"], "--backend", "cufft",
                      "--placement", seed["placement"], "--normalization", seed["normalization"]],
         })
@@ -67,6 +68,8 @@ def case_metadata(case, trial):
         "candidate_id": case["id"], "group": case["group"], "trial": trial,
         "implementation": case["implementation"], "reference": int(case["reference"]),
         "static_score": case["static_score"], "mapping_id": case["mapping_id"],
+        "decomposition_count": case["decomposition_count"],
+        "stages_per_decomposition": "x".join(map(str, case["stages_per_decomposition"])),
         "processing_unit": case["processing_unit"], "prefix_log_n": case["prefix_log_n"],
         "suffix_log_n": case["suffix_log_n"], "prefix_threads": case["prefix_threads"],
         "suffix_threads": case["suffix_threads"], "prefix_ept": case["prefix_ept"],

@@ -1,39 +1,70 @@
 # FFT Pipeline Generator
 
-The FFT generator separates three decisions that must not be collapsed into one
+The FFT generator separates four decisions that must not be collapsed into one
 kernel implementation.
 
 ## Layers
 
-1. **Processing unit** describes one local FFT: supported dimension, thread and
-   element-per-thread choices, exchange method, twiddle method, and compiled
+1. **Factorization topology** selects a decomposition count `D` and an ordered
+   stage vector `S=[s0,...,s(D-1)]`, constrained by `sum(S)=logN`. In the
+   machine-readable schema these are `decomposition_count` and
+   `stages_per_decomposition`. Neither `D`
+   nor an individual `si` is fixed by the architecture paradigm.
+2. **Processing unit mapping** describes one decomposition segment: supported stage count,
+   thread and element-per-thread choices, exchange method, twiddle method, and compiled
    availability. `cufftdx-online-shared` covers local `logN=3..10`, while
    `cufftdx-large-online` adapts the direct unit for `logN=11..12`. A suffix
    direct unit independently selects either a strided natural-order store or a
    contiguous store followed by a padded tiled transpose. A prefix direct unit
    can instead transpose input into a workspace and consume contiguous rows.
-2. **Mapping** factors a transform into prefix and suffix dimensions. Each pass
-   independently selects threads and elements per thread. The model derives
+   Each segment independently selects threads and elements per thread. The model derives
    units/CTA, grid blocks, shared storage, estimated resident CTAs, waves/SM,
    issued thread slots, and work imbalance.
-3. **Dispatch** is generated only from measured winners. It selects a mapping by
+3. **Boundary mapping** describes each of the `D-1` connections: twiddle
+   generation, permutation, residency, synchronization, and physical handoff.
+4. **Dispatch** is generated only from measured winners. It selects a mapping by
    `(GPU, semantics, logN, batch regime)` and then reuses the normal runtime
    validation path.
 
 `config/v100_fft_pipeline.json` is the search specification.
-`scripts/generate_fft_pipeline.py` emits the bounded candidate manifest. Known
-measured incumbents are mandatory candidates so that static pruning cannot
-exclude an existing strong point. Each selected row records the legal pool size
+`scripts/generate_fft_pipeline.py` emits the bounded candidate manifest. The
+specification supplies ranges for `D` and `si`, not a list of splits; the
+generator enumerates ordered integer compositions before lowering supported
+topologies. Known measured incumbents are mandatory candidates so that static
+pruning cannot exclude an existing strong point. Each selected row records the legal pool size
 and shortlist limit so that pruning remains auditable. Prefix and suffix units
-are selected independently, so `8+12`, `9+11`, `11+9`, and `12+8` are real
-mixed-unit candidates rather than aliases for `10+10`.
+are selected independently. Prefix/suffix names appear only in the current
+`D=2` lowering and are not part of the general architecture abstraction. The
+current runtime accepts the same topology as `--stage-partition s0,s1,...`; a
+partition with more than two segments is preserved by the generator and fails
+explicitly until the multi-pass lowering is emitted.
+
+For `logN=18/20`, `D=2..4`, and `si=3..12`, the current manifest contains 385
+factorization topologies:
+
+| logN | `D=2` | `D=3` | `D=4` |
+|--:|--:|--:|--:|
+| 18 | 7 | 55 | 84 |
+| 20 | 5 | 69 | 165 |
+
+The 12 two-segment topologies are lowered to the existing runtime. The other
+373 are retained as `requires-multi-pass-runtime`; they are architecture points,
+not silently discarded configurations.
 
 ## V100 Search Result
 
-The current scan contains 306 samples: 102 cases, three randomized trials per
+The current scan contains 414 samples: 138 cases, three randomized trials per
 case, 100 warmups, and 50 timed repetitions. Times are resident kernel times on
 the repository V100. A ratio above 1 means cuButterfly is faster. The boundary
 column is `direct-strided` for all current winners.
+
+The complete `D=2` scan confirms that the earlier balanced points were winners
+rather than assumptions. Best recurrence time per `logN=18` partition at batch
+16 is:
+
+| Stages | 6x12 | 7x11 | 8x10 | 9x9 | 10x8 | 11x7 | 12x6 |
+|:--|--:|--:|--:|--:|--:|--:|--:|
+| ms | 0.302141 | 0.305316 | 0.236872 | **0.205722** | 0.243384 | 0.324792 | 0.336261 |
 
 | logN | Batch | Selected mapping | cuButterfly ms | cuFFT ms | Ratio |
 |--:|--:|:--|--:|--:|--:|

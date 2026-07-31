@@ -10,8 +10,8 @@ for the research idea, then move toward implementation and evidence.
 | [Design Overview](design_overview.md) | What is the reusable space-time parallel paradigm? |
 | [Hardware Mapping Methodology](hardware_mapping_methodology.md) | How do the unfolding factors translate into GPU resource demand? |
 | [Complete Butterfly Design Space](butterfly_design_space.md) | How are graph, architecture, processing unit, layout, realization, selection, and hardware separated? |
-| [FFT Design Space](fft_design_space.md) | Which semantic, two-dimensional, processing-unit, and hardware axes are enumerable? |
-| [FFT Pipeline Generator](fft_pipeline_generator.md) | How are local units, two-dimensional mappings, measured search, and runtime dispatch separated? |
+| [FFT Design Space](fft_design_space.md) | Which semantic, factorization, two-axis mapping, processing-unit, and hardware parameters are enumerable? |
+| [FFT Pipeline Generator](fft_pipeline_generator.md) | How are stage partitions, local units, boundaries, measured search, and runtime dispatch separated? |
 | [Candidate Implementations](implementation_candidates.md) | Which processing units and kernel forms are implemented or planned? |
 | [Getting Started](getting_started.md) | How is the project built and used? |
 | [Experimental Results](experiments.md) | What has been measured, and where are the gaps? |
