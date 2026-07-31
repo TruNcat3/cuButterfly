@@ -85,13 +85,16 @@ availability, dispatch, and a resolved build manifest.
 The factorization parameters and the paper's two space/time axes are distinct. `D`
 does not introduce a new parallel axis: the stage/data spatial and temporal
 mapping is applied independently to every decomposition segment `i`, and `D-1` boundary
-descriptors connect them. The current CUDA lowering implements `D=2`; the
-manifest retains parameterized `D=3/4` topologies as runtime backlog.
+descriptors connect them. The optimized `D=2` CUDA path remains unchanged,
+while a generic ping-pong lowering
+executes `D=3/4` with one cuFFTDx processing unit per segment and one explicit
+boundary descriptor per adjacent pair.
 
 The current selection contains EPT 4/8/16 and 128/256/512/1024-thread points;
 1024/16 is excluded because its tiled storage exceeds the V100 per-CTA shared
-memory limit. The public FFT configuration records independent prefix/suffix
-thread and EPT values plus normalized units/CTA. Feasible but unselected values
+memory limit. The public FFT configuration records `segment_mappings[D]` and
+`boundaries[D-1]`; the old prefix/suffix fields remain a `D=2` compatibility
+interface. Feasible but unselected values
 fail explicitly as `awaiting code generation`; they do not fall back to EPT=8.
 
 Regenerate an isolated manifest with:
@@ -117,12 +120,13 @@ implementation queues are now explicit:
 - fuse the implemented directional tiled transposes into adjacent work or retain
   their layouts across multiple dimensions; standalone prefix and suffix
   transpose kernels are measured but do not win at saturated batch;
-- generalize the current prefix/suffix runtime interface to per-segment vectors
-  and allow different cores on all segments;
+- allow heterogeneous core families across segments; the descriptors are
+  per-segment, but the generic runtime currently validates cuFFTDx-block/shared;
 - add shared-resident and cooperative-grid boundaries beyond selected points;
 - generate padding and multi-buffer pipeline variants;
-- implement multi-pass lowering for the already enumerated `D=3/4` stage
-  partitions, including a boundary descriptor for every adjacent pair.
+- fuse adjacent segment/boundary work or keep multiple segments resident; the
+  functional `D=3/4` lowering currently incurs one global read/write pass per
+  segment and is therefore a correctness and exploration baseline.
 
 Fine-grained performance search should operate only on `compiled` points after
 the desired `awaiting-codegen` subset has been emitted.

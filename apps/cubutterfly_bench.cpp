@@ -41,6 +41,34 @@ std::vector<std::uint32_t> parse_stage_partition(const std::string& text) {
     return partition;
 }
 
+std::vector<std::string> parse_csv_tokens(const std::string& text) {
+    std::vector<std::string> tokens;
+    std::size_t begin = 0;
+    while (begin <= text.size()) {
+        const std::size_t end = text.find(',', begin);
+        const std::string token = text.substr(begin, end == std::string::npos ? end : end - begin);
+        if (token.empty())
+            throw std::invalid_argument("comma-separated list contains an empty value");
+        tokens.push_back(token);
+        if (end == std::string::npos)
+            break;
+        begin = end + 1;
+    }
+    return tokens;
+}
+
+std::vector<std::uint32_t> parse_positive_list(const std::string& text, const char* name) {
+    std::vector<std::uint32_t> values;
+    for (const auto& token : parse_csv_tokens(text)) {
+        std::size_t consumed = 0;
+        const auto value = std::stoul(token, &consumed);
+        if (consumed != token.size() || value == 0 || value > std::numeric_limits<std::uint32_t>::max())
+            throw std::invalid_argument(std::string(name) + " values must be positive integers");
+        values.push_back(static_cast<std::uint32_t>(value));
+    }
+    return values;
+}
+
 std::string format_stage_partition(const std::vector<std::uint32_t>& partition) {
     std::string text;
     for (const auto stages : partition) {
@@ -51,11 +79,24 @@ std::string format_stage_partition(const std::vector<std::uint32_t>& partition) 
     return text;
 }
 
+template <typename Mapping, typename Getter>
+std::string format_mapping_list(const std::vector<Mapping>& mappings, Getter getter) {
+    std::string text;
+    for (const auto& mapping : mappings) {
+        if (!text.empty())
+            text += 'x';
+        text += getter(mapping);
+    }
+    return text;
+}
+
 void print_usage() {
     std::cout
         << "cubutterfly_bench [--operator fwht|fft|xor-zeta] [--backend temporal-tile|hierarchical|online-reorder|warp-hybrid|stage-pipeline|cufft]\n"
         << "                    [--logN 8] [--batch 16384] [--inverse]\n"
         << "                    [--stage-partition 9,9]\n"
+        << "                    [--segment-threads 256,256,256] [--segment-ept 8,8,8]\n"
+        << "                    [--boundary-twiddle table,recurrence] [--boundary-layout direct-strided,direct-strided]\n"
         << "                    [--normalization none|inverse]\n"
         << "                    [--auto-select]\n"
         << "                    [--placement in-place|out-of-place]\n"
@@ -138,6 +179,34 @@ int main(int argc, char** argv) {
                 config.batch = std::stoull(take_arg(index, argc, argv));
             } else if (arg == "--stage-partition") {
                 config.stage_partition = parse_stage_partition(take_arg(index, argc, argv));
+            } else if (arg == "--segment-threads") {
+                const auto values = parse_positive_list(take_arg(index, argc, argv), "segment threads");
+                if (!config.segment_mappings.empty() && config.segment_mappings.size() != values.size())
+                    throw std::invalid_argument("segment threads and EPT lists must have equal length");
+                config.segment_mappings.resize(values.size());
+                for (std::size_t segment = 0; segment < values.size(); ++segment)
+                    config.segment_mappings[segment].threads = values[segment];
+            } else if (arg == "--segment-ept") {
+                const auto values = parse_positive_list(take_arg(index, argc, argv), "segment EPT");
+                if (!config.segment_mappings.empty() && config.segment_mappings.size() != values.size())
+                    throw std::invalid_argument("segment threads and EPT lists must have equal length");
+                config.segment_mappings.resize(values.size());
+                for (std::size_t segment = 0; segment < values.size(); ++segment)
+                    config.segment_mappings[segment].ept = values[segment];
+            } else if (arg == "--boundary-twiddle") {
+                const auto values = parse_csv_tokens(take_arg(index, argc, argv));
+                if (!config.boundaries.empty() && config.boundaries.size() != values.size())
+                    throw std::invalid_argument("boundary twiddle and layout lists must have equal length");
+                config.boundaries.resize(values.size());
+                for (std::size_t boundary = 0; boundary < values.size(); ++boundary)
+                    config.boundaries[boundary].cross_twiddle = cuntt::parse_cross_twiddle_mode(values[boundary]);
+            } else if (arg == "--boundary-layout") {
+                const auto values = parse_csv_tokens(take_arg(index, argc, argv));
+                if (!config.boundaries.empty() && config.boundaries.size() != values.size())
+                    throw std::invalid_argument("boundary twiddle and layout lists must have equal length");
+                config.boundaries.resize(values.size());
+                for (std::size_t boundary = 0; boundary < values.size(); ++boundary)
+                    config.boundaries[boundary].layout = cuntt::parse_direct_boundary(values[boundary]);
             } else if (arg == "--batch-stride") {
                 config.batch_stride = std::stoull(take_arg(index, argc, argv));
             } else if (arg == "--element-stride") {
@@ -320,7 +389,7 @@ int main(int argc, char** argv) {
         const auto device = cuntt::current_device_info();
         std::cout << std::fixed << std::setprecision(6);
         if (csv) {
-            std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,auto_select,backend,compute_unit,complex_multiply,cross_twiddle,direct_boundary,decomposition_count,stages_per_decomposition,local_"
+            std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,auto_select,backend,compute_unit,complex_multiply,cross_twiddle,direct_boundary,decomposition_count,stages_per_decomposition,segment_threads,segment_ept,boundary_twiddles,boundary_layouts,local_"
                          "exchange,fft_core,stage_space,stage_handoff,tile_threads,prefix_threads,suffix_threads,prefix_ept,suffix_ept,prefix_units_per_cta,suffix_units_per_cta,local_stages,reorder_columns,warp_stages,pipeline_warps,logN,N,batch,element_stride,batch_"
                          "stride,warmup,repeat,h2d_ms,kernel_ms,d2h_ms,"
                          "transforms_s,Gbutterfly_s,points_s,max_error,correct\n";
@@ -333,6 +402,10 @@ int main(int argc, char** argv) {
                       << cuntt::cross_twiddle_mode_name(config.cross_twiddle) << ','
                       << cuntt::direct_boundary_name(config.direct_boundary) << ','
                       << config.stage_partition.size() << ',' << format_stage_partition(config.stage_partition) << ','
+                      << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.threads); }) << ','
+                      << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << ','
+                      << format_mapping_list(config.boundaries, [](const auto& boundary) { return std::string(cuntt::cross_twiddle_mode_name(boundary.cross_twiddle)); }) << ','
+                      << format_mapping_list(config.boundaries, [](const auto& boundary) { return std::string(cuntt::direct_boundary_name(boundary.layout)); }) << ','
                       << cuntt::local_exchange_name(config.local_exchange) << ',' << cuntt::fft_core_name(config.fft_core) << ',' << config.stage_space << ','
                       << cuntt::stage_handoff_name(config.stage_handoff) << ',' << config.tile_threads << ','
                       << config.prefix_threads << ',' << config.suffix_threads << ',' << config.prefix_ept << ',' << config.suffix_ept << ','
@@ -356,6 +429,8 @@ int main(int argc, char** argv) {
                       << "cross_twiddle: " << cuntt::cross_twiddle_mode_name(config.cross_twiddle) << "\n"
                       << "direct_boundary: " << cuntt::direct_boundary_name(config.direct_boundary) << "\n"
                       << "stage_partition: " << format_stage_partition(config.stage_partition) << "\n"
+                      << "segment_threads: " << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.threads); }) << "\n"
+                      << "segment_ept: " << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << "\n"
                       << "local_exchange: " << cuntt::local_exchange_name(config.local_exchange) << "\n"
                       << "fft_core: " << cuntt::fft_core_name(config.fft_core) << "\n"
                       << "stage_space: " << config.stage_space << "\n"

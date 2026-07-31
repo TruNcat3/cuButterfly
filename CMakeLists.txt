@@ -271,11 +271,33 @@ if(BUILD_TESTING)
                          --suffix-threads 128 --suffix-ept 16 --cross-twiddle recurrence
                          --direct-boundary prefix-tiled-transpose --placement in-place --normalization none
                          --logN 20 --batch 1 --warmup 1 --repeat 1 --verify)
-        add_test(NAME fft_multisegment_runtime_rejection
+        add_test(NAME fft_multisegment_d3_correctness
                  COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
                          --fft-core cufftdx-block --stage-partition 6,6,8
+                         --segment-threads 256,256,256 --segment-ept 8,8,8
+                         --boundary-twiddle recurrence,recurrence
                          --placement in-place --normalization none --logN 20 --batch 1
                          --warmup 1 --repeat 1 --verify)
-        set_tests_properties(fft_multisegment_runtime_rejection PROPERTIES WILL_FAIL TRUE)
+        add_test(NAME fft_multisegment_d4_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 5,5,5,5
+                         --segment-threads 256,256,256,256 --segment-ept 8,8,8,8
+                         --boundary-twiddle recurrence,table,recurrence
+                         --placement in-place --normalization none --logN 20 --batch 1
+                         --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_multisegment_inverse_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 6,6,6
+                         --segment-threads 256,256,256 --segment-ept 8,8,8
+                         --boundary-twiddle table,recurrence --inverse
+                         --placement out-of-place --normalization inverse --logN 18 --batch 1
+                         --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_multisegment_strided_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 4,4,4
+                         --segment-threads 128,128,128 --segment-ept 4,4,4
+                         --boundary-twiddle recurrence,table --element-stride 2 --batch-stride 8192
+                         --placement out-of-place --normalization none --logN 12 --batch 2
+                         --warmup 1 --repeat 1 --verify)
     endif()
 endif()

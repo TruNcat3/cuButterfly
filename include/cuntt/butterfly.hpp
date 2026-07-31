@@ -128,6 +128,18 @@ enum class FftCore {
 const char* fft_core_name(FftCore core) noexcept;
 FftCore     parse_fft_core(const std::string& name);
 
+struct FftSegmentMapping {
+    FftCore         core     = FftCore::CufftDxBlock;
+    LocalExchange   exchange = LocalExchange::SharedMemory;
+    std::uint32_t   threads  = 0;
+    std::uint32_t   ept      = 8;
+};
+
+struct FftBoundaryMapping {
+    CrossTwiddleMode cross_twiddle = CrossTwiddleMode::Table;
+    DirectBoundary   layout        = DirectBoundary::Strided;
+};
+
 std::vector<ButterflyCapability> butterfly_capabilities();
 
 struct ButterflyConfig {
@@ -138,6 +150,8 @@ struct ButterflyConfig {
     std::uint32_t      log_n             = 8;
     // Ordered stage counts for each algorithmic decomposition segment.
     std::vector<std::uint32_t> stage_partition;
+    std::vector<FftSegmentMapping> segment_mappings;
+    std::vector<FftBoundaryMapping> boundaries;
     std::size_t        batch             = 1;
     std::size_t        batch_stride      = 0;
     std::size_t        element_stride    = 1;

@@ -256,6 +256,138 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_sec
     }
 }
 
+struct StagePartitionDescriptor {
+    std::uint32_t count;
+    std::uint32_t input_shift[8];
+    std::uint32_t output_shift[8];
+    std::uint32_t mask[8];
+};
+
+__device__ __forceinline__ std::uint32_t reverse_stage_groups(
+    std::uint32_t logical, const StagePartitionDescriptor& partition) {
+    std::uint32_t reordered = 0;
+#pragma unroll
+    for (std::uint32_t segment = 0; segment < 8; ++segment) {
+        if (segment < partition.count) {
+            const std::uint32_t digit = (logical >> partition.input_shift[segment]) & partition.mask[segment];
+            reordered |= digit << partition.output_shift[segment];
+        }
+    }
+    return reordered;
+}
+
+template <class FFT, bool FinalSegment>
+__launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_multisegment_kernel(
+    const Complex32* input, Complex32* output, const Complex32* twiddles,
+    std::uint64_t transforms, std::uint32_t log_n, std::uint32_t prefix_log_n,
+    std::uint32_t segment_log_n, std::uint32_t remaining_log_n,
+    std::uint64_t batch_distance, std::uint64_t element_stride,
+    bool recurrence_twiddle, bool normalize, StagePartitionDescriptor partition) {
+    using Value = typename FFT::value_type;
+    // Intermediate layouts keep completed frequency digits before the remaining time digits.
+    // The final pass reverses those radix groups into natural FFT output order.
+    const std::uint32_t prefix_n = 1U << prefix_log_n;
+    const std::uint32_t remaining_n = 1U << remaining_log_n;
+    const std::uint64_t local_per_batch = static_cast<std::uint64_t>(prefix_n) * remaining_n;
+    const std::uint64_t local_transform = static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + threadIdx.y;
+    const std::uint64_t total_local = transforms * local_per_batch;
+    const bool active = local_transform < total_local;
+    const std::uint64_t within = active ? local_transform % local_per_batch : 0;
+    const std::uint32_t remainder = static_cast<std::uint32_t>(within) & (remaining_n - 1);
+
+    extern __shared__ __align__(16) unsigned char storage[];
+    Value* tile = reinterpret_cast<Value*>(storage);
+    const std::uint32_t flat_thread = threadIdx.y * blockDim.x + threadIdx.x;
+    const std::uint32_t flat_threads = blockDim.x * blockDim.y;
+    constexpr std::uint32_t tile_values = FFT::input_length * FFT::ffts_per_block;
+    for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+        const std::uint32_t element = work / FFT::ffts_per_block;
+        const std::uint32_t slot = work - element * FFT::ffts_per_block;
+        const std::uint64_t staged_local = static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+        if (staged_local < total_local) {
+            const std::uint64_t staged_transform = staged_local / local_per_batch;
+            const std::uint64_t staged_within = staged_local - staged_transform * local_per_batch;
+            const std::uint32_t staged_prefix = static_cast<std::uint32_t>(staged_within >> remaining_log_n);
+            const std::uint32_t staged_remainder = static_cast<std::uint32_t>(staged_within) & (remaining_n - 1);
+            const std::uint64_t logical =
+                (static_cast<std::uint64_t>(staged_prefix) * FFT::input_length + element) * remaining_n + staged_remainder;
+            const Complex32 value = input[staged_transform * batch_distance + logical * element_stride];
+            tile[work] = Value{value.real, value.imag};
+        } else {
+            tile[work] = Value{0.0F, 0.0F};
+        }
+    }
+    __syncthreads();
+
+    Value thread_data[FFT::storage_size];
+    std::uint32_t element = threadIdx.x;
+#pragma unroll
+    for (unsigned int item = 0; item < FFT::storage_size; ++item) {
+        thread_data[item] = active && element < FFT::input_length
+                                ? tile[element * FFT::ffts_per_block + threadIdx.y]
+                                : Value{0.0F, 0.0F};
+        element += FFT::stride;
+    }
+    __syncthreads();
+    FFT().execute(thread_data, storage);
+    __syncthreads();
+
+    Complex32 running_root = {1.0F, 0.0F};
+    Complex32 root_step = {1.0F, 0.0F};
+    if constexpr (!FinalSegment) {
+        if (active && recurrence_twiddle) {
+            const std::uint64_t exponent_scale = static_cast<std::uint64_t>(prefix_n) * remainder;
+            running_root = cross_root(twiddles, log_n, exponent_scale * threadIdx.x);
+            root_step = cross_root(twiddles, log_n, exponent_scale * FFT::stride);
+        }
+    }
+    std::uint32_t frequency = threadIdx.x;
+#pragma unroll
+    for (unsigned int item = 0; item < FFT::storage_size; ++item) {
+        if (active && frequency < FFT::output_length) {
+            Value value = thread_data[item];
+            if constexpr (!FinalSegment) {
+                const std::uint64_t exponent = static_cast<std::uint64_t>(prefix_n) * frequency * remainder;
+                const Complex32 root = recurrence_twiddle ? running_root : cross_root(twiddles, log_n, exponent);
+                value = Value{value.x * root.real - value.y * root.imag,
+                              value.x * root.imag + value.y * root.real};
+            } else if (normalize) {
+                const float scale = 1.0F / static_cast<float>(1U << log_n);
+                value = Value{value.x * scale, value.y * scale};
+            }
+            tile[frequency * FFT::ffts_per_block + threadIdx.y] = value;
+        }
+        if constexpr (!FinalSegment) {
+            if (recurrence_twiddle) {
+                running_root = {running_root.real * root_step.real - running_root.imag * root_step.imag,
+                                running_root.real * root_step.imag + running_root.imag * root_step.real};
+            }
+        }
+        frequency += FFT::stride;
+    }
+    __syncthreads();
+
+    for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+        const std::uint32_t staged_frequency = work / FFT::ffts_per_block;
+        const std::uint32_t slot = work - staged_frequency * FFT::ffts_per_block;
+        const std::uint64_t staged_local = static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+        if (staged_local < total_local) {
+            const std::uint64_t staged_transform = staged_local / local_per_batch;
+            const std::uint64_t staged_within = staged_local - staged_transform * local_per_batch;
+            const std::uint32_t staged_prefix = static_cast<std::uint32_t>(staged_within >> remaining_log_n);
+            const std::uint32_t staged_remainder = static_cast<std::uint32_t>(staged_within) & (remaining_n - 1);
+            std::uint32_t logical = static_cast<std::uint32_t>(
+                (static_cast<std::uint64_t>(staged_prefix) * FFT::output_length + staged_frequency) * remaining_n +
+                staged_remainder);
+            if constexpr (FinalSegment)
+                logical = reverse_stage_groups(logical, partition);
+            const Value value = tile[work];
+            output[staged_transform * batch_distance + static_cast<std::uint64_t>(logical) * element_stride] =
+                {value.x, value.y};
+        }
+    }
+}
+
 template <class FFT, bool ContiguousInput>
 __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_direct_first_kernel(
     const Complex32* input, Complex32* scratch, const Complex32* twiddles, std::uint32_t log_n,
@@ -679,6 +811,65 @@ void launch_online_second(std::uint32_t log_n, std::uint32_t local_log_n, const 
     }
 }
 
+template <class FFT, bool FinalSegment>
+void launch_multisegment_kernel(const Complex32* input, Complex32* output, const Complex32* twiddles,
+                                std::uint64_t transforms, std::uint32_t log_n,
+                                std::uint32_t prefix_log_n, std::uint32_t segment_log_n,
+                                std::uint32_t remaining_log_n, std::uint64_t batch_distance,
+                                std::uint64_t element_stride, bool recurrence_twiddle, bool normalize,
+                                StagePartitionDescriptor partition) {
+    const std::uint64_t local_transforms = transforms << (log_n - segment_log_n);
+    const std::uint64_t block_count = (local_transforms + FFT::ffts_per_block - 1) / FFT::ffts_per_block;
+    if (block_count > 0x7fffffffULL)
+        throw std::invalid_argument("multi-segment cuFFTDx grid exceeds the CUDA grid.x limit");
+    constexpr std::size_t tile_bytes = FFT::input_length * FFT::ffts_per_block * sizeof(typename FFT::value_type);
+    constexpr std::size_t shared_bytes = FFT::shared_memory_size > tile_bytes ? FFT::shared_memory_size : tile_bytes;
+    if constexpr (shared_bytes > 48U * 1024U)
+        cudaFuncSetAttribute(cufftdx_multisegment_kernel<FFT, FinalSegment>,
+                             cudaFuncAttributeMaxDynamicSharedMemorySize, shared_bytes);
+    cufftdx_multisegment_kernel<FFT, FinalSegment>
+        <<<static_cast<unsigned int>(block_count), FFT::block_dim, shared_bytes>>>(
+            input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n,
+            remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition);
+}
+
+template <unsigned int Size, unsigned int Threads, unsigned int Ept,
+          cufftdx::fft_direction Direction, bool FinalSegment>
+void launch_multisegment_online(const Complex32* input, Complex32* output, const Complex32* twiddles,
+                                std::uint64_t transforms, std::uint32_t log_n,
+                                std::uint32_t prefix_log_n, std::uint32_t segment_log_n,
+                                std::uint32_t remaining_log_n, std::uint64_t batch_distance,
+                                std::uint64_t element_stride, bool recurrence_twiddle, bool normalize,
+                                StagePartitionDescriptor partition) {
+    if constexpr (Ept <= Size && Threads * Ept >= Size && (Threads * Ept) % Size == 0) {
+        using FFT = OnlineBlockFft<Size, Threads, Ept, Direction>;
+        launch_multisegment_kernel<FFT, FinalSegment>(
+            input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n,
+            remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition);
+    } else {
+        throw std::invalid_argument("multi-segment cuFFTDx thread/EPT point cannot cover an integer number of FFTs");
+    }
+}
+
+template <unsigned int Size, unsigned int Threads, unsigned int Ept,
+          cufftdx::fft_direction Direction, bool FinalSegment>
+void launch_multisegment_direct(const Complex32* input, Complex32* output, const Complex32* twiddles,
+                                std::uint64_t transforms, std::uint32_t log_n,
+                                std::uint32_t prefix_log_n, std::uint32_t segment_log_n,
+                                std::uint32_t remaining_log_n, std::uint64_t batch_distance,
+                                std::uint64_t element_stride, bool recurrence_twiddle, bool normalize,
+                                StagePartitionDescriptor partition) {
+    if constexpr (Threads * Ept == Size) {
+        using FFT = DirectFft<Size, Ept, Direction>;
+        static_assert(FFT::block_dim.x == Threads);
+        launch_multisegment_kernel<FFT, FinalSegment>(
+            input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n,
+            remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition);
+    } else {
+        throw std::invalid_argument("multi-segment direct cuFFTDx requires exactly one FFT per CTA");
+    }
+}
+
 template <unsigned int Size, unsigned int Threads, unsigned int Ept, cufftdx::fft_direction Direction,
           bool ContiguousInput>
 void launch_online_direct_first(std::uint32_t log_n, std::uint32_t local_log_n, const Complex32* input,
@@ -810,6 +1001,78 @@ void dispatch_online_second_threads(std::uint32_t threads, std::uint32_t ept, st
 #undef CUNTT_CUFFTDX_ONLINE_LAUNCH
         default: throw std::invalid_argument("requested cuFFTDx suffix thread/EPT point was not generated");
     }
+}
+
+template <unsigned int Size, cufftdx::fft_direction Direction, bool FinalSegment>
+void dispatch_multisegment_online_threads(
+    std::uint32_t threads, std::uint32_t ept, const Complex32* input, Complex32* output,
+    const Complex32* twiddles, std::uint64_t transforms, std::uint32_t log_n,
+    std::uint32_t prefix_log_n, std::uint32_t segment_log_n, std::uint32_t remaining_log_n,
+    std::uint64_t batch_distance, std::uint64_t element_stride, bool recurrence_twiddle,
+    bool normalize, StagePartitionDescriptor partition) {
+    switch ((ept << 16) | threads) {
+#define CUNTT_CUFFTDX_ONLINE_LAUNCH(Threads, Ept)                                                    \
+        launch_multisegment_online<Size, Threads, Ept, Direction, FinalSegment>(                    \
+            input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n,                \
+            remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition)
+#include "generated_cufftdx_online_dispatch.inc"
+#undef CUNTT_CUFFTDX_ONLINE_LAUNCH
+        default: throw std::invalid_argument("requested multi-segment cuFFTDx thread/EPT point was not generated");
+    }
+}
+
+template <unsigned int Size, cufftdx::fft_direction Direction, bool FinalSegment>
+void dispatch_multisegment_direct_threads(
+    std::uint32_t threads, std::uint32_t ept, const Complex32* input, Complex32* output,
+    const Complex32* twiddles, std::uint64_t transforms, std::uint32_t log_n,
+    std::uint32_t prefix_log_n, std::uint32_t segment_log_n, std::uint32_t remaining_log_n,
+    std::uint64_t batch_distance, std::uint64_t element_stride, bool recurrence_twiddle,
+    bool normalize, StagePartitionDescriptor partition) {
+    switch ((ept << 16) | threads) {
+        case (2U << 16) | 1024U:
+            launch_multisegment_direct<Size, 1024, 2, Direction, FinalSegment>(input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        case (4U << 16) | 512U:
+            launch_multisegment_direct<Size, 512, 4, Direction, FinalSegment>(input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        case (4U << 16) | 1024U:
+            launch_multisegment_direct<Size, 1024, 4, Direction, FinalSegment>(input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        case (8U << 16) | 256U:
+            launch_multisegment_direct<Size, 256, 8, Direction, FinalSegment>(input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        case (8U << 16) | 512U:
+            launch_multisegment_direct<Size, 512, 8, Direction, FinalSegment>(input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        case (16U << 16) | 256U:
+            launch_multisegment_direct<Size, 256, 16, Direction, FinalSegment>(input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        default: throw std::invalid_argument("unsupported multi-segment direct cuFFTDx thread/EPT point");
+    }
+}
+
+template <cufftdx::fft_direction Direction, bool FinalSegment>
+void dispatch_multisegment(
+    std::uint32_t segment_log_n, std::uint32_t threads, std::uint32_t ept,
+    const Complex32* input, Complex32* output, const Complex32* twiddles,
+    std::uint64_t transforms, std::uint32_t log_n, std::uint32_t prefix_log_n,
+    std::uint32_t remaining_log_n, std::uint64_t batch_distance,
+    std::uint64_t element_stride, bool recurrence_twiddle, bool normalize,
+    StagePartitionDescriptor partition) {
+#define CUNTT_DISPATCH_SEGMENT(Size)                                                                  \
+    dispatch_multisegment_online_threads<Size, Direction, FinalSegment>(                              \
+        threads, ept, input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n,       \
+        remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition)
+    switch (segment_log_n) {
+        case 3: CUNTT_DISPATCH_SEGMENT(8); return;
+        case 4: CUNTT_DISPATCH_SEGMENT(16); return;
+        case 5: CUNTT_DISPATCH_SEGMENT(32); return;
+        case 6: CUNTT_DISPATCH_SEGMENT(64); return;
+        case 7: CUNTT_DISPATCH_SEGMENT(128); return;
+        case 8: CUNTT_DISPATCH_SEGMENT(256); return;
+        case 9: CUNTT_DISPATCH_SEGMENT(512); return;
+        case 10: CUNTT_DISPATCH_SEGMENT(1024); return;
+        case 11:
+            dispatch_multisegment_direct_threads<2048, Direction, FinalSegment>(threads, ept, input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        case 12:
+            dispatch_multisegment_direct_threads<4096, Direction, FinalSegment>(threads, ept, input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        default: throw std::invalid_argument("multi-segment cuFFTDx supports segment logN=3..12");
+    }
+#undef CUNTT_DISPATCH_SEGMENT
 }
 
 template <cufftdx::fft_direction Direction>
@@ -1057,6 +1320,70 @@ void launch_cufftdx_online_reorder(std::uint32_t log_n, std::uint32_t local_log_
         dispatch_online_second<cufftdx::fft_direction::forward>(log_n, local_log_n, scratch, output, transforms,
                                                                 batch_distance, element_stride, false, suffix_threads, suffix_ept,
                                                                 suffix_tiled_transpose);
+    }
+}
+
+void launch_cufftdx_multisegment(std::uint32_t log_n, const std::vector<std::uint32_t>& stage_partition,
+                                 const std::vector<FftSegmentMapping>& segment_mappings,
+                                 const std::vector<FftBoundaryMapping>& boundaries,
+                                 const Complex32* input, Complex32* output, Complex32* scratch,
+                                 Complex32* workspace, const Complex32* twiddles,
+                                 std::uint64_t transforms, std::uint64_t batch_distance,
+                                 std::uint64_t element_stride, bool inverse, bool normalize) {
+    if (stage_partition.size() < 3 || stage_partition.size() > 8 ||
+        segment_mappings.size() != stage_partition.size() ||
+        boundaries.size() + 1 != stage_partition.size())
+        throw std::invalid_argument("invalid multi-segment FFT runtime descriptors");
+    if (scratch == nullptr || workspace == nullptr)
+        throw std::invalid_argument("multi-segment FFT requires two scratch buffers");
+
+    StagePartitionDescriptor descriptor{};
+    descriptor.count = static_cast<std::uint32_t>(stage_partition.size());
+    std::uint32_t input_shift = log_n;
+    std::uint32_t output_shift = 0;
+    for (std::size_t segment = 0; segment < stage_partition.size(); ++segment) {
+        input_shift -= stage_partition[segment];
+        descriptor.input_shift[segment] = input_shift;
+        descriptor.output_shift[segment] = output_shift;
+        descriptor.mask[segment] = (1U << stage_partition[segment]) - 1U;
+        output_shift += stage_partition[segment];
+    }
+
+    const Complex32* source = input;
+    std::uint32_t prefix_log_n = 0;
+    for (std::size_t segment = 0; segment < stage_partition.size(); ++segment) {
+        const bool final_segment = segment + 1 == stage_partition.size();
+        const std::uint32_t segment_log_n = stage_partition[segment];
+        const std::uint32_t remaining_log_n = log_n - prefix_log_n - segment_log_n;
+        Complex32* destination = final_segment ? output : (segment % 2 == 0 ? scratch : workspace);
+        const bool recurrence = !final_segment &&
+                                boundaries[segment].cross_twiddle == CrossTwiddleMode::Recurrence;
+        const auto& mapping = segment_mappings[segment];
+        if (inverse) {
+            if (final_segment)
+                dispatch_multisegment<cufftdx::fft_direction::inverse, true>(
+                    segment_log_n, mapping.threads, mapping.ept, source, destination, twiddles,
+                    transforms, log_n, prefix_log_n, remaining_log_n, batch_distance,
+                    element_stride, false, normalize, descriptor);
+            else
+                dispatch_multisegment<cufftdx::fft_direction::inverse, false>(
+                    segment_log_n, mapping.threads, mapping.ept, source, destination, twiddles,
+                    transforms, log_n, prefix_log_n, remaining_log_n, batch_distance,
+                    element_stride, recurrence, false, descriptor);
+        } else {
+            if (final_segment)
+                dispatch_multisegment<cufftdx::fft_direction::forward, true>(
+                    segment_log_n, mapping.threads, mapping.ept, source, destination, twiddles,
+                    transforms, log_n, prefix_log_n, remaining_log_n, batch_distance,
+                    element_stride, false, false, descriptor);
+            else
+                dispatch_multisegment<cufftdx::fft_direction::forward, false>(
+                    segment_log_n, mapping.threads, mapping.ept, source, destination, twiddles,
+                    transforms, log_n, prefix_log_n, remaining_log_n, batch_distance,
+                    element_stride, recurrence, false, descriptor);
+        }
+        source = destination;
+        prefix_log_n += segment_log_n;
     }
 }
 

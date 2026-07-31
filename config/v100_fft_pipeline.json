@@ -36,9 +36,9 @@
       "decomposition_space": {
         "decomposition_count": {"min": 2, "max": 4},
         "stages_per_decomposition": {"min": 3, "max": 12},
-        "compiled_decomposition_counts": [2]
+        "compiled_decomposition_counts": [2, 3, 4]
       },
-      "max_runnable_candidates_per_shape": 24,
+      "max_runnable_candidates_per_shape": 32,
       "required_candidates": [
         {"stage_partition": [9, 9],
          "segment_mappings": [{"threads": 256, "ept": 8}, {"threads": 256, "ept": 8}],
@@ -53,9 +53,9 @@
       "decomposition_space": {
         "decomposition_count": {"min": 2, "max": 4},
         "stages_per_decomposition": {"min": 3, "max": 12},
-        "compiled_decomposition_counts": [2]
+        "compiled_decomposition_counts": [2, 3, 4]
       },
-      "max_runnable_candidates_per_shape": 20,
+      "max_runnable_candidates_per_shape": 32,
       "required_candidates": [
         {"stage_partition": [10, 10],
          "segment_mappings": [{"threads": 512, "ept": 8}, {"threads": 512, "ept": 8}],

@@ -9,7 +9,8 @@ import subprocess
 
 OUTPUT_FIELDS = (
     "candidate_id", "group", "trial", "implementation", "reference", "static_score",
-    "mapping_id", "decomposition_count", "stages_per_decomposition", "processing_unit",
+    "mapping_id", "decomposition_count", "stages_per_decomposition", "segment_threads", "segment_ept",
+    "boundary_twiddles", "boundary_layouts", "processing_unit",
     "prefix_log_n", "suffix_log_n", "prefix_threads",
     "suffix_threads", "prefix_ept", "suffix_ept", "cross_twiddle", "direct_boundary", "device",
     "compute_capability", "operator", "precision", "direction", "normalization", "placement",
@@ -42,6 +43,7 @@ def expand(document):
             "prefix_log_n": 0, "suffix_log_n": 0, "prefix_threads": 0, "suffix_threads": 0,
             "prefix_ept": 0, "suffix_ept": 0, "cross_twiddle": "none", "static_score": 0.0,
             "direct_boundary": "none", "decomposition_count": 0, "stages_per_decomposition": [],
+            "segment_mappings": [], "boundaries": [],
             "args": ["--operator", "fft", "--precision", seed["precision"], "--backend", "cufft",
                      "--placement", seed["placement"], "--normalization", seed["normalization"]],
         })
@@ -70,6 +72,10 @@ def case_metadata(case, trial):
         "static_score": case["static_score"], "mapping_id": case["mapping_id"],
         "decomposition_count": case["decomposition_count"],
         "stages_per_decomposition": "x".join(map(str, case["stages_per_decomposition"])),
+        "segment_threads": "x".join(str(item["threads"]) for item in case.get("segment_mappings", [])),
+        "segment_ept": "x".join(str(item["ept"]) for item in case.get("segment_mappings", [])),
+        "boundary_twiddles": "x".join(item["cross_twiddle"] for item in case.get("boundaries", [])),
+        "boundary_layouts": "x".join(item["layout"] for item in case.get("boundaries", [])),
         "processing_unit": case["processing_unit"], "prefix_log_n": case["prefix_log_n"],
         "suffix_log_n": case["suffix_log_n"], "prefix_threads": case["prefix_threads"],
         "suffix_threads": case["suffix_threads"], "prefix_ept": case["prefix_ept"],

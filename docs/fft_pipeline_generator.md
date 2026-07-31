@@ -35,9 +35,10 @@ pruning cannot exclude an existing strong point. Each selected row records the l
 and shortlist limit so that pruning remains auditable. Prefix and suffix units
 are selected independently. Prefix/suffix names appear only in the current
 `D=2` lowering and are not part of the general architecture abstraction. The
-current runtime accepts the same topology as `--stage-partition s0,s1,...`; a
-partition with more than two segments is preserved by the generator and fails
-explicitly until the multi-pass lowering is emitted.
+current runtime accepts the same topology as `--stage-partition s0,s1,...`,
+plus `--segment-threads`, `--segment-ept`, `--boundary-twiddle`, and
+`--boundary-layout`. The optimized `D=2` lowering remains separate from the
+generic multi-segment ping-pong path.
 
 For `logN=18/20`, `D=2..4`, and `si=3..12`, the current manifest contains 385
 factorization topologies:
@@ -47,13 +48,14 @@ factorization topologies:
 | 18 | 7 | 55 | 84 |
 | 20 | 5 | 69 | 165 |
 
-The 12 two-segment topologies are lowered to the existing runtime. The other
-373 are retained as `requires-multi-pass-runtime`; they are architecture points,
-not silently discarded configurations.
+All 385 topologies have a compiled runtime lowering. The bounded performance
+manifest selects 192 internal candidates from this topology/mapping product;
+it preserves every `D=2` split and directional boundary realization, then
+retains multiple `D=3/4` segment-mapping classes under a per-shape limit.
 
 ## V100 Search Result
 
-The current scan contains 414 samples: 138 cases, three randomized trials per
+The current scan contains 594 samples: 198 cases, three randomized trials per
 case, 100 warmups, and 50 timed repetitions. Times are resident kernel times on
 the repository V100. A ratio above 1 means cuButterfly is faster. The boundary
 column is `direct-strided` for all current winners.
@@ -74,6 +76,25 @@ rather than assumptions. Best recurrence time per `logN=18` partition at batch
 | 20 | 2 | `10+10`, `512/512`, EPT `8/8` | 0.128799 | 0.123556 | 0.959x |
 | 20 | 8 | `10+10`, `256/128`, EPT `16/16` | 0.450109 | 0.382157 | 0.849x |
 | 20 | 16 | `10+10`, `256/128`, EPT `16/16` | 0.883835 | 0.720855 | 0.816x |
+
+The generic multi-segment baseline is correct but not yet competitive because
+each segment is a separate global-scratch pass. Per-segment mapping still
+matters: the second scan replaced the initially selected uniform
+`512-thread/EPT16` points with smaller codelets and improved `D=3` by roughly
+15--28%. Best measured points by decomposition count are:
+
+| logN | Batch | `D=2` ms / cuFFT | `D=3` stages, mapping, ms / cuFFT | `D=4` ms / cuFFT |
+|--:|--:|:--|:--|:--|
+| 18 | 2 | 0.026051 / 1.079x | `3+3+12`, `128/128/512`, 0.068301 / 0.411x | 0.114934 / 0.244x |
+| 18 | 16 | 0.205722 / 1.051x | `3+3+12`, `128/128/512`, 0.485929 / 0.445x | 0.868803 / 0.249x |
+| 18 | 64 | 0.842875 / 0.851x | `3+5+10`, `128/128/128`, 1.725727 / 0.416x | 3.172168 / 0.226x |
+| 20 | 2 | 0.128799 / 0.959x | `7+3+10`, `128/128/128`, 0.306196 / 0.404x | 0.545915 / 0.226x |
+| 20 | 8 | 0.450109 / 0.849x | `7+3+10`, `128/128/128`, 1.046466 / 0.365x | 1.800069 / 0.212x |
+| 20 | 16 | 0.883835 / 0.816x | `7+3+10`, `128/128/128`, 2.050929 / 0.351x | 3.581092 / 0.201x |
+
+This isolates the next architecture task: fuse a boundary with its producer or
+consumer, or retain adjacent segments on chip. Merely increasing `D` while
+materializing every boundary in global memory is predictably bandwidth-bound.
 
 The boundary experiment compares the same `9+11`, 128/256-thread, EPT 16/8,
 recurrence point. Both rows include every launched kernel.
