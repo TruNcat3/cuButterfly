@@ -25,6 +25,10 @@ hypothesis.
 - P2 is complete with 120 matching-protocol Dao FHT/GPU-NTT samples.
 - P0 is complete with 22 profiled implementation-shape pairs and 37 kernels;
   the attribution separates grid coverage, residency, and useful work/warp.
+- The parameterized FFT pipeline now has a separate six-shape evaluation over
+  48 candidates per shape. Leave-one-batch-out top-3 regret is 1.0007x
+  geometric mean and 1.0020x worst case. A post-vector NCU capture remains
+  administrator-gated.
 
 ## Work Packages
 

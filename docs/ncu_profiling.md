@@ -40,6 +40,21 @@ sudo chown -R "$USER:$USER" results/ncu_fft_architecture
 Override `LOG_N`, `BATCH`, and `LOCAL_STAGES` to reuse the script for another
 selected split.
 
+The paired 128-bit boundary optimization has a dedicated controlled capture.
+It profiles the pre-existing 512/512-thread mapping, the newly selected
+256/128-thread mapping, and cuFFT at `logN=20`, batch 16. The reducer compares
+the fixed mapping with the archived pre-vector capture before attributing the
+additional mapping-selection gain:
+
+```bash
+sudo -E ./scripts/profile_fft_vectorized_ncu.sh
+sudo chown -R "$USER:$USER" results/ncu_fft_vectorized
+```
+
+The script writes raw CSV, a pivoted summary, `attribution.csv`, and
+`attribution.md`. Override `BATCH` only when a matching archived pre-vector
+label exists.
+
 ## Purpose
 
 The profiling run compares three implementations under the same modulus,

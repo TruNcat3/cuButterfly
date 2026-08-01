@@ -71,6 +71,8 @@ precision, direction, layout, and warmup protocol. Ratios above `1.0x` mean
 cuButterfly has higher throughput. They must not be generalized to other GPUs.
 For the latest controlled cross-workload protocol and its complete evidence
 boundary, use the [V100 Comprehensive Results](docs/comprehensive_v100_results.md);
+the [V100 Research Status](docs/research_status.md) separates closed claims,
+negative results, remaining work, and the cross-GPU TODO;
 the focused rows below retain their original experiment protocols. The newer
 [orthogonal length/batch scan](docs/v100_scaling_results.md) shows that parity
 is shape-dependent: the best processing unit and the relative library result
@@ -88,15 +90,16 @@ without forcing an intermediate global-memory pass.
 | FP32 DFT8, `2^22` total points | 0.093420 ms | cuFFT 0.086323 ms | 0.924x | generated CTA DFT8 |
 | FP32 FFT, `logN=12`, `2^22` total points | 0.088934 ms | cuFFT 0.089989 ms | 1.012x | contiguous cuFFTDx direct unit |
 | FP32 FFT, `logN=14`, `2^22` total points | 0.131543 ms | cuFFT 0.135383 ms | 1.029x | contiguous cuFFTDx direct unit |
-| FP32 FFT, `logN=18`, `2^22` total points | 0.212019 ms | cuFFT 0.226877 ms | 1.070x | `9+9`, independently tuned 256/256-thread dimensions |
-| FP32 FFT, `logN=20`, `2^22` total points | 0.235971 ms | cuFFT 0.209521 ms | 0.888x | cuFFTDx two-pass composition |
+| FP32 FFT, `logN=18`, `2^22` total points | 0.195942 ms | cuFFT 0.211098 ms | 1.077x | vectorized `9+9`, 256/256-thread dimensions |
+| FP32 FFT, `logN=20`, `2^22` total points | 0.214733 ms | cuFFT 0.210330 ms | 0.979x | vectorized `10+10`, batch-selected dimensions |
 | FP32 FWHT, `logN=8` | 0.043131 ms | Dao FHT 0.043172 ms | 1.001x | integrated register unit |
 | FP32 FWHT, `logN=15` | 0.069243 ms | Dao FHT 0.063949 ms | 0.924x | register-pressure boundary |
 | 60-bit NTT, `logN=16`, natural order | 0.274104 ms | GPU-NTT 0.291133 ms | 1.062x | fused Hybrid2D |
 | 60-bit NTT, `logN=20`, native bit-reversed | 0.341320 ms | GPU-NTT 0.396186 ms | 1.161x | compact-stage mapping |
 
-The generated local core and tiled two-pass composition raise long FFT
-throughput from 32.7%-47.4% to 41.9%-88.8% of cuFFT. Whole-transform cuFFTDx
+The generated local core, fused physical grouping, and vectorized two-pass
+composition bring the selected long FFT shapes to 95.4%-108.5% of cuFFT.
+Whole-transform cuFFTDx
 units at `logN=11..14` isolate the local-unit ceiling: the contiguous paths at
 `logN=11,12,14` reach 1.006x, 1.012x, and 1.029x cuFFT throughput, while
 `logN=13` reaches 0.965x. Independently tuning the two long-transform dimensions

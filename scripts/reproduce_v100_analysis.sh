@@ -12,13 +12,20 @@ python3 scripts/generate_fft_pipeline.py \
   --check config/v100_fft_pipeline_candidates.json
 
 python3 scripts/summarize_fft_pipeline.py \
-  results/v100_fft_pipeline_raw.csv \
-  --output results/v100_fft_pipeline_summary.csv \
-  --markdown results/v100_fft_pipeline_report.md
+  results/v100_fft_pipeline_vectorized_raw.csv \
+  --output results/v100_fft_pipeline_vectorized_summary.csv \
+  --markdown results/v100_fft_pipeline_vectorized_report.md
 
 python3 scripts/generate_fft_dispatch.py \
-  --summary results/v100_fft_pipeline_summary.csv \
+  --summary results/v100_fft_pipeline_vectorized_summary.csv \
   --output config/v100_fft_dispatch.json
+
+python3 scripts/analyze_fft_pipeline_model.py \
+  results/v100_fft_pipeline_vectorized_summary.csv \
+  --output results/v100_fft_pipeline_model_evaluation.csv \
+  --calibrated-output results/v100_fft_pipeline_model_calibrated_evaluation.csv \
+  --metrics results/v100_fft_pipeline_model_metrics.json \
+  --markdown results/v100_fft_pipeline_model_report.md
 
 python3 scripts/summarize_scaling_suite.py \
   results/v100_scaling_full_raw.csv \
@@ -33,6 +40,17 @@ python3 scripts/summarize_external_baseline_suite.py \
   results/v100_external_baselines_raw.csv \
   --output results/v100_external_baselines_summary.csv \
   --markdown results/v100_external_baselines_report.md
+
+python3 scripts/summarize_comprehensive_suite.py \
+  results/comprehensive_v100_full_raw.csv \
+  --output results/comprehensive_v100_full_summary.csv \
+  --markdown results/comprehensive_v100_full_report.md
+
+python3 scripts/summarize_comprehensive_suite.py \
+  results/comprehensive_v100_vectorized_fft_raw.csv \
+  --output results/comprehensive_v100_vectorized_fft_summary.csv \
+  --markdown results/comprehensive_v100_vectorized_fft_report.md \
+  --require-stable
 
 python3 scripts/summarize_ncu.py \
   results/ncu_scaling_crossovers/fft*.csv \

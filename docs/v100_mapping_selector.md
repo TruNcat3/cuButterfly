@@ -40,6 +40,12 @@ excluded from the internal validation because the scaling manifest currently
 contains one cuButterfly implementation per FFT length; cuFFT and VkFFT remain
 external baselines rather than architecture candidates.
 
+The separate FFT pipeline evaluation closes that gap over 48 internal
+candidates per shape. Static-only ranking is insufficient, but
+leave-one-batch-out calibration reaches 1.0007x top-3 geometric-mean regret and
+1.0020x worst regret while returning 6.2% of candidates. See
+[`v100_fft_pipeline_model_report.md`](../results/v100_fft_pipeline_model_report.md).
+
 ## Commands
 
 ```bash

@@ -182,7 +182,7 @@ def write_markdown(path, rows, external_evidence):
                 f"{row['throughput_vs_basis']:.3f}x | {row['basis_implementation']} | "
                 f"{row['stability_class']} |")
         lines.append("")
-    lines += ["## External Coverage Gaps", ""]
+    lines += ["## External Evidence", ""]
     if external_evidence:
         for item in external_evidence:
             lines.append(

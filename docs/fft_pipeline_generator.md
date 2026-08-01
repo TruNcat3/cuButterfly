@@ -101,6 +101,23 @@ logical decomposition restriction. The records are
 `results/v100_fft_pipeline_vectorized_summary.csv`, and
 `results/v100_fft_pipeline_vectorized_report.md`.
 
+### Model validation
+
+Ranking the 48 measured candidates per shape with the static resource score
+alone gives 1.0762x geometric-mean top-1 regret and a 1.4220x worst case. The
+failure is concentrated in low-batch shapes where the score does not model
+launch and service latency accurately enough. A leave-one-batch-out calibrated
+selector interpolates or extrapolates matching physical mappings using only the
+other batches at the same length. Its top-3 geometric-mean regret is 1.0007x,
+worst regret is 1.0020x, and candidate fraction is 6.2%. Top-10 finds the exact
+winner in all six shapes while measuring 20.8% of the shortlist.
+
+This supports a two-level method rather than a universal analytic cost model:
+static constraints reject illegal points and form the candidate classes, then
+a small target-hardware calibration set ranks the surviving physical mappings.
+The complete per-shape ranks, including the static-model failures, are in
+`results/v100_fft_pipeline_model_report.md`.
+
 The tables below preserve the pre-vectorization scan as a controlled baseline
 for boundary and physical-group experiments.
 
