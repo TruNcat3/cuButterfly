@@ -63,11 +63,13 @@ at 0.658x, then replaces the local unit with double-precision cuFFTDx and reache
 0.893x with table twiddles. Register recurrence reduces the selected prefix's
 table lookups and raises the final result to 0.948x. This isolates most of the
 former deficit in the physical unit and its precision-specific CTA/EPT mapping.
-The table-path NCU capture attributes its 12% event-time gap to 2.08x warp
-instructions and 135.5x shared-bank conflicts, not DRAM volume (1.007x) or
-FP64 arithmetic work (0.982x). Its prefix/twiddle/reorder pass takes 236.0 us
-versus 173.5 us for the suffix. A recurrence counter capture is prepared to
-measure how much of that mechanism the new 0.948x point removes.
+The controlled NCU capture shows recurrence reduces prefix replay time by
+15.9% and warp instructions by 6.9%, while spending 8.4% more FP64 instructions
+with unchanged registers, shared allocation, and waves/SM. Prefix DRAM peak
+rises from 60.8% to 72.2%; suffix time changes only 0.1%. The remaining 5.5%
+event-time gap is now localized to shared exchange and address work: total
+shared-bank conflicts remain unchanged and warp instructions are still 2.06x
+cuFFT.
 
 ## Remaining Work
 

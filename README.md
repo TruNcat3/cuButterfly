@@ -107,11 +107,12 @@ units at `logN=11..14` isolate the local-unit ceiling: the contiguous paths at
 also raises `logN=18` from 0.881x in the fixed-512 mapping experiment to 1.070x.
 Processing-unit granularity and each dimension's CTA shape are therefore explicit
 hardware-mapping axes rather than fixed properties of the paradigm.
-The corresponding FP64 table-twiddle counter capture shows that its remaining gap is not
-double-precision arithmetic or DRAM volume: the selected path executes 0.982x
-cuFFT's FP64 instructions and transfers 1.007x its bytes, but the prefix
-twiddle/reorder pass drives 2.08x total warp instructions and 135.5x shared
-bank conflicts. See [FP64 NCU Attribution](results/ncu_fp64_fft/analysis.md).
+The corresponding FP64 counter capture shows recurrence reduces prefix replay
+time by 15.9% and raises its DRAM utilization from 60.8% to 72.2% by trading
+8.4% more FP64 instructions for 6.9% fewer warp instructions. The suffix is
+unchanged. The remaining path still executes 2.06x cuFFT's warp instructions
+with essentially unchanged shared conflicts, localizing the next step in the
+exchange/address path. See [FP64 NCU Attribution](results/ncu_fp64_fft/analysis.md).
 
 ### Online Reorder at `logN=20`
 

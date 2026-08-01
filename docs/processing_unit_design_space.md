@@ -194,14 +194,16 @@ and 0.397609 ms, while suffix-only is statistically neutral at 0.383765 ms.
 The conflict count therefore identifies real exchange overhead, but uniform
 padding is not an efficient realization on V100.
 
-The fixed table-path privileged capture confirms the mechanism. Relative to
-cuFFT, the selected FP64 composition transfers 1.007x the DRAM bytes and executes 0.982x
-the FP64 instructions, but executes 2.08x the warp instructions and incurs
-135.5x the shared-memory bank conflicts. Its prefix pass takes 236.0 us with
-46.7% long-scoreboard stall and 63.7% peak DRAM throughput; the suffix takes
-173.5 us and reaches 86.4% DRAM. Since either cuFFT pass takes about 179 us,
-the remaining work is specifically the prefix input/reorder, cross-twiddle
-epilogue, shared layout, and synchronization. See
+The fixed privileged capture confirms the recurrence mechanism. It reduces
+prefix replay from 247.136 us to 207.776 us (15.9%), warp instructions by 6.9%,
+and raises peak DRAM use from 60.8% to 72.2%. This costs 8.4% more prefix FP64
+instructions but does not change registers, shared allocation, or waves/SM.
+The suffix changes by only 0.1%, confirming that the measured gain belongs to
+the prefix twiddle policy. Against cuFFT, the recurrence path transfers 1.006x
+the bytes and executes 1.023x the FP64 instructions, but still executes 2.06x
+the warp instructions and incurs about 180x the shared-bank conflicts. The
+remaining work is therefore shared exchange and general address work, not
+twiddle service, occupancy, or FP64 arithmetic throughput. See
 `results/ncu_fp64_fft/analysis.md`.
 
 ### Resident and direct granularity experiment

@@ -98,8 +98,19 @@ def write_markdown(path, rows, kernels, batch):
     cufftdx_kernels = [row for row in kernels if row["label"] == labels(batch)["cufftdx"]]
     first = next(row for row in cufftdx_kernels if "first_kernel" in row["kernel_name"])
     second = next(row for row in cufftdx_kernels if "second_kernel" in row["kernel_name"])
-    first_conflicts = number(first, "shared_load_bank_conflicts") + number(first, "shared_store_bank_conflicts")
-    second_conflicts = number(second, "shared_load_bank_conflicts") + number(second, "shared_store_bank_conflicts")
+    recurrence_first = None
+    recurrence_second = None
+    if recurrence:
+        recurrence_kernels = [row for row in kernels if row["label"] == f"fp64_recurrence_b{batch}"]
+        recurrence_first = next(row for row in recurrence_kernels if "first_kernel" in row["kernel_name"])
+        recurrence_second = next(row for row in recurrence_kernels if "second_kernel" in row["kernel_name"])
+
+    def pass_row(name, row):
+        conflicts = number(row, "shared_load_bank_conflicts") + number(row, "shared_store_bank_conflicts")
+        return (f"| {name} | {number(row, 'time_us'):.3f} | {number(row, 'warp_instructions'):.0f} | "
+                f"{number(row, 'fp64_thread_instructions'):.0f} | {conflicts:.0f} | "
+                f"{number(row, 'dram_peak_pct'):.1f}% | {number(row, 'barrier_stall_pct'):.1f}% | "
+                f"{number(row, 'long_scoreboard_stall_pct'):.1f}% |")
 
     lines = [
         "# FP64 FFT NCU Attribution", "",
@@ -138,22 +149,31 @@ def write_markdown(path, rows, kernels, batch):
             f"{recurrence['fp64_thread_instructions'] / cufftdx['fp64_thread_instructions'] - 1.0:+.1%}.")
     lines += [
         "", "## Prefix/Suffix Split", "",
-        "| cuFFTDx pass | NCU us | Warp inst. | Shared conflicts | DRAM peak | Barrier stall | Scoreboard stall |",
-        "|:--|--:|--:|--:|--:|--:|--:|",
-        f"| prefix + twiddle/reorder | {number(first, 'time_us'):.3f} | {number(first, 'warp_instructions'):.0f} | "
-        f"{first_conflicts:.0f} | {number(first, 'dram_peak_pct'):.1f}% | "
-        f"{number(first, 'barrier_stall_pct'):.1f}% | {number(first, 'long_scoreboard_stall_pct'):.1f}% |",
-        f"| suffix + natural-order store | {number(second, 'time_us'):.3f} | {number(second, 'warp_instructions'):.0f} | "
-        f"{second_conflicts:.0f} | {number(second, 'dram_peak_pct'):.1f}% | "
-        f"{number(second, 'barrier_stall_pct'):.1f}% | {number(second, 'long_scoreboard_stall_pct'):.1f}% |",
-        "",
-        f"The prefix consumes {number(first, 'time_us') / cufftdx['time_us']:.1%} of replay time and is "
-        f"{number(first, 'time_us') / number(second, 'time_us'):.2f}x slower than the suffix. The suffix "
-        f"already runs in {number(second, 'time_us'):.3f} us, below either cuFFT pass (about 179 us). "
-        "The next optimization target is therefore the prefix boundary: coalesced online input layout, "
-        "cross-twiddle epilogue, shared-memory indexing, and synchronization. Increasing occupancy or "
-        "changing FP64 arithmetic alone is not supported by these counters.", "",
+        "| cuFFTDx pass | NCU us | Warp inst. | FP64 inst. | Shared conflicts | DRAM peak | Barrier stall | Scoreboard stall |",
+        "|:--|--:|--:|--:|--:|--:|--:|--:|",
+        pass_row("table prefix + twiddle/reorder", first),
+        pass_row("table suffix + natural-order store", second),
     ]
+    if recurrence:
+        lines += [pass_row("recurrence prefix + twiddle/reorder", recurrence_first),
+                  pass_row("recurrence suffix + natural-order store", recurrence_second), "",
+                  f"Recurrence reduces prefix replay time by "
+                  f"{1.0 - number(recurrence_first, 'time_us') / number(first, 'time_us'):.1%}, warp instructions by "
+                  f"{1.0 - number(recurrence_first, 'warp_instructions') / number(first, 'warp_instructions'):.1%}, "
+                  f"and raises DRAM peak from {number(first, 'dram_peak_pct'):.1f}% to "
+                  f"{number(recurrence_first, 'dram_peak_pct'):.1f}%. It spends "
+                  f"{number(recurrence_first, 'fp64_thread_instructions') / number(first, 'fp64_thread_instructions') - 1.0:.1%} "
+                  f"more FP64 instructions while registers, shared allocation, and waves/SM remain unchanged. "
+                  f"The suffix changes by only "
+                  f"{number(recurrence_second, 'time_us') / number(second, 'time_us') - 1.0:+.1%}.", "",
+                  "The recurrence result confirms a useful architecture trade: idle FP64 capacity replaces "
+                  "dependent twiddle-table service in the prefix. Shared conflicts remain essentially unchanged, "
+                  "so the next target is the local exchange/address path rather than another twiddle change.", ""]
+    else:
+        lines += ["",
+                  f"The prefix consumes {number(first, 'time_us') / cufftdx['time_us']:.1%} of replay time and is "
+                  f"{number(first, 'time_us') / number(second, 'time_us'):.2f}x slower than the suffix. The suffix "
+                  f"already runs in {number(second, 'time_us'):.3f} us, below either cuFFT pass (about 179 us).", ""]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines))
 
