@@ -69,10 +69,40 @@ mappings for compatible D3/D4 lowerings, including their boundary twiddle mode.
 
 ## V100 Search Result
 
-The current scan contains 882 samples: 294 cases, three randomized trials per
-case, 100 warmups, and 50 timed repetitions. Times are resident kernel times on
-the repository V100. All 294 cases pass verification. A ratio above 1 means
-cuButterfly is faster.
+The physical-unit optimization pairs adjacent FP32 complex values at the
+online cuFFTDx input, global-scratch handoff, and final output. Contiguous,
+aligned boundaries now use one 128-bit transaction for two transforms. Strided
+layouts, odd batch distances, and units with fewer than two transforms per CTA
+retain the scalar path. This changes the processing-unit realization without
+constraining the logical decomposition or physical group partition.
+
+The post-optimization scan contains 882 samples: 294 cases, three randomized
+trials per case, 100 warmups, and 50 timed repetitions. Times are resident
+kernel times on the repository V100. All 294 cases pass verification. A ratio
+above 1 means cuButterfly is faster.
+
+| logN | Batch | New best ms | Previous best ms | Best-point gain | cuFFT ms | Ratio |
+|--:|--:|--:|--:|--:|--:|--:|
+| 18 | 2 | 0.025866 | 0.026010 | 0.6% | 0.028058 | 1.085x |
+| 18 | 16 | 0.195441 | 0.205496 | 5.1% | 0.211108 | 1.080x |
+| 18 | 64 | 0.767201 | 0.836690 | 9.1% | 0.706273 | 0.921x |
+| 20 | 2 | 0.119869 | 0.128573 | 7.3% | 0.123453 | 1.030x |
+| 20 | 8 | 0.397332 | 0.445338 | 12.1% | 0.382300 | 0.962x |
+| 20 | 16 | 0.764334 | 0.867799 | 13.5% | 0.729416 | 0.954x |
+
+Across all 48 internal candidates per shape, the median same-candidate gain is
+3.4--6.0%. The larger best-point gains at saturated batch include mapping
+selection: vectorized boundary traffic changes which physical unit wins. The
+best `logN=20` batch-8/16 points are now within 3.8%/4.6% of cuFFT; `logN=18`
+batch 64 remains 7.9% behind. The next physical-unit target is therefore the
+cuFFTDx internal shared-memory exchange and synchronization, not another
+logical decomposition restriction. The records are
+`results/v100_fft_pipeline_vectorized_raw.csv`,
+`results/v100_fft_pipeline_vectorized_summary.csv`, and
+`results/v100_fft_pipeline_vectorized_report.md`.
+
+The tables below preserve the pre-vectorization scan as a controlled baseline
+for boundary and physical-group experiments.
 
 The complete `D=2` scan confirms that the earlier balanced points were winners
 rather than assumptions. Best recurrence time per `logN=18` partition at batch
@@ -185,8 +215,19 @@ python3 scripts/summarize_fft_pipeline.py \
   --output results/v100_fft_pipeline_summary.csv \
   --markdown results/v100_fft_pipeline_report.md
 
+# Repeat after a processing-unit change without overwriting the baseline.
+python3 scripts/run_fft_pipeline.py \
+  --manifest config/v100_fft_pipeline_candidates.json \
+  --binary build/cubutterfly_bench \
+  --output results/v100_fft_pipeline_vectorized_raw.csv
+
+python3 scripts/summarize_fft_pipeline.py \
+  results/v100_fft_pipeline_vectorized_raw.csv \
+  --output results/v100_fft_pipeline_vectorized_summary.csv \
+  --markdown results/v100_fft_pipeline_vectorized_report.md
+
 python3 scripts/generate_fft_dispatch.py \
-  --summary results/v100_fft_pipeline_summary.csv \
+  --summary results/v100_fft_pipeline_vectorized_summary.csv \
   --output config/v100_fft_dispatch.json
 ```
 

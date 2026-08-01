@@ -45,6 +45,27 @@ class FftDispatchGeneratorTest(unittest.TestCase):
             self.assertIn("mapping = {8U, 256U, 128U, 8U, 16U, true, true, false}", text)
             self.assertIn("mapping = {9U, 128U, 128U, 16U, 16U, false, false, true}", text)
 
+    def test_fused_logical_segments_dispatch_as_physical_groups(self):
+        row = self.rows()[0] | {
+            "execution_group_stages": "9x9",
+            "group_threads": "512x256",
+            "group_ept": "8x16",
+        }
+        entry = MODULE.select_dispatch([row])[0]
+        self.assertEqual(entry["prefix_log_n"], 9)
+        self.assertEqual(entry["suffix_log_n"], 9)
+        self.assertEqual(entry["prefix_threads"], 512)
+        self.assertEqual(entry["suffix_threads"], 256)
+
+    def test_dispatch_rejects_more_than_two_physical_groups(self):
+        row = self.rows()[0] | {
+            "execution_group_stages": "6x6x6",
+            "group_threads": "256x256x256",
+            "group_ept": "8x8x8",
+        }
+        with self.assertRaisesRegex(ValueError, "exactly two physical groups"):
+            MODULE.select_dispatch([row])
+
 
 if __name__ == "__main__":
     unittest.main()

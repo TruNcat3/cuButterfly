@@ -10,6 +10,24 @@ INTEGER_FIELDS = ("prefix_log_n", "suffix_log_n", "prefix_threads", "suffix_thre
 FLOAT_FIELDS = ("median_kernel_ms", "cufft_median_ms", "throughput_vs_cufft")
 
 
+def physical_mapping(row):
+    group_stages = row.get("execution_group_stages", "")
+    group_threads = row.get("group_threads", "")
+    group_ept = row.get("group_ept", "")
+    if group_stages:
+        stages = [int(value) for value in group_stages.split("x")]
+        threads = [int(value) for value in group_threads.split("x")]
+        ept = [int(value) for value in group_ept.split("x")]
+        if len(stages) != 2 or len(threads) != 2 or len(ept) != 2:
+            raise ValueError("generated FFT dispatch currently requires exactly two physical groups")
+        return {
+            "prefix_log_n": stages[0], "suffix_log_n": stages[1],
+            "prefix_threads": threads[0], "suffix_threads": threads[1],
+            "prefix_ept": ept[0], "suffix_ept": ept[1],
+        }
+    return {field: int(row[field]) for field in INTEGER_FIELDS}
+
+
 def select_dispatch(rows):
     winners = [row for row in rows if int(row["rank"]) == 1]
     by_log_n = {}
@@ -29,7 +47,7 @@ def select_dispatch(rows):
                 "logN": log_n, "max_batch": max_batch,
                 "candidate_id": row["candidate_id"], "cross_twiddle": row["cross_twiddle"],
                 "direct_boundary": row.get("direct_boundary", "direct-strided"),
-                **{field: int(row[field]) for field in INTEGER_FIELDS},
+                **physical_mapping(row),
                 **{field: float(row[field]) for field in FLOAT_FIELDS},
             })
     return entries

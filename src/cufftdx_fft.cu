@@ -121,19 +121,64 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_fir
     const std::uint32_t flat_thread = threadIdx.y * blockDim.x + threadIdx.x;
     const std::uint32_t flat_threads = blockDim.x * blockDim.y;
     constexpr std::uint32_t tile_values = FFT::input_length * FFT::ffts_per_block;
-    for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
-        const std::uint32_t element = work / FFT::ffts_per_block;
-        const std::uint32_t slot    = work - element * FFT::ffts_per_block;
-        const std::uint64_t staged_transform = static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
-        const bool staged_active = staged_transform < total_local;
-        if (staged_active) {
-            const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
-            const std::uint32_t staged_n2 = static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
-            const std::uint64_t logical = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
-            const Complex32 value = input[staged_batch * batch_distance + logical * element_stride];
-            tile[work] = Value{value.real, value.imag};
+    // Pair adjacent transforms when the boundary layout permits aligned 128-bit transactions.
+    if constexpr (FFT::ffts_per_block >= 2 && (FFT::ffts_per_block & 1) == 0) {
+        if (remaining_n >= 2 && element_stride == 1 && (batch_distance & 1) == 0) {
+            constexpr std::uint32_t tile_pairs = tile_values / 2;
+            for (std::uint32_t pair = flat_thread; pair < tile_pairs; pair += flat_threads) {
+                const std::uint32_t work    = pair * 2;
+                const std::uint32_t element = work / FFT::ffts_per_block;
+                const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+                const std::uint64_t staged_transform =
+                    static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+                if (staged_transform + 1 < total_local) {
+                    const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
+                    const std::uint32_t staged_n2 =
+                        static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+                    const std::uint64_t logical = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
+                    reinterpret_cast<float4*>(tile)[pair] =
+                        *reinterpret_cast<const float4*>(input + staged_batch * batch_distance + logical);
+                } else {
+                    tile[work] = Value{0.0F, 0.0F};
+                    tile[work + 1] = Value{0.0F, 0.0F};
+                }
+            }
         } else {
-            tile[work] = Value{0.0F, 0.0F};
+            for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+                const std::uint32_t element = work / FFT::ffts_per_block;
+                const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+                const std::uint64_t staged_transform =
+                    static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+                const bool staged_active = staged_transform < total_local;
+                if (staged_active) {
+                    const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
+                    const std::uint32_t staged_n2 =
+                        static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+                    const std::uint64_t logical = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
+                    const Complex32 value = input[staged_batch * batch_distance + logical * element_stride];
+                    tile[work] = Value{value.real, value.imag};
+                } else {
+                    tile[work] = Value{0.0F, 0.0F};
+                }
+            }
+        }
+    } else {
+        for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+            const std::uint32_t element = work / FFT::ffts_per_block;
+            const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+            const std::uint64_t staged_transform =
+                static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+            const bool staged_active = staged_transform < total_local;
+            if (staged_active) {
+                const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
+                const std::uint32_t staged_n2 =
+                    static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+                const std::uint64_t logical = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
+                const Complex32 value = input[staged_batch * batch_distance + logical * element_stride];
+                tile[work] = Value{value.real, value.imag};
+            } else {
+                tile[work] = Value{0.0F, 0.0F};
+            }
         }
     }
     __syncthreads();
@@ -178,16 +223,56 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_fir
         k1 += FFT::stride;
     }
     __syncthreads();
-    for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
-        const std::uint32_t element = work / FFT::ffts_per_block;
-        const std::uint32_t slot    = work - element * FFT::ffts_per_block;
-        const std::uint64_t staged_transform = static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
-        if (staged_transform < total_local) {
-            const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
-            const std::uint32_t staged_n2 = static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
-            const std::uint64_t reordered = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
-            const Value value = tile[work];
-            scratch[staged_batch * batch_distance + reordered * element_stride] = {value.x, value.y};
+    if constexpr (FFT::ffts_per_block >= 2 && (FFT::ffts_per_block & 1) == 0) {
+        if (remaining_n >= 2 && element_stride == 1 && (batch_distance & 1) == 0) {
+            constexpr std::uint32_t tile_pairs = tile_values / 2;
+            for (std::uint32_t pair = flat_thread; pair < tile_pairs; pair += flat_threads) {
+                const std::uint32_t work    = pair * 2;
+                const std::uint32_t element = work / FFT::ffts_per_block;
+                const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+                const std::uint64_t staged_transform =
+                    static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+                if (staged_transform + 1 < total_local) {
+                    const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
+                    const std::uint32_t staged_n2 =
+                        static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+                    const std::uint64_t reordered =
+                        static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
+                    *reinterpret_cast<float4*>(scratch + staged_batch * batch_distance + reordered) =
+                        reinterpret_cast<const float4*>(tile)[pair];
+                }
+            }
+        } else {
+            for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+                const std::uint32_t element = work / FFT::ffts_per_block;
+                const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+                const std::uint64_t staged_transform =
+                    static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+                if (staged_transform < total_local) {
+                    const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
+                    const std::uint32_t staged_n2 =
+                        static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+                    const std::uint64_t reordered =
+                        static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
+                    const Value value = tile[work];
+                    scratch[staged_batch * batch_distance + reordered * element_stride] = {value.x, value.y};
+                }
+            }
+        }
+    } else {
+        for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+            const std::uint32_t element = work / FFT::ffts_per_block;
+            const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+            const std::uint64_t staged_transform =
+                static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+            if (staged_transform < total_local) {
+                const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
+                const std::uint32_t staged_n2 =
+                    static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+                const std::uint64_t reordered = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
+                const Value value = tile[work];
+                scratch[staged_batch * batch_distance + reordered * element_stride] = {value.x, value.y};
+            }
         }
     }
 }
@@ -242,16 +327,54 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_sec
     const std::uint32_t flat_thread = threadIdx.y * blockDim.x + threadIdx.x;
     const std::uint32_t flat_threads = blockDim.x * blockDim.y;
     constexpr std::uint32_t tile_values = FFT::output_length * FFT::ffts_per_block;
-    for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
-        const std::uint32_t element = work / FFT::ffts_per_block;
-        const std::uint32_t slot    = work - element * FFT::ffts_per_block;
-        const std::uint64_t staged_transform = static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
-        if (staged_transform < total_local) {
-            const std::uint64_t staged_batch = staged_transform >> local_log_n;
-            const std::uint32_t staged_k1 = static_cast<std::uint32_t>(staged_transform) & (local_n - 1);
-            const std::uint64_t logical = static_cast<std::uint64_t>(element) * local_n + staged_k1;
-            const Value value = tile[work];
-            output[staged_batch * batch_distance + logical * element_stride] = {value.x, value.y};
+    if constexpr (FFT::ffts_per_block >= 2 && (FFT::ffts_per_block & 1) == 0) {
+        if (element_stride == 1 && (batch_distance & 1) == 0) {
+            constexpr std::uint32_t tile_pairs = tile_values / 2;
+            for (std::uint32_t pair = flat_thread; pair < tile_pairs; pair += flat_threads) {
+                const std::uint32_t work    = pair * 2;
+                const std::uint32_t element = work / FFT::ffts_per_block;
+                const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+                const std::uint64_t staged_transform =
+                    static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+                if (staged_transform + 1 < total_local) {
+                    const std::uint64_t staged_batch = staged_transform >> local_log_n;
+                    const std::uint32_t staged_k1 =
+                        static_cast<std::uint32_t>(staged_transform) & (local_n - 1);
+                    const std::uint64_t logical = static_cast<std::uint64_t>(element) * local_n + staged_k1;
+                    *reinterpret_cast<float4*>(output + staged_batch * batch_distance + logical) =
+                        reinterpret_cast<const float4*>(tile)[pair];
+                }
+            }
+        } else {
+            for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+                const std::uint32_t element = work / FFT::ffts_per_block;
+                const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+                const std::uint64_t staged_transform =
+                    static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+                if (staged_transform < total_local) {
+                    const std::uint64_t staged_batch = staged_transform >> local_log_n;
+                    const std::uint32_t staged_k1 =
+                        static_cast<std::uint32_t>(staged_transform) & (local_n - 1);
+                    const std::uint64_t logical = static_cast<std::uint64_t>(element) * local_n + staged_k1;
+                    const Value value = tile[work];
+                    output[staged_batch * batch_distance + logical * element_stride] = {value.x, value.y};
+                }
+            }
+        }
+    } else {
+        for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+            const std::uint32_t element = work / FFT::ffts_per_block;
+            const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+            const std::uint64_t staged_transform =
+                static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+            if (staged_transform < total_local) {
+                const std::uint64_t staged_batch = staged_transform >> local_log_n;
+                const std::uint32_t staged_k1 =
+                    static_cast<std::uint32_t>(staged_transform) & (local_n - 1);
+                const std::uint64_t logical = static_cast<std::uint64_t>(element) * local_n + staged_k1;
+                const Value value = tile[work];
+                output[staged_batch * batch_distance + logical * element_stride] = {value.x, value.y};
+            }
         }
     }
 }
