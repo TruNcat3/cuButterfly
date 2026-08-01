@@ -635,6 +635,8 @@ class ButterflyPlan::Impl {
             }
         }
         if (config_.backend == ButterflyBackend::OnlineReorder && config_.stage_partition.size() > 2) {
+            if (config_.precision == ButterflyPrecision::Fp64)
+                throw std::invalid_argument("FP64 cuFFTDx currently supports a two-segment online decomposition");
             const auto valid_threads = [](std::uint32_t threads) {
                 return threads == 128 || threads == 256 || threads == 512 || threads == 1024;
             };
@@ -673,9 +675,12 @@ class ButterflyPlan::Impl {
                 throw std::invalid_argument(
                     "online cuFFTDx thread/EPT products must cover an integer number of local FFTs");
             }
-            if (!detail::cufftdx_online_available(config_.local_stages, config_.prefix_threads, config_.prefix_ept) ||
-                !detail::cufftdx_online_available(config_.log_n - config_.local_stages,
-                                                  config_.suffix_threads, config_.suffix_ept)) {
+            const auto online_available = config_.precision == ButterflyPrecision::Fp64
+                                              ? detail::cufftdx_fp64_online_available
+                                              : detail::cufftdx_online_available;
+            if (!online_available(config_.local_stages, config_.prefix_threads, config_.prefix_ept) ||
+                !online_available(config_.log_n - config_.local_stages,
+                                  config_.suffix_threads, config_.suffix_ept)) {
                 throw std::invalid_argument(
                     "requested online cuFFTDx thread/EPT point is hardware-feasible but was not selected for this build");
             }
@@ -703,7 +708,9 @@ class ButterflyPlan::Impl {
                     !valid_threads(mapping.threads) || stages < 3 || stages > 12 ||
                     mapping.threads * mapping.ept < (1U << stages) ||
                     (mapping.threads * mapping.ept) % (1U << stages) != 0 ||
-                    !detail::cufftdx_online_available(stages, mapping.threads, mapping.ept))
+                    !(config_.precision == ButterflyPrecision::Fp64
+                          ? detail::cufftdx_fp64_online_available(stages, mapping.threads, mapping.ept)
+                          : detail::cufftdx_online_available(stages, mapping.threads, mapping.ept)))
                     throw std::invalid_argument(
                         "execution-group processing-unit mapping is not compiled or cannot cover its stages");
             }
@@ -789,19 +796,19 @@ class ButterflyPlan::Impl {
                 }
                 config_.tile_threads = 256;
             } else if (config_.fft_core == FftCore::CufftDxBlock) {
+                const bool fp64 = config_.precision == ButterflyPrecision::Fp64;
+                const auto online_available = fp64 ? detail::cufftdx_fp64_online_available
+                                                   : detail::cufftdx_online_available;
                 const bool supported = config_.backend == ButterflyBackend::TemporalTile
-                                           ? detail::cufftdx_block_available(config_.log_n)
-                                           : config_.stage_partition.size() > 2 ||
-                                                 (detail::cufftdx_online_available(config_.local_stages,
-                                                                                   config_.prefix_threads,
-                                                                                   config_.prefix_ept) &&
-                                                  detail::cufftdx_online_available(config_.log_n - config_.local_stages,
-                                                                                   config_.suffix_threads,
-                                                                                   config_.suffix_ept));
-                if (config_.precision != ButterflyPrecision::Fp32 || !supported) {
-                    throw std::invalid_argument(
-                        "cufftdx-block requires FP32 and compiled online local FFT dimensions in logN=3..12");
-                }
+                                           ? (fp64 ? detail::cufftdx_fp64_block_available(config_.log_n)
+                                                   : detail::cufftdx_block_available(config_.log_n))
+                                           : (!fp64 && config_.stage_partition.size() > 2) ||
+                                                 (online_available(config_.local_stages, config_.prefix_threads,
+                                                                   config_.prefix_ept) &&
+                                                  online_available(config_.log_n - config_.local_stages,
+                                                                   config_.suffix_threads, config_.suffix_ept));
+                if ((config_.precision != ButterflyPrecision::Fp32 && !fp64) || !supported)
+                    throw std::invalid_argument("cufftdx-block precision or compiled local FFT mapping is unsupported");
             } else if (config_.fft_core == FftCore::CufftDxDirect) {
                 if (config_.precision != ButterflyPrecision::Fp32 || !detail::cufftdx_direct_available(config_.log_n) ||
                     !resident_tile_threads || (config_.log_n == 14 && config_.tile_threads == 256)) {
@@ -861,6 +868,10 @@ class ButterflyPlan::Impl {
             (config_.op != ButterflyOperator::Fft || config_.backend != ButterflyBackend::OnlineReorder ||
              (config_.fft_core != FftCore::CufftDxBlock && config_.fft_core != FftCore::CufftDxResident))) {
             throw std::invalid_argument("cross-twiddle recurrence currently requires an online-reorder cuFFTDx FFT");
+        }
+        if (config_.precision == ButterflyPrecision::Fp64 &&
+            config_.cross_twiddle == CrossTwiddleMode::Recurrence) {
+            throw std::invalid_argument("FP64 cuFFTDx currently compiles table cross twiddles only");
         }
         if (config_.batch > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
             throw std::invalid_argument("butterfly batch exceeds backend integer limits");
@@ -1106,6 +1117,26 @@ class ButterflyPlan::Impl {
                 return;
             }
             if (config_.fft_core == FftCore::CufftDxBlock) {
+                if (config_.precision == ButterflyPrecision::Fp64) {
+                    if (config_.backend == ButterflyBackend::OnlineReorder) {
+                        const auto& prefix = config_.execution_group_mappings[0];
+                        const auto& suffix = config_.execution_group_mappings[1];
+                        detail::launch_cufftdx_fp64_online_reorder(
+                            config_.log_n, execution_stage_partition_[0], device_input_.as<Complex64>(),
+                            result_buffer<Complex64>(), device_scratch_.as<Complex64>(),
+                            device_twiddles_.as<Complex64>(), config_.batch, config_.batch_stride,
+                            config_.element_stride, config_.inverse,
+                            config_.inverse && config_.normalize_inverse, prefix.threads, suffix.threads,
+                            prefix.ept, suffix.ept);
+                    } else {
+                        detail::launch_cufftdx_fp64_block(
+                            config_.log_n, device_input_.as<Complex64>(), result_buffer<Complex64>(),
+                            config_.batch, config_.batch_stride, config_.element_stride, config_.inverse,
+                            config_.inverse && config_.normalize_inverse);
+                    }
+                    CUB_CUDA_CHECK(cudaGetLastError());
+                    return;
+                }
                 if (config_.backend == ButterflyBackend::OnlineReorder) {
                     if (execution_stage_partition_.size() > 2) {
                         detail::launch_cufftdx_multisegment(

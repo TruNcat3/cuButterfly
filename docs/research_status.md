@@ -35,6 +35,7 @@ event time.
 |:--|--:|--:|--:|--:|
 | `logN=18`, batch 16 | 0.195942 ms | 0.211098 ms | 0.201103 ms | 1.077x |
 | `logN=20`, batch 4 | 0.214733 ms | 0.210330 ms | 0.206520 ms | 0.979x |
+| FP64 `logN=16`, batch 64 | 0.383949 ms | 0.342927 ms | not measured | 0.893x |
 
 The broader design scan reaches 1.085x cuFFT at `logN=18`, batch 2 and 1.030x
 at `logN=20`, batch 2. At saturated `logN=20` batch 8/16 it reaches
@@ -56,8 +57,14 @@ ablation because no maintained matching external baseline has been identified.
 | XOR-zeta | uint32 | 8, 12, 20 | forward/inverse, multiple mapping families |
 
 Coverage establishes generality of the abstraction, not universal superiority.
-FP64 FFT remains a clear processing-unit gap at 0.642x cuFFT in the current
-comprehensive suite.
+The original FP64 scalar row remains 0.642x cuFFT in the comprehensive suite.
+A controlled follow-up first scans 264 scalar mappings and confirms the winner
+at 0.658x, then replaces the local unit with double-precision cuFFTDx and reaches
+0.893x. This isolates most of the former deficit in the physical unit and its
+precision-specific CTA/EPT mapping. NCU attributes the remaining 12% event-time
+gap to 2.08x warp instructions and 135.5x shared-bank conflicts, not DRAM volume
+(1.007x) or FP64 arithmetic work (0.982x). The prefix/twiddle/reorder pass takes
+236.0 us versus 173.5 us for the suffix and is the next optimization target.
 
 ## Remaining Work
 
@@ -79,6 +86,8 @@ portability beyond V100.
 - matching external baselines: `results/v100_external_baselines_*`
 - counter attribution: `results/ncu_scaling_crossovers/`
 - vectorized FFT attribution: `results/ncu_fft_vectorized/`
+- FP64 scalar/core/mapping validation: `results/fp64_*logN16*`
+- FP64 privileged counter command: `scripts/profile_fp64_fft_ncu.sh`
 
 Run `./scripts/reproduce_v100_analysis.sh` to regenerate derived artifacts from
 the checked-in raw measurements. It does not recollect timings or counters.

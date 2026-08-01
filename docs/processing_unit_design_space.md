@@ -36,6 +36,7 @@ search the product of both spaces.
 |:--|:--|:--|:--|
 | FFT FP32/FP64 | radix-2, fused radix-4, fused radix-8 | four-multiply, Gauss three-multiply, FP32 thread-register DFT8 | temporal, hierarchical, online-reorder; generated DFT8 point |
 | FFT FP32 optional | cuFFTDx block/direct FFT, TurboFFT generated FFT | imported local codelet transport and arithmetic | cuFFTDx online dimensions `logN=3..12`, TurboFFT `logN=7..10` |
+| FFT FP64 optional | cuFFTDx block FFT | imported double-precision local codelet | temporal `logN=3..10`; online `logN=16` with an `8+8` decomposition |
 | FFT mixed | temporally fused DFT8 matrix | FP16 WMMA input with FP32 accumulation/output | generated temporal point |
 | FWHT FP32/FP64 | radix-2, fused radix-4, fused radix-8 | add/subtract; FP32 register-vector/XOR-swizzle exchange | temporal, hierarchical, online-reorder |
 | XOR-zeta uint32 | radix-2, fused radix-4, fused radix-8 | add/subtract modulo `2^32` | temporal, hierarchical, online-reorder |
@@ -153,6 +154,44 @@ Reproduce the constrained search with:
 
 Primary records are `results/fft_architecture_explore_v100_{search,confirm,summary}.csv`
 and `results/fft_architecture_logN18_confirm_v100_{confirm,summary}.csv`.
+
+### FP64 processing-unit isolation
+
+The FP64 `logN=16`, batch-64 case separates mapping and local-unit effects in
+three ordered experiments. A 264-point scalar scan covers decomposition,
+radix, complex multiplication, CTA width, and reorder columns. It moves the
+original 0.534313 ms point to a 0.521492 ms confirmed result (`8+8`, radix-4,
+128 threads), or 0.658x cuFFT throughput. Replacing both local dimensions with
+`Precision<double>()` cuFFTDx codelets and independently scanning their CTA/EPT
+axes selects prefix `256/4` and suffix `128/8`.
+
+| FP64 implementation | Median ms | Throughput vs cuFFT |
+|:--|--:|--:|
+| scalar comprehensive point | 0.534313 | 0.642x |
+| scalar mapping winner | 0.521492 | 0.658x |
+| cuFFTDx `8+8`, selected mapping | 0.383949 | 0.893x |
+| cuFFT | 0.342927 | 1.000x |
+
+The final two rows use five independent trials, 1000 warmups, and 100 timed
+repetitions; all FP64 cuFFTDx local, online-forward, and normalized-inverse
+paths pass automated correctness tests. The imported unit reduces the selected
+scalar latency by 26.3%, so the former FP64 deficit is primarily a physical-core
+and mapping maturity issue rather than evidence against the architecture-level
+space/time decomposition. `scripts/profile_fp64_fft_ncu.sh` fixes the scalar,
+cuFFTDx, and cuFFT mappings for the remaining privileged boundary attribution.
+Reproduce the timing sequence with `scripts/benchmark_fp64_fft_units.sh` and
+the counters with `scripts/profile_fp64_fft_ncu.sh`. Raw and ranked records are
+`results/fp64_*logN16*.csv`.
+
+The fixed privileged capture confirms the mechanism. Relative to cuFFT, the
+selected FP64 composition transfers 1.007x the DRAM bytes and executes 0.982x
+the FP64 instructions, but executes 2.08x the warp instructions and incurs
+135.5x the shared-memory bank conflicts. Its prefix pass takes 236.0 us with
+46.7% long-scoreboard stall and 63.7% peak DRAM throughput; the suffix takes
+173.5 us and reaches 86.4% DRAM. Since either cuFFT pass takes about 179 us,
+the remaining work is specifically the prefix input/reorder, cross-twiddle
+epilogue, shared layout, and synchronization. See
+`results/ncu_fp64_fft/analysis.md`.
 
 ### Resident and direct granularity experiment
 

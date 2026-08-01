@@ -53,7 +53,7 @@ resource equations and counter-driven selection procedure.
 | Operator | Numeric forms | Processing-unit candidates | Mapping families |
 |:--|:--|:--|:--|
 | NTT | 32/64-bit words, compatible primes below `2^63` | radix-2/4/8, Shoup, Barrett, fused coset twiddles | baseline, local tile, Hybrid2D, compact stage, stage pipeline |
-| FFT | FP32, FP64, FP16 input with FP32 accumulation | radix-2/4/8, four-multiply, Gauss-3, thread/CTA/WMMA DFT8 | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
+| FFT | FP32, FP64, FP16 input with FP32 accumulation | radix-2/4/8, four-multiply, Gauss-3, thread/CTA/WMMA DFT8, FP32/FP64 cuFFTDx | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
 | FWHT | FP32, FP64 | radix-2/4/8, shared and warp-register exchange | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
 | XOR-zeta | uint32 | radix-2/4/8 | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
 
@@ -92,6 +92,7 @@ without forcing an intermediate global-memory pass.
 | FP32 FFT, `logN=14`, `2^22` total points | 0.131543 ms | cuFFT 0.135383 ms | 1.029x | contiguous cuFFTDx direct unit |
 | FP32 FFT, `logN=18`, `2^22` total points | 0.195942 ms | cuFFT 0.211098 ms | 1.077x | vectorized `9+9`, 256/256-thread dimensions |
 | FP32 FFT, `logN=20`, `2^22` total points | 0.214733 ms | cuFFT 0.210330 ms | 0.979x | vectorized `10+10`, batch-selected dimensions |
+| FP64 FFT, `logN=16`, batch 64 | 0.383949 ms | cuFFT 0.342927 ms | 0.893x | FP64 cuFFTDx `8+8`, independently selected CTA/EPT |
 | FP32 FWHT, `logN=8` | 0.043131 ms | Dao FHT 0.043172 ms | 1.001x | integrated register unit |
 | FP32 FWHT, `logN=15` | 0.069243 ms | Dao FHT 0.063949 ms | 0.924x | register-pressure boundary |
 | 60-bit NTT, `logN=16`, natural order | 0.274104 ms | GPU-NTT 0.291133 ms | 1.062x | fused Hybrid2D |
@@ -106,6 +107,11 @@ units at `logN=11..14` isolate the local-unit ceiling: the contiguous paths at
 also raises `logN=18` from 0.881x in the fixed-512 mapping experiment to 1.070x.
 Processing-unit granularity and each dimension's CTA shape are therefore explicit
 hardware-mapping axes rather than fixed properties of the paradigm.
+The corresponding FP64 counter capture shows that its remaining gap is not
+double-precision arithmetic or DRAM volume: the selected path executes 0.982x
+cuFFT's FP64 instructions and transfers 1.007x its bytes, but the prefix
+twiddle/reorder pass drives 2.08x total warp instructions and 135.5x shared
+bank conflicts. See [FP64 NCU Attribution](results/ncu_fp64_fft/analysis.md).
 
 ### Online Reorder at `logN=20`
 
@@ -202,7 +208,9 @@ The active research milestone and its acceptance criteria are in
   and RTX 4090 entries are placeholders, not performance claims.
 - FP32 FFT reaches cuFFT parity at selected `logN=8,14,18` shapes. At large
   batch, cuFFT has a higher `logN=18` throughput ceiling; the measured
-  `logN=20` and FP64 `logN=16` paths remain behind. Tensor Core DFT8 helps the
+  `logN=20` and FP64 `logN=16` paths remain behind. The FP64 cuFFTDx unit raises
+  the latter from 0.642x in the comprehensive scalar run to 0.893x under its
+  focused five-trial protocol. Tensor Core DFT8 helps the
   local unit but does not remove layout, synchronization, and composition
   costs.
 - FWHT closely tracks Dao FHT after importing its validated local register

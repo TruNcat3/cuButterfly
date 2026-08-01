@@ -143,7 +143,7 @@ if(CUBUTTERFLY_ENABLE_CUFFTDX)
             "cuFFTDx headers were not found under ${CUBUTTERFLY_MATHDX_ROOT}. "
             "Run scripts/install_cufftdx.sh or set CUBUTTERFLY_MATHDX_ROOT.")
     endif()
-    target_sources(cuntt PRIVATE src/cufftdx_fft.cu)
+    target_sources(cuntt PRIVATE src/cufftdx_fft.cu src/cufftdx_fft_fp64.cu)
     target_include_directories(cuntt SYSTEM PRIVATE "${CUBUTTERFLY_MATHDX_ROOT}/include")
     target_compile_definitions(cuntt PRIVATE CUBUTTERFLY_HAS_CUFFTDX=1)
 else()
@@ -244,6 +244,8 @@ if(BUILD_TESTING)
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_scaling_ncu_analysis.py")
     add_test(NAME fft_vectorized_ncu_analysis
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_vectorized_ncu.py")
+    add_test(NAME fp64_fft_ncu_analysis
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fp64_fft_ncu.py")
     add_test(NAME fft_pipeline_generator
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_pipeline_generator.py")
     add_test(NAME fft_pipeline_runner
@@ -253,6 +255,21 @@ if(BUILD_TESTING)
     add_test(NAME fft_dispatch_generator
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_dispatch_generator.py")
     if(CUBUTTERFLY_ENABLE_CUFFTDX)
+        add_test(NAME fft_fp64_cufftdx_block_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp64 --backend temporal-tile
+                         --fft-core cufftdx-block --tile-threads 32 --normalization none
+                         --logN 8 --batch 8 --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fp64_cufftdx_online_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                         --fft-core cufftdx-block --local-stages 8
+                         --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                         --normalization none --logN 16 --batch 2 --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fp64_cufftdx_online_inverse_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                         --fft-core cufftdx-block --local-stages 8
+                         --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                         --inverse --normalization inverse --logN 16 --batch 2
+                         --warmup 1 --repeat 1 --verify)
         add_test(NAME fft_auto_dispatch_correctness
                  COMMAND cubutterfly_bench --auto-select --operator fft --precision fp32
                          --placement in-place --normalization none --logN 18 --batch 2
