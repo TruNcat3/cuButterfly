@@ -21,6 +21,20 @@ For FFT `logN=20`, the online first pass consumes 61.8% of profiled time and
 reaches only 56.6% of peak DRAM, while its second pass reaches 85.3%. This
 identifies prefix/suffix imbalance as the next concrete FFT optimization target.
 
+## Post-Optimization Validation
+
+The subsequent paired 128-bit boundary implementation was profiled with the
+same 512/512-thread, EPT 8/8 physical mapping. Relative to the archived
+pre-vector capture, it reduces CUDA-event time by 10.5%, NCU replay time by
+9.3%, and warp instructions by 19.6%, while DRAM writes are unchanged. This
+confirms that the improvement removes boundary instruction/transaction
+overhead rather than a global handoff.
+
+The event-selected 256/128-thread mapping is another 7.8% faster than the
+post-vector fixed point, although NCU replay reverses that ordering by 2.8%.
+The complete controlled table is
+[`attribution.md`](../results/ncu_fft_vectorized/attribution.md).
+
 ## Methodological Consequence
 
 The selector must model three quantities independently:

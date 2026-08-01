@@ -27,8 +27,8 @@ hypothesis.
   the attribution separates grid coverage, residency, and useful work/warp.
 - The parameterized FFT pipeline now has a separate six-shape evaluation over
   48 candidates per shape. Leave-one-batch-out top-3 regret is 1.0007x
-  geometric mean and 1.0020x worst case. A post-vector NCU capture remains
-  administrator-gated.
+  geometric mean and 1.0020x worst case. The post-vector fixed-mapping NCU
+  capture records 19.6% fewer warp instructions and 9.3% lower replay time.
 
 ## Work Packages
 

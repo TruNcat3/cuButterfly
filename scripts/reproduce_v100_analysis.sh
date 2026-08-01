@@ -62,5 +62,18 @@ python3 scripts/analyze_scaling_ncu.py \
   --output results/ncu_scaling_crossovers/attribution.csv \
   --markdown results/ncu_scaling_crossovers/attribution.md
 
+python3 scripts/summarize_ncu.py \
+  results/ncu_fft_vectorized/post_vector_*.csv \
+  --output results/ncu_fft_vectorized/summary.csv
+
+python3 scripts/analyze_fft_vectorized_ncu.py \
+  results/ncu_scaling_crossovers/summary.csv \
+  results/ncu_fft_vectorized/summary.csv \
+  --pre-timing-summary results/v100_fft_pipeline_summary.csv \
+  --post-timing-summary results/v100_fft_pipeline_vectorized_summary.csv \
+  --batch 16 \
+  --output results/ncu_fft_vectorized/attribution.csv \
+  --markdown results/ncu_fft_vectorized/attribution.md
+
 python3 scripts/check_repository.py
 printf 'V100 derived analyses reproduced from checked-in raw records.\n'

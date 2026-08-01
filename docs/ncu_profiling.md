@@ -55,6 +55,13 @@ The script writes raw CSV, a pivoted summary, `attribution.csv`, and
 `attribution.md`. Override `BATCH` only when a matching archived pre-vector
 label exists.
 
+The archived V100 capture shows that vectorizing the same fixed mapping reduces
+warp instructions by 19.6%, CUDA-event time by 10.5%, and NCU replay time by
+9.3%, while DRAM writes remain unchanged. See
+`results/ncu_fft_vectorized/attribution.md`. The selected mapping is faster in
+CUDA-event timing but not under replay, reinforcing that NCU time is not the
+performance authority.
+
 ## Purpose
 
 The profiling run compares three implementations under the same modulus,

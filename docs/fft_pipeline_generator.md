@@ -118,6 +118,19 @@ a small target-hardware calibration set ranks the surviving physical mappings.
 The complete per-shape ranks, including the static-model failures, are in
 `results/v100_fft_pipeline_model_report.md`.
 
+### Counter attribution
+
+The controlled NCU capture holds the physical mapping at 512/512 threads and
+EPT 8/8 across the code change. Paired boundary I/O reduces CUDA-event time by
+10.5%, NCU replay time by 9.3%, and executed warp instructions by 19.6%; DRAM
+write volume is unchanged. The gain therefore comes from the boundary
+instruction/transaction realization, not from removing a global handoff.
+
+The selected 256/128-thread mapping is 7.8% faster than the post-vector fixed
+point under CUDA-event timing. NCU replay reverses that pairwise ordering by
+2.8%, so replay time is retained only for attribution. The raw counters and
+generated analysis are in `results/ncu_fft_vectorized/`.
+
 The tables below preserve the pre-vectorization scan as a controlled baseline
 for boundary and physical-group experiments.
 

@@ -7,9 +7,10 @@ research claim. Ordering may change after profiling or access to new hardware.
 
 Status: the three V100 work packages, vectorized FFT physical unit, FFT
 leave-one-batch-out selector evaluation, and matching-protocol long-FFT refresh
-are complete. The post-vector NCU script requires one administrator-enabled
-capture. Cross-GPU validation is deferred until the repository moves to a host
-with another GPU generation.
+are complete. The post-vector fixed-mapping NCU capture attributes the gain to
+19.6% fewer warp instructions with unchanged DRAM write volume. Cross-GPU
+validation is deferred until the repository moves to a host with another GPU
+generation.
 
 The next release turns the measured design space into a reproducible mapping
 method rather than adding another isolated kernel. Its primary question is:

@@ -14,6 +14,7 @@ not used to support any current portability claim.
 | Logical factorization is independent of physical execution | controlled `D2/D3/D4 -> P2` FFT lowering | the same physical schedule agrees within 1.8% |
 | Processing units are replaceable mapping parameters | scalar, register, warp, cuFFTDx, TurboFFT, WMMA, radix and reduction alternatives | winners change with operator, length, batch and precision |
 | Boundary realization affects the optimum without changing the paradigm | scalar versus paired 128-bit online cuFFTDx boundaries | best-point gain is 0.6%-13.5% across six long-FFT shapes |
+| The physical-unit gain has a counter-level mechanism | fixed-mapping pre/post NCU capture at `logN=20`, batch 16 | CUDA-event -10.5%, replay -9.3%, warp instructions -19.6%, unchanged DRAM writes |
 | Static hardware constraints are useful but insufficient for final ranking | 48-candidate FFT static-score evaluation | top-1 geomean regret 1.0762x; worst 1.4220x |
 | A small hardware calibration set can replace exhaustive timing | leave-one-batch-out FFT interpolation | top-3 geomean regret 1.0007x, worst 1.0020x using 6.2% of candidates |
 | The selection method extends beyond FFT | leave-one-complete-shape-out selector over NTT/FWHT/XOR-zeta | 93.88% top-1, 100% top-3, 1.0049x geomean regret |
@@ -60,11 +61,7 @@ comprehensive suite.
 
 ## Remaining Work
 
-1. **Latest NCU attribution:** the checked-in script isolates the vectorized
-   boundary from mapping selection, but this server requires administrator
-   counter access. Run `sudo -E ./scripts/profile_fft_vectorized_ncu.sh` and
-   return ownership of `results/ncu_fft_vectorized` to the user.
-2. **Cross-GPU transfer:** capture a newer GPU profile, predict without its
+1. **Cross-GPU transfer:** capture a newer GPU profile, predict without its
    timings, and report pre/post-calibration regret. This is the only deferred
    architecture-level validation item.
 
@@ -81,6 +78,7 @@ portability beyond V100.
 - calibrated selector: `results/v100_mapping_selector_*`
 - matching external baselines: `results/v100_external_baselines_*`
 - counter attribution: `results/ncu_scaling_crossovers/`
+- vectorized FFT attribution: `results/ncu_fft_vectorized/`
 
 Run `./scripts/reproduce_v100_analysis.sh` to regenerate derived artifacts from
 the checked-in raw measurements. It does not recollect timings or counters.

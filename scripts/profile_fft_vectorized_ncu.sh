@@ -33,10 +33,12 @@ profile "post_vector_selected_b${BATCH}" "$BIN" "${COMMON[@]}" "${ONLINE[@]}" \
     --prefix-threads 256 --suffix-threads 128 --prefix-ept 16 --suffix-ept 16
 profile "post_vector_cufft_b${BATCH}" "$BIN" "${COMMON[@]}" --backend cufft
 
-python3 "$ROOT/scripts/summarize_ncu.py" "$OUTPUT_DIR"/*.csv \
+python3 "$ROOT/scripts/summarize_ncu.py" "$OUTPUT_DIR"/post_vector_*.csv \
     --output "$OUTPUT_DIR/summary.csv"
 python3 "$ROOT/scripts/analyze_fft_vectorized_ncu.py" \
     "$ROOT/results/ncu_scaling_crossovers/summary.csv" "$OUTPUT_DIR/summary.csv" \
+    --pre-timing-summary "$ROOT/results/v100_fft_pipeline_summary.csv" \
+    --post-timing-summary "$ROOT/results/v100_fft_pipeline_vectorized_summary.csv" \
     --batch "$BATCH" --output "$OUTPUT_DIR/attribution.csv" \
     --markdown "$OUTPUT_DIR/attribution.md"
 printf 'NCU attribution: %s\n' "$OUTPUT_DIR/attribution.md"
