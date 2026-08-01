@@ -42,7 +42,8 @@ def event_timings(path):
         if row["backend"] == "cufft":
             matches["cufft"] = float(row["median_kernel_ms"])
         elif row["fft_core"] == "cufftdx-block":
-            matches["cufftdx"] = float(row["median_kernel_ms"])
+            name = "recurrence" if row.get("cross_twiddle") == "recurrence" else "cufftdx"
+            matches[name] = float(row["median_kernel_ms"])
         elif row["fft_core"] == "scalar" and row["backend"] == "online-reorder":
             matches["scalar"] = float(row["median_kernel_ms"])
     missing = {"scalar", "cufftdx", "cufft"} - set(matches)
@@ -62,6 +63,15 @@ def analyze(rows, timings, batch):
             "label": label,
             "cuda_event_ms": timings[implementation],
             **aggregate(matches),
+        })
+    recurrence_label = f"fp64_recurrence_b{batch}"
+    recurrence_rows = [row for row in rows if row["label"] == recurrence_label]
+    if recurrence_rows:
+        if "recurrence" not in timings:
+            raise ValueError("recurrence NCU rows require a recurrence CUDA-event timing")
+        output.append({
+            "implementation": "recurrence", "label": recurrence_label,
+            "cuda_event_ms": timings["recurrence"], **aggregate(recurrence_rows),
         })
     cufft = next(row for row in output if row["implementation"] == "cufft")
     for row in output:
@@ -84,6 +94,7 @@ def write_markdown(path, rows, kernels, batch):
     scalar = by_name["scalar"]
     cufftdx = by_name["cufftdx"]
     cufft = by_name["cufft"]
+    recurrence = by_name.get("recurrence")
     cufftdx_kernels = [row for row in kernels if row["label"] == labels(batch)["cufftdx"]]
     first = next(row for row in cufftdx_kernels if "first_kernel" in row["kernel_name"])
     second = next(row for row in cufftdx_kernels if "second_kernel" in row["kernel_name"])
@@ -118,6 +129,14 @@ def write_markdown(path, rows, kernels, batch):
         f"{cufftdx['shared_bank_conflicts_vs_cufft']:.1f}x the shared-memory bank conflicts of cuFFT. "
         f"Its weighted barrier and long-scoreboard stalls are {cufftdx['barrier_stall_pct']:.1f}% and "
         f"{cufftdx['long_scoreboard_stall_pct']:.1f}%.",
+    ]
+    if recurrence:
+        lines.append(
+            f"- Twiddle recurrence changes CUDA-event time by "
+            f"{recurrence['cuda_event_ms'] / cufftdx['cuda_event_ms'] - 1.0:+.1%}, replay time by "
+            f"{recurrence['time_us'] / cufftdx['time_us'] - 1.0:+.1%}, and FP64 instructions by "
+            f"{recurrence['fp64_thread_instructions'] / cufftdx['fp64_thread_instructions'] - 1.0:+.1%}.")
+    lines += [
         "", "## Prefix/Suffix Split", "",
         "| cuFFTDx pass | NCU us | Warp inst. | Shared conflicts | DRAM peak | Barrier stall | Scoreboard stall |",
         "|:--|--:|--:|--:|--:|--:|--:|",

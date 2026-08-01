@@ -69,7 +69,7 @@ template <class FFT>
 __launch_bounds__(FFT::max_threads_per_block) __global__ void fp64_online_first_kernel(
     const Complex64* input, Complex64* scratch, const Complex64* twiddles,
     std::uint64_t transforms, std::uint32_t log_n, std::uint32_t local_log_n,
-    std::uint64_t batch_distance, std::uint64_t element_stride) {
+    std::uint64_t batch_distance, std::uint64_t element_stride, bool recurrence_twiddle) {
     using Value = typename FFT::value_type;
     const std::uint32_t remaining_log_n = log_n - local_log_n;
     const std::uint32_t remaining_n = 1U << remaining_log_n;
@@ -114,15 +114,27 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void fp64_online_first_
     FFT().execute(thread_data, storage);
     __syncthreads();
 
+    Complex64 running_root{1.0, 0.0};
+    Complex64 root_step{1.0, 0.0};
+    if (active && recurrence_twiddle) {
+        running_root = fp64_cross_root(twiddles, log_n, static_cast<std::uint64_t>(threadIdx.x) * n2);
+        root_step = fp64_cross_root(twiddles, log_n, static_cast<std::uint64_t>(FFT::stride) * n2);
+    }
     unsigned k1 = threadIdx.x;
 #pragma unroll
     for (unsigned item = 0; item < FFT::storage_size; ++item) {
         if (active && k1 < FFT::output_length) {
             const Value value = thread_data[item];
-            const Complex64 root = fp64_cross_root(twiddles, log_n, static_cast<std::uint64_t>(k1) * n2);
+            const Complex64 root = recurrence_twiddle
+                                       ? running_root
+                                       : fp64_cross_root(twiddles, log_n, static_cast<std::uint64_t>(k1) * n2);
             tile[k1 * FFT::ffts_per_block + threadIdx.y] =
                 Value{value.x * root.real - value.y * root.imag,
                       value.x * root.imag + value.y * root.real};
+        }
+        if (recurrence_twiddle) {
+            running_root = {running_root.real * root_step.real - running_root.imag * root_step.imag,
+                            running_root.real * root_step.imag + running_root.imag * root_step.real};
         }
         k1 += FFT::stride;
     }
@@ -238,7 +250,7 @@ void dispatch_fp64_block(std::uint32_t log_n, const Complex64* input, Complex64*
 template <unsigned Threads, unsigned Ept, cufftdx::fft_direction Direction>
 void launch_fp64_online_first(const Complex64* input, Complex64* scratch, const Complex64* twiddles,
                               std::uint64_t transforms, std::uint64_t batch_distance,
-                              std::uint64_t element_stride) {
+                              std::uint64_t element_stride, bool recurrence_twiddle) {
     using FFT = Fp64OnlineFft<256, Threads, Ept, Direction>;
     constexpr std::size_t tile_bytes = 256 * FFT::ffts_per_block * sizeof(typename FFT::value_type);
     constexpr std::size_t shared_bytes = FFT::shared_memory_size > tile_bytes ? FFT::shared_memory_size : tile_bytes;
@@ -247,7 +259,7 @@ void launch_fp64_online_first(const Complex64* input, Complex64* scratch, const 
     const auto local_transforms = transforms << 8;
     const auto blocks = static_cast<unsigned>((local_transforms + FFT::ffts_per_block - 1) / FFT::ffts_per_block);
     fp64_online_first_kernel<FFT><<<blocks, FFT::block_dim, shared_bytes>>>(
-        input, scratch, twiddles, transforms, 16, 8, batch_distance, element_stride);
+        input, scratch, twiddles, transforms, 16, 8, batch_distance, element_stride, recurrence_twiddle);
 }
 
 template <unsigned Threads, unsigned Ept, cufftdx::fft_direction Direction>
@@ -268,11 +280,11 @@ template <cufftdx::fft_direction Direction, bool First>
 void dispatch_fp64_online_point(std::uint32_t threads, std::uint32_t ept,
                                 const Complex64* input, Complex64* output, const Complex64* twiddles,
                                 std::uint64_t transforms, std::uint64_t batch_distance,
-                                std::uint64_t element_stride, bool normalize) {
+                                std::uint64_t element_stride, bool option) {
 #define CUNTT_FP64_POINT(T, E) \
     case ((E) << 16) | (T): \
-        if constexpr (First) launch_fp64_online_first<T, E, Direction>(input, output, twiddles, transforms, batch_distance, element_stride); \
-        else launch_fp64_online_second<T, E, Direction>(input, output, transforms, batch_distance, element_stride, normalize); \
+        if constexpr (First) launch_fp64_online_first<T, E, Direction>(input, output, twiddles, transforms, batch_distance, element_stride, option); \
+        else launch_fp64_online_second<T, E, Direction>(input, output, transforms, batch_distance, element_stride, option); \
         return
     switch ((ept << 16) | threads) {
         CUNTT_FP64_POINT(128, 4);
@@ -310,22 +322,24 @@ void launch_cufftdx_fp64_online_reorder(std::uint32_t log_n, std::uint32_t local
                                         const Complex64* input, Complex64* output, Complex64* scratch,
                                         const Complex64* twiddles, std::uint64_t transforms,
                                         std::uint64_t batch_distance, std::uint64_t element_stride,
-                                        bool inverse, bool normalize, std::uint32_t prefix_threads,
+                                        bool inverse, bool normalize, CrossTwiddleMode cross_twiddle,
+                                        std::uint32_t prefix_threads,
                                         std::uint32_t suffix_threads, std::uint32_t prefix_ept,
                                         std::uint32_t suffix_ept) {
     if (log_n != 16 || local_log_n != 8)
         throw std::invalid_argument("FP64 online cuFFTDx currently compiles the logN=16, 8+8 decomposition");
+    const bool recurrence_twiddle = cross_twiddle == CrossTwiddleMode::Recurrence;
     if (inverse) {
         dispatch_fp64_online_point<cufftdx::fft_direction::inverse, true>(
             prefix_threads, prefix_ept, input, scratch, twiddles, transforms,
-            batch_distance, element_stride, false);
+            batch_distance, element_stride, recurrence_twiddle);
         dispatch_fp64_online_point<cufftdx::fft_direction::inverse, false>(
             suffix_threads, suffix_ept, scratch, output, nullptr, transforms,
             batch_distance, element_stride, normalize);
     } else {
         dispatch_fp64_online_point<cufftdx::fft_direction::forward, true>(
             prefix_threads, prefix_ept, input, scratch, twiddles, transforms,
-            batch_distance, element_stride, false);
+            batch_distance, element_stride, recurrence_twiddle);
         dispatch_fp64_online_point<cufftdx::fft_direction::forward, false>(
             suffix_threads, suffix_ept, scratch, output, nullptr, transforms,
             batch_distance, element_stride, false);

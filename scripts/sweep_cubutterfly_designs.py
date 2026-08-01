@@ -193,15 +193,16 @@ def configurations(operator, precision, log_n, tile_threads, hierarchical_local_
                         for suffix_ept in suffix_ept_options:
                             if suffix_threads not in (128, 256, 512) or suffix_ept not in (4, 8):
                                 continue
-                            yield {
-                                "backend": "online-reorder", "compute_unit": "auto",
-                                "complex_multiply": "four-mul", "cross_twiddle": "table",
-                                "local_exchange": "shared", "fft_core": "cufftdx-block",
-                                "tile_threads": 32, "prefix_threads": prefix_threads,
-                                "suffix_threads": suffix_threads, "prefix_ept": prefix_ept,
-                                "suffix_ept": suffix_ept, "local_stages": 8, "reorder_columns": 1,
-                                "warp_stages": 0, "pipeline_warps": 0, "stage_space": 0,
-                            }
+                            for cross_twiddle in ("table", "recurrence"):
+                                yield {
+                                    "backend": "online-reorder", "compute_unit": "auto",
+                                    "complex_multiply": "four-mul", "cross_twiddle": cross_twiddle,
+                                    "local_exchange": "shared", "fft_core": "cufftdx-block",
+                                    "tile_threads": 32, "prefix_threads": prefix_threads,
+                                    "suffix_threads": suffix_threads, "prefix_ept": prefix_ept,
+                                    "suffix_ept": suffix_ept, "local_stages": 8, "reorder_columns": 1,
+                                    "warp_stages": 0, "pipeline_warps": 0, "stage_space": 0,
+                                }
 
 
 def run(binary, operator, precision, config, log_n, direction, normalization, placement, batch, element_stride, batch_stride, warmup, repeat):

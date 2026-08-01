@@ -169,22 +169,33 @@ axes selects prefix `256/4` and suffix `128/8`.
 |:--|--:|--:|
 | scalar comprehensive point | 0.534313 | 0.642x |
 | scalar mapping winner | 0.521492 | 0.658x |
-| cuFFTDx `8+8`, selected mapping | 0.383949 | 0.893x |
+| cuFFTDx `8+8`, table twiddle | 0.383949 | 0.893x |
+| cuFFTDx `8+8`, recurrence twiddle | 0.361708 | 0.948x |
 | cuFFT | 0.342927 | 1.000x |
 
-The final two rows use five independent trials, 1000 warmups, and 100 timed
+The final three rows use five independent trials, 1000 warmups, and 100 timed
 repetitions; all FP64 cuFFTDx local, online-forward, and normalized-inverse
-paths pass automated correctness tests. The imported unit reduces the selected
-scalar latency by 26.3%, so the former FP64 deficit is primarily a physical-core
-and mapping maturity issue rather than evidence against the architecture-level
+paths pass automated correctness tests. The imported table unit reduces the
+selected scalar latency by 26.4%, and recurrence raises that reduction to
+30.6%, so the former FP64 deficit is primarily a physical-core and mapping
+maturity issue rather than evidence against the architecture-level
 space/time decomposition. `scripts/profile_fp64_fft_ncu.sh` fixes the scalar,
-cuFFTDx, and cuFFT mappings for the remaining privileged boundary attribution.
+table, recurrence, and cuFFT mappings for privileged boundary attribution.
 Reproduce the timing sequence with `scripts/benchmark_fp64_fft_units.sh` and
 the counters with `scripts/profile_fp64_fft_ncu.sh`. Raw and ranked records are
 `results/fp64_*logN16*.csv`.
 
-The fixed privileged capture confirms the mechanism. Relative to cuFFT, the
-selected FP64 composition transfers 1.007x the DRAM bytes and executes 0.982x
+The first prefix optimization replaces four EPT4 twiddle-table reads per
+thread with two initial reads and register recurrence. The selected mapping
+remains prefix `256/4`, suffix `128/8` across the full 36-point rescan, while
+latency falls from 0.383949 ms to 0.361708 ms (5.8%). Simple `pitch+1` shared
+padding is a negative result: prefix-only and both-pass variants take 0.398039
+and 0.397609 ms, while suffix-only is statistically neutral at 0.383765 ms.
+The conflict count therefore identifies real exchange overhead, but uniform
+padding is not an efficient realization on V100.
+
+The fixed table-path privileged capture confirms the mechanism. Relative to
+cuFFT, the selected FP64 composition transfers 1.007x the DRAM bytes and executes 0.982x
 the FP64 instructions, but executes 2.08x the warp instructions and incurs
 135.5x the shared-memory bank conflicts. Its prefix pass takes 236.0 us with
 46.7% long-scoreboard stall and 63.7% peak DRAM throughput; the suffix takes

@@ -35,7 +35,7 @@ event time.
 |:--|--:|--:|--:|--:|
 | `logN=18`, batch 16 | 0.195942 ms | 0.211098 ms | 0.201103 ms | 1.077x |
 | `logN=20`, batch 4 | 0.214733 ms | 0.210330 ms | 0.206520 ms | 0.979x |
-| FP64 `logN=16`, batch 64 | 0.383949 ms | 0.342927 ms | not measured | 0.893x |
+| FP64 `logN=16`, batch 64 | 0.361708 ms | 0.342927 ms | not measured | 0.948x |
 
 The broader design scan reaches 1.085x cuFFT at `logN=18`, batch 2 and 1.030x
 at `logN=20`, batch 2. At saturated `logN=20` batch 8/16 it reaches
@@ -60,11 +60,14 @@ Coverage establishes generality of the abstraction, not universal superiority.
 The original FP64 scalar row remains 0.642x cuFFT in the comprehensive suite.
 A controlled follow-up first scans 264 scalar mappings and confirms the winner
 at 0.658x, then replaces the local unit with double-precision cuFFTDx and reaches
-0.893x. This isolates most of the former deficit in the physical unit and its
-precision-specific CTA/EPT mapping. NCU attributes the remaining 12% event-time
-gap to 2.08x warp instructions and 135.5x shared-bank conflicts, not DRAM volume
-(1.007x) or FP64 arithmetic work (0.982x). The prefix/twiddle/reorder pass takes
-236.0 us versus 173.5 us for the suffix and is the next optimization target.
+0.893x with table twiddles. Register recurrence reduces the selected prefix's
+table lookups and raises the final result to 0.948x. This isolates most of the
+former deficit in the physical unit and its precision-specific CTA/EPT mapping.
+The table-path NCU capture attributes its 12% event-time gap to 2.08x warp
+instructions and 135.5x shared-bank conflicts, not DRAM volume (1.007x) or
+FP64 arithmetic work (0.982x). Its prefix/twiddle/reorder pass takes 236.0 us
+versus 173.5 us for the suffix. A recurrence counter capture is prepared to
+measure how much of that mechanism the new 0.948x point removes.
 
 ## Remaining Work
 

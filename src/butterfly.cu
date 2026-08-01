@@ -869,10 +869,6 @@ class ButterflyPlan::Impl {
              (config_.fft_core != FftCore::CufftDxBlock && config_.fft_core != FftCore::CufftDxResident))) {
             throw std::invalid_argument("cross-twiddle recurrence currently requires an online-reorder cuFFTDx FFT");
         }
-        if (config_.precision == ButterflyPrecision::Fp64 &&
-            config_.cross_twiddle == CrossTwiddleMode::Recurrence) {
-            throw std::invalid_argument("FP64 cuFFTDx currently compiles table cross twiddles only");
-        }
         if (config_.batch > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
             throw std::invalid_argument("butterfly batch exceeds backend integer limits");
         }
@@ -1121,12 +1117,14 @@ class ButterflyPlan::Impl {
                     if (config_.backend == ButterflyBackend::OnlineReorder) {
                         const auto& prefix = config_.execution_group_mappings[0];
                         const auto& suffix = config_.execution_group_mappings[1];
+                        const auto& boundary = execution_boundaries_[0];
                         detail::launch_cufftdx_fp64_online_reorder(
                             config_.log_n, execution_stage_partition_[0], device_input_.as<Complex64>(),
                             result_buffer<Complex64>(), device_scratch_.as<Complex64>(),
                             device_twiddles_.as<Complex64>(), config_.batch, config_.batch_stride,
                             config_.element_stride, config_.inverse,
-                            config_.inverse && config_.normalize_inverse, prefix.threads, suffix.threads,
+                            config_.inverse && config_.normalize_inverse, boundary.cross_twiddle,
+                            prefix.threads, suffix.threads,
                             prefix.ept, suffix.ept);
                     } else {
                         detail::launch_cufftdx_fp64_block(

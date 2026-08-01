@@ -31,12 +31,16 @@ profile "fp64_scalar_b${BATCH}" "$BIN" "${COMMON[@]}" \
 profile "fp64_cufftdx_b${BATCH}" "$BIN" "${COMMON[@]}" \
     --backend online-reorder --fft-core cufftdx-block --local-stages 8 \
     --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+profile "fp64_recurrence_b${BATCH}" "$BIN" "${COMMON[@]}" \
+    --backend online-reorder --fft-core cufftdx-block --local-stages 8 \
+    --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8 \
+    --cross-twiddle recurrence
 profile "fp64_cufft_b${BATCH}" "$BIN" "${COMMON[@]}" --backend cufft
 
 python3 "$ROOT/scripts/summarize_ncu.py" "$OUTPUT_DIR"/fp64_*.csv \
     --output "$OUTPUT_DIR/summary.csv"
 python3 "$ROOT/scripts/analyze_fp64_fft_ncu.py" "$OUTPUT_DIR/summary.csv" \
     --batch "$BATCH" \
-    --timing-summary "$ROOT/results/fp64_logN16_confirm_summary.csv" \
+    --timing-summary "$ROOT/results/fp64_logN16_twiddle_summary.csv" \
     --output "$OUTPUT_DIR/analysis.csv" --markdown "$OUTPUT_DIR/analysis.md"
 printf 'FP64 NCU attribution: %s\n' "$OUTPUT_DIR/analysis.md"

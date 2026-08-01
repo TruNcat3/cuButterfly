@@ -21,7 +21,7 @@ void launch_cufftdx_fp64_block(std::uint32_t, const Complex64*, Complex64*, std:
 
 void launch_cufftdx_fp64_online_reorder(std::uint32_t, std::uint32_t, const Complex64*, Complex64*, Complex64*,
                                         const Complex64*, std::uint64_t, std::uint64_t, std::uint64_t, bool, bool,
-                                        std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t) {
+                                        CrossTwiddleMode, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t) {
     throw std::runtime_error("FP64 online cufftdx-block was not enabled at build time");
 }
 

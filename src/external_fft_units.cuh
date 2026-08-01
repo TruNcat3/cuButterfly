@@ -20,7 +20,8 @@ void launch_cufftdx_fp64_online_reorder(std::uint32_t log_n, std::uint32_t local
                                         const Complex64* input, Complex64* output, Complex64* scratch,
                                         const Complex64* twiddles, std::uint64_t transforms,
                                         std::uint64_t batch_distance, std::uint64_t element_stride,
-                                        bool inverse, bool normalize, std::uint32_t prefix_threads,
+                                        bool inverse, bool normalize, CrossTwiddleMode cross_twiddle,
+                                        std::uint32_t prefix_threads,
                                         std::uint32_t suffix_threads, std::uint32_t prefix_ept,
                                         std::uint32_t suffix_ept);
 bool cufftdx_direct_available(std::uint32_t log_n) noexcept;

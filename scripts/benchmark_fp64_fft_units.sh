@@ -33,6 +33,16 @@ python3 "$SWEEP" --binary "$BIN" --operators fft --precisions fp64 --logNs 16 --
 python3 "$SUMMARY" "$OUTPUT_DIR/fp64_cufftdx_logN16_mapping_raw.csv" \
     --output "$OUTPUT_DIR/fp64_cufftdx_logN16_mapping_summary.csv"
 
+python3 "$SWEEP" --binary "$BIN" --operators fft --precisions fp64 --logNs 16 --batch 64 \
+    --directions forward --normalizations none --placements out-of-place \
+    --backends online-reorder --fft-cores cufftdx-block --hierarchical-local-stages 8 \
+    --prefix-thread-options 128 256 512 --suffix-thread-options 128 256 512 \
+    --prefix-ept-options 4 8 --suffix-ept-options 4 8 --cross-twiddles recurrence \
+    --warmup 100 --repeat 50 --trials 3 \
+    --output "$OUTPUT_DIR/fp64_cufftdx_recurrence_mapping_raw.csv"
+python3 "$SUMMARY" "$OUTPUT_DIR/fp64_cufftdx_recurrence_mapping_raw.csv" \
+    --output "$OUTPUT_DIR/fp64_cufftdx_recurrence_mapping_summary.csv"
+
 COMMON=(--binary "$BIN" --operators fft --precisions fp64 --logNs 16 --batch 64
         --directions forward --normalizations none --placements out-of-place
         --warmup 1000 --repeat 100 --trials 5)
@@ -44,11 +54,16 @@ python3 "$SWEEP" "${COMMON[@]}" --backends online-reorder --fft-cores cufftdx-bl
     --hierarchical-local-stages 8 --prefix-thread-options 256 --suffix-thread-options 128 \
     --prefix-ept-options 4 --suffix-ept-options 8 --cross-twiddles table \
     --output "$OUTPUT_DIR/fp64_cufftdx_logN16_confirm_raw.csv"
+python3 "$SWEEP" "${COMMON[@]}" --backends online-reorder --fft-cores cufftdx-block \
+    --hierarchical-local-stages 8 --prefix-thread-options 256 --suffix-thread-options 128 \
+    --prefix-ept-options 4 --suffix-ept-options 8 --cross-twiddles recurrence \
+    --output "$OUTPUT_DIR/fp64_cufftdx_recurrence_logN16_confirm_raw.csv"
 python3 "$SWEEP" "${COMMON[@]}" --backends cufft --fft-cores scalar \
     --output "$OUTPUT_DIR/fp64_cufft_logN16_confirm_raw.csv"
 python3 "$SUMMARY" "$OUTPUT_DIR/fp64_scalar_logN16_confirm_raw.csv" \
     "$OUTPUT_DIR/fp64_cufftdx_logN16_confirm_raw.csv" \
+    "$OUTPUT_DIR/fp64_cufftdx_recurrence_logN16_confirm_raw.csv" \
     "$OUTPUT_DIR/fp64_cufft_logN16_confirm_raw.csv" \
-    --output "$OUTPUT_DIR/fp64_logN16_confirm_summary.csv"
+    --output "$OUTPUT_DIR/fp64_logN16_twiddle_summary.csv"
 
-printf 'FP64 confirmation summary: %s\n' "$OUTPUT_DIR/fp64_logN16_confirm_summary.csv"
+printf 'FP64 confirmation summary: %s\n' "$OUTPUT_DIR/fp64_logN16_twiddle_summary.csv"

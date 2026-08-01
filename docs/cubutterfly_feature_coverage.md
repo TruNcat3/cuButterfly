@@ -52,8 +52,8 @@ The V100-valid CTA choices are 256/512/1024 threads through `logN=13` and
 
 The FP64 cuFFTDx adapter provides temporal block FFTs at `logN=3..10` and a
 measured online `logN=16` `8+8` composition. The latter compiles independent
-prefix/suffix mappings at 128/256/512 threads and EPT 4/8. It currently uses
-table cross twiddles and a direct-strided global boundary; recurrence,
+prefix/suffix mappings at 128/256/512 threads and EPT 4/8. It supports table
+and register-recurrence cross twiddles with a direct-strided global boundary;
 multi-segment, resident, direct whole-transform, and tiled-boundary FP64 forms
 remain outside the compiled matrix and are rejected rather than silently
 falling back.
