@@ -22,6 +22,8 @@ kernel implementation.
    issued thread slots, and work imbalance.
 3. **Boundary mapping** describes each of the `D-1` connections: twiddle
    generation, permutation, residency, synchronization, and physical handoff.
+   A `fused` boundary remains inside one processing group; a `global-scratch`
+   boundary terminates the group and materializes its output.
 4. **Dispatch** is generated only from measured winners. It selects a mapping by
    `(GPU, semantics, logN, batch regime)` and then reuses the normal runtime
    validation path.
@@ -37,8 +39,18 @@ are selected independently. Prefix/suffix names appear only in the current
 `D=2` lowering and are not part of the general architecture abstraction. The
 current runtime accepts the same topology as `--stage-partition s0,s1,...`,
 plus `--segment-threads`, `--segment-ept`, `--boundary-twiddle`, and
-`--boundary-layout`. The optimized `D=2` lowering remains separate from the
-generic multi-segment ping-pong path.
+`--boundary-layout`. `--boundary-residency` controls logical-boundary fusion,
+while `--group-threads` and `--group-ept` map the resulting physical groups.
+
+The lowering derives an ordered physical partition `G=[g0,...,g(P-1)]` by
+coalescing logical segments across fused boundaries. Thus `P <= D`,
+`sum(G)=sum(S)=logN`, and the global handoff count is `P-1`, not `D-1`.
+For example, logical `7+3+10` with boundary residency
+`fused,global-scratch` lowers to physical `10+10`. It executes the same
+optimized two-group path as native `D=2`, while preserving the D3 topology in
+the architecture and experiment metadata. This separation is essential: `D`
+expresses the algorithmic space/time decomposition, whereas `P` expresses a
+hardware-dependent residency decision.
 
 For `logN=18/20`, `D=2..4`, and `si=3..12`, the current manifest contains 385
 factorization topologies:
@@ -49,16 +61,18 @@ factorization topologies:
 | 20 | 5 | 69 | 165 |
 
 All 385 topologies have a compiled runtime lowering. The bounded performance
-manifest selects 192 internal candidates from this topology/mapping product;
+manifest selects 288 internal candidates from this topology/mapping product;
 it preserves every `D=2` split and directional boundary realization, then
-retains multiple `D=3/4` segment-mapping classes under a per-shape limit.
+retains multiple `D=3/4` segment-mapping and physical-lowering classes under a
+per-shape limit. Measured D2 incumbents are also injected as physical-group
+mappings for compatible D3/D4 lowerings, including their boundary twiddle mode.
 
 ## V100 Search Result
 
-The current scan contains 594 samples: 198 cases, three randomized trials per
+The current scan contains 882 samples: 294 cases, three randomized trials per
 case, 100 warmups, and 50 timed repetitions. Times are resident kernel times on
-the repository V100. A ratio above 1 means cuButterfly is faster. The boundary
-column is `direct-strided` for all current winners.
+the repository V100. All 294 cases pass verification. A ratio above 1 means
+cuButterfly is faster.
 
 The complete `D=2` scan confirms that the earlier balanced points were winners
 rather than assumptions. Best recurrence time per `logN=18` partition at batch
@@ -77,8 +91,8 @@ rather than assumptions. Best recurrence time per `logN=18` partition at batch
 | 20 | 8 | `10+10`, `256/128`, EPT `16/16` | 0.450109 | 0.382157 | 0.849x |
 | 20 | 16 | `10+10`, `256/128`, EPT `16/16` | 0.883835 | 0.720855 | 0.816x |
 
-The generic multi-segment baseline is correct but not yet competitive because
-each segment is a separate global-scratch pass. Per-segment mapping still
+The original generic multi-segment baseline is correct but not competitive when
+each logical segment is a separate global-scratch pass. Per-segment mapping still
 matters: the second scan replaced the initially selected uniform
 `512-thread/EPT16` points with smaller codelets and improved `D=3` by roughly
 15--28%. Best measured points by decomposition count are:
@@ -92,9 +106,28 @@ matters: the second scan replaced the initially selected uniform
 | 20 | 8 | 0.450109 / 0.849x | `7+3+10`, `128/128/128`, 1.046466 / 0.365x | 1.800069 / 0.212x |
 | 20 | 16 | 0.883835 / 0.816x | `7+3+10`, `128/128/128`, 2.050929 / 0.351x | 3.581092 / 0.201x |
 
-This isolates the next architecture task: fuse a boundary with its producer or
-consumer, or retain adjacent segments on chip. Merely increasing `D` while
+These rows isolate the cost of setting `P=D`. Merely increasing `D` while
 materializing every boundary in global memory is predictably bandwidth-bound.
+
+The controlled fused-boundary scan then holds the physical group partition,
+threads/EPT, recurrence twiddle, and direct-strided global boundary constant.
+Only the logical decomposition metadata and fused internal boundaries change:
+
+| logN | Batch | D2/P2 ms / cuFFT | D3/P2 ms / cuFFT | D4/P2 ms / cuFFT | D3/P3 ms / cuFFT | D4/P4 ms / cuFFT |
+|--:|--:|:--|:--|:--|:--|:--|
+| 18 | 2 | 0.026051 / 1.079x | 0.026030 / 1.079x | 0.026010 / 1.080x | 0.081039 / 0.347x | 0.114913 / 0.245x |
+| 18 | 16 | 0.205722 / 1.051x | 0.205681 / 1.051x | 0.205496 / 1.052x | 0.716513 / 0.302x | 0.868434 / 0.249x |
+| 18 | 64 | 0.842875 / 0.851x | 0.836690 / 0.858x | 0.839721 / 0.855x | 2.613678 / 0.275x | 3.176305 / 0.226x |
+| 20 | 2 | 0.128799 / 0.959x | 0.128655 / 0.960x | 0.128573 / 0.961x | 0.371220 / 0.333x | 0.545833 / 0.226x |
+| 20 | 8 | 0.450109 / 0.849x | 0.445338 / 0.858x | 0.446628 / 0.856x | 1.411707 / 0.271x | 1.799455 / 0.212x |
+| 20 | 16 | 0.883835 / 0.816x | 0.868844 / 0.830x | 0.867799 / 0.831x | 2.792632 / 0.258x | 3.578204 / 0.201x |
+
+The D2/P2, D3/P2, and D4/P2 columns agree within normal run-to-run variation
+(at most 1.8% here). This is the central result of the lowering experiment:
+logical decomposition count has no intrinsic execution penalty when it maps to
+the same physical schedule. The large D3/P3 and D4/P4 loss is attributable to
+extra global handoffs. Fusion does not itself improve the selected arithmetic
+core; it prevents the architecture abstraction from imposing avoidable passes.
 
 The boundary experiment compares the same `9+11`, 128/256-thread, EPT 16/8,
 recurrence point. Both rows include every launched kernel.

@@ -10,7 +10,8 @@ import subprocess
 OUTPUT_FIELDS = (
     "candidate_id", "group", "trial", "implementation", "reference", "static_score",
     "mapping_id", "decomposition_count", "stages_per_decomposition", "segment_threads", "segment_ept",
-    "boundary_twiddles", "boundary_layouts", "processing_unit",
+    "boundary_twiddles", "boundary_layouts", "boundary_residencies", "execution_group_count",
+    "execution_group_stages", "group_threads", "group_ept", "processing_unit",
     "prefix_log_n", "suffix_log_n", "prefix_threads",
     "suffix_threads", "prefix_ept", "suffix_ept", "cross_twiddle", "direct_boundary", "device",
     "compute_capability", "operator", "precision", "direction", "normalization", "placement",
@@ -43,7 +44,7 @@ def expand(document):
             "prefix_log_n": 0, "suffix_log_n": 0, "prefix_threads": 0, "suffix_threads": 0,
             "prefix_ept": 0, "suffix_ept": 0, "cross_twiddle": "none", "static_score": 0.0,
             "direct_boundary": "none", "decomposition_count": 0, "stages_per_decomposition": [],
-            "segment_mappings": [], "boundaries": [],
+            "segment_mappings": [], "boundaries": [], "execution_group_mappings": [],
             "args": ["--operator", "fft", "--precision", seed["precision"], "--backend", "cufft",
                      "--placement", seed["placement"], "--normalization", seed["normalization"]],
         })
@@ -76,6 +77,14 @@ def case_metadata(case, trial):
         "segment_ept": "x".join(str(item["ept"]) for item in case.get("segment_mappings", [])),
         "boundary_twiddles": "x".join(item["cross_twiddle"] for item in case.get("boundaries", [])),
         "boundary_layouts": "x".join(item["layout"] for item in case.get("boundaries", [])),
+        "boundary_residencies": "x".join(item.get("residency", "global-scratch")
+                                           for item in case.get("boundaries", [])),
+        "execution_group_count": case.get("execution_group_count", case["decomposition_count"]),
+        "execution_group_stages": "x".join(map(str, case.get("execution_group_stages", []))),
+        "group_threads": "x".join(str(item["threads"])
+                                    for item in case.get("execution_group_mappings", [])),
+        "group_ept": "x".join(str(item["ept"])
+                                for item in case.get("execution_group_mappings", [])),
         "processing_unit": case["processing_unit"], "prefix_log_n": case["prefix_log_n"],
         "suffix_log_n": case["suffix_log_n"], "prefix_threads": case["prefix_threads"],
         "suffix_threads": case["suffix_threads"], "prefix_ept": case["prefix_ept"],

@@ -69,6 +69,45 @@ class FftPipelineGeneratorTest(unittest.TestCase):
         self.assertIn("--segment-ept", point["args"])
         self.assertIn("--boundary-twiddle", point["args"])
 
+    def test_fused_logical_boundaries_lower_to_two_execution_groups(self):
+        point = next(point for point in self.runnable
+                     if point["decomposition_count"] > 2 and
+                     any(boundary.get("residency") == "fused" for boundary in point["boundaries"]))
+        self.assertEqual(point["execution_group_count"], 2)
+        self.assertEqual(sum(point["execution_group_stages"]), point["logN"])
+        self.assertEqual(len(point["execution_group_mappings"]), 2)
+        self.assertIn("--boundary-residency", point["args"])
+        self.assertIn("--group-threads", point["args"])
+
+    def test_each_multisegment_decomposition_retains_global_and_fused_lowerings(self):
+        for mapping_id in {point["mapping_id"] for point in self.runnable}:
+            for batch in {point["batch"] for point in self.runnable
+                          if point["mapping_id"] == mapping_id}:
+                points = [point for point in self.runnable
+                          if point["mapping_id"] == mapping_id and point["batch"] == batch]
+                for decomposition_count in (3, 4):
+                    lowerings = [point for point in points
+                                 if point["decomposition_count"] == decomposition_count]
+                    self.assertTrue(any(all(boundary.get("residency") == "global-scratch"
+                                            for boundary in point["boundaries"])
+                                        for point in lowerings))
+                    self.assertTrue(any(any(boundary.get("residency") == "fused"
+                                            for boundary in point["boundaries"])
+                                        for point in lowerings))
+
+    def test_fused_lowerings_reuse_measured_d2_processing_unit_mappings(self):
+        expected = {"fft18-fp32": ((9, 9), ((256, 8), (256, 8))),
+                    "fft20-fp32": ((10, 10), ((512, 8), (512, 8)))}
+        for mapping_id, (stages, mappings) in expected.items():
+            points = [point for point in self.runnable
+                      if point["mapping_id"] == mapping_id and point["decomposition_count"] > 2 and
+                      tuple(point.get("execution_group_stages", [])) == stages and
+                      next(boundary["cross_twiddle"] for boundary in point["boundaries"]
+                           if boundary.get("residency", "global-scratch") == "global-scratch") == "recurrence" and
+                      tuple((item["threads"], item["ept"])
+                            for item in point.get("execution_group_mappings", [])) == mappings]
+            self.assertTrue(points)
+
     def test_suffix_direct_points_include_both_boundary_realizations(self):
         points = [point for point in self.runnable
                   if point["mapping_id"] == "fft20-fp32" and point["decomposition_count"] == 2

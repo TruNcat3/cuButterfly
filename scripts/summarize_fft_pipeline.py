@@ -7,7 +7,9 @@ import statistics
 
 CONFIG_FIELDS = ("candidate_id", "group", "implementation", "reference", "static_score", "mapping_id",
                  "decomposition_count", "stages_per_decomposition", "segment_threads", "segment_ept",
-                 "boundary_twiddles", "boundary_layouts", "processing_unit", "prefix_log_n", "suffix_log_n",
+                 "boundary_twiddles", "boundary_layouts", "boundary_residencies", "execution_group_count",
+                 "execution_group_stages", "group_threads", "group_ept", "processing_unit",
+                 "prefix_log_n", "suffix_log_n",
                  "prefix_threads", "suffix_threads",
                  "prefix_ept", "suffix_ept", "cross_twiddle", "direct_boundary", "operator", "precision", "direction",
                  "normalization", "placement", "backend", "fft_core", "logN", "N", "batch")
@@ -68,12 +70,15 @@ def write_csv(path, rows):
 def write_markdown(path, rows):
     winners = [row for row in rows if row["rank"] == 1]
     lines = ["# Generated V100 FFT Pipeline Search", "",
-             "| logN | Batch | Split | Threads | EPT | Twiddle | Boundary | Median ms | cuFFT ms | Throughput ratio |",
-             "|--:|--:|:--|:--|:--|:--|:--|--:|--:|--:|"]
+             "| logN | Batch | Logical stages | Physical groups | Threads/EPT | Residency | Median ms | cuFFT ms | Throughput ratio |",
+             "|--:|--:|:--|:--|:--|:--|--:|--:|--:|"]
     for row in winners:
-        lines.append(f"| {row['logN']} | {row['batch']} | {row['prefix_log_n']}+{row['suffix_log_n']} | "
-                     f"{row['prefix_threads']}+{row['suffix_threads']} | {row['prefix_ept']}+{row['suffix_ept']} | "
-                     f"{row['cross_twiddle']} | {row['direct_boundary']} | {row['median_kernel_ms']:.6f} | {row['cufft_median_ms']:.6f} | "
+        physical_groups = row["execution_group_stages"] or row["stages_per_decomposition"]
+        threads = row["group_threads"] or row["segment_threads"]
+        ept = row["group_ept"] or row["segment_ept"]
+        lines.append(f"| {row['logN']} | {row['batch']} | {row['stages_per_decomposition']} | "
+                     f"{physical_groups} | {threads} / {ept} | {row['boundary_residencies']} | "
+                     f"{row['median_kernel_ms']:.6f} | {row['cufft_median_ms']:.6f} | "
                      f"{row['throughput_vs_cufft']:.3f}x |")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines) + "\n")

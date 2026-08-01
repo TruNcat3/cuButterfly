@@ -97,6 +97,8 @@ void print_usage() {
         << "                    [--stage-partition 9,9]\n"
         << "                    [--segment-threads 256,256,256] [--segment-ept 8,8,8]\n"
         << "                    [--boundary-twiddle table,recurrence] [--boundary-layout direct-strided,direct-strided]\n"
+        << "                    [--boundary-residency fused,global-scratch]\n"
+        << "                    [--group-threads 512,512] [--group-ept 8,8]\n"
         << "                    [--normalization none|inverse]\n"
         << "                    [--auto-select]\n"
         << "                    [--placement in-place|out-of-place]\n"
@@ -207,6 +209,27 @@ int main(int argc, char** argv) {
                 config.boundaries.resize(values.size());
                 for (std::size_t boundary = 0; boundary < values.size(); ++boundary)
                     config.boundaries[boundary].layout = cuntt::parse_direct_boundary(values[boundary]);
+            } else if (arg == "--boundary-residency") {
+                const auto values = parse_csv_tokens(take_arg(index, argc, argv));
+                if (!config.boundaries.empty() && config.boundaries.size() != values.size())
+                    throw std::invalid_argument("boundary parameter lists must have equal length");
+                config.boundaries.resize(values.size());
+                for (std::size_t boundary = 0; boundary < values.size(); ++boundary)
+                    config.boundaries[boundary].residency = cuntt::parse_fft_boundary_residency(values[boundary]);
+            } else if (arg == "--group-threads") {
+                const auto values = parse_positive_list(take_arg(index, argc, argv), "group threads");
+                if (!config.execution_group_mappings.empty() && config.execution_group_mappings.size() != values.size())
+                    throw std::invalid_argument("group threads and EPT lists must have equal length");
+                config.execution_group_mappings.resize(values.size());
+                for (std::size_t group = 0; group < values.size(); ++group)
+                    config.execution_group_mappings[group].threads = values[group];
+            } else if (arg == "--group-ept") {
+                const auto values = parse_positive_list(take_arg(index, argc, argv), "group EPT");
+                if (!config.execution_group_mappings.empty() && config.execution_group_mappings.size() != values.size())
+                    throw std::invalid_argument("group threads and EPT lists must have equal length");
+                config.execution_group_mappings.resize(values.size());
+                for (std::size_t group = 0; group < values.size(); ++group)
+                    config.execution_group_mappings[group].ept = values[group];
             } else if (arg == "--batch-stride") {
                 config.batch_stride = std::stoull(take_arg(index, argc, argv));
             } else if (arg == "--element-stride") {
@@ -389,7 +412,7 @@ int main(int argc, char** argv) {
         const auto device = cuntt::current_device_info();
         std::cout << std::fixed << std::setprecision(6);
         if (csv) {
-            std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,auto_select,backend,compute_unit,complex_multiply,cross_twiddle,direct_boundary,decomposition_count,stages_per_decomposition,segment_threads,segment_ept,boundary_twiddles,boundary_layouts,local_"
+            std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,auto_select,backend,compute_unit,complex_multiply,cross_twiddle,direct_boundary,decomposition_count,stages_per_decomposition,segment_threads,segment_ept,boundary_twiddles,boundary_layouts,boundary_residencies,execution_group_count,group_threads,group_ept,local_"
                          "exchange,fft_core,stage_space,stage_handoff,tile_threads,prefix_threads,suffix_threads,prefix_ept,suffix_ept,prefix_units_per_cta,suffix_units_per_cta,local_stages,reorder_columns,warp_stages,pipeline_warps,logN,N,batch,element_stride,batch_"
                          "stride,warmup,repeat,h2d_ms,kernel_ms,d2h_ms,"
                          "transforms_s,Gbutterfly_s,points_s,max_error,correct\n";
@@ -406,6 +429,10 @@ int main(int argc, char** argv) {
                       << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << ','
                       << format_mapping_list(config.boundaries, [](const auto& boundary) { return std::string(cuntt::cross_twiddle_mode_name(boundary.cross_twiddle)); }) << ','
                       << format_mapping_list(config.boundaries, [](const auto& boundary) { return std::string(cuntt::direct_boundary_name(boundary.layout)); }) << ','
+                      << format_mapping_list(config.boundaries, [](const auto& boundary) { return std::string(cuntt::fft_boundary_residency_name(boundary.residency)); }) << ','
+                      << config.execution_group_mappings.size() << ','
+                      << format_mapping_list(config.execution_group_mappings, [](const auto& mapping) { return std::to_string(mapping.threads); }) << ','
+                      << format_mapping_list(config.execution_group_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << ','
                       << cuntt::local_exchange_name(config.local_exchange) << ',' << cuntt::fft_core_name(config.fft_core) << ',' << config.stage_space << ','
                       << cuntt::stage_handoff_name(config.stage_handoff) << ',' << config.tile_threads << ','
                       << config.prefix_threads << ',' << config.suffix_threads << ',' << config.prefix_ept << ',' << config.suffix_ept << ','
@@ -431,6 +458,9 @@ int main(int argc, char** argv) {
                       << "stage_partition: " << format_stage_partition(config.stage_partition) << "\n"
                       << "segment_threads: " << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.threads); }) << "\n"
                       << "segment_ept: " << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << "\n"
+                      << "boundary_residencies: " << format_mapping_list(config.boundaries, [](const auto& boundary) { return std::string(cuntt::fft_boundary_residency_name(boundary.residency)); }) << "\n"
+                      << "group_threads: " << format_mapping_list(config.execution_group_mappings, [](const auto& mapping) { return std::to_string(mapping.threads); }) << "\n"
+                      << "group_ept: " << format_mapping_list(config.execution_group_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << "\n"
                       << "local_exchange: " << cuntt::local_exchange_name(config.local_exchange) << "\n"
                       << "fft_core: " << cuntt::fft_core_name(config.fft_core) << "\n"
                       << "stage_space: " << config.stage_space << "\n"

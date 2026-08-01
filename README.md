@@ -77,6 +77,9 @@ is shape-dependent: the best processing unit and the relative library result
 can change as batch exposes additional hardware concurrency.
 The measured [FFT pipeline generator](docs/fft_pipeline_generator.md) turns
 that observation into a processing-unit, mapping, and runtime-dispatch flow.
+Its FFT lowering now treats logical decomposition count and physical execution
+group count as independent parameters: adjacent logical segments can be fused
+without forcing an intermediate global-memory pass.
 
 ### Same-Machine Library Comparisons
 

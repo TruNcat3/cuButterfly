@@ -118,6 +118,24 @@ DirectBoundary parse_direct_boundary(const std::string& name) {
     throw std::invalid_argument("unknown direct boundary: " + name);
 }
 
+const char* fft_boundary_residency_name(FftBoundaryResidency residency) noexcept {
+    switch (residency) {
+        case FftBoundaryResidency::GlobalScratch:
+            return "global-scratch";
+        case FftBoundaryResidency::Fused:
+            return "fused";
+    }
+    return "unknown";
+}
+
+FftBoundaryResidency parse_fft_boundary_residency(const std::string& name) {
+    if (name == "global-scratch")
+        return FftBoundaryResidency::GlobalScratch;
+    if (name == "fused")
+        return FftBoundaryResidency::Fused;
+    throw std::invalid_argument("unknown FFT boundary residency: " + name);
+}
+
 const char* local_exchange_name(LocalExchange exchange) noexcept {
     switch (exchange) {
         case LocalExchange::SharedMemory:

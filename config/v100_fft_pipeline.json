@@ -38,7 +38,7 @@
         "stages_per_decomposition": {"min": 3, "max": 12},
         "compiled_decomposition_counts": [2, 3, 4]
       },
-      "max_runnable_candidates_per_shape": 32,
+      "max_runnable_candidates_per_shape": 48,
       "required_candidates": [
         {"stage_partition": [9, 9],
          "segment_mappings": [{"threads": 256, "ept": 8}, {"threads": 256, "ept": 8}],
@@ -55,7 +55,7 @@
         "stages_per_decomposition": {"min": 3, "max": 12},
         "compiled_decomposition_counts": [2, 3, 4]
       },
-      "max_runnable_candidates_per_shape": 32,
+      "max_runnable_candidates_per_shape": 48,
       "required_candidates": [
         {"stage_partition": [10, 10],
          "segment_mappings": [{"threads": 512, "ept": 8}, {"threads": 512, "ept": 8}],

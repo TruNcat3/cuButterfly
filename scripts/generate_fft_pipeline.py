@@ -147,7 +147,8 @@ def compiled_segment_options(stage_log_n, unit, codegen_points, hardware, batch,
 
 def score_multisegment(point, selection):
     weighted = []
-    for segment, mapping in enumerate(point["segment_mappings"]):
+    mappings = point.get("execution_group_mappings", point["segment_mappings"])
+    for segment, mapping in enumerate(mappings):
         weight = selection["prefix_work_weight"] if segment == 0 else selection["suffix_work_weight"]
         weighted.append(weight * mapping["resources"]["issued_thread_slots"])
     work = sum(weighted)
@@ -164,14 +165,25 @@ def multisegment_runtime_args(point):
     ept = ",".join(str(mapping["ept"]) for mapping in point["segment_mappings"])
     twiddles = ",".join(boundary["cross_twiddle"] for boundary in point["boundaries"])
     layouts = ",".join(boundary["layout"] for boundary in point["boundaries"])
-    return [
+    residencies = ",".join(boundary.get("residency", "global-scratch")
+                           for boundary in point["boundaries"])
+    args = [
         "--operator", "fft", "--precision", point["precision"], "--backend", "online-reorder",
         "--fft-core", "cufftdx-block", "--stage-partition",
         ",".join(map(str, point["stages_per_decomposition"])),
         "--segment-threads", threads, "--segment-ept", ept,
         "--boundary-twiddle", twiddles, "--boundary-layout", layouts,
+        "--boundary-residency", residencies,
         "--placement", point["placement"], "--normalization", point["normalization"],
     ]
+    if point.get("execution_group_mappings"):
+        args.extend([
+            "--group-threads", ",".join(str(item["threads"])
+                                          for item in point["execution_group_mappings"]),
+            "--group-ept", ",".join(str(item["ept"])
+                                      for item in point["execution_group_mappings"]),
+        ])
+    return args
 
 
 def multisegment_candidate_id(point):
@@ -180,7 +192,15 @@ def multisegment_candidate_id(point):
     ept = "x".join(str(mapping["ept"]) for mapping in point["segment_mappings"])
     twiddles = "".join("r" if boundary["cross_twiddle"] == "recurrence" else "t"
                        for boundary in point["boundaries"])
-    return f"{point['mapping_id']}_b{point['batch']}_d{point['decomposition_count']}_{stages}_t{threads}_e{ept}_{twiddles}"
+    residencies = "".join("f" if boundary.get("residency") == "fused" else "g"
+                          for boundary in point["boundaries"])
+    group_suffix = ""
+    if point.get("execution_group_mappings"):
+        group_threads = "x".join(str(item["threads"]) for item in point["execution_group_mappings"])
+        group_ept = "x".join(str(item["ept"]) for item in point["execution_group_mappings"])
+        group_suffix = f"_gt{group_threads}_ge{group_ept}"
+    return (f"{point['mapping_id']}_b{point['batch']}_d{point['decomposition_count']}_{stages}_"
+            f"t{threads}_e{ept}_{twiddles}_{residencies}{group_suffix}")
 
 
 def runtime_args(point):
@@ -268,7 +288,8 @@ def enumerate_pipeline(document, architecture, codegen_points):
                         segment_mappings = [segment_options[min(variant, len(segment_options) - 1)]
                                             for segment_options in options]
                         for twiddles in twiddle_variants:
-                            boundaries = [{"cross_twiddle": twiddle, "layout": "direct-strided"}
+                            boundaries = [{"cross_twiddle": twiddle, "layout": "direct-strided",
+                                           "residency": "global-scratch"}
                                           for twiddle in twiddles]
                             point = {
                                 **{key: value for key, value in mapping.items()
@@ -290,6 +311,58 @@ def enumerate_pipeline(document, architecture, codegen_points):
                             point["id"] = multisegment_candidate_id(point)
                             point["args"] = multisegment_runtime_args(point)
                             shape.append(point)
+                            # Keep the logical decomposition intact while lowering all but one
+                            # boundary into two physical execution groups.
+                            for cut in range(1, len(stages)):
+                                group_stages = [sum(stages[:cut]), sum(stages[cut:])]
+                                group_units = [find_unit(group_stage) for group_stage in group_stages]
+                                if any(unit is None for unit in group_units):
+                                    continue
+                                group_options = [compiled_segment_options(group_stage, unit, codegen_points,
+                                                                          hardware, batch, mapping["logN"])
+                                                 for group_stage, unit in zip(group_stages, group_units)]
+                                if any(not options for options in group_options):
+                                    continue
+                                execution_mapping_variants = [[
+                                    options[min(variant, len(options) - 1)] for options in group_options
+                                ]]
+                                for required in mapping.get("required_candidates", []):
+                                    if required["stage_partition"] != group_stages:
+                                        continue
+                                    incumbent = []
+                                    for required_mapping, group_candidates in zip(required["segment_mappings"],
+                                                                                  group_options):
+                                        match = next((option for option in group_candidates
+                                                      if option["threads"] == required_mapping["threads"] and
+                                                      option["ept"] == required_mapping["ept"]), None)
+                                        if match is None:
+                                            incumbent = []
+                                            break
+                                        incumbent.append(match)
+                                    if incumbent:
+                                        execution_mapping_variants.append(incumbent)
+                                fused_boundaries = [
+                                    {**boundary,
+                                     "residency": ("global-scratch" if boundary_index == cut - 1 else "fused")}
+                                    for boundary_index, boundary in enumerate(boundaries)
+                                ]
+                                unique_execution_mappings = {
+                                    tuple((item["threads"], item["ept"]) for item in execution_mappings): execution_mappings
+                                    for execution_mappings in execution_mapping_variants
+                                }
+                                for execution_mappings in unique_execution_mappings.values():
+                                    fused_point = {
+                                        **point,
+                                        "boundaries": fused_boundaries,
+                                        "execution_group_count": 2,
+                                        "execution_group_stages": group_stages,
+                                        "execution_group_mappings": execution_mappings,
+                                        "physical_processing_unit": "+".join(item["id"] for item in group_units),
+                                    }
+                                    score_multisegment(fused_point, document["selection"])
+                                    fused_point["id"] = multisegment_candidate_id(fused_point)
+                                    fused_point["args"] = multisegment_runtime_args(fused_point)
+                                    shape.append(fused_point)
                     continue
                 prefix_log_n, suffix_log_n = stages
                 prefix_unit = find_unit(prefix_log_n)
@@ -336,7 +409,8 @@ def enumerate_pipeline(document, architecture, codegen_points):
                                                  "exchange": suffix_unit["exchange"], "threads": suffix_threads,
                                                  "ept": suffix_ept},
                                             ],
-                                            "boundaries": [{"cross_twiddle": twiddle, "layout": boundary}],
+                                            "boundaries": [{"cross_twiddle": twiddle, "layout": boundary,
+                                                            "residency": "global-scratch"}],
                                         }
                                         status, reason = classify_online_point(point, hardware, codegen_points)
                                         if status != "compiled":
@@ -383,13 +457,48 @@ def enumerate_pipeline(document, architecture, codegen_points):
                      if point["decomposition_count"] == decomposition_count and
                      tuple((item["threads"], item["ept"]) for item in point["segment_mappings"]) == mapping_key),
                     key=lambda item: item["static_score"]))
+            lowering_keys = {
+                (point["decomposition_count"],
+                 tuple(boundary.get("residency", "global-scratch") for boundary in point["boundaries"]))
+                for point in shape if point["decomposition_count"] > 2
+            }
+            lowering_selected = []
+            for decomposition_count, residencies in sorted(lowering_keys):
+                lowering_selected.append(min(
+                    (point for point in shape
+                     if point["decomposition_count"] == decomposition_count and
+                     tuple(boundary.get("residency", "global-scratch")
+                           for boundary in point["boundaries"]) == residencies),
+                    key=lambda item: item["static_score"]))
+            incumbent_lowering_selected = []
+            for required in mapping.get("required_candidates", []):
+                required_mapping = tuple((item["threads"], item["ept"])
+                                         for item in required["segment_mappings"])
+                for decomposition_count, residencies in sorted(lowering_keys):
+                    matches = [
+                        point for point in shape
+                        if point["decomposition_count"] == decomposition_count and
+                        point.get("execution_group_stages") == required["stage_partition"] and
+                        tuple(boundary.get("residency", "global-scratch")
+                              for boundary in point["boundaries"]) == residencies and
+                        next(boundary["cross_twiddle"] for boundary in point["boundaries"]
+                             if boundary.get("residency", "global-scratch") == "global-scratch") ==
+                        required["cross_twiddle"] and
+                        tuple((item["threads"], item["ept"])
+                              for item in point.get("execution_group_mappings", [])) == required_mapping
+                    ]
+                    if matches:
+                        incumbent_lowering_selected.append(min(matches, key=lambda item: item["static_score"]))
             diversity = {}
             for point in sorted(shape, key=lambda item: item["static_score"]):
                 key = (point["decomposition_count"], tuple(point["stages_per_decomposition"]),
-                       point["cross_twiddle"], point["direct_boundary"])
+                       point["cross_twiddle"], point["direct_boundary"],
+                       tuple(boundary.get("residency", "global-scratch")
+                             for boundary in point["boundaries"]))
                 if key not in diversity:
                     diversity[key] = point
-            selected = list({point["id"]: point for point in selected}.values())
+            selected = list({point["id"]: point
+                             for point in incumbent_lowering_selected + lowering_selected + selected}.values())
             selected_ids = {point["id"] for point in selected}
             selected.extend(point for point in diversity.values() if point["id"] not in selected_ids)
             limit = int(mapping.get("max_runnable_candidates_per_shape",

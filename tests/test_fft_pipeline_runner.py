@@ -46,6 +46,8 @@ class FftPipelineRunnerTest(unittest.TestCase):
         self.assertEqual(metadata["static_score"], case["static_score"])
         self.assertEqual(metadata["trial"], 3)
         self.assertEqual(metadata["direct_boundary"], case["direct_boundary"])
+        self.assertIn("boundary_residencies", metadata)
+        self.assertIn("execution_group_count", metadata)
 
     def test_summary_ranks_internal_and_compares_reference(self):
         header = "candidate_id,group,implementation,reference,kernel_ms,correct\n"

@@ -106,6 +106,14 @@ enum class DirectBoundary {
 const char*    direct_boundary_name(DirectBoundary boundary) noexcept;
 DirectBoundary parse_direct_boundary(const std::string& name);
 
+enum class FftBoundaryResidency {
+    GlobalScratch,
+    Fused,
+};
+
+const char*          fft_boundary_residency_name(FftBoundaryResidency residency) noexcept;
+FftBoundaryResidency parse_fft_boundary_residency(const std::string& name);
+
 enum class LocalExchange {
     SharedMemory,
     WarpRegister,
@@ -138,6 +146,7 @@ struct FftSegmentMapping {
 struct FftBoundaryMapping {
     CrossTwiddleMode cross_twiddle = CrossTwiddleMode::Table;
     DirectBoundary   layout        = DirectBoundary::Strided;
+    FftBoundaryResidency residency = FftBoundaryResidency::GlobalScratch;
 };
 
 std::vector<ButterflyCapability> butterfly_capabilities();
@@ -152,6 +161,8 @@ struct ButterflyConfig {
     std::vector<std::uint32_t> stage_partition;
     std::vector<FftSegmentMapping> segment_mappings;
     std::vector<FftBoundaryMapping> boundaries;
+    // Physical processing groups after fused logical boundaries are lowered.
+    std::vector<FftSegmentMapping> execution_group_mappings;
     std::size_t        batch             = 1;
     std::size_t        batch_stride      = 0;
     std::size_t        element_stride    = 1;

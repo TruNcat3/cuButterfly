@@ -545,6 +545,46 @@ class ButterflyPlan::Impl {
                 }
                 if (config_.boundaries.size() + 1 != config_.stage_partition.size())
                     throw std::invalid_argument("boundary count must equal decomposition_count - 1");
+                execution_stage_partition_.clear();
+                execution_boundaries_.clear();
+                std::uint32_t group_stages = config_.stage_partition.front();
+                for (std::size_t boundary = 0; boundary < config_.boundaries.size(); ++boundary) {
+                    if (config_.boundaries[boundary].residency == FftBoundaryResidency::Fused) {
+                        group_stages += config_.stage_partition[boundary + 1];
+                    } else {
+                        execution_stage_partition_.push_back(group_stages);
+                        execution_boundaries_.push_back(config_.boundaries[boundary]);
+                        group_stages = config_.stage_partition[boundary + 1];
+                    }
+                }
+                execution_stage_partition_.push_back(group_stages);
+                if (execution_stage_partition_.size() < 2)
+                    throw std::invalid_argument("fully fused FFT requires a whole-transform processing unit");
+                if (config_.execution_group_mappings.empty()) {
+                    if (execution_stage_partition_.size() == config_.stage_partition.size()) {
+                        config_.execution_group_mappings = config_.segment_mappings;
+                    } else {
+                        for (const auto stages : execution_stage_partition_) {
+                            FftSegmentMapping mapping;
+                            if (stages >= 11) {
+                                mapping.threads = 256;
+                                mapping.ept = (1U << stages) / mapping.threads;
+                            } else if (stages == 10 && config_.batch <= 2) {
+                                mapping.threads = 512;
+                                mapping.ept = 8;
+                            } else if (stages == 10) {
+                                mapping.threads = 256;
+                                mapping.ept = 16;
+                            } else {
+                                mapping.threads = 128;
+                                mapping.ept = std::max(8U, (1U << stages) / mapping.threads);
+                            }
+                            config_.execution_group_mappings.push_back(mapping);
+                        }
+                    }
+                }
+                if (config_.execution_group_mappings.size() != execution_stage_partition_.size())
+                    throw std::invalid_argument("execution group mapping count does not match fused boundary lowering");
                 if (config_.stage_partition.size() == 2) {
                     config_.prefix_threads = config_.segment_mappings[0].threads;
                     config_.prefix_ept = config_.segment_mappings[0].ept;
@@ -641,6 +681,32 @@ class ButterflyPlan::Impl {
             }
             config_.prefix_units_per_cta = config_.prefix_threads * config_.prefix_ept / prefix_n;
             config_.suffix_units_per_cta = config_.suffix_threads * config_.suffix_ept / suffix_n;
+            if (config_.execution_group_mappings[0].threads == 0) {
+                config_.execution_group_mappings[0].threads = config_.prefix_threads;
+                config_.execution_group_mappings[0].ept = config_.prefix_ept;
+            }
+            if (config_.execution_group_mappings[1].threads == 0) {
+                config_.execution_group_mappings[1].threads = config_.suffix_threads;
+                config_.execution_group_mappings[1].ept = config_.suffix_ept;
+            }
+        }
+        if (config_.backend == ButterflyBackend::OnlineReorder && config_.fft_core == FftCore::CufftDxBlock) {
+            const auto valid_threads = [](std::uint32_t threads) {
+                return threads == 128 || threads == 256 || threads == 512 || threads == 1024;
+            };
+            if (config_.execution_group_mappings.size() != execution_stage_partition_.size())
+                throw std::invalid_argument("execution group mapping count must equal physical execution group count");
+            for (std::size_t group = 0; group < execution_stage_partition_.size(); ++group) {
+                const std::uint32_t stages = execution_stage_partition_[group];
+                const auto& mapping = config_.execution_group_mappings[group];
+                if (mapping.core != FftCore::CufftDxBlock || mapping.exchange != LocalExchange::SharedMemory ||
+                    !valid_threads(mapping.threads) || stages < 3 || stages > 12 ||
+                    mapping.threads * mapping.ept < (1U << stages) ||
+                    (mapping.threads * mapping.ept) % (1U << stages) != 0 ||
+                    !detail::cufftdx_online_available(stages, mapping.threads, mapping.ept))
+                    throw std::invalid_argument(
+                        "execution-group processing-unit mapping is not compiled or cannot cover its stages");
+            }
         }
         if (config_.direct_boundary == DirectBoundary::TiledTranspose) {
             const std::uint32_t suffix_log_n = config_.log_n - config_.local_stages;
@@ -862,7 +928,7 @@ class ButterflyPlan::Impl {
             device_scratch_.allocate(data_bytes_);
         }
         if (config_.direct_boundary == DirectBoundary::PrefixTiledTranspose ||
-            (config_.backend == ButterflyBackend::OnlineReorder && config_.stage_partition.size() > 2)) {
+            (config_.backend == ButterflyBackend::OnlineReorder && execution_stage_partition_.size() > 2)) {
             device_workspace_.allocate(data_bytes_);
         }
 
@@ -1041,23 +1107,26 @@ class ButterflyPlan::Impl {
             }
             if (config_.fft_core == FftCore::CufftDxBlock) {
                 if (config_.backend == ButterflyBackend::OnlineReorder) {
-                    if (config_.stage_partition.size() > 2) {
+                    if (execution_stage_partition_.size() > 2) {
                         detail::launch_cufftdx_multisegment(
-                            config_.log_n, config_.stage_partition, config_.segment_mappings, config_.boundaries,
+                            config_.log_n, execution_stage_partition_, config_.execution_group_mappings,
+                            execution_boundaries_,
                             device_input_.as<Complex32>(), result_buffer<Complex32>(),
                             device_scratch_.as<Complex32>(), device_workspace_.as<Complex32>(),
                             device_twiddles_.as<Complex32>(), config_.batch, config_.batch_stride,
                             config_.element_stride, config_.inverse,
                             config_.inverse && config_.normalize_inverse);
                     } else {
+                        const auto& prefix = config_.execution_group_mappings[0];
+                        const auto& suffix = config_.execution_group_mappings[1];
+                        const auto& boundary = execution_boundaries_[0];
                         detail::launch_cufftdx_online_reorder(
-                            config_.log_n, config_.local_stages, device_input_.as<Complex32>(), result_buffer<Complex32>(),
+                            config_.log_n, execution_stage_partition_[0], device_input_.as<Complex32>(), result_buffer<Complex32>(),
                             device_scratch_.as<Complex32>(), device_workspace_.as<Complex32>(),
                             device_twiddles_.as<Complex32>(), config_.batch,
                             config_.batch_stride, config_.element_stride, config_.inverse,
-                            config_.inverse && config_.normalize_inverse, config_.cross_twiddle,
-                            config_.prefix_threads, config_.suffix_threads, config_.prefix_ept, config_.suffix_ept,
-                            config_.direct_boundary);
+                            config_.inverse && config_.normalize_inverse, boundary.cross_twiddle,
+                            prefix.threads, suffix.threads, prefix.ept, suffix.ept, boundary.layout);
                     }
                 } else {
                     detail::launch_cufftdx_block(config_.log_n, device_input_.as<Complex32>(), result_buffer<Complex32>(), config_.batch,
@@ -1147,6 +1216,8 @@ class ButterflyPlan::Impl {
     }
 
     ButterflyConfig config_;
+    std::vector<std::uint32_t> execution_stage_partition_;
+    std::vector<FftBoundaryMapping> execution_boundaries_;
     std::size_t     data_bytes_    = 0;
     std::size_t     data_elements_ = 0;
     std::size_t     points_        = 0;

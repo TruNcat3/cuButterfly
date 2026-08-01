@@ -285,6 +285,24 @@ if(BUILD_TESTING)
                          --boundary-twiddle recurrence,table,recurrence
                          --placement in-place --normalization none --logN 20 --batch 1
                          --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fused_boundary_d3_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 7,3,10
+                         --segment-threads 128,128,256 --segment-ept 8,8,16
+                         --boundary-twiddle table,recurrence
+                         --boundary-residency fused,global-scratch
+                         --group-threads 512,512 --group-ept 8,8
+                         --placement in-place --normalization none --logN 20 --batch 1
+                         --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fused_boundary_d4_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 5,5,5,5
+                         --segment-threads 128,128,128,128 --segment-ept 8,8,8,8
+                         --boundary-twiddle table,recurrence,table
+                         --boundary-residency fused,global-scratch,fused
+                         --group-threads 512,512 --group-ept 8,8
+                         --placement in-place --normalization none --logN 20 --batch 1
+                         --warmup 1 --repeat 1 --verify)
         add_test(NAME fft_multisegment_inverse_correctness
                  COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
                          --fft-core cufftdx-block --stage-partition 6,6,6
