@@ -13,7 +13,7 @@ SEMANTIC_FIELDS = (
 )
 
 CONFIG_FIELDS = (
-    "backend", "compute_unit", "fft_core", "local_exchange", "cross_twiddle",
+    "backend", "compute_unit", "fft_core", "local_exchange", "shared_layout", "cross_twiddle",
 )
 
 

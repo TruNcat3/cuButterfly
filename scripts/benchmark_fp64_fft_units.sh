@@ -28,6 +28,7 @@ python3 "$SWEEP" --binary "$BIN" --operators fft --precisions fp64 --logNs 16 --
     --backends online-reorder --fft-cores cufftdx-block --hierarchical-local-stages 8 \
     --prefix-thread-options 128 256 512 --suffix-thread-options 128 256 512 \
     --prefix-ept-options 4 8 --suffix-ept-options 4 8 --cross-twiddles table \
+    --shared-layouts linear \
     --warmup 100 --repeat 50 --trials 3 \
     --output "$OUTPUT_DIR/fp64_cufftdx_logN16_mapping_raw.csv"
 python3 "$SUMMARY" "$OUTPUT_DIR/fp64_cufftdx_logN16_mapping_raw.csv" \
@@ -38,6 +39,7 @@ python3 "$SWEEP" --binary "$BIN" --operators fft --precisions fp64 --logNs 16 --
     --backends online-reorder --fft-cores cufftdx-block --hierarchical-local-stages 8 \
     --prefix-thread-options 128 256 512 --suffix-thread-options 128 256 512 \
     --prefix-ept-options 4 8 --suffix-ept-options 4 8 --cross-twiddles recurrence \
+    --shared-layouts linear \
     --warmup 100 --repeat 50 --trials 3 \
     --output "$OUTPUT_DIR/fp64_cufftdx_recurrence_mapping_raw.csv"
 python3 "$SUMMARY" "$OUTPUT_DIR/fp64_cufftdx_recurrence_mapping_raw.csv" \
@@ -53,16 +55,24 @@ python3 "$SWEEP" "${COMMON[@]}" --backends online-reorder --fft-cores scalar \
 python3 "$SWEEP" "${COMMON[@]}" --backends online-reorder --fft-cores cufftdx-block \
     --hierarchical-local-stages 8 --prefix-thread-options 256 --suffix-thread-options 128 \
     --prefix-ept-options 4 --suffix-ept-options 8 --cross-twiddles table \
+    --shared-layouts linear \
     --output "$OUTPUT_DIR/fp64_cufftdx_logN16_confirm_raw.csv"
 python3 "$SWEEP" "${COMMON[@]}" --backends online-reorder --fft-cores cufftdx-block \
     --hierarchical-local-stages 8 --prefix-thread-options 256 --suffix-thread-options 128 \
     --prefix-ept-options 4 --suffix-ept-options 8 --cross-twiddles recurrence \
+    --shared-layouts linear \
     --output "$OUTPUT_DIR/fp64_cufftdx_recurrence_logN16_confirm_raw.csv"
+python3 "$SWEEP" "${COMMON[@]}" --backends online-reorder --fft-cores cufftdx-block \
+    --hierarchical-local-stages 8 --prefix-thread-options 256 --suffix-thread-options 128 \
+    --prefix-ept-options 4 --suffix-ept-options 8 --cross-twiddles recurrence \
+    --shared-layouts xor-swizzle \
+    --output "$OUTPUT_DIR/fp64_cufftdx_xor_swizzle_logN16_confirm_raw.csv"
 python3 "$SWEEP" "${COMMON[@]}" --backends cufft --fft-cores scalar \
     --output "$OUTPUT_DIR/fp64_cufft_logN16_confirm_raw.csv"
 python3 "$SUMMARY" "$OUTPUT_DIR/fp64_scalar_logN16_confirm_raw.csv" \
     "$OUTPUT_DIR/fp64_cufftdx_logN16_confirm_raw.csv" \
     "$OUTPUT_DIR/fp64_cufftdx_recurrence_logN16_confirm_raw.csv" \
+    "$OUTPUT_DIR/fp64_cufftdx_xor_swizzle_logN16_confirm_raw.csv" \
     "$OUTPUT_DIR/fp64_cufft_logN16_confirm_raw.csv" \
     --output "$OUTPUT_DIR/fp64_logN16_twiddle_summary.csv"
 

@@ -171,6 +171,7 @@ axes selects prefix `256/4` and suffix `128/8`.
 | scalar mapping winner | 0.521492 | 0.658x |
 | cuFFTDx `8+8`, table twiddle | 0.383949 | 0.893x |
 | cuFFTDx `8+8`, recurrence twiddle | 0.361708 | 0.948x |
+| cuFFTDx `8+8`, recurrence + XOR swizzle | 0.353526 | 0.970x |
 | cuFFT | 0.342927 | 1.000x |
 
 The final three rows use five independent trials, 1000 warmups, and 100 timed
@@ -193,6 +194,14 @@ padding is a negative result: prefix-only and both-pass variants take 0.398039
 and 0.397609 ms, while suffix-only is statistically neutral at 0.383765 ms.
 The conflict count therefore identifies real exchange overhead, but uniform
 padding is not an efficient realization on V100.
+
+An equal-capacity XOR swizzle succeeds where padding fails. It maps the prefix
+shared slot as `slot XOR ((element >> 1) & (FFTsPerBlock-1))`, spreading the
+fixed-transform access across bank groups without changing logical ownership,
+global layout, or shared allocation. With recurrence and the same selected
+mapping, it lowers latency from 0.361708 ms to 0.353526 ms (2.3%). A full
+36-point scan retains prefix `256/4`, suffix `128/8`, confirming that the gain
+is orthogonal to CTA/EPT selection.
 
 The fixed privileged capture confirms the recurrence mechanism. It reduces
 prefix replay from 247.136 us to 207.776 us (15.9%), warp instructions by 6.9%,

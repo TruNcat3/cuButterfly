@@ -122,6 +122,14 @@ enum class LocalExchange {
 const char*   local_exchange_name(LocalExchange exchange) noexcept;
 LocalExchange parse_local_exchange(const std::string& name);
 
+enum class SharedLayout {
+    Linear,
+    XorSwizzle,
+};
+
+const char*  shared_layout_name(SharedLayout layout) noexcept;
+SharedLayout parse_shared_layout(const std::string& name);
+
 enum class FftCore {
     Scalar,
     ThreadDft8,
@@ -187,6 +195,7 @@ struct ButterflyConfig {
     CrossTwiddleMode   cross_twiddle     = CrossTwiddleMode::Table;
     DirectBoundary     direct_boundary   = DirectBoundary::Strided;
     LocalExchange      local_exchange    = LocalExchange::SharedMemory;
+    SharedLayout       shared_layout     = SharedLayout::Linear;
     FftCore            fft_core          = FftCore::Scalar;
 };
 

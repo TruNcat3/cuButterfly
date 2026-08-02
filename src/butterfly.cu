@@ -864,6 +864,13 @@ class ButterflyPlan::Impl {
             (config_.op != ButterflyOperator::Fft || config_.backend == ButterflyBackend::CuFft)) {
             throw std::invalid_argument("Gauss complex multiplication requires a self-kernel FFT backend");
         }
+        if (config_.shared_layout == SharedLayout::XorSwizzle &&
+            (config_.op != ButterflyOperator::Fft || config_.precision != ButterflyPrecision::Fp64 ||
+             config_.backend != ButterflyBackend::OnlineReorder || config_.fft_core != FftCore::CufftDxBlock ||
+             config_.stage_partition.size() != 2 || config_.local_stages != 8 || config_.log_n != 16)) {
+            throw std::invalid_argument(
+                "xor-swizzle shared layout currently requires FP64 online cuFFTDx logN=16 with an 8+8 split");
+        }
         if (config_.cross_twiddle == CrossTwiddleMode::Recurrence &&
             (config_.op != ButterflyOperator::Fft || config_.backend != ButterflyBackend::OnlineReorder ||
              (config_.fft_core != FftCore::CufftDxBlock && config_.fft_core != FftCore::CufftDxResident))) {
@@ -1124,7 +1131,7 @@ class ButterflyPlan::Impl {
                             device_twiddles_.as<Complex64>(), config_.batch, config_.batch_stride,
                             config_.element_stride, config_.inverse,
                             config_.inverse && config_.normalize_inverse, boundary.cross_twiddle,
-                            prefix.threads, suffix.threads,
+                            config_.shared_layout, prefix.threads, suffix.threads,
                             prefix.ept, suffix.ept);
                     } else {
                         detail::launch_cufftdx_fp64_block(

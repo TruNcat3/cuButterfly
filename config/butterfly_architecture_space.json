@@ -160,7 +160,7 @@
       "thread-dft8": {"stage_group": "full-codelet", "arithmetic_core": "scalar", "precision": ["fp32"], "coefficient": ["generated"], "exchange": ["thread-register"]},
       "cta-dft8": {"stage_group": "full-codelet", "arithmetic_core": "scalar", "precision": ["fp32"], "coefficient": ["generated"], "exchange": ["shared"]},
       "wmma-dft8": {"stage_group": "matrix-tile", "arithmetic_core": "tensor", "precision": ["fp16-fp32"], "coefficient": ["generated"], "exchange": ["tensor-fragment", "shared"]},
-      "cufftdx-block": {"stage_group": "full-codelet", "arithmetic_core": "imported-codelet", "precision": ["fp32"], "coefficient": ["native-table", "recurrence"], "exchange": ["thread-register", "shared", "imported-codelet"]},
+      "cufftdx-block": {"stage_group": "full-codelet", "arithmetic_core": "imported-codelet", "precision": ["fp32", "fp64"], "coefficient": ["native-table", "recurrence"], "exchange": ["thread-register", "shared", "imported-codelet"]},
       "cufftdx-direct": {"stage_group": "full-codelet", "arithmetic_core": "imported-codelet", "precision": ["fp32"], "coefficient": ["native-table", "generated"], "exchange": ["imported-codelet"]},
       "turbofft-generated": {"stage_group": "full-codelet", "arithmetic_core": "generated-codelet", "precision": ["fp32"], "coefficient": ["generated"], "exchange": ["imported-codelet"]}
     },

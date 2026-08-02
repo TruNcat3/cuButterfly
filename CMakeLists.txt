@@ -282,6 +282,18 @@ if(BUILD_TESTING)
                          --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
                          --cross-twiddle recurrence --inverse --normalization inverse
                          --logN 16 --batch 2 --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fp64_cufftdx_xor_swizzle_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                         --fft-core cufftdx-block --local-stages 8
+                         --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                         --cross-twiddle recurrence --shared-layout xor-swizzle
+                         --normalization none --logN 16 --batch 2 --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fp64_cufftdx_xor_swizzle_inverse_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                         --fft-core cufftdx-block --local-stages 8
+                         --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                         --cross-twiddle recurrence --shared-layout xor-swizzle --inverse
+                         --normalization inverse --logN 16 --batch 2 --warmup 1 --repeat 1 --verify)
         add_test(NAME fft_auto_dispatch_correctness
                  COMMAND cubutterfly_bench --auto-select --operator fft --precision fp32
                          --placement in-place --normalization none --logN 18 --batch 2

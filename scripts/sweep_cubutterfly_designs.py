@@ -194,15 +194,17 @@ def configurations(operator, precision, log_n, tile_threads, hierarchical_local_
                             if suffix_threads not in (128, 256, 512) or suffix_ept not in (4, 8):
                                 continue
                             for cross_twiddle in ("table", "recurrence"):
-                                yield {
-                                    "backend": "online-reorder", "compute_unit": "auto",
-                                    "complex_multiply": "four-mul", "cross_twiddle": cross_twiddle,
-                                    "local_exchange": "shared", "fft_core": "cufftdx-block",
-                                    "tile_threads": 32, "prefix_threads": prefix_threads,
-                                    "suffix_threads": suffix_threads, "prefix_ept": prefix_ept,
-                                    "suffix_ept": suffix_ept, "local_stages": 8, "reorder_columns": 1,
-                                    "warp_stages": 0, "pipeline_warps": 0, "stage_space": 0,
-                                }
+                                for shared_layout in ("linear", "xor-swizzle"):
+                                    yield {
+                                        "backend": "online-reorder", "compute_unit": "auto",
+                                        "complex_multiply": "four-mul", "cross_twiddle": cross_twiddle,
+                                        "local_exchange": "shared", "shared_layout": shared_layout,
+                                        "fft_core": "cufftdx-block", "tile_threads": 32,
+                                        "prefix_threads": prefix_threads, "suffix_threads": suffix_threads,
+                                        "prefix_ept": prefix_ept, "suffix_ept": suffix_ept,
+                                        "local_stages": 8, "reorder_columns": 1, "warp_stages": 0,
+                                        "pipeline_warps": 0, "stage_space": 0,
+                                    }
 
 
 def run(binary, operator, precision, config, log_n, direction, normalization, placement, batch, element_stride, batch_stride, warmup, repeat):
@@ -212,6 +214,7 @@ def run(binary, operator, precision, config, log_n, direction, normalization, pl
         "--complex-multiply", config["complex_multiply"],
         "--cross-twiddle", config.get("cross_twiddle", "table"),
         "--local-exchange", config["local_exchange"],
+        "--shared-layout", config.get("shared_layout", "linear"),
         "--fft-core", config["fft_core"],
         "--normalization", normalization, "--placement", placement,
         "--batch", str(batch), "--warmup", str(warmup), "--repeat", str(repeat), "--csv",
@@ -261,6 +264,7 @@ def main():
     parser.add_argument("--complex-multiplies", nargs="+", choices=("four-mul", "gauss3"), default=("four-mul", "gauss3"))
     parser.add_argument("--cross-twiddles", nargs="+", choices=("table", "recurrence"), default=("table",))
     parser.add_argument("--local-exchanges", nargs="+", choices=("shared", "warp-register"), default=("shared", "warp-register"))
+    parser.add_argument("--shared-layouts", nargs="+", choices=("linear", "xor-swizzle"), default=("linear", "xor-swizzle"))
     parser.add_argument("--fft-cores", nargs="+",
                         choices=("scalar", "thread-dft8", "cta-dft8", "wmma-dft8", "cufftdx-block", "cufftdx-direct", "cufftdx-resident", "turbofft-generated"),
                         default=("scalar", "thread-dft8", "cta-dft8", "wmma-dft8"))
@@ -319,6 +323,8 @@ def main():
                                 if config.get("cross_twiddle", "table") not in args.cross_twiddles:
                                     continue
                                 if config["local_exchange"] not in args.local_exchanges:
+                                    continue
+                                if config.get("shared_layout", "linear") not in args.shared_layouts:
                                     continue
                                 if config["fft_core"] not in args.fft_cores:
                                     continue

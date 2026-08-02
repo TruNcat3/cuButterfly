@@ -116,6 +116,7 @@ void print_usage() {
         << "                    [--cross-twiddle table|recurrence]\n"
         << "                    [--direct-boundary direct-strided|tiled-transpose|prefix-tiled-transpose]\n"
         << "                    [--local-exchange shared|warp-register]\n"
+        << "                    [--shared-layout linear|xor-swizzle]\n"
         << "                    [--fft-core scalar|thread-dft8|cta-dft8|wmma-dft8|cufftdx-block|cufftdx-direct|cufftdx-resident|turbofft-generated]\n"
         << "                    [--precision fp32|fp64|fp16-fp32|uint32]\n"
         << "                    [--warmup 20] [--repeat 100] [--verify] [--csv]\n"
@@ -266,6 +267,8 @@ int main(int argc, char** argv) {
                 config.direct_boundary = cuntt::parse_direct_boundary(take_arg(index, argc, argv));
             } else if (arg == "--local-exchange") {
                 config.local_exchange = cuntt::parse_local_exchange(take_arg(index, argc, argv));
+            } else if (arg == "--shared-layout") {
+                config.shared_layout = cuntt::parse_shared_layout(take_arg(index, argc, argv));
             } else if (arg == "--fft-core") {
                 config.fft_core = cuntt::parse_fft_core(take_arg(index, argc, argv));
             } else if (arg == "--precision") {
@@ -413,7 +416,7 @@ int main(int argc, char** argv) {
         std::cout << std::fixed << std::setprecision(6);
         if (csv) {
             std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,auto_select,backend,compute_unit,complex_multiply,cross_twiddle,direct_boundary,decomposition_count,stages_per_decomposition,segment_threads,segment_ept,boundary_twiddles,boundary_layouts,boundary_residencies,execution_group_count,group_threads,group_ept,local_"
-                         "exchange,fft_core,stage_space,stage_handoff,tile_threads,prefix_threads,suffix_threads,prefix_ept,suffix_ept,prefix_units_per_cta,suffix_units_per_cta,local_stages,reorder_columns,warp_stages,pipeline_warps,logN,N,batch,element_stride,batch_"
+                         "exchange,shared_layout,fft_core,stage_space,stage_handoff,tile_threads,prefix_threads,suffix_threads,prefix_ept,suffix_ept,prefix_units_per_cta,suffix_units_per_cta,local_stages,reorder_columns,warp_stages,pipeline_warps,logN,N,batch,element_stride,batch_"
                          "stride,warmup,repeat,h2d_ms,kernel_ms,d2h_ms,"
                          "transforms_s,Gbutterfly_s,points_s,max_error,correct\n";
             std::cout << '"' << device.name << "\"," << device.compute_major << '.' << device.compute_minor << ','
@@ -433,7 +436,9 @@ int main(int argc, char** argv) {
                       << config.execution_group_mappings.size() << ','
                       << format_mapping_list(config.execution_group_mappings, [](const auto& mapping) { return std::to_string(mapping.threads); }) << ','
                       << format_mapping_list(config.execution_group_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << ','
-                      << cuntt::local_exchange_name(config.local_exchange) << ',' << cuntt::fft_core_name(config.fft_core) << ',' << config.stage_space << ','
+                      << cuntt::local_exchange_name(config.local_exchange) << ','
+                      << cuntt::shared_layout_name(config.shared_layout) << ','
+                      << cuntt::fft_core_name(config.fft_core) << ',' << config.stage_space << ','
                       << cuntt::stage_handoff_name(config.stage_handoff) << ',' << config.tile_threads << ','
                       << config.prefix_threads << ',' << config.suffix_threads << ',' << config.prefix_ept << ',' << config.suffix_ept << ','
                       << config.prefix_units_per_cta << ',' << config.suffix_units_per_cta << ',' << config.local_stages << ','
@@ -462,6 +467,7 @@ int main(int argc, char** argv) {
                       << "group_threads: " << format_mapping_list(config.execution_group_mappings, [](const auto& mapping) { return std::to_string(mapping.threads); }) << "\n"
                       << "group_ept: " << format_mapping_list(config.execution_group_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << "\n"
                       << "local_exchange: " << cuntt::local_exchange_name(config.local_exchange) << "\n"
+                      << "shared_layout: " << cuntt::shared_layout_name(config.shared_layout) << "\n"
                       << "fft_core: " << cuntt::fft_core_name(config.fft_core) << "\n"
                       << "stage_space: " << config.stage_space << "\n"
                       << "stage_handoff: " << cuntt::stage_handoff_name(config.stage_handoff) << "\n"

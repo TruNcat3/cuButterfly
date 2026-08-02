@@ -92,7 +92,7 @@ without forcing an intermediate global-memory pass.
 | FP32 FFT, `logN=14`, `2^22` total points | 0.131543 ms | cuFFT 0.135383 ms | 1.029x | contiguous cuFFTDx direct unit |
 | FP32 FFT, `logN=18`, `2^22` total points | 0.195942 ms | cuFFT 0.211098 ms | 1.077x | vectorized `9+9`, 256/256-thread dimensions |
 | FP32 FFT, `logN=20`, `2^22` total points | 0.214733 ms | cuFFT 0.210330 ms | 0.979x | vectorized `10+10`, batch-selected dimensions |
-| FP64 FFT, `logN=16`, batch 64 | 0.361708 ms | cuFFT 0.342927 ms | 0.948x | FP64 cuFFTDx `8+8`, recurrence twiddle, selected CTA/EPT |
+| FP64 FFT, `logN=16`, batch 64 | 0.353526 ms | cuFFT 0.342927 ms | 0.970x | FP64 cuFFTDx `8+8`, recurrence twiddle, XOR-swizzled prefix |
 | FP32 FWHT, `logN=8` | 0.043131 ms | Dao FHT 0.043172 ms | 1.001x | integrated register unit |
 | FP32 FWHT, `logN=15` | 0.069243 ms | Dao FHT 0.063949 ms | 0.924x | register-pressure boundary |
 | 60-bit NTT, `logN=16`, natural order | 0.274104 ms | GPU-NTT 0.291133 ms | 1.062x | fused Hybrid2D |
@@ -210,7 +210,7 @@ The active research milestone and its acceptance criteria are in
 - FP32 FFT reaches cuFFT parity at selected `logN=8,14,18` shapes. At large
   batch, cuFFT has a higher `logN=18` throughput ceiling; the measured
   `logN=20` and FP64 `logN=16` paths remain behind. The FP64 cuFFTDx unit raises
-  the latter from 0.642x in the comprehensive scalar run to 0.948x under its
+  the latter from 0.642x in the comprehensive scalar run to 0.970x under its
   focused five-trial protocol. Tensor Core DFT8 helps the
   local unit but does not remove layout, synchronization, and composition
   costs.

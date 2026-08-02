@@ -154,6 +154,24 @@ LocalExchange parse_local_exchange(const std::string& name) {
     throw std::invalid_argument("unknown local exchange: " + name);
 }
 
+const char* shared_layout_name(SharedLayout layout) noexcept {
+    switch (layout) {
+        case SharedLayout::Linear:
+            return "linear";
+        case SharedLayout::XorSwizzle:
+            return "xor-swizzle";
+    }
+    return "unknown";
+}
+
+SharedLayout parse_shared_layout(const std::string& name) {
+    if (name == "linear")
+        return SharedLayout::Linear;
+    if (name == "xor-swizzle")
+        return SharedLayout::XorSwizzle;
+    throw std::invalid_argument("unknown shared layout: " + name);
+}
+
 const char* fft_core_name(FftCore core) noexcept {
     switch (core) {
         case FftCore::Scalar:

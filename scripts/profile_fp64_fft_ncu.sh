@@ -35,6 +35,10 @@ profile "fp64_recurrence_b${BATCH}" "$BIN" "${COMMON[@]}" \
     --backend online-reorder --fft-core cufftdx-block --local-stages 8 \
     --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8 \
     --cross-twiddle recurrence
+profile "fp64_xor_swizzle_b${BATCH}" "$BIN" "${COMMON[@]}" \
+    --backend online-reorder --fft-core cufftdx-block --local-stages 8 \
+    --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8 \
+    --cross-twiddle recurrence --shared-layout xor-swizzle
 profile "fp64_cufft_b${BATCH}" "$BIN" "${COMMON[@]}" --backend cufft
 
 python3 "$ROOT/scripts/summarize_ncu.py" "$OUTPUT_DIR"/fp64_*.csv \

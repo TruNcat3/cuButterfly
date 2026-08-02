@@ -57,6 +57,10 @@ and register-recurrence cross twiddles with a direct-strided global boundary;
 multi-segment, resident, direct whole-transform, and tiled-boundary FP64 forms
 remain outside the compiled matrix and are rejected rather than silently
 falling back.
+The prefix shared staging layout is independently selectable as `linear` or
+`xor-swizzle`. XOR swizzle permutes the physical `FFTsPerBlock` slot using
+element bits without increasing shared capacity or changing logical/global
+layout. It is currently compiled only for the FP64 `8+8` online path.
 
 Each temporal length is a compile-time CUDA specialization selected by the
 runtime. This preserves unrolling at performance-critical fixed sizes while

@@ -35,7 +35,7 @@ event time.
 |:--|--:|--:|--:|--:|
 | `logN=18`, batch 16 | 0.195942 ms | 0.211098 ms | 0.201103 ms | 1.077x |
 | `logN=20`, batch 4 | 0.214733 ms | 0.210330 ms | 0.206520 ms | 0.979x |
-| FP64 `logN=16`, batch 64 | 0.361708 ms | 0.342927 ms | not measured | 0.948x |
+| FP64 `logN=16`, batch 64 | 0.353526 ms | 0.342927 ms | not measured | 0.970x |
 
 The broader design scan reaches 1.085x cuFFT at `logN=18`, batch 2 and 1.030x
 at `logN=20`, batch 2. At saturated `logN=20` batch 8/16 it reaches
@@ -70,6 +70,10 @@ rises from 60.8% to 72.2%; suffix time changes only 0.1%. The remaining 5.5%
 event-time gap is now localized to shared exchange and address work: total
 shared-bank conflicts remain unchanged and warp instructions are still 2.06x
 cuFFT.
+An XOR-swizzled prefix then redistributes the same-capacity shared slot layout
+and reaches 0.353526 ms, or 0.970x cuFFT. The complete 36-point remap retains
+the same `256/4 + 128/8` winner, so this is a boundary-layout gain rather than
+a mapping-selection artifact.
 
 ## Remaining Work
 
