@@ -108,11 +108,14 @@ also raises `logN=18` from 0.881x in the fixed-512 mapping experiment to 1.070x.
 Processing-unit granularity and each dimension's CTA shape are therefore explicit
 hardware-mapping axes rather than fixed properties of the paradigm.
 The corresponding FP64 counter capture shows recurrence reduces prefix replay
-time by 15.9% and raises its DRAM utilization from 60.8% to 72.2% by trading
+time by 17.5% and raises its DRAM utilization from 60.2% to 72.9% by trading
 8.4% more FP64 instructions for 6.9% fewer warp instructions. The suffix is
-unchanged. The remaining path still executes 2.06x cuFFT's warp instructions
-with essentially unchanged shared conflicts, localizing the next step in the
-exchange/address path. See [FP64 NCU Attribution](results/ncu_fp64_fft/analysis.md).
+unchanged. XOR-swizzling the same-capacity prefix layout then cuts its shared
+conflicts by 53.5% and replay time by 5.3%, raising DRAM utilization to 77.0%.
+The complete path is within 1.8% of cuFFT replay, but still executes 2.19x its
+warp instructions and incurs about 100x its shared conflicts. This localizes
+the next step in swizzled address generation and residual exchange work. See
+[FP64 NCU Attribution](results/ncu_fp64_fft/analysis.md).
 
 ### Online Reorder at `logN=20`
 

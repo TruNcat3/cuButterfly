@@ -201,18 +201,25 @@ fixed-transform access across bank groups without changing logical ownership,
 global layout, or shared allocation. With recurrence and the same selected
 mapping, it lowers latency from 0.361708 ms to 0.353526 ms (2.3%). A full
 36-point scan retains prefix `256/4`, suffix `128/8`, confirming that the gain
-is orthogonal to CTA/EPT selection.
+is orthogonal to CTA/EPT selection. NCU confirms that it cuts prefix shared
+conflicts by 53.5% and prefix replay by 5.3%, raising peak DRAM utilization
+from 72.9% to 77.0%. Suffix replay decreases by only 0.5%, while the prefix executes
+10.0% more warp instructions; strength-reducing the swizzled address path is
+therefore the next local optimization.
 
 The fixed privileged capture confirms the recurrence mechanism. It reduces
-prefix replay from 247.136 us to 207.776 us (15.9%), warp instructions by 6.9%,
-and raises peak DRAM use from 60.8% to 72.2%. This costs 8.4% more prefix FP64
+prefix replay from 249.824 us to 206.016 us (17.5%), warp instructions by 6.9%,
+and raises peak DRAM use from 60.2% to 72.9%. This costs 8.4% more prefix FP64
 instructions but does not change registers, shared allocation, or waves/SM.
-The suffix changes by only 0.1%, confirming that the measured gain belongs to
+The suffix is effectively unchanged, confirming that the measured gain belongs to
 the prefix twiddle policy. Against cuFFT, the recurrence path transfers 1.006x
 the bytes and executes 1.023x the FP64 instructions, but still executes 2.06x
-the warp instructions and incurs about 180x the shared-bank conflicts. The
-remaining work is therefore shared exchange and general address work, not
-twiddle service, occupancy, or FP64 arithmetic throughput. See
+the warp instructions and incurs about 145x the shared-bank conflicts. With
+XOR swizzle, total replay is 367.648 us versus cuFFT's 361.120 us, a 1.8% gap;
+the authoritative CUDA-event gap is 3.1%. It still executes 2.19x cuFFT's warp
+instructions and incurs about 100x its shared conflicts. The remaining work is
+therefore shared exchange and general address work, not twiddle service,
+occupancy, or FP64 arithmetic throughput. See
 `results/ncu_fp64_fft/analysis.md`.
 
 ### Resident and direct granularity experiment

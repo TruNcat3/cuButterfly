@@ -170,7 +170,10 @@ def write_markdown(path, rows, kernels, batch):
         lines.append(
             f"- XOR swizzle changes CUDA-event time by "
             f"{xor_swizzle['cuda_event_ms'] / recurrence['cuda_event_ms'] - 1.0:+.1%} and replay time by "
-            f"{xor_swizzle['time_us'] / recurrence['time_us'] - 1.0:+.1%} versus linear recurrence.")
+            f"{xor_swizzle['time_us'] / recurrence['time_us'] - 1.0:+.1%} versus linear recurrence. "
+            f"It finishes within {xor_swizzle['time_us_vs_cufft'] - 1.0:.1%} of cuFFT replay while still "
+            f"executing {xor_swizzle['warp_instructions_vs_cufft']:.2f}x its warp instructions and incurring "
+            f"{xor_swizzle['shared_bank_conflicts_vs_cufft']:.1f}x its shared conflicts.")
     lines += [
         "", "## Prefix/Suffix Split", "",
         "| cuFFTDx pass | NCU us | Warp inst. | FP64 inst. | Shared conflicts | DRAM peak | Barrier stall | Scoreboard stall |",

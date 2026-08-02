@@ -64,16 +64,20 @@ at 0.658x, then replaces the local unit with double-precision cuFFTDx and reache
 table lookups and raises the final result to 0.948x. This isolates most of the
 former deficit in the physical unit and its precision-specific CTA/EPT mapping.
 The controlled NCU capture shows recurrence reduces prefix replay time by
-15.9% and warp instructions by 6.9%, while spending 8.4% more FP64 instructions
+17.5% and warp instructions by 6.9%, while spending 8.4% more FP64 instructions
 with unchanged registers, shared allocation, and waves/SM. Prefix DRAM peak
-rises from 60.8% to 72.2%; suffix time changes only 0.1%. The remaining 5.5%
+rises from 60.2% to 72.9%; suffix time is effectively unchanged. The remaining 5.5%
 event-time gap is now localized to shared exchange and address work: total
 shared-bank conflicts remain unchanged and warp instructions are still 2.06x
 cuFFT.
 An XOR-swizzled prefix then redistributes the same-capacity shared slot layout
 and reaches 0.353526 ms, or 0.970x cuFFT. The complete 36-point remap retains
 the same `256/4 + 128/8` winner, so this is a boundary-layout gain rather than
-a mapping-selection artifact.
+a mapping-selection artifact. NCU confirms that it cuts prefix shared conflicts
+by 53.5% and prefix replay by 5.3%, raising peak DRAM utilization from 72.9% to
+77.0%; the suffix remains unchanged. Its 10.0% increase in prefix warp
+instructions identifies swizzled address generation as the next optimization
+target.
 
 ## Remaining Work
 
