@@ -259,9 +259,9 @@ implementation paths are catalogued in
 [Candidate Implementations](docs/implementation_candidates.md).
 Development priorities are tracked in [`ROADMAP.md`](ROADMAP.md), and evidence
 requirements for contributions are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
-Versioned changes are recorded in [`CHANGELOG.md`](CHANGELOG.md).
-The active research milestone and its acceptance criteria are in
-[Next Phase: v0.3.0](docs/next_phase_v0.3.md).
+Versioned changes are recorded in [`CHANGELOG.md`](CHANGELOG.md). The v0.3.0
+research milestone, acceptance criteria, and deferred cross-GPU work are in
+[v0.3.0 Mapping-Selection Milestone](docs/next_phase_v0.3.md).
 
 ## Evidence Boundary
 
@@ -293,7 +293,7 @@ software release as:
   author  = {TruNcat3},
   title   = {cuButterfly: Hardware-Mapped Space-Time Parallelism for Butterfly Computations on GPUs},
   year    = {2026},
-  version = {0.2.0},
+  version = {0.3.0},
   url     = {https://github.com/TruNcat3/cuButterfly}
 }
 ```

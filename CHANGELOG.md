@@ -4,6 +4,8 @@ All notable repository and research-artifact changes are recorded here.
 
 ## Unreleased
 
+## 0.3.0 - 2026-08-02
+
 ### Added
 
 - An orthogonal 184-case V100 length/batch suite and generated manifest for

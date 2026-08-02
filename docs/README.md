@@ -49,7 +49,7 @@ comprehensive and scaling reports define the paper-facing comparison protocol.
 | [V100 Counter Attribution](v100_ncu_attribution.md) | Which hardware services explain the observed saturation and mapping crossovers? |
 | [V100 External Baselines](v100_external_baselines.md) | What do matching-protocol Dao FHT and GPU-NTT comparisons establish? |
 | [V100 Research Status](research_status.md) | Which claims are closed, what are the current performance boundaries, and what remains? |
-| [Next Phase: v0.3.0](next_phase_v0.3.md) | What is the next falsifiable goal, execution order, and definition of done? |
+| [v0.3.0 Mapping-Selection Milestone](next_phase_v0.3.md) | Which falsifiable goal, execution order, and definition of done shaped this release? |
 | [Reproducibility](reproducibility.md) | How are sweeps, external baselines, and profiler data reproduced? |
 | [Research Positioning](cubutterfly_positioning.md) | What is the intended contribution relative to prior work? |
 

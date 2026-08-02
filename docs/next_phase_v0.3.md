@@ -1,4 +1,6 @@
-# Next Phase: v0.3.0
+# v0.3.0 Mapping-Selection Milestone
+
+Status: completed on V100. Cross-GPU transfer remains future work.
 
 ## Objective
 
