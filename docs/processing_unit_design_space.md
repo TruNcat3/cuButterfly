@@ -168,22 +168,24 @@ axes selects prefix `256/4` and suffix `128/8`.
 | FP64 implementation | Median ms | Throughput vs cuFFT |
 |:--|--:|--:|
 | scalar comprehensive point | 0.534313 | 0.642x |
-| scalar mapping winner | 0.521492 | 0.658x |
-| cuFFTDx `8+8`, table twiddle | 0.383949 | 0.893x |
-| cuFFTDx `8+8`, recurrence twiddle | 0.361708 | 0.948x |
-| cuFFTDx `8+8`, recurrence + XOR swizzle | 0.353526 | 0.970x |
-| cuFFT | 0.342927 | 1.000x |
+| scalar mapping winner, current build | 0.521226 | 0.658x |
+| cuFFTDx `8+8`, table twiddle, current build | 0.369459 | 0.928x |
+| cuFFTDx `8+8`, recurrence twiddle, current build | 0.345027 | 0.994x |
+| cuFFTDx `8+8`, recurrence + strength-reduced XOR | 0.342098 | 1.002x |
+| cuFFT, current build | 0.342856 | 1.000x |
 
-The final three rows use five independent trials, 1000 warmups, and 100 timed
+The five current-build rows use five independent trials, 1000 warmups, and 100 timed
 repetitions; all FP64 cuFFTDx local, online-forward, and normalized-inverse
 paths pass automated correctness tests. The imported table unit reduces the
-selected scalar latency by 26.4%, and recurrence raises that reduction to
-30.6%, so the former FP64 deficit is primarily a physical-core and mapping
-maturity issue rather than evidence against the architecture-level
+selected scalar latency by 29.1%, recurrence raises that reduction to 33.8%,
+and strength-reduced XOR raises it to 34.4%, so the former FP64 deficit is
+primarily a physical-core and mapping maturity issue rather than evidence
+against the architecture-level
 space/time decomposition. `scripts/profile_fp64_fft_ncu.sh` fixes the scalar,
 table, recurrence, and cuFFT mappings for privileged boundary attribution.
-Reproduce the timing sequence with `scripts/benchmark_fp64_fft_units.sh` and
-the counters with `scripts/profile_fp64_fft_ncu.sh`. Raw and ranked records are
+Reproduce the original design sequence with `scripts/benchmark_fp64_fft_units.sh`,
+the focused address-path result with `scripts/benchmark_fp64_fft_address_path.sh`,
+and counters with `scripts/profile_fp64_fft_ncu.sh`. Raw and ranked records are
 `results/fp64_*logN16*.csv`.
 
 The first prefix optimization replaces four EPT4 twiddle-table reads per
@@ -203,12 +205,19 @@ mapping, it lowers latency from 0.361708 ms to 0.353526 ms (2.3%). A full
 36-point scan retains prefix `256/4`, suffix `128/8`, confirming that the gain
 is orthogonal to CTA/EPT selection. NCU confirms that it cuts prefix shared
 conflicts by 53.5% and prefix replay by 5.3%, raising peak DRAM utilization
-from 72.9% to 77.0%. Suffix replay decreases by only 0.5%, while the prefix executes
-10.0% more warp instructions; strength-reducing the swizzled address path is
-therefore the next local optimization.
+from 72.9% to 77.0%. Suffix replay decreases by only 0.5%, while the prefix
+executes 10.0% more warp instructions; strength-reducing the swizzled address
+path is therefore the next local optimization. That optimization is now implemented:
+each staging loop computes the physical slot once and advances its shared
+pointer by the CTA stride, while transform identity, batch identity, and global
+address increments are hoisted out of the loop. Compile-time period checks
+guard all generated CTA/EPT specializations. It reduces current-build linear
+recurrence to 0.345027 ms and XOR to 0.342098 ms, a further 0.8% reduction over
+linear and 3.2% over the former XOR result, without local spills.
 
-The fixed privileged capture confirms the recurrence mechanism. It reduces
-prefix replay from 249.824 us to 206.016 us (17.5%), warp instructions by 6.9%,
+The fixed privileged capture below predates address strength reduction and
+confirms the recurrence and swizzle mechanisms. It reduces prefix replay from
+249.824 us to 206.016 us (17.5%), warp instructions by 6.9%,
 and raises peak DRAM use from 60.2% to 72.9%. This costs 8.4% more prefix FP64
 instructions but does not change registers, shared allocation, or waves/SM.
 The suffix is effectively unchanged, confirming that the measured gain belongs to
@@ -219,8 +228,17 @@ XOR swizzle, total replay is 367.648 us versus cuFFT's 361.120 us, a 1.8% gap;
 the authoritative CUDA-event gap is 3.1%. It still executes 2.19x cuFFT's warp
 instructions and incurs about 100x its shared conflicts. The remaining work is
 therefore shared exchange and general address work, not twiddle service,
-occupancy, or FP64 arithmetic throughput. See
+occupancy, or FP64 arithmetic throughput. A refreshed capture is required before
+using those instruction ratios for the optimized kernel. See
 `results/ncu_fp64_fft/analysis.md`.
+
+Collect the optimized counters into a separate evidence directory with:
+
+```bash
+OUTPUT_DIR=results/ncu_fp64_fft_address_opt \
+TIMING_SUMMARY=results/fp64_address_logN16_summary.csv \
+./scripts/profile_fp64_fft_ncu.sh
+```
 
 ### Resident and direct granularity experiment
 

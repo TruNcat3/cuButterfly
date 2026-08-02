@@ -17,6 +17,8 @@ All notable repository and research-artifact changes are recorded here.
 - A matching-protocol 120-sample Dao FHT and GPU-NTT baseline refresh.
 - Targeted NCU attribution over 22 FFT/FWHT implementation-shape pairs and 37
   kernels, plus one command that regenerates all derived V100 analyses.
+- An FP64 prefix address-path experiment that separately reproduces scalar,
+  table, recurrence, XOR-swizzled, and cuFFT timing under one protocol.
 
 ### Changed
 
@@ -27,12 +29,16 @@ All notable repository and research-artifact changes are recorded here.
   refreshed same-protocol external baselines.
 - Cross-GPU validation is deferred until the repository moves to a host with a
   second GPU generation; it is not a `v0.3.0` release gate.
+- FP64 online staging now hoists invariant global addresses and advances
+  same-period shared permutations by compile-time strides.
 
 ### Current Evidence Boundary
 
 - The new scaling evidence remains V100-only.
 - FP32 FFT matches or exceeds cuFFT at selected saturated shapes, but cuFFT has
   a higher large-batch ceiling at `logN=18` and remains ahead at `logN=20`.
+- Focused FP64 `logN=16`, batch-64 timing reaches cuFFT parity at 1.002x; an
+  updated privileged counter capture remains pending.
 - Cross-GPU portability and selector accuracy have not yet been measured.
 
 ## 0.2.0 - 2026-07-24

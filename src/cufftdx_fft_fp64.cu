@@ -87,36 +87,50 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void fp64_online_first_
     const bool active = local_transform < total_local;
     const std::uint32_t n2 = static_cast<std::uint32_t>(local_transform) & (remaining_n - 1);
     const std::uint32_t flat_thread = threadIdx.y * blockDim.x + threadIdx.x;
-    const std::uint32_t flat_threads = blockDim.x * blockDim.y;
+    constexpr std::uint32_t flat_threads = FFT::max_threads_per_block;
+    constexpr std::uint32_t elements_per_block_step = flat_threads / FFT::ffts_per_block;
+    constexpr std::uint32_t tile_item_step = FFT::stride * FFT::ffts_per_block;
     constexpr std::uint32_t tile_values = FFT::input_length * FFT::ffts_per_block;
+    static_assert(flat_threads % FFT::ffts_per_block == 0);
+    static_assert(!XorSwizzle || elements_per_block_step % (2 * FFT::ffts_per_block) == 0);
+    static_assert(!XorSwizzle || FFT::stride % (2 * FFT::ffts_per_block) == 0);
     extern __shared__ __align__(16) unsigned char storage[];
     Value* tile = reinterpret_cast<Value*>(storage);
 
-    for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
-        const std::uint32_t element = work / FFT::ffts_per_block;
-        const std::uint32_t slot = work - element * FFT::ffts_per_block;
-        const std::uint64_t staged_transform =
-            static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
-        if (staged_transform < total_local) {
-            const std::uint64_t batch = staged_transform >> remaining_log_n;
-            const std::uint32_t staged_n2 = static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
-            const std::uint64_t logical = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
-            const Complex64 value = input[batch * batch_distance + logical * element_stride];
-            tile[fp64_tile_index<FFT, XorSwizzle>(element, slot)] = Value{value.real, value.imag};
-        } else {
-            tile[fp64_tile_index<FFT, XorSwizzle>(element, slot)] = Value{0.0, 0.0};
+    const std::uint32_t first_element = flat_thread / FFT::ffts_per_block;
+    const std::uint32_t slot = flat_thread - first_element * FFT::ffts_per_block;
+    const std::uint64_t staged_transform =
+        static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+    std::uint32_t stage_index = fp64_tile_index<FFT, XorSwizzle>(first_element, slot);
+    if (staged_transform < total_local) {
+        const std::uint64_t batch = staged_transform >> remaining_log_n;
+        const std::uint32_t staged_n2 = static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+        std::uint64_t global_index = batch * batch_distance +
+                                     (static_cast<std::uint64_t>(first_element) * remaining_n + staged_n2) * element_stride;
+        const std::uint64_t global_step =
+            static_cast<std::uint64_t>(elements_per_block_step) * remaining_n * element_stride;
+        for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+            const Complex64 value = input[global_index];
+            tile[stage_index] = Value{value.real, value.imag};
+            stage_index += flat_threads;
+            global_index += global_step;
+        }
+    } else {
+        for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+            tile[stage_index] = Value{0.0, 0.0};
+            stage_index += flat_threads;
         }
     }
     __syncthreads();
 
     Value thread_data[FFT::storage_size];
     unsigned n1 = threadIdx.x;
+    std::uint32_t load_index = fp64_tile_index<FFT, XorSwizzle>(n1, threadIdx.y);
 #pragma unroll
     for (unsigned item = 0; item < FFT::storage_size; ++item) {
-        thread_data[item] = active && n1 < FFT::input_length
-                                ? tile[fp64_tile_index<FFT, XorSwizzle>(n1, threadIdx.y)]
-                                : Value{0.0, 0.0};
+        thread_data[item] = active && n1 < FFT::input_length ? tile[load_index] : Value{0.0, 0.0};
         n1 += FFT::stride;
+        load_index += tile_item_step;
     }
     __syncthreads();
     FFT().execute(thread_data, storage);
@@ -129,6 +143,7 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void fp64_online_first_
         root_step = fp64_cross_root(twiddles, log_n, static_cast<std::uint64_t>(FFT::stride) * n2);
     }
     unsigned k1 = threadIdx.x;
+    std::uint32_t store_index = fp64_tile_index<FFT, XorSwizzle>(k1, threadIdx.y);
 #pragma unroll
     for (unsigned item = 0; item < FFT::storage_size; ++item) {
         if (active && k1 < FFT::output_length) {
@@ -136,7 +151,7 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void fp64_online_first_
             const Complex64 root = recurrence_twiddle
                                        ? running_root
                                        : fp64_cross_root(twiddles, log_n, static_cast<std::uint64_t>(k1) * n2);
-            tile[fp64_tile_index<FFT, XorSwizzle>(k1, threadIdx.y)] =
+            tile[store_index] =
                 Value{value.x * root.real - value.y * root.imag,
                       value.x * root.imag + value.y * root.real};
         }
@@ -145,20 +160,23 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void fp64_online_first_
                             running_root.real * root_step.imag + running_root.imag * root_step.real};
         }
         k1 += FFT::stride;
+        store_index += tile_item_step;
     }
     __syncthreads();
 
-    for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
-        const std::uint32_t element = work / FFT::ffts_per_block;
-        const std::uint32_t slot = work - element * FFT::ffts_per_block;
-        const std::uint64_t staged_transform =
-            static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
-        if (staged_transform < total_local) {
-            const std::uint64_t batch = staged_transform >> remaining_log_n;
-            const std::uint32_t staged_n2 = static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
-            const std::uint64_t logical = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
-            const Value value = tile[fp64_tile_index<FFT, XorSwizzle>(element, slot)];
-            scratch[batch * batch_distance + logical * element_stride] = {value.x, value.y};
+    if (staged_transform < total_local) {
+        const std::uint64_t batch = staged_transform >> remaining_log_n;
+        const std::uint32_t staged_n2 = static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+        std::uint64_t global_index = batch * batch_distance +
+                                     (static_cast<std::uint64_t>(first_element) * remaining_n + staged_n2) * element_stride;
+        const std::uint64_t global_step =
+            static_cast<std::uint64_t>(elements_per_block_step) * remaining_n * element_stride;
+        std::uint32_t export_index = fp64_tile_index<FFT, XorSwizzle>(first_element, slot);
+        for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+            const Value value = tile[export_index];
+            scratch[global_index] = {value.x, value.y};
+            export_index += flat_threads;
+            global_index += global_step;
         }
     }
 }

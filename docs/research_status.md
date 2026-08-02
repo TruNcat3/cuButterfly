@@ -35,7 +35,7 @@ event time.
 |:--|--:|--:|--:|--:|
 | `logN=18`, batch 16 | 0.195942 ms | 0.211098 ms | 0.201103 ms | 1.077x |
 | `logN=20`, batch 4 | 0.214733 ms | 0.210330 ms | 0.206520 ms | 0.979x |
-| FP64 `logN=16`, batch 64 | 0.353526 ms | 0.342927 ms | not measured | 0.970x |
+| FP64 `logN=16`, batch 64 | 0.342098 ms | 0.342856 ms | not measured | 1.002x |
 
 The broader design scan reaches 1.085x cuFFT at `logN=18`, batch 2 and 1.030x
 at `logN=20`, batch 2. At saturated `logN=20` batch 8/16 it reaches
@@ -77,11 +77,21 @@ a mapping-selection artifact. NCU confirms that it cuts prefix shared conflicts
 by 53.5% and prefix replay by 5.3%, raising peak DRAM utilization from 72.9% to
 77.0%; the suffix remains unchanged. Its 10.0% increase in prefix warp
 instructions identifies swizzled address generation as the next optimization
-target.
+target. The implemented strength reduction computes each swizzled pointer once,
+advances it by a compile-time stride, and hoists invariant transform/global
+address work out of the staging loops. It lowers linear recurrence from
+0.361708 ms to 0.345027 ms and XOR swizzle from 0.353526 ms to 0.342098 ms.
+The latter matches the 0.342856 ms cuFFT measurement at 1.002x throughput; five
+trial ranges are 0.341893-0.342170 ms and 0.342610-0.343040 ms, respectively.
+This is parity evidence rather than a claim of a robust lead. Updated NCU
+counters remain required to confirm the predicted warp-instruction reduction.
 
 ## Remaining Work
 
-1. **Cross-GPU transfer:** capture a newer GPU profile, predict without its
+1. **Optimized FP64 attribution:** rerun the prepared NCU capture to quantify
+   the warp-instruction reduction and residual shared conflicts after address
+   strength reduction.
+2. **Cross-GPU transfer:** capture a newer GPU profile, predict without its
    timings, and report pre/post-calibration regret. This is the only deferred
    architecture-level validation item.
 

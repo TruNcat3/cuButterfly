@@ -92,7 +92,7 @@ without forcing an intermediate global-memory pass.
 | FP32 FFT, `logN=14`, `2^22` total points | 0.131543 ms | cuFFT 0.135383 ms | 1.029x | contiguous cuFFTDx direct unit |
 | FP32 FFT, `logN=18`, `2^22` total points | 0.195942 ms | cuFFT 0.211098 ms | 1.077x | vectorized `9+9`, 256/256-thread dimensions |
 | FP32 FFT, `logN=20`, `2^22` total points | 0.214733 ms | cuFFT 0.210330 ms | 0.979x | vectorized `10+10`, batch-selected dimensions |
-| FP64 FFT, `logN=16`, batch 64 | 0.353526 ms | cuFFT 0.342927 ms | 0.970x | FP64 cuFFTDx `8+8`, recurrence twiddle, XOR-swizzled prefix |
+| FP64 FFT, `logN=16`, batch 64 | 0.342098 ms | cuFFT 0.342856 ms | 1.002x | FP64 cuFFTDx `8+8`, recurrence twiddle, strength-reduced XOR prefix |
 | FP32 FWHT, `logN=8` | 0.043131 ms | Dao FHT 0.043172 ms | 1.001x | integrated register unit |
 | FP32 FWHT, `logN=15` | 0.069243 ms | Dao FHT 0.063949 ms | 0.924x | register-pressure boundary |
 | 60-bit NTT, `logN=16`, natural order | 0.274104 ms | GPU-NTT 0.291133 ms | 1.062x | fused Hybrid2D |
@@ -107,14 +107,17 @@ units at `logN=11..14` isolate the local-unit ceiling: the contiguous paths at
 also raises `logN=18` from 0.881x in the fixed-512 mapping experiment to 1.070x.
 Processing-unit granularity and each dimension's CTA shape are therefore explicit
 hardware-mapping axes rather than fixed properties of the paradigm.
-The corresponding FP64 counter capture shows recurrence reduces prefix replay
+The pre-address-optimization FP64 counter capture shows recurrence reduces prefix replay
 time by 17.5% and raises its DRAM utilization from 60.2% to 72.9% by trading
 8.4% more FP64 instructions for 6.9% fewer warp instructions. The suffix is
 unchanged. XOR-swizzling the same-capacity prefix layout then cuts its shared
 conflicts by 53.5% and replay time by 5.3%, raising DRAM utilization to 77.0%.
-The complete path is within 1.8% of cuFFT replay, but still executes 2.19x its
-warp instructions and incurs about 100x its shared conflicts. This localizes
-the next step in swizzled address generation and residual exchange work. See
+The path was within 1.8% of cuFFT replay, but still executed 2.19x its warp
+instructions and incurred about 100x its shared conflicts. Hoisting invariant
+global addresses and advancing swizzled shared pointers by compile-time strides
+then lowers CUDA-event time from 0.353526 ms to 0.342098 ms, matching cuFFT at
+1.002x throughput. Updated counter collection is prepared to verify the expected
+instruction reduction. See
 [FP64 NCU Attribution](results/ncu_fp64_fft/analysis.md).
 
 ### Online Reorder at `logN=20`
@@ -212,8 +215,8 @@ The active research milestone and its acceptance criteria are in
   and RTX 4090 entries are placeholders, not performance claims.
 - FP32 FFT reaches cuFFT parity at selected `logN=8,14,18` shapes. At large
   batch, cuFFT has a higher `logN=18` throughput ceiling; the measured
-  `logN=20` and FP64 `logN=16` paths remain behind. The FP64 cuFFTDx unit raises
-  the latter from 0.642x in the comprehensive scalar run to 0.970x under its
+  `logN=20` path remains behind. The focused FP64 cuFFTDx experiment raises
+  `logN=16` from 0.642x in the comprehensive scalar run to 1.002x under its
   focused five-trial protocol. Tensor Core DFT8 helps the
   local unit but does not remove layout, synchronization, and composition
   costs.
