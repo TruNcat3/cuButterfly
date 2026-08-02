@@ -246,6 +246,8 @@ if(BUILD_TESTING)
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_vectorized_ncu.py")
     add_test(NAME fp64_fft_ncu_analysis
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fp64_fft_ncu.py")
+    add_test(NAME fp64_fft_robustness_analysis
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fp64_fft_robustness.py")
     add_test(NAME fft_pipeline_generator
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_pipeline_generator.py")
     add_test(NAME fft_pipeline_runner
@@ -294,6 +296,28 @@ if(BUILD_TESTING)
                          --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
                          --cross-twiddle recurrence --shared-layout xor-swizzle --inverse
                          --normalization inverse --logN 16 --batch 2 --warmup 1 --repeat 1 --verify)
+        foreach(fp64_shape IN ITEMS "14;7" "15;8" "17;8" "18;9")
+            list(GET fp64_shape 0 fp64_log_n)
+            list(GET fp64_shape 1 fp64_local_stages)
+            add_test(NAME fft_fp64_cufftdx_xor_logN${fp64_log_n}_correctness
+                     COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                             --fft-core cufftdx-block --local-stages ${fp64_local_stages}
+                             --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                             --cross-twiddle recurrence --shared-layout xor-swizzle
+                             --normalization none --logN ${fp64_log_n} --batch 2
+                             --warmup 1 --repeat 1 --verify)
+        endforeach()
+        foreach(fp64_shape IN ITEMS "14;7" "18;9")
+            list(GET fp64_shape 0 fp64_log_n)
+            list(GET fp64_shape 1 fp64_local_stages)
+            add_test(NAME fft_fp64_cufftdx_xor_logN${fp64_log_n}_inverse_correctness
+                     COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                             --fft-core cufftdx-block --local-stages ${fp64_local_stages}
+                             --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                             --cross-twiddle recurrence --shared-layout xor-swizzle --inverse
+                             --normalization inverse --logN ${fp64_log_n} --batch 2
+                             --warmup 1 --repeat 1 --verify)
+        endforeach()
         add_test(NAME fft_auto_dispatch_correctness
                  COMMAND cubutterfly_bench --auto-select --operator fft --precision fp32
                          --placement in-place --normalization none --logN 18 --batch 2

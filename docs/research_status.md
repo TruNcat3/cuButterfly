@@ -35,7 +35,10 @@ event time.
 |:--|--:|--:|--:|--:|
 | `logN=18`, batch 16 | 0.195942 ms | 0.211098 ms | 0.201103 ms | 1.077x |
 | `logN=20`, batch 4 | 0.214733 ms | 0.210330 ms | 0.206520 ms | 0.979x |
-| FP64 `logN=16`, batch 64 | 0.342098 ms | 0.342856 ms | not measured | 1.002x |
+| FP64 `logN=14`, batch 256 | 0.340173 ms | 0.344433 ms | not measured | 1.013x |
+| FP64 `logN=16`, batch 64 | 0.339364 ms | 0.343040 ms | not measured | 1.011x |
+| FP64 `logN=17`, batch 32 | 0.346307 ms | 0.395213 ms | not measured | 1.141x |
+| FP64 `logN=18`, batch 16 | 0.354877 ms | 0.421970 ms | not measured | 1.189x |
 
 The broader design scan reaches 1.085x cuFFT at `logN=18`, batch 2 and 1.030x
 at `logN=20`, batch 2. At saturated `logN=20` batch 8/16 it reaches
@@ -93,10 +96,19 @@ conflicts. Prefix registers rise from 48 to 64 and the register block limit
 falls from 5 to 4, so strength reduction exchanges occupancy for substantially
 less dynamic address work.
 
+The FP64 adapter now instantiates 128/256/512-point segments and covers every
+two-segment composition whose dimensions are both `logN=7..9`. A 648-point
+coarse scan selects distinct mappings for `logN=14..18`; a subsequent
+five-trial, execution-order-interleaved matrix covers batch 1..64. Applying the
+existing 0.020-ms timing floor leaves 25 stable shapes: 20 have higher median
+throughput than cuFFT and 19 have completely separated faster trial ranges.
+All 13 stable `logN=17/18` shapes are faster. The five remaining median deficits
+are confined to `logN=14..16` crossover batches and range from 0.1% to 3.2%.
+
 ## Remaining Work
 
-1. **FP64 robustness:** test whether the parity point persists across batch and
-   nearby lengths, and reduce residual shared/integer work to create margin.
+1. **FP64 crossover margin:** target `logN=14..16` medium-batch launch and
+   boundary overhead; exhaustive remapping did not remove all five deficits.
 2. **Cross-GPU transfer:** capture a newer GPU profile, predict without its
    timings, and report pre/post-calibration regret. This is the only deferred
    architecture-level validation item.

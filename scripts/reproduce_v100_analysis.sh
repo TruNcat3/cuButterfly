@@ -75,5 +75,33 @@ python3 scripts/analyze_fft_vectorized_ncu.py \
   --output results/ncu_fft_vectorized/attribution.csv \
   --markdown results/ncu_fft_vectorized/attribution.md
 
+python3 scripts/analyze_fp64_fft_robustness.py \
+  results/fp64_robustness_batch_raw.csv \
+  --output results/fp64_robustness_batch_summary.csv \
+  --markdown results/fp64_robustness_batch_analysis.md
+
+python3 scripts/summarize_cubutterfly_designs.py \
+  results/fp64_robustness_mapping_coarse_raw.csv \
+  --output results/fp64_robustness_mapping_coarse_summary.csv
+
+python3 scripts/summarize_cubutterfly_designs.py \
+  results/fp64_robustness_crossover_*_raw.csv \
+  --output results/fp64_robustness_crossover_summary.csv
+
+python3 scripts/summarize_cubutterfly_designs.py \
+  results/fp64_robustness_logN*_confirm_raw.csv \
+  results/fp64_robustness_cufft_confirm_raw.csv \
+  --output results/fp64_robustness_confirm_summary.csv
+
+python3 scripts/summarize_ncu.py \
+  results/ncu_fp64_fft/fp64_*.csv \
+  --output results/ncu_fp64_fft/summary.csv
+
+python3 scripts/analyze_fp64_fft_ncu.py \
+  results/ncu_fp64_fft/summary.csv \
+  --timing-summary results/fp64_address_logN16_summary.csv \
+  --output results/ncu_fp64_fft/analysis.csv \
+  --markdown results/ncu_fp64_fft/analysis.md
+
 python3 scripts/check_repository.py
 printf 'V100 derived analyses reproduced from checked-in raw records.\n'

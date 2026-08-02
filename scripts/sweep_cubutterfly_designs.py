@@ -184,14 +184,21 @@ def configurations(operator, precision, log_n, tile_threads, hierarchical_local_
                 "local_stages": 0, "reorder_columns": 0, "warp_stages": 0,
                 "pipeline_warps": 0, "stage_space": 0,
             }
-        if log_n == 16 and 8 in hierarchical_local_stages:
+        for local_stages in hierarchical_local_stages:
+            remaining_stages = log_n - local_stages
+            if not (7 <= local_stages <= 9 and 7 <= remaining_stages <= 9):
+                continue
+            prefix_n = 1 << local_stages
+            suffix_n = 1 << remaining_stages
             for prefix_threads in prefix_thread_options:
                 for prefix_ept in prefix_ept_options:
-                    if prefix_threads not in (128, 256, 512) or prefix_ept not in (4, 8):
+                    if prefix_threads not in (128, 256, 512) or prefix_ept not in (4, 8) or \
+                            prefix_threads * prefix_ept < prefix_n or (prefix_threads * prefix_ept) % prefix_n:
                         continue
                     for suffix_threads in suffix_thread_options:
                         for suffix_ept in suffix_ept_options:
-                            if suffix_threads not in (128, 256, 512) or suffix_ept not in (4, 8):
+                            if suffix_threads not in (128, 256, 512) or suffix_ept not in (4, 8) or \
+                                    suffix_threads * suffix_ept < suffix_n or (suffix_threads * suffix_ept) % suffix_n:
                                 continue
                             for cross_twiddle in ("table", "recurrence"):
                                 for shared_layout in ("linear", "xor-swizzle"):
@@ -202,7 +209,7 @@ def configurations(operator, precision, log_n, tile_threads, hierarchical_local_
                                         "fft_core": "cufftdx-block", "tile_threads": 32,
                                         "prefix_threads": prefix_threads, "suffix_threads": suffix_threads,
                                         "prefix_ept": prefix_ept, "suffix_ept": suffix_ept,
-                                        "local_stages": 8, "reorder_columns": 1, "warp_stages": 0,
+                                        "local_stages": local_stages, "reorder_columns": 1, "warp_stages": 0,
                                         "pipeline_warps": 0, "stage_space": 0,
                                     }
 

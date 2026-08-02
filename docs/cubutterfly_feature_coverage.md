@@ -50,9 +50,10 @@ processing-unit granularity ceiling independently of the composed schedule.
 The V100-valid CTA choices are 256/512/1024 threads through `logN=13` and
 512/1024 threads at `logN=14`.
 
-The FP64 cuFFTDx adapter provides temporal block FFTs at `logN=3..10` and a
-measured online `logN=16` `8+8` composition. The latter compiles independent
-prefix/suffix mappings at 128/256/512 threads and EPT 4/8. It supports table
+The FP64 cuFFTDx adapter provides temporal block FFTs at `logN=3..10` and
+two-segment online compositions at `logN=14..18`, with each segment covering
+`logN=7..9`. These compile independent prefix/suffix mappings at 128/256/512
+threads and EPT 4/8. They support table
 and register-recurrence cross twiddles with a direct-strided global boundary;
 multi-segment, resident, direct whole-transform, and tiled-boundary FP64 forms
 remain outside the compiled matrix and are rejected rather than silently
@@ -60,7 +61,9 @@ falling back.
 The prefix shared staging layout is independently selectable as `linear` or
 `xor-swizzle`. XOR swizzle permutes the physical `FFTsPerBlock` slot using
 element bits without increasing shared capacity or changing logical/global
-layout. It is currently compiled only for the FP64 `8+8` online path.
+layout. Fixed-stride address strength reduction is selected at compile time
+when a mapping step spans a complete swizzle period; other legal mappings use
+the general per-item permutation.
 
 Each temporal length is a compile-time CUDA specialization selected by the
 runtime. This preserves unrolling at performance-critical fixed sizes while

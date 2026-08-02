@@ -92,7 +92,8 @@ without forcing an intermediate global-memory pass.
 | FP32 FFT, `logN=14`, `2^22` total points | 0.131543 ms | cuFFT 0.135383 ms | 1.029x | contiguous cuFFTDx direct unit |
 | FP32 FFT, `logN=18`, `2^22` total points | 0.195942 ms | cuFFT 0.211098 ms | 1.077x | vectorized `9+9`, 256/256-thread dimensions |
 | FP32 FFT, `logN=20`, `2^22` total points | 0.214733 ms | cuFFT 0.210330 ms | 0.979x | vectorized `10+10`, batch-selected dimensions |
-| FP64 FFT, `logN=16`, batch 64 | 0.342098 ms | cuFFT 0.342856 ms | 1.002x | FP64 cuFFTDx `8+8`, recurrence twiddle, strength-reduced XOR prefix |
+| FP64 FFT, `logN=16`, batch 64 | 0.339364 ms | cuFFT 0.343040 ms | 1.011x | remapped FP64 cuFFTDx `8+8`, recurrence, XOR prefix |
+| FP64 FFT, `logN=18`, batch 16 | 0.354877 ms | cuFFT 0.421970 ms | 1.189x | FP64 cuFFTDx `9+9`, independently mapped dimensions |
 | FP32 FWHT, `logN=8` | 0.043131 ms | Dao FHT 0.043172 ms | 1.001x | integrated register unit |
 | FP32 FWHT, `logN=15` | 0.069243 ms | Dao FHT 0.063949 ms | 0.924x | register-pressure boundary |
 | 60-bit NTT, `logN=16`, natural order | 0.274104 ms | GPU-NTT 0.291133 ms | 1.062x | fused Hybrid2D |
@@ -122,6 +123,12 @@ XOR kernel. Total replay is 2.5% below cuFFT even though the path still executes
 1.83x its warp instructions, 3.62x its integer instructions, and about 114x its
 shared conflicts. See
 [FP64 NCU Attribution](results/ncu_fp64_fft/analysis.md).
+
+The FP64 online unit now covers two-segment `logN=14..18` compositions rather
+than only `8+8`. A 648-point V100 scan independently selects decomposition and
+both CTA/EPT dimensions. Across the 25 length/batch shapes above the 0.020-ms
+timing floor, cuButterfly has higher median throughput in 20 and non-overlapping
+faster trial ranges in 19. See [FP64 robustness](results/fp64_robustness_batch_analysis.md).
 
 ### Online Reorder at `logN=20`
 

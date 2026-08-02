@@ -19,6 +19,8 @@ All notable repository and research-artifact changes are recorded here.
   kernels, plus one command that regenerates all derived V100 analyses.
 - An FP64 prefix address-path experiment that separately reproduces scalar,
   table, recurrence, XOR-swizzled, and cuFFT timing under one protocol.
+- FP64 online cuFFTDx segment specializations at logN 7/8/9, a 648-point
+  neighboring-length mapping scan, and an interleaved 35-shape batch matrix.
 
 ### Changed
 
@@ -31,15 +33,19 @@ All notable repository and research-artifact changes are recorded here.
   second GPU generation; it is not a `v0.3.0` release gate.
 - FP64 online staging now hoists invariant global addresses and advances
   same-period shared permutations by compile-time strides.
+- FP64 online composition now covers total `logN=14..18`; each length selects
+  its split and two physical mappings independently.
 
 ### Current Evidence Boundary
 
 - The new scaling evidence remains V100-only.
 - FP32 FFT matches or exceeds cuFFT at selected saturated shapes, but cuFFT has
   a higher large-batch ceiling at `logN=18` and remains ahead at `logN=20`.
-- Focused FP64 `logN=16`, batch-64 timing reaches cuFFT parity at 1.002x. The
-  updated counter capture attributes this to 26.8% fewer prefix warp
+- The profiled FP64 `logN=16`, batch-64 mapping reaches cuFFT parity at 1.002x.
+  Its updated counter capture attributes this to 26.8% fewer prefix warp
   instructions and 8.3% lower prefix replay than the prior XOR kernel.
+- In the expanded FP64 matrix, 20/25 stable shapes have higher median
+  throughput than cuFFT and all 13 stable `logN=17/18` shapes are faster.
 - Cross-GPU portability and selector accuracy have not yet been measured.
 
 ## 0.2.0 - 2026-07-24

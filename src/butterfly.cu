@@ -867,9 +867,10 @@ class ButterflyPlan::Impl {
         if (config_.shared_layout == SharedLayout::XorSwizzle &&
             (config_.op != ButterflyOperator::Fft || config_.precision != ButterflyPrecision::Fp64 ||
              config_.backend != ButterflyBackend::OnlineReorder || config_.fft_core != FftCore::CufftDxBlock ||
-             config_.stage_partition.size() != 2 || config_.local_stages != 8 || config_.log_n != 16)) {
+             config_.stage_partition.size() != 2 || config_.local_stages < 7 || config_.local_stages > 9 ||
+             config_.log_n - config_.local_stages < 7 || config_.log_n - config_.local_stages > 9)) {
             throw std::invalid_argument(
-                "xor-swizzle shared layout currently requires FP64 online cuFFTDx logN=16 with an 8+8 split");
+                "xor-swizzle shared layout requires FP64 online cuFFTDx with two logN=7..9 segments");
         }
         if (config_.cross_twiddle == CrossTwiddleMode::Recurrence &&
             (config_.op != ButterflyOperator::Fft || config_.backend != ButterflyBackend::OnlineReorder ||

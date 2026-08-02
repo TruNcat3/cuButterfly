@@ -250,6 +250,39 @@ Recollect and regenerate the current optimized attribution with:
 ./scripts/profile_fp64_fft_ncu.sh
 ```
 
+### FP64 length and batch robustness
+
+The physical-unit templates now instantiate segment sizes 128, 256, and 512,
+covering two-segment totals `logN=14..18`. The architecture parameters remain
+shape-dependent: a 648-point scan over split direction, both CTA/EPT mappings,
+and shared layout selects the following equal-`2^22`-point winners.
+
+| logN | Batch | Split | Prefix | Suffix | cuButterfly ms | cuFFT ms | Throughput |
+|--:|--:|:--|:--|:--|--:|--:|--:|
+| 14 | 256 | `7+7` | `128/4` | `128/4` | 0.340173 | 0.344433 | 1.013x |
+| 15 | 128 | `7+8` | `128/4` | `128/8` | 0.338852 | 0.342753 | 1.012x |
+| 16 | 64 | `8+8` | `128/8` | `128/8` | 0.339364 | 0.343040 | 1.011x |
+| 17 | 32 | `8+9` | `128/8` | `256/8` | 0.346307 | 0.395213 | 1.141x |
+| 18 | 16 | `9+9` | `256/8` | `256/8` | 0.354877 | 0.421970 | 1.189x |
+
+The formal length/batch matrix alternates implementation order within each of
+five trials. Of 25 shapes above the 0.020-ms timing floor, 20 have a faster
+median and 19 have non-overlapping faster ranges. All 13 stable `logN=17/18`
+shapes are faster. Remaining deficits occur at five `logN=14..16` medium-batch
+crossovers (0.1%-3.2%); targeted exhaustive remapping does not consistently
+remove them, localizing the next work in launch/boundary overhead rather than
+the mapping selector. Reproduce with:
+
+```bash
+./scripts/benchmark_fp64_fft_robustness_mapping.sh
+python3 scripts/benchmark_fp64_fft_robustness.py \
+  --output results/fp64_robustness_batch_raw.csv
+python3 scripts/analyze_fp64_fft_robustness.py \
+  results/fp64_robustness_batch_raw.csv \
+  --output results/fp64_robustness_batch_summary.csv \
+  --markdown results/fp64_robustness_batch_analysis.md
+```
+
 ### Resident and direct granularity experiment
 
 At `logN=12`, one 4096-value transform fits in a V100 CTA. Three physical
