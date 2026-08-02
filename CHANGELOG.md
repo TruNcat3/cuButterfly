@@ -37,8 +37,9 @@ All notable repository and research-artifact changes are recorded here.
 - The new scaling evidence remains V100-only.
 - FP32 FFT matches or exceeds cuFFT at selected saturated shapes, but cuFFT has
   a higher large-batch ceiling at `logN=18` and remains ahead at `logN=20`.
-- Focused FP64 `logN=16`, batch-64 timing reaches cuFFT parity at 1.002x; an
-  updated privileged counter capture remains pending.
+- Focused FP64 `logN=16`, batch-64 timing reaches cuFFT parity at 1.002x. The
+  updated counter capture attributes this to 26.8% fewer prefix warp
+  instructions and 8.3% lower prefix replay than the prior XOR kernel.
 - Cross-GPU portability and selector accuracy have not yet been measured.
 
 ## 0.2.0 - 2026-07-24

@@ -18,6 +18,7 @@ def kernel(label, time_us, warp_instructions, fp64_instructions, conflicts):
         "shared_load_bank_conflicts": str(conflicts),
         "shared_store_bank_conflicts": "0",
         "warp_instructions": str(warp_instructions),
+        "integer_thread_instructions": str(warp_instructions * 10),
         "fp64_thread_instructions": str(fp64_instructions),
         "dram_peak_pct": "50",
         "l2_hit_pct": "40",
@@ -44,6 +45,7 @@ def main():
                             "xor_swizzle": 1.4, "cufft": 1.0}, batch)
     by_name = {row["implementation"]: row for row in output}
     assert by_name["cufftdx"]["warp_instructions_vs_cufft"] == 2.0
+    assert by_name["xor_swizzle"]["integer_thread_instructions_vs_cufft"] == 1.7
     assert by_name["cufftdx"]["fp64_thread_instructions_vs_cufft"] == 0.8
     assert by_name["scalar"]["cuda_event_ms_vs_cufft"] == 3.0
     assert by_name["recurrence"]["time_us_vs_cufft"] == 1.5

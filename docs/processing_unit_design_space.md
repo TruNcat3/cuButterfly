@@ -215,8 +215,9 @@ guard all generated CTA/EPT specializations. It reduces current-build linear
 recurrence to 0.345027 ms and XOR to 0.342098 ms, a further 0.8% reduction over
 linear and 3.2% over the former XOR result, without local spills.
 
-The fixed privileged capture below predates address strength reduction and
-confirms the recurrence and swizzle mechanisms. It reduces prefix replay from
+The fixed privileged capture below predates address strength reduction, is
+preserved in commit `7892666`, and confirms the recurrence and swizzle
+mechanisms. It reduces prefix replay from
 249.824 us to 206.016 us (17.5%), warp instructions by 6.9%,
 and raises peak DRAM use from 60.2% to 72.9%. This costs 8.4% more prefix FP64
 instructions but does not change registers, shared allocation, or waves/SM.
@@ -228,15 +229,24 @@ XOR swizzle, total replay is 367.648 us versus cuFFT's 361.120 us, a 1.8% gap;
 the authoritative CUDA-event gap is 3.1%. It still executes 2.19x cuFFT's warp
 instructions and incurs about 100x its shared conflicts. The remaining work is
 therefore shared exchange and general address work, not twiddle service,
-occupancy, or FP64 arithmetic throughput. A refreshed capture is required before
-using those instruction ratios for the optimized kernel. See
+occupancy, or FP64 arithmetic throughput.
+
+The refreshed optimized capture validates the address-strength-reduction
+mechanism. Relative to the prior XOR prefix, warp instructions fall from
+22.020M to 16.122M (26.8%), replay falls from 195.008 us to 178.912 us (8.3%),
+and shared conflicts fall from 2.794M to 2.552M (8.6%); suffix replay changes
+by less than 0.4%. Total XOR replay is 350.880 us versus cuFFT's 359.744 us,
+2.5% lower. The optimized path still executes 1.83x cuFFT's warp instructions,
+3.62x its integer instructions, and 113.7x its shared conflicts, but reaches
+85.5% peak DRAM utilization with lower long-scoreboard stall. Prefix registers
+rise from 48 to 64 and the register block limit falls from 5 to 4. The result
+therefore demonstrates an explicit trade: additional induction state reduces
+dynamic address work enough to outweigh lower occupancy. See
 `results/ncu_fp64_fft/analysis.md`.
 
-Collect the optimized counters into a separate evidence directory with:
+Recollect and regenerate the current optimized attribution with:
 
 ```bash
-OUTPUT_DIR=results/ncu_fp64_fft_address_opt \
-TIMING_SUMMARY=results/fp64_address_logN16_summary.csv \
 ./scripts/profile_fp64_fft_ncu.sh
 ```
 

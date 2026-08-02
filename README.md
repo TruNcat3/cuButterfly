@@ -116,8 +116,11 @@ The path was within 1.8% of cuFFT replay, but still executed 2.19x its warp
 instructions and incurred about 100x its shared conflicts. Hoisting invariant
 global addresses and advancing swizzled shared pointers by compile-time strides
 then lowers CUDA-event time from 0.353526 ms to 0.342098 ms, matching cuFFT at
-1.002x throughput. Updated counter collection is prepared to verify the expected
-instruction reduction. See
+1.002x throughput. Updated counters confirm a 26.8% reduction in prefix warp
+instructions and an 8.3% reduction in prefix replay versus the pre-optimization
+XOR kernel. Total replay is 2.5% below cuFFT even though the path still executes
+1.83x its warp instructions, 3.62x its integer instructions, and about 114x its
+shared conflicts. See
 [FP64 NCU Attribution](results/ncu_fp64_fft/analysis.md).
 
 ### Online Reorder at `logN=20`

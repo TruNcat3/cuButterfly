@@ -84,13 +84,19 @@ address work out of the staging loops. It lowers linear recurrence from
 The latter matches the 0.342856 ms cuFFT measurement at 1.002x throughput; five
 trial ranges are 0.341893-0.342170 ms and 0.342610-0.343040 ms, respectively.
 This is parity evidence rather than a claim of a robust lead. Updated NCU
-counters remain required to confirm the predicted warp-instruction reduction.
+counters confirm the predicted mechanism: versus the pre-optimization XOR
+kernel, prefix warp instructions fall 26.8%, prefix replay falls 8.3%, and
+prefix shared conflicts fall 8.6%; suffix replay changes by less than 0.4%.
+The full XOR path now replays 2.5% below cuFFT while executing 1.83x its warp
+instructions, 3.62x its integer instructions, and about 114x its shared
+conflicts. Prefix registers rise from 48 to 64 and the register block limit
+falls from 5 to 4, so strength reduction exchanges occupancy for substantially
+less dynamic address work.
 
 ## Remaining Work
 
-1. **Optimized FP64 attribution:** rerun the prepared NCU capture to quantify
-   the warp-instruction reduction and residual shared conflicts after address
-   strength reduction.
+1. **FP64 robustness:** test whether the parity point persists across batch and
+   nearby lengths, and reduce residual shared/integer work to create margin.
 2. **Cross-GPU transfer:** capture a newer GPU profile, predict without its
    timings, and report pre/post-calibration regret. This is the only deferred
    architecture-level validation item.

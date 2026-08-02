@@ -6,7 +6,8 @@ import pathlib
 
 SUM_FIELDS = (
     "time_us", "dram_read_mib", "dram_write_mib", "shared_load_bank_conflicts",
-    "shared_store_bank_conflicts", "warp_instructions", "fp64_thread_instructions",
+    "shared_store_bank_conflicts", "warp_instructions", "integer_thread_instructions",
+    "fp64_thread_instructions",
 )
 WEIGHTED_FIELDS = (
     "dram_peak_pct", "l2_hit_pct", "l1_hit_pct", "active_warps_pct",
@@ -88,7 +89,8 @@ def analyze(rows, timings, batch):
     cufft = next(row for row in output if row["implementation"] == "cufft")
     for row in output:
         for field in ("cuda_event_ms", "time_us", "dram_total_mib", "warp_instructions",
-                      "fp64_thread_instructions", "shared_bank_conflicts"):
+                      "integer_thread_instructions", "fp64_thread_instructions",
+                      "shared_bank_conflicts"):
             row[f"{field}_vs_cufft"] = row[field] / cufft[field] if cufft[field] else 0.0
     return output
 
@@ -127,6 +129,7 @@ def write_markdown(path, rows, kernels, batch):
     def pass_row(name, row):
         conflicts = number(row, "shared_load_bank_conflicts") + number(row, "shared_store_bank_conflicts")
         return (f"| {name} | {number(row, 'time_us'):.3f} | {number(row, 'warp_instructions'):.0f} | "
+                f"{number(row, 'integer_thread_instructions'):.0f} | "
                 f"{number(row, 'fp64_thread_instructions'):.0f} | {conflicts:.0f} | "
                 f"{number(row, 'dram_peak_pct'):.1f}% | {number(row, 'barrier_stall_pct'):.1f}% | "
                 f"{number(row, 'long_scoreboard_stall_pct'):.1f}% |")
@@ -136,13 +139,14 @@ def write_markdown(path, rows, kernels, batch):
         f"All rows are FP64 forward `logN=16`, batch {batch} on V100. CUDA-event medians use",
         "five process trials, 1000 warmups, and 100 repetitions. NCU replay time is",
         "attribution-only and is not used to rank the implementations.", "",
-        "| Implementation | CUDA-event ms | NCU us | DRAM MiB | Warp inst. | FP64 inst. | Shared conflicts | DRAM peak | Barrier stall | Scoreboard stall |",
-        "|:--|--:|--:|--:|--:|--:|--:|--:|--:|--:|",
+        "| Implementation | CUDA-event ms | NCU us | DRAM MiB | Warp inst. | Integer inst. | FP64 inst. | Shared conflicts | DRAM peak | Barrier stall | Scoreboard stall |",
+        "|:--|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|",
     ]
     for row in rows:
         lines.append(
             f"| {row['implementation']} | {row['cuda_event_ms']:.6f} | {row['time_us']:.3f} | "
             f"{row['dram_total_mib']:.2f} | {row['warp_instructions']:.0f} | "
+            f"{row['integer_thread_instructions']:.0f} | "
             f"{row['fp64_thread_instructions']:.0f} | {row['shared_bank_conflicts']:.0f} | "
             f"{row['dram_peak_pct']:.1f}% | {row['barrier_stall_pct']:.1f}% | "
             f"{row['long_scoreboard_stall_pct']:.1f}% |")
@@ -167,17 +171,20 @@ def write_markdown(path, rows, kernels, batch):
             f"{recurrence['time_us'] / cufftdx['time_us'] - 1.0:+.1%}, and FP64 instructions by "
             f"{recurrence['fp64_thread_instructions'] / cufftdx['fp64_thread_instructions'] - 1.0:+.1%}.")
     if xor_swizzle:
+        replay_delta = xor_swizzle['time_us_vs_cufft'] - 1.0
+        replay_position = "below" if replay_delta < 0.0 else "above"
         lines.append(
             f"- XOR swizzle changes CUDA-event time by "
             f"{xor_swizzle['cuda_event_ms'] / recurrence['cuda_event_ms'] - 1.0:+.1%} and replay time by "
             f"{xor_swizzle['time_us'] / recurrence['time_us'] - 1.0:+.1%} versus linear recurrence. "
-            f"It finishes within {xor_swizzle['time_us_vs_cufft'] - 1.0:.1%} of cuFFT replay while still "
-            f"executing {xor_swizzle['warp_instructions_vs_cufft']:.2f}x its warp instructions and incurring "
+            f"It finishes {abs(replay_delta):.1%} {replay_position} cuFFT replay while still "
+            f"executing {xor_swizzle['warp_instructions_vs_cufft']:.2f}x its warp instructions, "
+            f"{xor_swizzle['integer_thread_instructions_vs_cufft']:.2f}x its integer instructions, and incurring "
             f"{xor_swizzle['shared_bank_conflicts_vs_cufft']:.1f}x its shared conflicts.")
     lines += [
         "", "## Prefix/Suffix Split", "",
-        "| cuFFTDx pass | NCU us | Warp inst. | FP64 inst. | Shared conflicts | DRAM peak | Barrier stall | Scoreboard stall |",
-        "|:--|--:|--:|--:|--:|--:|--:|--:|",
+        "| cuFFTDx pass | NCU us | Warp inst. | Integer inst. | FP64 inst. | Shared conflicts | DRAM peak | Barrier stall | Scoreboard stall |",
+        "|:--|--:|--:|--:|--:|--:|--:|--:|--:|",
         pass_row("table prefix + twiddle/reorder", first),
         pass_row("table suffix + natural-order store", second),
     ]
@@ -202,12 +209,20 @@ def write_markdown(path, rows, kernels, batch):
                   "dependent twiddle-table service in the prefix. Shared conflicts remain essentially unchanged, "
                   "so the next target is the local exchange/address path rather than another twiddle change.", ""]
     if xor_swizzle:
-        lines += [f"XOR swizzle changes prefix replay time by "
-                  f"{number(xor_first, 'time_us') / number(recurrence_first, 'time_us') - 1.0:+.1%}, shared conflicts by "
-                  f"{(number(xor_first, 'shared_load_bank_conflicts') + number(xor_first, 'shared_store_bank_conflicts')) / (number(recurrence_first, 'shared_load_bank_conflicts') + number(recurrence_first, 'shared_store_bank_conflicts')) - 1.0:+.1%}, "
-                  f"and warp instructions by "
-                  f"{number(xor_first, 'warp_instructions') / number(recurrence_first, 'warp_instructions') - 1.0:+.1%}. "
-                  f"The suffix changes by {number(xor_second, 'time_us') / number(recurrence_second, 'time_us') - 1.0:+.1%}.", ""]
+        recurrence_integer = number(recurrence_first, 'integer_thread_instructions')
+        xor_integer = number(xor_first, 'integer_thread_instructions')
+        integer_delta = xor_integer / recurrence_integer - 1.0 if recurrence_integer else None
+        integer_text = (f"Integer instructions change by {integer_delta:+.1%}. "
+                        if integer_delta is not None else "")
+        xor_summary = (
+            f"XOR swizzle changes prefix replay time by "
+            f"{number(xor_first, 'time_us') / number(recurrence_first, 'time_us') - 1.0:+.1%}, shared conflicts by "
+            f"{(number(xor_first, 'shared_load_bank_conflicts') + number(xor_first, 'shared_store_bank_conflicts')) / (number(recurrence_first, 'shared_load_bank_conflicts') + number(recurrence_first, 'shared_store_bank_conflicts')) - 1.0:+.1%}, "
+            f"and warp instructions by "
+            f"{number(xor_first, 'warp_instructions') / number(recurrence_first, 'warp_instructions') - 1.0:+.1%}. "
+            + integer_text
+            + f"The suffix changes by {number(xor_second, 'time_us') / number(recurrence_second, 'time_us') - 1.0:+.1%}.")
+        lines += [xor_summary, ""]
     else:
         lines += ["",
                   f"The prefix consumes {number(first, 'time_us') / cufftdx['time_us']:.1%} of replay time and is "

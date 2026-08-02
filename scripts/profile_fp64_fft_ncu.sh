@@ -6,7 +6,7 @@ NCU=${NCU:-/usr/local/cuda-11.8/bin/ncu}
 BIN=${BIN:-"$ROOT/build/cubutterfly_bench"}
 OUTPUT_DIR=${OUTPUT_DIR:-"$ROOT/results/ncu_fp64_fft"}
 BATCH=${BATCH:-64}
-TIMING_SUMMARY=${TIMING_SUMMARY:-"$ROOT/results/fp64_logN16_twiddle_summary.csv"}
+TIMING_SUMMARY=${TIMING_SUMMARY:-"$ROOT/results/fp64_address_logN16_summary.csv"}
 
 if [[ ! -x "$NCU" || ! -x "$BIN" ]]; then
     echo "missing profiler or benchmark: NCU=$NCU BIN=$BIN" >&2
