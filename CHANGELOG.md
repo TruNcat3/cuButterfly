@@ -24,6 +24,16 @@ All notable repository and research-artifact changes are recorded here.
 
 ### Changed
 
+- Reworked the root, design, documentation-index, and experiment narratives
+  around the two logical dimensions and their four spatial/temporal unfolding
+  factors, with an explicit mapping from graph work to GPU services.
+- Replaced the high-level concept figure with a hardware-mapping diagram that
+  connects `Ud/Td/Us/Ts`, residence and transport, replaceable processing units,
+  online reordering, and counter-calibrated selection.
+- Updated paper-facing experiment summaries to include the expanded FP64
+  length/batch robustness matrix and fixed-mapping NCU attribution.
+- Regenerated checked-in V100 summaries with the current `shared_layout` and
+  `fp64_thread_instructions` schemas; existing measurement values are unchanged.
 - The comprehensive runner now supports exact case selection, validates batch
   consistency within comparison groups, and caches identical correctness
   preflights.

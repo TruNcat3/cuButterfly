@@ -128,6 +128,7 @@ portability beyond V100.
 - counter attribution: `results/ncu_scaling_crossovers/`
 - vectorized FFT attribution: `results/ncu_fft_vectorized/`
 - FP64 scalar/core/mapping validation: `results/fp64_*logN16*`
+- FP64 length/batch robustness: `results/fp64_robustness_*`
 - FP64 privileged counter command: `scripts/profile_fp64_fft_ncu.sh`
 
 Run `./scripts/reproduce_v100_analysis.sh` to regenerate derived artifacts from

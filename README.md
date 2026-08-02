@@ -6,47 +6,82 @@
 [![Release](https://img.shields.io/github/v/release/TruNcat3/cuButterfly)](https://github.com/TruNcat3/cuButterfly/releases/latest)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
-cuButterfly is a CUDA research prototype that generalizes the
-space-time parallel paradigm from NTT to regular layered transforms. It keeps
-the architecture-level mapping independent of the local arithmetic core, so
-FFT, NTT, FWHT, and XOR-zeta can share one mapping vocabulary while selecting
-different GPU realizations.
+cuButterfly is a CUDA research prototype for mapping regular layered transforms
+onto a GPU. Its central observation is that FFT, NTT, FWHT, and XOR-zeta differ
+in arithmetic but expose the same two-dimensional scheduling problem: many
+independent data groups must pass through an ordered sequence of butterfly
+stages. The project describes how both dimensions are unfolded in space and
+time, then selects the concrete CUDA realization from the target hardware.
 
 The repository contains working kernels, CPU references, a generated
 processing-unit boundary, same-machine library comparisons, Nsight profiling
 scripts, and the raw CSV data used in the reports. It is a research artifact,
 not a drop-in replacement for cuFFT or a production cryptography library.
 
-## Core Idea
+## Why This Design
 
-A regular butterfly graph exposes two logical dimensions: stage and independent
-data unit. cuButterfly unfolds both dimensions in space and time:
+A fast butterfly kernel needs more than a fast butterfly instruction. It must
+decide which independent values execute together, how long dependent stages
+remain on chip, how values move between lanes or warps, and which layout the
+next stage group consumes. If those decisions are embedded in one arithmetic
+core, every new operator, precision, length, or GPU requires another isolated
+kernel design.
+
+cuButterfly instead keeps two layers separate. The **mapping layer** organizes
+the dependency graph and owns parallel placement, temporal reuse, residence,
+synchronization, and layout. The **processing-unit layer** implements a local
+stage group using an appropriate radix, modular core, register hierarchy,
+cuFFTDx block, or WMMA candidate. A stronger local unit can therefore be added
+to the search space without changing the architecture model.
+
+## Mapping Model
+
+Let `D` be independent data work and `S` be ordered stage work. The fundamental
+factorization is:
 
 ```text
-M = (Us, Ts, Ud, Td, Ub, Tb, Hs, Rs, Rd, Rb, L, F, Q)
-
-Us, Ts  stage-space and stage-time unfolding
-Ud, Td  data-space and data-time unfolding
-Ub, Tb  batch-space and batch-time unfolding
-Hs      physical service for spatial stage edges
-Rs/Rd/Rb residence across stage, data, and batch folds
-L       input, intermediate, and output layout policy
-F, Q    kernel family and hardware realization parameters
+D = Ud * Td       data-space replication x data-time reuse
+S = Us * Ts       stage-space service     x stage-time reuse
 ```
+
+`Ud` and `Us` spend hardware to expose work concurrently. `Td` and `Ts` reuse
+that hardware across logical positions. Batch supplies more independent work
+to `D`; implementation fields `Ub` and `Tb` can refine its scheduling but do
+not create a third dependency dimension. None of these factors is a fixed tile
+constant: register capacity, shared memory, warp and barrier behavior, SM count,
+cache, and memory service determine the useful values on each GPU.
 
 ![cuButterfly concept: a regular butterfly graph is factorized in space and time, combined with a GPU profile and replaceable processing units, and calibrated by measured counters.](figures/cubutterfly_concept.svg)
 
 The editable Graphviz source is
 [`figures/cubutterfly_concept.dot`](figures/cubutterfly_concept.dot).
 
-The processing unit may change without changing the paradigm. Conversely, a
-good codelet does not determine its block shape, residency, permutation policy,
-or cross-kernel schedule. These are searched against the current GPU.
+The diagram is a mapping chain, not a fixed kernel template. Data-space
+unfolding primarily determines grid, CTA, and warp placement. Data-time and
+stage-time unfolding create reuse, whose live state is placed in registers or
+shared memory according to visibility and capacity. Stage-space unfolding
+requires an explicit transport such as shuffle, shared memory, or a barrier.
+The chosen processing unit consumes that schedule. When the next stage group
+needs another ownership or layout, its output store performs an online reorder
+or a global handoff.
 
-Read [Complete Butterfly Design Space](docs/butterfly_design_space.md) for the
-canonical model, [Design Overview](docs/design_overview.md) for the concise view, and
-[Hardware Mapping Methodology](docs/hardware_mapping_methodology.md) for the
-resource equations and counter-driven selection procedure.
+Temporal reuse does not mean that all values always remain in registers, and a
+single CUDA source kernel does not provide ordinary CTAs with a grid-wide
+barrier. Thread-private state uses registers, CTA-visible state uses shared
+memory, and a global boundary is retained only where dependency scope or
+capacity requires it. Similarly, online reordering is fused with a required
+handoff but is not assumed free; address work, coalescing, and shared-bank
+behavior are part of measurement and selection.
+
+The [Design Overview](docs/design_overview.md) derives the four factors and
+their execution semantics. [Hardware Mapping
+Methodology](docs/hardware_mapping_methodology.md) gives the resource equations
+and counter-driven selection procedure, while [Complete Butterfly Design
+Space](docs/butterfly_design_space.md) specifies the full mapping descriptor:
+
+```text
+M = (Us, Ts, Ud, Td, Ub, Tb, Hs, Rs, Rd, Rb, L, F, Q)
+```
 
 ## Implemented Scope
 
@@ -199,6 +234,14 @@ artifact; the clean-clone validation uses CUDA 11.8 with GCC 11.
 
 ## Repository Guide
 
+For a first reading, follow the argument rather than the directory tree:
+[Design Overview](docs/design_overview.md) explains why the graph is split into
+two dimensions and four unfolding factors; [Experimental
+Results](docs/experiments.md) connects each architectural claim to a controlled
+measurement; [Getting Started](docs/getting_started.md) then reproduces a
+verified design point. Readers evaluating the paper claim should continue with
+the hardware model, complete design-space contract, and research-status report.
+
 | Path | Purpose |
 |:--|:--|
 | `include/cuntt/` | public NTT and common butterfly plan APIs |
@@ -210,8 +253,9 @@ artifact; the clean-clone validation uses CUDA 11.8 with GCC 11.
 | `results/` | measured V100 CSV data and counter analyses |
 | `docs/` | architecture, implementation, experiments, and research positioning |
 
-Start with the [Documentation Index](docs/README.md). Candidate processing
-units and future implementation paths are catalogued in
+The [Documentation Index](docs/README.md) provides separate architecture,
+implementation, and reproduction paths. Candidate processing units and future
+implementation paths are catalogued in
 [Candidate Implementations](docs/implementation_candidates.md).
 Development priorities are tracked in [`ROADMAP.md`](ROADMAP.md), and evidence
 requirements for contributions are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
@@ -223,13 +267,12 @@ The active research milestone and its acceptance criteria are in
 
 - V100 is the only fully measured GPU generation in this revision. A100, H100,
   and RTX 4090 entries are placeholders, not performance claims.
-- FP32 FFT reaches cuFFT parity at selected `logN=8,14,18` shapes. At large
-  batch, cuFFT has a higher `logN=18` throughput ceiling; the measured
-  `logN=20` path remains behind. The focused FP64 cuFFTDx experiment raises
-  `logN=16` from 0.642x in the comprehensive scalar run to 1.002x under its
-  focused five-trial protocol. Tensor Core DFT8 helps the
-  local unit but does not remove layout, synchronization, and composition
-  costs.
+- FP32 FFT reaches cuFFT parity or advantage at selected direct and long
+  shapes; saturated `logN=20` batch 8/16 remains at `0.962x/0.954x`. The
+  focused FP64 cuFFTDx matrix raises `logN=16`, batch 64 from 0.642x in the
+  scalar comprehensive run to 1.011x and is faster by median on 20/25 stable
+  `logN=14..18` shapes. Tensor Core DFT8 helps the local unit but does not
+  remove layout, synchronization, and composition costs.
 - FWHT closely tracks Dao FHT after importing its validated local register
   hierarchy. This demonstrates processing-unit reuse, not independent invention
   of that core.

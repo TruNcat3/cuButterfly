@@ -40,10 +40,8 @@ artifacts, and decision gates.
 - Extend the measured orthogonal `(logN, batch)` sweep across additional
   precision, direction, stride, and normalization contracts, then train the
   selector on the observed saturation and mapping-crossover boundaries.
-- Refresh Dao-AILab FHT and GPU-NTT under the comprehensive-suite clock,
-  correctness, modulus, output-order, and trial protocol.
-- Profile the remaining FP32 `logN=20` and FP64 `logN=16` FFT gaps against
-  cuFFT, separating local-core, permutation, coefficient, and launch costs.
+- Reduce the remaining saturated FP32 `logN=20` exchange cost and the five
+  FP64 `logN=14..16` crossover deficits, preserving fixed-mapping NCU evidence.
 - Add a device-pointer and CUDA-stream execution API without weakening the
   current typed semantic contract.
 - Reduce template warning volume and record compiled resource envelopes as
