@@ -7,8 +7,9 @@ the architecture independently of the CUDA specializations currently compiled.
 The model has five layers:
 
 1. Semantic: length, precision, direction, placement, normalization, and layout.
-2. Decomposition: single-unit, two-dimensional, or multi-dimensional stage partition.
-3. Per-dimension mapping: spatial scope, stage fusion, temporal reuse, core,
+2. Factorization: `decomposition_count=D` and ordered stage vector
+   `stages_per_decomposition=S=[s0,...,s(D-1)]`, constrained by `sum(S)=logN`.
+3. Per-segment mapping: spatial scope, stage fusion, temporal reuse, core,
    threads, elements/thread, units/CTA, exchange, padding, and pipeline buffers.
 4. Boundary: residency, permutation, cross-twiddle policy, and global/shared handoff.
 5. Hardware: SM count, thread/shared/register limits, and scheduling capacity.
@@ -25,6 +26,7 @@ The relation must produce an integer and cover at least one unit.
 
 The architectural terms remain independent of a particular codelet:
 
+- `D/S` determines the number of local transform segments and boundaries;
 - `spatial_scope` states whether concurrent work is owned by a thread, warp,
   CTA, or cooperating CTAs;
 - `stage_fusion` states how many equivalent butterfly stages form one operation;
@@ -80,10 +82,19 @@ compiled into this build. The generator validates every selected thread/EPT pair
 against the canonical axes and V100 shared-memory/thread limits, then emits
 availability, dispatch, and a resolved build manifest.
 
+The factorization parameters and the paper's two space/time axes are distinct. `D`
+does not introduce a new parallel axis: the stage/data spatial and temporal
+mapping is applied independently to every decomposition segment `i`, and `D-1` boundary
+descriptors connect them. The optimized `D=2` CUDA path remains unchanged,
+while a generic ping-pong lowering
+executes `D=3/4` with one cuFFTDx processing unit per segment and one explicit
+boundary descriptor per adjacent pair.
+
 The current selection contains EPT 4/8/16 and 128/256/512/1024-thread points;
 1024/16 is excluded because its tiled storage exceeds the V100 per-CTA shared
-memory limit. The public FFT configuration records independent prefix/suffix
-thread and EPT values plus normalized units/CTA. Feasible but unselected values
+memory limit. The public FFT configuration records `segment_mappings[D]` and
+`boundaries[D-1]`; the old prefix/suffix fields remain a `D=2` compatibility
+interface. Feasible but unselected values
 fail explicitly as `awaiting code generation`; they do not fall back to EPT=8.
 
 Regenerate an isolated manifest with:
@@ -106,12 +117,19 @@ Completing the model does not imply every family is implemented. The major
 implementation queues are now explicit:
 
 - optionally emit the remaining cuFFTDx online EPT 1/2/32/64 points selected by a target profile;
-- compose `logN=11..14` direct units using direct-strided or explicit transpose boundaries;
-- allow different cores on the two dimensions;
+- fuse the implemented directional tiled transposes into adjacent work or retain
+  their layouts across multiple dimensions; standalone prefix and suffix
+  transpose kernels are measured but do not win at saturated batch;
+- allow heterogeneous core families across segments; the descriptors are
+  per-segment, but the generic runtime currently validates cuFFTDx-block/shared;
 - add shared-resident and cooperative-grid boundaries beyond selected points;
 - generate padding and multi-buffer pipeline variants;
-- extend the same schema to three or more dimensions for transforms beyond a
-  profitable two-dimensional factorization.
+- fuse adjacent segment/boundary work or keep multiple segments resident; the
+  functional `D=3/4` lowering currently incurs one global read/write pass per
+  segment and is therefore a correctness and exploration baseline.
 
 Fine-grained performance search should operate only on `compiled` points after
 the desired `awaiting-codegen` subset has been emitted.
+
+The bounded candidate search and measured runtime selection built on this
+space are documented in [FFT Pipeline Generator](fft_pipeline_generator.md).

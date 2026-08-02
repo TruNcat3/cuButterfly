@@ -2,6 +2,64 @@
 
 All notable repository and research-artifact changes are recorded here.
 
+## Unreleased
+
+## 0.3.0 - 2026-08-02
+
+### Added
+
+- An orthogonal 184-case V100 length/batch suite and generated manifest for
+  FFT, NTT, FWHT, and XOR-zeta.
+- Scaling summaries that identify timing quality, throughput saturation, and
+  mapping crossovers without using sub-0.020-ms rows as stable claims.
+- Targeted NCU collection for the FFT saturation gaps and FWHT processing-unit
+  crossover.
+- A V100-calibrated mapping selector with held-out-shape evaluation and
+  explicit separation of mapping family from processing unit.
+- A matching-protocol 120-sample Dao FHT and GPU-NTT baseline refresh.
+- Targeted NCU attribution over 22 FFT/FWHT implementation-shape pairs and 37
+  kernels, plus one command that regenerates all derived V100 analyses.
+- An FP64 prefix address-path experiment that separately reproduces scalar,
+  table, recurrence, XOR-swizzled, and cuFFT timing under one protocol.
+- FP64 online cuFFTDx segment specializations at logN 7/8/9, a 648-point
+  neighboring-length mapping scan, and an interleaved 35-shape batch matrix.
+
+### Changed
+
+- Reworked the root, design, documentation-index, and experiment narratives
+  around the two logical dimensions and their four spatial/temporal unfolding
+  factors, with an explicit mapping from graph work to GPU services.
+- Replaced the high-level concept figure with a hardware-mapping diagram that
+  connects `Ud/Td/Us/Ts`, residence and transport, replaceable processing units,
+  online reordering, and counter-calibrated selection.
+- Updated paper-facing experiment summaries to include the expanded FP64
+  length/batch robustness matrix and fixed-mapping NCU attribution.
+- Regenerated checked-in V100 summaries with the current `shared_layout` and
+  `fp64_thread_instructions` schemas; existing measurement values are unchanged.
+- The comprehensive runner now supports exact case selection, validates batch
+  consistency within comparison groups, and caches identical correctness
+  preflights.
+- The next release is scoped around counter-calibrated mapping selection and
+  refreshed same-protocol external baselines.
+- Cross-GPU validation is deferred until the repository moves to a host with a
+  second GPU generation; it is not a `v0.3.0` release gate.
+- FP64 online staging now hoists invariant global addresses and advances
+  same-period shared permutations by compile-time strides.
+- FP64 online composition now covers total `logN=14..18`; each length selects
+  its split and two physical mappings independently.
+
+### Current Evidence Boundary
+
+- The new scaling evidence remains V100-only.
+- FP32 FFT matches or exceeds cuFFT at selected saturated shapes, but cuFFT has
+  a higher large-batch ceiling at `logN=18` and remains ahead at `logN=20`.
+- The profiled FP64 `logN=16`, batch-64 mapping reaches cuFFT parity at 1.002x.
+  Its updated counter capture attributes this to 26.8% fewer prefix warp
+  instructions and 8.3% lower prefix replay than the prior XOR kernel.
+- In the expanded FP64 matrix, 20/25 stable shapes have higher median
+  throughput than cuFFT and all 13 stable `logN=17/18` shapes are faster.
+- Cross-GPU portability and selector accuracy have not yet been measured.
+
 ## 0.2.0 - 2026-07-24
 
 ### Added

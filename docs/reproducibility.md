@@ -75,6 +75,56 @@ The current protocol fixes `N * batch = 2^22` for length comparisons. Do not
 use it to infer independent batch scaling; that requires holding `N` fixed and
 sweeping batch separately.
 
+Generate and run the orthogonal length/batch suite with:
+
+```bash
+python3 scripts/generate_scaling_suite.py \
+  --spec config/v100_scaling_space.json \
+  --output config/v100_scaling_suite.json
+
+python3 scripts/run_comprehensive_suite.py \
+  --manifest config/v100_scaling_suite.json --mode full \
+  --output results/v100_scaling_full_raw.csv
+
+python3 scripts/summarize_scaling_suite.py \
+  results/v100_scaling_full_raw.csv \
+  --output results/v100_scaling_full_summary.csv \
+  --markdown results/v100_scaling_full_report.md
+```
+
+Rows below the default 0.020 ms timing floor are retained for transparency but
+cannot define the reported peak or saturation batch.
+
+After all raw records are present, regenerate the V100 scaling, selector,
+external-baseline, and NCU analyses together without modifying raw data:
+
+```bash
+./scripts/reproduce_v100_analysis.sh
+```
+
+Evaluate the V100-calibrated selector without using the target shape's own
+timing:
+
+```bash
+python3 scripts/select_mapping.py --evaluate --top-k 3 \
+  --evaluation-output results/v100_mapping_selector_evaluation.csv \
+  --metrics-output results/v100_mapping_selector_metrics.json
+```
+
+Refresh matching-protocol external baselines with:
+
+```bash
+python3 scripts/run_external_baseline_suite.py --resume \
+  --fht-python /home/wt/.conda/envs/cubutterfly-baselines/bin/python \
+  --gpuntt-binary /tmp/gpuntt_merge_gap_bench \
+  --output results/v100_external_baselines_raw.csv
+
+python3 scripts/summarize_external_baseline_suite.py \
+  results/v100_external_baselines_raw.csv \
+  --output results/v100_external_baselines_summary.csv \
+  --markdown results/v100_external_baselines_report.md
+```
+
 ## 4. Generated Design Points
 
 The build invokes:

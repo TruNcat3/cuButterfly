@@ -11,6 +11,21 @@ void launch_cufftdx_block(std::uint32_t, const Complex32*, Complex32*, std::uint
     throw std::runtime_error("cufftdx-block was not enabled at build time");
 }
 
+bool cufftdx_fp64_block_available(std::uint32_t) noexcept { return false; }
+bool cufftdx_fp64_online_available(std::uint32_t, std::uint32_t, std::uint32_t) noexcept { return false; }
+
+void launch_cufftdx_fp64_block(std::uint32_t, const Complex64*, Complex64*, std::uint64_t, std::uint64_t,
+                               std::uint64_t, bool, bool) {
+    throw std::runtime_error("FP64 cufftdx-block was not enabled at build time");
+}
+
+void launch_cufftdx_fp64_online_reorder(std::uint32_t, std::uint32_t, const Complex64*, Complex64*, Complex64*,
+                                        const Complex64*, std::uint64_t, std::uint64_t, std::uint64_t, bool, bool,
+                                        CrossTwiddleMode, SharedLayout, std::uint32_t, std::uint32_t,
+                                        std::uint32_t, std::uint32_t) {
+    throw std::runtime_error("FP64 online cufftdx-block was not enabled at build time");
+}
+
 bool cufftdx_direct_available(std::uint32_t) noexcept { return false; }
 
 void launch_cufftdx_direct(std::uint32_t, const Complex32*, Complex32*, std::uint64_t, std::uint64_t,
@@ -18,9 +33,10 @@ void launch_cufftdx_direct(std::uint32_t, const Complex32*, Complex32*, std::uin
     throw std::runtime_error("cufftdx-direct was not enabled at build time");
 }
 
-void launch_cufftdx_online_reorder(std::uint32_t, std::uint32_t, const Complex32*, Complex32*, Complex32*,
+void launch_cufftdx_online_reorder(std::uint32_t, std::uint32_t, const Complex32*, Complex32*, Complex32*, Complex32*,
                                    const Complex32*, std::uint64_t, std::uint64_t, std::uint64_t, bool, bool,
-                                   CrossTwiddleMode, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t) {
+                                   CrossTwiddleMode, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t,
+                                   DirectBoundary) {
     throw std::runtime_error("cufftdx-block was not enabled at build time");
 }
 

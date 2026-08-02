@@ -4,7 +4,7 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
     set(CMAKE_CUDA_ARCHITECTURES 70 CACHE STRING "CUDA architectures to compile for")
 endif()
 
-project(cuButterfly VERSION 0.2.0 LANGUAGES CXX CUDA)
+project(cuButterfly VERSION 0.3.0 LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -34,16 +34,30 @@ set(CUBUTTERFLY_ARCHITECTURE_SPACE_SPEC "${CMAKE_CURRENT_SOURCE_DIR}/config/butt
     "Canonical operator-independent butterfly architecture-space specification")
 set(CUBUTTERFLY_FFT_CODEGEN_SPEC "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_fft_codegen.json" CACHE FILEPATH
     "Selected FFT template points compiled into this build")
+set(CUBUTTERFLY_FFT_PIPELINE_SPEC "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_fft_pipeline.json" CACHE FILEPATH
+    "FFT processing-unit and mapping search specification")
+set(CUBUTTERFLY_FFT_PIPELINE_CANDIDATES "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_fft_pipeline_candidates.json" CACHE FILEPATH
+    "Generated FFT pipeline candidate manifest")
+set(CUBUTTERFLY_FFT_DISPATCH_SPEC "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_fft_dispatch.json" CACHE FILEPATH
+    "Measured FFT mapping dispatch table")
 set(CUNTT_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CUNTT_DESIGN_SPEC}"
     "${CUBUTTERFLY_FFT_SPACE_SPEC}"
     "${CUBUTTERFLY_ARCHITECTURE_SPACE_SPEC}"
     "${CUBUTTERFLY_FFT_CODEGEN_SPEC}"
+    "${CUBUTTERFLY_FFT_PIPELINE_SPEC}"
+    "${CUBUTTERFLY_FFT_PIPELINE_CANDIDATES}"
+    "${CUBUTTERFLY_FFT_DISPATCH_SPEC}"
     "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_comprehensive_suite.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_space.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_suite.json"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/fft_design_space.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/butterfly_design_space.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_codegen.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_pipeline.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_dispatch.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_scaling_suite.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_design_points.py")
 file(MAKE_DIRECTORY "${CUNTT_GENERATED_DIR}")
 execute_process(
@@ -85,6 +99,35 @@ execute_process(
 if(NOT CUBUTTERFLY_FFT_CODEGEN_RESULT EQUAL 0)
     message(FATAL_ERROR "cuButterfly FFT code generation failed: ${CUBUTTERFLY_FFT_CODEGEN_ERROR}")
 endif()
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_scaling_suite.py"
+            --spec "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_space.json"
+            --check "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_suite.json"
+    RESULT_VARIABLE CUBUTTERFLY_SCALING_SUITE_RESULT
+    ERROR_VARIABLE CUBUTTERFLY_SCALING_SUITE_ERROR)
+if(NOT CUBUTTERFLY_SCALING_SUITE_RESULT EQUAL 0)
+    message(FATAL_ERROR "cuButterfly scaling-suite validation failed: ${CUBUTTERFLY_SCALING_SUITE_ERROR}")
+endif()
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_pipeline.py"
+            --pipeline "${CUBUTTERFLY_FFT_PIPELINE_SPEC}"
+            --architecture "${CUBUTTERFLY_FFT_SPACE_SPEC}"
+            --codegen "${CUBUTTERFLY_FFT_CODEGEN_SPEC}"
+            --check "${CUBUTTERFLY_FFT_PIPELINE_CANDIDATES}"
+    RESULT_VARIABLE CUBUTTERFLY_FFT_PIPELINE_RESULT
+    ERROR_VARIABLE CUBUTTERFLY_FFT_PIPELINE_ERROR)
+if(NOT CUBUTTERFLY_FFT_PIPELINE_RESULT EQUAL 0)
+    message(FATAL_ERROR "cuButterfly FFT pipeline validation failed: ${CUBUTTERFLY_FFT_PIPELINE_ERROR}")
+endif()
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_dispatch.py"
+            --dispatch "${CUBUTTERFLY_FFT_DISPATCH_SPEC}"
+            --header "${CUNTT_GENERATED_DIR}/generated_fft_dispatch.cuh"
+    RESULT_VARIABLE CUBUTTERFLY_FFT_DISPATCH_RESULT
+    ERROR_VARIABLE CUBUTTERFLY_FFT_DISPATCH_ERROR)
+if(NOT CUBUTTERFLY_FFT_DISPATCH_RESULT EQUAL 0)
+    message(FATAL_ERROR "cuButterfly FFT dispatch generation failed: ${CUBUTTERFLY_FFT_DISPATCH_ERROR}")
+endif()
 include("${CUNTT_GENERATED_DIR}/design_points.cmake")
 
 add_library(cuntt STATIC
@@ -100,7 +143,7 @@ if(CUBUTTERFLY_ENABLE_CUFFTDX)
             "cuFFTDx headers were not found under ${CUBUTTERFLY_MATHDX_ROOT}. "
             "Run scripts/install_cufftdx.sh or set CUBUTTERFLY_MATHDX_ROOT.")
     endif()
-    target_sources(cuntt PRIVATE src/cufftdx_fft.cu)
+    target_sources(cuntt PRIVATE src/cufftdx_fft.cu src/cufftdx_fft_fp64.cu)
     target_include_directories(cuntt SYSTEM PRIVATE "${CUBUTTERFLY_MATHDX_ROOT}/include")
     target_compile_definitions(cuntt PRIVATE CUBUTTERFLY_HAS_CUFFTDX=1)
 else()
@@ -191,4 +234,157 @@ if(BUILD_TESTING)
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_butterfly_design_space.py")
     add_test(NAME comprehensive_suite
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_comprehensive_suite.py")
+    add_test(NAME scaling_suite
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_scaling_suite.py")
+    add_test(NAME mapping_selector
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mapping_selector.py")
+    add_test(NAME external_baseline_suite
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_external_baseline_suite.py")
+    add_test(NAME scaling_ncu_analysis
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_scaling_ncu_analysis.py")
+    add_test(NAME fft_vectorized_ncu_analysis
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_vectorized_ncu.py")
+    add_test(NAME fp64_fft_ncu_analysis
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fp64_fft_ncu.py")
+    add_test(NAME fp64_fft_robustness_analysis
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fp64_fft_robustness.py")
+    add_test(NAME fft_pipeline_generator
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_pipeline_generator.py")
+    add_test(NAME fft_pipeline_runner
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_pipeline_runner.py")
+    add_test(NAME fft_pipeline_model
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_pipeline_model.py")
+    add_test(NAME fft_dispatch_generator
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_dispatch_generator.py")
+    if(CUBUTTERFLY_ENABLE_CUFFTDX)
+        add_test(NAME fft_fp64_cufftdx_block_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp64 --backend temporal-tile
+                         --fft-core cufftdx-block --tile-threads 32 --normalization none
+                         --logN 8 --batch 8 --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fp64_cufftdx_online_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                         --fft-core cufftdx-block --local-stages 8
+                         --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                         --normalization none --logN 16 --batch 2 --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fp64_cufftdx_online_inverse_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                         --fft-core cufftdx-block --local-stages 8
+                         --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                         --inverse --normalization inverse --logN 16 --batch 2
+                         --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fp64_cufftdx_recurrence_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                         --fft-core cufftdx-block --local-stages 8
+                         --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                         --cross-twiddle recurrence --normalization none --logN 16 --batch 2
+                         --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fp64_cufftdx_recurrence_inverse_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                         --fft-core cufftdx-block --local-stages 8
+                         --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                         --cross-twiddle recurrence --inverse --normalization inverse
+                         --logN 16 --batch 2 --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fp64_cufftdx_xor_swizzle_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                         --fft-core cufftdx-block --local-stages 8
+                         --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                         --cross-twiddle recurrence --shared-layout xor-swizzle
+                         --normalization none --logN 16 --batch 2 --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fp64_cufftdx_xor_swizzle_inverse_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                         --fft-core cufftdx-block --local-stages 8
+                         --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                         --cross-twiddle recurrence --shared-layout xor-swizzle --inverse
+                         --normalization inverse --logN 16 --batch 2 --warmup 1 --repeat 1 --verify)
+        foreach(fp64_shape IN ITEMS "14;7" "15;8" "17;8" "18;9")
+            list(GET fp64_shape 0 fp64_log_n)
+            list(GET fp64_shape 1 fp64_local_stages)
+            add_test(NAME fft_fp64_cufftdx_xor_logN${fp64_log_n}_correctness
+                     COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                             --fft-core cufftdx-block --local-stages ${fp64_local_stages}
+                             --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                             --cross-twiddle recurrence --shared-layout xor-swizzle
+                             --normalization none --logN ${fp64_log_n} --batch 2
+                             --warmup 1 --repeat 1 --verify)
+        endforeach()
+        foreach(fp64_shape IN ITEMS "14;7" "18;9")
+            list(GET fp64_shape 0 fp64_log_n)
+            list(GET fp64_shape 1 fp64_local_stages)
+            add_test(NAME fft_fp64_cufftdx_xor_logN${fp64_log_n}_inverse_correctness
+                     COMMAND cubutterfly_bench --operator fft --precision fp64 --backend online-reorder
+                             --fft-core cufftdx-block --local-stages ${fp64_local_stages}
+                             --prefix-threads 256 --prefix-ept 4 --suffix-threads 128 --suffix-ept 8
+                             --cross-twiddle recurrence --shared-layout xor-swizzle --inverse
+                             --normalization inverse --logN ${fp64_log_n} --batch 2
+                             --warmup 1 --repeat 1 --verify)
+        endforeach()
+        add_test(NAME fft_auto_dispatch_correctness
+                 COMMAND cubutterfly_bench --auto-select --operator fft --precision fp32
+                         --placement in-place --normalization none --logN 18 --batch 2
+                         --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_mixed_direct_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 9,11 --prefix-threads 256 --prefix-ept 8
+                         --suffix-threads 256 --suffix-ept 8 --cross-twiddle recurrence
+                         --placement in-place --normalization none --logN 20 --batch 1
+                         --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_tiled_transpose_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --local-stages 9 --prefix-threads 256 --prefix-ept 8
+                         --suffix-threads 256 --suffix-ept 8 --cross-twiddle recurrence
+                         --direct-boundary tiled-transpose --placement in-place --normalization none
+                         --logN 20 --batch 1 --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_prefix_tiled_transpose_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 11,9 --prefix-threads 256 --prefix-ept 8
+                         --suffix-threads 128 --suffix-ept 16 --cross-twiddle recurrence
+                         --direct-boundary prefix-tiled-transpose --placement in-place --normalization none
+                         --logN 20 --batch 1 --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_multisegment_d3_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 6,6,8
+                         --segment-threads 256,256,256 --segment-ept 8,8,8
+                         --boundary-twiddle recurrence,recurrence
+                         --placement in-place --normalization none --logN 20 --batch 1
+                         --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_multisegment_d4_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 5,5,5,5
+                         --segment-threads 256,256,256,256 --segment-ept 8,8,8,8
+                         --boundary-twiddle recurrence,table,recurrence
+                         --placement in-place --normalization none --logN 20 --batch 1
+                         --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fused_boundary_d3_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 7,3,10
+                         --segment-threads 128,128,256 --segment-ept 8,8,16
+                         --boundary-twiddle table,recurrence
+                         --boundary-residency fused,global-scratch
+                         --group-threads 512,512 --group-ept 8,8
+                         --placement in-place --normalization none --logN 20 --batch 1
+                         --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_fused_boundary_d4_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 5,5,5,5
+                         --segment-threads 128,128,128,128 --segment-ept 8,8,8,8
+                         --boundary-twiddle table,recurrence,table
+                         --boundary-residency fused,global-scratch,fused
+                         --group-threads 512,512 --group-ept 8,8
+                         --placement in-place --normalization none --logN 20 --batch 1
+                         --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_multisegment_inverse_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 6,6,6
+                         --segment-threads 256,256,256 --segment-ept 8,8,8
+                         --boundary-twiddle table,recurrence --inverse
+                         --placement out-of-place --normalization inverse --logN 18 --batch 1
+                         --warmup 1 --repeat 1 --verify)
+        add_test(NAME fft_multisegment_strided_correctness
+                 COMMAND cubutterfly_bench --operator fft --precision fp32 --backend online-reorder
+                         --fft-core cufftdx-block --stage-partition 4,4,4
+                         --segment-threads 128,128,128 --segment-ept 4,4,4
+                         --boundary-twiddle recurrence,table --element-stride 2 --batch-stride 8192
+                         --placement out-of-place --normalization none --logN 12 --batch 2
+                         --warmup 1 --repeat 1 --verify)
+    endif()
 endif()

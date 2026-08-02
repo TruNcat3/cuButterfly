@@ -1,0 +1,78 @@
+{
+  "schema_version": 2,
+  "target": "v100-sm70",
+  "processing_units": [
+    {
+      "id": "cufftdx-online-shared",
+      "family": "cufftdx-online",
+      "core": "cufftdx-block",
+      "exchange": "shared",
+      "status": "compiled",
+      "dimension_log_n": {"min": 3, "max": 10},
+      "threads": [128, 256, 512],
+      "elements_per_thread": [4, 8, 16],
+      "cross_twiddle": ["recurrence", "table"],
+      "estimated_registers_per_thread": {"default": 48, "logN10": 52}
+    },
+    {
+      "id": "cufftdx-large-online",
+      "family": "cufftdx-large-online",
+      "core": "cufftdx-direct",
+      "exchange": "direct-strided",
+      "direct_boundaries": ["direct-strided", "tiled-transpose", "prefix-tiled-transpose"],
+      "status": "compiled",
+      "dimension_log_n": {"min": 11, "max": 12},
+      "threads": [256, 512, 1024],
+      "elements_per_thread": [2, 4, 8, 16],
+      "cross_twiddle": ["recurrence", "table"]
+    }
+  ],
+  "mapping_spaces": [
+    {
+      "id": "fft18-fp32",
+      "operator": "fft", "precision": "fp32", "logN": 18,
+      "direction": "forward", "placement": "in-place", "normalization": "none",
+      "batches": [2, 16, 64],
+      "decomposition_space": {
+        "decomposition_count": {"min": 2, "max": 4},
+        "stages_per_decomposition": {"min": 3, "max": 12},
+        "compiled_decomposition_counts": [2, 3, 4]
+      },
+      "max_runnable_candidates_per_shape": 48,
+      "required_candidates": [
+        {"stage_partition": [9, 9],
+         "segment_mappings": [{"threads": 256, "ept": 8}, {"threads": 256, "ept": 8}],
+         "cross_twiddle": "recurrence"}
+      ]
+    },
+    {
+      "id": "fft20-fp32",
+      "operator": "fft", "precision": "fp32", "logN": 20,
+      "direction": "forward", "placement": "in-place", "normalization": "none",
+      "batches": [2, 8, 16],
+      "decomposition_space": {
+        "decomposition_count": {"min": 2, "max": 4},
+        "stages_per_decomposition": {"min": 3, "max": 12},
+        "compiled_decomposition_counts": [2, 3, 4]
+      },
+      "max_runnable_candidates_per_shape": 48,
+      "required_candidates": [
+        {"stage_partition": [10, 10],
+         "segment_mappings": [{"threads": 512, "ept": 8}, {"threads": 512, "ept": 8}],
+         "cross_twiddle": "recurrence"},
+        {"stage_partition": [10, 10],
+         "segment_mappings": [{"threads": 256, "ept": 16}, {"threads": 128, "ept": 16}],
+         "cross_twiddle": "recurrence"}
+      ]
+    }
+  ],
+  "selection": {
+    "max_runnable_candidates_per_shape": 12,
+    "retain_per_factorization_twiddle": 1,
+    "prefix_work_weight": 1.25,
+    "suffix_work_weight": 1.0,
+    "underfill_penalty": 0.5,
+    "imbalance_penalty": 0.1
+  },
+  "protocol": {"warmup": 100, "repeat": 50, "trials": 3, "seed": 20260724}
+}

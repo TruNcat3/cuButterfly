@@ -59,8 +59,9 @@ cmake -S . -B build \
 cmake --build build -j
 ```
 
-The cuFFTDx adapter supports FP32 forward/inverse local FFTs at `logN=3..10`,
-including strided and in-place plan semantics. The current TurboFFT artifact
+The cuFFTDx adapter supports FP32 forward/inverse block FFTs at `logN=3..10`
+and direct-strided online dimensions at `logN=11..12`, including strided and
+in-place plan semantics. The current TurboFFT artifact
 adapter supports the generated FP32 forward, contiguous, out-of-place kernels
 actually present upstream at `logN=7..10`.
 

@@ -1,0 +1,34 @@
+{
+  "static": {
+    "evaluated_shapes": 6,
+    "top1_exact_recall": 0.16666666666666666,
+    "top1_geomean_regret": 1.076176475816476,
+    "top1_worst_regret": 1.4220211861130443,
+    "top1_candidate_fraction": 0.020833333333333332,
+    "top3_exact_recall": 0.16666666666666666,
+    "top3_geomean_regret": 1.076176475816476,
+    "top3_worst_regret": 1.4220211861130443,
+    "top3_candidate_fraction": 0.0625,
+    "top10_exact_recall": 0.5,
+    "top10_geomean_regret": 1.0595721342083242,
+    "top10_worst_regret": 1.296914868939921,
+    "top10_candidate_fraction": 0.20833333333333334,
+    "mean_spearman": 0.34599033056997947
+  },
+  "calibrated": {
+    "evaluated_shapes": 6,
+    "mean_candidate_coverage": 0.9861111111111112,
+    "top1_exact_recall": 0,
+    "top1_geomean_regret": 1.0149371399354197,
+    "top1_worst_regret": 1.0799764338159101,
+    "top1_candidate_fraction": 0.020833333333333332,
+    "top3_exact_recall": 0.5,
+    "top3_geomean_regret": 1.0007159706702138,
+    "top3_worst_regret": 1.0019903704954436,
+    "top3_candidate_fraction": 0.0625,
+    "top10_exact_recall": 1,
+    "top10_geomean_regret": 1.0,
+    "top10_worst_regret": 1.0,
+    "top10_candidate_fraction": 0.20833333333333334
+  }
+}

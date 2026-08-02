@@ -1,0 +1,15 @@
+{
+  "method": "leave-one-complete-shape-out log-latency interpolation",
+  "scope": "V100 calibrated internal candidates",
+  "evaluated_shapes": 49,
+  "top_k": 3,
+  "top1_accuracy": 0.9387755102040817,
+  "topk_recall": 1,
+  "top3_recall": 1,
+  "geomean_regret": 1.0049205916018493,
+  "worst_regret": 1.1531778692272519,
+  "mean_candidates": 2,
+  "mean_returned": 2,
+  "search_space_reduction": 0.0,
+  "top1_search_space_reduction": 0.5
+}

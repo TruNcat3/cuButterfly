@@ -40,6 +40,28 @@ sudo chown -R "$USER:$USER" results/ncu_fft_architecture
 Override `LOG_N`, `BATCH`, and `LOCAL_STAGES` to reuse the script for another
 selected split.
 
+The paired 128-bit boundary optimization has a dedicated controlled capture.
+It profiles the pre-existing 512/512-thread mapping, the newly selected
+256/128-thread mapping, and cuFFT at `logN=20`, batch 16. The reducer compares
+the fixed mapping with the archived pre-vector capture before attributing the
+additional mapping-selection gain:
+
+```bash
+sudo -E ./scripts/profile_fft_vectorized_ncu.sh
+sudo chown -R "$USER:$USER" results/ncu_fft_vectorized
+```
+
+The script writes raw CSV, a pivoted summary, `attribution.csv`, and
+`attribution.md`. Override `BATCH` only when a matching archived pre-vector
+label exists.
+
+The archived V100 capture shows that vectorizing the same fixed mapping reduces
+warp instructions by 19.6%, CUDA-event time by 10.5%, and NCU replay time by
+9.3%, while DRAM writes remain unchanged. See
+`results/ncu_fft_vectorized/attribution.md`. The selected mapping is faster in
+CUDA-event timing but not under replay, reinforcing that NCU time is not the
+performance authority.
+
 ## Purpose
 
 The profiling run compares three implementations under the same modulus,
@@ -191,3 +213,28 @@ capacity and bandwidth from modular-arithmetic cost.
 
 The script assumes two cuNTT kernels at all supported Hybrid2D lengths, two
 GPU-NTT kernels through `logN=16`, and three GPU-NTT kernels above it.
+
+## Length/Batch Crossover Targets
+
+The orthogonal V100 scaling sweep selects FFT `logN=14/18/20` and FWHT
+`logN=15` crossover points for counter attribution. Collect all selected
+low/intermediate/saturated batches with administrator-enabled counters:
+
+```bash
+sudo -E ./scripts/profile_scaling_crossovers_ncu.sh
+sudo chown -R "$USER:$USER" results/ncu_scaling_crossovers
+
+python3 scripts/summarize_ncu.py \
+  results/ncu_scaling_crossovers/*.csv \
+  --output results/ncu_scaling_crossovers/summary.csv
+
+python3 scripts/analyze_scaling_ncu.py \
+  results/ncu_scaling_crossovers/summary.csv \
+  --output results/ncu_scaling_crossovers/attribution.csv \
+  --markdown results/ncu_scaling_crossovers/attribution.md
+```
+
+The script requests base profiling clocks. Compare grid waves, active warps,
+DRAM throughput, register/shared-memory limits, barrier stalls, and long
+scoreboard stalls across batch before comparing absolute NCU kernel time with
+the steady-state CUDA-event table.

@@ -18,6 +18,7 @@ METRICS = {
     "smsp__inst_executed.sum": ("warp_instructions", 1.0),
     "smsp__sass_thread_inst_executed_op_integer_pred_on.sum": ("integer_thread_instructions", 1.0),
     "smsp__sass_thread_inst_executed_op_fp32_pred_on.sum": ("fp32_thread_instructions", 1.0),
+    "smsp__sass_thread_inst_executed_op_fp64_pred_on.sum": ("fp64_thread_instructions", 1.0),
     "smsp__inst_executed_pipe_tensor.sum": ("tensor_warp_instructions", 1.0),
     "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": ("tensor_active_pct", 1.0),
     "sm__warps_active.avg.pct_of_peak_sustained_active": ("active_warps_pct", 1.0),

@@ -97,6 +97,23 @@ enum class CrossTwiddleMode {
 const char*      cross_twiddle_mode_name(CrossTwiddleMode mode) noexcept;
 CrossTwiddleMode parse_cross_twiddle_mode(const std::string& name);
 
+enum class DirectBoundary {
+    Strided,
+    TiledTranspose,
+    PrefixTiledTranspose,
+};
+
+const char*    direct_boundary_name(DirectBoundary boundary) noexcept;
+DirectBoundary parse_direct_boundary(const std::string& name);
+
+enum class FftBoundaryResidency {
+    GlobalScratch,
+    Fused,
+};
+
+const char*          fft_boundary_residency_name(FftBoundaryResidency residency) noexcept;
+FftBoundaryResidency parse_fft_boundary_residency(const std::string& name);
+
 enum class LocalExchange {
     SharedMemory,
     WarpRegister,
@@ -104,6 +121,14 @@ enum class LocalExchange {
 
 const char*   local_exchange_name(LocalExchange exchange) noexcept;
 LocalExchange parse_local_exchange(const std::string& name);
+
+enum class SharedLayout {
+    Linear,
+    XorSwizzle,
+};
+
+const char*  shared_layout_name(SharedLayout layout) noexcept;
+SharedLayout parse_shared_layout(const std::string& name);
 
 enum class FftCore {
     Scalar,
@@ -119,6 +144,19 @@ enum class FftCore {
 const char* fft_core_name(FftCore core) noexcept;
 FftCore     parse_fft_core(const std::string& name);
 
+struct FftSegmentMapping {
+    FftCore         core     = FftCore::CufftDxBlock;
+    LocalExchange   exchange = LocalExchange::SharedMemory;
+    std::uint32_t   threads  = 0;
+    std::uint32_t   ept      = 8;
+};
+
+struct FftBoundaryMapping {
+    CrossTwiddleMode cross_twiddle = CrossTwiddleMode::Table;
+    DirectBoundary   layout        = DirectBoundary::Strided;
+    FftBoundaryResidency residency = FftBoundaryResidency::GlobalScratch;
+};
+
 std::vector<ButterflyCapability> butterfly_capabilities();
 
 struct ButterflyConfig {
@@ -127,11 +165,18 @@ struct ButterflyConfig {
     ButterflyPrecision precision         = ButterflyPrecision::Fp32;
     ButterflyPlacement placement         = ButterflyPlacement::OutOfPlace;
     std::uint32_t      log_n             = 8;
+    // Ordered stage counts for each algorithmic decomposition segment.
+    std::vector<std::uint32_t> stage_partition;
+    std::vector<FftSegmentMapping> segment_mappings;
+    std::vector<FftBoundaryMapping> boundaries;
+    // Physical processing groups after fused logical boundaries are lowered.
+    std::vector<FftSegmentMapping> execution_group_mappings;
     std::size_t        batch             = 1;
     std::size_t        batch_stride      = 0;
     std::size_t        element_stride    = 1;
     bool               inverse           = false;
     bool               normalize_inverse = true;
+    bool               auto_select       = false;
     std::uint32_t      stage_space       = 0;
     StageHandoff       stage_handoff     = StageHandoff::NamedBarrier;
     std::uint32_t      tile_threads      = 128;
@@ -148,7 +193,9 @@ struct ButterflyConfig {
     ComputeUnit        compute_unit      = ComputeUnit::Radix2;
     ComplexMultiply    complex_multiply  = ComplexMultiply::FourMul;
     CrossTwiddleMode   cross_twiddle     = CrossTwiddleMode::Table;
+    DirectBoundary     direct_boundary   = DirectBoundary::Strided;
     LocalExchange      local_exchange    = LocalExchange::SharedMemory;
+    SharedLayout       shared_layout     = SharedLayout::Linear;
     FftCore            fft_core          = FftCore::Scalar;
 };
 

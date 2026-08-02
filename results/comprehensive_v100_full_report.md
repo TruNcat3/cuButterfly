@@ -62,7 +62,7 @@ their fastest internal implementation as the basis.
 | uint32 | forward | 20 | 1,048,576 | 4 | out-of-place, es=1, bs=1048576 | cuButterfly-online-radix4 | online-reorder / radix4 | 0.319304 | 0.013 | 13.136 | 1.000x | cuButterfly-online-radix4 | stable |
 | uint32 | forward | 20 | 1,048,576 | 4 | out-of-place, es=1, bs=1048576 | cuButterfly-hierarchical-radix4 | hierarchical / radix4 | 0.486994 | 0.008 | 8.613 | 0.656x | cuButterfly-online-radix4 | stable |
 
-## External Coverage Gaps
+## External Evidence
 
-- **fwht / Dao-AILab FHT**: not-runnable; PyTorch is not installed in the active Python environment. Existing evidence: `results/external_dao_fht_v100_summary.csv`.
-- **ntt / GPU-NTT**: not-runnable; the external comparator harness binary is not present. Existing evidence: `results/compact_stage_logN20.csv`.
+- **fwht / Dao-AILab FHT**: measured-matching-protocol; five-trial correctness-checked refresh is archived separately. Existing evidence: `results/v100_external_baselines_summary.csv`.
+- **ntt / GPU-NTT**: measured-matching-protocol; natural and native bit-reversed contracts are archived separately. Existing evidence: `results/v100_external_baselines_summary.csv`.

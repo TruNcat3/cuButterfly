@@ -35,7 +35,8 @@ search the product of both spaces.
 | Operator | Stage group | Arithmetic/coefficient choices | Mapping support |
 |:--|:--|:--|:--|
 | FFT FP32/FP64 | radix-2, fused radix-4, fused radix-8 | four-multiply, Gauss three-multiply, FP32 thread-register DFT8 | temporal, hierarchical, online-reorder; generated DFT8 point |
-| FFT FP32 optional | cuFFTDx block FFT, TurboFFT generated FFT | imported local codelet transport and arithmetic | temporal full-local points; cuFFTDx `logN=3..10`, TurboFFT `logN=7..10` |
+| FFT FP32 optional | cuFFTDx block/direct FFT, TurboFFT generated FFT | imported local codelet transport and arithmetic | cuFFTDx online dimensions `logN=3..12`, TurboFFT `logN=7..10` |
+| FFT FP64 optional | cuFFTDx block FFT | imported double-precision local codelet | temporal `logN=3..10`; online `logN=16` with an `8+8` decomposition |
 | FFT mixed | temporally fused DFT8 matrix | FP16 WMMA input with FP32 accumulation/output | generated temporal point |
 | FWHT FP32/FP64 | radix-2, fused radix-4, fused radix-8 | add/subtract; FP32 register-vector/XOR-swizzle exchange | temporal, hierarchical, online-reorder |
 | XOR-zeta uint32 | radix-2, fused radix-4, fused radix-8 | add/subtract modulo `2^32` | temporal, hierarchical, online-reorder |
@@ -153,6 +154,134 @@ Reproduce the constrained search with:
 
 Primary records are `results/fft_architecture_explore_v100_{search,confirm,summary}.csv`
 and `results/fft_architecture_logN18_confirm_v100_{confirm,summary}.csv`.
+
+### FP64 processing-unit isolation
+
+The FP64 `logN=16`, batch-64 case separates mapping and local-unit effects in
+three ordered experiments. A 264-point scalar scan covers decomposition,
+radix, complex multiplication, CTA width, and reorder columns. It moves the
+original 0.534313 ms point to a 0.521492 ms confirmed result (`8+8`, radix-4,
+128 threads), or 0.658x cuFFT throughput. Replacing both local dimensions with
+`Precision<double>()` cuFFTDx codelets and independently scanning their CTA/EPT
+axes selects prefix `256/4` and suffix `128/8`.
+
+| FP64 implementation | Median ms | Throughput vs cuFFT |
+|:--|--:|--:|
+| scalar comprehensive point | 0.534313 | 0.642x |
+| scalar mapping winner, current build | 0.521226 | 0.658x |
+| cuFFTDx `8+8`, table twiddle, current build | 0.369459 | 0.928x |
+| cuFFTDx `8+8`, recurrence twiddle, current build | 0.345027 | 0.994x |
+| cuFFTDx `8+8`, recurrence + strength-reduced XOR | 0.342098 | 1.002x |
+| cuFFT, current build | 0.342856 | 1.000x |
+
+The five current-build rows use five independent trials, 1000 warmups, and 100 timed
+repetitions; all FP64 cuFFTDx local, online-forward, and normalized-inverse
+paths pass automated correctness tests. The imported table unit reduces the
+selected scalar latency by 29.1%, recurrence raises that reduction to 33.8%,
+and strength-reduced XOR raises it to 34.4%, so the former FP64 deficit is
+primarily a physical-core and mapping maturity issue rather than evidence
+against the architecture-level
+space/time decomposition. `scripts/profile_fp64_fft_ncu.sh` fixes the scalar,
+table, recurrence, and cuFFT mappings for privileged boundary attribution.
+Reproduce the original design sequence with `scripts/benchmark_fp64_fft_units.sh`,
+the focused address-path result with `scripts/benchmark_fp64_fft_address_path.sh`,
+and counters with `scripts/profile_fp64_fft_ncu.sh`. Raw and ranked records are
+`results/fp64_*logN16*.csv`.
+
+The first prefix optimization replaces four EPT4 twiddle-table reads per
+thread with two initial reads and register recurrence. The selected mapping
+remains prefix `256/4`, suffix `128/8` across the full 36-point rescan, while
+latency falls from 0.383949 ms to 0.361708 ms (5.8%). Simple `pitch+1` shared
+padding is a negative result: prefix-only and both-pass variants take 0.398039
+and 0.397609 ms, while suffix-only is statistically neutral at 0.383765 ms.
+The conflict count therefore identifies real exchange overhead, but uniform
+padding is not an efficient realization on V100.
+
+An equal-capacity XOR swizzle succeeds where padding fails. It maps the prefix
+shared slot as `slot XOR ((element >> 1) & (FFTsPerBlock-1))`, spreading the
+fixed-transform access across bank groups without changing logical ownership,
+global layout, or shared allocation. With recurrence and the same selected
+mapping, it lowers latency from 0.361708 ms to 0.353526 ms (2.3%). A full
+36-point scan retains prefix `256/4`, suffix `128/8`, confirming that the gain
+is orthogonal to CTA/EPT selection. NCU confirms that it cuts prefix shared
+conflicts by 53.5% and prefix replay by 5.3%, raising peak DRAM utilization
+from 72.9% to 77.0%. Suffix replay decreases by only 0.5%, while the prefix
+executes 10.0% more warp instructions; strength-reducing the swizzled address
+path is therefore the next local optimization. That optimization is now implemented:
+each staging loop computes the physical slot once and advances its shared
+pointer by the CTA stride, while transform identity, batch identity, and global
+address increments are hoisted out of the loop. Compile-time period checks
+guard all generated CTA/EPT specializations. It reduces current-build linear
+recurrence to 0.345027 ms and XOR to 0.342098 ms, a further 0.8% reduction over
+linear and 3.2% over the former XOR result, without local spills.
+
+The fixed privileged capture below predates address strength reduction, is
+preserved in commit `7892666`, and confirms the recurrence and swizzle
+mechanisms. It reduces prefix replay from
+249.824 us to 206.016 us (17.5%), warp instructions by 6.9%,
+and raises peak DRAM use from 60.2% to 72.9%. This costs 8.4% more prefix FP64
+instructions but does not change registers, shared allocation, or waves/SM.
+The suffix is effectively unchanged, confirming that the measured gain belongs to
+the prefix twiddle policy. Against cuFFT, the recurrence path transfers 1.006x
+the bytes and executes 1.023x the FP64 instructions, but still executes 2.06x
+the warp instructions and incurs about 145x the shared-bank conflicts. With
+XOR swizzle, total replay is 367.648 us versus cuFFT's 361.120 us, a 1.8% gap;
+the authoritative CUDA-event gap is 3.1%. It still executes 2.19x cuFFT's warp
+instructions and incurs about 100x its shared conflicts. The remaining work is
+therefore shared exchange and general address work, not twiddle service,
+occupancy, or FP64 arithmetic throughput.
+
+The refreshed optimized capture validates the address-strength-reduction
+mechanism. Relative to the prior XOR prefix, warp instructions fall from
+22.020M to 16.122M (26.8%), replay falls from 195.008 us to 178.912 us (8.3%),
+and shared conflicts fall from 2.794M to 2.552M (8.6%); suffix replay changes
+by less than 0.4%. Total XOR replay is 350.880 us versus cuFFT's 359.744 us,
+2.5% lower. The optimized path still executes 1.83x cuFFT's warp instructions,
+3.62x its integer instructions, and 113.7x its shared conflicts, but reaches
+85.5% peak DRAM utilization with lower long-scoreboard stall. Prefix registers
+rise from 48 to 64 and the register block limit falls from 5 to 4. The result
+therefore demonstrates an explicit trade: additional induction state reduces
+dynamic address work enough to outweigh lower occupancy. See
+`results/ncu_fp64_fft/analysis.md`.
+
+Recollect and regenerate the current optimized attribution with:
+
+```bash
+./scripts/profile_fp64_fft_ncu.sh
+```
+
+### FP64 length and batch robustness
+
+The physical-unit templates now instantiate segment sizes 128, 256, and 512,
+covering two-segment totals `logN=14..18`. The architecture parameters remain
+shape-dependent: a 648-point scan over split direction, both CTA/EPT mappings,
+and shared layout selects the following equal-`2^22`-point winners.
+
+| logN | Batch | Split | Prefix | Suffix | cuButterfly ms | cuFFT ms | Throughput |
+|--:|--:|:--|:--|:--|--:|--:|--:|
+| 14 | 256 | `7+7` | `128/4` | `128/4` | 0.340173 | 0.344433 | 1.013x |
+| 15 | 128 | `7+8` | `128/4` | `128/8` | 0.338852 | 0.342753 | 1.012x |
+| 16 | 64 | `8+8` | `128/8` | `128/8` | 0.339364 | 0.343040 | 1.011x |
+| 17 | 32 | `8+9` | `128/8` | `256/8` | 0.346307 | 0.395213 | 1.141x |
+| 18 | 16 | `9+9` | `256/8` | `256/8` | 0.354877 | 0.421970 | 1.189x |
+
+The formal length/batch matrix alternates implementation order within each of
+five trials. Of 25 shapes above the 0.020-ms timing floor, 20 have a faster
+median and 19 have non-overlapping faster ranges. All 13 stable `logN=17/18`
+shapes are faster. Remaining deficits occur at five `logN=14..16` medium-batch
+crossovers (0.1%-3.2%); targeted exhaustive remapping does not consistently
+remove them, localizing the next work in launch/boundary overhead rather than
+the mapping selector. Reproduce with:
+
+```bash
+./scripts/benchmark_fp64_fft_robustness_mapping.sh
+python3 scripts/benchmark_fp64_fft_robustness.py \
+  --output results/fp64_robustness_batch_raw.csv
+python3 scripts/analyze_fp64_fft_robustness.py \
+  results/fp64_robustness_batch_raw.csv \
+  --output results/fp64_robustness_batch_summary.csv \
+  --markdown results/fp64_robustness_batch_analysis.md
+```
 
 ### Resident and direct granularity experiment
 

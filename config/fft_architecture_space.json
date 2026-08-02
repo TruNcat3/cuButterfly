@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "model": "two-dimensional-space-time-butterfly",
+  "model": "parameterized-factorization-two-axis-space-time-butterfly",
   "hardware_profiles": {
     "v100-sm70": {
       "sm_count": 80,
@@ -14,7 +14,11 @@
   },
   "axes": {
     "log_n": {"min": 1, "max": 20},
-    "decomposition": ["single-unit", "two-dimensional", "multi-dimensional"],
+    "decomposition": {
+      "decomposition_count": {"min": 1, "max": 8},
+      "stage_partition": "ordered-composition",
+      "constraint": "sum(stages_per_decomposition)=log_n"
+    },
     "precision": ["fp16-fp32", "fp32", "fp64"],
     "direction": ["forward", "inverse"],
     "placement": ["out-of-place", "in-place"],
@@ -40,7 +44,7 @@
   "families": [
     {
       "name": "cufftdx-online",
-      "decomposition": "two-dimensional",
+      "decomposition_count": "parameterized",
       "prefix_core": "cufftdx-block",
       "suffix_core": "cufftdx-block",
       "boundary": "global-scratch",
@@ -51,19 +55,19 @@
     },
     {
       "name": "cufftdx-large-online",
-      "decomposition": "two-dimensional",
+      "decomposition_count": "parameterized",
       "prefix_core": "cufftdx-block-or-direct",
       "suffix_core": "cufftdx-block-or-direct",
       "boundary": "global-scratch",
       "reorder": "direct-strided-or-transpose",
       "precision": ["fp32"],
       "cross_twiddle": ["table", "recurrence"],
-      "dimension_log_n": {"min": 3, "max": 14},
-      "status": "requires-new-kernel"
+      "dimension_log_n": {"min": 3, "max": 12},
+      "status": "compiled-direct-strided-and-directional-transpose"
     },
     {
       "name": "resident-composition",
-      "decomposition": "two-dimensional",
+      "decomposition_count": "parameterized",
       "boundary": "shared-resident",
       "reorder": "online-tiled",
       "precision": ["fp32"],
@@ -71,7 +75,7 @@
     },
     {
       "name": "mixed-core-composition",
-      "decomposition": "two-dimensional",
+      "decomposition_count": "parameterized",
       "boundary": "global-scratch",
       "reorder": "online-tiled-or-transpose",
       "precision": ["fp16-fp32", "fp32", "fp64"],
@@ -79,7 +83,7 @@
     },
     {
       "name": "single-whole-transform",
-      "decomposition": "single-unit",
+      "decomposition_count": 1,
       "boundary": "none",
       "reorder": "direct-strided",
       "precision": ["fp32"],

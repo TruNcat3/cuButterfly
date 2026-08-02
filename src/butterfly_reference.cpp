@@ -51,7 +51,7 @@ std::vector<ButterflyCapability> butterfly_capabilities() {
         {ButterflyBackend::Hierarchical, 6, 20, true, true, true, false, false, false, false, true, true, true, true, false, true, true, true,
          "local_stages=5..10 and local_stages<logN"},
         {ButterflyBackend::OnlineReorder, 6, 20, true, true, true, false, false, false, false, true, true, true, true, false, true, true, true,
-         "local_stages and remaining stages are each <=10"},
+         "scalar dimensions are <=10; cuFFTDx mixed block/direct dimensions are <=12"},
         {ButterflyBackend::WarpHybrid, 8, 8, true, false, false, false, false, false, false, true, true, true, true, false, true, true, true, "N=256"},
         {ButterflyBackend::StagePipeline, 8, 8, true, false, false, false, false, false, false, true, true, true, true, false, true, true, true,
          "FP64 complex exceeds V100 CTA shared memory"},
@@ -96,6 +96,46 @@ CrossTwiddleMode parse_cross_twiddle_mode(const std::string& name) {
     throw std::invalid_argument("unknown cross twiddle mode: " + name);
 }
 
+const char* direct_boundary_name(DirectBoundary boundary) noexcept {
+    switch (boundary) {
+        case DirectBoundary::Strided:
+            return "direct-strided";
+        case DirectBoundary::TiledTranspose:
+            return "tiled-transpose";
+        case DirectBoundary::PrefixTiledTranspose:
+            return "prefix-tiled-transpose";
+    }
+    return "unknown";
+}
+
+DirectBoundary parse_direct_boundary(const std::string& name) {
+    if (name == "direct-strided")
+        return DirectBoundary::Strided;
+    if (name == "tiled-transpose")
+        return DirectBoundary::TiledTranspose;
+    if (name == "prefix-tiled-transpose")
+        return DirectBoundary::PrefixTiledTranspose;
+    throw std::invalid_argument("unknown direct boundary: " + name);
+}
+
+const char* fft_boundary_residency_name(FftBoundaryResidency residency) noexcept {
+    switch (residency) {
+        case FftBoundaryResidency::GlobalScratch:
+            return "global-scratch";
+        case FftBoundaryResidency::Fused:
+            return "fused";
+    }
+    return "unknown";
+}
+
+FftBoundaryResidency parse_fft_boundary_residency(const std::string& name) {
+    if (name == "global-scratch")
+        return FftBoundaryResidency::GlobalScratch;
+    if (name == "fused")
+        return FftBoundaryResidency::Fused;
+    throw std::invalid_argument("unknown FFT boundary residency: " + name);
+}
+
 const char* local_exchange_name(LocalExchange exchange) noexcept {
     switch (exchange) {
         case LocalExchange::SharedMemory:
@@ -112,6 +152,24 @@ LocalExchange parse_local_exchange(const std::string& name) {
     if (name == "warp-register")
         return LocalExchange::WarpRegister;
     throw std::invalid_argument("unknown local exchange: " + name);
+}
+
+const char* shared_layout_name(SharedLayout layout) noexcept {
+    switch (layout) {
+        case SharedLayout::Linear:
+            return "linear";
+        case SharedLayout::XorSwizzle:
+            return "xor-swizzle";
+    }
+    return "unknown";
+}
+
+SharedLayout parse_shared_layout(const std::string& name) {
+    if (name == "linear")
+        return SharedLayout::Linear;
+    if (name == "xor-swizzle")
+        return SharedLayout::XorSwizzle;
+    throw std::invalid_argument("unknown shared layout: " + name);
 }
 
 const char* fft_core_name(FftCore core) noexcept {

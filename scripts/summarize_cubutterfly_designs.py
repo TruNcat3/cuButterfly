@@ -5,7 +5,7 @@ import pathlib
 import statistics
 
 
-CONFIG_FIELDS = ("backend", "compute_unit", "complex_multiply", "cross_twiddle", "local_exchange", "fft_core", "stage_space", "tile_threads", "prefix_threads", "suffix_threads", "prefix_ept", "suffix_ept", "prefix_units_per_cta", "suffix_units_per_cta", "local_stages", "reorder_columns", "warp_stages", "pipeline_warps", "stage_handoff")
+CONFIG_FIELDS = ("backend", "compute_unit", "complex_multiply", "cross_twiddle", "local_exchange", "shared_layout", "fft_core", "stage_space", "tile_threads", "prefix_threads", "suffix_threads", "prefix_ept", "suffix_ept", "prefix_units_per_cta", "suffix_units_per_cta", "local_stages", "reorder_columns", "warp_stages", "pipeline_warps", "stage_handoff")
 GROUP_FIELDS = ("operator", "precision", "direction", "normalization", "placement", "logN", "N", "batch", "element_stride", "batch_stride")
 
 
@@ -24,7 +24,8 @@ def main():
 
     groups = {}
     for row in rows:
-        key = tuple(row.get(field, "0") for field in GROUP_FIELDS + CONFIG_FIELDS)
+        key = tuple((row.get(field) or "linear") if field == "shared_layout" else row.get(field, "0")
+                    for field in GROUP_FIELDS + CONFIG_FIELDS)
         groups.setdefault(key, []).append(row)
 
     summaries = []

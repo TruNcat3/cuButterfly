@@ -19,11 +19,11 @@
     {"id": "fft14_cufft", "tier": "quick", "group": "fft-fp32-fwd-log14", "runner": "fft-library", "implementation": "cuFFT", "reference": true, "operator": "fft", "precision": "fp32", "logN": 14, "args": ["--library", "cufft"]},
     {"id": "fft14_vkfft", "tier": "quick", "group": "fft-fp32-fwd-log14", "runner": "fft-library", "implementation": "VkFFT", "operator": "fft", "precision": "fp32", "logN": 14, "args": ["--library", "vkfft"]},
 
-    {"id": "fft18_cub", "tier": "quick", "group": "fft-fp32-fwd-log18", "runner": "butterfly", "implementation": "cuButterfly-cuFFTDx-online", "operator": "fft", "precision": "fp32", "logN": 18, "args": ["--backend", "online-reorder", "--fft-core", "cufftdx-block", "--local-stages", "9", "--reorder-columns", "1", "--cross-twiddle", "recurrence", "--prefix-threads", "256", "--suffix-threads", "256", "--prefix-ept", "8", "--suffix-ept", "8", "--precision", "fp32", "--operator", "fft", "--placement", "in-place", "--normalization", "none"]},
+    {"id": "fft18_cub", "tier": "quick", "group": "fft-fp32-fwd-log18", "runner": "butterfly", "implementation": "cuButterfly-auto-vectorized", "operator": "fft", "precision": "fp32", "logN": 18, "args": ["--auto-select", "--precision", "fp32", "--operator", "fft", "--placement", "in-place", "--normalization", "none"]},
     {"id": "fft18_cufft", "tier": "quick", "group": "fft-fp32-fwd-log18", "runner": "fft-library", "implementation": "cuFFT", "reference": true, "operator": "fft", "precision": "fp32", "logN": 18, "args": ["--library", "cufft"]},
     {"id": "fft18_vkfft", "tier": "quick", "group": "fft-fp32-fwd-log18", "runner": "fft-library", "implementation": "VkFFT", "operator": "fft", "precision": "fp32", "logN": 18, "args": ["--library", "vkfft"]},
 
-    {"id": "fft20_cub", "tier": "quick", "group": "fft-fp32-fwd-log20", "runner": "butterfly", "implementation": "cuButterfly-cuFFTDx-online", "operator": "fft", "precision": "fp32", "logN": 20, "args": ["--backend", "online-reorder", "--fft-core", "cufftdx-block", "--local-stages", "10", "--reorder-columns", "1", "--cross-twiddle", "recurrence", "--prefix-threads", "512", "--suffix-threads", "512", "--prefix-ept", "8", "--suffix-ept", "8", "--precision", "fp32", "--operator", "fft", "--placement", "in-place", "--normalization", "none"]},
+    {"id": "fft20_cub", "tier": "quick", "group": "fft-fp32-fwd-log20", "runner": "butterfly", "implementation": "cuButterfly-auto-vectorized", "operator": "fft", "precision": "fp32", "logN": 20, "args": ["--auto-select", "--precision", "fp32", "--operator", "fft", "--placement", "in-place", "--normalization", "none"]},
     {"id": "fft20_cufft", "tier": "quick", "group": "fft-fp32-fwd-log20", "runner": "fft-library", "implementation": "cuFFT", "reference": true, "operator": "fft", "precision": "fp32", "logN": 20, "args": ["--library", "cufft"]},
     {"id": "fft20_vkfft", "tier": "quick", "group": "fft-fp32-fwd-log20", "runner": "fft-library", "implementation": "VkFFT", "operator": "fft", "precision": "fp32", "logN": 20, "args": ["--library", "vkfft"]},
 
@@ -57,7 +57,7 @@
     {"id": "ntt16_60_inverse", "tier": "full", "group": "ntt-u60-inverse-log16", "runner": "ntt", "implementation": "cuNTT-Hybrid2D-radix2", "operator": "ntt", "precision": "uint64", "direction": "inverse", "modulus_bits": 60, "logN": 16, "args": ["--backend", "hybrid2d", "--compute-unit", "radix2", "--word-bits", "64", "--cross-twiddle", "fused", "--output-order", "natural", "--inverse"]}
   ],
   "external_evidence": [
-    {"operator": "fwht", "implementation": "Dao-AILab FHT", "status": "not-runnable", "reason": "PyTorch is not installed in the active Python environment", "existing_result": "results/external_dao_fht_v100_summary.csv"},
-    {"operator": "ntt", "implementation": "GPU-NTT", "status": "not-runnable", "reason": "the external comparator harness binary is not present", "existing_result": "results/compact_stage_logN20.csv"}
+    {"operator": "fwht", "implementation": "Dao-AILab FHT", "status": "measured-matching-protocol", "reason": "five-trial correctness-checked refresh is archived separately", "existing_result": "results/v100_external_baselines_summary.csv"},
+    {"operator": "ntt", "implementation": "GPU-NTT", "status": "measured-matching-protocol", "reason": "natural and native bit-reversed contracts are archived separately", "existing_result": "results/v100_external_baselines_summary.csv"}
   ]
 }

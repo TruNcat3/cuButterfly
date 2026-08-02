@@ -121,19 +121,64 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_fir
     const std::uint32_t flat_thread = threadIdx.y * blockDim.x + threadIdx.x;
     const std::uint32_t flat_threads = blockDim.x * blockDim.y;
     constexpr std::uint32_t tile_values = FFT::input_length * FFT::ffts_per_block;
-    for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
-        const std::uint32_t element = work / FFT::ffts_per_block;
-        const std::uint32_t slot    = work - element * FFT::ffts_per_block;
-        const std::uint64_t staged_transform = static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
-        const bool staged_active = staged_transform < total_local;
-        if (staged_active) {
-            const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
-            const std::uint32_t staged_n2 = static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
-            const std::uint64_t logical = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
-            const Complex32 value = input[staged_batch * batch_distance + logical * element_stride];
-            tile[work] = Value{value.real, value.imag};
+    // Pair adjacent transforms when the boundary layout permits aligned 128-bit transactions.
+    if constexpr (FFT::ffts_per_block >= 2 && (FFT::ffts_per_block & 1) == 0) {
+        if (remaining_n >= 2 && element_stride == 1 && (batch_distance & 1) == 0) {
+            constexpr std::uint32_t tile_pairs = tile_values / 2;
+            for (std::uint32_t pair = flat_thread; pair < tile_pairs; pair += flat_threads) {
+                const std::uint32_t work    = pair * 2;
+                const std::uint32_t element = work / FFT::ffts_per_block;
+                const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+                const std::uint64_t staged_transform =
+                    static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+                if (staged_transform + 1 < total_local) {
+                    const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
+                    const std::uint32_t staged_n2 =
+                        static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+                    const std::uint64_t logical = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
+                    reinterpret_cast<float4*>(tile)[pair] =
+                        *reinterpret_cast<const float4*>(input + staged_batch * batch_distance + logical);
+                } else {
+                    tile[work] = Value{0.0F, 0.0F};
+                    tile[work + 1] = Value{0.0F, 0.0F};
+                }
+            }
         } else {
-            tile[work] = Value{0.0F, 0.0F};
+            for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+                const std::uint32_t element = work / FFT::ffts_per_block;
+                const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+                const std::uint64_t staged_transform =
+                    static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+                const bool staged_active = staged_transform < total_local;
+                if (staged_active) {
+                    const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
+                    const std::uint32_t staged_n2 =
+                        static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+                    const std::uint64_t logical = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
+                    const Complex32 value = input[staged_batch * batch_distance + logical * element_stride];
+                    tile[work] = Value{value.real, value.imag};
+                } else {
+                    tile[work] = Value{0.0F, 0.0F};
+                }
+            }
+        }
+    } else {
+        for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+            const std::uint32_t element = work / FFT::ffts_per_block;
+            const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+            const std::uint64_t staged_transform =
+                static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+            const bool staged_active = staged_transform < total_local;
+            if (staged_active) {
+                const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
+                const std::uint32_t staged_n2 =
+                    static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+                const std::uint64_t logical = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
+                const Complex32 value = input[staged_batch * batch_distance + logical * element_stride];
+                tile[work] = Value{value.real, value.imag};
+            } else {
+                tile[work] = Value{0.0F, 0.0F};
+            }
         }
     }
     __syncthreads();
@@ -178,16 +223,56 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_fir
         k1 += FFT::stride;
     }
     __syncthreads();
-    for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
-        const std::uint32_t element = work / FFT::ffts_per_block;
-        const std::uint32_t slot    = work - element * FFT::ffts_per_block;
-        const std::uint64_t staged_transform = static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
-        if (staged_transform < total_local) {
-            const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
-            const std::uint32_t staged_n2 = static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
-            const std::uint64_t reordered = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
-            const Value value = tile[work];
-            scratch[staged_batch * batch_distance + reordered * element_stride] = {value.x, value.y};
+    if constexpr (FFT::ffts_per_block >= 2 && (FFT::ffts_per_block & 1) == 0) {
+        if (remaining_n >= 2 && element_stride == 1 && (batch_distance & 1) == 0) {
+            constexpr std::uint32_t tile_pairs = tile_values / 2;
+            for (std::uint32_t pair = flat_thread; pair < tile_pairs; pair += flat_threads) {
+                const std::uint32_t work    = pair * 2;
+                const std::uint32_t element = work / FFT::ffts_per_block;
+                const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+                const std::uint64_t staged_transform =
+                    static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+                if (staged_transform + 1 < total_local) {
+                    const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
+                    const std::uint32_t staged_n2 =
+                        static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+                    const std::uint64_t reordered =
+                        static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
+                    *reinterpret_cast<float4*>(scratch + staged_batch * batch_distance + reordered) =
+                        reinterpret_cast<const float4*>(tile)[pair];
+                }
+            }
+        } else {
+            for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+                const std::uint32_t element = work / FFT::ffts_per_block;
+                const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+                const std::uint64_t staged_transform =
+                    static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+                if (staged_transform < total_local) {
+                    const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
+                    const std::uint32_t staged_n2 =
+                        static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+                    const std::uint64_t reordered =
+                        static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
+                    const Value value = tile[work];
+                    scratch[staged_batch * batch_distance + reordered * element_stride] = {value.x, value.y};
+                }
+            }
+        }
+    } else {
+        for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+            const std::uint32_t element = work / FFT::ffts_per_block;
+            const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+            const std::uint64_t staged_transform =
+                static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+            if (staged_transform < total_local) {
+                const std::uint64_t staged_batch = staged_transform >> remaining_log_n;
+                const std::uint32_t staged_n2 =
+                    static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
+                const std::uint64_t reordered = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
+                const Value value = tile[work];
+                scratch[staged_batch * batch_distance + reordered * element_stride] = {value.x, value.y};
+            }
         }
     }
 }
@@ -242,18 +327,327 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_sec
     const std::uint32_t flat_thread = threadIdx.y * blockDim.x + threadIdx.x;
     const std::uint32_t flat_threads = blockDim.x * blockDim.y;
     constexpr std::uint32_t tile_values = FFT::output_length * FFT::ffts_per_block;
-    for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
-        const std::uint32_t element = work / FFT::ffts_per_block;
-        const std::uint32_t slot    = work - element * FFT::ffts_per_block;
-        const std::uint64_t staged_transform = static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
-        if (staged_transform < total_local) {
-            const std::uint64_t staged_batch = staged_transform >> local_log_n;
-            const std::uint32_t staged_k1 = static_cast<std::uint32_t>(staged_transform) & (local_n - 1);
-            const std::uint64_t logical = static_cast<std::uint64_t>(element) * local_n + staged_k1;
-            const Value value = tile[work];
-            output[staged_batch * batch_distance + logical * element_stride] = {value.x, value.y};
+    if constexpr (FFT::ffts_per_block >= 2 && (FFT::ffts_per_block & 1) == 0) {
+        if (element_stride == 1 && (batch_distance & 1) == 0) {
+            constexpr std::uint32_t tile_pairs = tile_values / 2;
+            for (std::uint32_t pair = flat_thread; pair < tile_pairs; pair += flat_threads) {
+                const std::uint32_t work    = pair * 2;
+                const std::uint32_t element = work / FFT::ffts_per_block;
+                const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+                const std::uint64_t staged_transform =
+                    static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+                if (staged_transform + 1 < total_local) {
+                    const std::uint64_t staged_batch = staged_transform >> local_log_n;
+                    const std::uint32_t staged_k1 =
+                        static_cast<std::uint32_t>(staged_transform) & (local_n - 1);
+                    const std::uint64_t logical = static_cast<std::uint64_t>(element) * local_n + staged_k1;
+                    *reinterpret_cast<float4*>(output + staged_batch * batch_distance + logical) =
+                        reinterpret_cast<const float4*>(tile)[pair];
+                }
+            }
+        } else {
+            for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+                const std::uint32_t element = work / FFT::ffts_per_block;
+                const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+                const std::uint64_t staged_transform =
+                    static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+                if (staged_transform < total_local) {
+                    const std::uint64_t staged_batch = staged_transform >> local_log_n;
+                    const std::uint32_t staged_k1 =
+                        static_cast<std::uint32_t>(staged_transform) & (local_n - 1);
+                    const std::uint64_t logical = static_cast<std::uint64_t>(element) * local_n + staged_k1;
+                    const Value value = tile[work];
+                    output[staged_batch * batch_distance + logical * element_stride] = {value.x, value.y};
+                }
+            }
+        }
+    } else {
+        for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+            const std::uint32_t element = work / FFT::ffts_per_block;
+            const std::uint32_t slot    = work - element * FFT::ffts_per_block;
+            const std::uint64_t staged_transform =
+                static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+            if (staged_transform < total_local) {
+                const std::uint64_t staged_batch = staged_transform >> local_log_n;
+                const std::uint32_t staged_k1 =
+                    static_cast<std::uint32_t>(staged_transform) & (local_n - 1);
+                const std::uint64_t logical = static_cast<std::uint64_t>(element) * local_n + staged_k1;
+                const Value value = tile[work];
+                output[staged_batch * batch_distance + logical * element_stride] = {value.x, value.y};
+            }
         }
     }
+}
+
+struct StagePartitionDescriptor {
+    std::uint32_t count;
+    std::uint32_t input_shift[8];
+    std::uint32_t output_shift[8];
+    std::uint32_t mask[8];
+};
+
+__device__ __forceinline__ std::uint32_t reverse_stage_groups(
+    std::uint32_t logical, const StagePartitionDescriptor& partition) {
+    std::uint32_t reordered = 0;
+#pragma unroll
+    for (std::uint32_t segment = 0; segment < 8; ++segment) {
+        if (segment < partition.count) {
+            const std::uint32_t digit = (logical >> partition.input_shift[segment]) & partition.mask[segment];
+            reordered |= digit << partition.output_shift[segment];
+        }
+    }
+    return reordered;
+}
+
+template <class FFT, bool FinalSegment>
+__launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_multisegment_kernel(
+    const Complex32* input, Complex32* output, const Complex32* twiddles,
+    std::uint64_t transforms, std::uint32_t log_n, std::uint32_t prefix_log_n,
+    std::uint32_t segment_log_n, std::uint32_t remaining_log_n,
+    std::uint64_t batch_distance, std::uint64_t element_stride,
+    bool recurrence_twiddle, bool normalize, StagePartitionDescriptor partition) {
+    using Value = typename FFT::value_type;
+    // Intermediate layouts keep completed frequency digits before the remaining time digits.
+    // The final pass reverses those radix groups into natural FFT output order.
+    const std::uint32_t prefix_n = 1U << prefix_log_n;
+    const std::uint32_t remaining_n = 1U << remaining_log_n;
+    const std::uint64_t local_per_batch = static_cast<std::uint64_t>(prefix_n) * remaining_n;
+    const std::uint64_t local_transform = static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + threadIdx.y;
+    const std::uint64_t total_local = transforms * local_per_batch;
+    const bool active = local_transform < total_local;
+    const std::uint64_t within = active ? local_transform % local_per_batch : 0;
+    const std::uint32_t remainder = static_cast<std::uint32_t>(within) & (remaining_n - 1);
+
+    extern __shared__ __align__(16) unsigned char storage[];
+    Value* tile = reinterpret_cast<Value*>(storage);
+    const std::uint32_t flat_thread = threadIdx.y * blockDim.x + threadIdx.x;
+    const std::uint32_t flat_threads = blockDim.x * blockDim.y;
+    constexpr std::uint32_t tile_values = FFT::input_length * FFT::ffts_per_block;
+    for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+        const std::uint32_t element = work / FFT::ffts_per_block;
+        const std::uint32_t slot = work - element * FFT::ffts_per_block;
+        const std::uint64_t staged_local = static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+        if (staged_local < total_local) {
+            const std::uint64_t staged_transform = staged_local / local_per_batch;
+            const std::uint64_t staged_within = staged_local - staged_transform * local_per_batch;
+            const std::uint32_t staged_prefix = static_cast<std::uint32_t>(staged_within >> remaining_log_n);
+            const std::uint32_t staged_remainder = static_cast<std::uint32_t>(staged_within) & (remaining_n - 1);
+            const std::uint64_t logical =
+                (static_cast<std::uint64_t>(staged_prefix) * FFT::input_length + element) * remaining_n + staged_remainder;
+            const Complex32 value = input[staged_transform * batch_distance + logical * element_stride];
+            tile[work] = Value{value.real, value.imag};
+        } else {
+            tile[work] = Value{0.0F, 0.0F};
+        }
+    }
+    __syncthreads();
+
+    Value thread_data[FFT::storage_size];
+    std::uint32_t element = threadIdx.x;
+#pragma unroll
+    for (unsigned int item = 0; item < FFT::storage_size; ++item) {
+        thread_data[item] = active && element < FFT::input_length
+                                ? tile[element * FFT::ffts_per_block + threadIdx.y]
+                                : Value{0.0F, 0.0F};
+        element += FFT::stride;
+    }
+    __syncthreads();
+    FFT().execute(thread_data, storage);
+    __syncthreads();
+
+    Complex32 running_root = {1.0F, 0.0F};
+    Complex32 root_step = {1.0F, 0.0F};
+    if constexpr (!FinalSegment) {
+        if (active && recurrence_twiddle) {
+            const std::uint64_t exponent_scale = static_cast<std::uint64_t>(prefix_n) * remainder;
+            running_root = cross_root(twiddles, log_n, exponent_scale * threadIdx.x);
+            root_step = cross_root(twiddles, log_n, exponent_scale * FFT::stride);
+        }
+    }
+    std::uint32_t frequency = threadIdx.x;
+#pragma unroll
+    for (unsigned int item = 0; item < FFT::storage_size; ++item) {
+        if (active && frequency < FFT::output_length) {
+            Value value = thread_data[item];
+            if constexpr (!FinalSegment) {
+                const std::uint64_t exponent = static_cast<std::uint64_t>(prefix_n) * frequency * remainder;
+                const Complex32 root = recurrence_twiddle ? running_root : cross_root(twiddles, log_n, exponent);
+                value = Value{value.x * root.real - value.y * root.imag,
+                              value.x * root.imag + value.y * root.real};
+            } else if (normalize) {
+                const float scale = 1.0F / static_cast<float>(1U << log_n);
+                value = Value{value.x * scale, value.y * scale};
+            }
+            tile[frequency * FFT::ffts_per_block + threadIdx.y] = value;
+        }
+        if constexpr (!FinalSegment) {
+            if (recurrence_twiddle) {
+                running_root = {running_root.real * root_step.real - running_root.imag * root_step.imag,
+                                running_root.real * root_step.imag + running_root.imag * root_step.real};
+            }
+        }
+        frequency += FFT::stride;
+    }
+    __syncthreads();
+
+    for (std::uint32_t work = flat_thread; work < tile_values; work += flat_threads) {
+        const std::uint32_t staged_frequency = work / FFT::ffts_per_block;
+        const std::uint32_t slot = work - staged_frequency * FFT::ffts_per_block;
+        const std::uint64_t staged_local = static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + slot;
+        if (staged_local < total_local) {
+            const std::uint64_t staged_transform = staged_local / local_per_batch;
+            const std::uint64_t staged_within = staged_local - staged_transform * local_per_batch;
+            const std::uint32_t staged_prefix = static_cast<std::uint32_t>(staged_within >> remaining_log_n);
+            const std::uint32_t staged_remainder = static_cast<std::uint32_t>(staged_within) & (remaining_n - 1);
+            std::uint32_t logical = static_cast<std::uint32_t>(
+                (static_cast<std::uint64_t>(staged_prefix) * FFT::output_length + staged_frequency) * remaining_n +
+                staged_remainder);
+            if constexpr (FinalSegment)
+                logical = reverse_stage_groups(logical, partition);
+            const Value value = tile[work];
+            output[staged_transform * batch_distance + static_cast<std::uint64_t>(logical) * element_stride] =
+                {value.x, value.y};
+        }
+    }
+}
+
+template <class FFT, bool ContiguousInput>
+__launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_direct_first_kernel(
+    const Complex32* input, Complex32* scratch, const Complex32* twiddles, std::uint32_t log_n,
+    std::uint32_t local_log_n, std::uint64_t batch_distance,
+    std::uint64_t element_stride, bool recurrence_twiddle) {
+    using Value = typename FFT::value_type;
+    const std::uint32_t remaining_log_n = log_n - local_log_n;
+    const std::uint32_t remaining_n     = 1U << remaining_log_n;
+    const std::uint64_t local_transform = blockIdx.x;
+    const std::uint64_t transform       = local_transform >> remaining_log_n;
+    const std::uint32_t n2              = static_cast<std::uint32_t>(local_transform) & (remaining_n - 1);
+    const std::uint64_t base            = transform * batch_distance;
+
+    Value thread_data[FFT::storage_size];
+    std::uint32_t n1 = threadIdx.x;
+#pragma unroll
+    for (unsigned int item = 0; item < FFT::storage_size; ++item) {
+        const std::uint64_t logical = ContiguousInput
+                                          ? static_cast<std::uint64_t>(n2) * FFT::input_length + n1
+                                          : static_cast<std::uint64_t>(n1) * remaining_n + n2;
+        const Complex32 value = input[base + logical * element_stride];
+        thread_data[item] = Value{value.real, value.imag};
+        n1 += FFT::stride;
+    }
+
+    extern __shared__ __align__(16) unsigned char storage[];
+    FFT().execute(thread_data, storage);
+
+    Complex32 running_root = {1.0F, 0.0F};
+    Complex32 root_step    = {1.0F, 0.0F};
+    if (recurrence_twiddle) {
+        running_root = cross_root(twiddles, log_n, static_cast<std::uint64_t>(threadIdx.x) * n2);
+        root_step    = cross_root(twiddles, log_n, static_cast<std::uint64_t>(FFT::stride) * n2);
+    }
+    std::uint32_t k1 = threadIdx.x;
+#pragma unroll
+    for (unsigned int item = 0; item < FFT::storage_size; ++item) {
+        const Value value = thread_data[item];
+        const Complex32 root = recurrence_twiddle
+                                   ? running_root
+                                   : cross_root(twiddles, log_n, static_cast<std::uint64_t>(k1) * n2);
+        const Complex32 crossed = {value.x * root.real - value.y * root.imag,
+                                   value.x * root.imag + value.y * root.real};
+        const std::uint64_t reordered = static_cast<std::uint64_t>(k1) * remaining_n + n2;
+        scratch[base + reordered * element_stride] = crossed;
+        if (recurrence_twiddle) {
+            running_root = {running_root.real * root_step.real - running_root.imag * root_step.imag,
+                            running_root.real * root_step.imag + running_root.imag * root_step.real};
+        }
+        k1 += FFT::stride;
+    }
+}
+
+template <class FFT, bool ContiguousOutput>
+__launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_direct_second_kernel(
+    const Complex32* scratch, Complex32* output, std::uint32_t log_n, std::uint32_t local_log_n,
+    std::uint64_t batch_distance, std::uint64_t element_stride,
+    bool normalize) {
+    using Value = typename FFT::value_type;
+    const std::uint32_t local_n         = 1U << local_log_n;
+    const std::uint32_t remaining_log_n = log_n - local_log_n;
+    const std::uint32_t remaining_n     = 1U << remaining_log_n;
+    const std::uint64_t local_transform = blockIdx.x;
+    const std::uint64_t transform       = local_transform >> local_log_n;
+    const std::uint32_t k1              = static_cast<std::uint32_t>(local_transform) & (local_n - 1);
+    const std::uint64_t base            = transform * batch_distance;
+
+    Value thread_data[FFT::storage_size];
+    std::uint32_t n2 = threadIdx.x;
+#pragma unroll
+    for (unsigned int item = 0; item < FFT::storage_size; ++item) {
+        const std::uint64_t reordered = static_cast<std::uint64_t>(k1) * remaining_n + n2;
+        const Complex32 value = scratch[base + reordered * element_stride];
+        thread_data[item] = Value{value.real, value.imag};
+        n2 += FFT::stride;
+    }
+
+    extern __shared__ __align__(16) unsigned char storage[];
+    FFT().execute(thread_data, storage);
+    const float scale = normalize ? 1.0F / static_cast<float>(1U << log_n) : 1.0F;
+    std::uint32_t k2 = threadIdx.x;
+#pragma unroll
+    for (unsigned int item = 0; item < FFT::storage_size; ++item) {
+        const Value value = thread_data[item];
+        const std::uint64_t logical = ContiguousOutput
+                                          ? static_cast<std::uint64_t>(k1) * remaining_n + k2
+                                          : static_cast<std::uint64_t>(k2) * local_n + k1;
+        output[base + logical * element_stride] = {value.x * scale, value.y * scale};
+        k2 += FFT::stride;
+    }
+}
+
+__global__ void transpose_complex32_kernel(const Complex32* input, Complex32* output,
+                                           std::uint32_t rows, std::uint32_t columns,
+                                           std::uint64_t tiles_per_transform,
+                                           std::uint64_t batch_distance,
+                                           std::uint64_t element_stride) {
+    __shared__ Complex32 tile[32][33];
+    const std::uint64_t flat_block = blockIdx.x;
+    const std::uint64_t transform = flat_block / tiles_per_transform;
+    const std::uint64_t tile_index = flat_block - transform * tiles_per_transform;
+    const std::uint32_t tiles_x = (columns + 31U) / 32U;
+    const std::uint32_t tile_y = static_cast<std::uint32_t>(tile_index / tiles_x);
+    const std::uint32_t tile_x = static_cast<std::uint32_t>(tile_index - static_cast<std::uint64_t>(tile_y) * tiles_x);
+    const std::uint64_t base = transform * batch_distance;
+
+#pragma unroll
+    for (std::uint32_t offset = 0; offset < 32; offset += 8) {
+        const std::uint32_t row = tile_y * 32U + threadIdx.y + offset;
+        const std::uint32_t column = tile_x * 32U + threadIdx.x;
+        if (row < rows && column < columns)
+            tile[threadIdx.y + offset][threadIdx.x] =
+                input[base + (static_cast<std::uint64_t>(row) * columns + column) * element_stride];
+    }
+    __syncthreads();
+
+#pragma unroll
+    for (std::uint32_t offset = 0; offset < 32; offset += 8) {
+        const std::uint32_t output_row = tile_x * 32U + threadIdx.y + offset;
+        const std::uint32_t output_column = tile_y * 32U + threadIdx.x;
+        if (output_row < columns && output_column < rows)
+            output[base + (static_cast<std::uint64_t>(output_row) * rows + output_column) * element_stride] =
+                tile[threadIdx.x][threadIdx.y + offset];
+    }
+}
+
+void launch_transpose_complex32(const Complex32* input, Complex32* output, std::uint32_t rows,
+                                std::uint32_t columns, std::uint64_t transforms,
+                                std::uint64_t batch_distance, std::uint64_t element_stride) {
+    const std::uint64_t tiles_x = (columns + 31U) / 32U;
+    const std::uint64_t tiles_y = (rows + 31U) / 32U;
+    const std::uint64_t tiles_per_transform = tiles_x * tiles_y;
+    const std::uint64_t blocks = transforms * tiles_per_transform;
+    if (blocks > 0x7fffffffULL)
+        throw std::invalid_argument("tiled transpose grid exceeds the CUDA grid.x limit");
+    transpose_complex32_kernel<<<static_cast<unsigned int>(blocks), dim3(32, 8)>>>(
+        input, output, rows, columns, tiles_per_transform, batch_distance, element_stride);
 }
 
 template <class FFT>
@@ -540,6 +934,171 @@ void launch_online_second(std::uint32_t log_n, std::uint32_t local_log_n, const 
     }
 }
 
+template <class FFT, bool FinalSegment>
+void launch_multisegment_kernel(const Complex32* input, Complex32* output, const Complex32* twiddles,
+                                std::uint64_t transforms, std::uint32_t log_n,
+                                std::uint32_t prefix_log_n, std::uint32_t segment_log_n,
+                                std::uint32_t remaining_log_n, std::uint64_t batch_distance,
+                                std::uint64_t element_stride, bool recurrence_twiddle, bool normalize,
+                                StagePartitionDescriptor partition) {
+    const std::uint64_t local_transforms = transforms << (log_n - segment_log_n);
+    const std::uint64_t block_count = (local_transforms + FFT::ffts_per_block - 1) / FFT::ffts_per_block;
+    if (block_count > 0x7fffffffULL)
+        throw std::invalid_argument("multi-segment cuFFTDx grid exceeds the CUDA grid.x limit");
+    constexpr std::size_t tile_bytes = FFT::input_length * FFT::ffts_per_block * sizeof(typename FFT::value_type);
+    constexpr std::size_t shared_bytes = FFT::shared_memory_size > tile_bytes ? FFT::shared_memory_size : tile_bytes;
+    if constexpr (shared_bytes > 48U * 1024U)
+        cudaFuncSetAttribute(cufftdx_multisegment_kernel<FFT, FinalSegment>,
+                             cudaFuncAttributeMaxDynamicSharedMemorySize, shared_bytes);
+    cufftdx_multisegment_kernel<FFT, FinalSegment>
+        <<<static_cast<unsigned int>(block_count), FFT::block_dim, shared_bytes>>>(
+            input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n,
+            remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition);
+}
+
+template <unsigned int Size, unsigned int Threads, unsigned int Ept,
+          cufftdx::fft_direction Direction, bool FinalSegment>
+void launch_multisegment_online(const Complex32* input, Complex32* output, const Complex32* twiddles,
+                                std::uint64_t transforms, std::uint32_t log_n,
+                                std::uint32_t prefix_log_n, std::uint32_t segment_log_n,
+                                std::uint32_t remaining_log_n, std::uint64_t batch_distance,
+                                std::uint64_t element_stride, bool recurrence_twiddle, bool normalize,
+                                StagePartitionDescriptor partition) {
+    if constexpr (Ept <= Size && Threads * Ept >= Size && (Threads * Ept) % Size == 0) {
+        using FFT = OnlineBlockFft<Size, Threads, Ept, Direction>;
+        launch_multisegment_kernel<FFT, FinalSegment>(
+            input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n,
+            remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition);
+    } else {
+        throw std::invalid_argument("multi-segment cuFFTDx thread/EPT point cannot cover an integer number of FFTs");
+    }
+}
+
+template <unsigned int Size, unsigned int Threads, unsigned int Ept,
+          cufftdx::fft_direction Direction, bool FinalSegment>
+void launch_multisegment_direct(const Complex32* input, Complex32* output, const Complex32* twiddles,
+                                std::uint64_t transforms, std::uint32_t log_n,
+                                std::uint32_t prefix_log_n, std::uint32_t segment_log_n,
+                                std::uint32_t remaining_log_n, std::uint64_t batch_distance,
+                                std::uint64_t element_stride, bool recurrence_twiddle, bool normalize,
+                                StagePartitionDescriptor partition) {
+    if constexpr (Threads * Ept == Size) {
+        using FFT = DirectFft<Size, Ept, Direction>;
+        static_assert(FFT::block_dim.x == Threads);
+        launch_multisegment_kernel<FFT, FinalSegment>(
+            input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n,
+            remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition);
+    } else {
+        throw std::invalid_argument("multi-segment direct cuFFTDx requires exactly one FFT per CTA");
+    }
+}
+
+template <unsigned int Size, unsigned int Threads, unsigned int Ept, cufftdx::fft_direction Direction,
+          bool ContiguousInput>
+void launch_online_direct_first(std::uint32_t log_n, std::uint32_t local_log_n, const Complex32* input,
+                                Complex32* scratch, const Complex32* twiddles, std::uint64_t transforms,
+                                std::uint64_t batch_distance, std::uint64_t element_stride,
+                                bool recurrence_twiddle) {
+    if constexpr (Threads * Ept == Size) {
+        using FFT = DirectFft<Size, Ept, Direction>;
+        static_assert(FFT::block_dim.x == Threads);
+        if constexpr (FFT::shared_memory_size > 48U * 1024U)
+            cudaFuncSetAttribute(cufftdx_online_direct_first_kernel<FFT, ContiguousInput>, cudaFuncAttributeMaxDynamicSharedMemorySize,
+                                 FFT::shared_memory_size);
+        const auto blocks = static_cast<unsigned int>(transforms << (log_n - local_log_n));
+        cufftdx_online_direct_first_kernel<FFT, ContiguousInput><<<blocks, FFT::block_dim, FFT::shared_memory_size>>>(
+            input, scratch, twiddles, log_n, local_log_n, batch_distance, element_stride, recurrence_twiddle);
+    } else {
+        throw std::invalid_argument("cuFFTDx direct prefix requires exactly one FFT per CTA");
+    }
+}
+
+template <unsigned int Size, unsigned int Threads, unsigned int Ept, cufftdx::fft_direction Direction,
+          bool ContiguousOutput>
+void launch_online_direct_second(std::uint32_t log_n, std::uint32_t local_log_n, Complex32* scratch,
+                                 Complex32* output, std::uint64_t transforms, std::uint64_t batch_distance,
+                                 std::uint64_t element_stride, bool normalize) {
+    if constexpr (Threads * Ept == Size) {
+        using FFT = DirectFft<Size, Ept, Direction>;
+        static_assert(FFT::block_dim.x == Threads);
+        if constexpr (FFT::shared_memory_size > 48U * 1024U)
+            cudaFuncSetAttribute(cufftdx_online_direct_second_kernel<FFT, ContiguousOutput>, cudaFuncAttributeMaxDynamicSharedMemorySize,
+                                 FFT::shared_memory_size);
+        const auto blocks = static_cast<unsigned int>(transforms << local_log_n);
+        cufftdx_online_direct_second_kernel<FFT, ContiguousOutput><<<blocks, FFT::block_dim, FFT::shared_memory_size>>>(
+            scratch, ContiguousOutput ? scratch : output, log_n, local_log_n,
+            batch_distance, element_stride, normalize);
+    } else {
+        throw std::invalid_argument("cuFFTDx direct suffix requires exactly one FFT per CTA");
+    }
+}
+
+template <unsigned int Size, cufftdx::fft_direction Direction, bool ContiguousInput>
+void dispatch_online_direct_first_threads_impl(std::uint32_t threads, std::uint32_t ept, std::uint32_t log_n,
+                                               std::uint32_t local_log_n, const Complex32* input, Complex32* scratch,
+                                               const Complex32* twiddles, std::uint64_t transforms,
+                                               std::uint64_t batch_distance, std::uint64_t element_stride,
+                                               bool recurrence_twiddle) {
+    switch ((ept << 16) | threads) {
+        case (2U << 16) | 1024U: launch_online_direct_first<Size, 1024, 2, Direction, ContiguousInput>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case (4U << 16) | 512U: launch_online_direct_first<Size, 512, 4, Direction, ContiguousInput>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case (4U << 16) | 1024U: launch_online_direct_first<Size, 1024, 4, Direction, ContiguousInput>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case (8U << 16) | 256U: launch_online_direct_first<Size, 256, 8, Direction, ContiguousInput>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case (8U << 16) | 512U: launch_online_direct_first<Size, 512, 8, Direction, ContiguousInput>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case (16U << 16) | 256U: launch_online_direct_first<Size, 256, 16, Direction, ContiguousInput>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        default: throw std::invalid_argument("unsupported cuFFTDx direct prefix thread/EPT point");
+    }
+}
+
+template <unsigned int Size, cufftdx::fft_direction Direction>
+void dispatch_online_direct_first_threads(std::uint32_t threads, std::uint32_t ept, std::uint32_t log_n,
+                                          std::uint32_t local_log_n, const Complex32* input, Complex32* scratch,
+                                          const Complex32* twiddles, std::uint64_t transforms,
+                                          std::uint64_t batch_distance, std::uint64_t element_stride,
+                                          bool recurrence_twiddle, bool contiguous_input) {
+    if (contiguous_input)
+        dispatch_online_direct_first_threads_impl<Size, Direction, true>(threads, ept, log_n, local_log_n,
+                                                                         input, scratch, twiddles, transforms,
+                                                                         batch_distance, element_stride,
+                                                                         recurrence_twiddle);
+    else
+        dispatch_online_direct_first_threads_impl<Size, Direction, false>(threads, ept, log_n, local_log_n,
+                                                                          input, scratch, twiddles, transforms,
+                                                                          batch_distance, element_stride,
+                                                                          recurrence_twiddle);
+}
+
+template <unsigned int Size, cufftdx::fft_direction Direction, bool ContiguousOutput>
+void dispatch_online_direct_second_threads_impl(std::uint32_t threads, std::uint32_t ept, std::uint32_t log_n,
+                                                std::uint32_t local_log_n, Complex32* scratch, Complex32* output,
+                                                std::uint64_t transforms, std::uint64_t batch_distance,
+                                                std::uint64_t element_stride, bool normalize) {
+    switch ((ept << 16) | threads) {
+        case (2U << 16) | 1024U: launch_online_direct_second<Size, 1024, 2, Direction, ContiguousOutput>(log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        case (4U << 16) | 512U: launch_online_direct_second<Size, 512, 4, Direction, ContiguousOutput>(log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        case (4U << 16) | 1024U: launch_online_direct_second<Size, 1024, 4, Direction, ContiguousOutput>(log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        case (8U << 16) | 256U: launch_online_direct_second<Size, 256, 8, Direction, ContiguousOutput>(log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        case (8U << 16) | 512U: launch_online_direct_second<Size, 512, 8, Direction, ContiguousOutput>(log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        case (16U << 16) | 256U: launch_online_direct_second<Size, 256, 16, Direction, ContiguousOutput>(log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        default: throw std::invalid_argument("unsupported cuFFTDx direct suffix thread/EPT point");
+    }
+}
+
+template <unsigned int Size, cufftdx::fft_direction Direction>
+void dispatch_online_direct_second_threads(std::uint32_t threads, std::uint32_t ept, std::uint32_t log_n,
+                                           std::uint32_t local_log_n, Complex32* scratch, Complex32* output,
+                                           std::uint64_t transforms, std::uint64_t batch_distance,
+                                           std::uint64_t element_stride, bool normalize, bool tiled_transpose) {
+    if (tiled_transpose)
+        dispatch_online_direct_second_threads_impl<Size, Direction, true>(threads, ept, log_n, local_log_n,
+                                                                          scratch, output, transforms, batch_distance,
+                                                                          element_stride, normalize);
+    else
+        dispatch_online_direct_second_threads_impl<Size, Direction, false>(threads, ept, log_n, local_log_n,
+                                                                           scratch, output, transforms, batch_distance,
+                                                                           element_stride, normalize);
+}
+
 template <unsigned int Size, cufftdx::fft_direction Direction>
 void dispatch_online_first_threads(std::uint32_t threads, std::uint32_t ept, std::uint32_t log_n, std::uint32_t local_log_n,
                                    const Complex32* input, Complex32* scratch, const Complex32* twiddles,
@@ -567,39 +1126,134 @@ void dispatch_online_second_threads(std::uint32_t threads, std::uint32_t ept, st
     }
 }
 
+template <unsigned int Size, cufftdx::fft_direction Direction, bool FinalSegment>
+void dispatch_multisegment_online_threads(
+    std::uint32_t threads, std::uint32_t ept, const Complex32* input, Complex32* output,
+    const Complex32* twiddles, std::uint64_t transforms, std::uint32_t log_n,
+    std::uint32_t prefix_log_n, std::uint32_t segment_log_n, std::uint32_t remaining_log_n,
+    std::uint64_t batch_distance, std::uint64_t element_stride, bool recurrence_twiddle,
+    bool normalize, StagePartitionDescriptor partition) {
+    switch ((ept << 16) | threads) {
+#define CUNTT_CUFFTDX_ONLINE_LAUNCH(Threads, Ept)                                                    \
+        launch_multisegment_online<Size, Threads, Ept, Direction, FinalSegment>(                    \
+            input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n,                \
+            remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition)
+#include "generated_cufftdx_online_dispatch.inc"
+#undef CUNTT_CUFFTDX_ONLINE_LAUNCH
+        default: throw std::invalid_argument("requested multi-segment cuFFTDx thread/EPT point was not generated");
+    }
+}
+
+template <unsigned int Size, cufftdx::fft_direction Direction, bool FinalSegment>
+void dispatch_multisegment_direct_threads(
+    std::uint32_t threads, std::uint32_t ept, const Complex32* input, Complex32* output,
+    const Complex32* twiddles, std::uint64_t transforms, std::uint32_t log_n,
+    std::uint32_t prefix_log_n, std::uint32_t segment_log_n, std::uint32_t remaining_log_n,
+    std::uint64_t batch_distance, std::uint64_t element_stride, bool recurrence_twiddle,
+    bool normalize, StagePartitionDescriptor partition) {
+    switch ((ept << 16) | threads) {
+        case (2U << 16) | 1024U:
+            launch_multisegment_direct<Size, 1024, 2, Direction, FinalSegment>(input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        case (4U << 16) | 512U:
+            launch_multisegment_direct<Size, 512, 4, Direction, FinalSegment>(input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        case (4U << 16) | 1024U:
+            launch_multisegment_direct<Size, 1024, 4, Direction, FinalSegment>(input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        case (8U << 16) | 256U:
+            launch_multisegment_direct<Size, 256, 8, Direction, FinalSegment>(input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        case (8U << 16) | 512U:
+            launch_multisegment_direct<Size, 512, 8, Direction, FinalSegment>(input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        case (16U << 16) | 256U:
+            launch_multisegment_direct<Size, 256, 16, Direction, FinalSegment>(input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        default: throw std::invalid_argument("unsupported multi-segment direct cuFFTDx thread/EPT point");
+    }
+}
+
+template <cufftdx::fft_direction Direction, bool FinalSegment>
+void dispatch_multisegment(
+    std::uint32_t segment_log_n, std::uint32_t threads, std::uint32_t ept,
+    const Complex32* input, Complex32* output, const Complex32* twiddles,
+    std::uint64_t transforms, std::uint32_t log_n, std::uint32_t prefix_log_n,
+    std::uint32_t remaining_log_n, std::uint64_t batch_distance,
+    std::uint64_t element_stride, bool recurrence_twiddle, bool normalize,
+    StagePartitionDescriptor partition) {
+#define CUNTT_DISPATCH_SEGMENT(Size)                                                                  \
+    dispatch_multisegment_online_threads<Size, Direction, FinalSegment>(                              \
+        threads, ept, input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n,       \
+        remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition)
+    switch (segment_log_n) {
+        case 3: CUNTT_DISPATCH_SEGMENT(8); return;
+        case 4: CUNTT_DISPATCH_SEGMENT(16); return;
+        case 5: CUNTT_DISPATCH_SEGMENT(32); return;
+        case 6: CUNTT_DISPATCH_SEGMENT(64); return;
+        case 7: CUNTT_DISPATCH_SEGMENT(128); return;
+        case 8: CUNTT_DISPATCH_SEGMENT(256); return;
+        case 9: CUNTT_DISPATCH_SEGMENT(512); return;
+        case 10: CUNTT_DISPATCH_SEGMENT(1024); return;
+        case 11:
+            dispatch_multisegment_direct_threads<2048, Direction, FinalSegment>(threads, ept, input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        case 12:
+            dispatch_multisegment_direct_threads<4096, Direction, FinalSegment>(threads, ept, input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n, remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition); return;
+        default: throw std::invalid_argument("multi-segment cuFFTDx supports segment logN=3..12");
+    }
+#undef CUNTT_DISPATCH_SEGMENT
+}
+
 template <cufftdx::fft_direction Direction>
 void dispatch_online_first(std::uint32_t log_n, std::uint32_t local_log_n, const Complex32* input,
                            Complex32* scratch, const Complex32* twiddles, std::uint64_t transforms,
                            std::uint64_t batch_distance, std::uint64_t element_stride, bool recurrence_twiddle,
-                           std::uint32_t threads, std::uint32_t ept) {
+                           std::uint32_t threads, std::uint32_t ept, bool contiguous_input) {
     switch (local_log_n) {
-        case 3: dispatch_online_first_threads<8, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 4: dispatch_online_first_threads<16, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 5: dispatch_online_first_threads<32, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 6: dispatch_online_first_threads<64, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 7: dispatch_online_first_threads<128, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 8: dispatch_online_first_threads<256, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 9: dispatch_online_first_threads<512, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 10: dispatch_online_first_threads<1024, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        default: throw std::invalid_argument("cufftdx online first pass supports logN=3..10");
+        case 3: if (contiguous_input) break; dispatch_online_first_threads<8, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 4: if (contiguous_input) break; dispatch_online_first_threads<16, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 5: if (contiguous_input) break; dispatch_online_first_threads<32, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 6: if (contiguous_input) break; dispatch_online_first_threads<64, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 7: if (contiguous_input) break; dispatch_online_first_threads<128, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 8: if (contiguous_input) break; dispatch_online_first_threads<256, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 9: if (contiguous_input) break; dispatch_online_first_threads<512, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 10: if (contiguous_input) break; dispatch_online_first_threads<1024, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 11: dispatch_online_direct_first_threads<2048, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, contiguous_input); return;
+        case 12: dispatch_online_direct_first_threads<4096, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, contiguous_input); return;
+        default: throw std::invalid_argument("cufftdx online first pass supports logN=3..12");
     }
+    throw std::invalid_argument("prefix tiled transpose requires a direct prefix in logN=11..12");
 }
 
 template <cufftdx::fft_direction Direction>
-void dispatch_online_second(std::uint32_t log_n, std::uint32_t local_log_n, const Complex32* scratch,
+void dispatch_online_second(std::uint32_t log_n, std::uint32_t local_log_n, Complex32* scratch,
                             Complex32* output, std::uint64_t transforms, std::uint64_t batch_distance,
-                            std::uint64_t element_stride, bool normalize, std::uint32_t threads, std::uint32_t ept) {
+                            std::uint64_t element_stride, bool normalize, std::uint32_t threads, std::uint32_t ept,
+                            bool tiled_transpose) {
     switch (log_n - local_log_n) {
-        case 3: dispatch_online_second_threads<8, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
-        case 4: dispatch_online_second_threads<16, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
-        case 5: dispatch_online_second_threads<32, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
-        case 6: dispatch_online_second_threads<64, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
-        case 7: dispatch_online_second_threads<128, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
-        case 8: dispatch_online_second_threads<256, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
-        case 9: dispatch_online_second_threads<512, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
-        case 10: dispatch_online_second_threads<1024, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
-        default: throw std::invalid_argument("cufftdx online second pass supports logN=3..10");
+        case 3: if (tiled_transpose) break; dispatch_online_second_threads<8, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        case 4: if (tiled_transpose) break; dispatch_online_second_threads<16, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        case 5: if (tiled_transpose) break; dispatch_online_second_threads<32, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        case 6: if (tiled_transpose) break; dispatch_online_second_threads<64, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        case 7: if (tiled_transpose) break; dispatch_online_second_threads<128, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        case 8: if (tiled_transpose) break; dispatch_online_second_threads<256, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        case 9: if (tiled_transpose) break; dispatch_online_second_threads<512, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        case 10: if (tiled_transpose) break; dispatch_online_second_threads<1024, Direction>(threads, ept, log_n, local_log_n, scratch, output, transforms, batch_distance, element_stride, normalize); return;
+        case 11:
+            dispatch_online_direct_second_threads<2048, Direction>(threads, ept, log_n, local_log_n, scratch, output,
+                                                                   transforms, batch_distance, element_stride, normalize,
+                                                                   tiled_transpose);
+            if (tiled_transpose)
+                launch_transpose_complex32(scratch, output, 1U << local_log_n,
+                                           1U << (log_n - local_log_n), transforms,
+                                           batch_distance, element_stride);
+            return;
+        case 12:
+            dispatch_online_direct_second_threads<4096, Direction>(threads, ept, log_n, local_log_n, scratch, output,
+                                                                   transforms, batch_distance, element_stride, normalize,
+                                                                   tiled_transpose);
+            if (tiled_transpose)
+                launch_transpose_complex32(scratch, output, 1U << local_log_n,
+                                           1U << (log_n - local_log_n), transforms,
+                                           batch_distance, element_stride);
+            return;
+        default: throw std::invalid_argument("cufftdx online second pass supports logN=3..12");
     }
+    throw std::invalid_argument("tiled transpose requires a direct suffix in logN=11..12");
 }
 
 template <unsigned int Elements, cufftdx::fft_direction Direction>
@@ -719,6 +1373,10 @@ void launch_persistent_16384(const Complex32* input, Complex32* output, Complex3
 bool cufftdx_block_available(std::uint32_t log_n) noexcept { return log_n >= 3 && log_n <= 10; }
 
 bool cufftdx_online_available(std::uint32_t log_n, std::uint32_t threads, std::uint32_t ept) noexcept {
+    if (log_n == 11 || log_n == 12) {
+        return (threads == 256 || threads == 512 || threads == 1024) &&
+               static_cast<std::uint64_t>(threads) * ept == (1ULL << log_n);
+    }
     return generated_cufftdx_online_available(log_n, threads, ept);
 }
 
@@ -752,25 +1410,103 @@ void launch_cufftdx_direct(std::uint32_t log_n, const Complex32* input, Complex3
 }
 
 void launch_cufftdx_online_reorder(std::uint32_t log_n, std::uint32_t local_log_n, const Complex32* input,
-                                   Complex32* output, Complex32* scratch, const Complex32* twiddles,
+                                   Complex32* output, Complex32* scratch, Complex32* workspace,
+                                   const Complex32* twiddles,
                                    std::uint64_t transforms, std::uint64_t batch_distance,
                                    std::uint64_t element_stride, bool inverse, bool normalize,
                                    CrossTwiddleMode cross_twiddle, std::uint32_t prefix_threads,
                                    std::uint32_t suffix_threads, std::uint32_t prefix_ept,
-                                   std::uint32_t suffix_ept) {
+                                   std::uint32_t suffix_ept, DirectBoundary direct_boundary) {
     const bool recurrence_twiddle = cross_twiddle == CrossTwiddleMode::Recurrence;
+    const bool suffix_tiled_transpose = direct_boundary == DirectBoundary::TiledTranspose;
+    const bool prefix_tiled_transpose = direct_boundary == DirectBoundary::PrefixTiledTranspose;
+    const Complex32* prefix_input = input;
+    if (prefix_tiled_transpose) {
+        if (workspace == nullptr)
+            throw std::invalid_argument("prefix tiled transpose requires a workspace buffer");
+        launch_transpose_complex32(input, workspace, 1U << local_log_n,
+                                   1U << (log_n - local_log_n), transforms,
+                                   batch_distance, element_stride);
+        prefix_input = workspace;
+    }
     if (inverse) {
-        dispatch_online_first<cufftdx::fft_direction::inverse>(log_n, local_log_n, input, scratch, twiddles,
+        dispatch_online_first<cufftdx::fft_direction::inverse>(log_n, local_log_n, prefix_input, scratch, twiddles,
                                                                transforms, batch_distance, element_stride, recurrence_twiddle,
-                                                               prefix_threads, prefix_ept);
+                                                               prefix_threads, prefix_ept, prefix_tiled_transpose);
         dispatch_online_second<cufftdx::fft_direction::inverse>(log_n, local_log_n, scratch, output, transforms,
-                                                                batch_distance, element_stride, normalize, suffix_threads, suffix_ept);
+                                                                batch_distance, element_stride, normalize, suffix_threads, suffix_ept,
+                                                                suffix_tiled_transpose);
     } else {
-        dispatch_online_first<cufftdx::fft_direction::forward>(log_n, local_log_n, input, scratch, twiddles,
+        dispatch_online_first<cufftdx::fft_direction::forward>(log_n, local_log_n, prefix_input, scratch, twiddles,
                                                                transforms, batch_distance, element_stride, recurrence_twiddle,
-                                                               prefix_threads, prefix_ept);
+                                                               prefix_threads, prefix_ept, prefix_tiled_transpose);
         dispatch_online_second<cufftdx::fft_direction::forward>(log_n, local_log_n, scratch, output, transforms,
-                                                                batch_distance, element_stride, false, suffix_threads, suffix_ept);
+                                                                batch_distance, element_stride, false, suffix_threads, suffix_ept,
+                                                                suffix_tiled_transpose);
+    }
+}
+
+void launch_cufftdx_multisegment(std::uint32_t log_n, const std::vector<std::uint32_t>& stage_partition,
+                                 const std::vector<FftSegmentMapping>& segment_mappings,
+                                 const std::vector<FftBoundaryMapping>& boundaries,
+                                 const Complex32* input, Complex32* output, Complex32* scratch,
+                                 Complex32* workspace, const Complex32* twiddles,
+                                 std::uint64_t transforms, std::uint64_t batch_distance,
+                                 std::uint64_t element_stride, bool inverse, bool normalize) {
+    if (stage_partition.size() < 3 || stage_partition.size() > 8 ||
+        segment_mappings.size() != stage_partition.size() ||
+        boundaries.size() + 1 != stage_partition.size())
+        throw std::invalid_argument("invalid multi-segment FFT runtime descriptors");
+    if (scratch == nullptr || workspace == nullptr)
+        throw std::invalid_argument("multi-segment FFT requires two scratch buffers");
+
+    StagePartitionDescriptor descriptor{};
+    descriptor.count = static_cast<std::uint32_t>(stage_partition.size());
+    std::uint32_t input_shift = log_n;
+    std::uint32_t output_shift = 0;
+    for (std::size_t segment = 0; segment < stage_partition.size(); ++segment) {
+        input_shift -= stage_partition[segment];
+        descriptor.input_shift[segment] = input_shift;
+        descriptor.output_shift[segment] = output_shift;
+        descriptor.mask[segment] = (1U << stage_partition[segment]) - 1U;
+        output_shift += stage_partition[segment];
+    }
+
+    const Complex32* source = input;
+    std::uint32_t prefix_log_n = 0;
+    for (std::size_t segment = 0; segment < stage_partition.size(); ++segment) {
+        const bool final_segment = segment + 1 == stage_partition.size();
+        const std::uint32_t segment_log_n = stage_partition[segment];
+        const std::uint32_t remaining_log_n = log_n - prefix_log_n - segment_log_n;
+        Complex32* destination = final_segment ? output : (segment % 2 == 0 ? scratch : workspace);
+        const bool recurrence = !final_segment &&
+                                boundaries[segment].cross_twiddle == CrossTwiddleMode::Recurrence;
+        const auto& mapping = segment_mappings[segment];
+        if (inverse) {
+            if (final_segment)
+                dispatch_multisegment<cufftdx::fft_direction::inverse, true>(
+                    segment_log_n, mapping.threads, mapping.ept, source, destination, twiddles,
+                    transforms, log_n, prefix_log_n, remaining_log_n, batch_distance,
+                    element_stride, false, normalize, descriptor);
+            else
+                dispatch_multisegment<cufftdx::fft_direction::inverse, false>(
+                    segment_log_n, mapping.threads, mapping.ept, source, destination, twiddles,
+                    transforms, log_n, prefix_log_n, remaining_log_n, batch_distance,
+                    element_stride, recurrence, false, descriptor);
+        } else {
+            if (final_segment)
+                dispatch_multisegment<cufftdx::fft_direction::forward, true>(
+                    segment_log_n, mapping.threads, mapping.ept, source, destination, twiddles,
+                    transforms, log_n, prefix_log_n, remaining_log_n, batch_distance,
+                    element_stride, false, false, descriptor);
+            else
+                dispatch_multisegment<cufftdx::fft_direction::forward, false>(
+                    segment_log_n, mapping.threads, mapping.ept, source, destination, twiddles,
+                    transforms, log_n, prefix_log_n, remaining_log_n, batch_distance,
+                    element_stride, recurrence, false, descriptor);
+        }
+        source = destination;
+        prefix_log_n += segment_log_n;
     }
 }
 

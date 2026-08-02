@@ -30,9 +30,16 @@ Generated FFT codelets add FP32 `thread-dft8` and mixed `fp16-fp32`
 Core operands to FP16 and accumulates into FP32. Generated availability is
 controlled by `config/v100_design_points.json`.
 
-When cuFFTDx is enabled, FP32 online-reorder can compose two local FFTs whose
-individual sizes are `logN=3..10`. The first pass fuses the cross twiddle and a
-transposed scratch store; the second pass restores natural order. Cross
+When cuFFTDx is enabled, FP32 online-reorder can compose block FFT dimensions
+at `logN=3..10` with direct-strided dimensions at `logN=11..12`. The first pass
+fuses the cross twiddle and scratch-layout conversion; the second pass restores
+natural order. For suffix-direct `8+12` and `9+11`,
+`--direct-boundary tiled-transpose` instead performs a contiguous in-place
+suffix write and an explicit 32x32 padded transpose to natural order. The
+`--direct-boundary prefix-tiled-transpose` alternative first transposes natural
+input into a dedicated workspace so a direct `11/12`-bit prefix reads a
+contiguous row. The default `direct-strided` remains available as a measured
+alternative. Cross
 twiddles are independently selectable as table lookup or register recurrence,
 so this processing-unit choice remains subordinate to the architecture-level
 space/time schedule.
@@ -42,6 +49,21 @@ persistent `logN=14` 7+7 mappings with 256/512/1024-thread choices. The
 processing-unit granularity ceiling independently of the composed schedule.
 The V100-valid CTA choices are 256/512/1024 threads through `logN=13` and
 512/1024 threads at `logN=14`.
+
+The FP64 cuFFTDx adapter provides temporal block FFTs at `logN=3..10` and
+two-segment online compositions at `logN=14..18`, with each segment covering
+`logN=7..9`. These compile independent prefix/suffix mappings at 128/256/512
+threads and EPT 4/8. They support table
+and register-recurrence cross twiddles with a direct-strided global boundary;
+multi-segment, resident, direct whole-transform, and tiled-boundary FP64 forms
+remain outside the compiled matrix and are rejected rather than silently
+falling back.
+The prefix shared staging layout is independently selectable as `linear` or
+`xor-swizzle`. XOR swizzle permutes the physical `FFTsPerBlock` slot using
+element bits without increasing shared capacity or changing logical/global
+layout. Fixed-stride address strength reduction is selected at compile time
+when a mapping step spans a complete swizzle period; other legal mappings use
+the general per-item permutation.
 
 Each temporal length is a compile-time CUDA specialization selected by the
 runtime. This preserves unrolling at performance-critical fixed sizes while
@@ -70,7 +92,7 @@ normalization
 placement
 element_stride and batch_stride
 logN, N, batch
-backend, compute_unit, FFT complex_multiply, local_exchange, and fft_core
+backend, compute_unit, FFT complex_multiply, local_exchange, fft_core, and direct_boundary
 tile_threads, local_stages, reorder_columns, warp_stages, stage_space, pipeline_warps, handoff
 kernel/H2D/D2H time, transforms/s, points/s, butterflies/s, correctness
 ```
@@ -96,9 +118,11 @@ radix-2/radix-4/radix-8 FFT, FWHT, and XOR are checked in both directions at
 `logN=11`. Online-reorder additionally covers unequal stage groups, multiple
 columns per suffix CTA, FP64, strided/in-place execution, and verified
 `logN=20` execution in the large-length protocol.
-Optional cuFFTDx tests cover local `logN=3..10`, temporal and online-reorder
+Optional cuFFTDx tests cover local `logN=3..12`, temporal and online-reorder
 layouts, unequal long-FFT splits, table/recurrence cross twiddles, and forward
-and normalized inverse execution. Online-reorder also covers independent
+and normalized inverse execution. Both directional tiled boundaries are checked
+in natural order, and manual regressions cover normalized inverse, out-of-place,
+element-stride-two execution. Online-reorder also covers independent
 prefix/suffix EPT 4/8/16 and asymmetric thread/EPT mappings. Direct whole-transform tests cover every
 valid `logN=11..14` CTA shape, normalized inverse, strided layout, and in-place
 execution.
