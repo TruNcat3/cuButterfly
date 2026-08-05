@@ -181,13 +181,72 @@ Examples:
 # Vendor FFT baseline
 ./build/cubutterfly_bench --operator fft --backend cufft \
   --precision fp32 --logN 20 --batch 4 --csv
+
+# Subset zeta and Mobius inverse over uint32 mask-indexed data
+./build/cubutterfly_bench --operator subset-zeta --backend online-reorder \
+  --compute-unit radix4 --logN 20 --local-stages 10 --batch 4 --verify --csv
+./build/cubutterfly_bench --operator superset-zeta --backend hierarchical \
+  --compute-unit radix4 --logN 20 --local-stages 10 --batch 4 --inverse --verify --csv
+
+# A stage-parameterized real 2x2 butterfly; one matrix is broadcast.
+./build/cubutterfly_bench --operator structured-2x2 \
+  --stage-matrix 1,0.25,-0.5,1 --precision fp32 \
+  --backend temporal-tile --local-exchange warp-register \
+  --compute-unit radix2 --logN 12 --batch 1024 --verify --csv
 ```
 
 ## C++ API
 
 The public headers are `include/cuntt/ntt.hpp` and
-`include/cuntt/butterfly.hpp`. Both APIs use immutable plan configuration and
-typed host vectors:
+`include/cuntt/butterfly.hpp`. Applications can install and consume the CMake
+package without depending on the source tree:
+
+```bash
+cmake --install build --prefix "$HOME/.local"
+```
+
+```cmake
+find_package(cuButterfly CONFIG REQUIRED)
+target_link_libraries(my_app PRIVATE cuButterfly::cuButterfly)
+```
+
+The primary integration path accepts caller-owned device pointers and a CUDA
+stream. Query and optionally bind the exact workspace before submitting work:
+
+```cpp
+#include "cuntt/butterfly.hpp"
+
+cuntt::ButterflyConfig config;
+config.op = cuntt::ButterflyOperator::Fwht;
+config.backend = cuntt::ButterflyBackend::OnlineReorder;
+config.precision = cuntt::ButterflyPrecision::Fp32;
+config.log_n = 15;
+config.batch = 16;
+config.auto_select = true;
+config.auto_allocate_workspace = false;
+
+cuntt::ButterflyPlan plan(config);
+plan.set_stream(stream);
+cudaMalloc(&workspace, plan.workspace_size());
+plan.set_workspace(workspace, plan.workspace_size());
+plan.execute_async(device_input, device_output);
+```
+
+`execute_async` performs no allocation, transfer, or synchronization. Input,
+output, workspace, and stream lifetimes remain the caller's responsibility.
+The complete contract and NTT equivalent are in [Device API](device_api.md).
+The calibrated coverage and decision metadata are described in [Runtime
+Mapping Selector](runtime_selector.md).
+
+The [Programming Guide](programming_guide.md) defines device association,
+layout, concurrency, CUDA Graph status, determinism, and resource lifetime.
+Use the [C++ API Reference](api_reference.md) for individual configuration
+fields and methods, the [Capability and Compatibility
+Matrix](support_matrix.md) for supported ranges, and [Examples](examples.md)
+for build-checked programs.
+
+Typed host vectors remain convenient for reference execution and benchmark
+timing:
 
 ```cpp
 #include "cuntt/butterfly.hpp"
@@ -206,14 +265,14 @@ std::vector<float> output;
 const auto stats = plan.execute(input, output, 20, 100);
 ```
 
-The current API owns allocation and transfers for trustworthy reference and
-benchmark execution. A device-pointer API is future work.
+The host overload owns its staging allocations and reports transfer and kernel
+timings; it should not be used to measure application submission overhead.
 
 ## Design-Space Sweeps
 
 ```bash
 python3 scripts/sweep_cubutterfly_designs.py \
-  --operators fwht fft xor-zeta \
+  --operators fwht fft subset-zeta superset-zeta structured-2x2 \
   --logNs 8 10 12 --target-points 4194304 \
   --trials 5 --output results/my_sweep_raw.csv
 

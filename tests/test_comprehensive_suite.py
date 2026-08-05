@@ -10,7 +10,8 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from run_comprehensive_suite import build_command, load_manifest, ntt_prime, parse_csv_record, selected_cases
+from run_comprehensive_suite import (build_command, expected_semantics, load_manifest, ntt_prime,
+                                     parse_csv_record, selected_cases)
 from summarize_comprehensive_suite import summarize
 
 
@@ -57,6 +58,28 @@ class ComprehensiveSuiteTest(unittest.TestCase):
             path.write_text(json.dumps(invalid))
             with self.assertRaisesRegex(ValueError, "mixes semantic contracts"):
                 load_manifest(path)
+
+    def test_structured_matrix_is_part_of_semantic_contract(self):
+        invalid = copy.deepcopy(self.document)
+        cases = [case for case in invalid["cases"] if case["group"] == "fwht-fp32-fwd-log8"]
+        for case, matrix in zip(cases, ("1,0.25,-0.5,1", "1,0.5,-0.5,1")):
+            case["operator"] = "structured-2x2"
+            case["args"] += ["--stage-matrix", matrix]
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "invalid.json"
+            path.write_text(json.dumps(invalid))
+            with self.assertRaisesRegex(ValueError, "mixes semantic contracts"):
+                load_manifest(path)
+
+    def test_structured_semantics_canonicalize_repeated_matrices(self):
+        case = {
+            "runner": "butterfly", "operator": "structured-2x2", "precision": "fp32", "logN": 2,
+            "args": ["--operator", "structured-2x2", "--stage-matrix", "1.0,0.25,-0.5,1",
+                     "--stage-matrix", "2,0,0,0.5"],
+        }
+        semantics = expected_semantics(case)
+        self.assertEqual(semantics["normalization"], "none")
+        self.assertEqual(semantics["stage_matrices"], "1:0.25:-0.5:1x2:0:0:0.5")
 
     def test_ntt_prime_has_requested_contract(self):
         value = ntt_prime(60, 20)

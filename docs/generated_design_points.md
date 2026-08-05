@@ -19,6 +19,7 @@ The default V100 specification emits:
 | Operator | Core | Precision | Generated range |
 |:--|:--|:--|:--|
 | FWHT | `warp-register` | FP32 | `logN=3..15` |
+| Structured 2x2 | `warp-register` | FP32 | `logN=3..15` |
 | FFT | `thread-dft8` | FP32 | `logN=3` |
 | FFT | `cta-dft8` | FP32 | `logN=3..10` |
 | FFT | `wmma-dft8` | FP16 input, FP32 accumulation/output | `logN=3` |
@@ -26,6 +27,19 @@ The default V100 specification emits:
 Unsupported combinations fail during plan construction. They are not silently
 redirected to another core. The scalar shared-memory implementation remains the
 general fallback and is selected with `--fft-core scalar`.
+
+The Structured 2x2 register family reuses the FWHT value layout, warp shuffle,
+and XOR-swizzled cross-warp transport, but replaces each add/subtract pair with
+the selected stage matrix. Matrices remain device-resident and may be broadcast
+or stage-specific. This keeps the scheduling and transport choice independent
+from the physical pair operation.
+
+Each generated length contains two coefficient-policy specializations. A
+single public matrix selects `broadcast-register`, which loads one `float4` at
+kernel entry and reuses it across all stages. Exactly `logN` public matrices
+select `per-stage-table`, preserving arbitrary stage coefficients. The choice
+is based on descriptor shape rather than coefficient equality, so equivalent
+policies can be benchmarked independently.
 
 Configure with another generated range using:
 

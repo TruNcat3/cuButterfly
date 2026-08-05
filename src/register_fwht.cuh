@@ -51,6 +51,30 @@ __device__ __forceinline__ void register_wht(float (&values)[Length]) {
     }
 }
 
+__device__ __forceinline__ float structured_pair(float self, float partner, bool right, float4 matrix) {
+    return right ? matrix.z * partner + matrix.w * self
+                 : matrix.x * self + matrix.y * partner;
+}
+
+template <bool Broadcast, std::uint32_t Length, std::uint32_t StageBase>
+__device__ __forceinline__ void register_structured(float (&values)[Length], const float4* matrices,
+                                                    float4 broadcast_matrix) {
+#pragma unroll
+    for (std::uint32_t local_stage = 0; local_stage < static_log2(Length); ++local_stage) {
+        const std::uint32_t half   = 1U << local_stage;
+        const float4        matrix = Broadcast ? broadcast_matrix : matrices[StageBase + local_stage];
+#pragma unroll
+        for (std::uint32_t unit = 0; unit < Length / 2; ++unit) {
+            const std::uint32_t offset = unit & (half - 1);
+            const std::uint32_t left   = (unit - offset) * 2 + offset;
+            const float         a      = values[left];
+            const float         b      = values[left + half];
+            values[left]               = matrix.x * a + matrix.y * b;
+            values[left + half]        = matrix.z * a + matrix.w * b;
+        }
+    }
+}
+
 __device__ __forceinline__ float4 pack_float4(const float (&values)[4]) {
     return make_float4(values[0], values[1], values[2], values[3]);
 }
@@ -77,6 +101,30 @@ __device__ __forceinline__ void warp_wht(float (&values)[Chunks][4]) {
                 for (std::uint32_t item = 0; item < 4; ++item) {
                     const float partner = __shfl_xor_sync(mask, values[chunk][item], lane_mask, Width);
                     values[chunk][item] = sign * values[chunk][item] + partner;
+                }
+            }
+        }
+    }
+}
+
+template <bool Broadcast, std::uint32_t Width, std::uint32_t Chunks, std::uint32_t StageBase>
+__device__ __forceinline__ void warp_structured(float (&values)[Chunks][4], const float4* matrices,
+                                                float4 broadcast_matrix) {
+    if constexpr (Width > 1) {
+        const std::uint32_t lane = threadIdx.x & (Width - 1);
+        const unsigned int  mask = __activemask();
+#pragma unroll
+        for (std::uint32_t local_stage = 0; local_stage < static_log2(Width); ++local_stage) {
+            const std::uint32_t lane_mask = 1U << local_stage;
+            const bool          right     = (lane & lane_mask) != 0;
+            const float4        matrix    = Broadcast ? broadcast_matrix : matrices[StageBase + local_stage];
+#pragma unroll
+            for (std::uint32_t chunk = 0; chunk < Chunks; ++chunk) {
+#pragma unroll
+                for (std::uint32_t item = 0; item < 4; ++item) {
+                    const float self    = values[chunk][item];
+                    const float partner = __shfl_xor_sync(mask, self, lane_mask, Width);
+                    values[chunk][item] = structured_pair(self, partner, right, matrix);
                 }
             }
         }
@@ -187,11 +235,104 @@ __global__ __launch_bounds__(RegisterFwhtTraits<LogN>::kThreads) void register_f
 
 template <std::uint32_t LogN>
 void launch_register_fwht(const float* input, float* output, std::uint64_t transforms, std::uint64_t batch_distance, std::uint64_t element_stride,
-                          bool normalize) {
+                          bool normalize, cudaStream_t stream) {
     using Traits      = RegisterFwhtTraits<LogN>;
     const float scale = normalize ? 1.0F / static_cast<float>(Traits::kN) : 1.0F;
-    register_fwht_kernel<LogN><<<static_cast<unsigned int>(transforms), Traits::kThreads, Traits::kSharedBytes>>>(
+    register_fwht_kernel<LogN><<<static_cast<unsigned int>(transforms), Traits::kThreads, Traits::kSharedBytes, stream>>>(
         input, output, transforms, batch_distance, element_stride, scale);
+}
+
+template <std::uint32_t LogN, bool Broadcast>
+__global__ __launch_bounds__(RegisterFwhtTraits<LogN>::kThreads) void register_structured_kernel(
+    const float* input, float* output, const float* matrix_entries, std::uint64_t transforms,
+    std::uint64_t batch_distance, std::uint64_t element_stride) {
+    using Traits = RegisterFwhtTraits<LogN>;
+    extern __shared__ __align__(16) unsigned char storage[];
+    float4*                                       shared    = reinterpret_cast<float4*>(storage);
+    const float4*                                 matrices  = reinterpret_cast<const float4*>(matrix_entries);
+    const float4                                  broadcast_matrix = Broadcast ? matrices[0] : make_float4(0, 0, 0, 0);
+    const std::uint64_t                           transform = blockIdx.x;
+    if (transform >= transforms)
+        return;
+
+    const std::uint64_t base = transform * batch_distance;
+    float               values[Traits::kChunks][4];
+#pragma unroll
+    for (std::uint32_t chunk = 0; chunk < Traits::kChunks; ++chunk) {
+        const std::uint32_t vector_index = chunk * Traits::kThreads + threadIdx.x;
+        if (element_stride == 1 && (base & 3U) == 0) {
+            unpack_float4(reinterpret_cast<const float4*>(input + base)[vector_index], values[chunk]);
+        } else {
+#pragma unroll
+            for (std::uint32_t item = 0; item < 4; ++item) {
+                const std::uint32_t index = vector_index * 4 + item;
+                values[chunk][item]       = input[base + static_cast<std::uint64_t>(index) * element_stride];
+            }
+        }
+        register_structured<Broadcast, 4, 0>(values[chunk], matrices, broadcast_matrix);
+    }
+
+    constexpr std::uint32_t kWarpStageBase = 2;
+    warp_structured<Broadcast, Traits::kWarpSize, Traits::kChunks, kWarpStageBase>(
+        values, matrices, broadcast_matrix);
+    if constexpr (Traits::kWarps > 1) {
+        exchange_warps<Traits, true>(values, shared);
+        constexpr std::uint32_t kCtaStageBase = kWarpStageBase + static_log2(Traits::kWarpSize);
+        warp_structured<Broadcast, Traits::kWarps, Traits::kChunks, kCtaStageBase>(
+            values, matrices, broadcast_matrix);
+        exchange_warps<Traits, false>(values, shared);
+    }
+
+    if constexpr (Traits::kChunks > 1) {
+        float transposed[4][Traits::kChunks];
+#pragma unroll
+        for (std::uint32_t chunk = 0; chunk < Traits::kChunks; ++chunk) {
+#pragma unroll
+            for (std::uint32_t item = 0; item < 4; ++item)
+                transposed[item][chunk] = values[chunk][item];
+        }
+        constexpr std::uint32_t kChunkStageBase = 2 + static_log2(Traits::kThreads);
+#pragma unroll
+        for (std::uint32_t item = 0; item < 4; ++item)
+            register_structured<Broadcast, Traits::kChunks, kChunkStageBase>(
+                transposed[item], matrices, broadcast_matrix);
+#pragma unroll
+        for (std::uint32_t chunk = 0; chunk < Traits::kChunks; ++chunk) {
+#pragma unroll
+            for (std::uint32_t item = 0; item < 4; ++item)
+                values[chunk][item] = transposed[item][chunk];
+        }
+    }
+
+#pragma unroll
+    for (std::uint32_t chunk = 0; chunk < Traits::kChunks; ++chunk) {
+        const std::uint32_t vector_index = chunk * Traits::kThreads + threadIdx.x;
+        if (element_stride == 1 && (base & 3U) == 0) {
+            reinterpret_cast<float4*>(output + base)[vector_index] = pack_float4(values[chunk]);
+        } else {
+#pragma unroll
+            for (std::uint32_t item = 0; item < 4; ++item) {
+                const std::uint32_t index = vector_index * 4 + item;
+                output[base + static_cast<std::uint64_t>(index) * element_stride] = values[chunk][item];
+            }
+        }
+    }
+}
+
+template <std::uint32_t LogN>
+void launch_register_structured(const float* input, float* output, const float* matrices,
+                                std::uint64_t transforms, std::uint64_t batch_distance,
+                                std::uint64_t element_stride, bool broadcast, cudaStream_t stream) {
+    using Traits = RegisterFwhtTraits<LogN>;
+    if (broadcast) {
+        register_structured_kernel<LogN, true><<<static_cast<unsigned int>(transforms), Traits::kThreads,
+                                                Traits::kSharedBytes, stream>>>(
+            input, output, matrices, transforms, batch_distance, element_stride);
+    } else {
+        register_structured_kernel<LogN, false><<<static_cast<unsigned int>(transforms), Traits::kThreads,
+                                                 Traits::kSharedBytes, stream>>>(
+            input, output, matrices, transforms, batch_distance, element_stride);
+    }
 }
 
 }  // namespace cuntt::detail

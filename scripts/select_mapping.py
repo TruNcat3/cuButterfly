@@ -9,7 +9,7 @@ import statistics
 
 SEMANTIC_FIELDS = (
     "operator", "precision", "direction", "normalization", "placement", "logN",
-    "element_stride", "output_order", "modulus_bits",
+    "element_stride", "output_order", "modulus_bits", "stage_matrices",
 )
 EXTERNAL_BACKENDS = {"cufft", "vkfft"}
 

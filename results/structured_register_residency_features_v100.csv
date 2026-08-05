@@ -1,0 +1,13 @@
+operator,precision,core,coefficient_policy,logN,threads,registers_per_thread,shared_bytes,local_bytes,ctas_per_transform,batch,warps_per_cta,temporal_state_words_per_thread,allocated_registers_per_cta,allocated_shared_bytes_per_cta,register_file_fraction_per_cta,register_cta_limit,shared_cta_limit,thread_cta_limit,warp_cta_limit,resident_ctas_per_sm,resident_warps_per_sm,occupancy_upper_bound,total_ctas,grid_waves,grid_concurrent_fraction,limiting_resource,hardware_feasible,residency_drop_from_previous,residency_ratio_from_previous,occupancy_drop_from_previous,occupancy_ratio_from_previous,register_residency_drop_from_previous,crosses_single_cta_boundary,resource_cliff
+structured-2x2,fp32,warp-register,broadcast,8,32,35,1024,0,1,16384,1,8,1280,1024,0.01953125,51,96,64,64,32,32,0.5,16384,6.4,1.0,hardware,1,0,1.0,0.0,1.0,0,0,0
+structured-2x2,fp32,warp-register,broadcast,10,128,32,4096,0,1,4096,4,8,4096,4096,0.0625,16,24,16,16,16,64,1.0,4096,3.2,1.0,register+thread+warp,1,16,2.0,0.0,0.5,35,0,0
+structured-2x2,fp32,warp-register,broadcast,12,256,40,16384,0,1,1024,8,16,10240,16384,0.15625,6,6,8,8,6,48,0.75,1024,2.1333333333333333,1.0,register+shared,1,10,2.6666666666666665,0.25,1.3333333333333333,10,0,0
+structured-2x2,fp32,warp-register,broadcast,13,256,64,32768,0,1,512,8,32,16384,32768,0.25,4,3,8,8,3,24,0.375,512,2.1333333333333333,1.0,shared,1,3,2.0,0.375,2.0,2,0,1
+structured-2x2,fp32,warp-register,broadcast,14,256,128,32768,0,1,256,8,64,32768,32768,0.5,2,3,8,8,2,16,0.25,256,1.6,1.0,register,1,1,1.5,0.125,1.5,2,0,1
+structured-2x2,fp32,warp-register,broadcast,15,256,254,32768,0,1,128,8,128,65536,32768,1.0,1,3,8,8,1,8,0.125,128,1.6,1.0,register,1,1,2.0,0.125,2.0,1,1,1
+structured-2x2,fp32,warp-register,per-stage,8,32,58,1024,0,1,16384,1,8,2048,1024,0.03125,32,96,64,64,32,32,0.5,16384,6.4,1.0,register+hardware,1,0,1.0,0.0,1.0,0,0,0
+structured-2x2,fp32,warp-register,per-stage,10,128,34,4096,0,1,4096,4,8,5120,4096,0.078125,12,24,16,16,12,48,0.75,4096,4.266666666666667,1.0,register,1,20,2.6666666666666665,0.0,0.6666666666666666,20,0,0
+structured-2x2,fp32,warp-register,per-stage,12,256,43,16384,0,1,1024,8,16,12288,16384,0.1875,5,6,8,8,5,40,0.625,1024,2.56,1.0,register,1,7,2.4,0.125,1.2,7,0,0
+structured-2x2,fp32,warp-register,per-stage,13,256,76,32768,0,1,512,8,32,20480,32768,0.3125,3,3,8,8,3,24,0.375,512,2.1333333333333333,1.0,register+shared,1,2,1.6666666666666667,0.25,1.6666666666666667,2,0,1
+structured-2x2,fp32,warp-register,per-stage,14,256,128,32768,0,1,256,8,64,32768,32768,0.5,2,3,8,8,2,16,0.25,256,1.6,1.0,register,1,1,1.5,0.125,1.5,1,0,1
+structured-2x2,fp32,warp-register,per-stage,15,256,214,32768,0,1,128,8,128,55296,32768,0.84375,1,3,8,8,1,8,0.125,128,1.6,1.0,register,1,1,2.0,0.125,2.0,1,1,1

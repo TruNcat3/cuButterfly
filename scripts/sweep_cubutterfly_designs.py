@@ -1,10 +1,32 @@
 #!/usr/bin/env python3
 import argparse
 import csv
+import json
 import pathlib
 import subprocess
 
 from fft_design_space import load_codegen_points
+from residency_features import RESOURCE_FEATURE_FIELDS, derive_residency_features
+
+
+def load_resource_profile(path):
+    with path.open() as source:
+        rows = list(csv.DictReader(source))
+    return {
+        (row["operator"], row["precision"], row["core"], row["coefficient_policy"], int(row["logN"])): row
+        for row in rows
+    }
+
+
+def candidate_resource_key(operator, precision, config, log_n):
+    if config["local_exchange"] == "warp-register":
+        core = "warp-register"
+    elif config["fft_core"] != "scalar":
+        core = config["fft_core"]
+    else:
+        core = config["compute_unit"]
+    policy = "broadcast" if operator == "structured-2x2" else "none"
+    return operator, precision, core, policy, log_n
 
 
 def base_configurations(operator, precision, log_n, tile_threads, hierarchical_local_stages, reorder_column_options):
@@ -100,7 +122,7 @@ def configurations(operator, precision, log_n, tile_threads, hierarchical_local_
         multiply_options = ("four-mul", "gauss3") if operator == "fft" and config["backend"] != "cufft" else ("four-mul",)
         for complex_multiply in multiply_options:
             yield {**config, "complex_multiply": complex_multiply, "local_exchange": "shared", "fft_core": "scalar"}
-    if operator == "fwht" and precision == "fp32" and 3 <= log_n <= 15:
+    if operator in ("fwht", "structured-2x2") and precision == "fp32" and 3 <= log_n <= 15:
         threads = 1 if log_n == 3 else 2 if log_n == 4 else 4 if log_n == 5 else 8 if log_n == 6 else 16 if log_n == 7 else 32 if log_n <= 9 else 128 if log_n == 10 else 256
         yield {
             "backend": "temporal-tile", "compute_unit": "radix2", "complex_multiply": "four-mul", "local_exchange": "warp-register",
@@ -228,6 +250,8 @@ def run(binary, operator, precision, config, log_n, direction, normalization, pl
         "--batch-stride", str(batch_stride),
         "--element-stride", str(element_stride),
     ]
+    if operator == "structured-2x2":
+        command += ["--stage-matrix", "1,0.25,-0.5,1"]
     if direction == "inverse":
         command.append("--inverse")
     if config["backend"] == "temporal-tile":
@@ -264,7 +288,9 @@ def main():
     parser.add_argument("--binary", type=pathlib.Path, default=pathlib.Path("build/cubutterfly_bench"))
     parser.add_argument("--fft-codegen-spec", type=pathlib.Path,
                         default=pathlib.Path("config/v100_fft_codegen.json"))
-    parser.add_argument("--operators", nargs="+", choices=("fwht", "fft", "xor-zeta"), default=("fwht", "fft", "xor-zeta"))
+    parser.add_argument("--operators", nargs="+",
+                        choices=("fwht", "fft", "subset-zeta", "superset-zeta", "structured-2x2", "xor-zeta"),
+                        default=("fwht", "fft", "subset-zeta", "superset-zeta", "structured-2x2"))
     parser.add_argument("--backends", nargs="+", choices=("temporal-tile", "hierarchical", "online-reorder", "warp-hybrid", "stage-pipeline", "cufft"),
                         default=("temporal-tile", "hierarchical", "online-reorder", "warp-hybrid", "stage-pipeline", "cufft"))
     parser.add_argument("--compute-units", nargs="+", choices=("radix2", "radix4", "radix8"), default=("radix2", "radix4", "radix8"))
@@ -296,24 +322,34 @@ def main():
     parser.add_argument("--warmup", type=int, default=20)
     parser.add_argument("--repeat", type=int, default=100)
     parser.add_argument("--trials", type=int, default=5)
+    parser.add_argument("--hardware-profile", type=pathlib.Path,
+                        help="GPU allocation/capacity JSON used to derive candidate residency features.")
+    parser.add_argument("--resource-profile", type=pathlib.Path,
+                        help="Compiled per-kernel register/shared resource CSV.")
     parser.add_argument("--output", "-o", required=True, type=pathlib.Path)
     args = parser.parse_args()
 
     if not args.binary.is_file():
         raise FileNotFoundError(f"benchmark binary not found: {args.binary}")
+    if bool(args.hardware_profile) != bool(args.resource_profile):
+        raise ValueError("--hardware-profile and --resource-profile must be supplied together")
+    hardware = json.loads(args.hardware_profile.read_text()) if args.hardware_profile else None
+    resource_profile = load_resource_profile(args.resource_profile) if args.resource_profile else {}
+    previous_features = {}
     compiled_fft_points = load_codegen_points(args.fft_codegen_spec)
     records = []
     for operator in args.operators:
-        precisions = ("uint32",) if operator == "xor-zeta" else args.precisions
+        integer_zeta = operator in ("subset-zeta", "superset-zeta", "xor-zeta")
+        precisions = ("uint32",) if integer_zeta else args.precisions
         for precision in precisions:
-            for log_n in args.logNs:
+            for log_n in sorted(args.logNs):
                 if not 1 <= log_n <= 20:
                     raise ValueError("cuButterfly logN sweep values must be in [1, 20]")
                 batch = max(1, args.target_points // (1 << log_n)) if args.target_points else args.batch
                 transform_extent = ((1 << log_n) - 1) * args.element_stride + 1
                 batch_stride = transform_extent + args.batch_padding
                 for direction in args.directions:
-                    normalizations = ("none",) if operator == "xor-zeta" else args.normalizations
+                    normalizations = ("none",) if integer_zeta or operator == "structured-2x2" else args.normalizations
                     for normalization in normalizations:
                         for placement in args.placements:
                             for config in configurations(operator, precision, log_n, args.tile_thread_options,
@@ -340,10 +376,30 @@ def main():
                                     suffix_key = (log_n - config["local_stages"], config["suffix_threads"], config["suffix_ept"])
                                     if prefix_key not in compiled_fft_points or suffix_key not in compiled_fft_points:
                                         continue
+                                features = None
+                                resource_key = candidate_resource_key(operator, precision, config, log_n)
+                                resource = resource_profile.get(resource_key)
+                                if hardware is not None and resource is not None:
+                                    family = resource_key[:4]
+                                    features = derive_residency_features(
+                                        hardware,
+                                        int(resource["threads"]),
+                                        int(resource["registers_per_thread"]),
+                                        int(resource["shared_bytes"]),
+                                        batch * int(resource.get("ctas_per_transform") or 1),
+                                        temporal_state_words_per_thread=(1 << log_n) // int(resource["threads"]),
+                                        previous=previous_features.get(family),
+                                    )
+                                    previous_features[family] = features
+                                    if not features["hardware_feasible"]:
+                                        continue
                                 for trial in range(1, args.trials + 1):
                                     row = run(args.binary, operator, precision, config, log_n, direction, normalization, placement, batch,
                                               args.element_stride, batch_stride, args.warmup, args.repeat)
-                                    row = {"trial": trial, **row}
+                                    feature_row = ({field: features[field] for field in RESOURCE_FEATURE_FIELDS}
+                                                   if features is not None else
+                                                   {field: "" for field in RESOURCE_FEATURE_FIELDS})
+                                    row = {"trial": trial, **row, **feature_row}
                                     records.append(row)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)

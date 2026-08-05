@@ -61,6 +61,21 @@ The register hierarchy is adapted from Dao-AILab's fast-hadamard-transform;
 provenance is recorded in `THIRD_PARTY_NOTICES.md`. It is evidence that the
 framework can absorb an established core, not a claim of inventing that core.
 
+## Structured 2x2
+
+| Status | Unit | Design-space value | Main limitation or next step |
+|:--|:--|:--|:--|
+| implemented | scalar dense radix-2/4/8 | arbitrary FP32/FP64 stage matrices | shared exchange dominates resident short transforms |
+| implemented | generated FP32 warp-register matrix core | register vectors, shuffle, XOR-swizzled cross-warp exchange | `logN=3..15`; dense arithmetic overhead grows with stage count |
+| implemented | broadcast-register and per-stage-table policies | reuse one matrix or retain arbitrary stage coefficients | broadcast register pressure rises sharply at `logN=15` |
+| candidate | structure-specialized codelet | diagonal, triangular, sparse, Hadamard, or rotation matrices | explicit semantic class and code-size budget |
+| candidate | FP64 register matrix core | preserve the same transport hierarchy | register footprint and occupancy crossover |
+
+The register core deliberately retains matrix loads and the general dense pair
+operation. It tests whether an established transport hierarchy can be reused
+without baking FWHT arithmetic into the architecture. Constant-matrix
+specialization is a separate physical-unit choice, not a mapping requirement.
+
 ## XOR-Zeta And Related Layered Operators
 
 | Status | Unit | Design-space value | Main limitation or next step |

@@ -11,7 +11,10 @@ REQUIRED_OBJECTS = {
     "G_graph_semantics", "A_architecture", "P_processing_unit", "L_layout",
     "F_realization", "Q_generation_selection", "H_hardware",
 }
-REQUIRED_OPERATORS = {"fft", "ntt", "fwht", "xor-zeta", "subset-mobius", "structured-butterfly"}
+REQUIRED_OPERATORS = {
+    "fft", "ntt", "fwht", "subset-zeta", "superset-zeta", "xor-zeta",
+    "structured-2x2",
+}
 
 
 def load_space(path):
@@ -43,9 +46,15 @@ def load_space(path):
     if semantic_operators != projections:
         raise ValueError("graph operator enumeration and operator projections differ")
     hierarchy_levels = set(architecture["hierarchical_unfolding"]["levels"])
-    hardware_levels = set(document["objects"]["H_hardware"]["hierarchy"])
+    hardware = document["objects"]["H_hardware"]
+    hardware_levels = set(hardware["hierarchy"])
     if hierarchy_levels != hardware_levels:
         raise ValueError("architecture and hardware hierarchy levels differ")
+    for field in ("allocation_fields", "derived_residency_fields"):
+        if not hardware.get(field):
+            raise ValueError(f"hardware object lacks required resource field group: {field}")
+    if not document["objects"]["Q_generation_selection"].get("resource_features"):
+        raise ValueError("generation/selection object lacks resource features")
     processing = document["objects"]["P_processing_unit"]
     coefficient_forms = set(processing["coefficient_form"])
     for name, projection in document["operator_projections"].items():

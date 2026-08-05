@@ -28,7 +28,7 @@ void print_usage() {
               << "            [--mod-multiply shoup|barrett]\n"
               << "            [--word-bits 32|64]\n"
               << "            [--output-order natural|bit-reversed]\n"
-              << "            [--warmup 5] [--repeat 20] [--modulus Q] [--inverse] [--verify] [--csv]\n";
+              << "            [--auto-select] [--warmup 5] [--repeat 20] [--modulus Q] [--inverse] [--verify] [--csv]\n";
 }
 
 std::uint32_t reverse_bits(std::uint32_t value, std::uint32_t bits) {
@@ -113,6 +113,8 @@ int main(int argc, char** argv) {
                 config.modulus = std::stoull(take_arg(i, argc, argv));
             } else if (arg == "--inverse") {
                 config.inverse = true;
+            } else if (arg == "--auto-select") {
+                config.auto_select = true;
             } else if (arg == "--verify") {
                 verify = true;
             } else if (arg == "--csv") {
@@ -125,6 +127,7 @@ int main(int argc, char** argv) {
         const auto  device = cuntt::current_device_info();
         cuntt::Plan plan(config);
         config                       = plan.config();
+        const auto& selection        = plan.selection();
         const std::size_t          n = plan.points_per_transform();
         std::mt19937_64            random(0x43554e5454ULL + config.log_n + config.batch);
         std::vector<std::uint64_t> input(n * config.batch);
@@ -143,11 +146,13 @@ int main(int argc, char** argv) {
 
         std::cout << std::fixed << std::setprecision(6);
         if (csv) {
-            std::cout << "device,compute_capability,backend,stage_space,stage_handoff,compute_unit,word_bits,logN,N,batch,modulus,modulus_bits,n1_"
+            std::cout << "device,compute_capability,auto_select,selection_target,selected_implementation,selection_confidence,predicted_kernel_ms,selection_reason,backend,stage_space,stage_handoff,compute_unit,word_bits,logN,N,batch,modulus,modulus_bits,n1_"
                          "log,rows_per_block,threads_"
                          "per_block,inverse,warmup,repeat,h2d_ms,kernel_ms,"
                          "d2h_ms,kernel_ntt_s,end_to_end_ntt_s,kernel_points_s,cross_twiddle,mod_multiply,output_order,correct\n";
             std::cout << '"' << device.name << "\"," << device.compute_major << '.' << device.compute_minor << ','
+                      << static_cast<int>(selection.automatic) << ",\"" << selection.target << "\",\"" << selection.implementation
+                      << "\",\"" << selection.confidence << "\"," << selection.predicted_kernel_ms << ",\"" << selection.reason << "\","
                       << cuntt::backend_name(config.backend) << ',' << config.stage_space << ',' << cuntt::stage_handoff_name(config.stage_handoff)
                       << ',' << cuntt::compute_unit_name(config.compute_unit) << ',' << config.word_bits << ',' << config.log_n << ',' << n << ','
                       << config.batch << ',' << config.modulus << ',' << (64U - static_cast<std::uint32_t>(__builtin_clzll(config.modulus))) << ','
@@ -160,6 +165,15 @@ int main(int argc, char** argv) {
         } else {
             std::cout << "device: " << device.name << " (sm_" << device.compute_major << device.compute_minor << ")\n"
                       << "backend: " << cuntt::backend_name(config.backend) << "\n"
+                      << "auto_select: " << (selection.automatic ? "yes" : "no") << "\n";
+            if (selection.automatic) {
+                std::cout << "selected_implementation: " << selection.implementation << "\n"
+                          << "selection_target: " << selection.target << "\n"
+                          << "selection_confidence: " << selection.confidence << "\n"
+                          << "predicted_kernel_ms: " << selection.predicted_kernel_ms << "\n"
+                          << "selection_reason: " << selection.reason << "\n";
+            }
+            std::cout
                       << "stage_space: " << config.stage_space << "\n"
                       << "stage_handoff: " << cuntt::stage_handoff_name(config.stage_handoff) << "\n"
                       << "compute_unit: " << cuntt::compute_unit_name(config.compute_unit) << "\n"

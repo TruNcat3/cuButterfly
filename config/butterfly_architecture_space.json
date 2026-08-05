@@ -3,7 +3,7 @@
   "model": "multidimensional-space-time-butterfly",
   "objects": {
     "G_graph_semantics": {
-      "operator": ["fft", "ntt", "fwht", "xor-zeta", "subset-mobius", "structured-butterfly"],
+      "operator": ["fft", "ntt", "fwht", "subset-zeta", "superset-zeta", "xor-zeta", "structured-2x2"],
       "log_n": {"min": 1, "max": 32},
       "batch": {"min": 1},
       "direction": ["forward", "inverse"],
@@ -96,14 +96,17 @@
       "specialization": ["runtime-generic", "compile-time", "generated", "external"],
       "selection": ["manual", "exhaustive", "hierarchical-search", "analytic-model", "learned-model"],
       "status": ["abstract", "compiled", "awaiting-codegen", "requires-new-kernel", "semantic-infeasible", "hardware-infeasible", "external-baseline"],
-      "objectives": ["latency", "steady-state-throughput", "batch-throughput", "global-traffic", "on-chip-traffic", "energy", "code-size", "compile-time", "numeric-error"]
+      "objectives": ["latency", "steady-state-throughput", "batch-throughput", "global-traffic", "on-chip-traffic", "energy", "code-size", "compile-time", "numeric-error"],
+      "resource_features": ["temporal-state-per-thread", "allocated-registers-per-cta", "allocated-shared-per-cta", "register-file-fraction", "register-cta-limit", "shared-cta-limit", "thread-cta-limit", "warp-cta-limit", "resident-ctas", "resident-warps", "occupancy-upper-bound", "grid-waves", "grid-concurrent-fraction", "limiting-resource", "resource-cliff"]
     },
     "H_hardware": {
       "execution": ["scalar-lanes", "simd", "tensor-core", "fpga-pipeline"],
       "hierarchy": ["lane", "thread", "warp", "cta", "cluster", "grid", "device", "node"],
       "transport": ["register", "shuffle", "shared", "cluster-shared", "cache", "global", "network"],
       "capacity_fields": ["threads", "warps", "ctas", "registers", "shared-bytes", "cache-bytes", "global-bytes"],
-      "rate_fields": ["arithmetic", "boundary-bandwidth", "interstage-bandwidth", "feedback-bandwidth", "coefficient-bandwidth", "barrier-rate"]
+      "rate_fields": ["arithmetic", "boundary-bandwidth", "interstage-bandwidth", "feedback-bandwidth", "coefficient-bandwidth", "barrier-rate"],
+      "allocation_fields": ["warp-size", "register-allocation-unit", "shared-allocation-unit", "max-threads-per-cta", "max-registers-per-cta", "max-shared-per-cta"],
+      "derived_residency_fields": ["resource-specific-cta-limits", "resident-warps", "occupancy-upper-bound", "grid-waves", "resource-cliff"]
     }
   },
   "operator_projections": {
@@ -129,27 +132,32 @@
       "traits": ["coefficient-free", "symmetric-update"]
     },
     "xor-zeta": {
-      "precision": ["uint8", "uint16", "uint32", "uint64"],
-      "cell": "semiring pair update",
+      "precision": ["uint32"],
+      "cell": "legacy name for the implemented subset zeta/Mobius pair update",
       "coefficient": ["none"],
       "cores": ["scalar-radix2", "scalar-radix4", "scalar-radix8", "packed-integer"],
-      "traits": ["coefficient-free", "asymmetric-update", "semiring-contract"]
+      "traits": ["coefficient-free", "asymmetric-update", "exact-arithmetic", "legacy-name"]
     },
-    "subset-mobius": {
-      "precision": ["operator-defined"],
-      "cell": "inverse semiring pair update",
-      "coefficient": ["none", "operator-defined"],
-      "cores": ["scalar-radix2", "packed-integer"],
-      "traits": ["asymmetric-update", "inverse-contract", "semiring-contract"],
-      "status": "candidate"
+    "subset-zeta": {
+      "precision": ["uint32"],
+      "cell": "right = right plus-or-minus left over the uint32 ring",
+      "coefficient": ["none"],
+      "cores": ["scalar-radix2", "scalar-radix4", "scalar-radix8", "packed-integer"],
+      "traits": ["coefficient-free", "asymmetric-update", "exact-arithmetic", "subset-lattice"]
     },
-    "structured-butterfly": {
-      "precision": ["operator-defined"],
-      "cell": "2x2 linear or semiring map",
-      "coefficient": ["native-table", "generated", "operator-defined"],
-      "cores": ["scalar", "vector", "tensor", "generated-codelet"],
-      "traits": ["operator-defined"],
-      "status": "candidate"
+    "superset-zeta": {
+      "precision": ["uint32"],
+      "cell": "left = left plus-or-minus right over the uint32 ring",
+      "coefficient": ["none"],
+      "cores": ["scalar-radix2", "scalar-radix4", "scalar-radix8", "packed-integer"],
+      "traits": ["coefficient-free", "asymmetric-update", "exact-arithmetic", "superset-lattice"]
+    },
+    "structured-2x2": {
+      "precision": ["fp32", "fp64"],
+      "cell": "stage-parameterized real 2x2 linear map",
+      "coefficient": ["native-table", "generated"],
+      "cores": ["scalar-radix2", "scalar-radix4", "scalar-radix8", "warp-register"],
+      "traits": ["stage-coefficient", "asymmetric-update", "floating-error", "invertible-local-map"]
     }
   },
   "processing_core_bindings": {
@@ -185,15 +193,23 @@
       "scalar-radix8": {"stage_group": "radix8", "arithmetic_core": "scalar", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
       "packed-integer": {"stage_group": "radix2", "arithmetic_core": "vector", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle"]}
     },
-    "subset-mobius": {
-      "scalar-radix2": {"stage_group": "radix2", "arithmetic_core": "scalar", "coefficient": ["none", "operator-defined"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
-      "packed-integer": {"stage_group": "radix2", "arithmetic_core": "vector", "coefficient": ["none", "operator-defined"], "exchange": ["thread-register", "warp-shuffle"]}
+    "subset-zeta": {
+      "scalar-radix2": {"stage_group": "radix2", "arithmetic_core": "scalar", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "scalar-radix4": {"stage_group": "radix4", "arithmetic_core": "scalar", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "scalar-radix8": {"stage_group": "radix8", "arithmetic_core": "scalar", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "packed-integer": {"stage_group": "radix2", "arithmetic_core": "vector", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle"]}
     },
-    "structured-butterfly": {
-      "scalar": {"stage_group": "radix2", "arithmetic_core": "scalar", "coefficient": ["native-table", "generated", "operator-defined"], "exchange": ["thread-register", "warp-shuffle", "shared", "operator-defined"]},
-      "vector": {"stage_group": "radix2", "arithmetic_core": "vector", "coefficient": ["native-table", "generated", "operator-defined"], "exchange": ["thread-register", "warp-shuffle", "shared", "operator-defined"]},
-      "tensor": {"stage_group": "matrix-tile", "arithmetic_core": "tensor", "coefficient": ["native-table", "generated", "operator-defined"], "exchange": ["tensor-fragment", "shared", "operator-defined"]},
-      "generated-codelet": {"stage_group": "full-codelet", "arithmetic_core": "generated-codelet", "coefficient": ["generated", "operator-defined"], "exchange": ["imported-codelet", "operator-defined"]}
+    "superset-zeta": {
+      "scalar-radix2": {"stage_group": "radix2", "arithmetic_core": "scalar", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "scalar-radix4": {"stage_group": "radix4", "arithmetic_core": "scalar", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "scalar-radix8": {"stage_group": "radix8", "arithmetic_core": "scalar", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "packed-integer": {"stage_group": "radix2", "arithmetic_core": "vector", "coefficient": ["none"], "exchange": ["thread-register", "warp-shuffle"]}
+    },
+    "structured-2x2": {
+      "scalar-radix2": {"stage_group": "radix2", "arithmetic_core": "scalar", "coefficient": ["native-table", "generated"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "scalar-radix4": {"stage_group": "radix4", "arithmetic_core": "scalar", "coefficient": ["native-table", "generated"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "scalar-radix8": {"stage_group": "radix8", "arithmetic_core": "scalar", "coefficient": ["native-table", "generated"], "exchange": ["thread-register", "warp-shuffle", "shared"]},
+      "warp-register": {"stage_group": "full-codelet", "arithmetic_core": "vector", "precision": ["fp32"], "coefficient": ["native-table"], "exchange": ["thread-register", "warp-shuffle", "shared"]}
     }
   },
   "precision_bindings": {
@@ -212,16 +228,17 @@
       "fp64": {"word_bits": [64], "accumulator_bits": [64]}
     },
     "xor-zeta": {
-      "uint8": {"word_bits": [16], "accumulator_bits": [16]},
-      "uint16": {"word_bits": [16], "accumulator_bits": [16]},
-      "uint32": {"word_bits": [32], "accumulator_bits": [32]},
-      "uint64": {"word_bits": [64], "accumulator_bits": [64]}
+      "uint32": {"word_bits": [32], "accumulator_bits": [32]}
     },
-    "subset-mobius": {
-      "operator-defined": {"word_bits": ["operator-defined"], "accumulator_bits": ["operator-defined"]}
+    "subset-zeta": {
+      "uint32": {"word_bits": [32], "accumulator_bits": [32]}
     },
-    "structured-butterfly": {
-      "operator-defined": {"word_bits": ["operator-defined"], "accumulator_bits": ["operator-defined"]}
+    "superset-zeta": {
+      "uint32": {"word_bits": [32], "accumulator_bits": [32]}
+    },
+    "structured-2x2": {
+      "fp32": {"word_bits": [32], "accumulator_bits": [32]},
+      "fp64": {"word_bits": [64], "accumulator_bits": [64]}
     }
   },
   "implementation_families": {

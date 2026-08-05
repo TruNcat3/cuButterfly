@@ -10,7 +10,7 @@ def read_rows(path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Combine NTT, FWHT, FFT, and XOR-zeta mapping summaries.")
+    parser = argparse.ArgumentParser(description="Combine NTT, FWHT, FFT, and Boolean-zeta mapping summaries.")
     parser.add_argument("--ntt", required=True, type=pathlib.Path)
     parser.add_argument("--operators", required=True, type=pathlib.Path)
     parser.add_argument("--output", "-o", required=True, type=pathlib.Path)
@@ -40,6 +40,9 @@ def main():
 
     metadata = {
         "fwht": (4, 0, 0, "temporal-tile"),
+        "structured-2x2": (4, 1, 0, "temporal-tile"),
+        "subset-zeta": (4, 0, 0, "temporal-tile"),
+        "superset-zeta": (4, 0, 0, "temporal-tile"),
         "xor-zeta": (4, 0, 0, "temporal-tile"),
         "fft": (8, 1, 1, "cufft"),
     }

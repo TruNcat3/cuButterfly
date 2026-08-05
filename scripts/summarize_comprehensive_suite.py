@@ -9,7 +9,7 @@ import statistics
 SEMANTIC_FIELDS = (
     "operator", "precision", "direction", "normalization", "placement", "logN", "N",
     "performance_batch", "element_stride", "batch_stride", "word_bits", "modulus_bits",
-    "inverse", "output_order",
+    "inverse", "output_order", "stage_matrices",
 )
 
 CONFIG_FIELDS = (
@@ -165,7 +165,7 @@ def write_markdown(path, rows, external_evidence):
         "mean higher throughput than `Basis`; groups without a declared reference use",
         "their fastest internal implementation as the basis.", "",
     ]
-    operator_order = ("fft", "ntt", "fwht", "xor-zeta")
+    operator_order = ("fft", "ntt", "fwht", "structured-2x2", "subset-zeta", "superset-zeta", "xor-zeta")
     for operator in operator_order:
         operator_rows = [row for row in rows if row["operator"] == operator]
         if not operator_rows:

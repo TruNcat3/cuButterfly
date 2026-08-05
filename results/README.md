@@ -14,6 +14,15 @@ artifacts.
 | external baseline refresh | matching-protocol Dao FHT and GPU-NTT pairs | `v100_external_baselines_raw.csv` | `v100_external_baselines_summary.csv`, `v100_external_baselines_report.md` |
 | crossover counters | NCU mechanism attribution for FFT/FWHT scaling boundaries | `ncu_scaling_crossovers/*.csv` | `ncu_scaling_crossovers/summary.csv`, `ncu_scaling_crossovers/attribution.md` |
 | hardware capabilities | V100 service and resource profile | `hardware_capabilities_raw.csv` | `hardware_capabilities_v100.json` |
+| Boolean-zeta direction check | subset/superset/legacy pair-update mapping comparison | `butterfly_operators_expanded_v100_raw.csv` | `butterfly_operators_expanded_v100_summary.csv` |
+| structured 2x2 mapping | dense local-matrix length/precision design-space scan and selected-point preflight | `structured_2x2_v100_raw.csv`, `structured_2x2_v100_best_verify.csv` | `structured_2x2_v100_summary.csv`, `docs/structured_2x2_v100_results.md` |
+| matched FWHT control | same candidate space used to isolate generic matrix-unit cost | `fwht_matched_v100_raw.csv` | `fwht_matched_v100_summary.csv` |
+| structured/FWHT order control | alternating-order confirmation of the FP32 `logN=20` same-mapping result | `structured_fwht_log20_interleaved_v100_raw.csv` | interpreted in `docs/structured_2x2_v100_results.md` |
+| structured 2x2 counters | same-mapping arithmetic plus broadcast/per-stage register attribution | `ncu_structured_2x2_policy/*.csv` | `ncu_structured_2x2_attribution.csv`, `ncu_structured_2x2_attribution.md` |
+| structured register core | generated register-resident matrix core across representative resident lengths | `structured_register_v100_raw.csv`, `structured_register_vs_fwht_v100_raw.csv` | `structured_register_v100_summary.csv`, interpreted in `docs/structured_2x2_v100_results.md` |
+| structured coefficient policy | equivalent broadcast-register versus repeated per-stage-table matrices | `structured_broadcast_policy_v100_raw.csv` | `structured_broadcast_policy_v100_summary.csv`, `structured_register_resources_v100.csv` |
+| structured broadcast/FWHT control | alternating-order same-transport arithmetic comparison after coefficient reuse | `structured_broadcast_vs_fwht_v100_raw.csv` | interpreted in `docs/structured_2x2_v100_results.md` |
+| structured residency features | portable hardware-resource features for both register coefficient policies | `structured_register_resource_profile_v100.csv` | `structured_register_residency_features_v100.csv` |
 
 The `quick` files are protocol smoke tests. Files containing `confirm` retain
 independent reruns used to investigate instability; they do not silently

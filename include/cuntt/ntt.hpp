@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cuda_runtime_api.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -66,6 +68,16 @@ enum class ModularMultiply {
 const char*     modular_multiply_name(ModularMultiply multiply) noexcept;
 ModularMultiply parse_modular_multiply(const std::string& name);
 
+struct SelectionInfo {
+    bool        automatic = false;
+    bool        calibrated = false;
+    std::string target;
+    std::string implementation;
+    std::string confidence;
+    std::string reason;
+    double      predicted_kernel_ms = 0.0;
+};
+
 struct PlanConfig {
     std::uint32_t log_n   = 16;
     std::size_t   batch   = 1;
@@ -84,6 +96,12 @@ struct PlanConfig {
     CrossTwiddlePlacement cross_twiddle_placement = CrossTwiddlePlacement::Fused;
     ModularMultiply       modular_multiply        = ModularMultiply::Shoup;
     OutputOrder           output_order            = OutputOrder::Natural;
+    // Resolve the backend and physical unit from the calibrated runtime table.
+    // Unsupported hardware or semantic contracts fail explicitly.
+    bool                  auto_select              = false;
+    // Allocate plan-owned scratch storage when the selected mapping requires it.
+    // Disable this when the application wants to bind and reuse its own workspace.
+    bool                  auto_allocate_workspace = true;
 };
 
 struct RunStats {
@@ -122,7 +140,22 @@ class Plan {
     Plan& operator=(Plan&&) noexcept;
 
     const PlanConfig& config() const noexcept;
+    const SelectionInfo& selection() const noexcept;
     std::size_t       points_per_transform() const noexcept;
+    std::size_t       data_size() const noexcept;
+    std::size_t       workspace_size() const noexcept;
+
+    // The caller retains ownership of the stream and optional workspace. They must
+    // remain valid until all previously submitted work has completed.
+    void         set_stream(cudaStream_t stream) noexcept;
+    cudaStream_t stream() const noexcept;
+    void         set_workspace(void* workspace, std::size_t bytes);
+    void*        workspace() const noexcept;
+
+    // Allocation-free, asynchronous device-pointer execution. Input and output
+    // must be distinct and match the configured word width.
+    void execute_async(const std::uint32_t* input, std::uint32_t* output);
+    void execute_async(const std::uint64_t* input, std::uint64_t* output);
 
     RunStats execute(const std::vector<std::uint64_t>& input, std::vector<std::uint64_t>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);
 

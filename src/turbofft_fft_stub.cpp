@@ -6,7 +6,8 @@ namespace cuntt::detail {
 
 bool turbofft_generated_available(std::uint32_t) noexcept { return false; }
 
-void launch_turbofft_generated(std::uint32_t, const Complex32*, Complex32*, std::uint64_t, std::uint64_t, std::uint64_t) {
+void launch_turbofft_generated(std::uint32_t, const Complex32*, Complex32*, std::uint64_t, std::uint64_t, std::uint64_t,
+                               cudaStream_t) {
     throw std::runtime_error("turbofft-generated was not enabled at build time");
 }
 

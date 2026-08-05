@@ -39,14 +39,17 @@ search the product of both spaces.
 | FFT FP64 optional | cuFFTDx block FFT | imported double-precision local codelet | temporal `logN=3..10`; online `logN=16` with an `8+8` decomposition |
 | FFT mixed | temporally fused DFT8 matrix | FP16 WMMA input with FP32 accumulation/output | generated temporal point |
 | FWHT FP32/FP64 | radix-2, fused radix-4, fused radix-8 | add/subtract; FP32 register-vector/XOR-swizzle exchange | temporal, hierarchical, online-reorder |
+| Structured 2x2 FP32/FP64 | radix-2, fused radix-4, fused radix-8 | dense stage matrices; FP32 register-vector/XOR-swizzle exchange | temporal, hierarchical, online-reorder; generated register point for `logN=3..15` |
 | XOR-zeta uint32 | radix-2, fused radix-4, fused radix-8 | add/subtract modulo `2^32` | temporal, hierarchical, online-reorder |
 | NTT 32/64-bit | radix-2, fused radix-4, fused radix-8 | independent Shoup or Barrett modular multiplication | Hybrid2D |
 
 `warp-hybrid` and `stage-pipeline` currently expose radix-2 only. cuFFT is an
 opaque vendor baseline, not an internal unit. The FP32 FWHT `warp-register`
 unit isolates the register-vector, warp shuffle, and XOR-swizzled cross-warp
-exchange used by Dao-AILab FHT behind the same local-unit contract. It retains
-cuButterfly batch, stride, placement, inverse, and normalization semantics.
+exchange used by Dao-AILab FHT behind the same local-unit contract. The FP32
+Structured 2x2 unit reuses that transport with arbitrary device-resident stage
+matrices. Both retain cuButterfly batch, stride, placement, inverse, and
+normalization semantics.
 Query the compiled matrix with:
 
 ```bash
@@ -389,6 +392,22 @@ breakpoints and thread schedule must be regenerated while the mapping paradigm
 remains unchanged. Register counts above come from `cuobjdump
 --dump-resource-usage build/cubutterfly_bench`; occupancy statements are
 resource upper bounds for V100, not profiler-measured achieved occupancy.
+
+The Structured broadcast core demonstrates why this vector must be recomputed
+for every physical unit. Its V100 residency sequence is:
+
+| logN | state words/thread | registers/CTA | resident CTA/SM | occupancy bound | waves at `2^22` points | limit | cliff |
+|--:|--:|--:|--:|--:|--:|:--|:--:|
+| 8 | 8 | 1,280 | 32 | 50.0% | 6.40 | CTA count | no |
+| 10 | 8 | 4,096 | 16 | 100.0% | 3.20 | register/thread/warp | no |
+| 12 | 16 | 10,240 | 6 | 75.0% | 2.13 | register/shared | no |
+| 13 | 32 | 16,384 | 3 | 37.5% | 2.13 | shared | yes |
+| 14 | 64 | 32,768 | 2 | 25.0% | 1.60 | register | yes |
+| 15 | 128 | 65,536 | 1 | 12.5% | 1.60 | register | yes |
+
+The transition begins at `logN=13`, not only at `logN=15`. The final point is
+highlighted because it crosses the one-CTA/SM boundary, while the continuous
+features allow the search to see the full `12..15` degradation region.
 
 Gauss three-multiply is correct but does not improve these V100 FP32 cases. Its
 best times differ from four-multiply by less than 0.5%; the extra dependent

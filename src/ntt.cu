@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "cuntt/ntt.hpp"
+#include "mapping_selector.hpp"
 #include "stage_pipeline.cuh"
 
 namespace cuntt {
@@ -23,6 +24,17 @@ void check_cuda(cudaError_t status, const char* expression, const char* file, in
 }
 
 #define CUNTT_CUDA_CHECK(expr) check_cuda((expr), #expr, __FILE__, __LINE__)
+
+thread_local cudaStream_t active_stream = nullptr;
+
+class LaunchStreamScope {
+  public:
+    explicit LaunchStreamScope(cudaStream_t stream) noexcept : previous_(active_stream) { active_stream = stream; }
+    ~LaunchStreamScope() { active_stream = previous_; }
+
+  private:
+    cudaStream_t previous_;
+};
 
 class Event {
   public:
@@ -69,6 +81,8 @@ class DeviceBuffer {
     T* as() const noexcept {
         return reinterpret_cast<T*>(pointer_);
     }
+
+    void* data() const noexcept { return pointer_; }
 
   private:
     std::uint64_t* pointer_ = nullptr;
@@ -207,8 +221,8 @@ void launch_stage_pipeline_ntt256(const PlanConfig& config, const std::uint64_t*
         const std::uint64_t* stage_input = stage_base == 0 ? input : output;
         constexpr std::size_t kHandoffPadding = NamedBarrier ? 16 * sizeof(int) : 0;
         const NttStageOperator op{twiddles, twiddles_shoup, config.modulus};
-        detail::stage_pipeline_256_kernel<NttStageOperator, StageSpace, NamedBarrier><<<blocks, 256, kHandoffPadding>>>(stage_input, output, tiles,
-                                                                                                                       stage_base, 256, 256, 1, op);
+        detail::stage_pipeline_256_kernel<NttStageOperator, StageSpace, NamedBarrier><<<blocks, 256, kHandoffPadding, active_stream>>>(
+            stage_input, output, tiles, stage_base, 256, 256, 1, op);
         CUNTT_CUDA_CHECK(cudaGetLastError());
     }
 }
@@ -316,15 +330,18 @@ void launch_compact_stage_log20(const PlanConfig& config, const std::uint64_t* i
                                 const std::uint64_t* roots_shoup, std::uint64_t* natural_output) {
     const auto batch = static_cast<unsigned int>(config.batch);
 
-    compact_stage_kernel<16, 16, 0, 5, false><<<dim3(2048, 1, batch), dim3(16, 16)>>>(input, output, roots, config.modulus, roots_shoup);
+    compact_stage_kernel<16, 16, 0, 5, false><<<dim3(2048, 1, batch), dim3(16, 16), 0, active_stream>>>(input, output, roots, config.modulus,
+                                                                                                        roots_shoup);
     CUNTT_CUDA_CHECK(cudaGetLastError());
-    compact_stage_kernel<8, 32, 5, 6, false><<<dim3(64, 32, batch), dim3(8, 32)>>>(output, output, roots, config.modulus, roots_shoup);
+    compact_stage_kernel<8, 32, 5, 6, false><<<dim3(64, 32, batch), dim3(8, 32), 0, active_stream>>>(output, output, roots, config.modulus,
+                                                                                                     roots_shoup);
     CUNTT_CUDA_CHECK(cudaGetLastError());
     if (natural_output != nullptr) {
         compact_stage_kernel<256, 1, 11, 9, true, true>
-            <<<dim3(1, 2048, batch), dim3(256, 1)>>>(output, natural_output, roots, config.modulus, roots_shoup);
+            <<<dim3(1, 2048, batch), dim3(256, 1), 0, active_stream>>>(output, natural_output, roots, config.modulus, roots_shoup);
     } else {
-        compact_stage_kernel<256, 1, 11, 9, true><<<dim3(1, 2048, batch), dim3(256, 1)>>>(output, output, roots, config.modulus, roots_shoup);
+        compact_stage_kernel<256, 1, 11, 9, true><<<dim3(1, 2048, batch), dim3(256, 1), 0, active_stream>>>(output, output, roots, config.modulus,
+                                                                                                          roots_shoup);
     }
     CUNTT_CUDA_CHECK(cudaGetLastError());
 }
@@ -721,10 +738,10 @@ void launch_hybrid2d_pass(const PlanConfig& config, bool first_pass, const Word*
     const Word            barrett_mu           = static_cast<Word>(barrett_precompute(config.modulus, modulus_bits));
     if (first_pass) {
         hybrid2d_first_pass_kernel<Word, LocalLog, RowsPerBlock, Unit, Placement, Barrett>
-            <<<grid, config.threads_per_block, shared_bytes>>>(input, scratch, twiddles, twiddles_shoup, root_powers, root_powers_shoup,
+            <<<grid, config.threads_per_block, shared_bytes, active_stream>>>(input, scratch, twiddles, twiddles_shoup, root_powers, root_powers_shoup,
                                                                static_cast<Word>(config.modulus), other_log, modulus_bits, barrett_mu, config.log_n);
     } else {
-        hybrid2d_second_pass_kernel<Word, LocalLog, RowsPerBlock, Unit, Placement, Barrett><<<grid, config.threads_per_block, shared_bytes>>>(
+        hybrid2d_second_pass_kernel<Word, LocalLog, RowsPerBlock, Unit, Placement, Barrett><<<grid, config.threads_per_block, shared_bytes, active_stream>>>(
             scratch, output, twiddles, twiddles_shoup, static_cast<Word>(config.modulus), root_powers, root_powers_shoup, config.inverse,
             static_cast<Word>(inverse_n), static_cast<Word>(inverse_n_shoup), modulus_bits, barrett_mu, other_log, config.log_n);
     }
@@ -788,6 +805,12 @@ void dispatch_hybrid2d_log(const PlanConfig& config, std::uint32_t local_log, bo
 class Plan::Impl {
   public:
     explicit Impl(PlanConfig config) : config_(std::move(config)) {
+        const bool automatic_selection = config_.auto_select;
+        if (automatic_selection) {
+            auto selected = detail::select_ntt_mapping(std::move(config_));
+            config_       = std::move(selected.config);
+            selection_    = std::move(selected.info);
+        }
         resolve_hybrid2d_mapping();
         validate_config();
         n_ = 1ULL << config_.log_n;
@@ -795,26 +818,29 @@ class Plan::Impl {
             throw std::overflow_error("batch * N overflows size_t");
         }
         total_points_ = n_ * config_.batch;
-        if (total_points_ > std::numeric_limits<std::size_t>::max() / sizeof(std::uint64_t)) {
+        if (total_points_ > std::numeric_limits<std::size_t>::max() / (config_.word_bits / 8)) {
             throw std::overflow_error("device allocation size overflows size_t");
         }
 
         build_twiddles();
         const std::size_t word_bytes          = config_.word_bits / 8;
-        const std::size_t data_bytes          = total_points_ * word_bytes;
+        data_bytes_                           = total_points_ * word_bytes;
+        workspace_bytes_ = (config_.backend == Backend::Hybrid2D ||
+                            (config_.backend == Backend::CompactStage && config_.output_order == OutputOrder::Natural))
+                               ? data_bytes_
+                               : 0;
+        config_.auto_select = automatic_selection;
         const std::size_t twiddle_bytes       = twiddles_.size() * word_bytes;
         const std::size_t twiddle_shoup_bytes = twiddles_shoup_.size() * word_bytes;
-        device_input_.allocate(data_bytes);
-        device_work_.allocate(data_bytes);
+        if (config_.auto_allocate_workspace && workspace_bytes_ != 0) {
+            device_scratch_.allocate(workspace_bytes_);
+        }
         if (config_.backend == Backend::CompactStage) {
             const std::size_t root_bytes = compact_roots_.size() * sizeof(std::uint64_t);
             device_compact_roots_.allocate(root_bytes);
             device_compact_roots_shoup_.allocate(root_bytes);
             CUNTT_CUDA_CHECK(cudaMemcpy(device_compact_roots_.get(), compact_roots_.data(), root_bytes, cudaMemcpyHostToDevice));
             CUNTT_CUDA_CHECK(cudaMemcpy(device_compact_roots_shoup_.get(), compact_roots_shoup_.data(), root_bytes, cudaMemcpyHostToDevice));
-            if (config_.output_order == OutputOrder::Natural) {
-                device_scratch_.allocate(data_bytes);
-            }
             return;
         }
         device_twiddles_.allocate(twiddle_bytes);
@@ -830,7 +856,6 @@ class Plan::Impl {
         if (config_.backend == Backend::Hybrid2D) {
             const std::size_t root_power_bytes       = root_powers_.size() * word_bytes;
             const std::size_t root_power_shoup_bytes = root_powers_shoup_.size() * word_bytes;
-            device_scratch_.allocate(data_bytes);
             device_root_powers_.allocate(root_power_bytes);
             device_root_powers_shoup_.allocate(root_power_shoup_bytes);
             if (config_.word_bits == 32) {
@@ -847,8 +872,59 @@ class Plan::Impl {
     }
 
     const PlanConfig& config() const noexcept { return config_; }
+    const SelectionInfo& selection() const noexcept { return selection_; }
 
     std::size_t points_per_transform() const noexcept { return n_; }
+
+    std::size_t data_size() const noexcept { return data_bytes_; }
+
+    std::size_t workspace_size() const noexcept { return workspace_bytes_; }
+
+    void set_stream(cudaStream_t stream) noexcept { stream_ = stream; }
+
+    cudaStream_t stream() const noexcept { return stream_; }
+
+    void set_workspace(void* workspace, std::size_t bytes) {
+        if (workspace == nullptr) {
+            if (bytes != 0) {
+                throw std::invalid_argument("a null workspace must have zero bytes");
+            }
+            external_workspace_       = nullptr;
+            external_workspace_bytes_ = 0;
+            return;
+        }
+        if (bytes < workspace_bytes_) {
+            throw std::invalid_argument("workspace is smaller than Plan::workspace_size()");
+        }
+        if (reinterpret_cast<std::uintptr_t>(workspace) % 16 != 0) {
+            throw std::invalid_argument("workspace must be at least 16-byte aligned");
+        }
+        external_workspace_       = workspace;
+        external_workspace_bytes_ = bytes;
+    }
+
+    void* workspace() const noexcept {
+        return external_workspace_ != nullptr ? external_workspace_ : device_scratch_.data();
+    }
+
+    template <typename Word>
+    void execute_async(const Word* input, Word* output, std::uint32_t expected_word_bits) {
+        if (config_.word_bits != expected_word_bits) {
+            throw std::invalid_argument("device pointer type does not match the configured NTT word width");
+        }
+        if (input == nullptr || output == nullptr) {
+            throw std::invalid_argument("device input and output pointers must be non-null");
+        }
+        if (input == output) {
+            throw std::invalid_argument("NTT device execution currently requires distinct input and output pointers");
+        }
+        void* scratch = workspace();
+        if (workspace_bytes_ != 0 && scratch == nullptr) {
+            throw std::logic_error("the selected NTT mapping requires a bound workspace");
+        }
+        LaunchStreamScope scope(stream_);
+        launch_once(input, output, scratch);
+    }
 
     RunStats execute(const std::vector<std::uint64_t>& input, std::vector<std::uint64_t>& output, std::uint32_t warmup, std::uint32_t repeat) {
         if (input.size() != total_points_) {
@@ -874,36 +950,40 @@ class Plan::Impl {
             host_output = output32.data();
         }
 
-        Event             start;
-        Event             stop;
-        const std::size_t data_bytes = total_points_ * (config_.word_bits / 8);
+        ensure_host_buffers();
+        void* scratch = workspace();
+        if (workspace_bytes_ != 0 && scratch == nullptr) {
+            throw std::logic_error("the selected NTT mapping requires a bound workspace");
+        }
 
-        CUNTT_CUDA_CHECK(cudaEventRecord(start.get()));
-        CUNTT_CUDA_CHECK(cudaMemcpyAsync(device_input_.get(), host_input, data_bytes, cudaMemcpyHostToDevice));
-        CUNTT_CUDA_CHECK(cudaEventRecord(stop.get()));
+        Event start;
+        Event stop;
+        LaunchStreamScope scope(stream_);
+
+        CUNTT_CUDA_CHECK(cudaEventRecord(start.get(), stream_));
+        CUNTT_CUDA_CHECK(cudaMemcpyAsync(device_input_.get(), host_input, data_bytes_, cudaMemcpyHostToDevice, stream_));
+        CUNTT_CUDA_CHECK(cudaEventRecord(stop.get(), stream_));
         CUNTT_CUDA_CHECK(cudaEventSynchronize(stop.get()));
         float h2d_ms = 0.0F;
         CUNTT_CUDA_CHECK(cudaEventElapsedTime(&h2d_ms, start.get(), stop.get()));
 
         for (std::uint32_t i = 0; i < warmup; ++i) {
-            launch_once();
+            launch_once(device_input_.data(), device_work_.data(), scratch);
         }
-        CUNTT_CUDA_CHECK(cudaDeviceSynchronize());
+        CUNTT_CUDA_CHECK(cudaStreamSynchronize(stream_));
 
-        CUNTT_CUDA_CHECK(cudaEventRecord(start.get()));
+        CUNTT_CUDA_CHECK(cudaEventRecord(start.get(), stream_));
         for (std::uint32_t i = 0; i < repeat; ++i) {
-            launch_once();
+            launch_once(device_input_.data(), device_work_.data(), scratch);
         }
-        CUNTT_CUDA_CHECK(cudaEventRecord(stop.get()));
+        CUNTT_CUDA_CHECK(cudaEventRecord(stop.get(), stream_));
         CUNTT_CUDA_CHECK(cudaEventSynchronize(stop.get()));
         float total_kernel_ms = 0.0F;
         CUNTT_CUDA_CHECK(cudaEventElapsedTime(&total_kernel_ms, start.get(), stop.get()));
 
-        CUNTT_CUDA_CHECK(cudaEventRecord(start.get()));
-        const std::uint64_t* result =
-            config_.backend == Backend::CompactStage && config_.output_order == OutputOrder::Natural ? device_scratch_.get() : device_work_.get();
-        CUNTT_CUDA_CHECK(cudaMemcpyAsync(host_output, result, data_bytes, cudaMemcpyDeviceToHost));
-        CUNTT_CUDA_CHECK(cudaEventRecord(stop.get()));
+        CUNTT_CUDA_CHECK(cudaEventRecord(start.get(), stream_));
+        CUNTT_CUDA_CHECK(cudaMemcpyAsync(host_output, device_work_.data(), data_bytes_, cudaMemcpyDeviceToHost, stream_));
+        CUNTT_CUDA_CHECK(cudaEventRecord(stop.get(), stream_));
         CUNTT_CUDA_CHECK(cudaEventSynchronize(stop.get()));
         float d2h_ms = 0.0F;
         CUNTT_CUDA_CHECK(cudaEventElapsedTime(&d2h_ms, start.get(), stop.get()));
@@ -924,6 +1004,13 @@ class Plan::Impl {
     }
 
   private:
+    void ensure_host_buffers() {
+        if (device_input_.data() == nullptr) {
+            device_input_.allocate(data_bytes_);
+            device_work_.allocate(data_bytes_);
+        }
+    }
+
     void resolve_hybrid2d_mapping() {
         if (config_.cross_twiddle_placement == CrossTwiddlePlacement::FusedBarrett) {
             config_.cross_twiddle_placement = CrossTwiddlePlacement::Fused;
@@ -1170,45 +1257,40 @@ class Plan::Impl {
         }
     }
 
-    void launch_once() {
+    void launch_once(const void* input_pointer, void* output_pointer, void* scratch_pointer) {
         constexpr std::uint32_t kThreads = 256;
+        const auto*             input    = static_cast<const std::uint64_t*>(input_pointer);
+        auto*                   output   = static_cast<std::uint64_t*>(output_pointer);
+        auto*                   scratch  = static_cast<std::uint64_t*>(scratch_pointer);
         if (config_.backend == Backend::StagePipeline) {
             const bool named_barrier = config_.stage_handoff == StageHandoff::NamedBarrier;
             switch (config_.stage_space) {
                 case 1:
                     if (named_barrier) {
-                        launch_stage_pipeline_ntt256<1, true>(config_, device_input_.get(), device_work_.get(), device_twiddles_.get(),
-                                                              device_twiddles_shoup_.get());
+                        launch_stage_pipeline_ntt256<1, true>(config_, input, output, device_twiddles_.get(), device_twiddles_shoup_.get());
                     } else {
-                        launch_stage_pipeline_ntt256<1, false>(config_, device_input_.get(), device_work_.get(), device_twiddles_.get(),
-                                                               device_twiddles_shoup_.get());
+                        launch_stage_pipeline_ntt256<1, false>(config_, input, output, device_twiddles_.get(), device_twiddles_shoup_.get());
                     }
                     break;
                 case 2:
                     if (named_barrier) {
-                        launch_stage_pipeline_ntt256<2, true>(config_, device_input_.get(), device_work_.get(), device_twiddles_.get(),
-                                                              device_twiddles_shoup_.get());
+                        launch_stage_pipeline_ntt256<2, true>(config_, input, output, device_twiddles_.get(), device_twiddles_shoup_.get());
                     } else {
-                        launch_stage_pipeline_ntt256<2, false>(config_, device_input_.get(), device_work_.get(), device_twiddles_.get(),
-                                                               device_twiddles_shoup_.get());
+                        launch_stage_pipeline_ntt256<2, false>(config_, input, output, device_twiddles_.get(), device_twiddles_shoup_.get());
                     }
                     break;
                 case 4:
                     if (named_barrier) {
-                        launch_stage_pipeline_ntt256<4, true>(config_, device_input_.get(), device_work_.get(), device_twiddles_.get(),
-                                                              device_twiddles_shoup_.get());
+                        launch_stage_pipeline_ntt256<4, true>(config_, input, output, device_twiddles_.get(), device_twiddles_shoup_.get());
                     } else {
-                        launch_stage_pipeline_ntt256<4, false>(config_, device_input_.get(), device_work_.get(), device_twiddles_.get(),
-                                                               device_twiddles_shoup_.get());
+                        launch_stage_pipeline_ntt256<4, false>(config_, input, output, device_twiddles_.get(), device_twiddles_shoup_.get());
                     }
                     break;
                 case 8:
                     if (named_barrier) {
-                        launch_stage_pipeline_ntt256<8, true>(config_, device_input_.get(), device_work_.get(), device_twiddles_.get(),
-                                                              device_twiddles_shoup_.get());
+                        launch_stage_pipeline_ntt256<8, true>(config_, input, output, device_twiddles_.get(), device_twiddles_shoup_.get());
                     } else {
-                        launch_stage_pipeline_ntt256<8, false>(config_, device_input_.get(), device_work_.get(), device_twiddles_.get(),
-                                                               device_twiddles_shoup_.get());
+                        launch_stage_pipeline_ntt256<8, false>(config_, input, output, device_twiddles_.get(), device_twiddles_shoup_.get());
                     }
                     break;
                 default:
@@ -1217,44 +1299,52 @@ class Plan::Impl {
             return;
         }
         if (config_.backend == Backend::CompactStage) {
-            launch_compact_stage_log20(config_, device_input_.get(), device_work_.get(), device_compact_roots_.get(),
-                                       device_compact_roots_shoup_.get(),
-                                       config_.output_order == OutputOrder::Natural ? device_scratch_.get() : nullptr);
+            if (config_.output_order == OutputOrder::Natural) {
+                launch_compact_stage_log20(config_, input, scratch, device_compact_roots_.get(), device_compact_roots_shoup_.get(), output);
+            } else {
+                launch_compact_stage_log20(config_, input, output, device_compact_roots_.get(), device_compact_roots_shoup_.get(), nullptr);
+            }
             return;
         }
         if (config_.backend == Backend::Hybrid2D) {
             const std::uint32_t n2_log = config_.log_n - config_.n1_log;
-#define CUNTT_DISPATCH_PLACEMENT(WORD, UNIT, PLACEMENT, BARRETT)                                                                                    \
+            const auto* input32   = static_cast<const std::uint32_t*>(input_pointer);
+            auto*       output32  = static_cast<std::uint32_t*>(output_pointer);
+            auto*       scratch32 = static_cast<std::uint32_t*>(scratch_pointer);
+            const auto* input64   = input;
+            auto*       output64  = output;
+            auto*       scratch64 = scratch;
+#define CUNTT_DISPATCH_PLACEMENT(WORD, TAG, UNIT, PLACEMENT, BARRETT)                                                                               \
     dispatch_hybrid2d_log<WORD, UNIT, PLACEMENT, BARRETT>(                                                                                          \
-        config_, n2_log, true, device_input_.as<WORD>(), device_scratch_.as<WORD>(), device_work_.as<WORD>(), device_twiddles_.as<WORD>(),          \
+        config_, n2_log, true, input##TAG, scratch##TAG, output##TAG, device_twiddles_.as<WORD>(),                                                    \
         device_twiddles_shoup_.as<WORD>(), device_root_powers_.as<WORD>(), device_root_powers_shoup_.as<WORD>(), inverse_n_, inverse_n_shoup_);     \
     dispatch_hybrid2d_log<WORD, UNIT, PLACEMENT, BARRETT>(                                                                                          \
-        config_, config_.n1_log, false, device_input_.as<WORD>(), device_scratch_.as<WORD>(), device_work_.as<WORD>(), device_twiddles_.as<WORD>(), \
+        config_, config_.n1_log, false, input##TAG, scratch##TAG, output##TAG, device_twiddles_.as<WORD>(),                                           \
         device_twiddles_shoup_.as<WORD>(), device_root_powers_.as<WORD>(), device_root_powers_shoup_.as<WORD>(), inverse_n_, inverse_n_shoup_)
-#define CUNTT_DISPATCH_REDUCTION(WORD, UNIT, PLACEMENT)         \
+#define CUNTT_DISPATCH_REDUCTION(WORD, TAG, UNIT, PLACEMENT)    \
     if (config_.modular_multiply == ModularMultiply::Barrett) { \
-        CUNTT_DISPATCH_PLACEMENT(WORD, UNIT, PLACEMENT, true);  \
+        CUNTT_DISPATCH_PLACEMENT(WORD, TAG, UNIT, PLACEMENT, true);  \
     } else {                                                    \
-        CUNTT_DISPATCH_PLACEMENT(WORD, UNIT, PLACEMENT, false); \
+        CUNTT_DISPATCH_PLACEMENT(WORD, TAG, UNIT, PLACEMENT, false); \
     }
-#define CUNTT_DISPATCH_UNIT(WORD, UNIT)                                                \
+#define CUNTT_DISPATCH_UNIT(WORD, TAG, UNIT)                                           \
     if (config_.cross_twiddle_placement == CrossTwiddlePlacement::FirstPass) {         \
-        CUNTT_DISPATCH_REDUCTION(WORD, UNIT, CrossTwiddlePlacement::FirstPass);        \
+        CUNTT_DISPATCH_REDUCTION(WORD, TAG, UNIT, CrossTwiddlePlacement::FirstPass);   \
     } else if (config_.cross_twiddle_placement == CrossTwiddlePlacement::SecondPass) { \
-        CUNTT_DISPATCH_REDUCTION(WORD, UNIT, CrossTwiddlePlacement::SecondPass);       \
+        CUNTT_DISPATCH_REDUCTION(WORD, TAG, UNIT, CrossTwiddlePlacement::SecondPass);  \
     } else {                                                                           \
-        CUNTT_DISPATCH_REDUCTION(WORD, UNIT, CrossTwiddlePlacement::Fused);            \
+        CUNTT_DISPATCH_REDUCTION(WORD, TAG, UNIT, CrossTwiddlePlacement::Fused);       \
     }
             if (config_.word_bits == 32) {
                 switch (config_.compute_unit) {
                     case ComputeUnit::Radix2:
-                        CUNTT_DISPATCH_UNIT(std::uint32_t, ComputeUnit::Radix2);
+                        CUNTT_DISPATCH_UNIT(std::uint32_t, 32, ComputeUnit::Radix2);
                         break;
                     case ComputeUnit::Radix4:
-                        CUNTT_DISPATCH_UNIT(std::uint32_t, ComputeUnit::Radix4);
+                        CUNTT_DISPATCH_UNIT(std::uint32_t, 32, ComputeUnit::Radix4);
                         break;
                     case ComputeUnit::Radix8:
-                        CUNTT_DISPATCH_UNIT(std::uint32_t, ComputeUnit::Radix8);
+                        CUNTT_DISPATCH_UNIT(std::uint32_t, 32, ComputeUnit::Radix8);
                         break;
                     case ComputeUnit::Auto:
                         throw std::logic_error("unresolved Hybrid2D compute unit");
@@ -1262,13 +1352,13 @@ class Plan::Impl {
             } else {
                 switch (config_.compute_unit) {
                     case ComputeUnit::Radix2:
-                        CUNTT_DISPATCH_UNIT(std::uint64_t, ComputeUnit::Radix2);
+                        CUNTT_DISPATCH_UNIT(std::uint64_t, 64, ComputeUnit::Radix2);
                         break;
                     case ComputeUnit::Radix4:
-                        CUNTT_DISPATCH_UNIT(std::uint64_t, ComputeUnit::Radix4);
+                        CUNTT_DISPATCH_UNIT(std::uint64_t, 64, ComputeUnit::Radix4);
                         break;
                     case ComputeUnit::Radix8:
-                        CUNTT_DISPATCH_UNIT(std::uint64_t, ComputeUnit::Radix8);
+                        CUNTT_DISPATCH_UNIT(std::uint64_t, 64, ComputeUnit::Radix8);
                         break;
                     case ComputeUnit::Auto:
                         throw std::logic_error("unresolved Hybrid2D compute unit");
@@ -1279,8 +1369,7 @@ class Plan::Impl {
 #undef CUNTT_DISPATCH_PLACEMENT
             return;
         }
-        bit_reverse_copy_kernel<<<grid_for(total_points_, kThreads), kThreads>>>(device_input_.get(), device_work_.get(), total_points_,
-                                                                                 config_.log_n);
+        bit_reverse_copy_kernel<<<grid_for(total_points_, kThreads), kThreads, 0, active_stream>>>(input, output, total_points_, config_.log_n);
         CUNTT_CUDA_CHECK(cudaGetLastError());
 
         std::uint32_t first_global_stage = 0;
@@ -1288,8 +1377,8 @@ class Plan::Impl {
             const std::uint32_t tile_log   = std::min<std::uint32_t>(config_.log_n, 8);
             const std::uint64_t tile_size  = 1ULL << tile_log;
             const std::uint64_t tile_count = total_points_ / tile_size;
-            tile_kernel<<<grid_for(tile_count, 1), 128>>>(device_work_.get(), tile_log, device_twiddles_.get(), device_twiddles_shoup_.get(),
-                                                          config_.modulus);
+            tile_kernel<<<grid_for(tile_count, 1), 128, 0, active_stream>>>(output, tile_log, device_twiddles_.get(), device_twiddles_shoup_.get(),
+                                                                            config_.modulus);
             CUNTT_CUDA_CHECK(cudaGetLastError());
             first_global_stage = tile_log;
         }
@@ -1298,22 +1387,25 @@ class Plan::Impl {
         const std::uint64_t total_butterflies         = butterflies_per_transform * config_.batch;
         for (std::uint32_t stage = first_global_stage; stage < config_.log_n; ++stage) {
             const std::uint64_t half = 1ULL << stage;
-            stage_kernel<<<grid_for(total_butterflies, kThreads), kThreads>>>(device_work_.get(), butterflies_per_transform, total_butterflies, n_,
-                                                                              half, half - 1, device_twiddles_.get(), device_twiddles_shoup_.get(),
-                                                                              config_.modulus);
+            stage_kernel<<<grid_for(total_butterflies, kThreads), kThreads, 0, active_stream>>>(
+                output, butterflies_per_transform, total_butterflies, n_, half, half - 1, device_twiddles_.get(), device_twiddles_shoup_.get(),
+                config_.modulus);
             CUNTT_CUDA_CHECK(cudaGetLastError());
         }
 
         if (config_.inverse) {
-            scale_kernel<<<grid_for(total_points_, kThreads), kThreads>>>(device_work_.get(), total_points_, inverse_n_, inverse_n_shoup_,
-                                                                          config_.modulus);
+            scale_kernel<<<grid_for(total_points_, kThreads), kThreads, 0, active_stream>>>(output, total_points_, inverse_n_, inverse_n_shoup_,
+                                                                                            config_.modulus);
             CUNTT_CUDA_CHECK(cudaGetLastError());
         }
     }
 
     PlanConfig                 config_;
+    SelectionInfo              selection_;
     std::size_t                n_            = 0;
     std::size_t                total_points_ = 0;
+    std::size_t                data_bytes_ = 0;
+    std::size_t                workspace_bytes_ = 0;
     std::vector<std::uint64_t> twiddles_;
     std::vector<std::uint64_t> twiddles_shoup_;
     std::vector<std::uint64_t> root_powers_;
@@ -1336,6 +1428,9 @@ class Plan::Impl {
     DeviceBuffer               device_compact_roots_;
     DeviceBuffer               device_compact_roots_shoup_;
     cudaDeviceProp             device_properties_{};
+    cudaStream_t               stream_ = nullptr;
+    void*                      external_workspace_ = nullptr;
+    std::size_t                external_workspace_bytes_ = 0;
 };
 
 DeviceInfo current_device_info() {
@@ -1364,8 +1459,44 @@ const PlanConfig& Plan::config() const noexcept {
     return impl_->config();
 }
 
+const SelectionInfo& Plan::selection() const noexcept {
+    return impl_->selection();
+}
+
 std::size_t Plan::points_per_transform() const noexcept {
     return impl_->points_per_transform();
+}
+
+std::size_t Plan::data_size() const noexcept {
+    return impl_->data_size();
+}
+
+std::size_t Plan::workspace_size() const noexcept {
+    return impl_->workspace_size();
+}
+
+void Plan::set_stream(cudaStream_t stream) noexcept {
+    impl_->set_stream(stream);
+}
+
+cudaStream_t Plan::stream() const noexcept {
+    return impl_->stream();
+}
+
+void Plan::set_workspace(void* workspace, std::size_t bytes) {
+    impl_->set_workspace(workspace, bytes);
+}
+
+void* Plan::workspace() const noexcept {
+    return impl_->workspace();
+}
+
+void Plan::execute_async(const std::uint32_t* input, std::uint32_t* output) {
+    impl_->execute_async(input, output, 32);
+}
+
+void Plan::execute_async(const std::uint64_t* input, std::uint64_t* output) {
+    impl_->execute_async(input, output, 64);
 }
 
 RunStats Plan::execute(const std::vector<std::uint64_t>& input, std::vector<std::uint64_t>& output, std::uint32_t warmup, std::uint32_t repeat) {

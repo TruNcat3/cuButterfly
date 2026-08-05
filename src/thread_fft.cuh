@@ -67,11 +67,11 @@ __global__ void thread_fft_kernel(const Complex32* input, Complex32* output, con
 
 template <std::uint32_t LogN>
 void launch_thread_fft(const Complex32* input, Complex32* output, const Complex32* twiddles, std::uint64_t transforms, std::uint64_t batch_distance,
-                       std::uint64_t element_stride, bool normalize) {
+                       std::uint64_t element_stride, bool normalize, cudaStream_t stream) {
     constexpr std::uint32_t kThreads = 128;
     const auto              blocks   = static_cast<unsigned int>((transforms + kThreads - 1) / kThreads);
     const float             scale    = normalize ? 1.0F / static_cast<float>(1U << LogN) : 1.0F;
-    thread_fft_kernel<LogN><<<blocks, kThreads>>>(input, output, twiddles, transforms, batch_distance, element_stride, scale);
+    thread_fft_kernel<LogN><<<blocks, kThreads, 0, stream>>>(input, output, twiddles, transforms, batch_distance, element_stride, scale);
 }
 
 template <std::uint32_t LogN, std::uint32_t Threads>
@@ -205,12 +205,12 @@ __global__ void cta_fft_kernel(const Complex32* input, Complex32* output, const 
 
 template <std::uint32_t LogN, std::uint32_t Threads>
 void launch_cta_fft(const Complex32* input, Complex32* output, const Complex32* twiddles, std::uint64_t transforms, std::uint64_t batch_distance,
-                    std::uint64_t element_stride, bool normalize) {
+                    std::uint64_t element_stride, bool normalize, cudaStream_t stream) {
     constexpr std::uint32_t kTransformsPerBlock = (Threads * 8) / (1U << LogN);
     constexpr std::size_t   kShared              = Threads * 8 * sizeof(Complex32);
     const auto              blocks   = static_cast<unsigned int>((transforms + kTransformsPerBlock - 1) / kTransformsPerBlock);
     const float             scale    = normalize ? 1.0F / static_cast<float>(1U << LogN) : 1.0F;
-    cta_fft_kernel<LogN, Threads><<<blocks, Threads, kShared>>>(input, output, twiddles, transforms, batch_distance, element_stride, scale);
+    cta_fft_kernel<LogN, Threads><<<blocks, Threads, kShared, stream>>>(input, output, twiddles, transforms, batch_distance, element_stride, scale);
 }
 
 }  // namespace cuntt::detail

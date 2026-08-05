@@ -43,6 +43,10 @@ The [matching-protocol external refresh](v100_external_baselines.md) is the
 current authority for Dao FHT and GPU-NTT comparisons with matching semantics.
 Targeted [V100 counter attribution](v100_ncu_attribution.md) explains the
 length/batch saturation and FWHT mapping crossover in hardware-service terms.
+The focused [Structured 2x2 V100 Results](structured_2x2_v100_results.md)
+experiment tests a stage-parameterized dense processing unit across the same
+mapping families. Its follow-up generated register codelet separates mapping
+and transport gains from the remaining dense-pair arithmetic cost.
 
 The evidence chain is therefore:
 
@@ -170,10 +174,12 @@ separately.
 |:--|:--|:--|
 | FP32 FFT | selected direct and long shapes reach parity or advantage; saturated `logN=20` batch 8/16 remains at `0.962x/0.954x` cuFFT | reduce long-path local exchange and excess useful-work cost without losing residence |
 | FP64 FFT | 20/25 stable shapes have higher median throughput; five `logN=14..16` crossover shapes remain 0.1%-3.2% behind | reduce launch and boundary overhead; exhaustive remapping alone did not remove the deficits |
-| cross GPU | only V100 fully measured | predict and validate mappings on another GPU generation |
-| automatic selection | V100 calibrated selectors meet current regret gates | validate pre/post-calibration regret on another GPU generation |
+| conditional mapping model | current selector keys mainly on operator, length, batch, and precision | measure how word width, arithmetic/reduction policy, coefficient reuse, layout, and physical core move resource cliffs and mapping crossovers |
+| workload coverage | representative length/batch points are measured, but cliff neighborhoods are uneven | use boundary-focused scans across length, batch, stride, direction, and normalization rather than a uniformly larger grid |
+| cross GPU | only V100 fully measured | after the conditional model is established, test whether its descriptors and boundary predictions transfer to another GPU generation |
+| automatic selection | V100 calibrated selectors meet current regret gates | add numeric/workload descriptors and validate held-out-regime regret before cross-GPU calibration |
 | XOR-zeta baseline | internal comparisons only | pinned same-machine external implementation |
-| public API | host-vector plan interface | device-pointer and stream-aware integration contract |
+| public API | device-pointer, stream-aware plans and caller-owned workspace are implemented | broaden production compatibility only where demanded by operator coverage |
 | numeric coverage | current listed precisions/moduli | additional FFT mixed precision and NTT reduction contracts |
 
 ## 4. Result Locations
@@ -184,6 +190,7 @@ separately.
 | orthogonal length/batch scaling | `v100_scaling_results.md` | `v100_scaling_full_raw.csv`, `v100_scaling_full_summary.csv` |
 | calibrated V100 selector | `v100_mapping_selector.md` | `v100_mapping_selector_evaluation.csv`, `v100_mapping_selector_metrics.json` |
 | scaling-crossover counters | `v100_ncu_attribution.md` | `ncu_scaling_crossovers/summary.csv`, `ncu_scaling_crossovers/attribution.csv` |
+| structured 2x2 mapping | `structured_2x2_v100_results.md` | `structured_2x2_v100_raw.csv`, `structured_2x2_v100_summary.csv` |
 | refreshed external baselines | `v100_external_baselines.md` | `v100_external_baselines_raw.csv`, `v100_external_baselines_summary.csv` |
 | V100 NTT baseline | `v100_initial_results.md` | `hybrid2d_matrix*.csv` |
 | NTT vs GPU-NTT | `gpu_ntt_gap_analysis.md` | `fused_vs_gpuntt.csv`, `gpu_ntt_gap_same_modulus.csv` |

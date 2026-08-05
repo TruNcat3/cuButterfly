@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
 cuButterfly is a CUDA research prototype for mapping regular layered transforms
-onto a GPU. Its central observation is that FFT, NTT, FWHT, and XOR-zeta differ
+onto a GPU. Its central observation is that FFT, NTT, FWHT, and subset/superset zeta differ
 in arithmetic but expose the same two-dimensional scheduling problem: many
 independent data groups must pass through an ordered sequence of butterfly
 stages. The project describes how both dimensions are unfolded in space and
@@ -79,6 +79,13 @@ Methodology](docs/hardware_mapping_methodology.md) gives the resource equations
 and counter-driven selection procedure, while [Complete Butterfly Design
 Space](docs/butterfly_design_space.md) specifies the full mapping descriptor:
 
+Search candidates also carry portable residency features derived from the
+target GPU and compiled core: temporal state/thread, allocated registers and
+shared bytes/CTA, resource-specific CTA limits, resident warps, occupancy upper
+bound, grid waves, limiting resource, and adjacent-point resource cliffs. Only
+hardware-infeasible points are pruned automatically; a cliff triggers nearby
+`Td`, decomposition, thread/EPT, and processing-unit alternatives.
+
 ```text
 M = (Us, Ts, Ud, Td, Ub, Tb, Hs, Rs, Rd, Rb, L, F, Q)
 ```
@@ -90,7 +97,12 @@ M = (Us, Ts, Ud, Td, Ub, Tb, Hs, Rs, Rd, Rb, L, F, Q)
 | NTT | 32/64-bit words, compatible primes below `2^63` | radix-2/4/8, Shoup, Barrett, fused coset twiddles | baseline, local tile, Hybrid2D, compact stage, stage pipeline |
 | FFT | FP32, FP64, FP16 input with FP32 accumulation | radix-2/4/8, four-multiply, Gauss-3, thread/CTA/WMMA DFT8, FP32/FP64 cuFFTDx | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
 | FWHT | FP32, FP64 | radix-2/4/8, shared and warp-register exchange | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
-| XOR-zeta | uint32 | radix-2/4/8 | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
+| Subset/superset zeta and Mobius | uint32 | asymmetric radix-2/4/8 | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
+| Structured 2x2 | FP32, FP64 stage matrices | parameterized radix-2/4/8; generated FP32 warp-register matrix core | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
+
+The historical `xor-zeta` API name is retained as a compatibility spelling for
+its original subset-zeta behavior. See the [Operator
+Catalog](docs/operator_catalog.md) for exact semantics and expansion priorities.
 
 Power-of-two lengths, batches, forward/inverse execution, normalization,
 in-place/out-of-place placement, padded batches, and strided elements are
@@ -203,6 +215,30 @@ cmake --build build -j
 cmake --build build --target test
 ```
 
+Install and link from another CMake project:
+
+```bash
+cmake --install build --prefix "$HOME/.local"
+```
+
+```cmake
+find_package(cuButterfly CONFIG REQUIRED)
+target_link_libraries(my_app PRIVATE cuButterfly::cuButterfly)
+```
+
+`ButterflyPlan` and NTT `Plan` accept caller-owned device pointers, CUDA
+streams, and optional external workspaces through allocation-free
+`execute_async` calls. Start with the [Programming
+Guide](docs/programming_guide.md), [C++ API
+Reference](docs/api_reference.md), and build-checked [Examples](docs/examples.md).
+The [Capability and Compatibility Matrix](docs/support_matrix.md) distinguishes
+compiled support from V100-calibrated automatic selection.
+
+Setting `auto_select = true` resolves a covered semantic workload to a measured
+V100 mapping and exposes the decision through `plan.selection()`. The selector
+fails outside its calibrated hardware and semantic range; see [Runtime Mapping
+Selector](docs/runtime_selector.md).
+
 Run representative verified workloads:
 
 ```bash
@@ -214,6 +250,11 @@ Run representative verified workloads:
 ./build/cubutterfly_bench --operator fwht --backend temporal-tile \
   --local-exchange warp-register --precision fp32 \
   --logN 15 --batch 128 --verify
+
+# Structured 2x2: same generated transport, arbitrary stage matrix
+./build/cubutterfly_bench --operator structured-2x2 --backend temporal-tile \
+  --local-exchange warp-register --precision fp32 \
+  --stage-matrix 1,0.25,-0.5,1 --logN 12 --batch 1024 --verify
 
 # FFT: generated CTA DFT8 mapping
 ./build/cubutterfly_bench --operator fft --backend temporal-tile \
@@ -247,7 +288,7 @@ the hardware model, complete design-space contract, and research-status report.
 | `include/cuntt/` | public NTT and common butterfly plan APIs |
 | `src/` | CUDA runtime, mappings, processing units, and CPU references |
 | `config/`, `configs/` | generated-unit choices, GPU profiles, and mapping descriptors |
-| `apps/` | benchmark and hardware microbenchmark executables |
+| `apps/`, `examples/` | benchmark executables and application API examples |
 | `tests/` | correctness and semantic coverage |
 | `scripts/` | sweeps, summarizers, plotting, NCU, and Nsight Systems workflows |
 | `results/` | measured V100 CSV data and counter analyses |
@@ -259,9 +300,12 @@ implementation paths are catalogued in
 [Candidate Implementations](docs/implementation_candidates.md).
 Development priorities are tracked in [`ROADMAP.md`](ROADMAP.md), and evidence
 requirements for contributions are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
-Versioned changes are recorded in [`CHANGELOG.md`](CHANGELOG.md). The v0.3.0
-research milestone, acceptance criteria, and deferred cross-GPU work are in
-[v0.3.0 Mapping-Selection Milestone](docs/next_phase_v0.3.md).
+Versioned changes are recorded in [`CHANGELOG.md`](CHANGELOG.md). The completed
+v0.3.0 mapping-selection milestone is archived in
+[v0.3.0 Mapping-Selection Milestone](docs/next_phase_v0.3.md). The next study
+conditions resource cliffs and mapping preference on numeric representation,
+length, batch, layout, and processing-unit cost; its hypotheses and completion
+criteria are in [Numeric-Regime Mapping Study](docs/next_phase_numeric_regimes.md).
 
 ## Evidence Boundary
 
@@ -293,7 +337,7 @@ software release as:
   author  = {TruNcat3},
   title   = {cuButterfly: Hardware-Mapped Space-Time Parallelism for Butterfly Computations on GPUs},
   year    = {2026},
-  version = {0.3.0},
+  version = {0.4.0},
   url     = {https://github.com/TruNcat3/cuButterfly}
 }
 ```

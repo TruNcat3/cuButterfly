@@ -66,6 +66,20 @@ def argument_value(arguments, option, default=""):
     return str(arguments[index + 1])
 
 
+def stage_matrix_value(arguments):
+    values = []
+    for index, argument in enumerate(arguments):
+        if argument != "--stage-matrix":
+            continue
+        if index + 1 >= len(arguments):
+            raise ValueError("missing value after --stage-matrix")
+        entries = str(arguments[index + 1]).split(",")
+        if len(entries) != 4:
+            raise ValueError("--stage-matrix requires four coefficients")
+        values.append(":".join(format(float(entry), ".17g") for entry in entries))
+    return "x".join(values)
+
+
 def expected_semantics(case, batch=None):
     arguments = case["args"]
     runner = case["runner"]
@@ -77,7 +91,7 @@ def expected_semantics(case, batch=None):
     elif runner == "butterfly":
         placement = argument_value(arguments, "--placement", "out-of-place")
         normalization = argument_value(arguments, "--normalization", "inverse")
-        if case["operator"] == "xor-zeta":
+        if case["operator"] in ("structured-2x2", "subset-zeta", "superset-zeta", "xor-zeta"):
             normalization = "none"
     else:
         placement = ""
@@ -88,6 +102,7 @@ def expected_semantics(case, batch=None):
         "direction": "inverse" if "--inverse" in arguments else case.get("direction", "forward"),
         "normalization": normalization,
         "placement": placement,
+        "stage_matrices": stage_matrix_value(arguments),
         "logN": str(log_n),
         "N": str(1 << log_n),
         "element_stride": str(element_stride),
@@ -124,7 +139,7 @@ def load_manifest(path):
     groups = {}
     for case in document["cases"]:
         groups.setdefault(case["group"], []).append(case)
-    comparable_fields = ("operator", "precision", "direction", "normalization", "placement", "logN", "element_stride", "output_order")
+    comparable_fields = ("operator", "precision", "direction", "normalization", "placement", "stage_matrices", "logN", "element_stride", "output_order")
     for group, cases in groups.items():
         contracts = {
             tuple(expected_semantics(case)[field] for field in comparable_fields)

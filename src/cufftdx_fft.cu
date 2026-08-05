@@ -9,6 +9,17 @@
 namespace cuntt::detail {
 namespace {
 
+thread_local cudaStream_t active_stream = nullptr;
+
+class LaunchStreamScope {
+  public:
+    explicit LaunchStreamScope(cudaStream_t stream) : previous_(active_stream) { active_stream = stream; }
+    ~LaunchStreamScope() { active_stream = previous_; }
+
+  private:
+    cudaStream_t previous_;
+};
+
 template <unsigned int Size, cufftdx::fft_direction Direction>
 using BlockFft = decltype(cufftdx::Block() + cufftdx::Size<Size>() + cufftdx::Type<cufftdx::fft_type::c2c>() +
                           cufftdx::Direction<Direction>() + cufftdx::Precision<float>() + cufftdx::ElementsPerThread<8>() +
@@ -646,7 +657,7 @@ void launch_transpose_complex32(const Complex32* input, Complex32* output, std::
     const std::uint64_t blocks = transforms * tiles_per_transform;
     if (blocks > 0x7fffffffULL)
         throw std::invalid_argument("tiled transpose grid exceeds the CUDA grid.x limit");
-    transpose_complex32_kernel<<<static_cast<unsigned int>(blocks), dim3(32, 8)>>>(
+    transpose_complex32_kernel<<<static_cast<unsigned int>(blocks), dim3(32, 8), 0, active_stream>>>(
         input, output, rows, columns, tiles_per_transform, batch_distance, element_stride);
 }
 
@@ -876,7 +887,7 @@ void launch(const Complex32* input, Complex32* output, std::uint64_t transforms,
         cudaFuncSetAttribute(cufftdx_block_kernel<FFT>, cudaFuncAttributeMaxDynamicSharedMemorySize, FFT::shared_memory_size);
     }
     const auto blocks = static_cast<unsigned int>((transforms + FFT::ffts_per_block - 1) / FFT::ffts_per_block);
-    cufftdx_block_kernel<FFT><<<blocks, FFT::block_dim, FFT::shared_memory_size>>>(
+    cufftdx_block_kernel<FFT><<<blocks, FFT::block_dim, FFT::shared_memory_size, active_stream>>>(
         input, output, transforms, batch_distance, element_stride, normalize);
 }
 
@@ -908,7 +919,7 @@ void launch_online_first(std::uint32_t log_n, std::uint32_t local_log_n, const C
         constexpr std::size_t shared_bytes = FFT::shared_memory_size > tile_bytes ? FFT::shared_memory_size : tile_bytes;
         if constexpr (shared_bytes > 48U * 1024U)
             cudaFuncSetAttribute(cufftdx_online_first_kernel<FFT>, cudaFuncAttributeMaxDynamicSharedMemorySize, shared_bytes);
-        cufftdx_online_first_kernel<FFT><<<blocks, FFT::block_dim, shared_bytes>>>(
+        cufftdx_online_first_kernel<FFT><<<blocks, FFT::block_dim, shared_bytes, active_stream>>>(
             input, scratch, twiddles, transforms, log_n, local_log_n, batch_distance, element_stride, recurrence_twiddle);
     } else {
         throw std::invalid_argument("cuFFTDx prefix thread/EPT point cannot cover an integer number of FFTs");
@@ -927,7 +938,7 @@ void launch_online_second(std::uint32_t log_n, std::uint32_t local_log_n, const 
         constexpr std::size_t shared_bytes = FFT::shared_memory_size > tile_bytes ? FFT::shared_memory_size : tile_bytes;
         if constexpr (shared_bytes > 48U * 1024U)
             cudaFuncSetAttribute(cufftdx_online_second_kernel<FFT>, cudaFuncAttributeMaxDynamicSharedMemorySize, shared_bytes);
-        cufftdx_online_second_kernel<FFT><<<blocks, FFT::block_dim, shared_bytes>>>(
+        cufftdx_online_second_kernel<FFT><<<blocks, FFT::block_dim, shared_bytes, active_stream>>>(
             scratch, output, transforms, log_n, local_log_n, batch_distance, element_stride, normalize);
     } else {
         throw std::invalid_argument("cuFFTDx suffix thread/EPT point cannot cover an integer number of FFTs");
@@ -951,7 +962,7 @@ void launch_multisegment_kernel(const Complex32* input, Complex32* output, const
         cudaFuncSetAttribute(cufftdx_multisegment_kernel<FFT, FinalSegment>,
                              cudaFuncAttributeMaxDynamicSharedMemorySize, shared_bytes);
     cufftdx_multisegment_kernel<FFT, FinalSegment>
-        <<<static_cast<unsigned int>(block_count), FFT::block_dim, shared_bytes>>>(
+        <<<static_cast<unsigned int>(block_count), FFT::block_dim, shared_bytes, active_stream>>>(
             input, output, twiddles, transforms, log_n, prefix_log_n, segment_log_n,
             remaining_log_n, batch_distance, element_stride, recurrence_twiddle, normalize, partition);
 }
@@ -1006,7 +1017,7 @@ void launch_online_direct_first(std::uint32_t log_n, std::uint32_t local_log_n, 
             cudaFuncSetAttribute(cufftdx_online_direct_first_kernel<FFT, ContiguousInput>, cudaFuncAttributeMaxDynamicSharedMemorySize,
                                  FFT::shared_memory_size);
         const auto blocks = static_cast<unsigned int>(transforms << (log_n - local_log_n));
-        cufftdx_online_direct_first_kernel<FFT, ContiguousInput><<<blocks, FFT::block_dim, FFT::shared_memory_size>>>(
+        cufftdx_online_direct_first_kernel<FFT, ContiguousInput><<<blocks, FFT::block_dim, FFT::shared_memory_size, active_stream>>>(
             input, scratch, twiddles, log_n, local_log_n, batch_distance, element_stride, recurrence_twiddle);
     } else {
         throw std::invalid_argument("cuFFTDx direct prefix requires exactly one FFT per CTA");
@@ -1025,7 +1036,7 @@ void launch_online_direct_second(std::uint32_t log_n, std::uint32_t local_log_n,
             cudaFuncSetAttribute(cufftdx_online_direct_second_kernel<FFT, ContiguousOutput>, cudaFuncAttributeMaxDynamicSharedMemorySize,
                                  FFT::shared_memory_size);
         const auto blocks = static_cast<unsigned int>(transforms << local_log_n);
-        cufftdx_online_direct_second_kernel<FFT, ContiguousOutput><<<blocks, FFT::block_dim, FFT::shared_memory_size>>>(
+        cufftdx_online_direct_second_kernel<FFT, ContiguousOutput><<<blocks, FFT::block_dim, FFT::shared_memory_size, active_stream>>>(
             scratch, ContiguousOutput ? scratch : output, log_n, local_log_n,
             batch_distance, element_stride, normalize);
     } else {
@@ -1263,7 +1274,7 @@ void launch_resident_4096(const Complex32* input, Complex32* output, const Compl
     using FFT = Resident4096Fft<Elements, Direction>;
     constexpr std::size_t tile_bytes = 64 * 65 * sizeof(Complex32);
     constexpr std::size_t shared_bytes = FFT::shared_memory_size > tile_bytes ? FFT::shared_memory_size : tile_bytes;
-    cufftdx_resident_4096_kernel<FFT><<<static_cast<unsigned int>(transforms), FFT::block_dim, shared_bytes>>>(
+    cufftdx_resident_4096_kernel<FFT><<<static_cast<unsigned int>(transforms), FFT::block_dim, shared_bytes, active_stream>>>(
         input, output, twiddles, transforms, batch_distance, element_stride, normalize, recurrence_twiddle);
 }
 
@@ -1282,14 +1293,14 @@ void launch_direct(const Complex32* input, Complex32* output, std::uint64_t tran
     if (batch_distance == Size && element_stride == 1) {
         if (normalize) {
             cufftdx_contiguous_block_kernel<FFT, true>
-                <<<static_cast<unsigned int>(transforms), FFT::block_dim, FFT::shared_memory_size>>>(input, output);
+                <<<static_cast<unsigned int>(transforms), FFT::block_dim, FFT::shared_memory_size, active_stream>>>(input, output);
         } else {
             cufftdx_contiguous_block_kernel<FFT, false>
-                <<<static_cast<unsigned int>(transforms), FFT::block_dim, FFT::shared_memory_size>>>(input, output);
+                <<<static_cast<unsigned int>(transforms), FFT::block_dim, FFT::shared_memory_size, active_stream>>>(input, output);
         }
         return;
     }
-    cufftdx_block_kernel<FFT><<<static_cast<unsigned int>(transforms), FFT::block_dim, FFT::shared_memory_size>>>(
+    cufftdx_block_kernel<FFT><<<static_cast<unsigned int>(transforms), FFT::block_dim, FFT::shared_memory_size, active_stream>>>(
         input, output, transforms, batch_distance, element_stride, normalize);
 }
 
@@ -1364,7 +1375,7 @@ void launch_persistent_16384(const Complex32* input, Complex32* output, Complex3
     using FFT = Persistent16384Fft<Elements, Direction>;
     constexpr std::size_t tile_bytes = 128 * 33 * sizeof(Complex32);
     constexpr std::size_t shared_bytes = FFT::shared_memory_size > tile_bytes ? FFT::shared_memory_size : tile_bytes;
-    cufftdx_persistent_16384_kernel<FFT><<<static_cast<unsigned int>(transforms), FFT::block_dim, shared_bytes>>>(
+    cufftdx_persistent_16384_kernel<FFT><<<static_cast<unsigned int>(transforms), FFT::block_dim, shared_bytes, active_stream>>>(
         input, output, scratch, twiddles, transforms, batch_distance, element_stride, normalize, recurrence_twiddle);
 }
 
@@ -1387,7 +1398,9 @@ bool cufftdx_resident_available(std::uint32_t log_n, std::uint32_t local_log_n) 
 }
 
 void launch_cufftdx_block(std::uint32_t log_n, const Complex32* input, Complex32* output, std::uint64_t transforms,
-                          std::uint64_t batch_distance, std::uint64_t element_stride, bool inverse, bool normalize) {
+                          std::uint64_t batch_distance, std::uint64_t element_stride, bool inverse, bool normalize,
+                          cudaStream_t stream) {
+    const LaunchStreamScope stream_scope(stream);
     if (inverse) {
         dispatch<cufftdx::fft_direction::inverse>(log_n, input, output, transforms, batch_distance, element_stride, normalize);
     } else {
@@ -1397,7 +1410,8 @@ void launch_cufftdx_block(std::uint32_t log_n, const Complex32* input, Complex32
 
 void launch_cufftdx_direct(std::uint32_t log_n, const Complex32* input, Complex32* output,
                            std::uint64_t transforms, std::uint64_t batch_distance, std::uint64_t element_stride,
-                           bool inverse, bool normalize, std::uint32_t tile_threads) {
+                           bool inverse, bool normalize, std::uint32_t tile_threads, cudaStream_t stream) {
+    const LaunchStreamScope stream_scope(stream);
     if (!cufftdx_direct_available(log_n))
         throw std::invalid_argument("cufftdx-direct requires logN=11..14");
     if (inverse) {
@@ -1416,7 +1430,8 @@ void launch_cufftdx_online_reorder(std::uint32_t log_n, std::uint32_t local_log_
                                    std::uint64_t element_stride, bool inverse, bool normalize,
                                    CrossTwiddleMode cross_twiddle, std::uint32_t prefix_threads,
                                    std::uint32_t suffix_threads, std::uint32_t prefix_ept,
-                                   std::uint32_t suffix_ept, DirectBoundary direct_boundary) {
+                                   std::uint32_t suffix_ept, DirectBoundary direct_boundary, cudaStream_t stream) {
+    const LaunchStreamScope stream_scope(stream);
     const bool recurrence_twiddle = cross_twiddle == CrossTwiddleMode::Recurrence;
     const bool suffix_tiled_transpose = direct_boundary == DirectBoundary::TiledTranspose;
     const bool prefix_tiled_transpose = direct_boundary == DirectBoundary::PrefixTiledTranspose;
@@ -1452,7 +1467,8 @@ void launch_cufftdx_multisegment(std::uint32_t log_n, const std::vector<std::uin
                                  const Complex32* input, Complex32* output, Complex32* scratch,
                                  Complex32* workspace, const Complex32* twiddles,
                                  std::uint64_t transforms, std::uint64_t batch_distance,
-                                 std::uint64_t element_stride, bool inverse, bool normalize) {
+                                 std::uint64_t element_stride, bool inverse, bool normalize, cudaStream_t stream) {
+    const LaunchStreamScope stream_scope(stream);
     if (stage_partition.size() < 3 || stage_partition.size() > 8 ||
         segment_mappings.size() != stage_partition.size() ||
         boundaries.size() + 1 != stage_partition.size())
@@ -1513,7 +1529,9 @@ void launch_cufftdx_multisegment(std::uint32_t log_n, const std::vector<std::uin
 void launch_cufftdx_resident(std::uint32_t log_n, std::uint32_t local_log_n, const Complex32* input,
                              Complex32* output, Complex32* scratch, const Complex32* twiddles, std::uint64_t transforms,
                              std::uint64_t batch_distance, std::uint64_t element_stride, bool inverse,
-                             bool normalize, CrossTwiddleMode cross_twiddle, std::uint32_t tile_threads) {
+                             bool normalize, CrossTwiddleMode cross_twiddle, std::uint32_t tile_threads,
+                             cudaStream_t stream) {
+    const LaunchStreamScope stream_scope(stream);
     if (!cufftdx_resident_available(log_n, local_log_n))
         throw std::invalid_argument("cufftdx-resident requires logN=12/6+6 or logN=14/7+7");
     const bool recurrence_twiddle = cross_twiddle == CrossTwiddleMode::Recurrence;

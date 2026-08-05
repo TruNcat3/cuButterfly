@@ -8,6 +8,17 @@
 namespace cuntt::detail {
 namespace {
 
+thread_local cudaStream_t active_stream = nullptr;
+
+class LaunchStreamScope {
+  public:
+    explicit LaunchStreamScope(cudaStream_t stream) : previous_(active_stream) { active_stream = stream; }
+    ~LaunchStreamScope() { active_stream = previous_; }
+
+  private:
+    cudaStream_t previous_;
+};
+
 template <unsigned Size, cufftdx::fft_direction Direction>
 using Fp64BlockFft = decltype(cufftdx::Block() + cufftdx::Size<Size>() +
                               cufftdx::Type<cufftdx::fft_type::c2c>() + cufftdx::Direction<Direction>() +
@@ -274,7 +285,7 @@ void launch_fp64_block_impl(const Complex64* input, Complex64* output, std::uint
         cudaFuncSetAttribute(fp64_block_kernel<FFT>, cudaFuncAttributeMaxDynamicSharedMemorySize,
                              FFT::shared_memory_size);
     const auto blocks = static_cast<unsigned>((transforms + FFT::ffts_per_block - 1) / FFT::ffts_per_block);
-    fp64_block_kernel<FFT><<<blocks, FFT::block_dim, FFT::shared_memory_size>>>(
+    fp64_block_kernel<FFT><<<blocks, FFT::block_dim, FFT::shared_memory_size, active_stream>>>(
         input, output, transforms, batch_distance, element_stride, normalize);
 }
 
@@ -311,11 +322,11 @@ void launch_fp64_online_first(std::uint32_t log_n, std::uint32_t local_log_n,
     const auto local_transforms = transforms << (log_n - local_log_n);
     const auto blocks = static_cast<unsigned>((local_transforms + FFT::ffts_per_block - 1) / FFT::ffts_per_block);
     if (xor_swizzle)
-        fp64_online_first_kernel<FFT, true><<<blocks, FFT::block_dim, shared_bytes>>>(
+        fp64_online_first_kernel<FFT, true><<<blocks, FFT::block_dim, shared_bytes, active_stream>>>(
             input, scratch, twiddles, transforms, log_n, local_log_n,
             batch_distance, element_stride, recurrence_twiddle);
     else
-        fp64_online_first_kernel<FFT, false><<<blocks, FFT::block_dim, shared_bytes>>>(
+        fp64_online_first_kernel<FFT, false><<<blocks, FFT::block_dim, shared_bytes, active_stream>>>(
             input, scratch, twiddles, transforms, log_n, local_log_n,
             batch_distance, element_stride, recurrence_twiddle);
 }
@@ -331,7 +342,7 @@ void launch_fp64_online_second(std::uint32_t log_n, std::uint32_t local_log_n,
         cudaFuncSetAttribute(fp64_online_second_kernel<FFT>, cudaFuncAttributeMaxDynamicSharedMemorySize, shared_bytes);
     const auto local_transforms = transforms << local_log_n;
     const auto blocks = static_cast<unsigned>((local_transforms + FFT::ffts_per_block - 1) / FFT::ffts_per_block);
-    fp64_online_second_kernel<FFT><<<blocks, FFT::block_dim, shared_bytes>>>(
+    fp64_online_second_kernel<FFT><<<blocks, FFT::block_dim, shared_bytes, active_stream>>>(
         scratch, output, transforms, log_n, local_log_n, batch_distance, element_stride, normalize);
 }
 
@@ -391,7 +402,8 @@ bool cufftdx_fp64_online_available(std::uint32_t log_n, std::uint32_t threads, s
 
 void launch_cufftdx_fp64_block(std::uint32_t log_n, const Complex64* input, Complex64* output,
                                std::uint64_t transforms, std::uint64_t batch_distance,
-                               std::uint64_t element_stride, bool inverse, bool normalize) {
+                               std::uint64_t element_stride, bool inverse, bool normalize, cudaStream_t stream) {
+    const LaunchStreamScope stream_scope(stream);
     if (inverse)
         dispatch_fp64_block<cufftdx::fft_direction::inverse>(log_n, input, output, transforms,
                                                              batch_distance, element_stride, normalize);
@@ -407,7 +419,8 @@ void launch_cufftdx_fp64_online_reorder(std::uint32_t log_n, std::uint32_t local
                                         bool inverse, bool normalize, CrossTwiddleMode cross_twiddle,
                                         SharedLayout shared_layout, std::uint32_t prefix_threads,
                                         std::uint32_t suffix_threads, std::uint32_t prefix_ept,
-                                        std::uint32_t suffix_ept) {
+                                        std::uint32_t suffix_ept, cudaStream_t stream) {
+    const LaunchStreamScope stream_scope(stream);
     const std::uint32_t remaining_log_n = log_n - local_log_n;
     if (local_log_n < 7 || local_log_n > 9 || remaining_log_n < 7 || remaining_log_n > 9)
         throw std::invalid_argument("FP64 online cuFFTDx requires two logN=7..9 segments");

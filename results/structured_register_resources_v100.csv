@@ -1,0 +1,7 @@
+logN,threads,per_stage_registers,broadcast_registers,per_stage_local_bytes,broadcast_local_bytes
+8,32,58,35,0,0
+10,128,34,32,0,0
+12,256,43,40,0,0
+13,256,76,64,0,0
+14,256,128,128,0,0
+15,256,214,254,0,0
