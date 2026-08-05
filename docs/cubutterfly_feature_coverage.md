@@ -6,7 +6,10 @@
 |:--|:--|:--:|:--:|:--|
 | FFT | FP32, FP64 | yes | yes | selectable `none` or `inverse` |
 | FWHT | FP32, FP64 | yes | yes | selectable `none` or `inverse` |
-| XOR-zeta/Mobius | uint32 | yes | yes | arithmetic modulo `2^32`; no scaling |
+| Subset zeta/Mobius | uint32 | yes | yes | right-side update modulo `2^32`; no scaling |
+| Superset zeta/Mobius | uint32 | yes | yes | left-side update modulo `2^32`; no scaling |
+| Legacy XOR-zeta name | uint32 | yes | yes | compatibility name for subset-zeta behavior |
+| Structured 2x2 | FP32, FP64 | yes | yes | one broadcast or per-stage real matrix; inverse requires nonsingular matrices |
 | NTT | 32/64-bit physical paths | yes | yes | existing modular inverse convention |
 
 FFT and FWHT inverse normalization is part of timed kernel execution. For
@@ -17,7 +20,7 @@ native unnormalized inverse for a core-equivalent comparison.
 
 | Backend | Length | Processing unit | FP32 | FP64 | uint32 |
 |:--|:--|:--|:--:|:--:|:--:|
-| temporal-tile | shared: `logN=1..10`; register FWHT: `logN=3..15` | radix-2, fused radix-4/radix-8; FP32 FWHT register-vector unit | yes | yes | yes |
+| temporal-tile | shared: `logN=1..10`; register FWHT/Structured: `logN=3..15` | radix-2, fused radix-4/radix-8; FP32 FWHT and Structured register-vector units | yes | yes | yes |
 | hierarchical | `logN=6..20` | local stages 5..10, radix-2/radix-4/radix-8, global remainder | yes | yes | yes |
 | online-reorder | `logN=6..20` | radix-2/radix-4/radix-8 groups with a fused permutation store; optional two-pass cuFFTDx local FFTs | yes | yes | yes |
 | warp-hybrid | `logN=8` | radix-2 | yes | yes | yes |
@@ -90,6 +93,7 @@ precision
 direction
 normalization
 placement
+stage_matrices (structured-2x2 processing-unit semantics)
 element_stride and batch_stride
 logN, N, batch
 backend, compute_unit, FFT complex_multiply, local_exchange, fft_core, and direct_boundary
@@ -98,7 +102,8 @@ kernel/H2D/D2H time, transforms/s, points/s, butterflies/s, correctness
 ```
 
 The summarizer ranks configurations independently for every semantic group, so
-different lengths, precisions, directions, normalization policies, and batches
+different lengths, precisions, directions, normalization policies, structured
+processing units, and batches
 cannot be accidentally combined.
 
 ## Verification
@@ -109,9 +114,10 @@ forward and inverse. FP64 temporal FWHT, temporal FFT, and cuFFT are checked at
 `logN=1,5,8,10` in both directions. Existing `N=256` warp-hybrid,
 stage-pipeline, tail handling, unnormalized inverse, and NTT tests remain
 enabled.
-The FP32 FWHT warp-register unit is checked forward and inverse for every
-`logN=3..15`; a separate benchmark verification covers strided, padded,
-in-place inverse normalization.
+The FP32 FWHT and Structured 2x2 warp-register units are checked forward and
+inverse for every `logN=3..15`. Structured coverage uses per-stage matrices;
+separate benchmark verification covers broadcast matrices, strided and padded
+layouts, in-place execution, and inverse normalization.
 Strided in-place and out-of-place FFTs are also checked through temporal,
 hierarchical, online-reorder, warp-hybrid, stage-pipeline, and cuFFT backends. Hierarchical
 radix-2/radix-4/radix-8 FFT, FWHT, and XOR are checked in both directions at

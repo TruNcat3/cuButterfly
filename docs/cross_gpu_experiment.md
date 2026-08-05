@@ -11,6 +11,12 @@ The table is stored in `configs/hardware/cross_gpu_matrix.csv`. V100 is the
 measured reference. A100, H100, and RTX 4090 rows are placeholders and must not
 enter performance plots until their `status` becomes `measured`.
 
+Before searching, each row must include the SM register/shared capacities,
+per-CTA limits, warp size, and register/shared allocation granularities. These
+are feasibility inputs, not vendor peak-performance context. A core resource
+profile produced from the target binary supplies registers/thread, shared
+bytes/CTA, threads/CTA, and local spill bytes for each generated point.
+
 ## Capture Protocol
 
 Build for the target architecture, then collect its calibrated profile:
@@ -38,11 +44,13 @@ python3 scripts/sweep_cubutterfly_designs.py \
   --precisions fp32 --normalizations none \
   --tile-thread-options 128 256 \
   --hierarchical-local-stages 6 8 10 \
+  --hardware-profile configs/hardware/<gpu>.json \
+  --resource-profile results/generated_resource_profile_<gpu>.csv \
   --target-points 4194304 --warmup 50 --repeat 100 --trials 5 \
   --output results/cubutterfly_large_<gpu>_raw.csv
 ```
 
 For each GPU, record the predicted mapping before inspecting sweep performance.
 Report top-1 accuracy, top-3 recall, predicted/measured slowdown, and how the
-selected `local_stages`, radix, threads, `Us`, and residency change relative to
-V100.
+selected `local_stages`, radix, threads, `Us`, `Td`, limiting resource,
+occupancy bound, waves, and resource-cliff locations change relative to V100.

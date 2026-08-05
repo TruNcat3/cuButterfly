@@ -220,6 +220,12 @@ const char* butterfly_operator_name(ButterflyOperator op) noexcept {
             return "fwht";
         case ButterflyOperator::Fft:
             return "fft";
+        case ButterflyOperator::SubsetZeta:
+            return "subset-zeta";
+        case ButterflyOperator::SupersetZeta:
+            return "superset-zeta";
+        case ButterflyOperator::Structured2x2:
+            return "structured-2x2";
         case ButterflyOperator::XorZeta:
             return "xor-zeta";
     }
@@ -232,6 +238,15 @@ ButterflyOperator parse_butterfly_operator(const std::string& name) {
     }
     if (name == "fft") {
         return ButterflyOperator::Fft;
+    }
+    if (name == "subset-zeta" || name == "or-zeta") {
+        return ButterflyOperator::SubsetZeta;
+    }
+    if (name == "superset-zeta" || name == "and-zeta") {
+        return ButterflyOperator::SupersetZeta;
+    }
+    if (name == "structured-2x2" || name == "structured") {
+        return ButterflyOperator::Structured2x2;
     }
     if (name == "xor-zeta") {
         return ButterflyOperator::XorZeta;
@@ -405,9 +420,9 @@ void reference_fft(std::vector<Complex64>& values, bool inverse, bool normalize_
     }
 }
 
-void reference_xor_zeta(std::vector<std::uint32_t>& values, bool inverse) {
+void reference_subset_zeta(std::vector<std::uint32_t>& values, bool inverse) {
     if (values.empty() || (values.size() & (values.size() - 1)) != 0) {
-        throw std::invalid_argument("XOR zeta input size must be a nonzero power of two");
+        throw std::invalid_argument("subset zeta input size must be a nonzero power of two");
     }
     for (std::size_t half = 1; half < values.size(); half <<= 1) {
         for (std::size_t base = 0; base < values.size(); base += 2 * half) {
@@ -420,6 +435,82 @@ void reference_xor_zeta(std::vector<std::uint32_t>& values, bool inverse) {
             }
         }
     }
+}
+
+void reference_superset_zeta(std::vector<std::uint32_t>& values, bool inverse) {
+    if (values.empty() || (values.size() & (values.size() - 1)) != 0) {
+        throw std::invalid_argument("superset zeta input size must be a nonzero power of two");
+    }
+    for (std::size_t half = 1; half < values.size(); half <<= 1) {
+        for (std::size_t base = 0; base < values.size(); base += 2 * half) {
+            for (std::size_t offset = 0; offset < half; ++offset) {
+                if (inverse) {
+                    values[base + offset] -= values[base + half + offset];
+                } else {
+                    values[base + offset] += values[base + half + offset];
+                }
+            }
+        }
+    }
+}
+
+void reference_xor_zeta(std::vector<std::uint32_t>& values, bool inverse) {
+    reference_subset_zeta(values, inverse);
+}
+
+namespace {
+
+template <typename Real>
+void reference_structured_impl(std::vector<Real>& values, const std::vector<ButterflyMatrix2x2>& matrices, bool inverse) {
+    if (values.empty() || (values.size() & (values.size() - 1)) != 0) {
+        throw std::invalid_argument("structured 2x2 input size must be a nonzero power of two");
+    }
+    std::uint32_t log_n = 0;
+    for (std::size_t n = values.size(); n > 1; n >>= 1) {
+        ++log_n;
+    }
+    if (matrices.size() != 1 && matrices.size() != log_n) {
+        throw std::invalid_argument("structured 2x2 requires one matrix or one matrix per stage");
+    }
+    for (std::uint32_t stage = 0; stage < log_n; ++stage) {
+        const auto& source = matrices.size() == 1 ? matrices.front() : matrices[stage];
+        double m00 = source.m00;
+        double m01 = source.m01;
+        double m10 = source.m10;
+        double m11 = source.m11;
+        if (!std::isfinite(m00) || !std::isfinite(m01) || !std::isfinite(m10) || !std::isfinite(m11)) {
+            throw std::invalid_argument("structured 2x2 matrix entries must be finite");
+        }
+        if (inverse) {
+            const double determinant = m00 * m11 - m01 * m10;
+            if (!std::isfinite(determinant) || determinant == 0.0) {
+                throw std::invalid_argument("structured 2x2 inverse requires nonsingular matrices");
+            }
+            m00 = source.m11 / determinant;
+            m01 = -source.m01 / determinant;
+            m10 = -source.m10 / determinant;
+            m11 = source.m00 / determinant;
+        }
+        const std::size_t half = std::size_t{1} << stage;
+        for (std::size_t base = 0; base < values.size(); base += 2 * half) {
+            for (std::size_t offset = 0; offset < half; ++offset) {
+                const Real left  = values[base + offset];
+                const Real right = values[base + half + offset];
+                values[base + offset] = static_cast<Real>(m00) * left + static_cast<Real>(m01) * right;
+                values[base + half + offset] = static_cast<Real>(m10) * left + static_cast<Real>(m11) * right;
+            }
+        }
+    }
+}
+
+}  // namespace
+
+void reference_structured_2x2(std::vector<float>& values, const std::vector<ButterflyMatrix2x2>& stage_matrices, bool inverse) {
+    reference_structured_impl(values, stage_matrices, inverse);
+}
+
+void reference_structured_2x2(std::vector<double>& values, const std::vector<ButterflyMatrix2x2>& stage_matrices, bool inverse) {
+    reference_structured_impl(values, stage_matrices, inverse);
 }
 
 }  // namespace cuntt

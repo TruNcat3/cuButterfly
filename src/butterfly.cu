@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <cstdint>
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
@@ -13,6 +14,7 @@
 #include "external_fft_units.cuh"
 #include "generated_fft_dispatch.cuh"
 #include "generated_unit_api.cuh"
+#include "mapping_selector.hpp"
 #include "stage_pipeline.cuh"
 
 namespace cuntt {
@@ -39,6 +41,17 @@ void check_cufft(cufftResult status, const char* expression, const char* file, i
 #define CUB_CUDA_CHECK(expr) check_cuda((expr), #expr, __FILE__, __LINE__)
 #define CUB_CUFFT_CHECK(expr) check_cufft((expr), #expr, __FILE__, __LINE__)
 
+thread_local cudaStream_t active_stream = nullptr;
+
+class LaunchStreamScope {
+  public:
+    explicit LaunchStreamScope(cudaStream_t stream) : previous_(active_stream) { active_stream = stream; }
+    ~LaunchStreamScope() { active_stream = previous_; }
+
+  private:
+    cudaStream_t previous_;
+};
+
 class Event {
   public:
     Event() { CUB_CUDA_CHECK(cudaEventCreate(&event_)); }
@@ -56,11 +69,18 @@ class DeviceBuffer {
             cudaFree(pointer_);
         }
     }
-    void allocate(std::size_t bytes) { CUB_CUDA_CHECK(cudaMalloc(&pointer_, bytes)); }
+    void allocate(std::size_t bytes) {
+        if (bytes == 0)
+            return;
+        if (pointer_ != nullptr)
+            throw std::logic_error("device buffer is already allocated");
+        CUB_CUDA_CHECK(cudaMalloc(&pointer_, bytes));
+    }
     template <typename T>
     T* as() const noexcept {
         return static_cast<T*>(pointer_);
     }
+    void* data() const noexcept { return pointer_; }
 
   private:
     void* pointer_ = nullptr;
@@ -90,6 +110,45 @@ struct FwhtOperator {
     __device__ __forceinline__ Value finalize(Value value, std::uint32_t n) const {
         return inverse && normalize_inverse ? value / static_cast<Real>(n) : value;
     }
+};
+
+template <typename Real>
+struct DeviceMatrix2x2 {
+    Real m00;
+    Real m01;
+    Real m10;
+    Real m11;
+};
+
+template <typename Real>
+struct Structured2x2Operator {
+    using Value                            = Real;
+    static constexpr bool kBitReverseInput = false;
+
+    const DeviceMatrix2x2<Real>* matrices;
+    bool inverse = false;
+    bool normalize_inverse = false;
+
+    __device__ __forceinline__ void apply(std::uint32_t stage, std::uint32_t, Value& left, Value& right) const {
+        const auto matrix = matrices[stage];
+        const Real a      = left;
+        const Real b      = right;
+        left              = matrix.m00 * a + matrix.m01 * b;
+        right             = matrix.m10 * a + matrix.m11 * b;
+    }
+
+    __device__ __forceinline__ Value shuffle(Value value, std::uint32_t mask) const {
+        return __shfl_xor_sync(0xffffffffU, value, mask);
+    }
+
+    __device__ __forceinline__ Value apply_lane(std::uint32_t stage, std::uint32_t, Value self, Value partner,
+                                                 bool right_lane) const {
+        const auto matrix = matrices[stage];
+        return right_lane ? matrix.m10 * partner + matrix.m11 * self
+                          : matrix.m00 * self + matrix.m01 * partner;
+    }
+
+    __device__ __forceinline__ Value finalize(Value value, std::uint32_t) const { return value; }
 };
 
 template <typename Complex, typename Real>
@@ -154,20 +213,29 @@ struct FftOperator {
     }
 };
 
-struct XorZetaOperator {
+template <bool UpdateLeft>
+struct BooleanZetaOperator {
     using Value                            = std::uint32_t;
     static constexpr bool kBitReverseInput = false;
 
     bool inverse;
 
     __device__ __forceinline__ void apply(std::uint32_t, std::uint32_t, Value& left, Value& right) const {
-        right = inverse ? right - left : right + left;
+        if constexpr (UpdateLeft) {
+            left = inverse ? left - right : left + right;
+        } else {
+            right = inverse ? right - left : right + left;
+        }
     }
 
     __device__ __forceinline__ Value shuffle(Value value, std::uint32_t mask) const { return __shfl_xor_sync(0xffffffffU, value, mask); }
 
     __device__ __forceinline__ Value apply_lane(std::uint32_t, std::uint32_t, Value self, Value partner, bool right_lane) const {
-        return right_lane ? (inverse ? self - partner : partner + self) : self;
+        if constexpr (UpdateLeft) {
+            return right_lane ? self : (inverse ? self - partner : self + partner);
+        } else {
+            return right_lane ? (inverse ? self - partner : partner + self) : self;
+        }
     }
 
     __device__ __forceinline__ Value finalize(Value value, std::uint32_t) const { return value; }
@@ -191,7 +259,7 @@ void launch_stage_pipeline(const ButterflyConfig& config, const typename Operato
     for (std::uint32_t stage_base = 0; stage_base < 8; stage_base += StageSpace) {
         const auto*           stage_input     = stage_base == 0 ? input : output;
         constexpr std::size_t kHandoffPadding = NamedBarrier ? PipelineWarps * 2 * sizeof(int) : 0;
-        detail::stage_pipeline_256_kernel<Operator, StageSpace, NamedBarrier, PipelineWarps><<<blocks, PipelineWarps * 32, kHandoffPadding>>>(
+        detail::stage_pipeline_256_kernel<Operator, StageSpace, NamedBarrier, PipelineWarps><<<blocks, PipelineWarps * 32, kHandoffPadding, active_stream>>>(
             stage_input, output, tiles, stage_base, config.batch_stride, config.batch_stride, config.element_stride, op);
         CUB_CUDA_CHECK(cudaGetLastError());
     }
@@ -235,13 +303,13 @@ void launch_temporal_tile(const ButterflyConfig& config, const typename Operator
     constexpr std::size_t shared_bytes = (std::size_t{1} << LogN) * sizeof(typename Operator::Value);
     if (config.compute_unit == ComputeUnit::Radix8) {
         detail::hierarchical_prefix_kernel<Operator, LogN, false, false, true, true>
-            <<<static_cast<unsigned int>(config.batch), config.tile_threads, shared_bytes>>>(input, output, config.batch, config.log_n,
+            <<<static_cast<unsigned int>(config.batch), config.tile_threads, shared_bytes, active_stream>>>(input, output, config.batch, config.log_n,
                                                                                              config.batch_stride, config.element_stride, op);
     } else if (config.compute_unit == ComputeUnit::Radix4) {
-        detail::temporal_tile_radix4_kernel<Operator, LogN><<<static_cast<unsigned int>(config.batch), config.tile_threads, shared_bytes>>>(
+        detail::temporal_tile_radix4_kernel<Operator, LogN><<<static_cast<unsigned int>(config.batch), config.tile_threads, shared_bytes, active_stream>>>(
             input, output, config.batch, config.batch_stride, config.element_stride, op);
     } else {
-        detail::temporal_tile_kernel<Operator, LogN><<<static_cast<unsigned int>(config.batch), config.tile_threads, shared_bytes>>>(
+        detail::temporal_tile_kernel<Operator, LogN><<<static_cast<unsigned int>(config.batch), config.tile_threads, shared_bytes, active_stream>>>(
             input, output, config.batch, config.batch_stride, config.element_stride, op);
     }
     CUB_CUDA_CHECK(cudaGetLastError());
@@ -291,13 +359,13 @@ void launch_hierarchical_prefix(const ButterflyConfig& config, const typename Op
     const std::uint64_t   tiles        = static_cast<std::uint64_t>(config.batch) << (config.log_n - LocalLogN);
     if (config.compute_unit == ComputeUnit::Radix8) {
         detail::hierarchical_prefix_kernel<Operator, LocalLogN, false, false, true>
-            <<<static_cast<unsigned int>(tiles), config.tile_threads, shared_bytes>>>(input, output, config.batch, config.log_n, config.batch_stride,
+            <<<static_cast<unsigned int>(tiles), config.tile_threads, shared_bytes, active_stream>>>(input, output, config.batch, config.log_n, config.batch_stride,
                                                                                       config.element_stride, op);
     } else if (config.compute_unit == ComputeUnit::Radix4) {
-        detail::hierarchical_prefix_kernel<Operator, LocalLogN, true><<<static_cast<unsigned int>(tiles), config.tile_threads, shared_bytes>>>(
+        detail::hierarchical_prefix_kernel<Operator, LocalLogN, true><<<static_cast<unsigned int>(tiles), config.tile_threads, shared_bytes, active_stream>>>(
             input, output, config.batch, config.log_n, config.batch_stride, config.element_stride, op);
     } else {
-        detail::hierarchical_prefix_kernel<Operator, LocalLogN, false><<<static_cast<unsigned int>(tiles), config.tile_threads, shared_bytes>>>(
+        detail::hierarchical_prefix_kernel<Operator, LocalLogN, false><<<static_cast<unsigned int>(tiles), config.tile_threads, shared_bytes, active_stream>>>(
             input, output, config.batch, config.log_n, config.batch_stride, config.element_stride, op);
     }
     CUB_CUDA_CHECK(cudaGetLastError());
@@ -341,27 +409,27 @@ void launch_online_reorder(const ButterflyConfig& config, const typename Operato
     const std::uint64_t   suffix_tiles        = static_cast<std::uint64_t>(config.batch) * column_tiles;
     if (config.compute_unit == ComputeUnit::Radix8) {
         detail::hierarchical_prefix_kernel<Operator, LocalLogN, false, true, true>
-            <<<static_cast<unsigned int>(prefix_tiles), config.tile_threads, prefix_shared_bytes>>>(input, scratch, config.batch, config.log_n,
+            <<<static_cast<unsigned int>(prefix_tiles), config.tile_threads, prefix_shared_bytes, active_stream>>>(input, scratch, config.batch, config.log_n,
                                                                                                     config.batch_stride, config.element_stride, op);
         CUB_CUDA_CHECK(cudaGetLastError());
         detail::online_reorder_suffix_kernel<Operator, RemainingLogN, false, true>
-            <<<static_cast<unsigned int>(suffix_tiles), config.tile_threads, suffix_shared_bytes>>>(
+            <<<static_cast<unsigned int>(suffix_tiles), config.tile_threads, suffix_shared_bytes, active_stream>>>(
                 scratch, output, config.batch, config.log_n, LocalLogN, config.batch_stride, config.element_stride, config.reorder_columns, op);
     } else if (config.compute_unit == ComputeUnit::Radix4) {
         detail::hierarchical_prefix_kernel<Operator, LocalLogN, true, true>
-            <<<static_cast<unsigned int>(prefix_tiles), config.tile_threads, prefix_shared_bytes>>>(input, scratch, config.batch, config.log_n,
+            <<<static_cast<unsigned int>(prefix_tiles), config.tile_threads, prefix_shared_bytes, active_stream>>>(input, scratch, config.batch, config.log_n,
                                                                                                     config.batch_stride, config.element_stride, op);
         CUB_CUDA_CHECK(cudaGetLastError());
         detail::online_reorder_suffix_kernel<Operator, RemainingLogN, true>
-            <<<static_cast<unsigned int>(suffix_tiles), config.tile_threads, suffix_shared_bytes>>>(
+            <<<static_cast<unsigned int>(suffix_tiles), config.tile_threads, suffix_shared_bytes, active_stream>>>(
                 scratch, output, config.batch, config.log_n, LocalLogN, config.batch_stride, config.element_stride, config.reorder_columns, op);
     } else {
         detail::hierarchical_prefix_kernel<Operator, LocalLogN, false, true>
-            <<<static_cast<unsigned int>(prefix_tiles), config.tile_threads, prefix_shared_bytes>>>(input, scratch, config.batch, config.log_n,
+            <<<static_cast<unsigned int>(prefix_tiles), config.tile_threads, prefix_shared_bytes, active_stream>>>(input, scratch, config.batch, config.log_n,
                                                                                                     config.batch_stride, config.element_stride, op);
         CUB_CUDA_CHECK(cudaGetLastError());
         detail::online_reorder_suffix_kernel<Operator, RemainingLogN, false>
-            <<<static_cast<unsigned int>(suffix_tiles), config.tile_threads, suffix_shared_bytes>>>(
+            <<<static_cast<unsigned int>(suffix_tiles), config.tile_threads, suffix_shared_bytes, active_stream>>>(
                 scratch, output, config.batch, config.log_n, LocalLogN, config.batch_stride, config.element_stride, config.reorder_columns, op);
     }
     CUB_CUDA_CHECK(cudaGetLastError());
@@ -447,13 +515,13 @@ void launch_hierarchical(const ButterflyConfig& config, const typename Operator:
     const auto              blocks            = static_cast<unsigned int>((total_butterflies + kThreads - 1) / kThreads);
     for (std::uint32_t stage = config.local_stages; stage < config.log_n; ++stage) {
         Value* destination = source == scratch ? desired_output : scratch;
-        detail::hierarchical_stage_kernel<Operator><<<blocks, kThreads>>>(source, destination, config.batch, config.log_n, stage, config.batch_stride,
+        detail::hierarchical_stage_kernel<Operator><<<blocks, kThreads, 0, active_stream>>>(source, destination, config.batch, config.log_n, stage, config.batch_stride,
                                                                           config.element_stride, stage + 1 == config.log_n, op);
         CUB_CUDA_CHECK(cudaGetLastError());
         source = destination;
     }
     if (source != desired_output) {
-        CUB_CUDA_CHECK(cudaMemcpyAsync(desired_output, source, data_bytes, cudaMemcpyDeviceToDevice));
+        CUB_CUDA_CHECK(cudaMemcpyAsync(desired_output, source, data_bytes, cudaMemcpyDeviceToDevice, active_stream));
     }
 }
 
@@ -462,48 +530,37 @@ void launch_hierarchical(const ButterflyConfig& config, const typename Operator:
 class ButterflyPlan::Impl {
   public:
     explicit Impl(ButterflyConfig config) : config_(std::move(config)) {
+        const bool automatic_selection = config_.auto_select;
+        if (automatic_selection) {
+            auto selected = detail::select_butterfly_mapping(std::move(config_));
+            config_       = std::move(selected.config);
+            selection_    = std::move(selected.info);
+        }
         if (config_.log_n == 0 || config_.log_n > 20) {
             throw std::invalid_argument("butterfly log_n must be in [1, 20]");
         }
+        if (config_.op == ButterflyOperator::Structured2x2) {
+            if (config_.precision != ButterflyPrecision::Fp32 && config_.precision != ButterflyPrecision::Fp64) {
+                throw std::invalid_argument("structured-2x2 requires fp32 or fp64 precision");
+            }
+            if (config_.stage_matrices.size() != 1 && config_.stage_matrices.size() != config_.log_n) {
+                throw std::invalid_argument("structured-2x2 requires one matrix or one matrix per stage");
+            }
+            for (const auto& matrix : config_.stage_matrices) {
+                if (!std::isfinite(matrix.m00) || !std::isfinite(matrix.m01) ||
+                    !std::isfinite(matrix.m10) || !std::isfinite(matrix.m11)) {
+                    throw std::invalid_argument("structured-2x2 matrix entries must be finite");
+                }
+                const double determinant = matrix.m00 * matrix.m11 - matrix.m01 * matrix.m10;
+                if (config_.inverse && (!std::isfinite(determinant) || determinant == 0.0)) {
+                    throw std::invalid_argument("structured-2x2 inverse requires nonsingular matrices");
+                }
+            }
+            config_.normalize_inverse = false;
+        } else if (!config_.stage_matrices.empty()) {
+            throw std::invalid_argument("stage_matrices requires the structured-2x2 operator");
+        }
         const bool explicit_stage_partition = !config_.stage_partition.empty();
-        if (config_.auto_select && explicit_stage_partition) {
-            throw std::invalid_argument("auto-select owns the stage partition");
-        }
-        if (config_.auto_select) {
-            const std::size_t contiguous_stride = std::size_t{1} << config_.log_n;
-            if (config_.op != ButterflyOperator::Fft || config_.precision != ButterflyPrecision::Fp32 ||
-                config_.inverse || config_.placement != ButterflyPlacement::InPlace || config_.normalize_inverse ||
-                config_.element_stride != 1 || (config_.batch_stride != 0 && config_.batch_stride != contiguous_stride)) {
-                throw std::invalid_argument(
-                    "generated FFT selection requires FP32 forward, in-place, contiguous, no-normalization semantics");
-            }
-            int device = 0;
-            cudaDeviceProp properties{};
-            CUB_CUDA_CHECK(cudaGetDevice(&device));
-            CUB_CUDA_CHECK(cudaGetDeviceProperties(&properties, device));
-            if (properties.major != 7 || properties.minor != 0) {
-                throw std::invalid_argument("generated FFT selection is calibrated only for V100 sm_70");
-            }
-            detail::GeneratedFftMapping mapping{};
-            if (!detail::select_generated_fft_mapping(config_.log_n, config_.batch, mapping)) {
-                throw std::invalid_argument("no generated V100 FFT mapping exists for this length and batch");
-            }
-            config_.backend         = ButterflyBackend::OnlineReorder;
-            config_.fft_core        = FftCore::CufftDxBlock;
-            config_.local_exchange  = LocalExchange::SharedMemory;
-            config_.local_stages    = mapping.local_stages;
-            config_.reorder_columns = 1;
-            config_.prefix_threads  = mapping.prefix_threads;
-            config_.suffix_threads  = mapping.suffix_threads;
-            config_.prefix_ept      = mapping.prefix_ept;
-            config_.suffix_ept      = mapping.suffix_ept;
-            config_.cross_twiddle   = mapping.recurrence_twiddle ? CrossTwiddleMode::Recurrence : CrossTwiddleMode::Table;
-            config_.direct_boundary = mapping.prefix_tiled_transpose
-                                          ? DirectBoundary::PrefixTiledTranspose
-                                          : (mapping.suffix_tiled_transpose ? DirectBoundary::TiledTranspose
-                                                                            : DirectBoundary::Strided);
-            config_.stage_partition = {mapping.local_stages, config_.log_n - mapping.local_stages};
-        }
         if (config_.backend == ButterflyBackend::OnlineReorder && config_.stage_partition.empty()) {
             config_.stage_partition = {config_.local_stages, config_.log_n - config_.local_stages};
         }
@@ -600,11 +657,18 @@ class ButterflyPlan::Impl {
             throw std::invalid_argument("temporal-tile requires log_n in [1, 10]");
         }
         if (config_.local_exchange == LocalExchange::WarpRegister) {
-            if (config_.backend != ButterflyBackend::TemporalTile || config_.op != ButterflyOperator::Fwht ||
-                config_.precision != ButterflyPrecision::Fp32 || !detail::generated_register_fwht_available(config_.log_n)) {
-                throw std::invalid_argument("warp-register exchange requires a generated temporal-tile FP32 FWHT design point");
+            const bool fwht_point = config_.op == ButterflyOperator::Fwht &&
+                                    detail::generated_register_fwht_available(config_.log_n);
+            const bool structured_point = config_.op == ButterflyOperator::Structured2x2 &&
+                                          detail::generated_register_structured_available(config_.log_n);
+            if (config_.backend != ButterflyBackend::TemporalTile || config_.precision != ButterflyPrecision::Fp32 ||
+                (!fwht_point && !structured_point)) {
+                throw std::invalid_argument(
+                    "warp-register exchange requires a generated temporal-tile FP32 FWHT or structured-2x2 design point");
             }
-            config_.tile_threads = detail::generated_register_fwht_threads(config_.log_n);
+            config_.tile_threads = structured_point
+                                       ? detail::generated_register_structured_threads(config_.log_n)
+                                       : detail::generated_register_fwht_threads(config_.log_n);
         }
         if (config_.backend == ButterflyBackend::Hierarchical &&
             (config_.local_stages < 5 || config_.local_stages > 10 || config_.local_stages >= config_.log_n)) {
@@ -766,11 +830,14 @@ class ButterflyPlan::Impl {
         if (config_.backend == ButterflyBackend::CuFft && config_.op != ButterflyOperator::Fft) {
             throw std::invalid_argument("cufft backend requires the FFT operator");
         }
-        if (config_.op == ButterflyOperator::XorZeta) {
+        const bool integer_zeta = config_.op == ButterflyOperator::SubsetZeta ||
+                                  config_.op == ButterflyOperator::SupersetZeta ||
+                                  config_.op == ButterflyOperator::XorZeta;
+        if (integer_zeta) {
             config_.precision         = ButterflyPrecision::Uint32;
             config_.normalize_inverse = false;
         } else if (config_.precision == ButterflyPrecision::Uint32) {
-            throw std::invalid_argument("uint32 precision requires xor-zeta");
+            throw std::invalid_argument("uint32 precision requires a subset/superset zeta operator");
         }
         if (config_.fft_core != FftCore::Scalar) {
             const bool cufftdx_online = (config_.fft_core == FftCore::CufftDxBlock ||
@@ -935,16 +1002,23 @@ class ButterflyPlan::Impl {
             throw std::invalid_argument("butterfly allocation size overflows size_t");
         }
         data_bytes_ = data_elements_ * element_bytes;
-        device_input_.allocate(data_bytes_);
-        if (config_.placement == ButterflyPlacement::OutOfPlace) {
-            device_output_.allocate(data_bytes_);
-        }
-        if (config_.backend == ButterflyBackend::Hierarchical || config_.backend == ButterflyBackend::OnlineReorder) {
-            device_scratch_.allocate(data_bytes_);
-        }
+        if (config_.backend == ButterflyBackend::Hierarchical || config_.backend == ButterflyBackend::OnlineReorder)
+            workspace_buffers_ = 1;
         if (config_.direct_boundary == DirectBoundary::PrefixTiledTranspose ||
-            (config_.backend == ButterflyBackend::OnlineReorder && execution_stage_partition_.size() > 2)) {
-            device_workspace_.allocate(data_bytes_);
+            (config_.backend == ButterflyBackend::OnlineReorder && execution_stage_partition_.size() > 2))
+            workspace_buffers_ = 2;
+        if (workspace_buffers_ != 0 && data_bytes_ > kMaxSize / workspace_buffers_)
+            throw std::invalid_argument("butterfly workspace size overflows size_t");
+        workspace_bytes_ = workspace_buffers_ * data_bytes_;
+        if (config_.auto_allocate_workspace)
+            internal_workspace_.allocate(workspace_bytes_);
+
+        if (config_.op == ButterflyOperator::Structured2x2) {
+            if (config_.precision == ButterflyPrecision::Fp64) {
+                initialize_structured_matrices<double>();
+            } else {
+                initialize_structured_matrices<float>();
+            }
         }
 
         if (config_.op == ButterflyOperator::Fft && config_.backend != ButterflyBackend::CuFft) {
@@ -984,6 +1058,7 @@ class ButterflyPlan::Impl {
             CUB_CUFFT_CHECK(cufftPlanMany(&cufft_plan_, 1, &length, &length, element_stride, distance, &length, element_stride, distance, type,
                                           static_cast<int>(config_.batch)));
         }
+        config_.auto_select = automatic_selection;
     }
 
     ~Impl() {
@@ -993,41 +1068,85 @@ class ButterflyPlan::Impl {
     }
 
     const ButterflyConfig& config() const noexcept { return config_; }
+    const SelectionInfo& selection() const noexcept { return selection_; }
+
+    std::size_t data_size() const noexcept { return data_bytes_; }
+    std::size_t workspace_size() const noexcept { return workspace_bytes_; }
+
+    void set_stream(cudaStream_t stream) {
+        if (cufft_plan_ != 0)
+            CUB_CUFFT_CHECK(cufftSetStream(cufft_plan_, stream));
+        stream_ = stream;
+    }
+
+    cudaStream_t stream() const noexcept { return stream_; }
+
+    void set_workspace(void* workspace, std::size_t bytes) {
+        if (workspace == nullptr) {
+            external_workspace_ = nullptr;
+            external_workspace_bytes_ = 0;
+            return;
+        }
+        if (workspace_bytes_ == 0)
+            throw std::invalid_argument("this butterfly plan does not require workspace");
+        if (bytes < workspace_bytes_)
+            throw std::invalid_argument("external butterfly workspace is smaller than workspace_size()");
+        if (reinterpret_cast<std::uintptr_t>(workspace) % alignof(Complex64) != 0)
+            throw std::invalid_argument("external butterfly workspace must be at least 16-byte aligned");
+        external_workspace_ = workspace;
+        external_workspace_bytes_ = bytes;
+    }
+
+    void* workspace() const noexcept {
+        return external_workspace_ != nullptr ? external_workspace_ : internal_workspace_.data();
+    }
+
+    template <typename Value>
+    void execute_async(const Value* input, Value* output, ButterflyOperator required_op,
+                       ButterflyPrecision required_precision) {
+        validate_value_type(required_op, required_precision);
+        if (input == nullptr || output == nullptr)
+            throw std::invalid_argument("butterfly device input and output must be non-null");
+        if (config_.placement == ButterflyPlacement::InPlace && input != output)
+            throw std::invalid_argument("in-place butterfly execution requires identical input and output pointers");
+        if (config_.placement == ButterflyPlacement::OutOfPlace && input == output)
+            throw std::invalid_argument("out-of-place butterfly execution requires distinct input and output pointers");
+        ensure_workspace();
+        launch_once(input, output, scratch_buffer(), auxiliary_buffer());
+    }
 
     template <typename Value>
     ButterflyStats execute(const std::vector<Value>& input, std::vector<Value>& output, std::uint32_t warmup, std::uint32_t repeat,
                            ButterflyOperator required_op, ButterflyPrecision required_precision) {
-        const bool mixed_complex32 = required_op == ButterflyOperator::Fft && required_precision == ButterflyPrecision::Fp32 &&
-                                     config_.precision == ButterflyPrecision::Fp16Fp32;
-        if (config_.op != required_op || (config_.precision != required_precision && !mixed_complex32)) {
-            throw std::invalid_argument("input type does not match butterfly operator");
-        }
+        validate_value_type(required_op, required_precision);
         if (input.size() != data_elements_) {
             throw std::invalid_argument("butterfly input size does not match the strided batch extent");
         }
         if (repeat == 0) {
             throw std::invalid_argument("repeat must be positive");
         }
+        ensure_host_buffers();
+        ensure_workspace();
         output.resize(input.size());
 
         Event start;
         Event stop;
-        CUB_CUDA_CHECK(cudaEventRecord(start.get()));
-        CUB_CUDA_CHECK(cudaMemcpyAsync(device_input_.as<Value>(), input.data(), data_bytes_, cudaMemcpyHostToDevice));
-        CUB_CUDA_CHECK(cudaEventRecord(stop.get()));
+        CUB_CUDA_CHECK(cudaEventRecord(start.get(), stream_));
+        CUB_CUDA_CHECK(cudaMemcpyAsync(device_input_.as<Value>(), input.data(), data_bytes_, cudaMemcpyHostToDevice, stream_));
+        CUB_CUDA_CHECK(cudaEventRecord(stop.get(), stream_));
         CUB_CUDA_CHECK(cudaEventSynchronize(stop.get()));
         float h2d_ms = 0.0F;
         CUB_CUDA_CHECK(cudaEventElapsedTime(&h2d_ms, start.get(), stop.get()));
 
         for (std::uint32_t iteration = 0; iteration < warmup; ++iteration) {
-            launch_once();
+            launch_once(device_input_.as<Value>(), result_buffer<Value>(), scratch_buffer(), auxiliary_buffer());
         }
-        CUB_CUDA_CHECK(cudaDeviceSynchronize());
-        CUB_CUDA_CHECK(cudaEventRecord(start.get()));
+        CUB_CUDA_CHECK(cudaStreamSynchronize(stream_));
+        CUB_CUDA_CHECK(cudaEventRecord(start.get(), stream_));
         for (std::uint32_t iteration = 0; iteration < repeat; ++iteration) {
-            launch_once();
+            launch_once(device_input_.as<Value>(), result_buffer<Value>(), scratch_buffer(), auxiliary_buffer());
         }
-        CUB_CUDA_CHECK(cudaEventRecord(stop.get()));
+        CUB_CUDA_CHECK(cudaEventRecord(stop.get(), stream_));
         CUB_CUDA_CHECK(cudaEventSynchronize(stop.get()));
         float total_kernel_ms = 0.0F;
         CUB_CUDA_CHECK(cudaEventElapsedTime(&total_kernel_ms, start.get(), stop.get()));
@@ -1035,14 +1154,14 @@ class ButterflyPlan::Impl {
         // Repeated in-place launches consume their previous result. Restore the
         // API contract without including this correctness launch in kernel time.
         if (config_.placement == ButterflyPlacement::InPlace && (warmup != 0 || repeat > 1)) {
-            CUB_CUDA_CHECK(cudaMemcpy(device_input_.as<Value>(), input.data(), data_bytes_, cudaMemcpyHostToDevice));
-            launch_once();
-            CUB_CUDA_CHECK(cudaDeviceSynchronize());
+            CUB_CUDA_CHECK(cudaMemcpyAsync(device_input_.as<Value>(), input.data(), data_bytes_, cudaMemcpyHostToDevice, stream_));
+            launch_once(device_input_.as<Value>(), result_buffer<Value>(), scratch_buffer(), auxiliary_buffer());
+            CUB_CUDA_CHECK(cudaStreamSynchronize(stream_));
         }
 
-        CUB_CUDA_CHECK(cudaEventRecord(start.get()));
-        CUB_CUDA_CHECK(cudaMemcpyAsync(output.data(), result_buffer<Value>(), data_bytes_, cudaMemcpyDeviceToHost));
-        CUB_CUDA_CHECK(cudaEventRecord(stop.get()));
+        CUB_CUDA_CHECK(cudaEventRecord(start.get(), stream_));
+        CUB_CUDA_CHECK(cudaMemcpyAsync(output.data(), result_buffer<Value>(), data_bytes_, cudaMemcpyDeviceToHost, stream_));
+        CUB_CUDA_CHECK(cudaEventRecord(stop.get(), stream_));
         CUB_CUDA_CHECK(cudaEventSynchronize(stop.get()));
         float d2h_ms = 0.0F;
         CUB_CUDA_CHECK(cudaEventElapsedTime(&d2h_ms, start.get(), stop.get()));
@@ -1058,20 +1177,86 @@ class ButterflyPlan::Impl {
     }
 
   private:
+    template <typename Real>
+    void initialize_structured_matrices() {
+        std::vector<DeviceMatrix2x2<Real>> matrices;
+        matrices.reserve(config_.log_n);
+        for (std::uint32_t stage = 0; stage < config_.log_n; ++stage) {
+            const auto& source = config_.stage_matrices.size() == 1 ? config_.stage_matrices.front()
+                                                                    : config_.stage_matrices[stage];
+            double m00 = source.m00;
+            double m01 = source.m01;
+            double m10 = source.m10;
+            double m11 = source.m11;
+            if (config_.inverse) {
+                const double determinant = m00 * m11 - m01 * m10;
+                m00 = source.m11 / determinant;
+                m01 = -source.m01 / determinant;
+                m10 = -source.m10 / determinant;
+                m11 = source.m00 / determinant;
+            }
+            const DeviceMatrix2x2<Real> matrix{static_cast<Real>(m00), static_cast<Real>(m01),
+                                                static_cast<Real>(m10), static_cast<Real>(m11)};
+            if (!std::isfinite(matrix.m00) || !std::isfinite(matrix.m01) ||
+                !std::isfinite(matrix.m10) || !std::isfinite(matrix.m11)) {
+                throw std::invalid_argument("structured-2x2 coefficients are not representable at the selected precision");
+            }
+            matrices.push_back(matrix);
+        }
+        device_operator_coefficients_.allocate(matrices.size() * sizeof(DeviceMatrix2x2<Real>));
+        CUB_CUDA_CHECK(cudaMemcpy(device_operator_coefficients_.data(), matrices.data(),
+                                  matrices.size() * sizeof(DeviceMatrix2x2<Real>), cudaMemcpyHostToDevice));
+    }
+
+    void validate_value_type(ButterflyOperator required_op, ButterflyPrecision required_precision) const {
+        const bool mixed_complex32 = required_op == ButterflyOperator::Fft && required_precision == ButterflyPrecision::Fp32 &&
+                                     config_.precision == ButterflyPrecision::Fp16Fp32;
+        const bool structured_real = required_op == ButterflyOperator::Fwht && config_.op == ButterflyOperator::Structured2x2 &&
+                                     config_.precision == required_precision;
+        const bool integer_zeta = required_op == ButterflyOperator::XorZeta && required_precision == ButterflyPrecision::Uint32 &&
+                                  (config_.op == ButterflyOperator::SubsetZeta || config_.op == ButterflyOperator::SupersetZeta ||
+                                   config_.op == ButterflyOperator::XorZeta);
+        if ((!integer_zeta && !structured_real && config_.op != required_op) ||
+            (config_.precision != required_precision && !mixed_complex32))
+            throw std::invalid_argument("input type does not match butterfly operator and precision");
+    }
+
+    void ensure_host_buffers() {
+        if (device_input_.data() == nullptr)
+            device_input_.allocate(data_bytes_);
+        if (config_.placement == ButterflyPlacement::OutOfPlace && device_output_.data() == nullptr)
+            device_output_.allocate(data_bytes_);
+    }
+
+    void ensure_workspace() const {
+        if (workspace_bytes_ != 0 && workspace() == nullptr)
+            throw std::invalid_argument(
+                "butterfly plan requires workspace; enable auto allocation or call set_workspace()");
+    }
+
+    void* scratch_buffer() const noexcept { return workspace(); }
+
+    void* auxiliary_buffer() const noexcept {
+        if (workspace_buffers_ < 2 || workspace() == nullptr)
+            return nullptr;
+        return static_cast<void*>(static_cast<unsigned char*>(workspace()) + data_bytes_);
+    }
+
     template <typename Value>
     Value* result_buffer() const noexcept {
         return config_.placement == ButterflyPlacement::InPlace ? device_input_.as<Value>() : device_output_.as<Value>();
     }
 
-    void launch_once() {
+    void launch_once(const void* input_buffer, void* output_buffer, void* scratch, void* auxiliary) {
+        const LaunchStreamScope stream_scope(stream_);
         if (config_.backend == ButterflyBackend::CuFft) {
             if (config_.precision == ButterflyPrecision::Fp64) {
-                CUB_CUFFT_CHECK(cufftExecZ2Z(cufft_plan_, reinterpret_cast<cufftDoubleComplex*>(device_input_.as<Complex64>()),
-                                             reinterpret_cast<cufftDoubleComplex*>(result_buffer<Complex64>()),
+                CUB_CUFFT_CHECK(cufftExecZ2Z(cufft_plan_, reinterpret_cast<cufftDoubleComplex*>(const_cast<void*>(input_buffer)),
+                                             reinterpret_cast<cufftDoubleComplex*>(output_buffer),
                                              config_.inverse ? CUFFT_INVERSE : CUFFT_FORWARD));
             } else {
-                CUB_CUFFT_CHECK(cufftExecC2C(cufft_plan_, reinterpret_cast<cufftComplex*>(device_input_.as<Complex32>()),
-                                             reinterpret_cast<cufftComplex*>(result_buffer<Complex32>()),
+                CUB_CUFFT_CHECK(cufftExecC2C(cufft_plan_, reinterpret_cast<cufftComplex*>(const_cast<void*>(input_buffer)),
+                                             reinterpret_cast<cufftComplex*>(output_buffer),
                                              config_.inverse ? CUFFT_INVERSE : CUFFT_FORWARD));
             }
             if (config_.inverse && config_.normalize_inverse) {
@@ -1079,10 +1264,12 @@ class ButterflyPlan::Impl {
                 const auto              count    = static_cast<std::uint64_t>(data_elements_);
                 const auto              blocks   = static_cast<unsigned int>((count + kThreads - 1) / kThreads);
                 if (config_.precision == ButterflyPrecision::Fp64) {
-                    scale_inverse_fft_kernel<Complex64, double><<<blocks, kThreads>>>(result_buffer<Complex64>(), count, 1.0 / points_);
+                    scale_inverse_fft_kernel<Complex64, double><<<blocks, kThreads, 0, stream_>>>(static_cast<Complex64*>(output_buffer), count,
+                                                                                                  1.0 / points_);
                 } else {
                     scale_inverse_fft_kernel<Complex32, float>
-                        <<<blocks, kThreads>>>(result_buffer<Complex32>(), count, 1.0F / static_cast<float>(points_));
+                        <<<blocks, kThreads, 0, stream_>>>(static_cast<Complex32*>(output_buffer), count,
+                                                          1.0F / static_cast<float>(points_));
                 }
                 CUB_CUDA_CHECK(cudaGetLastError());
             }
@@ -1092,31 +1279,33 @@ class ButterflyPlan::Impl {
         if (config_.op == ButterflyOperator::Fwht) {
             if (config_.precision == ButterflyPrecision::Fp64) {
                 const FwhtOperator<double> op{config_.inverse, config_.normalize_inverse};
-                launch_operator(device_input_.as<double>(), result_buffer<double>(), op);
+                launch_operator(static_cast<const double*>(input_buffer), static_cast<double*>(output_buffer), op,
+                                static_cast<double*>(scratch));
             } else {
                 const FwhtOperator<float> op{config_.inverse, config_.normalize_inverse};
-                launch_operator(device_input_.as<float>(), result_buffer<float>(), op);
+                launch_operator(static_cast<const float*>(input_buffer), static_cast<float*>(output_buffer), op,
+                                static_cast<float*>(scratch));
             }
         } else if (config_.op == ButterflyOperator::Fft) {
             if (config_.fft_core == FftCore::ThreadDft8) {
-                detail::launch_generated_thread_dft8(config_.log_n, device_input_.as<Complex32>(), result_buffer<Complex32>(),
+                detail::launch_generated_thread_dft8(config_.log_n, static_cast<const Complex32*>(input_buffer), static_cast<Complex32*>(output_buffer),
                                                      device_twiddles_.as<Complex32>(), config_.batch, config_.batch_stride,
-                                                     config_.element_stride, config_.inverse && config_.normalize_inverse);
+                                                     config_.element_stride, config_.inverse && config_.normalize_inverse, stream_);
                 CUB_CUDA_CHECK(cudaGetLastError());
                 return;
             }
             if (config_.fft_core == FftCore::CtaDft8) {
-                detail::launch_generated_cta_dft8(config_.log_n, device_input_.as<Complex32>(), result_buffer<Complex32>(),
+                detail::launch_generated_cta_dft8(config_.log_n, static_cast<const Complex32*>(input_buffer), static_cast<Complex32*>(output_buffer),
                                                   device_twiddles_.as<Complex32>(), config_.batch, config_.batch_stride,
                                                   config_.element_stride, config_.tile_threads,
-                                                  config_.inverse && config_.normalize_inverse);
+                                                  config_.inverse && config_.normalize_inverse, stream_);
                 CUB_CUDA_CHECK(cudaGetLastError());
                 return;
             }
             if (config_.fft_core == FftCore::WmmaDft8) {
-                detail::launch_generated_wmma_dft8(config_.log_n, device_input_.as<Complex32>(), result_buffer<Complex32>(), config_.batch,
+                detail::launch_generated_wmma_dft8(config_.log_n, static_cast<const Complex32*>(input_buffer), static_cast<Complex32*>(output_buffer), config_.batch,
                                                    config_.batch_stride, config_.element_stride, config_.inverse,
-                                                   config_.inverse && config_.normalize_inverse);
+                                                   config_.inverse && config_.normalize_inverse, stream_);
                 CUB_CUDA_CHECK(cudaGetLastError());
                 return;
             }
@@ -1127,18 +1316,18 @@ class ButterflyPlan::Impl {
                         const auto& suffix = config_.execution_group_mappings[1];
                         const auto& boundary = execution_boundaries_[0];
                         detail::launch_cufftdx_fp64_online_reorder(
-                            config_.log_n, execution_stage_partition_[0], device_input_.as<Complex64>(),
-                            result_buffer<Complex64>(), device_scratch_.as<Complex64>(),
+                            config_.log_n, execution_stage_partition_[0], static_cast<const Complex64*>(input_buffer),
+                            static_cast<Complex64*>(output_buffer), static_cast<Complex64*>(scratch),
                             device_twiddles_.as<Complex64>(), config_.batch, config_.batch_stride,
                             config_.element_stride, config_.inverse,
                             config_.inverse && config_.normalize_inverse, boundary.cross_twiddle,
                             config_.shared_layout, prefix.threads, suffix.threads,
-                            prefix.ept, suffix.ept);
+                            prefix.ept, suffix.ept, stream_);
                     } else {
                         detail::launch_cufftdx_fp64_block(
-                            config_.log_n, device_input_.as<Complex64>(), result_buffer<Complex64>(),
+                            config_.log_n, static_cast<const Complex64*>(input_buffer), static_cast<Complex64*>(output_buffer),
                             config_.batch, config_.batch_stride, config_.element_stride, config_.inverse,
-                            config_.inverse && config_.normalize_inverse);
+                            config_.inverse && config_.normalize_inverse, stream_);
                     }
                     CUB_CUDA_CHECK(cudaGetLastError());
                     return;
@@ -1148,75 +1337,101 @@ class ButterflyPlan::Impl {
                         detail::launch_cufftdx_multisegment(
                             config_.log_n, execution_stage_partition_, config_.execution_group_mappings,
                             execution_boundaries_,
-                            device_input_.as<Complex32>(), result_buffer<Complex32>(),
-                            device_scratch_.as<Complex32>(), device_workspace_.as<Complex32>(),
+                            static_cast<const Complex32*>(input_buffer), static_cast<Complex32*>(output_buffer),
+                            static_cast<Complex32*>(scratch), static_cast<Complex32*>(auxiliary),
                             device_twiddles_.as<Complex32>(), config_.batch, config_.batch_stride,
                             config_.element_stride, config_.inverse,
-                            config_.inverse && config_.normalize_inverse);
+                            config_.inverse && config_.normalize_inverse, stream_);
                     } else {
                         const auto& prefix = config_.execution_group_mappings[0];
                         const auto& suffix = config_.execution_group_mappings[1];
                         const auto& boundary = execution_boundaries_[0];
                         detail::launch_cufftdx_online_reorder(
-                            config_.log_n, execution_stage_partition_[0], device_input_.as<Complex32>(), result_buffer<Complex32>(),
-                            device_scratch_.as<Complex32>(), device_workspace_.as<Complex32>(),
+                            config_.log_n, execution_stage_partition_[0], static_cast<const Complex32*>(input_buffer), static_cast<Complex32*>(output_buffer),
+                            static_cast<Complex32*>(scratch), static_cast<Complex32*>(auxiliary),
                             device_twiddles_.as<Complex32>(), config_.batch,
                             config_.batch_stride, config_.element_stride, config_.inverse,
                             config_.inverse && config_.normalize_inverse, boundary.cross_twiddle,
-                            prefix.threads, suffix.threads, prefix.ept, suffix.ept, boundary.layout);
+                            prefix.threads, suffix.threads, prefix.ept, suffix.ept, boundary.layout, stream_);
                     }
                 } else {
-                    detail::launch_cufftdx_block(config_.log_n, device_input_.as<Complex32>(), result_buffer<Complex32>(), config_.batch,
+                    detail::launch_cufftdx_block(config_.log_n, static_cast<const Complex32*>(input_buffer), static_cast<Complex32*>(output_buffer), config_.batch,
                                                  config_.batch_stride, config_.element_stride, config_.inverse,
-                                                 config_.inverse && config_.normalize_inverse);
+                                                 config_.inverse && config_.normalize_inverse, stream_);
                 }
                 CUB_CUDA_CHECK(cudaGetLastError());
                 return;
             }
             if (config_.fft_core == FftCore::CufftDxDirect) {
-                detail::launch_cufftdx_direct(config_.log_n, device_input_.as<Complex32>(), result_buffer<Complex32>(),
+                detail::launch_cufftdx_direct(config_.log_n, static_cast<const Complex32*>(input_buffer), static_cast<Complex32*>(output_buffer),
                                               config_.batch, config_.batch_stride, config_.element_stride, config_.inverse,
-                                              config_.inverse && config_.normalize_inverse, config_.tile_threads);
+                                              config_.inverse && config_.normalize_inverse, config_.tile_threads, stream_);
                 CUB_CUDA_CHECK(cudaGetLastError());
                 return;
             }
             if (config_.fft_core == FftCore::CufftDxResident) {
                 detail::launch_cufftdx_resident(
-                    config_.log_n, config_.local_stages, device_input_.as<Complex32>(), result_buffer<Complex32>(),
-                    device_scratch_.as<Complex32>(), device_twiddles_.as<Complex32>(), config_.batch,
+                    config_.log_n, config_.local_stages, static_cast<const Complex32*>(input_buffer), static_cast<Complex32*>(output_buffer),
+                    static_cast<Complex32*>(scratch), device_twiddles_.as<Complex32>(), config_.batch,
                     config_.batch_stride, config_.element_stride,
                     config_.inverse, config_.inverse && config_.normalize_inverse, config_.cross_twiddle,
-                    config_.tile_threads);
+                    config_.tile_threads, stream_);
                 CUB_CUDA_CHECK(cudaGetLastError());
                 return;
             }
             if (config_.fft_core == FftCore::TurboFftGenerated) {
-                detail::launch_turbofft_generated(config_.log_n, device_input_.as<Complex32>(), result_buffer<Complex32>(), config_.batch,
-                                                   config_.batch_stride, config_.element_stride);
+                detail::launch_turbofft_generated(config_.log_n, static_cast<const Complex32*>(input_buffer), static_cast<Complex32*>(output_buffer), config_.batch,
+                                                   config_.batch_stride, config_.element_stride, stream_);
                 CUB_CUDA_CHECK(cudaGetLastError());
                 return;
             }
             if (config_.precision == ButterflyPrecision::Fp64) {
                 const FftOperator<Complex64, double> op{device_twiddles_.as<Complex64>(), config_.inverse, config_.normalize_inverse,
                                                         config_.complex_multiply};
-                launch_operator(device_input_.as<Complex64>(), result_buffer<Complex64>(), op);
+                launch_operator(static_cast<const Complex64*>(input_buffer), static_cast<Complex64*>(output_buffer), op,
+                                static_cast<Complex64*>(scratch));
             } else {
                 const FftOperator<Complex32, float> op{device_twiddles_.as<Complex32>(), config_.inverse, config_.normalize_inverse,
                                                        config_.complex_multiply};
-                launch_operator(device_input_.as<Complex32>(), result_buffer<Complex32>(), op);
+                launch_operator(static_cast<const Complex32*>(input_buffer), static_cast<Complex32*>(output_buffer), op,
+                                static_cast<Complex32*>(scratch));
             }
+        } else if (config_.op == ButterflyOperator::Structured2x2) {
+            if (config_.precision == ButterflyPrecision::Fp64) {
+                const Structured2x2Operator<double> op{device_operator_coefficients_.as<DeviceMatrix2x2<double>>()};
+                launch_operator(static_cast<const double*>(input_buffer), static_cast<double*>(output_buffer), op,
+                                static_cast<double*>(scratch));
+            } else {
+                if (config_.local_exchange == LocalExchange::WarpRegister) {
+                    detail::launch_generated_register_structured(
+                        config_.log_n, static_cast<const float*>(input_buffer), static_cast<float*>(output_buffer),
+                        reinterpret_cast<const float*>(device_operator_coefficients_.data()), config_.batch,
+                        config_.batch_stride, config_.element_stride, config_.stage_matrices.size() == 1, stream_);
+                    CUB_CUDA_CHECK(cudaGetLastError());
+                    return;
+                }
+                const Structured2x2Operator<float> op{device_operator_coefficients_.as<DeviceMatrix2x2<float>>()};
+                launch_operator(static_cast<const float*>(input_buffer), static_cast<float*>(output_buffer), op,
+                                static_cast<float*>(scratch));
+            }
+        } else if (config_.op == ButterflyOperator::SupersetZeta) {
+            const BooleanZetaOperator<true> op{config_.inverse};
+            launch_operator(static_cast<const std::uint32_t*>(input_buffer), static_cast<std::uint32_t*>(output_buffer), op,
+                            static_cast<std::uint32_t*>(scratch));
         } else {
-            const XorZetaOperator op{config_.inverse};
-            launch_operator(device_input_.as<std::uint32_t>(), result_buffer<std::uint32_t>(), op);
+            const BooleanZetaOperator<false> op{config_.inverse};
+            launch_operator(static_cast<const std::uint32_t*>(input_buffer), static_cast<std::uint32_t*>(output_buffer), op,
+                            static_cast<std::uint32_t*>(scratch));
         }
     }
 
     template <typename Operator>
-    void launch_operator(const typename Operator::Value* input, typename Operator::Value* output, Operator op) {
+    void launch_operator(const typename Operator::Value* input, typename Operator::Value* output, Operator op,
+                         typename Operator::Value* scratch) {
         if (config_.local_exchange == LocalExchange::WarpRegister) {
             if constexpr (std::is_same_v<typename Operator::Value, float>) {
                 detail::launch_generated_register_fwht(config_.log_n, input, output, config_.batch, config_.batch_stride,
-                                                       config_.element_stride, op.inverse && op.normalize_inverse);
+                                                       config_.element_stride, op.inverse && op.normalize_inverse, stream_);
                 CUB_CUDA_CHECK(cudaGetLastError());
                 return;
             } else {
@@ -1228,15 +1443,15 @@ class ButterflyPlan::Impl {
             return;
         }
         if (config_.backend == ButterflyBackend::Hierarchical) {
-            launch_hierarchical(config_, input, output, device_scratch_.as<typename Operator::Value>(), data_bytes_, op);
+            launch_hierarchical(config_, input, output, scratch, data_bytes_, op);
             return;
         }
         if (config_.backend == ButterflyBackend::OnlineReorder) {
-            dispatch_online_reorder(config_, input, output, device_scratch_.as<typename Operator::Value>(), op);
+            dispatch_online_reorder(config_, input, output, scratch, op);
             return;
         }
         if (config_.backend == ButterflyBackend::WarpHybrid) {
-            detail::warp_hybrid_256_kernel<Operator><<<static_cast<unsigned int>(config_.batch), 256>>>(
+            detail::warp_hybrid_256_kernel<Operator><<<static_cast<unsigned int>(config_.batch), 256, 0, stream_>>>(
                 input, output, config_.batch, config_.warp_stages, config_.batch_stride, config_.element_stride, op);
             CUB_CUDA_CHECK(cudaGetLastError());
             return;
@@ -1253,16 +1468,22 @@ class ButterflyPlan::Impl {
     }
 
     ButterflyConfig config_;
+    SelectionInfo   selection_;
     std::vector<std::uint32_t> execution_stage_partition_;
     std::vector<FftBoundaryMapping> execution_boundaries_;
     std::size_t     data_bytes_    = 0;
     std::size_t     data_elements_ = 0;
     std::size_t     points_        = 0;
+    std::size_t     workspace_bytes_ = 0;
+    std::size_t     workspace_buffers_ = 0;
+    cudaStream_t    stream_ = nullptr;
+    void*           external_workspace_ = nullptr;
+    std::size_t     external_workspace_bytes_ = 0;
     DeviceBuffer    device_input_;
     DeviceBuffer    device_output_;
-    DeviceBuffer    device_scratch_;
-    DeviceBuffer    device_workspace_;
+    DeviceBuffer    internal_workspace_;
     DeviceBuffer    device_twiddles_;
+    DeviceBuffer    device_operator_coefficients_;
     cufftHandle     cufft_plan_ = 0;
 };
 
@@ -1275,6 +1496,54 @@ ButterflyPlan& ButterflyPlan::operator=(ButterflyPlan&&) noexcept = default;
 
 const ButterflyConfig& ButterflyPlan::config() const noexcept {
     return impl_->config();
+}
+
+const SelectionInfo& ButterflyPlan::selection() const noexcept {
+    return impl_->selection();
+}
+
+std::size_t ButterflyPlan::data_size() const noexcept {
+    return impl_->data_size();
+}
+
+std::size_t ButterflyPlan::workspace_size() const noexcept {
+    return impl_->workspace_size();
+}
+
+void ButterflyPlan::set_stream(cudaStream_t stream) {
+    impl_->set_stream(stream);
+}
+
+cudaStream_t ButterflyPlan::stream() const noexcept {
+    return impl_->stream();
+}
+
+void ButterflyPlan::set_workspace(void* workspace, std::size_t bytes) {
+    impl_->set_workspace(workspace, bytes);
+}
+
+void* ButterflyPlan::workspace() const noexcept {
+    return impl_->workspace();
+}
+
+void ButterflyPlan::execute_async(const float* input, float* output) {
+    impl_->execute_async(input, output, ButterflyOperator::Fwht, ButterflyPrecision::Fp32);
+}
+
+void ButterflyPlan::execute_async(const double* input, double* output) {
+    impl_->execute_async(input, output, ButterflyOperator::Fwht, ButterflyPrecision::Fp64);
+}
+
+void ButterflyPlan::execute_async(const Complex32* input, Complex32* output) {
+    impl_->execute_async(input, output, ButterflyOperator::Fft, ButterflyPrecision::Fp32);
+}
+
+void ButterflyPlan::execute_async(const Complex64* input, Complex64* output) {
+    impl_->execute_async(input, output, ButterflyOperator::Fft, ButterflyPrecision::Fp64);
+}
+
+void ButterflyPlan::execute_async(const std::uint32_t* input, std::uint32_t* output) {
+    impl_->execute_async(input, output, ButterflyOperator::XorZeta, ButterflyPrecision::Uint32);
 }
 
 ButterflyStats ButterflyPlan::execute(const std::vector<float>& input, std::vector<float>& output, std::uint32_t warmup, std::uint32_t repeat) {

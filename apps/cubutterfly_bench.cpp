@@ -5,6 +5,7 @@
 #include <iostream>
 #include <limits>
 #include <random>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -69,6 +70,32 @@ std::vector<std::uint32_t> parse_positive_list(const std::string& text, const ch
     return values;
 }
 
+cuntt::ButterflyMatrix2x2 parse_stage_matrix(const std::string& text) {
+    const auto tokens = parse_csv_tokens(text);
+    if (tokens.size() != 4)
+        throw std::invalid_argument("stage matrix must contain m00,m01,m10,m11");
+    double values[4]{};
+    for (std::size_t index = 0; index < 4; ++index) {
+        std::size_t consumed = 0;
+        values[index] = std::stod(tokens[index], &consumed);
+        if (consumed != tokens[index].size())
+            throw std::invalid_argument("stage matrix entries must be floating-point values");
+    }
+    return {values[0], values[1], values[2], values[3]};
+}
+
+std::string format_stage_matrices(const std::vector<cuntt::ButterflyMatrix2x2>& matrices) {
+    std::ostringstream text;
+    text << std::setprecision(17);
+    for (std::size_t index = 0; index < matrices.size(); ++index) {
+        if (index != 0)
+            text << 'x';
+        const auto& matrix = matrices[index];
+        text << matrix.m00 << ':' << matrix.m01 << ':' << matrix.m10 << ':' << matrix.m11;
+    }
+    return text.str();
+}
+
 std::string format_stage_partition(const std::vector<std::uint32_t>& partition) {
     std::string text;
     for (const auto stages : partition) {
@@ -92,9 +119,10 @@ std::string format_mapping_list(const std::vector<Mapping>& mappings, Getter get
 
 void print_usage() {
     std::cout
-        << "cubutterfly_bench [--operator fwht|fft|xor-zeta] [--backend temporal-tile|hierarchical|online-reorder|warp-hybrid|stage-pipeline|cufft]\n"
+        << "cubutterfly_bench [--operator fwht|fft|subset-zeta|superset-zeta|structured-2x2|xor-zeta] [--backend temporal-tile|hierarchical|online-reorder|warp-hybrid|stage-pipeline|cufft]\n"
         << "                    [--logN 8] [--batch 16384] [--inverse]\n"
         << "                    [--stage-partition 9,9]\n"
+        << "                    [--stage-matrix m00,m01,m10,m11; repeat once per stage or broadcast one]\n"
         << "                    [--segment-threads 256,256,256] [--segment-ept 8,8,8]\n"
         << "                    [--boundary-twiddle table,recurrence] [--boundary-layout direct-strided,direct-strided]\n"
         << "                    [--boundary-residency fused,global-scratch]\n"
@@ -182,6 +210,8 @@ int main(int argc, char** argv) {
                 config.batch = std::stoull(take_arg(index, argc, argv));
             } else if (arg == "--stage-partition") {
                 config.stage_partition = parse_stage_partition(take_arg(index, argc, argv));
+            } else if (arg == "--stage-matrix") {
+                config.stage_matrices.push_back(parse_stage_matrix(take_arg(index, argc, argv)));
             } else if (arg == "--segment-threads") {
                 const auto values = parse_positive_list(take_arg(index, argc, argv), "segment threads");
                 if (!config.segment_mappings.empty() && config.segment_mappings.size() != values.size())
@@ -302,6 +332,7 @@ int main(int argc, char** argv) {
 
         cuntt::ButterflyPlan plan(config);
         config = plan.config();
+        const auto& selection = plan.selection();
         std::mt19937                          random(0x43554246U + static_cast<unsigned int>(config.batch));
         std::uniform_real_distribution<float> distribution(-1.0F, 1.0F);
         cuntt::ButterflyStats                 stats;
@@ -346,6 +377,50 @@ int main(int argc, char** argv) {
                             max_error = std::max(max_error, std::abs(expected[index] - output[base + index * config.element_stride]));
                     }
                     correct = max_error <= 1.0e-4F;
+                }
+            }
+        } else if (config.op == cuntt::ButterflyOperator::Structured2x2) {
+            if (config.precision == cuntt::ButterflyPrecision::Fp64) {
+                std::vector<double> input(extent);
+                std::generate(input.begin(), input.end(), [&] { return static_cast<double>(distribution(random)); });
+                std::vector<double> output;
+                stats = plan.execute(input, output, warmup, repeat);
+                if (verify) {
+                    double relative_error = 0.0;
+                    for (std::size_t transform = 0; transform < config.batch; ++transform) {
+                        const auto base = transform * config.batch_stride;
+                        std::vector<double> expected(n);
+                        for (std::size_t index = 0; index < n; ++index)
+                            expected[index] = input[base + index * config.element_stride];
+                        cuntt::reference_structured_2x2(expected, config.stage_matrices, config.inverse);
+                        for (std::size_t index = 0; index < n; ++index) {
+                            const double error = std::abs(expected[index] - output[base + index * config.element_stride]);
+                            relative_error = std::max(relative_error, error / std::max(1.0, std::abs(expected[index])));
+                        }
+                    }
+                    max_error = static_cast<float>(relative_error);
+                    correct   = relative_error <= 1.0e-10;
+                }
+            } else {
+                std::vector<float> input(extent);
+                std::generate(input.begin(), input.end(), [&] { return distribution(random); });
+                std::vector<float> output;
+                stats = plan.execute(input, output, warmup, repeat);
+                if (verify) {
+                    float relative_error = 0.0F;
+                    for (std::size_t transform = 0; transform < config.batch; ++transform) {
+                        const auto base = transform * config.batch_stride;
+                        std::vector<float> expected(n);
+                        for (std::size_t index = 0; index < n; ++index)
+                            expected[index] = input[base + index * config.element_stride];
+                        cuntt::reference_structured_2x2(expected, config.stage_matrices, config.inverse);
+                        for (std::size_t index = 0; index < n; ++index) {
+                            const float error = std::abs(expected[index] - output[base + index * config.element_stride]);
+                            relative_error = std::max(relative_error, error / std::max(1.0F, std::abs(expected[index])));
+                        }
+                    }
+                    max_error = relative_error;
+                    correct   = relative_error <= 2.0e-4F;
                 }
             }
         } else if (config.op == cuntt::ButterflyOperator::Fft) {
@@ -399,7 +474,13 @@ int main(int argc, char** argv) {
                     std::vector<std::uint32_t> expected(n);
                     for (std::size_t index = 0; index < n; ++index)
                         expected[index] = input[base + index * config.element_stride];
-                    cuntt::reference_xor_zeta(expected, config.inverse);
+                    if (config.op == cuntt::ButterflyOperator::SupersetZeta) {
+                        cuntt::reference_superset_zeta(expected, config.inverse);
+                    } else if (config.op == cuntt::ButterflyOperator::SubsetZeta) {
+                        cuntt::reference_subset_zeta(expected, config.inverse);
+                    } else {
+                        cuntt::reference_xor_zeta(expected, config.inverse);
+                    }
                     for (std::size_t index = 0; index < n; ++index) {
                         if (expected[index] != output[base + index * config.element_stride]) {
                             correct   = false;
@@ -415,7 +496,7 @@ int main(int argc, char** argv) {
         const auto device = cuntt::current_device_info();
         std::cout << std::fixed << std::setprecision(6);
         if (csv) {
-            std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,auto_select,backend,compute_unit,complex_multiply,cross_twiddle,direct_boundary,decomposition_count,stages_per_decomposition,segment_threads,segment_ept,boundary_twiddles,boundary_layouts,boundary_residencies,execution_group_count,group_threads,group_ept,local_"
+            std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,auto_select,selection_target,selected_implementation,selection_confidence,predicted_kernel_ms,selection_reason,backend,compute_unit,complex_multiply,cross_twiddle,direct_boundary,stage_matrices,decomposition_count,stages_per_decomposition,segment_threads,segment_ept,boundary_twiddles,boundary_layouts,boundary_residencies,execution_group_count,group_threads,group_ept,local_"
                          "exchange,shared_layout,fft_core,stage_space,stage_handoff,tile_threads,prefix_threads,suffix_threads,prefix_ept,suffix_ept,prefix_units_per_cta,suffix_units_per_cta,local_stages,reorder_columns,warp_stages,pipeline_warps,logN,N,batch,element_stride,batch_"
                          "stride,warmup,repeat,h2d_ms,kernel_ms,d2h_ms,"
                          "transforms_s,Gbutterfly_s,points_s,max_error,correct\n";
@@ -423,10 +504,13 @@ int main(int argc, char** argv) {
                       << cuntt::butterfly_operator_name(config.op) << ',' << cuntt::butterfly_precision_name(config.precision) << ','
                       << (config.inverse ? "inverse" : "forward") << ',' << (config.normalize_inverse ? "inverse" : "none") << ','
                       << cuntt::butterfly_placement_name(config.placement) << ',' << static_cast<int>(config.auto_select) << ','
+                      << '"' << selection.target << "\",\"" << selection.implementation << "\",\"" << selection.confidence << "\","
+                      << selection.predicted_kernel_ms << ",\"" << selection.reason << "\","
                       << cuntt::butterfly_backend_name(config.backend) << ','
                       << cuntt::compute_unit_name(config.compute_unit) << ',' << cuntt::complex_multiply_name(config.complex_multiply) << ','
                       << cuntt::cross_twiddle_mode_name(config.cross_twiddle) << ','
                       << cuntt::direct_boundary_name(config.direct_boundary) << ','
+                      << format_stage_matrices(config.stage_matrices) << ','
                       << config.stage_partition.size() << ',' << format_stage_partition(config.stage_partition) << ','
                       << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.threads); }) << ','
                       << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << ','
@@ -455,11 +539,20 @@ int main(int argc, char** argv) {
                       << "normalization: " << (config.normalize_inverse ? "inverse" : "none") << "\n"
                       << "placement: " << cuntt::butterfly_placement_name(config.placement) << "\n"
                       << "auto_select: " << (config.auto_select ? "yes" : "no") << "\n"
-                      << "backend: " << cuntt::butterfly_backend_name(config.backend) << "\n"
+                      << "backend: " << cuntt::butterfly_backend_name(config.backend) << "\n";
+            if (selection.automatic) {
+                std::cout << "selected_implementation: " << selection.implementation << "\n"
+                          << "selection_target: " << selection.target << "\n"
+                          << "selection_confidence: " << selection.confidence << "\n"
+                          << "predicted_kernel_ms: " << selection.predicted_kernel_ms << "\n"
+                          << "selection_reason: " << selection.reason << "\n";
+            }
+            std::cout
                       << "compute_unit: " << cuntt::compute_unit_name(config.compute_unit) << "\n"
                       << "complex_multiply: " << cuntt::complex_multiply_name(config.complex_multiply) << "\n"
                       << "cross_twiddle: " << cuntt::cross_twiddle_mode_name(config.cross_twiddle) << "\n"
                       << "direct_boundary: " << cuntt::direct_boundary_name(config.direct_boundary) << "\n"
+                      << "stage_matrices: " << format_stage_matrices(config.stage_matrices) << "\n"
                       << "stage_partition: " << format_stage_partition(config.stage_partition) << "\n"
                       << "segment_threads: " << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.threads); }) << "\n"
                       << "segment_ept: " << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << "\n"

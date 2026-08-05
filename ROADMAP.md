@@ -3,7 +3,36 @@
 This roadmap separates implementation goals from evidence required for the
 research claim. Ordering may change after profiling or access to new hardware.
 
-## v0.3.0 Target: Counter-Calibrated Mapping Selection
+## v0.4.0 Status: Library And Resource-Model Integration
+
+Status: complete on V100. This release adds the public device API and package,
+generated Structured 2x2 register units, coefficient-policy specialization,
+runtime selection, and portable resource-cliff features. The measured
+`logN=13..15` Structured transition demonstrates why length alone is not an
+adequate mapping key: shared-memory, register, occupancy, and batch-derived
+grid-wave effects interact.
+
+## Next Target: Numeric-Regime Mapping
+
+The next release studies the mapping method on fixed hardware before adding GPU
+generation as another independent variable. Its primary question is:
+
+> How do numeric representation, arithmetic semantics, workload shape, and
+> processing-unit cost move resource cliffs and change the preferred
+> space-time mapping?
+
+The study covers precision/word and accumulator width, FFT/NTT/FWHT/Structured
+arithmetic and coefficient policies, length, batch, direction, normalization,
+stride, placement, output order, and the generated physical-core choices. It
+uses orthogonal screening followed by focused scans around predicted and
+observed launch, occupancy, register, shared-memory, and bandwidth boundaries.
+
+The deliverable is a conditional regime model and a selector evaluated on
+held-out regimes, not a larger table of isolated winners. See [Numeric-Regime
+Mapping Study](docs/next_phase_numeric_regimes.md) for hypotheses, work
+packages, and completion criteria.
+
+## Completed: v0.3.0 Counter-Calibrated Selection
 
 Status: the three V100 work packages, vectorized FFT physical unit, FFT
 leave-one-batch-out selector evaluation, and matching-protocol long-FFT refresh
@@ -12,8 +41,8 @@ are complete. The post-vector fixed-mapping NCU capture attributes the gain to
 validation is deferred until the repository moves to a host with another GPU
 generation.
 
-The next release turns the measured design space into a reproducible mapping
-method rather than adding another isolated kernel. Its primary question is:
+This release turned the measured design space into a reproducible mapping
+method. Its primary question was:
 
 > Given an operator contract, transform length, batch, and GPU service profile,
 > which mapping family and processing unit should be selected, and why?
@@ -37,21 +66,23 @@ artifacts, and decision gates.
 
 ## Near Term Backlog
 
-- Extend the measured orthogonal `(logN, batch)` sweep across additional
-  precision, direction, stride, and normalization contracts, then train the
-  selector on the observed saturation and mapping-crossover boundaries.
+- Extend the manifest with numeric, arithmetic, layout, and processing-unit
+  descriptors, then scan boundary neighborhoods across `(logN, batch)`.
+- Train and evaluate the selector on held-out precision, arithmetic-policy,
+  batch-region, and operator/core regimes.
 - Reduce the remaining saturated FP32 `logN=20` exchange cost and the five
   FP64 `logN=14..16` crossover deficits, preserving fixed-mapping NCU evidence.
-- Add a device-pointer and CUDA-stream execution API without weakening the
-  current typed semantic contract.
+- Explain the Structured `logN=13..15` resource-cliff response across batch,
+  coefficient policy, decomposition, and physical core.
 - Reduce template warning volume and record compiled resource envelopes as
   generated metadata.
 - Add focused sanitizer jobs on an available self-hosted GPU runner.
 
 ## Future: Cross-GPU Validation
 
-This work starts only after the repository is migrated to a machine with a
-second GPU generation. It is not a `v0.3.0` release gate.
+This work starts after the numeric/workload-conditioned regime model is
+established and the repository is available on a second GPU generation. It is
+not the next release gate.
 
 - Capture A100/H100/RTX 4090 hardware service profiles using the checked-in
   schema.
@@ -77,7 +108,8 @@ portable across GPU generations.
 
 - Preserve the V100 comprehensive suite as the single-GPU baseline and keep
   focused historical protocols separate from its cross-workload tables.
-- Freeze a versioned multi-GPU measurement matrix.
+- Freeze a versioned numeric/workload regime matrix; later add a reduced
+  multi-GPU transfer matrix.
 - Publish scripts and container/toolchain metadata for every main table.
 - Separate architecture ablations, core-only comparisons, resident transforms,
   and application end-to-end results.

@@ -26,6 +26,9 @@ run_trial() {
     temp=$(mktemp)
     trap 'unlink "$temp"' EXIT
     command=("$BIN" --operator "$operator" --backend "$backend" --batch "$BATCH" --warmup "$WARMUP" --repeat "$REPEAT" --csv)
+    if [[ "$operator" == "structured-2x2" ]]; then
+        command+=(--stage-matrix 1,0.25,-0.5,1)
+    fi
     if [[ "$backend" == "stage-pipeline" ]]; then
         command+=(--stage-space "$stage_space" --stage-handoff named-barrier)
     fi
@@ -40,7 +43,7 @@ run_trial() {
     trap - EXIT
 }
 
-for operator in fwht xor-zeta fft; do
+for operator in fwht structured-2x2 subset-zeta superset-zeta xor-zeta fft; do
     for ((trial = 1; trial <= TRIALS; ++trial)); do
         run_trial "$operator" temporal-tile 0 "$trial"
     done

@@ -17,7 +17,7 @@ kernel. That is effective for one operator and device, but it entangles the
 arithmetic codelet with scheduling, storage, synchronization, and layout.
 cuButterfly separates them. Its contribution is the architecture-level
 organization of the dependency graph; a radix codelet, modular reduction,
-cuFFTDx block, or register FWHT hierarchy remains a replaceable physical
+cuFFTDx block, register FWHT, or register Structured hierarchy remains a replaceable physical
 processing unit.
 
 The separation is represented by seven objects:
@@ -196,10 +196,12 @@ tile constant:
    normalization, placement, strides, and output order.
 2. Enumerate legal graph factorizations, four-factor mappings, residence and
    layout choices, and processing units.
-3. Reject candidates that exceed thread, register, shared-memory, layout, or
-   numeric constraints.
-4. Estimate grid waves, state residence, transport, coefficient supply, and
-   useful work per resident warp.
+3. Derive per-candidate register/shared/thread/warp CTA limits; reject only
+   hardware-infeasible, layout-infeasible, or numerically invalid points.
+4. Retain temporal state/thread, resident CTAs and warps, occupancy upper bound,
+   grid waves, limiting resource, and adjacent-point resource-cliff features.
+   A cliff expands the nearby decomposition/core search rather than pruning the
+   resident point automatically.
 5. Measure a reduced calibration set and dispatch among the remaining
    candidates.
 6. Use NCU/NSYS to test the predicted limiting service and update the hardware

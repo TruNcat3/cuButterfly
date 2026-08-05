@@ -107,11 +107,21 @@ are confined to `logN=14..16` crossover batches and range from 0.1% to 3.2%.
 
 ## Remaining Work
 
-1. **FP64 crossover margin:** target `logN=14..16` medium-batch launch and
-   boundary overhead; exhaustive remapping did not remove all five deficits.
-2. **Cross-GPU transfer:** capture a newer GPU profile, predict without its
-   timings, and report pre/post-calibration regret. This is the only deferred
-   architecture-level validation item.
+1. **Conditional cliff model:** determine how numeric width, coefficient
+   policy, modular reduction state, local-unit instruction mix, length, batch,
+   stride, direction, and normalization move residency cliffs and mapping
+   crossovers on the fixed V100 hardware target.
+2. **Boundary-focused selector validation:** hold out complete numeric and
+   workload regimes, not just individual shapes, and report top-k recall and
+   regret around launch, occupancy, register, shared-memory, and bandwidth
+   boundaries.
+3. **Remaining performance margins:** explain and reduce the FP32 `logN=20`
+   saturated-batch gap, the five FP64 `logN=14..16` crossover deficits, and the
+   Structured register cliff at `logN=13..15` without conflating physical-core
+   improvements with the scheduling contribution.
+4. **Cross-GPU transfer:** only after the conditional single-GPU model is
+   established, capture a newer GPU profile and test whether the learned
+   descriptors and predicted boundaries transfer before and after calibration.
 
 The repository does not currently claim a production cuFFT API replacement,
 non-power-of-two coverage, universal library superiority, or architecture

@@ -2,7 +2,70 @@
 
 All notable repository and research-artifact changes are recorded here.
 
-## Unreleased
+## 0.4.0 - 2026-08-05
+
+### Added
+
+- Canonical uint32 subset-zeta/Mobius and superset-zeta/Mobius operators across
+  temporal, hierarchical, online-reorder, warp-hybrid, and stage-pipeline
+  mappings, including radix-2/4/8 and CPU references.
+- A parameterized FP32/FP64 structured-2x2 operator with broadcast or per-stage
+  matrices, validated local inversion, device-resident coefficients, radix
+  fusion, CLI/CSV representation, and CPU/GPU regression targets.
+- A 762-sample V100 structured-2x2 length/precision mapping scan, matched FWHT
+  control, forward/inverse best-point verification, and focused NCU A/B script.
+- Structured/FWHT counter attribution and an alternating-order `logN=20`
+  confirmation that rejects a frequency-sensitive sequential-scan advantage.
+- A generated FP32 Structured 2x2 warp-register core for `logN=3..15`, with
+  broadcast/per-stage matrices, inverse and strided/in-place coverage, and a
+  V100 register-versus-shared/FWHT performance study.
+- Refreshed Structured/FWHT NCU attribution showing the generated `logN=12`
+  matrix core cuts DRAM traffic by 3.02x and base-clock time by 2.64x; its
+  remaining same-transport gap is dense arithmetic and register pressure.
+- Separate generated Structured coefficient policies for one-matrix broadcast
+  register reuse and arbitrary per-stage tables, with equivalent-semantics V100
+  A/B timing and compiled register/spill evidence.
+- NCU coefficient-policy attribution confirming broadcast reuse preserves the
+  FP32 work while reducing registers, long-scoreboard stalls, and base-clock
+  time relative to the per-stage table path.
+- Portable per-candidate residency/cliff feature extraction, hardware/resource
+  profiles, and resource-aware sweep annotations for register, shared, thread,
+  warp, occupancy, grid-wave, and temporal-state search signals.
+- An operator catalog defining transform semantics, the legacy `xor-zeta`
+  compatibility behavior, mapping coverage, and the next operator candidates.
+- Allocation-free asynchronous device-pointer execution for common butterfly
+  and NTT plans, with caller-selected CUDA streams and queryable workspaces.
+- Installable CMake package metadata exposing the
+  `cuButterfly::cuButterfly` target and a standalone device API example.
+- Device API lifecycle, memory, placement, type, and concurrency documentation.
+- Product-oriented programming guide, public C++ API reference, error model,
+  capability/compatibility matrix, and task-oriented example index.
+- Build-checked basic FFT and asynchronous NTT examples alongside the common
+  butterfly device-pointer example.
+- A unified V100 runtime selector for FFT, NTT, FWHT, and XOR-zeta plans, with
+  resolved configurations, prediction confidence, and auditable reasons.
+- Build-time generation of runtime latency anchors from the archived scaling
+  summary, plus selector generation and mapping-crossover regression tests.
+
+### Changed
+
+- Host-vector execution now submits through the same stream-aware kernel path
+  as the application API and lazily creates its private staging buffers.
+
+### Current Evidence Boundary
+
+- The generated register core makes resident FP32 Structured 2x2 transforms
+  1.208x-3.108x faster than the best measured shared-core controls at
+  `logN=8/10/12/15`; the coefficient policy adds up to another 1.107x.
+- On V100, the Structured register path enters a shared-memory resource cliff
+  at `logN=13`, a register-limited region at `logN=14`, and the one-CTA/SM
+  boundary at `logN=15`. These are measured single-GPU boundaries, not fixed
+  architectural constants.
+- The public device API, package target, examples, and V100 runtime selector
+  are functional and regression tested. Unsupported contracts remain explicit.
+- The next research phase conditions mapping preference and resource cliffs on
+  numeric representation and workload shape before attempting cross-GPU
+  transfer. Cross-GPU profiles remain placeholders only.
 
 ## 0.3.0 - 2026-08-02
 

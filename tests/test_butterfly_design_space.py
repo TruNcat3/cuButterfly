@@ -28,8 +28,9 @@ class ButterflyDesignSpaceTest(unittest.TestCase):
         cls.fft = json.loads((ROOT / "config" / "fft_architecture_space.json").read_text())
 
     def test_all_operator_projections_and_fft_projection(self):
-        self.assertEqual(len(self.space["operator_projections"]), 6)
+        self.assertEqual(len(self.space["operator_projections"]), 7)
         self.assertTrue(validate_fft_projection(self.space, self.fft))
+        self.assertIn("resource-cliff", self.space["objects"]["Q_generation_selection"]["resource_features"])
 
     def test_ordered_factorizations_are_complete(self):
         self.assertEqual(stage_partitions(5, 1), [(5,)])

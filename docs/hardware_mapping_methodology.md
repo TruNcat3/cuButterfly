@@ -272,6 +272,25 @@ for the target batch, or leave no occupancy to hide a long-latency root load.
 Maximum occupancy is not the objective: a lower-occupancy candidate can win if
 it removes a global pass or substantially improves locality.
 
+The executable search model retains the complete resource vector rather than
+only `occupancy_est`. For adjacent lengths or decompositions of the same
+operator/core/coefficient policy, it additionally derives:
+
+```text
+temporal_state_words_per_thread = resident_values / threads
+register_file_fraction          = allocated_registers_per_cta / registers_per_sm
+occupancy_ratio                 = previous_occupancy_upper_bound / current_occupancy_upper_bound
+grid_concurrent_fraction        = min(1, grid_waves)
+```
+
+`resource_cliff` marks an occupancy-upper-bound drop of at least 1.5x or a
+transition to one resident CTA/SM. This is a search-neighborhood signal, not a
+hard rejection: the high-`Td` point may still win by removing communication.
+Only `hardware_feasible=0` is pruned before measurement. The selector should
+expand alternatives around a cliff by shortening the resident dimension,
+changing threads/EPT or arithmetic core, increasing grid decomposition, or
+moving a boundary to shared/online-reordered storage.
+
 The memory footprint model must separate coefficient and root traffic:
 
 ```text
@@ -507,6 +526,29 @@ python3 scripts/analyze_hardware_mapping.py \
   --batch 4 \
   --output results/v100_compact_mapping_model.csv
 ```
+
+Generated butterfly cores use the operator-independent residency feature tool:
+
+```bash
+python3 scripts/analyze_residency_features.py \
+  --hardware configs/hardware/v100_sxm2_16gb.json \
+  --resources results/structured_register_resource_profile_v100.csv \
+  --output results/structured_register_residency_features_v100.csv
+```
+
+The same resource profile can annotate and prune a real timing sweep:
+
+```bash
+python3 scripts/sweep_cubutterfly_designs.py ... \
+  --hardware-profile configs/hardware/v100_sxm2_16gb.json \
+  --resource-profile results/structured_register_resource_profile_v100.csv \
+  --output results/resource_aware_sweep.csv
+```
+
+Resource-profile keys are `(operator, precision, core, coefficient_policy,
+logN)`. Replacing the hardware JSON recomputes residency and waves without
+changing the architecture space; replacing the resource rows admits another
+butterfly type or generated physical unit.
 
 The JSON files deliberately separate hardware facts from schedule choices.
 Register and shared-memory allocation granularities are architecture-specific

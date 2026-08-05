@@ -4,9 +4,11 @@ import csv
 import pathlib
 import statistics
 
+from residency_features import RESOURCE_FEATURE_FIELDS
+
 
 CONFIG_FIELDS = ("backend", "compute_unit", "complex_multiply", "cross_twiddle", "local_exchange", "shared_layout", "fft_core", "stage_space", "tile_threads", "prefix_threads", "suffix_threads", "prefix_ept", "suffix_ept", "prefix_units_per_cta", "suffix_units_per_cta", "local_stages", "reorder_columns", "warp_stages", "pipeline_warps", "stage_handoff")
-GROUP_FIELDS = ("operator", "precision", "direction", "normalization", "placement", "logN", "N", "batch", "element_stride", "batch_stride")
+GROUP_FIELDS = ("operator", "precision", "direction", "normalization", "placement", "stage_matrices", "logN", "N", "batch", "element_stride", "batch_stride")
 
 
 def main():
@@ -38,6 +40,7 @@ def main():
             "min_kernel_ms": min(kernel_samples),
             "max_kernel_ms": max(kernel_samples),
             "median_Gbutterfly_s": statistics.median(float(row["Gbutterfly_s"]) for row in samples),
+            **{field: samples[0].get(field, "") for field in RESOURCE_FEATURE_FIELDS},
         })
 
     output = []

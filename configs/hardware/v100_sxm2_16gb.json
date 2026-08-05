@@ -6,8 +6,11 @@
   "threads_per_sm": 2048,
   "warps_per_sm": 64,
   "max_ctas_per_sm": 32,
+  "max_threads_per_cta": 1024,
   "registers_per_sm": 65536,
+  "max_registers_per_cta": 65536,
   "shared_bytes_per_sm": 98304,
+  "max_shared_bytes_per_cta": 98304,
   "register_allocation_unit_per_warp": 256,
   "shared_allocation_unit_per_cta": 256,
   "l2_bytes": 6291456

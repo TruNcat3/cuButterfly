@@ -62,11 +62,11 @@ __global__ void wmma_dft8_kernel(const Complex32* input, Complex32* output, std:
 }
 
 inline void launch_wmma_dft8(const Complex32* input, Complex32* output, std::uint64_t transforms, std::uint64_t batch_distance,
-                             std::uint64_t element_stride, bool inverse, bool normalize) {
+                             std::uint64_t element_stride, bool inverse, bool normalize, cudaStream_t stream) {
     constexpr std::uint32_t kWarps = 8;
     const auto              blocks = static_cast<unsigned int>((transforms + kWarps * 16 - 1) / (kWarps * 16));
     const float             scale  = inverse && normalize ? 0.125F : 1.0F;
-    wmma_dft8_kernel<<<blocks, kWarps * 32>>>(input, output, transforms, batch_distance, element_stride, inverse, scale);
+    wmma_dft8_kernel<<<blocks, kWarps * 32, 0, stream>>>(input, output, transforms, batch_distance, element_stride, inverse, scale);
 }
 
 }  // namespace cuntt::detail

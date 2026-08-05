@@ -11,6 +11,38 @@
 
 namespace {
 
+void check_cuda(cudaError_t status, const char* context) {
+    if (status != cudaSuccess) {
+        throw std::runtime_error(std::string(context) + ": " + cudaGetErrorString(status));
+    }
+}
+
+class TestStream {
+  public:
+    TestStream() { check_cuda(cudaStreamCreateWithFlags(&stream_, cudaStreamNonBlocking), "create test stream"); }
+    ~TestStream() { cudaStreamDestroy(stream_); }
+    cudaStream_t get() const noexcept { return stream_; }
+
+  private:
+    cudaStream_t stream_ = nullptr;
+};
+
+class TestDeviceBuffer {
+  public:
+    explicit TestDeviceBuffer(std::size_t bytes) { check_cuda(cudaMalloc(&pointer_, bytes), "allocate test device buffer"); }
+    ~TestDeviceBuffer() { cudaFree(pointer_); }
+
+    template <typename T>
+    T* as() const noexcept {
+        return static_cast<T*>(pointer_);
+    }
+
+    void* data() const noexcept { return pointer_; }
+
+  private:
+    void* pointer_ = nullptr;
+};
+
 std::vector<std::uint64_t> make_input(std::size_t count, std::uint64_t modulus, std::uint64_t seed) {
     std::mt19937_64            random(seed);
     std::vector<std::uint64_t> values(count);
@@ -53,6 +85,16 @@ std::uint32_t reverse_bits(std::uint32_t value, std::uint32_t bits) {
     return reversed;
 }
 
+template <typename Callable>
+void require_invalid_argument(Callable&& callable, const std::string& context) {
+    try {
+        callable();
+    } catch (const std::invalid_argument&) {
+        return;
+    }
+    throw std::runtime_error(context + " did not throw std::invalid_argument");
+}
+
 void test_compact_stage_backend() {
     constexpr std::uint32_t kLogN    = 20;
     constexpr std::uint64_t kModulus = 1152921504577486849ULL;
@@ -81,6 +123,98 @@ void test_compact_stage_backend() {
         }
         std::cout << "PASS compact-stage output_order=" << cuntt::output_order_name(order) << '\n';
     }
+}
+
+void test_device_api() {
+    constexpr std::uint32_t kLogN  = 12;
+    constexpr std::size_t   kBatch = 2;
+    const auto input    = make_input((1ULL << kLogN) * kBatch, cuntt::kDefaultModulus, 0xd300);
+    const auto expected = reference_batch(input, kLogN, kBatch, cuntt::kDefaultModulus, false);
+
+    cuntt::PlanConfig config;
+    config.log_n                    = kLogN;
+    config.batch                    = kBatch;
+    config.backend                  = cuntt::Backend::Hybrid2D;
+    config.auto_allocate_workspace = false;
+    cuntt::Plan plan(config);
+    if (plan.data_size() != input.size() * sizeof(std::uint64_t) || plan.workspace_size() != plan.data_size() || plan.workspace() != nullptr) {
+        throw std::runtime_error("hybrid2d device API size query mismatch");
+    }
+
+    TestStream       stream;
+    TestDeviceBuffer device_input(plan.data_size());
+    TestDeviceBuffer device_output(plan.data_size());
+    TestDeviceBuffer workspace(plan.workspace_size());
+    plan.set_stream(stream.get());
+    if (plan.stream() != stream.get()) {
+        throw std::runtime_error("NTT stream getter mismatch");
+    }
+
+    try {
+        plan.execute_async(device_input.as<std::uint64_t>(), device_output.as<std::uint64_t>());
+        throw std::runtime_error("missing NTT workspace was accepted");
+    } catch (const std::logic_error&) {
+    }
+    require_invalid_argument([&] { plan.set_workspace(workspace.data(), plan.workspace_size() - 1); }, "undersized NTT workspace");
+    plan.set_workspace(workspace.data(), plan.workspace_size());
+
+    std::vector<std::uint64_t> output(input.size());
+    check_cuda(cudaMemcpyAsync(device_input.data(), input.data(), plan.data_size(), cudaMemcpyHostToDevice, stream.get()), "queue NTT input copy");
+    plan.execute_async(device_input.as<std::uint64_t>(), device_output.as<std::uint64_t>());
+    check_cuda(cudaMemcpyAsync(output.data(), device_output.data(), plan.data_size(), cudaMemcpyDeviceToHost, stream.get()), "queue NTT output copy");
+    check_cuda(cudaStreamSynchronize(stream.get()), "synchronize NTT test stream");
+    require_equal(expected, output, "hybrid2d asynchronous device API");
+
+    require_invalid_argument([&] { plan.execute_async(device_input.as<std::uint32_t>(), device_output.as<std::uint32_t>()); },
+                             "NTT device pointer width mismatch");
+    require_invalid_argument([&] { plan.execute_async(device_input.as<std::uint64_t>(), device_input.as<std::uint64_t>()); },
+                             "NTT device pointer alias");
+
+    cuntt::PlanConfig pipeline_config;
+    pipeline_config.log_n                    = 8;
+    pipeline_config.batch                    = 1;
+    pipeline_config.backend                  = cuntt::Backend::StagePipeline;
+    pipeline_config.auto_allocate_workspace = false;
+    cuntt::Plan pipeline_plan(pipeline_config);
+    if (pipeline_plan.workspace_size() != 0 || pipeline_plan.workspace() != nullptr) {
+        throw std::runtime_error("stage-pipeline unexpectedly requires workspace");
+    }
+    std::cout << "PASS NTT asynchronous device API\n";
+}
+
+void test_runtime_selector() {
+    cuntt::PlanConfig config;
+    config.log_n       = 16;
+    config.batch       = 4;
+    config.word_bits   = 64;
+    config.output_order = cuntt::OutputOrder::Natural;
+    config.auto_select = true;
+    cuntt::Plan plan(config);
+    if (!plan.config().auto_select || plan.config().backend != cuntt::Backend::Hybrid2D ||
+        plan.config().compute_unit != cuntt::ComputeUnit::Radix4 || !plan.selection().calibrated ||
+        plan.selection().implementation != "cuNTT-Hybrid2D-radix4" || plan.selection().predicted_kernel_ms <= 0.0) {
+        throw std::runtime_error("NTT runtime selector did not resolve the calibrated Hybrid2D mapping");
+    }
+
+    constexpr std::uint64_t kModulus30 = 1073479681ULL;
+    config.log_n       = 12;
+    config.batch       = 16;
+    config.word_bits   = 32;
+    config.modulus     = kModulus30;
+    cuntt::Plan word32_plan(config);
+    if (word32_plan.config().compute_unit != cuntt::ComputeUnit::Radix4 || word32_plan.config().word_bits != 32) {
+        throw std::runtime_error("NTT runtime selector did not preserve the 32-bit semantic contract");
+    }
+
+    config.log_n    = 14;
+    config.word_bits = 64;
+    config.modulus   = cuntt::kDefaultModulus;
+    try {
+        cuntt::Plan unsupported(config);
+        throw std::runtime_error("runtime selector accepted an uncalibrated NTT length");
+    } catch (const std::invalid_argument&) {
+    }
+    std::cout << "PASS calibrated NTT runtime selector\n";
 }
 
 void test_stage_pipeline_backend() {
@@ -333,16 +467,6 @@ void test_hybrid2d_backend() {
     std::cout << "PASS hybrid2d word_bits=32 mod_multiply=barrett\n";
 }
 
-template <typename Callable>
-void require_invalid_argument(Callable&& callable, const std::string& context) {
-    try {
-        callable();
-    } catch (const std::invalid_argument&) {
-        return;
-    }
-    throw std::runtime_error(context + " did not throw std::invalid_argument");
-}
-
 void test_validation() {
     require_invalid_argument(
         [] {
@@ -426,6 +550,8 @@ int main() {
     try {
         const auto device = cuntt::current_device_info();
         std::cout << "Testing on " << device.name << " (sm_" << device.compute_major << device.compute_minor << ")\n";
+        test_device_api();
+        test_runtime_selector();
         test_forward_backend(cuntt::Backend::Baseline);
         test_forward_backend(cuntt::Backend::Tile256);
         test_inverse_backend(cuntt::Backend::Baseline);

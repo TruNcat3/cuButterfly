@@ -178,6 +178,7 @@ Administrator-enabled representative collection:
 sudo -E ./scripts/profile_ncu.sh
 sudo -E ./scripts/profile_fft_units_ncu.sh
 sudo -E ./scripts/profile_fft_cta_mapping_ncu.sh
+sudo -E ./scripts/profile_structured_2x2_ncu.sh
 sudo chown -R "$USER:$USER" results/ncu results/ncu_fft_units results/ncu_fft_cta_mapping
 ```
 

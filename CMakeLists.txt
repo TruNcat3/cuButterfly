@@ -4,7 +4,10 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
     set(CMAKE_CUDA_ARCHITECTURES 70 CACHE STRING "CUDA architectures to compile for")
 endif()
 
-project(cuButterfly VERSION 0.3.0 LANGUAGES CXX CUDA)
+project(cuButterfly VERSION 0.4.0 LANGUAGES CXX CUDA)
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -40,6 +43,8 @@ set(CUBUTTERFLY_FFT_PIPELINE_CANDIDATES "${CMAKE_CURRENT_SOURCE_DIR}/config/v100
     "Generated FFT pipeline candidate manifest")
 set(CUBUTTERFLY_FFT_DISPATCH_SPEC "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_fft_dispatch.json" CACHE FILEPATH
     "Measured FFT mapping dispatch table")
+set(CUBUTTERFLY_RUNTIME_SELECTOR_SUMMARY "${CMAKE_CURRENT_SOURCE_DIR}/results/v100_scaling_full_summary.csv" CACHE FILEPATH
+    "Measured scaling summary used to generate runtime selector latency anchors")
 set(CUNTT_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CUNTT_DESIGN_SPEC}"
@@ -49,6 +54,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CUBUTTERFLY_FFT_PIPELINE_SPEC}"
     "${CUBUTTERFLY_FFT_PIPELINE_CANDIDATES}"
     "${CUBUTTERFLY_FFT_DISPATCH_SPEC}"
+    "${CUBUTTERFLY_RUNTIME_SELECTOR_SUMMARY}"
     "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_comprehensive_suite.json"
     "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_space.json"
     "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_suite.json"
@@ -57,6 +63,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_codegen.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_pipeline.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_fft_dispatch.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_runtime_selector.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_scaling_suite.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_design_points.py")
 file(MAKE_DIRECTORY "${CUNTT_GENERATED_DIR}")
@@ -128,11 +135,21 @@ execute_process(
 if(NOT CUBUTTERFLY_FFT_DISPATCH_RESULT EQUAL 0)
     message(FATAL_ERROR "cuButterfly FFT dispatch generation failed: ${CUBUTTERFLY_FFT_DISPATCH_ERROR}")
 endif()
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_runtime_selector.py"
+            --summary "${CUBUTTERFLY_RUNTIME_SELECTOR_SUMMARY}"
+            --header "${CUNTT_GENERATED_DIR}/generated_runtime_selector.hpp"
+    RESULT_VARIABLE CUBUTTERFLY_RUNTIME_SELECTOR_RESULT
+    ERROR_VARIABLE CUBUTTERFLY_RUNTIME_SELECTOR_ERROR)
+if(NOT CUBUTTERFLY_RUNTIME_SELECTOR_RESULT EQUAL 0)
+    message(FATAL_ERROR "cuButterfly runtime selector generation failed: ${CUBUTTERFLY_RUNTIME_SELECTOR_ERROR}")
+endif()
 include("${CUNTT_GENERATED_DIR}/design_points.cmake")
 
 add_library(cuntt STATIC
     src/butterfly.cu
     src/butterfly_reference.cpp
+    src/mapping_selector.cpp
     src/ntt.cu
     src/reference.cpp)
 target_sources(cuntt PRIVATE ${CUNTT_GENERATED_SOURCES})
@@ -167,7 +184,8 @@ endif()
 
 target_include_directories(cuntt
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CUNTT_GENERATED_DIR})
@@ -180,8 +198,24 @@ target_compile_options(cuntt
         $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-Wall,-Wextra>)
 
 set_target_properties(cuntt PROPERTIES
+    EXPORT_NAME cuButterfly
     CUDA_SEPARABLE_COMPILATION OFF
     POSITION_INDEPENDENT_CODE ON)
+
+option(CUBUTTERFLY_BUILD_EXAMPLES "Build cuButterfly API examples" ON)
+if(CUBUTTERFLY_BUILD_EXAMPLES)
+    add_executable(cubutterfly_device_api_example examples/device_api.cpp)
+    target_link_libraries(cubutterfly_device_api_example PRIVATE cuntt)
+    target_compile_options(cubutterfly_device_api_example PRIVATE -Wall -Wextra -Wpedantic)
+
+    add_executable(cubutterfly_basic_fft_example examples/basic_fft.cpp)
+    target_link_libraries(cubutterfly_basic_fft_example PRIVATE cuntt)
+    target_compile_options(cubutterfly_basic_fft_example PRIVATE -Wall -Wextra -Wpedantic)
+
+    add_executable(cuntt_device_api_example examples/ntt_device_api.cpp)
+    target_link_libraries(cuntt_device_api_example PRIVATE cuntt)
+    target_compile_options(cuntt_device_api_example PRIVATE -Wall -Wextra -Wpedantic)
+endif()
 
 add_executable(cuntt_bench apps/cuntt_bench.cpp)
 target_link_libraries(cuntt_bench PRIVATE cuntt)
@@ -198,6 +232,10 @@ target_compile_options(cuntt_tests PRIVATE -Wall -Wextra -Wpedantic)
 add_executable(cubutterfly_tests tests/test_butterfly.cpp)
 target_link_libraries(cubutterfly_tests PRIVATE cuntt)
 target_compile_options(cubutterfly_tests PRIVATE -Wall -Wextra -Wpedantic)
+
+add_executable(cubutterfly_structured_reference_tests tests/test_structured_reference.cpp)
+target_link_libraries(cubutterfly_structured_reference_tests PRIVATE cuntt)
+target_compile_options(cubutterfly_structured_reference_tests PRIVATE -Wall -Wextra -Wpedantic)
 if(CUBUTTERFLY_ENABLE_CUFFTDX)
     target_compile_definitions(cubutterfly_tests PRIVATE CUBUTTERFLY_TEST_CUFFTDX=1)
 endif()
@@ -228,10 +266,13 @@ include(CTest)
 if(BUILD_TESTING)
     add_test(NAME cuntt_correctness COMMAND cuntt_tests)
     add_test(NAME cubutterfly_correctness COMMAND cubutterfly_tests)
+    add_test(NAME cubutterfly_structured_reference COMMAND cubutterfly_structured_reference_tests)
     add_test(NAME fft_design_space
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_design_space.py")
     add_test(NAME butterfly_design_space
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_butterfly_design_space.py")
+    add_test(NAME design_point_generator
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_design_point_generator.py")
     add_test(NAME comprehensive_suite
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_comprehensive_suite.py")
     add_test(NAME scaling_suite
@@ -242,6 +283,12 @@ if(BUILD_TESTING)
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_external_baseline_suite.py")
     add_test(NAME scaling_ncu_analysis
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_scaling_ncu_analysis.py")
+    add_test(NAME structured_2x2_ncu_analysis
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_structured_2x2_ncu.py")
+    add_test(NAME structured_coefficient_policy_summary
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_structured_coefficient_policies.py")
+    add_test(NAME residency_features
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_residency_features.py")
     add_test(NAME fft_vectorized_ncu_analysis
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_vectorized_ncu.py")
     add_test(NAME fp64_fft_ncu_analysis
@@ -256,6 +303,13 @@ if(BUILD_TESTING)
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_pipeline_model.py")
     add_test(NAME fft_dispatch_generator
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_dispatch_generator.py")
+    add_test(NAME installed_package_consumer
+             COMMAND "${CMAKE_COMMAND}"
+                     -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+                     -DBUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}
+                     -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_install_package.cmake")
+    add_test(NAME runtime_selector_generator
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_runtime_selector_generator.py")
     if(CUBUTTERFLY_ENABLE_CUFFTDX)
         add_test(NAME fft_fp64_cufftdx_block_correctness
                  COMMAND cubutterfly_bench --operator fft --precision fp64 --backend temporal-tile
@@ -388,3 +442,28 @@ if(BUILD_TESTING)
                          --warmup 1 --repeat 1 --verify)
     endif()
 endif()
+
+install(TARGETS cuntt
+    EXPORT cuButterflyTargets
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(DIRECTORY include/cuntt DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cuButterflyConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cuButterflyConfig.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/cuButterfly")
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/cuButterflyConfigVersion.cmake"
+    VERSION "${PROJECT_VERSION}"
+    COMPATIBILITY SameMajorVersion)
+
+install(EXPORT cuButterflyTargets
+    FILE cuButterflyTargets.cmake
+    NAMESPACE cuButterfly::
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/cuButterfly")
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/cuButterflyConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/cuButterflyConfigVersion.cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/cuButterfly")

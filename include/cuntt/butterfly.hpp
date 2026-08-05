@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cuda_runtime_api.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -18,6 +20,14 @@ struct alignas(8) Complex32 {
 struct alignas(16) Complex64 {
     double real;
     double imag;
+};
+
+// One real-valued local butterfly: [left', right']^T = M [left, right]^T.
+struct ButterflyMatrix2x2 {
+    double m00 = 1.0;
+    double m01 = 0.0;
+    double m10 = 0.0;
+    double m11 = 1.0;
 };
 
 enum class ButterflyPrecision {
@@ -41,6 +51,11 @@ ButterflyPlacement parse_butterfly_placement(const std::string& name);
 enum class ButterflyOperator {
     Fwht,
     Fft,
+    SubsetZeta,
+    SupersetZeta,
+    Structured2x2,
+    // Legacy name retained for source and CLI compatibility. Its established
+    // operation is the subset zeta/Mobius transform, not an XOR convolution.
     XorZeta,
 };
 
@@ -165,6 +180,8 @@ struct ButterflyConfig {
     ButterflyPrecision precision         = ButterflyPrecision::Fp32;
     ButterflyPlacement placement         = ButterflyPlacement::OutOfPlace;
     std::uint32_t      log_n             = 8;
+    // Structured2x2 accepts one broadcast matrix or one matrix per stage.
+    std::vector<ButterflyMatrix2x2> stage_matrices;
     // Ordered stage counts for each algorithmic decomposition segment.
     std::vector<std::uint32_t> stage_partition;
     std::vector<FftSegmentMapping> segment_mappings;
@@ -177,6 +194,9 @@ struct ButterflyConfig {
     bool               inverse           = false;
     bool               normalize_inverse = true;
     bool               auto_select       = false;
+    // Allocate plan-owned scratch by default. Disable this when an application
+    // supplies workspace with set_workspace().
+    bool               auto_allocate_workspace = true;
     std::uint32_t      stage_space       = 0;
     StageHandoff       stage_handoff     = StageHandoff::NamedBarrier;
     std::uint32_t      tile_threads      = 128;
@@ -212,6 +232,13 @@ void reference_fwht(std::vector<float>& values, bool inverse = false, bool norma
 void reference_fwht(std::vector<double>& values, bool inverse = false, bool normalize_inverse = true);
 void reference_fft(std::vector<Complex32>& values, bool inverse = false, bool normalize_inverse = true);
 void reference_fft(std::vector<Complex64>& values, bool inverse = false, bool normalize_inverse = true);
+void reference_subset_zeta(std::vector<std::uint32_t>& values, bool inverse = false);
+void reference_superset_zeta(std::vector<std::uint32_t>& values, bool inverse = false);
+void reference_structured_2x2(std::vector<float>& values, const std::vector<ButterflyMatrix2x2>& stage_matrices,
+                              bool inverse = false);
+void reference_structured_2x2(std::vector<double>& values, const std::vector<ButterflyMatrix2x2>& stage_matrices,
+                              bool inverse = false);
+// Compatibility wrapper for reference_subset_zeta().
 void reference_xor_zeta(std::vector<std::uint32_t>& values, bool inverse = false);
 
 class ButterflyPlan {
@@ -225,6 +252,28 @@ class ButterflyPlan {
     ButterflyPlan& operator=(ButterflyPlan&&) noexcept;
 
     const ButterflyConfig& config() const noexcept;
+    const SelectionInfo&   selection() const noexcept;
+
+    std::size_t data_size() const noexcept;
+    std::size_t workspace_size() const noexcept;
+
+    // A plan is ordered on one CUDA stream. Changing the stream also updates
+    // an internal cuFFT plan when that backend is selected.
+    void         set_stream(cudaStream_t stream);
+    cudaStream_t stream() const noexcept;
+
+    // The workspace must remain valid until all work submitted by this plan
+    // completes. Passing nullptr restores plan-owned workspace when enabled.
+    void  set_workspace(void* workspace, std::size_t bytes);
+    void* workspace() const noexcept;
+
+    // Device-pointer execution is allocation-free, asynchronous, and does not
+    // perform host/device copies or stream synchronization.
+    void execute_async(const float* input, float* output);
+    void execute_async(const double* input, double* output);
+    void execute_async(const Complex32* input, Complex32* output);
+    void execute_async(const Complex64* input, Complex64* output);
+    void execute_async(const std::uint32_t* input, std::uint32_t* output);
 
     ButterflyStats execute(const std::vector<float>& input, std::vector<float>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);
     ButterflyStats execute(const std::vector<double>& input, std::vector<double>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);
