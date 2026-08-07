@@ -57,9 +57,13 @@ The pointer type is part of the semantic contract:
 |:--|:--|
 | FP32 FWHT | `float*` |
 | FP64 FWHT | `double*` |
-| FP32 or FP16/FP32 FFT | `cuntt::Complex32*` |
+| FP16 FFT | `cuntt::Complex16*` |
+| BF16 FFT | `cuntt::ComplexBf16*` |
+| FP32 or legacy FP16/FP32-WMMA FFT | `cuntt::Complex32*` |
 | FP64 FFT | `cuntt::Complex64*` |
 | Subset/superset zeta and legacy XOR-zeta name | `std::uint32_t*` |
+| FP16 structured 2x2 or FWHT | `cuntt::Fp16*` |
+| BF16 structured 2x2 or FWHT | `cuntt::Bf16*` |
 | FP32 structured 2x2 | `float*` |
 | FP64 structured 2x2 | `double*` |
 

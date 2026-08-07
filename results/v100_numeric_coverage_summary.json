@@ -1,0 +1,27 @@
+{
+  "shapes": 99,
+  "status_counts": {
+    "near-tie": 33,
+    "stable-same-direction": 66
+  },
+  "by_operator": {
+    "fwht": {
+      "near-tie": 15,
+      "stable-same-direction": 18
+    },
+    "structured-2x2": {
+      "stable-same-direction": 16,
+      "near-tie": 5
+    },
+    "fft": {
+      "stable-same-direction": 28,
+      "near-tie": 13
+    },
+    "subset-zeta": {
+      "stable-same-direction": 2
+    },
+    "ntt": {
+      "stable-same-direction": 2
+    }
+  }
+}

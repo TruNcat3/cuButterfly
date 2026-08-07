@@ -77,9 +77,10 @@ comprehensive and scaling reports define the paper-facing comparison protocol.
 | [V100 Counter Attribution](v100_ncu_attribution.md) | Which hardware services explain the observed saturation and mapping crossovers? |
 | [Structured 2x2 V100 Results](structured_2x2_v100_results.md) | Does a parameterized dense pair unit preserve the mapping methodology across precision and length? |
 | [V100 External Baselines](v100_external_baselines.md) | What do matching-protocol Dao FHT and GPU-NTT comparisons establish? |
+| [V100 Library/Base/Search Comparison](v100_three_way_comparison.md) | How much comes from search, and where does the selected point stand against specialized libraries? |
 | [V100 Research Status](research_status.md) | Which claims are closed, what are the current performance boundaries, and what remains? |
 | [v0.3.0 Mapping-Selection Milestone](next_phase_v0.3.md) | Which falsifiable goal, execution order, and definition of done shaped this release? |
-| [Numeric-Regime Mapping Study](next_phase_numeric_regimes.md) | How will precision, arithmetic, length, batch, layout, and core choice be related to resource cliffs and mapping preference? |
+| [Numeric-Regime Mapping Study](next_phase_numeric_regimes.md) | How are precision, arithmetic, length, batch, and core choice related to resource cliffs, and what did the first quick screen establish? |
 | [Reproducibility](reproducibility.md) | How are sweeps, external baselines, and profiler data reproduced? |
 | [Research Positioning](cubutterfly_positioning.md) | What is the intended contribution relative to prior work? |
 
@@ -102,6 +103,10 @@ Repository maintenance and research priorities are documented in
 
 ## Measurement Reports
 
+- [V100 Numeric-Regime Mapping Study](next_phase_numeric_regimes.md)
+- [V100 Numeric Boundary NCU Attribution](../results/v100_numeric_boundary_ncu_analysis.md)
+- [V100 Numeric Piecewise Selector](../results/v100_numeric_piecewise_report.md)
+- [V100 Library/Base/Search Comparison](v100_three_way_comparison.md)
 - [V100 Comprehensive Results](comprehensive_v100_results.md)
 - [V100 Length/Batch Scaling](v100_scaling_results.md)
 - [V100 Mapping Selector](v100_mapping_selector.md)

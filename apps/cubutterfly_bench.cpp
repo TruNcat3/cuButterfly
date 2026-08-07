@@ -146,7 +146,8 @@ void print_usage() {
         << "                    [--local-exchange shared|warp-register]\n"
         << "                    [--shared-layout linear|xor-swizzle]\n"
         << "                    [--fft-core scalar|thread-dft8|cta-dft8|wmma-dft8|cufftdx-block|cufftdx-direct|cufftdx-resident|turbofft-generated]\n"
-        << "                    [--precision fp32|fp64|fp16-fp32|uint32]\n"
+        << "                    [--precision fp16|bf16|fp32|fp64|fp16-fp32|uint32]\n"
+        << "                    [--accumulation native|fp32]\n"
         << "                    [--warmup 20] [--repeat 100] [--verify] [--csv]\n"
         << "                    [--list-capabilities]\n";
 }
@@ -303,6 +304,8 @@ int main(int argc, char** argv) {
                 config.fft_core = cuntt::parse_fft_core(take_arg(index, argc, argv));
             } else if (arg == "--precision") {
                 config.precision = cuntt::parse_butterfly_precision(take_arg(index, argc, argv));
+            } else if (arg == "--accumulation") {
+                config.accumulation = cuntt::parse_butterfly_accumulation(take_arg(index, argc, argv));
             } else if (arg == "--placement") {
                 config.placement = cuntt::parse_butterfly_placement(take_arg(index, argc, argv));
             } else if (arg == "--inverse") {
@@ -341,6 +344,72 @@ int main(int argc, char** argv) {
         const std::size_t                     n         = std::size_t{1} << config.log_n;
         const std::size_t                     extent    = (config.batch - 1) * config.batch_stride + (n - 1) * config.element_stride + 1;
 
+        auto execute_low_real = [&](auto storage_zero, bool structured) {
+            using Storage = decltype(storage_zero);
+            const float input_scale = 1.0F / std::sqrt(static_cast<float>(n));
+            std::vector<Storage> input(extent);
+            std::generate(input.begin(), input.end(), [&] { return Storage(distribution(random) * input_scale); });
+            std::vector<Storage> output;
+            stats = plan.execute(input, output, warmup, repeat);
+            if (!verify)
+                return;
+            long double error_norm = 0.0;
+            long double reference_norm = 0.0;
+            for (std::size_t transform = 0; transform < config.batch; ++transform) {
+                const auto base = transform * config.batch_stride;
+                std::vector<float> expected(n);
+                for (std::size_t index = 0; index < n; ++index)
+                    expected[index] = static_cast<float>(input[base + index * config.element_stride]);
+                if (structured)
+                    cuntt::reference_structured_2x2(expected, config.stage_matrices, config.inverse);
+                else
+                    cuntt::reference_fwht(expected, config.inverse, config.normalize_inverse);
+                for (std::size_t index = 0; index < n; ++index) {
+                    const float actual = static_cast<float>(output[base + index * config.element_stride]);
+                    const long double error = static_cast<long double>(actual) - expected[index];
+                    error_norm += error * error;
+                    reference_norm += static_cast<long double>(expected[index]) * expected[index];
+                }
+            }
+            max_error = static_cast<float>(std::sqrt(error_norm / std::max(reference_norm, 1.0e-30L)));
+            correct = std::isfinite(max_error) && max_error <= 0.25F;
+        };
+
+        auto execute_low_fft = [&](auto complex_zero) {
+            using Complex = decltype(complex_zero);
+            using Storage = decltype(complex_zero.real);
+            const float input_scale = 1.0F / std::sqrt(static_cast<float>(n));
+            std::vector<Complex> input(extent);
+            std::generate(input.begin(), input.end(), [&] {
+                return Complex{Storage(distribution(random) * input_scale), Storage(distribution(random) * input_scale)};
+            });
+            std::vector<Complex> output;
+            stats = plan.execute(input, output, warmup, repeat);
+            if (!verify)
+                return;
+            long double error_norm = 0.0;
+            long double reference_norm = 0.0;
+            for (std::size_t transform = 0; transform < config.batch; ++transform) {
+                const auto base = transform * config.batch_stride;
+                std::vector<cuntt::Complex32> expected(n);
+                for (std::size_t index = 0; index < n; ++index) {
+                    const auto value = input[base + index * config.element_stride];
+                    expected[index] = {static_cast<float>(value.real), static_cast<float>(value.imag)};
+                }
+                cuntt::reference_fft(expected, config.inverse, config.normalize_inverse);
+                for (std::size_t index = 0; index < n; ++index) {
+                    const auto value = output[base + index * config.element_stride];
+                    const long double dr = static_cast<float>(value.real) - expected[index].real;
+                    const long double di = static_cast<float>(value.imag) - expected[index].imag;
+                    error_norm += dr * dr + di * di;
+                    reference_norm += static_cast<long double>(expected[index].real) * expected[index].real +
+                                      static_cast<long double>(expected[index].imag) * expected[index].imag;
+                }
+            }
+            max_error = static_cast<float>(std::sqrt(error_norm / std::max(reference_norm, 1.0e-30L)));
+            correct = std::isfinite(max_error) && max_error <= 0.25F;
+        };
+
         if (config.op == cuntt::ButterflyOperator::Fwht) {
             if (config.precision == cuntt::ButterflyPrecision::Fp64) {
                 std::vector<double> input(extent);
@@ -361,6 +430,10 @@ int main(int argc, char** argv) {
                     max_error = static_cast<float>(error);
                     correct   = error <= fft_tolerance_fp64(n);
                 }
+            } else if (config.precision == cuntt::ButterflyPrecision::Fp16) {
+                execute_low_real(cuntt::Fp16{}, false);
+            } else if (config.precision == cuntt::ButterflyPrecision::Bf16) {
+                execute_low_real(cuntt::Bf16{}, false);
             } else {
                 std::vector<float> input(extent);
                 std::generate(input.begin(), input.end(), [&] { return distribution(random); });
@@ -401,6 +474,10 @@ int main(int argc, char** argv) {
                     max_error = static_cast<float>(relative_error);
                     correct   = relative_error <= 1.0e-10;
                 }
+            } else if (config.precision == cuntt::ButterflyPrecision::Fp16) {
+                execute_low_real(cuntt::Fp16{}, true);
+            } else if (config.precision == cuntt::ButterflyPrecision::Bf16) {
+                execute_low_real(cuntt::Bf16{}, true);
             } else {
                 std::vector<float> input(extent);
                 std::generate(input.begin(), input.end(), [&] { return distribution(random); });
@@ -443,6 +520,10 @@ int main(int argc, char** argv) {
                     max_error = static_cast<float>(error);
                     correct   = error <= 1.0e-10;
                 }
+            } else if (config.precision == cuntt::ButterflyPrecision::Fp16) {
+                execute_low_fft(cuntt::Complex16{});
+            } else if (config.precision == cuntt::ButterflyPrecision::Bf16) {
+                execute_low_fft(cuntt::ComplexBf16{});
             } else {
                 std::vector<cuntt::Complex32> input(extent);
                 std::generate(input.begin(), input.end(), [&] { return cuntt::Complex32{distribution(random), distribution(random)}; });
@@ -496,12 +577,15 @@ int main(int argc, char** argv) {
         const auto device = cuntt::current_device_info();
         std::cout << std::fixed << std::setprecision(6);
         if (csv) {
-            std::cout << "device,compute_capability,operator,precision,direction,normalization,placement,auto_select,selection_target,selected_implementation,selection_confidence,predicted_kernel_ms,selection_reason,backend,compute_unit,complex_multiply,cross_twiddle,direct_boundary,stage_matrices,decomposition_count,stages_per_decomposition,segment_threads,segment_ept,boundary_twiddles,boundary_layouts,boundary_residencies,execution_group_count,group_threads,group_ept,local_"
+            std::cout << "device,compute_capability,operator,precision,accumulation,emulated_native,direction,normalization,placement,auto_select,selection_target,selected_implementation,selection_confidence,predicted_kernel_ms,selection_reason,backend,compute_unit,complex_multiply,cross_twiddle,direct_boundary,stage_matrices,decomposition_count,stages_per_decomposition,segment_threads,segment_ept,boundary_twiddles,boundary_layouts,boundary_residencies,execution_group_count,group_threads,group_ept,local_"
                          "exchange,shared_layout,fft_core,stage_space,stage_handoff,tile_threads,prefix_threads,suffix_threads,prefix_ept,suffix_ept,prefix_units_per_cta,suffix_units_per_cta,local_stages,reorder_columns,warp_stages,pipeline_warps,logN,N,batch,element_stride,batch_"
                          "stride,warmup,repeat,h2d_ms,kernel_ms,d2h_ms,"
                          "transforms_s,Gbutterfly_s,points_s,max_error,correct\n";
             std::cout << '"' << device.name << "\"," << device.compute_major << '.' << device.compute_minor << ','
                       << cuntt::butterfly_operator_name(config.op) << ',' << cuntt::butterfly_precision_name(config.precision) << ','
+                      << cuntt::butterfly_accumulation_name(config.accumulation) << ','
+                      << static_cast<int>(config.precision == cuntt::ButterflyPrecision::Bf16 &&
+                                          config.accumulation == cuntt::ButterflyAccumulation::Native && device.compute_major < 8) << ','
                       << (config.inverse ? "inverse" : "forward") << ',' << (config.normalize_inverse ? "inverse" : "none") << ','
                       << cuntt::butterfly_placement_name(config.placement) << ',' << static_cast<int>(config.auto_select) << ','
                       << '"' << selection.target << "\",\"" << selection.implementation << "\",\"" << selection.confidence << "\","
@@ -535,6 +619,7 @@ int main(int argc, char** argv) {
             std::cout << "device: " << device.name << " (sm_" << device.compute_major << device.compute_minor << ")\n"
                       << "operator: " << cuntt::butterfly_operator_name(config.op) << "\n"
                       << "precision: " << cuntt::butterfly_precision_name(config.precision) << "\n"
+                      << "accumulation: " << cuntt::butterfly_accumulation_name(config.accumulation) << "\n"
                       << "direction: " << (config.inverse ? "inverse" : "forward") << "\n"
                       << "normalization: " << (config.normalize_inverse ? "inverse" : "none") << "\n"
                       << "placement: " << cuntt::butterfly_placement_name(config.placement) << "\n"

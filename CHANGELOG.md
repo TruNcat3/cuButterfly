@@ -2,6 +2,61 @@
 
 All notable repository and research-artifact changes are recorded here.
 
+## Unreleased - v0.5.0 Numeric-Regime Mapping
+
+### Added
+
+- Public FP16 and BF16 real/complex storage contracts for FFT, FWHT, and
+  Structured 2x2, each with explicit native-width or FP32 accumulation.
+- V100 BF16-native emulation labeling so FP32-compute-and-narrow measurements
+  cannot be mistaken for native SM70 BF16 arithmetic.
+- A generated 185-cell numeric-regime space covering floating-point contracts,
+  uint32 zeta, uint32/uint64 NTT, nine length anchors where legal, and matched
+  batch neighborhoods around predicted grid-wave boundaries.
+- Resource, grid-wave, working-set, winner-crossover, and numeric-pipeline cliff
+  detection with repeated-trial confirmation rules.
+- Complete-regime selector evaluation across numeric contract, arithmetic
+  policy, batch region, and operator, with explicit promotion/regret gates.
+- An abstaining piecewise batch selector that emits stable intervals, candidate
+  sets at boundaries, and explicit unseen-contract/out-of-range policies.
+- A matching-protocol library/base/search matrix and table generator covering
+  representative FP32 FFT/FWHT and 60-bit NTT shapes, with separate search/base
+  and search/external-library ratios.
+
+### Current Evidence Boundary
+
+- Correctness, focused smoke timing, and the 736-case/2,208-sample quick screen
+  pass on V100. The screen identifies 29 confirmed and 67 ambiguous mapping
+  crossovers. This screen is discovery evidence rather than a cross-library
+  performance claim; the focused timing, counter attribution, and separate
+  matching-protocol library comparison below provide the confirmation layers.
+- Complete-regime top-3 recall is 1.0, but geometric-mean/worst regret are
+  1.047/2.078. The new selector is intentionally not promoted to runtime use.
+- Focused full-protocol timing repeats all 29 quick-confirmed neighborhoods:
+  23 retain the same direction, 3 reverse, and 3 have overlapping trial ranges.
+  All nine length-axis crossovers reproduce; instability is confined to batch
+  boundaries.
+- Twelve paired NCU profiles attribute the six unstable batch events to
+  instruction/register tradeoffs, online-composition synchronization, and one
+  actual FP64 resident-CTA capacity change. None contradicts the stable
+  length-axis regime result.
+- The conservative piecewise selector auto-selects 13.61% of leave-one-batch-
+  out shapes with 1.0016x geometric-mean and 1.0567x worst regret. It is
+  validated only for those calibrated intervals; global runtime status remains
+  `measurement-required`.
+- Adaptive full timing covers 99 weak non-boundary anchors: 66 become stable,
+  33 remain near-ties, and none reverse direction. Incorporating them raises
+  leave-one-batch-out coverage to 27.74%, with 98.84% top-1 agreement,
+  1.00013x geometric-mean regret, and 1.01112x worst regret.
+- In the representative ten-shape library/base/search matrix, searched
+  configurations improve over fixed radix-2 base mappings by 2.349x geometric
+  mean and over matched external-library rows by 1.109x. Operator-level
+  search/library ratios are 1.015x FFT, 1.054x FWHT, and 1.313x NTT. The NTT
+  external rows are archived same-machine measurements with the same protocol,
+  not interleaved measurements from the current refresh.
+- Cross-GPU transfer remains deferred until the fixed-hardware numeric and
+  workload regime model is measured and validated.
+
 ## 0.4.0 - 2026-08-05
 
 ### Added

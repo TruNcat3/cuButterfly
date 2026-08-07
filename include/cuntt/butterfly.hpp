@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cuda_bf16.h>
+#include <cuda_fp16.h>
 #include <cuda_runtime_api.h>
 
 #include <cstddef>
@@ -22,6 +24,19 @@ struct alignas(16) Complex64 {
     double imag;
 };
 
+using Fp16 = __half;
+using Bf16 = __nv_bfloat16;
+
+struct alignas(4) Complex16 {
+    Fp16 real;
+    Fp16 imag;
+};
+
+struct alignas(4) ComplexBf16 {
+    Bf16 real;
+    Bf16 imag;
+};
+
 // One real-valued local butterfly: [left', right']^T = M [left, right]^T.
 struct ButterflyMatrix2x2 {
     double m00 = 1.0;
@@ -33,12 +48,23 @@ struct ButterflyMatrix2x2 {
 enum class ButterflyPrecision {
     Fp32,
     Fp64,
+    Fp16,
+    Bf16,
+    // Legacy FP32 storage with FP16 WMMA operands and FP32 accumulation.
     Fp16Fp32,
     Uint32,
 };
 
 const char*        butterfly_precision_name(ButterflyPrecision precision) noexcept;
 ButterflyPrecision parse_butterfly_precision(const std::string& name);
+
+enum class ButterflyAccumulation {
+    Native,
+    Fp32,
+};
+
+const char*           butterfly_accumulation_name(ButterflyAccumulation accumulation) noexcept;
+ButterflyAccumulation parse_butterfly_accumulation(const std::string& name);
 
 enum class ButterflyPlacement {
     OutOfPlace,
@@ -178,6 +204,7 @@ struct ButterflyConfig {
     ButterflyOperator  op                = ButterflyOperator::Fwht;
     ButterflyBackend   backend           = ButterflyBackend::StagePipeline;
     ButterflyPrecision precision         = ButterflyPrecision::Fp32;
+    ButterflyAccumulation accumulation   = ButterflyAccumulation::Native;
     ButterflyPlacement placement         = ButterflyPlacement::OutOfPlace;
     std::uint32_t      log_n             = 8;
     // Structured2x2 accepts one broadcast matrix or one matrix per stage.
@@ -271,14 +298,23 @@ class ButterflyPlan {
     // perform host/device copies or stream synchronization.
     void execute_async(const float* input, float* output);
     void execute_async(const double* input, double* output);
+    void execute_async(const Fp16* input, Fp16* output);
+    void execute_async(const Bf16* input, Bf16* output);
     void execute_async(const Complex32* input, Complex32* output);
     void execute_async(const Complex64* input, Complex64* output);
+    void execute_async(const Complex16* input, Complex16* output);
+    void execute_async(const ComplexBf16* input, ComplexBf16* output);
     void execute_async(const std::uint32_t* input, std::uint32_t* output);
 
     ButterflyStats execute(const std::vector<float>& input, std::vector<float>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);
     ButterflyStats execute(const std::vector<double>& input, std::vector<double>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);
+    ButterflyStats execute(const std::vector<Fp16>& input, std::vector<Fp16>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);
+    ButterflyStats execute(const std::vector<Bf16>& input, std::vector<Bf16>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);
     ButterflyStats execute(const std::vector<Complex32>& input, std::vector<Complex32>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);
     ButterflyStats execute(const std::vector<Complex64>& input, std::vector<Complex64>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);
+    ButterflyStats execute(const std::vector<Complex16>& input, std::vector<Complex16>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);
+    ButterflyStats execute(const std::vector<ComplexBf16>& input, std::vector<ComplexBf16>& output, std::uint32_t warmup = 1,
+                           std::uint32_t repeat = 1);
     ButterflyStats execute(const std::vector<std::uint32_t>& input, std::vector<std::uint32_t>& output, std::uint32_t warmup = 1,
                            std::uint32_t repeat = 1);
 

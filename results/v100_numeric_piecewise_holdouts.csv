@@ -1,0 +1,311 @@
+operator,precision,accumulation,logN,batch,decision,measured_winner,predicted_winner,regret,reason
+fwht,bf16,native,15,6,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fwht,bf16,native,8,961,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,fp64,native,8,800,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp16,fp32,15,6,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,fp64,native,15,1,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fft,fp32,native,15,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,native,15,6,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fft,fp32,native,15,9,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,native,8,1281,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fft,fp16,native,15,8,measurement-required,hier-r4-t256,,,bracketing anchors select different mappings
+fwht,bf16,native,8,959,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp16,native,15,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp32,native,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fft,fp32,native,15,4,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fwht,fp64,native,8,1281,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp32,native,15,7,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,native,15,9,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fft,fp64,native,15,4,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp32,native,8,961,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,bf16,fp32,15,9,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,native,15,1,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp64,native,15,7,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,native,15,5,auto-select,online-r2-t256,online-r2-t256,1.0,same stable winner at both held-out batch anchors
+fwht,bf16,fp32,20,1,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,fp32,8,959,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,fp64,native,8,1279,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,bf16,fp32,15,7,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp32,native,20,2,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,native,8,1279,auto-select,temporal-r2-t128,temporal-r2-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,bf16,native,8,961,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fft,fp16,native,8,1281,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp16,fp32,20,1,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,fp32,15,1,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,fp32,8,961,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+ntt,uint32,native,15,321,measurement-required,ntt-hybrid-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,fp32,15,8,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+subset-zeta,uint32,native,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,bf16,fp32,8,1281,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+ntt,uint32,native,15,1,measurement-required,ntt-hybrid-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,fp32,15,6,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,fp32,8,800,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fwht,fp16,fp32,8,1281,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fwht,fp64,native,15,7,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,native,20,2,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,fp16,fp32,8,801,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp16,native,8,1279,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp64,native,20,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp64,native,15,4,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp64,native,8,799,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp32,native,8,1279,auto-select,temporal-r2-t128,temporal-r4-t128,1.0111131353616325,same stable winner at both held-out batch anchors
+fft,fp32,native,15,5,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,native,15,8,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,native,15,9,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,fp32,native,8,1280,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,fp16,native,8,1281,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+subset-zeta,uint32,native,15,6,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,fp32,8,1281,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp16,fp32,15,7,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp16,fp32,8,960,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,bf16,native,8,801,auto-select,temporal-r2-t128,temporal-r2-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp16,native,15,6,measurement-required,online-r4-t256,,,bracketing anchors select different mappings
+structured-2x2,fp32,native,8,959,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp32,native,8,1279,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+ntt,uint64,native,15,241,measurement-required,ntt-hybrid-r4-t256,,,focused full timing marks target as an unstable boundary
+structured-2x2,fp32,native,8,960,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp16,fp32,15,6,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,fp32,20,2,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,fp64,native,8,719,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,bf16,native,8,1279,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fwht,bf16,fp32,8,960,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fwht,fp32,native,8,1281,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+subset-zeta,uint32,native,15,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp16,native,20,2,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp32,native,15,6,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fft,fp32,native,20,2,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,native,20,1,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,native,15,7,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fft,fp16,fp32,8,800,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp16,fp32,15,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,fp32,15,7,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fwht,fp16,fp32,20,1,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp64,native,15,8,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,fp32,20,2,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,native,8,959,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fwht,fp64,native,8,1280,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,bf16,fp32,8,961,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp16,native,15,5,measurement-required,online-r4-t256,,,bracketing anchors select different mappings
+fwht,fp16,fp32,8,1280,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,fp64,native,15,5,auto-select,online-r4-t256,online-r4-t256,1.0,same stable winner at both held-out batch anchors
+fft,bf16,fp32,15,9,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,native,20,2,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,fp32,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fft,fp16,fp32,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fft,fp16,fp32,15,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,fp64,native,8,960,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp16,fp32,8,1279,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp64,native,8,799,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fft,bf16,fp32,8,1281,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fft,fp16,fp32,15,9,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,native,20,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,fp32,8,960,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp64,native,8,959,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp16,native,15,6,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,native,15,1,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fft,bf16,native,8,799,auto-select,temporal-r2-t128,temporal-r2-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp32,native,15,6,measurement-required,online-r4-t256,,,bracketing anchors select different mappings
+fft,fp16,fp32,20,2,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+subset-zeta,uint32,native,15,7,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,native,20,2,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,native,8,1,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fft,fp64,native,15,6,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,fp32,15,6,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,fp32,20,2,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,fp32,8,1280,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fwht,fp16,fp32,20,2,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,fp32,native,15,6,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp32,native,15,9,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,native,8,1281,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fft,bf16,native,15,6,auto-select,online-r2-t256,online-r2-t256,1.0,same stable winner at both held-out batch anchors
+fwht,fp16,fp32,15,7,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp64,native,8,800,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+subset-zeta,uint32,native,8,959,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp64,native,15,1,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fft,fp32,native,8,800,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fft,bf16,fp32,15,7,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+subset-zeta,uint32,native,20,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp32,native,8,1279,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp32,native,15,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,fp32,15,4,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,fp16,fp32,15,5,measurement-required,online-r4-t256,,,focused full timing marks target as an unstable boundary
+fft,bf16,fp32,8,1279,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fft,fp32,native,15,8,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp64,native,8,1281,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fft,fp16,fp32,8,1281,measurement-required,temporal-r4-t128,,,focused full timing marks target as an unstable boundary
+fft,fp16,native,8,799,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp16,native,8,1279,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fwht,bf16,native,8,960,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,bf16,fp32,20,1,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,fp32,15,9,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp16,native,15,8,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp32,native,8,959,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp16,fp32,8,1280,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,fp32,native,8,1280,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp64,native,8,720,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,bf16,native,8,1280,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fwht,bf16,native,15,7,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fft,fp32,native,8,799,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fwht,bf16,fp32,8,959,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp16,fp32,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp32,native,8,1,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fft,fp16,native,8,801,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,bf16,native,8,1280,auto-select,temporal-r2-t128,temporal-r2-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp64,native,8,961,measurement-required,temporal-r4-t128,,,focused full timing marks target as an unstable boundary
+fwht,fp64,native,8,801,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+subset-zeta,uint32,native,15,8,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,fp64,native,15,7,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fft,fp32,native,20,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,fp16,fp32,20,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp64,native,15,5,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,native,15,7,auto-select,online-r2-t256,online-r2-t256,1.0,same stable winner at both held-out batch anchors
+subset-zeta,uint32,native,15,9,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp32,native,15,8,measurement-required,hier-r4-t256,,,focused full timing marks target as an unstable boundary
+fft,fp16,fp32,15,7,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+ntt,uint64,native,15,320,auto-select,ntt-hybrid-r4-t256,ntt-hybrid-r4-t256,1.0,same stable winner at both held-out batch anchors
+fft,fp64,native,15,8,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,native,15,1,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,native,8,1279,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp16,fp32,15,9,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,fp32,8,1,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp64,native,8,1280,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+ntt,uint64,native,15,319,auto-select,ntt-hybrid-r4-t256,ntt-hybrid-r4-t256,1.0,same stable winner at both held-out batch anchors
+structured-2x2,bf16,fp32,15,8,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp64,native,20,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,native,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fwht,bf16,fp32,8,1280,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fwht,fp16,fp32,8,1279,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+ntt,uint32,native,15,320,auto-select,ntt-hybrid-r4-t256,ntt-hybrid-r4-t256,1.0,same stable winner at both held-out batch anchors
+structured-2x2,fp64,native,20,2,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+subset-zeta,uint32,native,8,1279,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,bf16,native,15,8,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fft,fp16,fp32,15,4,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+ntt,uint32,native,15,319,auto-select,ntt-hybrid-r4-t256,ntt-hybrid-r4-t256,1.0,same stable winner at both held-out batch anchors
+fft,fp64,native,20,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,native,8,1,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fft,fp64,native,8,721,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp16,native,20,1,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp64,native,15,9,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,fp32,8,960,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,bf16,native,8,1281,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fwht,fp32,native,15,8,measurement-required,hier-r4-t256,,,bracketing anchors select different mappings
+structured-2x2,bf16,fp32,8,1280,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,bf16,fp32,8,1279,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fft,bf16,native,15,4,auto-select,online-r2-t256,online-r2-t256,1.0,same stable winner at both held-out batch anchors
+fwht,fp32,native,15,7,measurement-required,online-r4-t256,,,bracketing anchors select different mappings
+fft,fp16,native,15,9,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp64,native,20,2,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+ntt,uint64,native,15,239,measurement-required,ntt-hybrid-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,native,20,1,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,native,8,1280,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+subset-zeta,uint32,native,8,1281,measurement-required,temporal-r4-t128,,,focused full timing marks target as an unstable boundary
+subset-zeta,uint32,native,8,961,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp16,fp32,8,799,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp16,fp32,15,8,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,native,20,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp16,native,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,bf16,native,8,960,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fft,fp64,native,15,5,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp16,native,15,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,bf16,fp32,8,799,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fft,fp16,native,8,1280,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,bf16,fp32,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp64,native,8,801,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp16,native,15,9,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,native,8,1280,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,bf16,fp32,20,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,fp32,15,8,auto-select,hier-r4-t256,hier-r4-t256,1.0,same stable winner at both held-out batch anchors
+fwht,fp32,native,20,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,fp16,native,15,4,measurement-required,online-r4-t256,,,bracketing anchors select different mappings
+structured-2x2,fp16,fp32,8,1280,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp64,native,20,2,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,native,8,959,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,fp64,native,15,4,auto-select,online-r4-t256,online-r4-t256,1.0,same stable winner at both held-out batch anchors
+structured-2x2,fp16,fp32,8,1279,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp16,fp32,15,8,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp64,native,15,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,native,15,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+ntt,uint64,native,15,240,measurement-required,ntt-hybrid-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,native,8,1279,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+subset-zeta,uint32,native,20,2,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fwht,fp16,fp32,8,961,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+subset-zeta,uint32,native,8,1280,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,bf16,fp32,8,961,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+structured-2x2,bf16,native,15,9,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+ntt,uint64,native,20,1,measurement-required,ntt-hybrid-r2-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,fp32,15,9,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,fp32,native,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp64,native,15,6,auto-select,online-r4-t256,online-r4-t256,1.0,same stable winner at both held-out batch anchors
+fft,fp16,native,15,7,measurement-required,online-r4-t256,,,bracketing anchors select different mappings
+fwht,fp32,native,8,960,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,bf16,fp32,15,8,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fft,bf16,fp32,15,1,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,native,20,2,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp64,native,15,6,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,fp16,native,8,800,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,fp64,native,15,8,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp16,native,8,1280,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fwht,fp16,native,15,7,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,fp32,15,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,fp32,native,8,801,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp16,native,15,6,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,fp16,native,20,2,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,native,15,8,auto-select,hier-r4-t256,hier-r4-t256,1.0,same stable winner at both held-out batch anchors
+fwht,fp16,native,8,960,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp32,native,15,9,measurement-required,hier-r4-t256,,,bracketing anchors select different mappings
+structured-2x2,fp32,native,20,2,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,native,15,7,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp16,native,8,961,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,bf16,fp32,15,5,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+subset-zeta,uint32,native,8,960,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,bf16,fp32,15,6,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp32,native,8,1281,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp32,native,15,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,fp32,20,2,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp64,native,15,9,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+ntt,uint64,native,15,321,measurement-required,ntt-hybrid-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp32,native,20,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,fp32,8,959,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp16,native,8,1281,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fft,fp32,native,8,1281,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,bf16,fp32,15,6,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,native,8,961,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+ntt,uint64,native,15,1,measurement-required,ntt-hybrid-r2-t256,,,target is not bracketed by stable anchors
+fwht,fp64,native,8,1279,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,bf16,fp32,15,1,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fft,fp16,native,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fwht,fp32,native,8,1280,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp32,native,15,7,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,bf16,fp32,8,1279,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp64,native,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp16,native,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp32,native,8,961,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+ntt,uint32,native,20,1,measurement-required,ntt-hybrid-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,fp32,8,1281,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fft,bf16,fp32,8,801,measurement-required,temporal-r2-t128,,,target is not bracketed by stable anchors
+fwht,fp16,native,8,959,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fft,fp64,native,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fft,bf16,native,8,800,auto-select,temporal-r2-t128,temporal-r2-t128,1.0,same stable winner at both held-out batch anchors
+fft,bf16,native,15,8,auto-select,online-r2-t256,online-r2-t256,1.0,same stable winner at both held-out batch anchors
+structured-2x2,fp16,native,8,960,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+fwht,fp16,fp32,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fwht,fp16,native,20,1,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,native,15,9,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp16,fp32,8,959,auto-select,temporal-r4-t128,temporal-r4-t128,1.0,same stable winner at both held-out batch anchors
+structured-2x2,fp64,native,8,1,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp32,native,8,640,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+fft,bf16,fp32,18,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,fp16,fp32,18,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+subset-zeta,uint32,native,8,1920,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,bf16,native,18,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,fp64,native,8,1440,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,fp32,native,15,13,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,native,18,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+structured-2x2,fp16,fp32,18,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,fp64,native,18,1,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fwht,fp32,native,15,13,measurement-required,hier-r4-t256,,,target is not bracketed by stable anchors
+fft,fp16,native,20,3,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fft,fp16,fp32,8,1600,measurement-required,temporal-r4-t128,,,target is not bracketed by stable anchors
+structured-2x2,bf16,fp32,18,1,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors
+fwht,fp16,native,18,1,measurement-required,online-r4-t256,,,target is not bracketed by stable anchors
+fwht,bf16,native,18,1,measurement-required,online-r2-t256,,,target is not bracketed by stable anchors

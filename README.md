@@ -95,10 +95,10 @@ M = (Us, Ts, Ud, Td, Ub, Tb, Hs, Rs, Rd, Rb, L, F, Q)
 | Operator | Numeric forms | Processing-unit candidates | Mapping families |
 |:--|:--|:--|:--|
 | NTT | 32/64-bit words, compatible primes below `2^63` | radix-2/4/8, Shoup, Barrett, fused coset twiddles | baseline, local tile, Hybrid2D, compact stage, stage pipeline |
-| FFT | FP32, FP64, FP16 input with FP32 accumulation | radix-2/4/8, four-multiply, Gauss-3, thread/CTA/WMMA DFT8, FP32/FP64 cuFFTDx | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
-| FWHT | FP32, FP64 | radix-2/4/8, shared and warp-register exchange | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
+| FFT | FP16/BF16 storage with native or FP32 accumulation, FP32, FP64, legacy FP16/FP32 WMMA | radix-2/4/8, four-multiply, Gauss-3, thread/CTA/WMMA DFT8, FP32/FP64 cuFFTDx | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
+| FWHT | FP16/BF16 storage with native or FP32 accumulation, FP32, FP64 | radix-2/4/8, shared and warp-register exchange | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
 | Subset/superset zeta and Mobius | uint32 | asymmetric radix-2/4/8 | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
-| Structured 2x2 | FP32, FP64 stage matrices | parameterized radix-2/4/8; generated FP32 warp-register matrix core | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
+| Structured 2x2 | FP16/BF16 storage with native or FP32 accumulation, FP32, FP64 stage matrices | parameterized radix-2/4/8; generated FP32 warp-register matrix core | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
 
 The historical `xor-zeta` API name is retained as a compatibility spelling for
 its original subset-zeta behavior. See the [Operator
@@ -129,6 +129,24 @@ that observation into a processing-unit, mapping, and runtime-dispatch flow.
 Its FFT lowering now treats logical decomposition count and physical execution
 group count as independent parameters: adjacent logical segments can be fused
 without forcing an intermediate global-memory pass.
+The [numeric-regime study](docs/next_phase_numeric_regimes.md) adds FP16/BF16
+accumulation and integer controls. Its 736-case quick screen confirms that the
+best mapping changes with numeric semantics; full-protocol follow-ups and NCU
+then separate stable length transitions from unstable batch boundaries. The
+quick rows guide focused measurement rather than extend the cross-library
+claims below. The resulting
+[piecewise selector](results/v100_numeric_piecewise_report.md) safely
+auto-selects a measured stable subset (27.74% leave-one-batch-out coverage,
+1.00013x geometric-mean and 1.01112x worst regret) and explicitly requests a
+short measurement outside that subset.
+
+The matching-protocol [library/base/search comparison](docs/v100_three_way_comparison.md)
+separates mapping-search gain from external-library position. Across ten
+representative V100 shapes, searched configurations are 2.349x faster than the
+fixed radix-2 base by geometric mean and 1.109x faster than the matched
+cuFFT/Dao FHT/GPU-NTT rows. Operator-level ratios are 1.015x for FFT, 1.054x
+for FWHT, and 1.313x for NTT; these summarize the selected matrix rather than
+all precisions and shapes.
 
 ### Same-Machine Library Comparisons
 
@@ -302,10 +320,11 @@ Development priorities are tracked in [`ROADMAP.md`](ROADMAP.md), and evidence
 requirements for contributions are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 Versioned changes are recorded in [`CHANGELOG.md`](CHANGELOG.md). The completed
 v0.3.0 mapping-selection milestone is archived in
-[v0.3.0 Mapping-Selection Milestone](docs/next_phase_v0.3.md). The next study
-conditions resource cliffs and mapping preference on numeric representation,
-length, batch, layout, and processing-unit cost; its hypotheses and completion
-criteria are in [Numeric-Regime Mapping Study](docs/next_phase_numeric_regimes.md).
+[v0.3.0 Mapping-Selection Milestone](docs/next_phase_v0.3.md). The completed
+fixed-V100 v0.5 study conditions resource cliffs and mapping preference on
+numeric representation, length, batch, and processing-unit cost; its
+hypotheses, measured boundaries, manifest generator, and analysis commands are in
+[Numeric-Regime Mapping Study](docs/next_phase_numeric_regimes.md).
 
 ## Evidence Boundary
 

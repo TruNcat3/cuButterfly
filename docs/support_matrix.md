@@ -26,10 +26,10 @@ on another GPU is not a performance-portability claim.
 
 | Operator | Types | Direction | Placement/layout | Length |
 |:--|:--|:--|:--|:--|
-| FFT | complex FP32, complex FP64; limited mixed FP16/FP32 core | forward/inverse, optional inverse normalization | in/out of place, positive element stride and valid batch stride | power of two, common runtime `logN=1..20` subject to backend |
-| FWHT | FP32, FP64 | forward/inverse, optional inverse normalization | in/out of place, positive element stride and valid batch stride | power of two, common runtime `logN=1..20` subject to backend |
+| FFT | complex FP16/BF16 storage with native-width or FP32 accumulation; complex FP32/FP64; legacy mixed FP16/FP32 WMMA core | forward/inverse, optional inverse normalization | in/out of place, positive element stride and valid batch stride | power of two, common runtime `logN=1..20` subject to backend |
+| FWHT | FP16/BF16 storage with native-width or FP32 accumulation; FP32/FP64 | forward/inverse, optional inverse normalization | in/out of place, positive element stride and valid batch stride | power of two, common runtime `logN=1..20` subject to backend |
 | subset/superset zeta/Mobius | uint32 | forward/inverse | in/out of place, positive element stride and valid batch stride | power of two, common runtime `logN=1..20` subject to backend |
-| structured 2x2 | FP32, FP64 | forward/inverse for nonsingular matrices | in/out of place, positive element stride and valid batch stride | power of two, common runtime `logN=1..20`; generated FP32 warp-register core at `logN=3..15` |
+| structured 2x2 | FP16/BF16 storage with native-width or FP32 accumulation; FP32/FP64 | forward/inverse for nonsingular matrices | in/out of place, positive element stride and valid batch stride | power of two, common runtime `logN=1..20`; generated FP32 warp-register core at `logN=3..15` |
 | legacy `xor-zeta` name | uint32 | established subset-zeta behavior | same as subset zeta | retained for API/CLI/result compatibility |
 | NTT | uint32 or uint64 physical words | forward/inverse subject to backend | contiguous batches, device API out of place | power of two, `logN=1..30` with stricter backend ranges |
 
@@ -43,6 +43,12 @@ restrictions are rejected during `Plan` construction:
   path, with output order controlling workspace behavior;
 - StagePipeline currently supports forward, natural-order 64-bit `logN=8`;
 - 32-bit words currently require Hybrid2D and a modulus below `2^31`.
+
+FP16/BF16 results are narrowed after every logical butterfly output. V100 has
+no native BF16 arithmetic path, so BF16 `Native` measurements on `sm_70` are
+explicitly labeled `emulated_native=1`; this is an arithmetic-contract control,
+not a native-BF16 throughput claim. The legacy `Fp16Fp32` precision remains a
+separate FP32-storage WMMA processing-unit contract.
 
 ## Optional Build Features
 
