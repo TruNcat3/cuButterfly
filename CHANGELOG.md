@@ -2,7 +2,7 @@
 
 All notable repository and research-artifact changes are recorded here.
 
-## Unreleased - v0.5.0 Numeric-Regime Mapping
+## 0.5.0 - 2026-08-08 Numeric-Regime Mapping
 
 ### Added
 

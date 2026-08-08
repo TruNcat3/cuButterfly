@@ -356,7 +356,7 @@ software release as:
   author  = {TruNcat3},
   title   = {cuButterfly: Hardware-Mapped Space-Time Parallelism for Butterfly Computations on GPUs},
   year    = {2026},
-  version = {0.4.0},
+  version = {0.5.0},
   url     = {https://github.com/TruNcat3/cuButterfly}
 }
 ```
