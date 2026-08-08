@@ -4,7 +4,7 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
     set(CMAKE_CUDA_ARCHITECTURES 70 CACHE STRING "CUDA architectures to compile for")
 endif()
 
-project(cuButterfly VERSION 0.4.0 LANGUAGES CXX CUDA)
+project(cuButterfly VERSION 0.5.0 LANGUAGES CXX CUDA)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -277,6 +277,8 @@ if(BUILD_TESTING)
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_comprehensive_suite.py")
     add_test(NAME scaling_suite
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_scaling_suite.py")
+    add_test(NAME numeric_regime_study
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_numeric_regime_study.py")
     add_test(NAME mapping_selector
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mapping_selector.py")
     add_test(NAME external_baseline_suite

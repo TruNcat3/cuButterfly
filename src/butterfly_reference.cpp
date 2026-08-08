@@ -12,6 +12,10 @@ const char* butterfly_precision_name(ButterflyPrecision precision) noexcept {
             return "fp32";
         case ButterflyPrecision::Fp64:
             return "fp64";
+        case ButterflyPrecision::Fp16:
+            return "fp16";
+        case ButterflyPrecision::Bf16:
+            return "bf16";
         case ButterflyPrecision::Fp16Fp32:
             return "fp16-fp32";
         case ButterflyPrecision::Uint32:
@@ -25,11 +29,27 @@ ButterflyPrecision parse_butterfly_precision(const std::string& name) {
         return ButterflyPrecision::Fp32;
     if (name == "fp64")
         return ButterflyPrecision::Fp64;
+    if (name == "fp16")
+        return ButterflyPrecision::Fp16;
+    if (name == "bf16")
+        return ButterflyPrecision::Bf16;
     if (name == "fp16-fp32")
         return ButterflyPrecision::Fp16Fp32;
     if (name == "uint32")
         return ButterflyPrecision::Uint32;
     throw std::invalid_argument("unknown butterfly precision: " + name);
+}
+
+const char* butterfly_accumulation_name(ButterflyAccumulation accumulation) noexcept {
+    return accumulation == ButterflyAccumulation::Fp32 ? "fp32" : "native";
+}
+
+ButterflyAccumulation parse_butterfly_accumulation(const std::string& name) {
+    if (name == "native")
+        return ButterflyAccumulation::Native;
+    if (name == "fp32")
+        return ButterflyAccumulation::Fp32;
+    throw std::invalid_argument("unknown butterfly accumulation: " + name);
 }
 
 const char* butterfly_placement_name(ButterflyPlacement placement) noexcept {

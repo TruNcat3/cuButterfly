@@ -1,0 +1,6164 @@
+{
+  "schema_version": 1,
+  "method": "piecewise batch interpolation with explicit abstention",
+  "minimum_anchor_margin": 0.15,
+  "minimum_full_anchor_margin": 0.05,
+  "scope": "exact V100 numeric contract and measured length only",
+  "unseen_contract_policy": "measurement-required",
+  "out_of_range_policy": "measurement-required",
+  "contracts": [
+    {
+      "operator": "fft",
+      "precision": "bf16",
+      "accumulation": "fp32",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.23727045075125197,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 799,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.10961538461538467,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 800,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.0689575998775449,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 801,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.02014479068303432,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.04894218020406971,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.049576295613074306,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.013102376193648624,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 799,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 799,
+          "batch_max": 800,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 800,
+          "batch_max": 801,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 801,
+          "batch_max": 1279,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "bf16",
+      "accumulation": "fp32",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.10506807327678369,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 4,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.07226432887429723,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 5,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.07693531958237854,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.08216841869827762,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.04265402843601884,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.003918144843593652,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.1218234991898195,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 4,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 4,
+          "batch_max": 5,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 5,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "bf16",
+      "accumulation": "fp32",
+      "logN": 18,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.0853003834682573,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": []
+    },
+    {
+      "operator": "fft",
+      "precision": "bf16",
+      "accumulation": "fp32",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.14989914193536436,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.15488774528553373,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "auto-select",
+          "mapping": "online-r4-t256",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "bf16",
+      "accumulation": "native",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.5,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 799,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.19115761399189624,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 800,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.19164411366711787,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 801,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.1020882955741429,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.20884861407249478,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.1992522011820046,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.16626430963320615,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 799,
+          "decision": "auto-select",
+          "mapping": "temporal-r2-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 799,
+          "batch_max": 800,
+          "decision": "auto-select",
+          "mapping": "temporal-r2-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 800,
+          "batch_max": 801,
+          "decision": "auto-select",
+          "mapping": "temporal-r2-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 801,
+          "batch_max": 1279,
+          "decision": "auto-select",
+          "mapping": "temporal-r2-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "auto-select",
+          "mapping": "temporal-r2-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "auto-select",
+          "mapping": "temporal-r2-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "bf16",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.22234960884812516,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 4,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.2613206998779283,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 5,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.10802292263610314,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.2312989946410382,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.17594689574385014,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 8,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.08799815710665748,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 9,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.051848172656337566,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 4,
+          "decision": "auto-select",
+          "mapping": "online-r2-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 4,
+          "batch_max": 5,
+          "decision": "auto-select",
+          "mapping": "online-r2-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 5,
+          "batch_max": 6,
+          "decision": "auto-select",
+          "mapping": "online-r2-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "auto-select",
+          "mapping": "online-r2-t256",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "auto-select",
+          "mapping": "online-r2-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "auto-select",
+          "mapping": "online-r2-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "bf16",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.12317888228388618,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.11675594115428134,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "auto-select",
+          "mapping": "online-r4-t256",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "fp16",
+      "accumulation": "fp32",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.12600229095074456,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 799,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.024613899613899592,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 800,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.024613899613899592,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 801,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.03239570164348926,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.06358454718176065,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.0662016487000634,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.08117291719103958,
+          "evidence": "full",
+          "evidence_boundary": true,
+          "stable": false
+        },
+        {
+          "batch": 1600,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.13107638888888884,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 799,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 799,
+          "batch_max": 800,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 800,
+          "batch_max": 801,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 801,
+          "batch_max": 1279,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 1281,
+          "batch_max": 1600,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "fp16",
+      "accumulation": "fp32",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.05239943542695835,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 4,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.061563043376098525,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 5,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.06709798177083326,
+          "evidence": "full",
+          "evidence_boundary": true,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.060678934894744296,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 7,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.04638498884660813,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.027618838028169,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.15119356006796458,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 4,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 4,
+          "batch_max": 5,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 5,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "fp16",
+      "accumulation": "fp32",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.06365882846618898,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.11644556924088723,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "auto-select",
+          "mapping": "online-r4-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "fp16",
+      "accumulation": "native",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.25351170568561865,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 799,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1543524416135882,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 800,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.15668789808917194,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 801,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1539927981359881,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.30005051355447065,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.17972350230414724,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.2527763088313062,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 799,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 799,
+          "batch_max": 800,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 800,
+          "batch_max": 801,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 801,
+          "batch_max": 1279,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "fp16",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.11238509439557198,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 4,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.05741365621278294,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 5,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.046931565403236286,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.019327318712015318,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.007438262421898267,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.28314087759815254,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.3760834670947031,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 4,
+          "decision": "auto-select",
+          "mapping": "online-r4-t256",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 4,
+          "batch_max": 5,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 5,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "fp16",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.0062421280269964186,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 2,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.23479781439096903,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 3,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.23666620528968707,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 2,
+          "batch_max": 3,
+          "decision": "auto-select",
+          "mapping": "online-r4-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "fp32",
+      "accumulation": "native",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.04305592018902593,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 799,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.03934384211200803,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 800,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.11693318103940609,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 801,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1943359375,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.14925531914893608,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.15047923322683698,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1490657582326831,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 799,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 799,
+          "batch_max": 800,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 800,
+          "batch_max": 801,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 801,
+          "batch_max": 1279,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "fp32",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.2906357949771263,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 4,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.1214666031773517,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 5,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.1421601681805562,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.04979761216367895,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.03197087438046853,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.018642024909602206,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.021196227504571175,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 4,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 4,
+          "batch_max": 5,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 5,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "fp32",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.12023992357273272,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.17771363872596346,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "auto-select",
+          "mapping": "online-r4-t256",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "fp64",
+      "accumulation": "native",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1170382165605095,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 719,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1464247598719317,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 720,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.13572261690170717,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 721,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.2896236012207529,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 959,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.024104196133899025,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 960,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.03462792766083589,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 961,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.02327616380819042,
+          "evidence": "full",
+          "evidence_boundary": true,
+          "stable": false
+        },
+        {
+          "batch": 1440,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.07928586792858683,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 719,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 719,
+          "batch_max": 720,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 720,
+          "batch_max": 721,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 721,
+          "batch_max": 959,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 959,
+          "batch_max": 960,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 960,
+          "batch_max": 961,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 961,
+          "batch_max": 1440,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "fp64",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.024908592321754908,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 4,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.016184454676654525,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 5,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.0657652658937593,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.020475801325706033,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.09464850136239789,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.03378445517597717,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 4,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 4,
+          "batch_max": 5,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 5,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fft",
+      "precision": "fp64",
+      "accumulation": "native",
+      "logN": 18,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.05612105541089285,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": []
+    },
+    {
+      "operator": "fft",
+      "precision": "fp64",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.0945128274816367,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.13076710137795278,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "auto-select",
+          "mapping": "online-r4-t256",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "bf16",
+      "accumulation": "fp32",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.059203810820006586,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 959,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.04253112033195028,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 960,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.036898321542516266,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 961,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.06168786759677203,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.16233539214543757,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.05851658591129327,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.07333333333333347,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 959,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 959,
+          "batch_max": 960,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 960,
+          "batch_max": 961,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 961,
+          "batch_max": 1279,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "bf16",
+      "accumulation": "fp32",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.02688172043010728,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.15178417514221687,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.10805150480918391,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.00898223813061394,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.06761307362165714,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "bf16",
+      "accumulation": "fp32",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.1524986874134886,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.16076804709975256,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "auto-select",
+          "mapping": "hier-r4-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "bf16",
+      "accumulation": "native",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.05940594059405924,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 959,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.0440783615316116,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 960,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.0440783615316116,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 961,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.05339524085896685,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.05561035758323052,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.05055487053020968,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.07836835599505565,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 959,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 959,
+          "batch_max": 960,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 960,
+          "batch_max": 961,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 961,
+          "batch_max": 1279,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "bf16",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.024687294272547566,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.10755208333333321,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.06802189210320564,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 8,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.024413680202142407,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.00713432439607109,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "auto-select",
+          "mapping": "online-r2-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "bf16",
+      "accumulation": "native",
+      "logN": 18,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.15489947231313872,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": []
+    },
+    {
+      "operator": "fwht",
+      "precision": "bf16",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.29226722527047455,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.010196806283315096,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp16",
+      "accumulation": "fp32",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1879588839941264,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 959,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.17271275382158335,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 960,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.11819021237303784,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 961,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.12022109626900046,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1428273995419529,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.14045293995429065,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.168627450980392,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 959,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 959,
+          "batch_max": 960,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 960,
+          "batch_max": 961,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 961,
+          "batch_max": 1279,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp16",
+      "accumulation": "fp32",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.010723581467985355,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.03193979165710603,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 7,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.02288568340228858,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.08409043766853341,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.1337448559670782,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "auto-select",
+          "mapping": "hier-r4-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp16",
+      "accumulation": "fp32",
+      "logN": 18,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.08441798550510282,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": []
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp16",
+      "accumulation": "fp32",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.4219527966375687,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.16803817500121743,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "auto-select",
+          "mapping": "hier-r4-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp16",
+      "accumulation": "native",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.09003601440576237,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 959,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.11013215859030834,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 960,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.11285574092247308,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 961,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.2837706511175899,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.2921348314606742,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.13324652777777768,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.004053271569195216,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 959,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 959,
+          "batch_max": 960,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 960,
+          "batch_max": 961,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 961,
+          "batch_max": 1279,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp16",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.06020708168221889,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.02738060499951378,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.03281243236223541,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.024533503815878932,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.2506060256262266,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp16",
+      "accumulation": "native",
+      "logN": 18,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.09711968787055802,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": []
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp16",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.48335016863839453,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.23193488664547446,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "auto-select",
+          "mapping": "hier-r4-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp32",
+      "accumulation": "native",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.08932115919015482,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 959,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.13809411208323463,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 960,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.13809411208323463,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 961,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.2641639797328419,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.011113135361632498,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.08823529411764697,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.14253064616663225,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 959,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 959,
+          "batch_max": 960,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 960,
+          "batch_max": 961,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 961,
+          "batch_max": 1279,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp32",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.06639865127739575,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.02550073277967768,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.028119278053884367,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.04671502590673571,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.11940658545410687,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 13,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.29400166044001663,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 9,
+          "batch_max": 13,
+          "decision": "auto-select",
+          "mapping": "hier-r4-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp32",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.033846222113752544,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 2,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.019767949262064377,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "accumulation": "native",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.09370904325032758,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 799,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.010812696198116312,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 800,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1280625543006082,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 801,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.16538688718251615,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.18628518115378645,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.36369202510332177,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.19361339327236093,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 799,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 799,
+          "batch_max": 800,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 800,
+          "batch_max": 801,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 801,
+          "batch_max": 1279,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.002482856467249883,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 4,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.1423225423225425,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 5,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.20648501362397798,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.024964131994261063,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.029511722951172326,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.0939411593358579,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.022194361615613944,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 4,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 4,
+          "batch_max": 5,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 5,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.08945846215218922,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 2,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.10359349891612646,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "ntt",
+      "precision": "uint32",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "ntt-hybrid-r4-t256",
+          "runner_up": "ntt-hybrid-r2-t256",
+          "winner_margin": 0.2038366844480921,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 319,
+          "mapping": "ntt-hybrid-r4-t256",
+          "runner_up": "ntt-hybrid-r2-t256",
+          "winner_margin": 0.14171579730865824,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 320,
+          "mapping": "ntt-hybrid-r4-t256",
+          "runner_up": "ntt-hybrid-r2-t256",
+          "winner_margin": 0.14224525817985678,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 321,
+          "mapping": "ntt-hybrid-r4-t256",
+          "runner_up": "ntt-hybrid-r2-t256",
+          "winner_margin": 0.14706440634465712,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 319,
+          "decision": "auto-select",
+          "mapping": "ntt-hybrid-r4-t256",
+          "candidates": [
+            "ntt-hybrid-r2-t256",
+            "ntt-hybrid-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 319,
+          "batch_max": 320,
+          "decision": "auto-select",
+          "mapping": "ntt-hybrid-r4-t256",
+          "candidates": [
+            "ntt-hybrid-r2-t256",
+            "ntt-hybrid-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 320,
+          "batch_max": 321,
+          "decision": "auto-select",
+          "mapping": "ntt-hybrid-r4-t256",
+          "candidates": [
+            "ntt-hybrid-r2-t256",
+            "ntt-hybrid-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "ntt",
+      "precision": "uint32",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "ntt-hybrid-r4-t256",
+          "runner_up": "ntt-hybrid-r2-t256",
+          "winner_margin": 0.19459588564545105,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": []
+    },
+    {
+      "operator": "ntt",
+      "precision": "uint64",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "ntt-hybrid-r2-t256",
+          "runner_up": "ntt-hybrid-r4-t256",
+          "winner_margin": 0.003375874845615634,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 239,
+          "mapping": "ntt-hybrid-r4-t256",
+          "runner_up": "ntt-hybrid-r2-t256",
+          "winner_margin": 0.029561583827604432,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 240,
+          "mapping": "ntt-hybrid-r4-t256",
+          "runner_up": "ntt-hybrid-r2-t256",
+          "winner_margin": 0.08744806588364651,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 241,
+          "mapping": "ntt-hybrid-r4-t256",
+          "runner_up": "ntt-hybrid-r2-t256",
+          "winner_margin": 0.09123084215515864,
+          "evidence": "full",
+          "evidence_boundary": true,
+          "stable": false
+        },
+        {
+          "batch": 319,
+          "mapping": "ntt-hybrid-r4-t256",
+          "runner_up": "ntt-hybrid-r2-t256",
+          "winner_margin": 0.08671779453730144,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 320,
+          "mapping": "ntt-hybrid-r4-t256",
+          "runner_up": "ntt-hybrid-r2-t256",
+          "winner_margin": 0.08940173016020125,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 321,
+          "mapping": "ntt-hybrid-r4-t256",
+          "runner_up": "ntt-hybrid-r2-t256",
+          "winner_margin": 0.08695887213586029,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 239,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "ntt-hybrid-r2-t256",
+            "ntt-hybrid-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 239,
+          "batch_max": 240,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "ntt-hybrid-r2-t256",
+            "ntt-hybrid-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 240,
+          "batch_max": 241,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "ntt-hybrid-r2-t256",
+            "ntt-hybrid-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 241,
+          "batch_max": 319,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "ntt-hybrid-r2-t256",
+            "ntt-hybrid-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 319,
+          "batch_max": 320,
+          "decision": "auto-select",
+          "mapping": "ntt-hybrid-r4-t256",
+          "candidates": [
+            "ntt-hybrid-r2-t256",
+            "ntt-hybrid-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 320,
+          "batch_max": 321,
+          "decision": "auto-select",
+          "mapping": "ntt-hybrid-r4-t256",
+          "candidates": [
+            "ntt-hybrid-r2-t256",
+            "ntt-hybrid-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "ntt",
+      "precision": "uint64",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "ntt-hybrid-r2-t256",
+          "runner_up": "ntt-hybrid-r4-t256",
+          "winner_margin": 0.02136963356535837,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": []
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "bf16",
+      "accumulation": "fp32",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.06687402799377917,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 959,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1591653027823241,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 960,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.2638003526380035,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 961,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1227186052846636,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.17709993170953786,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1216418770898191,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.2023620258914378,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 959,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 959,
+          "batch_max": 960,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 960,
+          "batch_max": 961,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 961,
+          "batch_max": 1279,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "bf16",
+      "accumulation": "fp32",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.18327366746221152,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.022933294810213445,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.15169554587009682,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.0522518289818108,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.0675354323218873,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "bf16",
+      "accumulation": "fp32",
+      "logN": 18,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.02487997740751191,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": []
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "bf16",
+      "accumulation": "fp32",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.29670389837932554,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.09719280829472754,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "auto-select",
+          "mapping": "hier-r4-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "bf16",
+      "accumulation": "native",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.2934027777777777,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 959,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.03001464128843323,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 960,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.0894913277947822,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 961,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.05024865982044835,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.03167082294264345,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.11859027893769825,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.024120011765859317,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 959,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 959,
+          "batch_max": 960,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 960,
+          "batch_max": 961,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 961,
+          "batch_max": 1279,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "bf16",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.23479959239130443,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.08765765765765754,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.048334178025554175,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.04637174079754591,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "online-r2-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.02538505419281223,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 6,
+          "decision": "auto-select",
+          "mapping": "online-r2-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "bf16",
+      "accumulation": "native",
+      "logN": 18,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.10776072833958139,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": []
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "bf16",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.10550116000157295,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.044572932062172166,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp16",
+      "accumulation": "fp32",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.2171538708641183,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 959,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.4244973327862127,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 960,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.2293178519593615,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 961,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.2401120056002799,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.17181208053691277,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.32723721590909083,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.33351026185421095,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 959,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 959,
+          "batch_max": 960,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 960,
+          "batch_max": 961,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 961,
+          "batch_max": 1279,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp16",
+      "accumulation": "fp32",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.05087177223570949,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.0061709748414102705,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 7,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.06702622586355944,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 8,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.13828261908555062,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.18133524225755404,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp16",
+      "accumulation": "fp32",
+      "logN": 18,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.026553443860358517,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": []
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp16",
+      "accumulation": "fp32",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.4195695061982865,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.3118651072980776,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "auto-select",
+          "mapping": "hier-r4-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp16",
+      "accumulation": "native",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1335753176043557,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 959,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.22126188418323234,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 960,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.2977430555555556,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 961,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.24001736111111116,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.22116065109695682,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.36015022731765156,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.23386342376052394,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 959,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 959,
+          "batch_max": 960,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 960,
+          "batch_max": 961,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 961,
+          "batch_max": 1279,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp16",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.08276578552464486,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.0455779587839944,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 7,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.050104206541618845,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 8,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.1242956579383494,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.3197501951600312,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "auto-select",
+          "mapping": "hier-r4-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "auto-select",
+          "mapping": "hier-r4-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp16",
+      "accumulation": "native",
+      "logN": 18,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.051352687716324175,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": []
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp16",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.4695086682611891,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.24470334068934418,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "auto-select",
+          "mapping": "hier-r4-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp32",
+      "accumulation": "native",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r2-t128",
+          "runner_up": "temporal-r4-t128",
+          "winner_margin": 0.025339925834363397,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 640,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.15626488804192462,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 959,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.23176865046102257,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 960,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.2372132182698381,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 961,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.3205603625875566,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.2278019113814076,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1792587879751868,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.49990890872654403,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 640,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 640,
+          "batch_max": 959,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 959,
+          "batch_max": 960,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 960,
+          "batch_max": 961,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 961,
+          "batch_max": 1279,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp32",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.05510135513495373,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.1108878892431322,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 7,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.014455429093627847,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.07630327934896464,
+          "evidence": "full",
+          "evidence_boundary": true,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.13812451960030736,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 13,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.29675363473411664,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 9,
+          "batch_max": 13,
+          "decision": "auto-select",
+          "mapping": "hier-r4-t256",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp32",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.04689276735136705,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 2,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.02799862132352926,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp64",
+      "accumulation": "native",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.40235910878112713,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 799,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.34726743189994846,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 800,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.16365788694880123,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 801,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.29162479061976554,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.42580491861708447,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.36223218734429485,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1560420691135438,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 799,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 799,
+          "batch_max": 800,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 800,
+          "batch_max": 801,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 801,
+          "batch_max": 1279,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp64",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.15020801401357575,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 4,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.05547515677761705,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 5,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.05475504322766578,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.05402200139042246,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.05673602701016556,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 8,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.052579626217425623,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.06383759004584166,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 4,
+          "decision": "auto-select",
+          "mapping": "online-r4-t256",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 4,
+          "batch_max": 5,
+          "decision": "auto-select",
+          "mapping": "online-r4-t256",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 5,
+          "batch_max": 6,
+          "decision": "auto-select",
+          "mapping": "online-r4-t256",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "auto-select",
+          "mapping": "online-r4-t256",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp64",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.09786152040683271,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 2,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.087626728588311,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "auto-select",
+          "mapping": "online-r4-t256",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        }
+      ]
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "accumulation": "native",
+      "logN": 8,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.20453671664744322,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 959,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.09931425868999777,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 960,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.10191988622896431,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 961,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.12282352941176478,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1279,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.1103360811667724,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1280,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.10799409407298022,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        },
+        {
+          "batch": 1281,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.09141907334302934,
+          "evidence": "full",
+          "evidence_boundary": true,
+          "stable": false
+        },
+        {
+          "batch": 1920,
+          "mapping": "temporal-r4-t128",
+          "runner_up": "temporal-r2-t128",
+          "winner_margin": 0.0958408679927667,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 959,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 959,
+          "batch_max": 960,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 960,
+          "batch_max": 961,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 961,
+          "batch_max": 1279,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1279,
+          "batch_max": 1280,
+          "decision": "auto-select",
+          "mapping": "temporal-r4-t128",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "same stable winner at both batch anchors"
+        },
+        {
+          "batch_min": 1280,
+          "batch_max": 1281,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 1281,
+          "batch_max": 1920,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "temporal-r2-t128",
+            "temporal-r4-t128"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "accumulation": "native",
+      "logN": 15,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.11628435157846928,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 6,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.0819679761683112,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 7,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.008000347841210509,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 8,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r2-t256",
+          "winner_margin": 0.060427295918367374,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 9,
+          "mapping": "hier-r4-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.1261587249959344,
+          "evidence": "full",
+          "evidence_boundary": false,
+          "stable": true
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 6,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 6,
+          "batch_max": 7,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 7,
+          "batch_max": 8,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        },
+        {
+          "batch_min": 8,
+          "batch_max": 9,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "accumulation": "native",
+      "logN": 20,
+      "anchors": [
+        {
+          "batch": 1,
+          "mapping": "online-r4-t256",
+          "runner_up": "hier-r4-t256",
+          "winner_margin": 0.09492958368283966,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        },
+        {
+          "batch": 2,
+          "mapping": "online-r2-t256",
+          "runner_up": "online-r4-t256",
+          "winner_margin": 0.02455597650411878,
+          "evidence": "quick",
+          "evidence_boundary": false,
+          "stable": false
+        }
+      ],
+      "intervals": [
+        {
+          "batch_min": 1,
+          "batch_max": 2,
+          "decision": "measurement-required",
+          "mapping": "",
+          "candidates": [
+            "hier-r4-t256",
+            "online-r2-t256",
+            "online-r4-t256"
+          ],
+          "reason": "winner, margin, or trial-separation boundary"
+        }
+      ]
+    }
+  ]
+}

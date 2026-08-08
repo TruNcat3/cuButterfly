@@ -9,17 +9,23 @@ online-reorder, warp-hybrid, or stage-pipeline scheduling contracts.
 
 | Operator | Value type | Local pair update | Inverse | Coefficients |
 |:--|:--|:--|:--|:--|
-| FFT | `Complex32`, `Complex64` | weighted complex sum/difference | conjugate twiddle direction; optional `1/N` | stage twiddles |
+| FFT | `Complex16`, `ComplexBf16`, `Complex32`, `Complex64` | weighted complex sum/difference | conjugate twiddle direction; optional `1/N` | stage twiddles |
 | NTT | `uint32`, `uint64` words | modular weighted sum/difference | inverse root and modular scale | modular roots |
-| FWHT | `float`, `double` | `(a+b, a-b)` | same graph; optional `1/N` | none |
+| FWHT | `Fp16`, `Bf16`, `float`, `double` | `(a+b, a-b)` | same graph; optional `1/N` | none |
 | subset zeta/Mobius | `uint32` | forward `b += a`; inverse `b -= a` | Mobius subtraction | none |
 | superset zeta/Mobius | `uint32` | forward `a += b`; inverse `a -= b` | Mobius subtraction | none |
-| structured 2x2 | `float`, `double` | stage matrix times `(a,b)` | inverse of each local matrix | one broadcast or per-stage matrix |
+| structured 2x2 | `Fp16`, `Bf16`, `float`, `double` | stage matrix times `(a,b)` | inverse of each local matrix | one broadcast or per-stage matrix |
 
 All unsigned zeta arithmetic is modulo `2^32`. The pair-update direction is a
 processing-unit property; the stage/data space-time mapping is unchanged.
 This makes the subset/superset pair a direct test that the architecture layer
 does not assume symmetric FFT/FWHT arithmetic.
+
+FP16 and BF16 storage select either native-width or FP32 accumulation and
+narrow each logical butterfly output back to storage width. On V100, the BF16
+native-width contract is emulated and labeled as such because `sm_70` lacks a
+native BF16 arithmetic path. Accumulation policy is part of the processing-unit
+descriptor; it does not change the stage/data mapping abstraction.
 
 ## Subset And Superset Semantics
 

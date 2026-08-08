@@ -86,6 +86,72 @@ class DeviceBuffer {
     void* pointer_ = nullptr;
 };
 
+template <typename Storage>
+struct LowStorage;
+
+template <>
+struct LowStorage<Fp16> {
+    __host__ __device__ static float widen(Fp16 value) { return __half2float(value); }
+    __host__ __device__ static Fp16 narrow(float value) { return __float2half_rn(value); }
+    __device__ static Fp16 add(Fp16 left, Fp16 right) { return __hadd(left, right); }
+    __device__ static Fp16 sub(Fp16 left, Fp16 right) { return __hsub(left, right); }
+    __device__ static Fp16 mul(Fp16 left, Fp16 right) { return __hmul(left, right); }
+    __device__ static Fp16 shuffle(Fp16 value, std::uint32_t mask) {
+        const auto bits = __shfl_xor_sync(0xffffffffU, static_cast<unsigned int>(__half_as_ushort(value)), mask);
+        return __ushort_as_half(static_cast<unsigned short>(bits));
+    }
+};
+
+template <>
+struct LowStorage<Bf16> {
+    __host__ __device__ static float widen(Bf16 value) { return __bfloat162float(value); }
+    __host__ __device__ static Bf16 narrow(float value) { return __float2bfloat16_rn(value); }
+    // V100 has no native BF16 arithmetic. Explicit narrowing makes the
+    // emulated-native contract deterministic and visible to the experiment.
+    __device__ static Bf16 add(Bf16 left, Bf16 right) { return narrow(widen(left) + widen(right)); }
+    __device__ static Bf16 sub(Bf16 left, Bf16 right) { return narrow(widen(left) - widen(right)); }
+    __device__ static Bf16 mul(Bf16 left, Bf16 right) { return narrow(widen(left) * widen(right)); }
+    __device__ static Bf16 shuffle(Bf16 value, std::uint32_t mask) {
+        __nv_bfloat16_raw raw = static_cast<__nv_bfloat16_raw>(value);
+        raw.x = static_cast<unsigned short>(
+            __shfl_xor_sync(0xffffffffU, static_cast<unsigned int>(raw.x), mask));
+        return Bf16(raw);
+    }
+};
+
+template <typename Storage, bool Native>
+struct LowMath {
+    static __device__ Storage add(Storage left, Storage right) {
+        if constexpr (Native)
+            return LowStorage<Storage>::add(left, right);
+        return LowStorage<Storage>::narrow(LowStorage<Storage>::widen(left) + LowStorage<Storage>::widen(right));
+    }
+    static __device__ Storage sub(Storage left, Storage right) {
+        if constexpr (Native)
+            return LowStorage<Storage>::sub(left, right);
+        return LowStorage<Storage>::narrow(LowStorage<Storage>::widen(left) - LowStorage<Storage>::widen(right));
+    }
+    static __device__ Storage mul(Storage left, Storage right) {
+        if constexpr (Native)
+            return LowStorage<Storage>::mul(left, right);
+        return LowStorage<Storage>::narrow(LowStorage<Storage>::widen(left) * LowStorage<Storage>::widen(right));
+    }
+    static __device__ Storage linear(Storage c0, Storage x0, Storage c1, Storage x1) {
+        if constexpr (Native)
+            return add(mul(c0, x0), mul(c1, x1));
+        return LowStorage<Storage>::narrow(LowStorage<Storage>::widen(c0) * LowStorage<Storage>::widen(x0) +
+                                           LowStorage<Storage>::widen(c1) * LowStorage<Storage>::widen(x1));
+    }
+};
+
+template <typename Storage>
+struct LowComplexType;
+
+template <>
+struct LowComplexType<Fp16> { using type = Complex16; };
+template <>
+struct LowComplexType<Bf16> { using type = ComplexBf16; };
+
 template <typename Real>
 struct FwhtOperator {
     using Value                            = Real;
@@ -109,6 +175,33 @@ struct FwhtOperator {
 
     __device__ __forceinline__ Value finalize(Value value, std::uint32_t n) const {
         return inverse && normalize_inverse ? value / static_cast<Real>(n) : value;
+    }
+};
+
+template <typename Storage, bool Native>
+struct LowFwhtOperator {
+    using Value                            = Storage;
+    static constexpr bool kBitReverseInput = false;
+
+    bool inverse;
+    bool normalize_inverse;
+
+    __device__ __forceinline__ void apply(std::uint32_t, std::uint32_t, Value& left, Value& right) const {
+        const Storage a = left;
+        const Storage b = right;
+        left            = LowMath<Storage, Native>::add(a, b);
+        right           = LowMath<Storage, Native>::sub(a, b);
+    }
+    __device__ __forceinline__ Value shuffle(Value value, std::uint32_t mask) const {
+        return LowStorage<Storage>::shuffle(value, mask);
+    }
+    __device__ __forceinline__ Value apply_lane(std::uint32_t, std::uint32_t, Value self, Value partner, bool right_lane) const {
+        return right_lane ? LowMath<Storage, Native>::sub(partner, self) : LowMath<Storage, Native>::add(self, partner);
+    }
+    __device__ __forceinline__ Value finalize(Value value, std::uint32_t n) const {
+        if (!inverse || !normalize_inverse)
+            return value;
+        return LowStorage<Storage>::narrow(LowStorage<Storage>::widen(value) / static_cast<float>(n));
     }
 };
 
@@ -148,6 +241,34 @@ struct Structured2x2Operator {
                           : matrix.m00 * self + matrix.m01 * partner;
     }
 
+    __device__ __forceinline__ Value finalize(Value value, std::uint32_t) const { return value; }
+};
+
+template <typename Storage, bool Native>
+struct LowStructured2x2Operator {
+    using Value                            = Storage;
+    static constexpr bool kBitReverseInput = false;
+
+    const DeviceMatrix2x2<Storage>* matrices;
+    bool inverse = false;
+    bool normalize_inverse = false;
+
+    __device__ __forceinline__ void apply(std::uint32_t stage, std::uint32_t, Value& left, Value& right) const {
+        const auto matrix = matrices[stage];
+        const Storage a = left;
+        const Storage b = right;
+        left  = LowMath<Storage, Native>::linear(matrix.m00, a, matrix.m01, b);
+        right = LowMath<Storage, Native>::linear(matrix.m10, a, matrix.m11, b);
+    }
+    __device__ __forceinline__ Value shuffle(Value value, std::uint32_t mask) const {
+        return LowStorage<Storage>::shuffle(value, mask);
+    }
+    __device__ __forceinline__ Value apply_lane(std::uint32_t stage, std::uint32_t, Value self, Value partner,
+                                                 bool right_lane) const {
+        const auto matrix = matrices[stage];
+        return right_lane ? LowMath<Storage, Native>::linear(matrix.m10, partner, matrix.m11, self)
+                          : LowMath<Storage, Native>::linear(matrix.m00, self, matrix.m01, partner);
+    }
     __device__ __forceinline__ Value finalize(Value value, std::uint32_t) const { return value; }
 };
 
@@ -210,6 +331,56 @@ struct FftOperator {
         }
         const Real scale = Real{1} / static_cast<Real>(n);
         return {value.real * scale, value.imag * scale};
+    }
+};
+
+template <typename Storage, bool Native>
+struct LowFftOperator {
+    using Value                            = typename LowComplexType<Storage>::type;
+    static constexpr bool kBitReverseInput = true;
+
+    const Value* twiddles;
+    bool inverse;
+    bool normalize_inverse;
+    ComplexMultiply multiply;
+
+    __device__ __forceinline__ Value product(Value right, Value root) const {
+        if constexpr (Native) {
+            const Storage rr = LowMath<Storage, true>::mul(right.real, root.real);
+            const Storage ii = LowMath<Storage, true>::mul(right.imag, root.imag);
+            const Storage ri = LowMath<Storage, true>::mul(right.real, root.imag);
+            const Storage ir = LowMath<Storage, true>::mul(right.imag, root.real);
+            return {LowMath<Storage, true>::sub(rr, ii), LowMath<Storage, true>::add(ri, ir)};
+        }
+        const float rr = LowStorage<Storage>::widen(right.real);
+        const float ri = LowStorage<Storage>::widen(right.imag);
+        const float wr = LowStorage<Storage>::widen(root.real);
+        const float wi = LowStorage<Storage>::widen(root.imag);
+        return {LowStorage<Storage>::narrow(rr * wr - ri * wi), LowStorage<Storage>::narrow(rr * wi + ri * wr)};
+    }
+    __device__ __forceinline__ void apply(std::uint32_t stage, std::uint32_t offset, Value& left, Value& right) const {
+        const Value weighted = product(right, twiddles[(1U << stage) - 1 + offset]);
+        const Value original = left;
+        left  = {LowMath<Storage, Native>::add(original.real, weighted.real),
+                 LowMath<Storage, Native>::add(original.imag, weighted.imag)};
+        right = {LowMath<Storage, Native>::sub(original.real, weighted.real),
+                 LowMath<Storage, Native>::sub(original.imag, weighted.imag)};
+    }
+    __device__ __forceinline__ Value shuffle(Value value, std::uint32_t mask) const {
+        return {LowStorage<Storage>::shuffle(value.real, mask), LowStorage<Storage>::shuffle(value.imag, mask)};
+    }
+    __device__ __forceinline__ Value apply_lane(std::uint32_t stage, std::uint32_t offset, Value self, Value partner, bool right_lane) const {
+        Value left = right_lane ? partner : self;
+        Value right = right_lane ? self : partner;
+        apply(stage, offset, left, right);
+        return right_lane ? right : left;
+    }
+    __device__ __forceinline__ Value finalize(Value value, std::uint32_t n) const {
+        if (!inverse || !normalize_inverse)
+            return value;
+        const float scale = 1.0F / static_cast<float>(n);
+        return {LowStorage<Storage>::narrow(LowStorage<Storage>::widen(value.real) * scale),
+                LowStorage<Storage>::narrow(LowStorage<Storage>::widen(value.imag) * scale)};
     }
 };
 
@@ -540,8 +711,9 @@ class ButterflyPlan::Impl {
             throw std::invalid_argument("butterfly log_n must be in [1, 20]");
         }
         if (config_.op == ButterflyOperator::Structured2x2) {
-            if (config_.precision != ButterflyPrecision::Fp32 && config_.precision != ButterflyPrecision::Fp64) {
-                throw std::invalid_argument("structured-2x2 requires fp32 or fp64 precision");
+            if (config_.precision != ButterflyPrecision::Fp16 && config_.precision != ButterflyPrecision::Bf16 &&
+                config_.precision != ButterflyPrecision::Fp32 && config_.precision != ButterflyPrecision::Fp64) {
+                throw std::invalid_argument("structured-2x2 requires fp16, bf16, fp32, or fp64 precision");
             }
             if (config_.stage_matrices.size() != 1 && config_.stage_matrices.size() != config_.log_n) {
                 throw std::invalid_argument("structured-2x2 requires one matrix or one matrix per stage");
@@ -830,11 +1002,23 @@ class ButterflyPlan::Impl {
         if (config_.backend == ButterflyBackend::CuFft && config_.op != ButterflyOperator::Fft) {
             throw std::invalid_argument("cufft backend requires the FFT operator");
         }
+        const bool low_precision = config_.precision == ButterflyPrecision::Fp16 ||
+                                   config_.precision == ButterflyPrecision::Bf16;
+        if (!low_precision && config_.accumulation != ButterflyAccumulation::Native) {
+            throw std::invalid_argument("explicit fp32 accumulation requires fp16 or bf16 storage");
+        }
+        if (low_precision && config_.backend == ButterflyBackend::CuFft) {
+            throw std::invalid_argument("low-precision cuFFT is an external baseline, not an internal mapping backend");
+        }
+        if (low_precision && config_.local_exchange == LocalExchange::WarpRegister) {
+            throw std::invalid_argument("generated low-precision warp-register cores are not yet compiled");
+        }
         const bool integer_zeta = config_.op == ButterflyOperator::SubsetZeta ||
                                   config_.op == ButterflyOperator::SupersetZeta ||
                                   config_.op == ButterflyOperator::XorZeta;
         if (integer_zeta) {
             config_.precision         = ButterflyPrecision::Uint32;
+            config_.accumulation      = ButterflyAccumulation::Native;
             config_.normalize_inverse = false;
         } else if (config_.precision == ButterflyPrecision::Uint32) {
             throw std::invalid_argument("uint32 precision requires a subset/superset zeta operator");
@@ -994,9 +1178,25 @@ class ButterflyPlan::Impl {
                                                            config_.element_stride > static_cast<std::size_t>(std::numeric_limits<int>::max()))) {
             throw std::invalid_argument("cuFFT strides exceed backend integer limits");
         }
-        const std::size_t element_bytes = config_.op == ButterflyOperator::Fft
-                                              ? (config_.precision == ButterflyPrecision::Fp64 ? sizeof(Complex64) : sizeof(Complex32))
-                                              : (config_.precision == ButterflyPrecision::Fp64 ? sizeof(double) : sizeof(std::uint32_t));
+        std::size_t element_bytes = 0;
+        if (config_.op == ButterflyOperator::Fft) {
+            if (config_.precision == ButterflyPrecision::Fp64)
+                element_bytes = sizeof(Complex64);
+            else if (config_.precision == ButterflyPrecision::Fp16)
+                element_bytes = sizeof(Complex16);
+            else if (config_.precision == ButterflyPrecision::Bf16)
+                element_bytes = sizeof(ComplexBf16);
+            else
+                element_bytes = sizeof(Complex32);
+        } else if (config_.precision == ButterflyPrecision::Fp64) {
+            element_bytes = sizeof(double);
+        } else if (config_.precision == ButterflyPrecision::Fp16) {
+            element_bytes = sizeof(Fp16);
+        } else if (config_.precision == ButterflyPrecision::Bf16) {
+            element_bytes = sizeof(Bf16);
+        } else {
+            element_bytes = sizeof(std::uint32_t);
+        }
         data_elements_                  = (config_.batch - 1) * config_.batch_stride + transform_extent;
         if (data_elements_ > kMaxSize / element_bytes) {
             throw std::invalid_argument("butterfly allocation size overflows size_t");
@@ -1016,6 +1216,10 @@ class ButterflyPlan::Impl {
         if (config_.op == ButterflyOperator::Structured2x2) {
             if (config_.precision == ButterflyPrecision::Fp64) {
                 initialize_structured_matrices<double>();
+            } else if (config_.precision == ButterflyPrecision::Fp16) {
+                initialize_low_structured_matrices<Fp16>();
+            } else if (config_.precision == ButterflyPrecision::Bf16) {
+                initialize_low_structured_matrices<Bf16>();
             } else {
                 initialize_structured_matrices<float>();
             }
@@ -1035,7 +1239,8 @@ class ButterflyPlan::Impl {
                 device_twiddles_.allocate(twiddles.size() * sizeof(Complex64));
                 CUB_CUDA_CHECK(
                     cudaMemcpy(device_twiddles_.as<Complex64>(), twiddles.data(), twiddles.size() * sizeof(Complex64), cudaMemcpyHostToDevice));
-            } else {
+            } else if (config_.precision == ButterflyPrecision::Fp32 ||
+                       config_.precision == ButterflyPrecision::Fp16Fp32) {
                 std::vector<Complex32> twiddles(points_ - 1);
                 for (std::uint32_t stage = 0; stage < config_.log_n; ++stage) {
                     const std::uint32_t half = 1U << stage;
@@ -1047,6 +1252,10 @@ class ButterflyPlan::Impl {
                 device_twiddles_.allocate(twiddles.size() * sizeof(Complex32));
                 CUB_CUDA_CHECK(
                     cudaMemcpy(device_twiddles_.as<Complex32>(), twiddles.data(), twiddles.size() * sizeof(Complex32), cudaMemcpyHostToDevice));
+            } else if (config_.precision == ButterflyPrecision::Fp16) {
+                initialize_low_twiddles<Fp16, Complex16>();
+            } else {
+                initialize_low_twiddles<Bf16, ComplexBf16>();
             }
         }
 
@@ -1177,6 +1386,52 @@ class ButterflyPlan::Impl {
     }
 
   private:
+    template <typename Storage, typename Complex>
+    void initialize_low_twiddles() {
+        constexpr double kPi = 3.141592653589793238462643383279502884;
+        std::vector<Complex> twiddles(points_ - 1);
+        for (std::uint32_t stage = 0; stage < config_.log_n; ++stage) {
+            const std::uint32_t half = 1U << stage;
+            for (std::uint32_t offset = 0; offset < half; ++offset) {
+                const double angle = (config_.inverse ? 1.0 : -1.0) * kPi * static_cast<double>(offset) / half;
+                twiddles[half - 1 + offset] = {
+                    LowStorage<Storage>::narrow(static_cast<float>(std::cos(angle))),
+                    LowStorage<Storage>::narrow(static_cast<float>(std::sin(angle)))};
+            }
+        }
+        device_twiddles_.allocate(twiddles.size() * sizeof(Complex));
+        CUB_CUDA_CHECK(cudaMemcpy(device_twiddles_.as<Complex>(), twiddles.data(), twiddles.size() * sizeof(Complex),
+                                  cudaMemcpyHostToDevice));
+    }
+
+    template <typename Storage>
+    void initialize_low_structured_matrices() {
+        std::vector<DeviceMatrix2x2<Storage>> matrices;
+        matrices.reserve(config_.log_n);
+        for (std::uint32_t stage = 0; stage < config_.log_n; ++stage) {
+            const auto& source = config_.stage_matrices.size() == 1 ? config_.stage_matrices.front()
+                                                                    : config_.stage_matrices[stage];
+            double m00 = source.m00;
+            double m01 = source.m01;
+            double m10 = source.m10;
+            double m11 = source.m11;
+            if (config_.inverse) {
+                const double determinant = m00 * m11 - m01 * m10;
+                m00 = source.m11 / determinant;
+                m01 = -source.m01 / determinant;
+                m10 = -source.m10 / determinant;
+                m11 = source.m00 / determinant;
+            }
+            matrices.push_back({LowStorage<Storage>::narrow(static_cast<float>(m00)),
+                                LowStorage<Storage>::narrow(static_cast<float>(m01)),
+                                LowStorage<Storage>::narrow(static_cast<float>(m10)),
+                                LowStorage<Storage>::narrow(static_cast<float>(m11))});
+        }
+        device_operator_coefficients_.allocate(matrices.size() * sizeof(DeviceMatrix2x2<Storage>));
+        CUB_CUDA_CHECK(cudaMemcpy(device_operator_coefficients_.data(), matrices.data(),
+                                  matrices.size() * sizeof(DeviceMatrix2x2<Storage>), cudaMemcpyHostToDevice));
+    }
+
     template <typename Real>
     void initialize_structured_matrices() {
         std::vector<DeviceMatrix2x2<Real>> matrices;
@@ -1281,6 +1536,26 @@ class ButterflyPlan::Impl {
                 const FwhtOperator<double> op{config_.inverse, config_.normalize_inverse};
                 launch_operator(static_cast<const double*>(input_buffer), static_cast<double*>(output_buffer), op,
                                 static_cast<double*>(scratch));
+            } else if (config_.precision == ButterflyPrecision::Fp16) {
+                if (config_.accumulation == ButterflyAccumulation::Native) {
+                    const LowFwhtOperator<Fp16, true> op{config_.inverse, config_.normalize_inverse};
+                    launch_operator(static_cast<const Fp16*>(input_buffer), static_cast<Fp16*>(output_buffer), op,
+                                    static_cast<Fp16*>(scratch));
+                } else {
+                    const LowFwhtOperator<Fp16, false> op{config_.inverse, config_.normalize_inverse};
+                    launch_operator(static_cast<const Fp16*>(input_buffer), static_cast<Fp16*>(output_buffer), op,
+                                    static_cast<Fp16*>(scratch));
+                }
+            } else if (config_.precision == ButterflyPrecision::Bf16) {
+                if (config_.accumulation == ButterflyAccumulation::Native) {
+                    const LowFwhtOperator<Bf16, true> op{config_.inverse, config_.normalize_inverse};
+                    launch_operator(static_cast<const Bf16*>(input_buffer), static_cast<Bf16*>(output_buffer), op,
+                                    static_cast<Bf16*>(scratch));
+                } else {
+                    const LowFwhtOperator<Bf16, false> op{config_.inverse, config_.normalize_inverse};
+                    launch_operator(static_cast<const Bf16*>(input_buffer), static_cast<Bf16*>(output_buffer), op,
+                                    static_cast<Bf16*>(scratch));
+                }
             } else {
                 const FwhtOperator<float> op{config_.inverse, config_.normalize_inverse};
                 launch_operator(static_cast<const float*>(input_buffer), static_cast<float*>(output_buffer), op,
@@ -1390,6 +1665,30 @@ class ButterflyPlan::Impl {
                                                         config_.complex_multiply};
                 launch_operator(static_cast<const Complex64*>(input_buffer), static_cast<Complex64*>(output_buffer), op,
                                 static_cast<Complex64*>(scratch));
+            } else if (config_.precision == ButterflyPrecision::Fp16) {
+                if (config_.accumulation == ButterflyAccumulation::Native) {
+                    const LowFftOperator<Fp16, true> op{device_twiddles_.as<Complex16>(), config_.inverse,
+                                                        config_.normalize_inverse, config_.complex_multiply};
+                    launch_operator(static_cast<const Complex16*>(input_buffer), static_cast<Complex16*>(output_buffer), op,
+                                    static_cast<Complex16*>(scratch));
+                } else {
+                    const LowFftOperator<Fp16, false> op{device_twiddles_.as<Complex16>(), config_.inverse,
+                                                         config_.normalize_inverse, config_.complex_multiply};
+                    launch_operator(static_cast<const Complex16*>(input_buffer), static_cast<Complex16*>(output_buffer), op,
+                                    static_cast<Complex16*>(scratch));
+                }
+            } else if (config_.precision == ButterflyPrecision::Bf16) {
+                if (config_.accumulation == ButterflyAccumulation::Native) {
+                    const LowFftOperator<Bf16, true> op{device_twiddles_.as<ComplexBf16>(), config_.inverse,
+                                                        config_.normalize_inverse, config_.complex_multiply};
+                    launch_operator(static_cast<const ComplexBf16*>(input_buffer), static_cast<ComplexBf16*>(output_buffer), op,
+                                    static_cast<ComplexBf16*>(scratch));
+                } else {
+                    const LowFftOperator<Bf16, false> op{device_twiddles_.as<ComplexBf16>(), config_.inverse,
+                                                         config_.normalize_inverse, config_.complex_multiply};
+                    launch_operator(static_cast<const ComplexBf16*>(input_buffer), static_cast<ComplexBf16*>(output_buffer), op,
+                                    static_cast<ComplexBf16*>(scratch));
+                }
             } else {
                 const FftOperator<Complex32, float> op{device_twiddles_.as<Complex32>(), config_.inverse, config_.normalize_inverse,
                                                        config_.complex_multiply};
@@ -1401,6 +1700,26 @@ class ButterflyPlan::Impl {
                 const Structured2x2Operator<double> op{device_operator_coefficients_.as<DeviceMatrix2x2<double>>()};
                 launch_operator(static_cast<const double*>(input_buffer), static_cast<double*>(output_buffer), op,
                                 static_cast<double*>(scratch));
+            } else if (config_.precision == ButterflyPrecision::Fp16) {
+                if (config_.accumulation == ButterflyAccumulation::Native) {
+                    const LowStructured2x2Operator<Fp16, true> op{device_operator_coefficients_.as<DeviceMatrix2x2<Fp16>>()};
+                    launch_operator(static_cast<const Fp16*>(input_buffer), static_cast<Fp16*>(output_buffer), op,
+                                    static_cast<Fp16*>(scratch));
+                } else {
+                    const LowStructured2x2Operator<Fp16, false> op{device_operator_coefficients_.as<DeviceMatrix2x2<Fp16>>()};
+                    launch_operator(static_cast<const Fp16*>(input_buffer), static_cast<Fp16*>(output_buffer), op,
+                                    static_cast<Fp16*>(scratch));
+                }
+            } else if (config_.precision == ButterflyPrecision::Bf16) {
+                if (config_.accumulation == ButterflyAccumulation::Native) {
+                    const LowStructured2x2Operator<Bf16, true> op{device_operator_coefficients_.as<DeviceMatrix2x2<Bf16>>()};
+                    launch_operator(static_cast<const Bf16*>(input_buffer), static_cast<Bf16*>(output_buffer), op,
+                                    static_cast<Bf16*>(scratch));
+                } else {
+                    const LowStructured2x2Operator<Bf16, false> op{device_operator_coefficients_.as<DeviceMatrix2x2<Bf16>>()};
+                    launch_operator(static_cast<const Bf16*>(input_buffer), static_cast<Bf16*>(output_buffer), op,
+                                    static_cast<Bf16*>(scratch));
+                }
             } else {
                 if (config_.local_exchange == LocalExchange::WarpRegister) {
                     detail::launch_generated_register_structured(
@@ -1534,12 +1853,28 @@ void ButterflyPlan::execute_async(const double* input, double* output) {
     impl_->execute_async(input, output, ButterflyOperator::Fwht, ButterflyPrecision::Fp64);
 }
 
+void ButterflyPlan::execute_async(const Fp16* input, Fp16* output) {
+    impl_->execute_async(input, output, ButterflyOperator::Fwht, ButterflyPrecision::Fp16);
+}
+
+void ButterflyPlan::execute_async(const Bf16* input, Bf16* output) {
+    impl_->execute_async(input, output, ButterflyOperator::Fwht, ButterflyPrecision::Bf16);
+}
+
 void ButterflyPlan::execute_async(const Complex32* input, Complex32* output) {
     impl_->execute_async(input, output, ButterflyOperator::Fft, ButterflyPrecision::Fp32);
 }
 
 void ButterflyPlan::execute_async(const Complex64* input, Complex64* output) {
     impl_->execute_async(input, output, ButterflyOperator::Fft, ButterflyPrecision::Fp64);
+}
+
+void ButterflyPlan::execute_async(const Complex16* input, Complex16* output) {
+    impl_->execute_async(input, output, ButterflyOperator::Fft, ButterflyPrecision::Fp16);
+}
+
+void ButterflyPlan::execute_async(const ComplexBf16* input, ComplexBf16* output) {
+    impl_->execute_async(input, output, ButterflyOperator::Fft, ButterflyPrecision::Bf16);
 }
 
 void ButterflyPlan::execute_async(const std::uint32_t* input, std::uint32_t* output) {
@@ -1554,6 +1889,14 @@ ButterflyStats ButterflyPlan::execute(const std::vector<double>& input, std::vec
     return impl_->execute(input, output, warmup, repeat, ButterflyOperator::Fwht, ButterflyPrecision::Fp64);
 }
 
+ButterflyStats ButterflyPlan::execute(const std::vector<Fp16>& input, std::vector<Fp16>& output, std::uint32_t warmup, std::uint32_t repeat) {
+    return impl_->execute(input, output, warmup, repeat, ButterflyOperator::Fwht, ButterflyPrecision::Fp16);
+}
+
+ButterflyStats ButterflyPlan::execute(const std::vector<Bf16>& input, std::vector<Bf16>& output, std::uint32_t warmup, std::uint32_t repeat) {
+    return impl_->execute(input, output, warmup, repeat, ButterflyOperator::Fwht, ButterflyPrecision::Bf16);
+}
+
 ButterflyStats ButterflyPlan::execute(const std::vector<Complex32>& input, std::vector<Complex32>& output, std::uint32_t warmup,
                                       std::uint32_t repeat) {
     return impl_->execute(input, output, warmup, repeat, ButterflyOperator::Fft, ButterflyPrecision::Fp32);
@@ -1562,6 +1905,16 @@ ButterflyStats ButterflyPlan::execute(const std::vector<Complex32>& input, std::
 ButterflyStats ButterflyPlan::execute(const std::vector<Complex64>& input, std::vector<Complex64>& output, std::uint32_t warmup,
                                       std::uint32_t repeat) {
     return impl_->execute(input, output, warmup, repeat, ButterflyOperator::Fft, ButterflyPrecision::Fp64);
+}
+
+ButterflyStats ButterflyPlan::execute(const std::vector<Complex16>& input, std::vector<Complex16>& output, std::uint32_t warmup,
+                                      std::uint32_t repeat) {
+    return impl_->execute(input, output, warmup, repeat, ButterflyOperator::Fft, ButterflyPrecision::Fp16);
+}
+
+ButterflyStats ButterflyPlan::execute(const std::vector<ComplexBf16>& input, std::vector<ComplexBf16>& output, std::uint32_t warmup,
+                                      std::uint32_t repeat) {
+    return impl_->execute(input, output, warmup, repeat, ButterflyOperator::Fft, ButterflyPrecision::Bf16);
 }
 
 ButterflyStats ButterflyPlan::execute(const std::vector<std::uint32_t>& input, std::vector<std::uint32_t>& output, std::uint32_t warmup,

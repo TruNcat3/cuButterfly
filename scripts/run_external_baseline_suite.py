@@ -48,8 +48,9 @@ def execute(root, case, protocol, fht_python, gpuntt_binary):
     common = ["--logN", str(case["logN"]), "--batch", str(case["batch"]),
               "--warmup", str(protocol["warmup"]), "--repeat", str(protocol["repeat"])]
     if case["runner"] == "butterfly":
-        command = [str(root / "build/cubutterfly_bench"), "--operator", "fwht",
+        command = [str(root / "build/cubutterfly_bench"), "--operator", case["operator"],
                    "--precision", case["precision"], "--normalization", case["normalization"],
+                   "--placement", case["placement"],
                    *common, *case["args"], "--verify", "--csv"]
         result = subprocess.run(command, cwd=root, text=True, capture_output=True, check=True)
         row = read_one_csv(result.stdout)
@@ -103,7 +104,7 @@ def execute(root, case, protocol, fht_python, gpuntt_binary):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run matching-protocol Dao FHT and GPU-NTT baselines.")
+    parser = argparse.ArgumentParser(description="Run matching-protocol library and cuButterfly/cuNTT comparisons.")
     parser.add_argument("--manifest", type=pathlib.Path, default=pathlib.Path("config/v100_external_baseline_suite.json"))
     parser.add_argument("--output", type=pathlib.Path, default=pathlib.Path("results/v100_external_baselines_raw.csv"))
     parser.add_argument("--fht-python", type=pathlib.Path, default=pathlib.Path(sys.executable))

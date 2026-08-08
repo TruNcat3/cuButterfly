@@ -4,17 +4,21 @@
 
 | Operator | Precision | Forward | Inverse | Inverse normalization |
 |:--|:--|:--:|:--:|:--|
-| FFT | FP32, FP64 | yes | yes | selectable `none` or `inverse` |
-| FWHT | FP32, FP64 | yes | yes | selectable `none` or `inverse` |
+| FFT | FP16/BF16 storage with native-width or FP32 accumulation; FP32, FP64 | yes | yes | selectable `none` or `inverse` |
+| FWHT | FP16/BF16 storage with native-width or FP32 accumulation; FP32, FP64 | yes | yes | selectable `none` or `inverse` |
 | Subset zeta/Mobius | uint32 | yes | yes | right-side update modulo `2^32`; no scaling |
 | Superset zeta/Mobius | uint32 | yes | yes | left-side update modulo `2^32`; no scaling |
 | Legacy XOR-zeta name | uint32 | yes | yes | compatibility name for subset-zeta behavior |
-| Structured 2x2 | FP32, FP64 | yes | yes | one broadcast or per-stage real matrix; inverse requires nonsingular matrices |
+| Structured 2x2 | FP16/BF16 storage with native-width or FP32 accumulation; FP32, FP64 | yes | yes | one broadcast or per-stage real matrix; inverse requires nonsingular matrices |
 | NTT | 32/64-bit physical paths | yes | yes | existing modular inverse convention |
 
 FFT and FWHT inverse normalization is part of timed kernel execution. For
 cuFFT it requires a separate scale kernel; `--normalization none` exposes the
 native unnormalized inverse for a core-equivalent comparison.
+
+Low-precision results narrow at each logical butterfly output. BF16 native-
+width execution is emulated and explicitly labeled on V100; it becomes a native
+arithmetic contract only on hardware that implements the required BF16 path.
 
 ## Length and Backend Capabilities
 

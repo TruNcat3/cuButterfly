@@ -1,0 +1,258 @@
+event_type,axis,operator,precision,accumulation,logN,batch,from_mapping,to_mapping,relative_margin,trial_ranges_non_overlapping,classification,reason
+winner-crossover,batch,fwht,bf16,native,15,6,online-r2-t256,hier-r4-t256,0.043984374999999964,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,bf16,native,15,7,hier-r4-t256,online-r2-t256,0.17539236582057738,1,confirmed,winner changes along batch
+winner-crossover,batch,fwht,bf16,native,15,8,online-r2-t256,online-r4-t256,0.06493691638748311,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,bf16,native,15,9,online-r4-t256,online-r2-t256,0.04020213724732846,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,bf16,native,8,961,temporal-r4-t128,temporal-r2-t128,0.08660665575559201,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,bf16,native,8,1279,temporal-r2-t128,temporal-r4-t128,0.11644004944375763,1,confirmed,winner changes along batch
+winner-crossover,batch,fwht,bf16,native,8,1280,temporal-r4-t128,temporal-r2-t128,0.03844454264250996,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,bf16,native,8,1281,temporal-r2-t128,temporal-r4-t128,0.07355738744451501,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp16,fp32,15,5,online-r4-t256,online-r2-t256,0.09191512017036807,1,confirmed,winner changes along batch
+winner-crossover,batch,fft,fp16,fp32,15,6,online-r2-t256,online-r4-t256,0.133064251493076,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp16,fp32,15,9,online-r4-t256,hier-r4-t256,0.15119356006796458,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp64,native,15,4,online-r2-t256,online-r4-t256,0.016184454676654525,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp64,native,15,6,online-r4-t256,online-r2-t256,0.020475801325706033,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp64,native,15,8,online-r2-t256,online-r4-t256,0.03378445517597717,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp32,native,15,4,online-r4-t256,online-r2-t256,0.1214666031773517,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp32,native,15,5,online-r2-t256,online-r4-t256,0.21851572726190938,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,bf16,native,15,6,online-r2-t256,hier-r4-t256,0.016582046019228747,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,bf16,native,15,7,hier-r4-t256,online-r2-t256,0.048219859281595445,1,confirmed,winner changes along batch
+winner-crossover,batch,fft,fp16,native,15,8,online-r4-t256,hier-r4-t256,0.28314087759815254,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,fp32,native,8,1279,temporal-r4-t128,temporal-r2-t128,0.011113135361632498,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,fp32,native,8,1280,temporal-r2-t128,temporal-r4-t128,0.08823529411764697,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,fp64,native,8,799,temporal-r4-t128,temporal-r2-t128,0.010812696198116312,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,fp64,native,8,800,temporal-r2-t128,temporal-r4-t128,0.1280625543006082,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,fp32,native,15,6,online-r4-t256,online-r2-t256,0.1108878892431322,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,fp32,native,15,7,online-r2-t256,hier-r4-t256,0.006103461109043362,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,fp32,native,15,8,hier-r4-t256,online-r4-t256,0.07756860124020637,1,confirmed,winner changes along batch
+winner-crossover,batch,structured-2x2,fp32,native,15,9,online-r4-t256,hier-r4-t256,0.30716121360899074,1,confirmed,winner changes along batch
+winner-crossover,batch,structured-2x2,bf16,fp32,15,6,online-r2-t256,hier-r4-t256,0.022933294810213445,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,bf16,fp32,15,7,hier-r4-t256,online-r4-t256,0.15169554587009682,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,bf16,fp32,15,8,online-r4-t256,hier-r4-t256,0.0522518289818108,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,fp64,native,15,9,online-r4-t256,hier-r4-t256,0.06383759004584166,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,bf16,native,8,961,temporal-r2-t128,temporal-r4-t128,0.05024865982044835,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,bf16,native,8,1279,temporal-r4-t128,temporal-r2-t128,0.03167082294264345,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,bf16,native,8,1280,temporal-r2-t128,temporal-r4-t128,0.11859027893769825,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,bf16,native,8,1281,temporal-r4-t128,temporal-r2-t128,0.024120011765859317,0,ambiguous,winner changes along batch
+winner-crossover,batch,ntt,uint32,native,15,319,ntt-hybrid-r4-t256,ntt-hybrid-r2-t256,0.0008879156841041791,0,ambiguous,winner changes along batch
+winner-crossover,batch,ntt,uint32,native,15,320,ntt-hybrid-r2-t256,ntt-hybrid-r4-t256,0.25016701518072937,1,confirmed,winner changes along batch
+winner-crossover,batch,fwht,bf16,fp32,15,7,online-r4-t256,online-r2-t256,0.11359757989450814,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,bf16,fp32,15,8,online-r2-t256,online-r4-t256,0.00898223813061394,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,bf16,fp32,15,9,online-r4-t256,hier-r4-t256,0.06761307362165714,0,ambiguous,winner changes along batch
+winner-crossover,batch,subset-zeta,uint32,native,8,959,temporal-r4-t128,temporal-r2-t128,0.05671641791044779,0,ambiguous,winner changes along batch
+winner-crossover,batch,subset-zeta,uint32,native,8,960,temporal-r2-t128,temporal-r4-t128,0.15229016507788895,1,confirmed,winner changes along batch
+winner-crossover,batch,subset-zeta,uint32,native,8,1280,temporal-r4-t128,temporal-r2-t128,0.03092006033182515,0,ambiguous,winner changes along batch
+winner-crossover,batch,subset-zeta,uint32,native,8,1281,temporal-r2-t128,temporal-r4-t128,0.04228250701590275,1,confirmed,winner changes along batch
+winner-crossover,batch,fft,bf16,fp32,8,800,temporal-r2-t128,temporal-r4-t128,0.0689575998775449,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,bf16,fp32,8,1279,temporal-r4-t128,temporal-r2-t128,0.17289373110489992,1,confirmed,winner changes along batch
+winner-crossover,batch,fwht,fp16,fp32,8,961,temporal-r4-t128,temporal-r2-t128,0.00827280064568181,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,fp16,fp32,8,1279,temporal-r2-t128,temporal-r4-t128,0.1568384026484586,1,confirmed,winner changes along batch
+winner-crossover,batch,fwht,fp64,native,15,4,online-r2-t256,online-r4-t256,0.1423225423225425,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,fp64,native,15,9,online-r4-t256,online-r2-t256,0.022194361615613944,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp16,fp32,8,801,temporal-r4-t128,temporal-r2-t128,0.05299439896596292,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp16,fp32,8,1279,temporal-r2-t128,temporal-r4-t128,0.07831900668576885,1,confirmed,winner changes along batch
+winner-crossover,batch,fft,fp16,fp32,8,1281,temporal-r4-t128,temporal-r2-t128,0.06861043619113727,1,confirmed,winner changes along batch
+winner-crossover,batch,fwht,fp64,native,20,2,online-r4-t256,online-r2-t256,0.10359349891612646,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,fp16,native,15,6,online-r4-t256,hier-r4-t256,0.0455779587839944,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp32,native,8,799,temporal-r4-t128,temporal-r2-t128,0.03934384211200803,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp32,native,8,800,temporal-r2-t128,temporal-r4-t128,0.11693318103940609,0,ambiguous,winner changes along batch
+winner-crossover,batch,subset-zeta,uint32,native,15,6,online-r4-t256,online-r2-t256,0.0819679761683112,0,ambiguous,winner changes along batch
+winner-crossover,batch,subset-zeta,uint32,native,15,7,online-r2-t256,online-r4-t256,0.20570459585199363,0,ambiguous,winner changes along batch
+winner-crossover,batch,subset-zeta,uint32,native,15,8,online-r4-t256,hier-r4-t256,0.14449139030612246,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,fp16,fp32,15,7,online-r4-t256,hier-r4-t256,0.06883404394883574,1,confirmed,winner changes along batch
+winner-crossover,batch,structured-2x2,fp32,native,8,959,temporal-r2-t128,temporal-r4-t128,0.23463135006918368,1,confirmed,winner changes along batch
+winner-crossover,batch,ntt,uint64,native,15,239,ntt-hybrid-r2-t256,ntt-hybrid-r4-t256,0.029561583827604432,0,ambiguous,winner changes along batch
+winner-crossover,batch,ntt,uint64,native,15,241,ntt-hybrid-r4-t256,ntt-hybrid-r2-t256,0.04586132481498195,1,confirmed,winner changes along batch
+winner-crossover,batch,ntt,uint64,native,15,319,ntt-hybrid-r2-t256,ntt-hybrid-r4-t256,0.07780603718570256,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,fp16,fp32,15,6,online-r4-t256,online-r2-t256,0.03193979165710603,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,fp16,fp32,15,7,online-r2-t256,hier-r4-t256,0.05035595810503568,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp64,native,8,960,temporal-r4-t128,temporal-r2-t128,0.04093989556715916,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp64,native,8,961,temporal-r2-t128,temporal-r4-t128,0.0797310845078727,1,confirmed,winner changes along batch
+winner-crossover,batch,fwht,bf16,fp32,8,961,temporal-r4-t128,temporal-r2-t128,0.06168786759677203,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,bf16,fp32,8,1279,temporal-r2-t128,temporal-r4-t128,0.16233539214543757,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,bf16,fp32,15,4,online-r2-t256,online-r4-t256,0.07226432887429723,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,bf16,fp32,15,5,online-r4-t256,online-r2-t256,0.07693531958237854,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,bf16,fp32,15,9,online-r2-t256,hier-r4-t256,0.1218234991898195,0,ambiguous,winner changes along batch
+winner-crossover,batch,structured-2x2,bf16,native,20,2,online-r4-t256,hier-r4-t256,0.04723327540562927,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,fp16,native,15,8,online-r4-t256,hier-r4-t256,0.024533503815878932,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,fp32,native,15,6,online-r4-t256,online-r2-t256,0.07038607453693357,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,fp32,native,15,7,online-r2-t256,online-r4-t256,0.19069585273510592,1,confirmed,winner changes along batch
+winner-crossover,batch,fwht,fp32,native,15,9,online-r4-t256,hier-r4-t256,0.25184652852637046,1,confirmed,winner changes along batch
+winner-crossover,batch,subset-zeta,uint32,native,20,2,online-r4-t256,online-r2-t256,0.02455597650411878,0,ambiguous,winner changes along batch
+winner-crossover,batch,fwht,fp16,native,8,1281,temporal-r4-t128,temporal-r2-t128,0.004053271569195216,0,ambiguous,winner changes along batch
+winner-crossover,batch,fft,fp16,native,20,2,hier-r4-t256,online-r4-t256,0.23242874040015327,1,confirmed,winner changes along batch
+winner-crossover,length,fft,fp64,native,20,1,online-r2-t256,online-r4-t256,0.07694493459294671,1,confirmed,winner changes along length
+winner-crossover,length,fft,fp16,native,20,1,online-r4-t256,hier-r4-t256,0.12402530062301609,0,ambiguous,winner changes along length
+winner-crossover,length,fwht,fp32,native,20,1,online-r4-t256,online-r2-t256,0.11635169848324955,0,ambiguous,winner changes along length
+winner-crossover,length,fft,bf16,native,20,1,online-r2-t256,online-r4-t256,0.06991423700891097,0,ambiguous,winner changes along length
+winner-crossover,length,fwht,bf16,fp32,20,1,online-r4-t256,hier-r4-t256,0.17985944049332403,0,ambiguous,winner changes along length
+winner-crossover,length,structured-2x2,fp16,fp32,20,1,online-r4-t256,hier-r4-t256,0.34400133814694533,1,confirmed,winner changes along length
+winner-crossover,length,structured-2x2,bf16,fp32,20,1,online-r2-t256,hier-r4-t256,0.2393262624795034,1,confirmed,winner changes along length
+winner-crossover,length,fwht,fp64,native,20,1,online-r2-t256,online-r4-t256,0.08945846215218922,0,ambiguous,winner changes along length
+winner-crossover,length,structured-2x2,fp16,native,20,1,online-r4-t256,hier-r4-t256,0.39891984417424164,1,confirmed,winner changes along length
+winner-crossover,length,fwht,fp16,fp32,20,1,online-r4-t256,hier-r4-t256,0.44805871745745507,1,confirmed,winner changes along length
+winner-crossover,length,structured-2x2,bf16,native,20,1,online-r2-t256,online-r4-t256,0.2819892735251097,1,confirmed,winner changes along length
+winner-crossover,length,fwht,bf16,native,20,1,online-r2-t256,hier-r4-t256,0.412296970718822,1,confirmed,winner changes along length
+winner-crossover,length,fft,bf16,fp32,20,1,online-r2-t256,online-r4-t256,0.2061797100741003,1,confirmed,winner changes along length
+winner-crossover,length,fwht,fp16,native,20,1,online-r4-t256,hier-r4-t256,0.5690440837642723,1,confirmed,winner changes along length
+grid-wave,batch,fwht,bf16,native,15,6,online-r2-t256,hier-r4-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fwht,bf16,native,15,8,online-r2-t256,online-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,bf16,native,8,959,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fwht,bf16,native,8,960,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,bf16,native,8,1279,temporal-r2-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,structured-2x2,fp64,native,8,799,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,structured-2x2,fp64,native,8,800,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fft,fp16,fp32,15,4,online-r4-t256,online-r4-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fft,fp16,fp32,15,6,online-r2-t256,online-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fft,fp64,native,15,4,online-r2-t256,online-r4-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fft,fp64,native,15,5,online-r4-t256,online-r4-t256,,,predicted,crosses 1 grid waves
+working-set,batch,fft,fp64,native,15,6,online-r4-t256,online-r2-t256,,,predicted,estimated two-buffer working set crosses L2
+grid-wave,batch,fft,fp64,native,15,7,online-r2-t256,online-r2-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fft,fp32,native,15,4,online-r4-t256,online-r2-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fft,fp32,native,15,5,online-r2-t256,online-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,structured-2x2,bf16,native,15,6,online-r2-t256,hier-r4-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,structured-2x2,bf16,native,15,8,online-r2-t256,online-r2-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fft,bf16,native,8,799,temporal-r2-t128,temporal-r2-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fft,bf16,native,8,1280,temporal-r2-t128,temporal-r2-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fft,fp16,native,15,4,online-r4-t256,online-r4-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fft,fp16,native,15,5,online-r4-t256,online-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,fp32,native,8,959,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fwht,fp32,native,8,960,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,fp32,native,8,1280,temporal-r2-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,fp64,native,8,799,temporal-r4-t128,temporal-r2-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fwht,fp64,native,8,800,temporal-r2-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,structured-2x2,fp32,native,15,6,online-r4-t256,online-r2-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,structured-2x2,fp32,native,15,7,online-r2-t256,hier-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fft,bf16,native,15,4,online-r2-t256,online-r2-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fft,bf16,native,15,8,online-r2-t256,online-r2-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,structured-2x2,bf16,fp32,15,6,online-r2-t256,hier-r4-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,structured-2x2,bf16,fp32,15,7,hier-r4-t256,online-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,structured-2x2,fp64,native,15,4,online-r4-t256,online-r4-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,structured-2x2,fp64,native,15,5,online-r4-t256,online-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,bf16,fp32,20,2,hier-r4-t256,hier-r4-t256,,,predicted,crosses 2 grid waves
+working-set,batch,fwht,bf16,fp32,20,2,hier-r4-t256,hier-r4-t256,,,predicted,estimated two-buffer working set crosses L2
+grid-wave,batch,structured-2x2,fp16,fp32,8,959,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,structured-2x2,fp16,fp32,8,960,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,fp32,native,20,2,online-r2-t256,online-r2-t256,,,predicted,crosses 2 grid waves
+grid-wave,batch,structured-2x2,bf16,native,8,959,temporal-r2-t128,temporal-r2-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,structured-2x2,bf16,native,8,961,temporal-r2-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,structured-2x2,bf16,native,8,1280,temporal-r2-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fft,fp16,native,8,799,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fft,fp16,native,8,800,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,structured-2x2,fp16,fp32,20,2,hier-r4-t256,hier-r4-t256,,,predicted,crosses 2 grid waves
+working-set,batch,structured-2x2,fp16,fp32,20,2,hier-r4-t256,hier-r4-t256,,,predicted,estimated two-buffer working set crosses L2
+grid-wave,batch,ntt,uint32,native,15,319,ntt-hybrid-r4-t256,ntt-hybrid-r2-t256,,,predicted,crosses 0.5 grid waves
+working-set,batch,ntt,uint32,native,15,319,ntt-hybrid-r4-t256,ntt-hybrid-r2-t256,,,predicted,estimated two-buffer working set crosses L2
+grid-wave,batch,ntt,uint32,native,15,320,ntt-hybrid-r2-t256,ntt-hybrid-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,bf16,fp32,15,6,online-r4-t256,online-r4-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fwht,bf16,fp32,15,8,online-r2-t256,online-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,subset-zeta,uint32,native,8,959,temporal-r4-t128,temporal-r2-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,subset-zeta,uint32,native,8,960,temporal-r2-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,structured-2x2,bf16,fp32,8,959,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,structured-2x2,bf16,fp32,8,960,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fft,bf16,fp32,8,799,temporal-r2-t128,temporal-r2-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fft,bf16,fp32,8,800,temporal-r2-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fft,bf16,fp32,8,1280,temporal-r2-t128,temporal-r2-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,fp16,fp32,8,959,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fwht,fp16,fp32,8,960,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,fp16,fp32,8,1279,temporal-r2-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,fp64,native,15,4,online-r2-t256,online-r4-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fwht,fp64,native,15,5,online-r4-t256,online-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,bf16,native,20,2,hier-r4-t256,hier-r4-t256,,,predicted,crosses 2 grid waves
+working-set,batch,fwht,bf16,native,20,2,hier-r4-t256,hier-r4-t256,,,predicted,estimated two-buffer working set crosses L2
+grid-wave,batch,fft,fp16,fp32,8,799,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fft,fp16,fp32,8,800,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fft,fp16,fp32,8,1279,temporal-r2-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,fp64,native,20,2,online-r4-t256,online-r2-t256,,,predicted,crosses 2 grid waves
+grid-wave,batch,structured-2x2,fp16,native,15,6,online-r4-t256,hier-r4-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,structured-2x2,fp16,native,15,7,hier-r4-t256,hier-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fft,fp32,native,8,799,temporal-r4-t128,temporal-r2-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fft,fp32,native,8,800,temporal-r2-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,structured-2x2,fp16,native,8,959,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,structured-2x2,fp16,native,8,960,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,subset-zeta,uint32,native,15,6,online-r4-t256,online-r2-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,subset-zeta,uint32,native,15,7,online-r2-t256,online-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,structured-2x2,fp16,fp32,15,6,online-r4-t256,online-r4-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,structured-2x2,fp16,fp32,15,7,online-r4-t256,hier-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,structured-2x2,fp32,native,8,959,temporal-r2-t128,temporal-r4-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,structured-2x2,fp32,native,8,960,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,ntt,uint64,native,15,239,ntt-hybrid-r2-t256,ntt-hybrid-r4-t256,,,predicted,crosses 0.5 grid waves
+working-set,batch,ntt,uint64,native,15,239,ntt-hybrid-r2-t256,ntt-hybrid-r4-t256,,,predicted,estimated two-buffer working set crosses L2
+grid-wave,batch,ntt,uint64,native,15,240,ntt-hybrid-r4-t256,ntt-hybrid-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,ntt,uint64,native,15,319,ntt-hybrid-r2-t256,ntt-hybrid-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,fp16,fp32,15,6,online-r4-t256,online-r2-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fwht,fp16,fp32,15,7,online-r2-t256,hier-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,structured-2x2,bf16,fp32,20,2,hier-r4-t256,hier-r4-t256,,,predicted,crosses 2 grid waves
+working-set,batch,structured-2x2,bf16,fp32,20,2,hier-r4-t256,hier-r4-t256,,,predicted,estimated two-buffer working set crosses L2
+grid-wave,batch,fft,fp64,native,8,719,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fft,fp64,native,8,720,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+working-set,batch,fft,fp64,native,8,959,temporal-r4-t128,temporal-r4-t128,,,predicted,estimated two-buffer working set crosses L2
+grid-wave,batch,fwht,bf16,fp32,8,959,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fwht,bf16,fp32,8,960,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,bf16,fp32,8,1279,temporal-r2-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,fp16,native,20,2,hier-r4-t256,hier-r4-t256,,,predicted,crosses 2 grid waves
+working-set,batch,fwht,fp16,native,20,2,hier-r4-t256,hier-r4-t256,,,predicted,estimated two-buffer working set crosses L2
+grid-wave,batch,fft,fp32,native,20,2,online-r4-t256,online-r4-t256,,,predicted,crosses 2 grid waves
+grid-wave,batch,structured-2x2,fp16,native,20,2,hier-r4-t256,hier-r4-t256,,,predicted,crosses 2 grid waves
+working-set,batch,structured-2x2,fp16,native,20,2,hier-r4-t256,hier-r4-t256,,,predicted,estimated two-buffer working set crosses L2
+grid-wave,batch,fwht,fp16,fp32,20,2,hier-r4-t256,hier-r4-t256,,,predicted,crosses 2 grid waves
+working-set,batch,fwht,fp16,fp32,20,2,hier-r4-t256,hier-r4-t256,,,predicted,estimated two-buffer working set crosses L2
+grid-wave,batch,fft,bf16,fp32,20,2,online-r4-t256,online-r4-t256,,,predicted,crosses 2 grid waves
+grid-wave,batch,fft,bf16,fp32,15,4,online-r2-t256,online-r4-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fft,bf16,fp32,15,8,online-r2-t256,online-r2-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fft,bf16,native,20,2,online-r4-t256,online-r4-t256,,,predicted,crosses 2 grid waves
+grid-wave,batch,structured-2x2,bf16,native,20,2,online-r4-t256,hier-r4-t256,,,predicted,crosses 2 grid waves
+working-set,batch,structured-2x2,bf16,native,20,2,online-r4-t256,hier-r4-t256,,,predicted,estimated two-buffer working set crosses L2
+grid-wave,batch,fwht,fp16,native,15,6,online-r4-t256,online-r4-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fwht,fp16,native,15,7,online-r4-t256,online-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fwht,fp32,native,15,6,online-r4-t256,online-r2-t256,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fwht,fp32,native,15,7,online-r2-t256,online-r4-t256,,,predicted,crosses 1 grid waves
+grid-wave,batch,fft,fp16,fp32,20,2,online-r4-t256,online-r4-t256,,,predicted,crosses 2 grid waves
+grid-wave,batch,subset-zeta,uint32,native,20,2,online-r4-t256,online-r2-t256,,,predicted,crosses 2 grid waves
+grid-wave,batch,fwht,fp16,native,8,959,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 0.5 grid waves
+grid-wave,batch,fwht,fp16,native,8,960,temporal-r4-t128,temporal-r4-t128,,,predicted,crosses 1 grid waves
+grid-wave,batch,structured-2x2,fp64,native,20,2,online-r4-t256,online-r4-t256,,,predicted,crosses 2 grid waves
+grid-wave,batch,fft,fp64,native,20,2,online-r4-t256,online-r4-t256,,,predicted,crosses 2 grid waves
+grid-wave,batch,fft,fp16,native,20,2,hier-r4-t256,online-r4-t256,,,predicted,crosses 2 grid waves
+grid-wave,batch,structured-2x2,fp32,native,20,2,online-r4-t256,online-r4-t256,,,predicted,crosses 2 grid waves
+numeric-pipeline,numeric-contract,fwht,multiple,multiple,15,6,online-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fwht,multiple,multiple,8,961,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,15,6,online-r4-t256,online-r2-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,15,1,online-r4-t256,online-r2-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,structured-2x2,multiple,multiple,15,6,hier-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,15,9,hier-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,8,1281,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,15,8,hier-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,15,4,online-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fwht,multiple,multiple,8,1281,temporal-r2-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,structured-2x2,multiple,multiple,15,7,hier-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,structured-2x2,multiple,multiple,15,9,hier-r4-t256,hier-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,15,5,online-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fwht,multiple,multiple,20,1,hier-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,structured-2x2,multiple,multiple,8,959,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,structured-2x2,multiple,multiple,8,1279,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fwht,multiple,multiple,20,2,hier-r4-t256,online-r2-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,8,1279,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,structured-2x2,multiple,multiple,20,1,hier-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,structured-2x2,multiple,multiple,15,1,online-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fwht,multiple,multiple,15,8,hier-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,structured-2x2,multiple,multiple,8,1281,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,ntt,multiple,multiple,15,1,ntt-hybrid-r4-t256,ntt-hybrid-r2-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,8,800,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fwht,multiple,multiple,15,7,online-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,8,801,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fwht,multiple,multiple,8,1279,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,structured-2x2,multiple,multiple,15,8,hier-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,8,1280,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,structured-2x2,multiple,multiple,8,960,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,structured-2x2,multiple,multiple,20,2,hier-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fwht,multiple,multiple,15,1,online-r4-t256,online-r2-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fwht,multiple,multiple,8,1280,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,8,1,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,8,799,temporal-r4-t128,temporal-r2-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,15,7,online-r4-t256,online-r2-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fwht,multiple,multiple,15,9,hier-r4-t256,online-r2-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,structured-2x2,multiple,multiple,8,1,temporal-r4-t128,temporal-r4-t128,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,fft,multiple,multiple,20,1,hier-r4-t256,online-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,ntt,multiple,multiple,15,319,ntt-hybrid-r2-t256,ntt-hybrid-r4-t256,,,observed,best mapping changes while shape and operator remain fixed
+numeric-pipeline,numeric-contract,ntt,multiple,multiple,20,1,ntt-hybrid-r4-t256,ntt-hybrid-r2-t256,,,observed,best mapping changes while shape and operator remain fixed

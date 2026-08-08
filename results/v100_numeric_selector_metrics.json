@@ -1,0 +1,22 @@
+{
+  "method": "complete-regime holdout with descriptor nearest neighbors",
+  "evaluated_shapes": 1150,
+  "top_k": 3,
+  "top1_accuracy": 0.5860869565217391,
+  "topk_recall": 1,
+  "geomean_regret": 1.0471201091008548,
+  "worst_regret": 2.0780330139674477,
+  "evaluated_by_holdout": {
+    "numeric-contract": 294,
+    "arithmetic-policy": 281,
+    "batch-region": 294,
+    "operator": 281
+  },
+  "promotion_thresholds": {
+    "topk_recall": 0.95,
+    "geomean_regret": 1.02,
+    "worst_regret": 1.1
+  },
+  "complete_holdout_coverage": true,
+  "runtime_selector_status": "measurement-required"
+}

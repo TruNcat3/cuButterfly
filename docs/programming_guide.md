@@ -78,6 +78,13 @@ arithmetic and has no scale. NTT follows its modular inverse convention.
 default, while the native bit-reversed path is available only for the documented
 CompactStage configuration.
 
+For FP16/BF16 storage, `ButterflyConfig::accumulation` selects native-width or
+FP32 local accumulation and the result is narrowed after each logical
+butterfly. The input/output pointer type remains the storage type: `Fp16` or
+`Bf16` for real transforms and `Complex16` or `ComplexBf16` for FFT. V100 BF16
+native-width execution is emulated and labeled; applications must not infer a
+native SM70 BF16 arithmetic path from that semantic option.
+
 ## Workspace
 
 `workspace_size()` is the exact minimum for the resolved plan. Zero means the

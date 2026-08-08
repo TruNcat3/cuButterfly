@@ -125,6 +125,66 @@ python3 scripts/summarize_external_baseline_suite.py \
   --markdown results/v100_external_baselines_report.md
 ```
 
+### Numeric-Regime Mapping
+
+Generate the large numeric manifest on demand, then run only its quick tier for
+screening. The 5,690-case expanded manifest is intentionally ignored rather
+than checked into Git:
+
+```bash
+python3 scripts/generate_numeric_regime_suite.py \
+  --output results/v100_numeric_regime_suite.json
+python3 scripts/run_comprehensive_suite.py \
+  --manifest results/v100_numeric_regime_suite.json --mode quick \
+  --output results/v100_numeric_regime_quick_raw.csv
+python3 scripts/analyze_numeric_regime_cliffs.py \
+  results/v100_numeric_regime_quick_raw.csv \
+  --manifest results/v100_numeric_regime_suite.json \
+  --events results/v100_numeric_regime_events.csv \
+  --regimes results/v100_numeric_regimes.json \
+  --report results/v100_numeric_regime_quick_report.md
+```
+
+Focused full-timing, NCU, adaptive-coverage, and final selector commands are
+versioned in [Numeric-Regime Mapping Study](next_phase_numeric_regimes.md). The
+privileged counter step is run from the repository root:
+
+```bash
+python3 scripts/generate_numeric_boundary_ncu.py
+sudo -E ./scripts/profile_numeric_boundaries_ncu.sh
+python3 scripts/analyze_numeric_boundary_ncu.py \
+  results/ncu_numeric_boundaries/summary.csv \
+  --timing-analysis results/v100_numeric_confirmed_followup_analysis.csv \
+  --output results/v100_numeric_boundary_ncu_analysis.csv \
+  --report results/v100_numeric_boundary_ncu_analysis.md
+```
+
+### Library/Base/Search Matrix
+
+```bash
+python3 scripts/run_external_baseline_suite.py \
+  --manifest config/v100_three_way_comparison.json \
+  --fht-python /home/wt/.conda/envs/cubutterfly-baselines/bin/python \
+  --output results/v100_three_way_raw.csv
+python3 scripts/summarize_external_baseline_suite.py \
+  results/v100_three_way_raw.csv \
+  --output results/v100_three_way_summary.csv
+python3 scripts/summarize_three_way_comparison.py \
+  results/v100_three_way_summary.csv \
+  --archived-baselines results/v100_external_baselines_summary.csv \
+  --internal-raw results/v100_numeric_coverage_raw.csv \
+  --internal-manifest results/v100_numeric_coverage_suite.json \
+  --output results/v100_three_way_comparison.csv \
+  --internal-output results/v100_three_way_internal.csv \
+  --metrics results/v100_three_way_metrics.json \
+  --report results/v100_three_way_comparison.md
+```
+
+The NTT library rows in this matrix come from the checked-in matching-protocol
+same-V100 archive when the GPU-NTT comparator is unavailable. The summarizer
+labels that provenance; do not describe those rows as interleaved with the
+current FFT/FWHT refresh.
+
 ## 4. Generated Design Points
 
 The build invokes:

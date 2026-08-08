@@ -12,9 +12,18 @@ runtime selection, and portable resource-cliff features. The measured
 adequate mapping key: shared-memory, register, occupancy, and batch-derived
 grid-wave effects interact.
 
-## Next Target: Numeric-Regime Mapping
+## v0.5.0 Status: Numeric-Regime Mapping
 
-The next release studies the mapping method on fixed hardware before adding GPU
+Status: complete for the fixed-V100 release scope. FP16/BF16 storage and
+accumulation contracts, the 736-case quick screen, all 29 confirmed-event
+full-protocol follow-ups, 12 paired NCU profiles, 99 adaptive coverage anchors,
+and the library/base/search matrix are checked in. The abstaining piecewise
+selector covers 27.74% of leave-one-batch-out shapes with 1.00013x geometric-
+mean and 1.01112x worst regret. Global selection remains
+`measurement-required`; that negative boundary is a result of this milestone,
+not an unfinished promotion step.
+
+This release studies the mapping method on fixed hardware before adding GPU
 generation as another independent variable. Its primary question is:
 
 > How do numeric representation, arithmetic semantics, workload shape, and
@@ -27,10 +36,10 @@ stride, placement, output order, and the generated physical-core choices. It
 uses orthogonal screening followed by focused scans around predicted and
 observed launch, occupancy, register, shared-memory, and bandwidth boundaries.
 
-The deliverable is a conditional regime model and a selector evaluated on
-held-out regimes, not a larger table of isolated winners. See [Numeric-Regime
-Mapping Study](docs/next_phase_numeric_regimes.md) for hypotheses, work
-packages, and completion criteria.
+The deliverable is a conditional regime model with explicit abstention and a
+selector evaluated on held-out regimes, not a larger table of isolated winners.
+See [Numeric-Regime Mapping Study](docs/next_phase_numeric_regimes.md) for the
+hypotheses, protocol, evidence, and remaining generalization boundary.
 
 ## Completed: v0.3.0 Counter-Calibrated Selection
 
@@ -66,10 +75,11 @@ artifacts, and decision gates.
 
 ## Near Term Backlog
 
-- Extend the manifest with numeric, arithmetic, layout, and processing-unit
-  descriptors, then scan boundary neighborhoods across `(logN, batch)`.
-- Train and evaluate the selector on held-out precision, arithmetic-policy,
-  batch-region, and operator/core regimes.
+- Extend the fixed-V100 regime model to stride, placement, direction,
+  normalization, coefficient policy, and output-order neighborhoods using the
+  same screen-follow-up-counter hierarchy.
+- Hold out complete numeric and workload regimes and measure where the
+  piecewise selector can expand coverage without crossing its regret gates.
 - Reduce the remaining saturated FP32 `logN=20` exchange cost and the five
   FP64 `logN=14..16` crossover deficits, preserving fixed-mapping NCU evidence.
 - Explain the Structured `logN=13..15` resource-cliff response across batch,

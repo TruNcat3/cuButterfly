@@ -127,6 +127,12 @@ Examples:
   --element-stride 2 --batch-stride 2061 --tile-threads 256 \
   --batch 17 --verify
 
+# BF16-storage FWHT with FP32 accumulation. On V100, BF16 native-width
+# arithmetic is emulated and labeled in CSV output.
+./build/cubutterfly_bench --operator fwht --backend temporal-tile \
+  --precision bf16 --accumulation fp32 --compute-unit radix4 \
+  --logN 8 --batch 16384 --verify --csv
+
 # Generated CTA DFT8 design point
 ./build/cubutterfly_bench --operator fft --backend temporal-tile \
   --precision fp32 --fft-core cta-dft8 --compute-unit radix8 \

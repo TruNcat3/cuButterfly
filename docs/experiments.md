@@ -33,6 +33,14 @@ the current authority for claims spanning multiple lengths, precisions,
 semantics, and runnable FFT libraries; the focused experiments below retain
 their original protocols.
 
+The [V100 Library/Base/Search Comparison](v100_three_way_comparison.md) is the
+current authority for separating the gain from mapping and processing-unit
+search from the remaining position against cuFFT, Dao FHT, and GPU-NTT. The
+[Numeric-Regime Mapping Study](next_phase_numeric_regimes.md) is the authority
+for FP16/BF16 and integer regime boundaries, focused full-timing confirmation,
+paired NCU attribution, and selector abstention. Neither replaces the broader
+comprehensive semantic matrix.
+
 The follow-up [V100 Length/Batch Scaling](v100_scaling_results.md) experiment
 holds transform length fixed while varying batch, exposing saturation points
 and mapping crossovers hidden by constant-total-point comparisons.
@@ -168,13 +176,58 @@ traffic and long-scoreboard stalls. Compact roots remove the native-layout gap;
 a required natural-order permutation changes the ranking and is reported
 separately.
 
+### Numeric Regimes And Library/Base/Search
+
+The fixed-V100 numeric study contains 185 workload cells. Its 736 quick cases
+and 2,208 samples find 29 confirmed and 67 ambiguous winner crossovers. Full-
+protocol follow-up keeps 23 directions, reverses three, and leaves three with
+overlapping trial ranges. All nine length-axis changes reproduce; all six
+unstable events lie on batch boundaries. Twelve paired NCU captures attribute
+those cases to instruction/register tradeoffs, online-composition
+synchronization, and one FP64 resident-CTA capacity transition.
+
+Adaptive timing of 99 non-boundary anchors produces 66 stable anchors, 33
+near-ties, and no reversals. The final piecewise selector deliberately abstains
+outside same-winner stable intervals:
+
+| Metric | Result |
+|:--|--:|
+| evaluated leave-one-batch-out shapes | 310 |
+| automatically selected | 86 (27.74%) |
+| top-1 agreement in selected region | 98.84% |
+| geometric-mean regret | 1.00013x |
+| worst regret | 1.01112x |
+
+The global complete-regime model remains `measurement-required`; its 1.047x
+geometric-mean and 2.078x worst regret reject universal extrapolation from the
+quick screen. The validated result is a bounded stable region with explicit
+abstention.
+
+The representative library/base/search matrix then asks where the selected
+point stands after search. All local rows use five randomized process trials,
+1000 warmups, 100 timed iterations, correctness preflight, and resident CUDA-
+event timing. GPU-NTT rows are archived same-V100 measurements with matching
+protocol and semantics, but are not interleaved with the current refresh.
+
+| Operator | Shapes | Search/base geomean | Search/library geomean | Faster/parity/slower |
+|:--|--:|--:|--:|:--|
+| FFT | 4 | 2.931x | 1.015x | 1/3/0 |
+| FWHT | 3 | 3.768x | 1.054x | 2/1/0 |
+| NTT | 3 | 1.089x | 1.313x | 3/0/0 |
+| overall selected matrix | 10 | 2.349x | 1.109x | 6/4/0 |
+
+The status counts use a +/-3% parity band. These ten representative rows show
+that mapping/core search closes large fixed-base deficits and reaches parity or
+advantage in this matrix; they do not establish universal superiority across
+all precisions, lengths, batches, or semantics.
+
 ## 3. Remaining Gaps
 
 | Area | Current boundary | Needed evidence or implementation |
 |:--|:--|:--|
 | FP32 FFT | selected direct and long shapes reach parity or advantage; saturated `logN=20` batch 8/16 remains at `0.962x/0.954x` cuFFT | reduce long-path local exchange and excess useful-work cost without losing residence |
 | FP64 FFT | 20/25 stable shapes have higher median throughput; five `logN=14..16` crossover shapes remain 0.1%-3.2% behind | reduce launch and boundary overhead; exhaustive remapping alone did not remove the deficits |
-| conditional mapping model | current selector keys mainly on operator, length, batch, and precision | measure how word width, arithmetic/reduction policy, coefficient reuse, layout, and physical core move resource cliffs and mapping crossovers |
+| conditional mapping model | the numeric piecewise selector safely covers 27.74% of held-out batch shapes and abstains elsewhere | expand stable intervals across stride, direction, normalization, coefficient policy, and complete-regime holdouts without relaxing regret gates |
 | workload coverage | representative length/batch points are measured, but cliff neighborhoods are uneven | use boundary-focused scans across length, batch, stride, direction, and normalization rather than a uniformly larger grid |
 | cross GPU | only V100 fully measured | after the conditional model is established, test whether its descriptors and boundary predictions transfer to another GPU generation |
 | automatic selection | V100 calibrated selectors meet current regret gates | add numeric/workload descriptors and validate held-out-regime regret before cross-GPU calibration |
@@ -186,6 +239,10 @@ separately.
 
 | Topic | Report | Primary records |
 |:--|:--|:--|
+| numeric-regime mapping | `next_phase_numeric_regimes.md` | `v100_numeric_regime_quick_raw.csv`, `v100_numeric_confirmed_followup_raw.csv`, `v100_numeric_coverage_raw.csv` |
+| numeric boundary NCU | `results/v100_numeric_boundary_ncu_analysis.md` | `ncu_numeric_boundaries/summary.csv`, `v100_numeric_boundary_ncu_analysis.csv` |
+| numeric piecewise selector | `results/v100_numeric_piecewise_report.md` | `v100_numeric_piecewise_selector.json`, `v100_numeric_piecewise_metrics.json` |
+| library/base/search matrix | `v100_three_way_comparison.md` | `v100_three_way_comparison.csv`, `v100_three_way_metrics.json` |
 | comprehensive V100 suite | `comprehensive_v100_results.md` | `comprehensive_v100_full_raw.csv`, `comprehensive_v100_full_summary.csv` |
 | orthogonal length/batch scaling | `v100_scaling_results.md` | `v100_scaling_full_raw.csv`, `v100_scaling_full_summary.csv` |
 | calibrated V100 selector | `v100_mapping_selector.md` | `v100_mapping_selector_evaluation.csv`, `v100_mapping_selector_metrics.json` |

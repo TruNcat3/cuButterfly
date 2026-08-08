@@ -1,0 +1,18 @@
+{
+  "method": "leave-one-batch-out piecewise interpolation",
+  "evaluated_shapes": 310,
+  "auto_selected_shapes": 86,
+  "abstained_shapes": 224,
+  "auto_selection_coverage": 0.27741935483870966,
+  "top1_accuracy_when_selected": 0.9883720930232558,
+  "geomean_regret_when_selected": 1.0001285180041335,
+  "worst_regret_when_selected": 1.0111131353616325,
+  "minimum_anchor_margin": 0.15,
+  "minimum_full_anchor_margin": 0.05,
+  "gates": {
+    "geomean_regret": 1.02,
+    "worst_regret": 1.1
+  },
+  "calibrated_region_status": "validated",
+  "global_runtime_status": "measurement-required"
+}

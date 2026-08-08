@@ -18,6 +18,7 @@ not used to support any current portability claim.
 | Static hardware constraints are useful but insufficient for final ranking | 48-candidate FFT static-score evaluation | top-1 geomean regret 1.0762x; worst 1.4220x |
 | A small hardware calibration set can replace exhaustive timing | leave-one-batch-out FFT interpolation | top-3 geomean regret 1.0007x, worst 1.0020x using 6.2% of candidates |
 | The selection method extends beyond FFT | leave-one-complete-shape-out selector over NTT/FWHT/XOR-zeta | 93.88% top-1, 100% top-3, 1.0049x geomean regret |
+| Numeric and batch preference is piecewise rather than globally smooth | 736-case screen, 29 full follow-ups, 12 paired NCU profiles, 99 adaptive anchors | all 9 length crossovers reproduce; 6 batch events are unstable; bounded selector coverage is 27.74% with 1.01112x worst regret |
 
 The static-model failure is part of the result, not a row to hide. Resource
 legality, occupancy, waves, and issued work provide a useful shortlist, but do
@@ -50,14 +51,23 @@ on the qualified large FWHT shapes and 1.109x-1.425x throughput over GPU-NTT on
 the matched natural-order NTT shapes. XOR-zeta remains an internal architecture
 ablation because no maintained matching external baseline has been identified.
 
+In the current ten-shape library/base/search matrix, searched configurations
+are 2.349x faster than fixed radix-2 base mappings and 1.109x faster than the
+matched external rows by geometric mean. The per-operator library ratios are
+1.015x FFT, 1.054x FWHT, and 1.313x NTT, with six rows faster and four within a
++/-3% parity band. This is a representative matrix, not a universal result;
+the GPU-NTT rows are archived same-machine matching-protocol measurements rather
+than interleaved rows from the current refresh.
+
 ## Semantic Coverage
 
 | Operator | Numeric coverage | Measured lengths | Additional contracts |
 |:--|:--|:--|:--|
-| FFT | FP16/FP32 accumulation, FP32, FP64 | 3, 8, 12, 14, 16, 18, 20 | forward/inverse, normalized inverse, in/out-of-place, stride 2 |
+| FFT | FP16/BF16 storage with native-width or FP32 accumulation, FP32, FP64 | 3, 8, 12, 14, 16, 18, 20 | forward/inverse, normalized inverse, in/out-of-place, stride 2 |
 | NTT | 30-bit/32-bit and 60-bit/64-bit | 12, 16, 20 | forward/inverse, natural and native bit-reversed order |
-| FWHT | FP32, FP64 | 8, 12, 15, 20 | forward, multiple exchange and residency choices |
+| FWHT | FP16/BF16 storage with native-width or FP32 accumulation, FP32, FP64 | 8, 12, 15, 20 | forward, multiple exchange and residency choices |
 | XOR-zeta | uint32 | 8, 12, 20 | forward/inverse, multiple mapping families |
+| Structured 2x2 | FP16/BF16 storage with native-width or FP32 accumulation, FP32, FP64 | 8, 12, 15, 20 | broadcast/per-stage matrices, forward/inverse, shared/register cores |
 
 Coverage establishes generality of the abstraction, not universal superiority.
 The original FP64 scalar row remains 0.642x cuFFT in the comprehensive suite.
@@ -107,14 +117,25 @@ are confined to `logN=14..16` crossover batches and range from 0.1% to 3.2%.
 
 ## Remaining Work
 
-1. **Conditional cliff model:** determine how numeric width, coefficient
+The v0.5 quick screen now covers FP16/BF16 accumulation contracts, FP32/FP64,
+uint32 zeta, and uint32/uint64 NTT. It finds 29 confirmed and 67 ambiguous
+mapping crossovers. Complete-regime top-3 recall is 1.0, but geometric-mean and
+worst regret are 1.047 and 2.078, so global transfer remains
+`measurement-required`. A conservative piecewise model now auto-selects only
+between same-winner stable batch anchors. Its leave-one-batch-out coverage is
+27.74% after adaptive full timing, with 1.00013x geometric-mean and 1.01112x
+worst regret. Of 99 weak non-boundary anchors, 66 become stable and 33 remain
+near-ties; none reverse direction. This validates a bounded region with
+explicit abstention; it does not promote the model to a global runtime selector.
+
+1. **Conditional cliff model:** expand the current stable-interval model and determine how numeric width, coefficient
    policy, modular reduction state, local-unit instruction mix, length, batch,
    stride, direction, and normalization move residency cliffs and mapping
    crossovers on the fixed V100 hardware target.
 2. **Boundary-focused selector validation:** hold out complete numeric and
-   workload regimes, not just individual shapes, and report top-k recall and
+workload regimes, not just individual shapes, and report top-k recall and
    regret around launch, occupancy, register, shared-memory, and bandwidth
-   boundaries.
+boundaries.
 3. **Remaining performance margins:** explain and reduce the FP32 `logN=20`
    saturated-batch gap, the five FP64 `logN=14..16` crossover deficits, and the
    Structured register cliff at `logN=13..15` without conflating physical-core
@@ -134,6 +155,9 @@ portability beyond V100.
 - latest comprehensive FFT: `results/comprehensive_v100_vectorized_fft_*`
 - cross-operator semantics: `results/comprehensive_v100_full_*`
 - calibrated selector: `results/v100_mapping_selector_*`
+- numeric quick/follow-up/coverage: `results/v100_numeric_*`
+- numeric boundary attribution: `results/ncu_numeric_boundaries/`
+- library/base/search matrix: `results/v100_three_way_*`
 - matching external baselines: `results/v100_external_baselines_*`
 - counter attribution: `results/ncu_scaling_crossovers/`
 - vectorized FFT attribution: `results/ncu_fft_vectorized/`

@@ -1,0 +1,30 @@
+{
+  "events": 29,
+  "status_counts": {
+    "confirmed-same-direction": 23,
+    "not-confirmed": 3,
+    "confirmed-reversed": 3
+  },
+  "by_operator": {
+    "fwht": {
+      "confirmed-same-direction": 8
+    },
+    "fft": {
+      "not-confirmed": 2,
+      "confirmed-same-direction": 5,
+      "confirmed-reversed": 1
+    },
+    "structured-2x2": {
+      "confirmed-same-direction": 8,
+      "confirmed-reversed": 1
+    },
+    "ntt": {
+      "confirmed-same-direction": 1,
+      "confirmed-reversed": 1
+    },
+    "subset-zeta": {
+      "confirmed-same-direction": 1,
+      "not-confirmed": 1
+    }
+  }
+}

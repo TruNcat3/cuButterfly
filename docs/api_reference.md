@@ -28,6 +28,8 @@ alignment. They are the device and host storage types for FFT plans.
 
 | `ButterflyPrecision` | Storage/meaning |
 |:--|:--|
+| `Fp16` | `Fp16`/`Complex16` storage; `Native` or `Fp32` accumulation |
+| `Bf16` | `Bf16`/`ComplexBf16` storage; `Native` or `Fp32` accumulation |
 | `Fp32` | FP32 FWHT or complex FP32 FFT |
 | `Fp64` | FP64 FWHT or complex FP64 FFT |
 | `Fp16Fp32` | `Complex32` storage with supported mixed-precision FFT core |
@@ -65,6 +67,7 @@ authoritative because optional build features change the compiled matrix.
 |:--|:--|
 | `op` | transform operator |
 | `precision` | arithmetic and pointer-type contract |
+| `accumulation` | `Native` or explicit `Fp32`; the latter is legal for FP16/BF16 storage |
 | `placement` | in-place or out-of-place execution |
 | `log_n` | base-2 transform length |
 | `stage_matrices` | structured-2x2 coefficient list: one broadcast matrix or `log_n` matrices |
@@ -136,9 +139,13 @@ The associated enums expose:
 | `execute_async(input, output)` | typed, allocation-free device submission without synchronization |
 | `execute(input, output, warmup, repeat)` | synchronous host-vector convenience and timing path |
 
-The five `execute_async` overloads accept `float`, `double`, `Complex32`,
-`Complex64`, or `std::uint32_t`. The chosen overload must match `op` and
-`precision`. `ButterflyStats` reports H2D, kernel and D2H milliseconds plus
+The nine `execute_async` overloads accept `Fp16`, `Bf16`, `float`, `double`,
+`Complex16`, `ComplexBf16`, `Complex32`, `Complex64`, or `std::uint32_t`.
+The chosen overload must match `op` and `precision`. FP16/BF16 results are
+narrowed at each logical butterfly output. On V100, BF16 `Native` is an
+explicit FP32-compute-and-narrow emulation and benchmark CSV marks it with
+`emulated_native=1`; it is not presented as native SM70 BF16 throughput.
+`ButterflyStats` reports H2D, kernel and D2H milliseconds plus
 transforms, butterflies, and points per second.
 
 CPU helpers `reference_fwht`, `reference_fft`, `reference_subset_zeta`,

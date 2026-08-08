@@ -16,6 +16,14 @@ METADATA_FIELDS = (
     "suite_case_id", "suite_group", "suite_tier", "suite_runner", "implementation",
     "reference", "trial", "performance_batch", "preflight_correct", "preflight_max_error",
 )
+CASE_DESCRIPTOR_FIELDS = (
+    "accumulation", "storage_bits", "compute_bits", "accumulator_bits", "emulated_native",
+    "coefficient_policy", "arithmetic_pipeline", "mapping_id", "ctas_per_transform",
+    "estimated_registers_per_thread", "estimated_shared_bytes_per_cta",
+    "resident_ctas_per_sm", "resident_warps_per_sm", "occupancy_upper_bound",
+    "total_ctas", "grid_waves", "grid_concurrent_fraction", "limiting_resource",
+    "working_set_bytes", "working_set_over_l2", "resource_cliff",
+)
 
 
 def is_prime(value):
@@ -99,6 +107,7 @@ def expected_semantics(case, batch=None):
     semantics = {
         "operator": case["operator"],
         "precision": case["precision"],
+        "accumulation": case.get("accumulation", argument_value(arguments, "--accumulation", "native")),
         "direction": "inverse" if "--inverse" in arguments else case.get("direction", "forward"),
         "normalization": normalization,
         "placement": placement,
@@ -139,7 +148,7 @@ def load_manifest(path):
     groups = {}
     for case in document["cases"]:
         groups.setdefault(case["group"], []).append(case)
-    comparable_fields = ("operator", "precision", "direction", "normalization", "placement", "stage_matrices", "logN", "element_stride", "output_order")
+    comparable_fields = ("operator", "precision", "accumulation", "direction", "normalization", "placement", "stage_matrices", "logN", "element_stride", "output_order")
     for group, cases in groups.items():
         contracts = {
             tuple(expected_semantics(case)[field] for field in comparable_fields)
@@ -312,6 +321,7 @@ def main():
             "performance_batch": batch,
             "preflight_correct": preflight.get("correct", ""),
             "preflight_max_error": preflight.get("max_error", preflight.get("max_roundtrip_error", "")),
+            **{field: case[field] for field in CASE_DESCRIPTOR_FIELDS if field in case},
             **measured,
             **semantics,
         })

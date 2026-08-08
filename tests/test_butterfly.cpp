@@ -146,6 +146,122 @@ void test_fft(cuntt::ButterflyBackend backend, std::uint32_t stage_space, std::u
     std::cout << "PASS FFT backend=" << cuntt::butterfly_backend_name(backend) << " Us=" << stage_space << '\n';
 }
 
+template <typename Storage, typename Complex>
+void test_low_precision_contract(cuntt::ButterflyPrecision precision, cuntt::ButterflyAccumulation accumulation) {
+    constexpr std::size_t batch = 3;
+    auto relative_error = [](const auto& actual, const auto& expected) {
+        long double error = 0.0;
+        long double reference = 0.0;
+        for (std::size_t index = 0; index < actual.size(); ++index) {
+            const long double delta = static_cast<float>(actual[index]) - expected[index];
+            error += delta * delta;
+            reference += static_cast<long double>(expected[index]) * expected[index];
+        }
+        return std::sqrt(error / std::max(reference, 1.0e-30L));
+    };
+
+    for (const auto backend : {cuntt::ButterflyBackend::TemporalTile,
+                               cuntt::ButterflyBackend::Hierarchical,
+                               cuntt::ButterflyBackend::OnlineReorder}) {
+        const std::uint32_t log_n = backend == cuntt::ButterflyBackend::TemporalTile ? 8U : 11U;
+        const std::size_t n = std::size_t{1} << log_n;
+        std::vector<Storage> input(batch * n);
+        for (std::size_t index = 0; index < input.size(); ++index)
+            input[index] = Storage((static_cast<int>(index % 17) - 8) / std::sqrt(static_cast<float>(n)));
+        cuntt::ButterflyConfig config;
+        config.op = cuntt::ButterflyOperator::Fwht;
+        config.backend = backend;
+        config.precision = precision;
+        config.accumulation = accumulation;
+        config.log_n = log_n;
+        config.batch = batch;
+        config.tile_threads = 128;
+        config.local_stages = 5;
+        config.reorder_columns = 1;
+        cuntt::ButterflyPlan plan(config);
+        std::vector<Storage> output;
+        plan.execute(input, output, 0, 1);
+        std::vector<float> expected;
+        expected.reserve(output.size());
+        for (std::size_t transform = 0; transform < batch; ++transform) {
+            std::vector<float> one(n);
+            for (std::size_t index = 0; index < n; ++index)
+                one[index] = static_cast<float>(input[transform * n + index]);
+            cuntt::reference_fwht(one);
+            expected.insert(expected.end(), one.begin(), one.end());
+        }
+        if (relative_error(output, expected) > 0.25L)
+            throw std::runtime_error("low-precision FWHT mismatch");
+    }
+
+    constexpr std::uint32_t log_n = 8;
+    constexpr std::size_t n = std::size_t{1} << log_n;
+    std::vector<Complex> input(batch * n);
+    for (std::size_t index = 0; index < input.size(); ++index)
+        input[index] = {Storage((static_cast<int>(index % 13) - 6) / 64.0F),
+                        Storage((static_cast<int>(index % 11) - 5) / 64.0F)};
+    cuntt::ButterflyConfig config;
+    config.op = cuntt::ButterflyOperator::Fft;
+    config.backend = cuntt::ButterflyBackend::TemporalTile;
+    config.precision = precision;
+    config.accumulation = accumulation;
+    config.log_n = log_n;
+    config.batch = batch;
+    config.tile_threads = 128;
+    cuntt::ButterflyPlan plan(config);
+    std::vector<Complex> output;
+    plan.execute(input, output, 0, 1);
+    long double error = 0.0;
+    long double reference = 0.0;
+    for (std::size_t transform = 0; transform < batch; ++transform) {
+        std::vector<cuntt::Complex32> expected(n);
+        for (std::size_t index = 0; index < n; ++index) {
+            const auto value = input[transform * n + index];
+            expected[index] = {static_cast<float>(value.real), static_cast<float>(value.imag)};
+        }
+        cuntt::reference_fft(expected);
+        for (std::size_t index = 0; index < n; ++index) {
+            const auto actual = output[transform * n + index];
+            const long double dr = static_cast<float>(actual.real) - expected[index].real;
+            const long double di = static_cast<float>(actual.imag) - expected[index].imag;
+            error += dr * dr + di * di;
+            reference += static_cast<long double>(expected[index].real) * expected[index].real +
+                         static_cast<long double>(expected[index].imag) * expected[index].imag;
+        }
+    }
+    if (std::sqrt(error / std::max(reference, 1.0e-30L)) > 0.25L)
+        throw std::runtime_error("low-precision FFT mismatch");
+
+    std::vector<Storage> structured_input(batch * n);
+    for (std::size_t index = 0; index < structured_input.size(); ++index)
+        structured_input[index] = Storage((static_cast<int>(index % 17) - 8) / 64.0F);
+    cuntt::ButterflyConfig structured_config;
+    structured_config.op = cuntt::ButterflyOperator::Structured2x2;
+    structured_config.backend = cuntt::ButterflyBackend::TemporalTile;
+    structured_config.precision = precision;
+    structured_config.accumulation = accumulation;
+    structured_config.log_n = log_n;
+    structured_config.batch = batch;
+    structured_config.tile_threads = 128;
+    structured_config.stage_matrices = {{0.9238795, -0.3826834, 0.3826834, 0.9238795}};
+    cuntt::ButterflyPlan structured_plan(structured_config);
+    std::vector<Storage> structured_output;
+    structured_plan.execute(structured_input, structured_output, 0, 1);
+    std::vector<float> structured_expected;
+    structured_expected.reserve(structured_output.size());
+    for (std::size_t transform = 0; transform < batch; ++transform) {
+        std::vector<float> one(n);
+        for (std::size_t index = 0; index < n; ++index)
+            one[index] = static_cast<float>(structured_input[transform * n + index]);
+        cuntt::reference_structured_2x2(one, structured_config.stage_matrices, false);
+        structured_expected.insert(structured_expected.end(), one.begin(), one.end());
+    }
+    if (relative_error(structured_output, structured_expected) > 0.25L)
+        throw std::runtime_error("low-precision Structured2x2 mismatch");
+    std::cout << "PASS low precision=" << cuntt::butterfly_precision_name(precision)
+              << " accumulation=" << cuntt::butterfly_accumulation_name(accumulation) << '\n';
+}
+
 void test_xor_zeta(cuntt::ButterflyBackend backend, std::uint32_t stage_space, std::uint32_t warp_stages = 5, std::uint32_t pipeline_warps = 8,
                    std::uint32_t tile_threads = 128, cuntt::ComputeUnit compute_unit = cuntt::ComputeUnit::Radix2, std::uint32_t log_n = 8,
                    bool inverse = false, std::uint32_t local_stages = 10, std::uint32_t reorder_columns = 1,
@@ -603,6 +719,13 @@ int main() {
     try {
         test_device_api();
         test_runtime_selector();
+        for (const auto accumulation : {cuntt::ButterflyAccumulation::Native,
+                                        cuntt::ButterflyAccumulation::Fp32}) {
+            test_low_precision_contract<cuntt::Fp16, cuntt::Complex16>(cuntt::ButterflyPrecision::Fp16,
+                                                                       accumulation);
+            test_low_precision_contract<cuntt::Bf16, cuntt::ComplexBf16>(cuntt::ButterflyPrecision::Bf16,
+                                                                         accumulation);
+        }
         test_extended_zeta_operators();
         test_structured_operators();
         for (const std::uint32_t tile_threads : {32U, 64U, 128U, 256U}) {
