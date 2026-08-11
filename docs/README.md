@@ -12,8 +12,11 @@ Started](getting_started.md); architecture and paper readers should begin with
 | Document | Question answered |
 |:--|:--|
 | [Getting Started](getting_started.md) | How is the library configured, built, installed, tested, and called? |
+| [C Plan API](c_api.md) | How do handle, descriptor, plan, workspace, arbitrary shape, tuning cache, and logs compose? |
+| [General Shape Mapping](general_shapes.md) | How are exact, embedded, and rank-two workloads lowered to the same architecture mapping? |
+| [v0.6 Implementation Status](v0.6_implementation_status.md) | Which general-shape, API, selection, and boundary features are complete, and what remains outside the claim? |
 | [Programming Guide](programming_guide.md) | What are the plan, device, stream, layout, workspace, concurrency, and lifetime contracts? |
-| [C++ API Reference](api_reference.md) | What does each public type, configuration field, and plan member mean? |
+| [API Reference](api_reference.md) | What does each public type, configuration field, and plan member mean? |
 | [Error Handling](error_handling.md) | Which exceptions are reported synchronously and where can asynchronous CUDA errors surface? |
 | [Capability and Compatibility Matrix](support_matrix.md) | Which operators, types, toolchains, optional components, and runtime features are supported? |
 | [Operator Catalog](operator_catalog.md) | What does each transform compute, which mappings does it reuse, and which operators come next? |
@@ -62,6 +65,8 @@ comprehensive and scaling reports define the paper-facing comparison protocol.
 | [Candidate Implementations](implementation_candidates.md) | Which processing units and kernel forms are implemented or planned? |
 | [Getting Started](getting_started.md) | How is the project built and used? |
 | [Programming Guide](programming_guide.md) | How do plans, layouts, streams, workspaces, devices, concurrency, and determinism compose? |
+| [C Plan API](c_api.md) | What is the professional C integration and selection contract? |
+| [General Shape Mapping](general_shapes.md) | How do non-power-of-two and rank-two lowerings preserve operator semantics? |
 | [C++ API Reference](api_reference.md) | What is the contract of each installed public API type and member? |
 | [Error Handling](error_handling.md) | How are validation, backend, CUDA launch, and asynchronous failures reported? |
 | [Capability and Compatibility Matrix](support_matrix.md) | Which public semantics, optional builds, and runtime integrations are supported? |
@@ -79,6 +84,8 @@ comprehensive and scaling reports define the paper-facing comparison protocol.
 | [V100 External Baselines](v100_external_baselines.md) | What do matching-protocol Dao FHT and GPU-NTT comparisons establish? |
 | [V100 Library/Base/Search Comparison](v100_three_way_comparison.md) | How much comes from search, and where does the selected point stand against specialized libraries? |
 | [V100 Research Status](research_status.md) | Which claims are closed, what are the current performance boundaries, and what remains? |
+| [General-Shape V100 Selection Results](general_shape_results.md) | How much do composition and physical-core selection recover, and which boundaries remain? |
+| [v0.6 Implementation Status](v0.6_implementation_status.md) | What is implemented, validated, selected by default, retained only as a candidate, or deferred? |
 | [v0.3.0 Mapping-Selection Milestone](next_phase_v0.3.md) | Which falsifiable goal, execution order, and definition of done shaped this release? |
 | [Numeric-Regime Mapping Study](next_phase_numeric_regimes.md) | How are precision, arithmetic, length, batch, and core choice related to resource cliffs, and what did the first quick screen establish? |
 | [Reproducibility](reproducibility.md) | How are sweeps, external baselines, and profiler data reproduced? |

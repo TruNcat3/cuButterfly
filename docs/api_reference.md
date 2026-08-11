@@ -1,4 +1,12 @@
-# C++ API Reference
+# API Reference
+
+The library now also installs a stable-style C plan surface in
+`<cubutterfly/cubutterfly.h>`. It follows the handle, descriptor, immutable
+plan, workspace-query, and asynchronous execute sequence used by CUDA
+professional libraries. See [C Plan API](c_api.md) for the complete contract,
+general shapes, selection cache, and logging behavior.
+
+## C++ API
 
 The installed public headers are `<cuntt/butterfly.hpp>` and
 `<cuntt/ntt.hpp>`. All symbols are in namespace `cuntt`. The library requires
@@ -137,6 +145,7 @@ The associated enums expose:
 | `set_workspace(ptr, bytes)` | binds aligned caller-owned scratch or removes a binding with null |
 | `workspace()` | active external or plan-owned workspace pointer |
 | `execute_async(input, output)` | typed, allocation-free device submission without synchronization |
+| `execute_zero_extended_async(input, output, logical_points, input_batch_stride, input_element_stride)` | advanced FP32 warp-register boundary submission; reads a logical FWHT/Structured input and writes the full physical transform |
 | `execute(input, output, warmup, repeat)` | synchronous host-vector convenience and timing path |
 
 The nine `execute_async` overloads accept `Fp16`, `Bf16`, `float`, `double`,
@@ -147,6 +156,12 @@ explicit FP32-compute-and-narrow emulation and benchmark CSV marks it with
 `emulated_native=1`; it is not presented as native SM70 BF16 throughput.
 `ButterflyStats` reports H2D, kernel and D2H milliseconds plus
 transforms, butterflies, and points per second.
+
+`execute_zero_extended_async` is a processing-unit interface used by the C
+plan composition layer. It requires a forward FP32 warp-register FWHT or
+Structured 2x2 plan, distinct device pointers, and a logical extent no larger
+than `2^log_n`. Most applications should request embedding through the C plan
+API so selection can keep the explicit pack path when fusion is slower.
 
 CPU helpers `reference_fwht`, `reference_fft`, `reference_subset_zeta`,
 `reference_superset_zeta`, `reference_structured_2x2`, and legacy

@@ -74,19 +74,19 @@ silent substitution with another core.
 | concurrent use of one plan | not supported |
 | CUDA Graph capture | not currently claimed/tested |
 | one transform across multiple GPUs | not supported |
-| non-power-of-two transforms | not supported |
-| multidimensional FFT/NTT | not supported |
+| non-power-of-two transforms | C plan API: exact FP32/FP64 FFT via selected direct cuFFT/Bluestein, exact uint64 NTT when roots exist, or explicit power-of-two embedding for all operators |
+| multidimensional transforms | C plan API: rank-two FFT, NTT, FWHT, zeta/Mobius, and Structured 2x2 via axis plans and transpose boundaries |
 | fused user epilogues | not supported |
 
 ## Automatic Selector Coverage
 
-The checked-in selector recognizes V100 `sm_70` only and accepts a calibrated
+The checked-in static table recognizes V100 `sm_70` only and accepts a calibrated
 subset of forward contiguous workloads. Its exact FFT, FWHT, legacy XOR-name and NTT shape
 table is documented in [Runtime Mapping Selector](runtime_selector.md).
-Unsupported hardware or semantics throw `std::invalid_argument`; explicit
-backend configuration remains available outside selector coverage. The new
-canonical subset/superset and structured-2x2 names require explicit mapping
-until their sweeps are recorded.
+Unseen workloads use the legal resource-model fallback and emit a profile-miss
+log; they can be measured and cached. Invalid mathematical domains still fail
+plan creation. The new canonical subset/superset and structured-2x2 names
+require measurement or explicit mapping until their sweeps are recorded.
 
 ## Versioning And ABI
 

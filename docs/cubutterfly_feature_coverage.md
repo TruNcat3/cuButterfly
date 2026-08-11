@@ -22,6 +22,10 @@ arithmetic contract only on hardware that implements the required BF16 path.
 
 ## Length and Backend Capabilities
 
+The table below describes power-of-two physical plans exposed by the C++ API.
+The general-shape C plan composes those plans with the exact/embedded and
+rank-two lowerings summarized after the table.
+
 | Backend | Length | Processing unit | FP32 | FP64 | uint32 |
 |:--|:--|:--|:--:|:--:|:--:|
 | temporal-tile | shared: `logN=1..10`; register FWHT/Structured: `logN=3..15` | radix-2, fused radix-4/radix-8; FP32 FWHT and Structured register-vector units | yes | yes | yes |
@@ -110,6 +114,21 @@ different lengths, precisions, directions, normalization policies, structured
 processing units, and batches
 cannot be accidentally combined.
 
+## General-Shape C Plan Coverage
+
+| Shape contract | Operators and restrictions |
+|:--|:--|
+| native power of two | all public operators; rank one or two |
+| standard exact arbitrary length | packed complex FP32/FP64 FFT through selected direct cuFFT/Bluestein; uint64 NTT through modular Bluestein when roots exist |
+| zero-extended embedding | all public operators; rank one or two; forward returns the physical shape and inverse consumes it |
+| rank-two layout | per-axis physical plans with tiled transpose; contiguous final output can receive the final transpose directly |
+| fused input | selected forward FP32 warp-register FWHT; generated Structured candidate is correct but not selected on V100 |
+
+General-shape plans accept positive input/output element and batch strides.
+Direct packed cuFFT requires its documented contiguous layout; strided exact
+FFT uses Bluestein. Algorithm names and workspace queries expose whether pack,
+scatter, transpose, direct output, or fused input is present.
+
 ## Verification
 
 The standalone test executables cover FP32/uint32 temporal radix-2, radix-4,
@@ -147,7 +166,7 @@ multiplication; these are separate CSV fields.
 The current public runtime does not yet claim:
 
 - full-length FP16/BF16 Tensor Core FFT beyond the generated DFT8 point;
-- non-power-of-two or multidimensional transforms;
+- rank greater than two or mixed-radix native butterfly cores;
 - `logN>20` through the common runtime;
 - fused application epilogues such as convolution or quantization.
 

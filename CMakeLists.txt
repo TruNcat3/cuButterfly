@@ -4,7 +4,7 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
     set(CMAKE_CUDA_ARCHITECTURES 70 CACHE STRING "CUDA architectures to compile for")
 endif()
 
-project(cuButterfly VERSION 0.5.0 LANGUAGES CXX CUDA)
+project(cuButterfly VERSION 0.6.0 LANGUAGES C CXX CUDA)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -144,11 +144,25 @@ execute_process(
 if(NOT CUBUTTERFLY_RUNTIME_SELECTOR_RESULT EQUAL 0)
     message(FATAL_ERROR "cuButterfly runtime selector generation failed: ${CUBUTTERFLY_RUNTIME_SELECTOR_ERROR}")
 endif()
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_application_profiles.py"
+            --spec "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_application_profiles.json"
+            --header "${CUNTT_GENERATED_DIR}/generated_application_profiles.hpp"
+    RESULT_VARIABLE CUBUTTERFLY_APPLICATION_PROFILE_RESULT
+    ERROR_VARIABLE CUBUTTERFLY_APPLICATION_PROFILE_ERROR)
+if(NOT CUBUTTERFLY_APPLICATION_PROFILE_RESULT EQUAL 0)
+    message(FATAL_ERROR "cuButterfly application profile generation failed: ${CUBUTTERFLY_APPLICATION_PROFILE_ERROR}")
+endif()
 include("${CUNTT_GENERATED_DIR}/design_points.cmake")
 
 add_library(cuntt STATIC
+    src/bluestein_fft.cu
+    src/bluestein_ntt.cu
+    src/c_api.cpp
+    src/direct_fft.cu
     src/butterfly.cu
     src/butterfly_reference.cpp
+    src/general_kernels.cu
     src/mapping_selector.cpp
     src/ntt.cu
     src/reference.cpp)
@@ -225,6 +239,10 @@ add_executable(cubutterfly_bench apps/cubutterfly_bench.cpp)
 target_link_libraries(cubutterfly_bench PRIVATE cuntt)
 target_compile_options(cubutterfly_bench PRIVATE -Wall -Wextra -Wpedantic)
 
+add_executable(cubutterfly_plan_bench apps/cubutterfly_plan_bench.cpp)
+target_link_libraries(cubutterfly_plan_bench PRIVATE cuntt)
+target_compile_options(cubutterfly_plan_bench PRIVATE -Wall -Wextra -Wpedantic)
+
 add_executable(cuntt_tests tests/test_ntt.cpp)
 target_link_libraries(cuntt_tests PRIVATE cuntt)
 target_compile_options(cuntt_tests PRIVATE -Wall -Wextra -Wpedantic)
@@ -236,6 +254,9 @@ target_compile_options(cubutterfly_tests PRIVATE -Wall -Wextra -Wpedantic)
 add_executable(cubutterfly_structured_reference_tests tests/test_structured_reference.cpp)
 target_link_libraries(cubutterfly_structured_reference_tests PRIVATE cuntt)
 target_compile_options(cubutterfly_structured_reference_tests PRIVATE -Wall -Wextra -Wpedantic)
+add_executable(cubutterfly_c_api_tests tests/test_c_api.c)
+target_link_libraries(cubutterfly_c_api_tests PRIVATE cuntt)
+target_compile_options(cubutterfly_c_api_tests PRIVATE -Wall -Wextra -Wpedantic)
 if(CUBUTTERFLY_ENABLE_CUFFTDX)
     target_compile_definitions(cubutterfly_tests PRIVATE CUBUTTERFLY_TEST_CUFFTDX=1)
 endif()
@@ -267,6 +288,7 @@ if(BUILD_TESTING)
     add_test(NAME cuntt_correctness COMMAND cuntt_tests)
     add_test(NAME cubutterfly_correctness COMMAND cubutterfly_tests)
     add_test(NAME cubutterfly_structured_reference COMMAND cubutterfly_structured_reference_tests)
+    add_test(NAME cubutterfly_c_api COMMAND cubutterfly_c_api_tests)
     add_test(NAME fft_design_space
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fft_design_space.py")
     add_test(NAME butterfly_design_space
@@ -312,6 +334,8 @@ if(BUILD_TESTING)
                      -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_install_package.cmake")
     add_test(NAME runtime_selector_generator
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_runtime_selector_generator.py")
+    add_test(NAME application_profile_generator
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_application_profiles.py")
     if(CUBUTTERFLY_ENABLE_CUFFTDX)
         add_test(NAME fft_fp64_cufftdx_block_correctness
                  COMMAND cubutterfly_bench --operator fft --precision fp64 --backend temporal-tile
@@ -450,7 +474,7 @@ install(TARGETS cuntt
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
-install(DIRECTORY include/cuntt DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(DIRECTORY include/cuntt include/cubutterfly DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cuButterflyConfig.cmake.in"

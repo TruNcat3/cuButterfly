@@ -30,6 +30,27 @@ replace rows in the canonical full raw data.
 
 ## Focused Evidence
 
+`general_shapes_v100_smoke.csv` is the first seven-row v0.6 exact-length FFT
+diagnostic against direct cuFFT. It uses one aggregated CUDA-event run per row,
+so it locates a large implementation gap but is not canonical repeated-trial
+evidence. Its protocol and interpretation are in
+`docs/general_shape_results.md`.
+
+`general_shape_selection_v100_raw.csv` is the five-trial follow-up after
+composition selection. It covers direct-versus-Bluestein FFT, selected
+Bluestein NTT cores, embedded FWHT/zeta, and default versus selected Structured
+2x2. Runs are separate warmed processes and are interpreted in the same report.
+
+`general_shape_direct_boundary_v100_raw.csv` isolates the next lowering step:
+contiguous physical output replaces the final scatter for embedded FWHT,
+subset/superset zeta, and Structured 2x2. The noncontiguous fallback remains a
+C API correctness test.
+
+`general_shape_fused_input_v100_raw.csv` records the selected first-boundary
+fusion for FP32 warp-register FWHT and the rejected Structured control. The
+FWHT rows use five independent warmed processes with 100 timed launches; the
+algorithm suffix and zero workspace verify that the pack kernel is absent.
+
 Files prefixed with `fft_`, `cubutterfly_`, `processing_units_`, `ntt_`, or
 `stage_pipeline_` are focused design-space experiments. Their protocol and
 interpretation live in the matching document under `docs/`; they must not be
