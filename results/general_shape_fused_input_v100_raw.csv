@@ -1,0 +1,12 @@
+gpu,operator,logical_shape,physical_shape,batch,algorithm,trial,kernel_ms
+V100-SXM2-32GB,fwht-fp32,32767,32768,256,zero-extended-temporal-warp-register-radix2-direct-output-fused-input,1,0.117586
+V100-SXM2-32GB,fwht-fp32,32767,32768,256,zero-extended-temporal-warp-register-radix2-direct-output-fused-input,2,0.117248
+V100-SXM2-32GB,fwht-fp32,32767,32768,256,zero-extended-temporal-warp-register-radix2-direct-output-fused-input,3,0.117586
+V100-SXM2-32GB,fwht-fp32,32767,32768,256,zero-extended-temporal-warp-register-radix2-direct-output-fused-input,4,0.117647
+V100-SXM2-32GB,fwht-fp32,32767,32768,256,zero-extended-temporal-warp-register-radix2-direct-output-fused-input,5,0.117443
+V100-SXM2-32GB,fwht-fp32,255,256,65536,zero-extended-temporal-warp-register-radix2-direct-output-fused-input,1,0.165100
+V100-SXM2-32GB,fwht-fp32,255,256,65536,zero-extended-temporal-warp-register-radix2-direct-output-fused-input,2,0.165161
+V100-SXM2-32GB,fwht-fp32,255,256,65536,zero-extended-temporal-warp-register-radix2-direct-output-fused-input,3,0.165059
+V100-SXM2-32GB,fwht-fp32,255,256,65536,zero-extended-temporal-warp-register-radix2-direct-output-fused-input,4,0.165140
+V100-SXM2-32GB,fwht-fp32,255,256,65536,zero-extended-temporal-warp-register-radix2-direct-output-fused-input,5,0.164772
+V100-SXM2-32GB,structured-2x2-fp32,32767,32768,256,zero-extended-temporal-warp-register-radix2-direct-output,1,0.350198

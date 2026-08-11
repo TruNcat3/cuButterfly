@@ -306,6 +306,14 @@ class ButterflyPlan {
     void execute_async(const ComplexBf16* input, ComplexBf16* output);
     void execute_async(const std::uint32_t* input, std::uint32_t* output);
 
+    // Specialized boundary lowering for a packed power-of-two FP32
+    // warp-register plan. Values beyond logical_points are read as zero while
+    // the complete physical transform is written to the plan's output layout.
+    void execute_zero_extended_async(const float* input, float* output,
+                                     std::size_t logical_points,
+                                     std::size_t input_batch_stride,
+                                     std::size_t input_element_stride = 1);
+
     ButterflyStats execute(const std::vector<float>& input, std::vector<float>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);
     ButterflyStats execute(const std::vector<double>& input, std::vector<double>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);
     ButterflyStats execute(const std::vector<Fp16>& input, std::vector<Fp16>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);

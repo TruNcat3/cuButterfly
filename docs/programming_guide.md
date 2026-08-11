@@ -5,6 +5,12 @@ This guide defines the application-facing execution model. It complements the
 functions, and the [Capability and Compatibility Matrix](support_matrix.md),
 which states the supported semantic ranges.
 
+The plan types described below are the power-of-two C++ physical-plan APIs.
+Applications requiring exact arbitrary lengths, zero-extended embedding,
+rank-two composition, selection caches, or status-code error handling should
+use the [C Plan API](c_api.md); both surfaces share the same stream and caller-
+owned workspace principles.
+
 ## Execution Model
 
 Both API families use an immutable-shape plan:

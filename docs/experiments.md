@@ -56,6 +56,17 @@ experiment tests a stage-parameterized dense processing unit across the same
 mapping families. Its follow-up generated register codelet separates mapping
 and transport gains from the remaining dense-pair arithmetic cost.
 
+The v0.6 [General-Shape V100 Selection Results](general_shape_results.md) keep
+the initial Bluestein-only diagnostic separate from the five-trial selector
+follow-up. The first lowering reached only 0.105x-0.179x of direct cuFFT; the
+new composition selector reaches FFT parity through direct-core abstention and
+substantially improves NTT/FWHT/Structured physical-core choices. Embedded
+boundaries remain explicit and must not be merged with bare-core library
+comparisons. The follow-up removes contiguous output scatter and fuses input
+for selected warp-register FWHT: `32767 -> 32768,batch=256` reaches 0.11759 ms,
+within 1.01x of the archived pre-padded Dao core. Structured input fusion is a
+measured negative candidate and retains the pack path.
+
 The evidence chain is therefore:
 
 ```text

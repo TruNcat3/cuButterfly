@@ -1,0 +1,8 @@
+device,cuda,operator,precision,logical_shape,physical_shape,batch,warmup,repeat,algorithm,workspace_bytes,cubutterfly_ms,cufft_ms,speedup_vs_cufft
+Tesla V100-SXM2-16GB,11.8,fft,complex-fp32,5,16,1,20,100,bluestein-cufft-power2-core,128,0.0153395,0.00274432,0.178905
+Tesla V100-SXM2-16GB,11.8,fft,complex-fp32,5,16,4096,20,100,bluestein-cufft-power2-core,524288,0.0187802,0.00271360,0.144493
+Tesla V100-SXM2-16GB,11.8,fft,complex-fp32,1000,2048,1,20,100,bluestein-cufft-power2-core,16384,0.0204800,0.00336896,0.164500
+Tesla V100-SXM2-16GB,11.8,fft,complex-fp32,1000,2048,64,20,100,bluestein-cufft-power2-core,1048576,0.0262246,0.00428032,0.163217
+Tesla V100-SXM2-16GB,11.8,fft,complex-fp32,3x5,8x16,4096,20,100,rank2-transpose-bluestein-cufft-power2-core,2555904,0.0655258,0.00690176,0.105329
+Tesla V100-SXM2-16GB,11.8,fft,complex-fp32,30x50,64x128,1,20,100,rank2-transpose-bluestein-cufft-power2-core,54720,0.0468992,0.00788480,0.168122
+Tesla V100-SXM2-16GB,11.8,fft,complex-fp32,30x50,64x128,64,20,100,rank2-transpose-bluestein-cufft-power2-core,3502080,0.0799334,0.00978944,0.122470

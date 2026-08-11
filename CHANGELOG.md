@@ -2,6 +2,48 @@
 
 All notable repository and research-artifact changes are recorded here.
 
+## 0.6.0 - 2026-08-11 General Shapes And Plan API
+
+### Added
+
+- CUDA-library-style C handle/descriptor/plan API with streams, explicit
+  workspace, status codes, selection queries, and structured logging.
+- Exact arbitrary-length complex FP32/FP64 FFT through Bluestein and exact
+  uint64 modular Bluestein NTT when the requested root domain exists.
+- Explicit zero-extended power-of-two embedding for all public operators.
+- Rank-two FFT, NTT, FWHT, zeta/Mobius, and Structured 2x2 composition through
+  per-axis plans and transpose boundaries.
+- Versioned V100 application profile table generated at build time, exact-key
+  user cache, bounded runtime measurement policy, and profile-miss guidance.
+- A `cubutterfly_plan_bench` CLI for logical/physical shape, batch, policy,
+  cache, workspace, and kernel-time inspection.
+- Per-axis static/cache/measurement selection for embedded and rank-two
+  compositions, selectable Hybrid2D Bluestein NTT cores, and complete direct
+  cuFFT versus Bluestein measurement for exact arbitrary FFT.
+- Structured 2x2 matrices and explicit composite algorithm IDs in the plan
+  benchmark surface.
+- Direct physical-output lowering for contiguous embedded and rank-two
+  compositions, eliminating the final full-buffer scatter while retaining the
+  general strided-output path.
+- Generated zero-extended input dispatch for warp-register FP32 FWHT and
+  Structured 2x2 units, with the runtime selecting the one-kernel fused-input
+  lowering for validated FWHT workloads and retaining pack fallback otherwise.
+
+### Current Evidence Boundary
+
+- All 49 CTest entries pass on V100/CUDA 11.8, including exact arbitrary
+  length, embedding, rank-two, strided fallback, cache, and generated boundary
+  candidate coverage.
+- Direct packed arbitrary FFT selects cuFFT at timing parity; this is
+  processing-unit abstention, not a claim of improving the vendor core.
+- Fused-input FWHT reaches 0.11759 ms for `32767 -> 32768,batch=256`, within
+  1.01x of the archived pre-padded Dao result, and uses zero composition
+  workspace.
+- Structured fused input is retained as a correct generated candidate but is
+  not selected because the measured V100 path regresses.
+- Cross-GPU selection transfer and universal specialist-library superiority
+  remain outside the release claim.
+
 ## 0.5.0 - 2026-08-08 Numeric-Regime Mapping
 
 ### Added

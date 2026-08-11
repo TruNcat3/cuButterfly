@@ -117,6 +117,35 @@ end-to-end rates.
 ./build/cubutterfly_bench --list-capabilities
 ```
 
+For the unified C plan surface, arbitrary lengths, and rank-two shapes, use:
+
+```bash
+# Exact 3x5 FP32 FFT; default selects direct cuFFT when it wins
+./build/cubutterfly_plan_bench --operator fft --shape 3x5 --repeat 100
+./build/cubutterfly_plan_bench --operator fft --shape 3x5 --compare-cufft --repeat 100
+
+# Retain Bluestein as an explicit research composition
+./build/cubutterfly_plan_bench --operator fft --shape 3x5 \
+  --algorithm bluestein-cufft-power2-core --repeat 100
+
+# Exact length-3 uint64 NTT; the modulus/root domain is validated
+./build/cubutterfly_plan_bench --operator ntt --shape 3 --precision uint64
+
+# One-time search followed by exact-key cache reuse
+./build/cubutterfly_plan_bench --operator fwht --shape 4096 --batch 64 \
+  --policy measure --cache results/local_selection.cache
+./build/cubutterfly_plan_bench --operator fwht --shape 4096 --batch 64 \
+  --cache results/local_selection.cache
+
+# Embedded Structured 2x2 with one broadcast matrix per axis
+./build/cubutterfly_plan_bench --operator structured-2x2 --shape 32767 \
+  --length-mode embedding --matrix 1,0.25,-0.5,1 --policy measure \
+  --cache results/local_selection.cache
+```
+
+Profile misses are printed with the hardware/workload key and selected
+fallback. See [C Plan API](c_api.md) and [General Shape Mapping](general_shapes.md).
+
 Examples:
 
 ```bash

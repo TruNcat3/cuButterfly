@@ -18,6 +18,27 @@ processing-unit boundary, same-machine library comparisons, Nsight profiling
 scripts, and the raw CSV data used in the reports. It is a research artifact,
 not a drop-in replacement for cuFFT or a production cryptography library.
 
+The v0.6 API adds a CUDA-library-style C plan surface, exact
+non-power-of-two FFT/compatible NTT lowering, explicit power-of-two embedding,
+rank-two axis mapping, caller-owned workspace, static application profiles,
+one-time measured tuning, and exact-key cache reuse. See the
+[C Plan API](docs/c_api.md) and [General Shape Mapping](docs/general_shapes.md).
+The [general-shape comparison](docs/general_shape_results.md) records both the
+initial unfused lowering and the new composition selector. Exact packed FFT
+now selects direct cuFFT at parity, while modular NTT and embedded operators
+reuse selected physical cores. Composition boundaries are reported explicitly:
+contiguous output removes scatter, selected warp-register FWHT also fuses
+logical input and zero fill, and all other paths retain their documented
+materialized boundary.
+Contiguous embedded outputs also bypass the final scatter and expose that
+choice as `+direct-output` in the selected algorithm name.
+Generated FP32 warp-register FWHT can also consume the logical input and
+synthesize its zero tail inside the physical kernel. This one-kernel lowering
+is exposed as `+fused-input`; unsupported or measured-slower combinations keep
+the explicit pack path.
+The complete release boundary is summarized in the
+[v0.6 Implementation Status](docs/v0.6_implementation_status.md).
+
 ## Why This Design
 
 A fast butterfly kernel needs more than a fast butterfly instruction. It must
@@ -104,7 +125,10 @@ The historical `xor-zeta` API name is retained as a compatibility spelling for
 its original subset-zeta behavior. See the [Operator
 Catalog](docs/operator_catalog.md) for exact semantics and expansion priorities.
 
-Power-of-two lengths, batches, forward/inverse execution, normalization,
+The C++ kernel-level API covers power-of-two lengths. The unified C plan API
+also covers exact non-power-of-two FP32/FP64 FFT, compatible uint64 NTT,
+explicit power-of-two embedding for every operator, and rank-two axis
+composition. Batches, forward/inverse execution, normalization,
 in-place/out-of-place placement, padded batches, and strided elements are
 covered where listed in the [Feature Matrix](docs/cubutterfly_feature_coverage.md).
 Unsupported generated combinations fail explicitly rather than falling back to
@@ -163,6 +187,23 @@ all precisions and shapes.
 | FP32 FWHT, `logN=15` | 0.069243 ms | Dao FHT 0.063949 ms | 0.924x | register-pressure boundary |
 | 60-bit NTT, `logN=16`, natural order | 0.274104 ms | GPU-NTT 0.291133 ms | 1.062x | fused Hybrid2D |
 | 60-bit NTT, `logN=20`, native bit-reversed | 0.341320 ms | GPU-NTT 0.396186 ms | 1.161x | compact-stage mapping |
+
+### General-Shape Composition
+
+These v0.6 rows time the complete logical-input resident composition, not only
+the selected power-of-two core:
+
+| Workload | Initial composition | Selected composition | Result |
+|:--|--:|--:|:--|
+| exact FP32 FFT `N=1000,batch=64` | 0.02622 ms Bluestein | 0.00427 ms direct cuFFT | 0.998x matching cuFFT; processing-unit abstention |
+| exact rank-2 FP32 FFT `30x50,batch=64` | 0.07993 ms Bluestein | 0.00981 ms direct cuFFT | 1.000x matching cuFFT; processing-unit abstention |
+| embedded FP32 FWHT `32767 -> 32768,batch=256` | 0.73772 ms | **0.11759 ms** | 6.27x composition gain; within 1.01x of pre-padded Dao core |
+| embedded FP32 FWHT `255 -> 256,batch=65536` | 0.60309 ms | **0.16511 ms** | 3.65x composition gain |
+
+The FFT rows deliberately reuse the vendor exact-length unit and therefore do
+not claim to outperform cuFFT. See [General-Shape V100 Selection
+Results](docs/general_shape_results.md) for NTT, zeta, Structured, boundary,
+workspace, and raw-trial details.
 
 The generated local core, fused physical grouping, and vectorized two-pass
 composition bring the selected long FFT shapes to 95.4%-108.5% of cuFFT.
@@ -356,7 +397,7 @@ software release as:
   author  = {TruNcat3},
   title   = {cuButterfly: Hardware-Mapped Space-Time Parallelism for Butterfly Computations on GPUs},
   year    = {2026},
-  version = {0.5.0},
+  version = {0.6.0},
   url     = {https://github.com/TruNcat3/cuButterfly}
 }
 ```

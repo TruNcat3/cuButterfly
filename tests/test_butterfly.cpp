@@ -444,6 +444,60 @@ void test_structured_operators() {
     }
 }
 
+void test_zero_extended_register_units() {
+    constexpr std::size_t logical_n = 6;
+    constexpr std::size_t physical_n = 8;
+    constexpr std::size_t batch = 3;
+    const std::vector<float> input{
+        1, 2, 3, 4, 5, 6,
+        -1, 0.5F, 2, -3, 4, -0.25F,
+        0.125F, -0.5F, 1.5F, 2.5F, -4, 8};
+    const std::vector<cuntt::ButterflyMatrix2x2> matrices{{1.0, 0.25, -0.5, 1.0}};
+    TestStream stream;
+    TestDeviceBuffer device_input(input.size() * sizeof(float));
+    TestDeviceBuffer device_output(batch * physical_n * sizeof(float));
+    check_cuda(cudaMemcpyAsync(device_input.get(), input.data(), input.size() * sizeof(float),
+                               cudaMemcpyHostToDevice, stream.get()),
+               "cudaMemcpyAsync zero-extended input");
+
+    for (const auto op : {cuntt::ButterflyOperator::Fwht,
+                          cuntt::ButterflyOperator::Structured2x2}) {
+        cuntt::ButterflyConfig config;
+        config.op = op;
+        config.backend = cuntt::ButterflyBackend::TemporalTile;
+        config.precision = cuntt::ButterflyPrecision::Fp32;
+        config.log_n = 3;
+        config.batch = batch;
+        config.local_exchange = cuntt::LocalExchange::WarpRegister;
+        if (op == cuntt::ButterflyOperator::Structured2x2)
+            config.stage_matrices = matrices;
+        cuntt::ButterflyPlan plan(config);
+        plan.set_stream(stream.get());
+        plan.execute_zero_extended_async(
+            static_cast<const float*>(device_input.get()),
+            static_cast<float*>(device_output.get()), logical_n, logical_n);
+
+        std::vector<float> output(batch * physical_n);
+        check_cuda(cudaMemcpyAsync(output.data(), device_output.get(), output.size() * sizeof(float),
+                                   cudaMemcpyDeviceToHost, stream.get()),
+                   "cudaMemcpyAsync zero-extended output");
+        check_cuda(cudaStreamSynchronize(stream.get()), "cudaStreamSynchronize zero-extended");
+        for (std::size_t transform = 0; transform < batch; ++transform) {
+            std::vector<float> expected(physical_n, 0.0F);
+            std::copy_n(input.begin() + transform * logical_n, logical_n, expected.begin());
+            if (op == cuntt::ButterflyOperator::Fwht)
+                cuntt::reference_fwht(expected);
+            else
+                cuntt::reference_structured_2x2(expected, matrices);
+            for (std::size_t index = 0; index < physical_n; ++index) {
+                if (std::abs(output[transform * physical_n + index] - expected[index]) > 1.0e-4F)
+                    throw std::runtime_error("zero-extended warp-register processing-unit mismatch");
+            }
+        }
+    }
+    std::cout << "PASS zero-extended warp-register processing units\n";
+}
+
 void test_fp64(std::uint32_t log_n, bool inverse) {
     const std::size_t                      n = std::size_t{1} << log_n;
     std::mt19937                           random(0x6400U + log_n + static_cast<unsigned int>(inverse));
@@ -728,6 +782,7 @@ int main() {
         }
         test_extended_zeta_operators();
         test_structured_operators();
+        test_zero_extended_register_units();
         for (const std::uint32_t tile_threads : {32U, 64U, 128U, 256U}) {
             test_fwht(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, tile_threads);
             test_fft(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, tile_threads);

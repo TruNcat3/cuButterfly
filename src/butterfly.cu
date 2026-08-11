@@ -1324,6 +1324,47 @@ class ButterflyPlan::Impl {
         launch_once(input, output, scratch_buffer(), auxiliary_buffer());
     }
 
+    void execute_zero_extended_async(const float* input, float* output,
+                                     std::size_t logical_points,
+                                     std::size_t input_batch_stride,
+                                     std::size_t input_element_stride) {
+        if (input == nullptr || output == nullptr)
+            throw std::invalid_argument("zero-extended butterfly input and output must be non-null");
+        if (input == output)
+            throw std::invalid_argument("zero-extended butterfly execution requires distinct input and output pointers");
+        if (config_.precision != ButterflyPrecision::Fp32 ||
+            (config_.op != ButterflyOperator::Fwht && config_.op != ButterflyOperator::Structured2x2) ||
+            config_.inverse || config_.local_exchange != LocalExchange::WarpRegister) {
+            throw std::invalid_argument(
+                "zero-extended fused input requires a forward FP32 warp-register FWHT or structured-2x2 plan");
+        }
+        if (logical_points == 0 || logical_points > points_)
+            throw std::invalid_argument("zero-extended logical length must be in the physical transform range");
+        if (input_element_stride == 0 || input_batch_stride == 0)
+            throw std::invalid_argument("zero-extended input strides must be positive");
+        if (logical_points > 1 &&
+            (input_element_stride > std::numeric_limits<std::size_t>::max() / (logical_points - 1) ||
+             input_batch_stride <= (logical_points - 1) * input_element_stride))
+            throw std::invalid_argument("zero-extended input batches overlap");
+
+        if (config_.op == ButterflyOperator::Structured2x2) {
+            detail::launch_generated_register_structured_zero_extended(
+                config_.log_n, input, output,
+                reinterpret_cast<const float*>(device_operator_coefficients_.data()),
+                config_.batch, input_batch_stride, config_.batch_stride,
+                input_element_stride, config_.element_stride,
+                static_cast<std::uint32_t>(logical_points),
+                config_.stage_matrices.size() == 1, stream_);
+        } else {
+            detail::launch_generated_register_fwht_zero_extended(
+                config_.log_n, input, output, config_.batch,
+                input_batch_stride, config_.batch_stride,
+                input_element_stride, config_.element_stride,
+                static_cast<std::uint32_t>(logical_points), stream_);
+        }
+        CUB_CUDA_CHECK(cudaGetLastError());
+    }
+
     template <typename Value>
     ButterflyStats execute(const std::vector<Value>& input, std::vector<Value>& output, std::uint32_t warmup, std::uint32_t repeat,
                            ButterflyOperator required_op, ButterflyPrecision required_precision) {
@@ -1879,6 +1920,14 @@ void ButterflyPlan::execute_async(const ComplexBf16* input, ComplexBf16* output)
 
 void ButterflyPlan::execute_async(const std::uint32_t* input, std::uint32_t* output) {
     impl_->execute_async(input, output, ButterflyOperator::XorZeta, ButterflyPrecision::Uint32);
+}
+
+void ButterflyPlan::execute_zero_extended_async(const float* input, float* output,
+                                                std::size_t logical_points,
+                                                std::size_t input_batch_stride,
+                                                std::size_t input_element_stride) {
+    impl_->execute_zero_extended_async(input, output, logical_points,
+                                       input_batch_stride, input_element_stride);
 }
 
 ButterflyStats ButterflyPlan::execute(const std::vector<float>& input, std::vector<float>& output, std::uint32_t warmup, std::uint32_t repeat) {

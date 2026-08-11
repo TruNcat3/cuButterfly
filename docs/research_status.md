@@ -6,6 +6,10 @@ cuButterfly is a single-GPU research artifact for hardware-mapped space-time
 parallelism across regular butterfly computations. V100 is the only fully
 measured hardware target. Cross-GPU transfer is explicitly future work and is
 not used to support any current portability claim.
+Power-of-two and numeric-regime evidence below is the v0.5 authority. The
+general-shape/API extension and its separate protocols are summarized in
+[v0.6 Implementation Status](v0.6_implementation_status.md); those results do
+not retroactively change older controlled tables.
 
 ## Research Claims And Evidence
 
@@ -19,6 +23,7 @@ not used to support any current portability claim.
 | A small hardware calibration set can replace exhaustive timing | leave-one-batch-out FFT interpolation | top-3 geomean regret 1.0007x, worst 1.0020x using 6.2% of candidates |
 | The selection method extends beyond FFT | leave-one-complete-shape-out selector over NTT/FWHT/XOR-zeta | 93.88% top-1, 100% top-3, 1.0049x geomean regret |
 | Numeric and batch preference is piecewise rather than globally smooth | 736-case screen, 29 full follow-ups, 12 paired NCU profiles, 99 adaptive anchors | all 9 length crossovers reproduce; 6 batch events are unstable; bounded selector coverage is 27.74% with 1.01112x worst regret |
+| General-shape composition must select both physical units and boundaries | exact FFT/NTT, embedding, rank-two, direct-output and fused-input follow-ups | direct exact FFT reaches vendor parity by abstention; embedded `32767 -> 32768` FWHT reaches 0.11759 ms after selected boundary fusion |
 
 The static-model failure is part of the result, not a row to hide. Resource
 legality, occupancy, waves, and issued work provide a useful shortlist, but do
@@ -144,9 +149,11 @@ boundaries.
    established, capture a newer GPU profile and test whether the learned
    descriptors and predicted boundaries transfer before and after calibration.
 
-The repository does not currently claim a production cuFFT API replacement,
-non-power-of-two coverage, universal library superiority, or architecture
-portability beyond V100.
+The repository does not currently claim a production cuFFT replacement,
+universal library superiority, or architecture portability beyond V100.
+Non-power-of-two and rank-two execution are implemented through the v0.6 C
+plan composition layer, but only the documented exact/embedding semantics and
+single-V100 evidence are claimed.
 
 ## Reproduction Map
 
@@ -164,6 +171,8 @@ portability beyond V100.
 - FP64 scalar/core/mapping validation: `results/fp64_*logN16*`
 - FP64 length/batch robustness: `results/fp64_robustness_*`
 - FP64 privileged counter command: `scripts/profile_fp64_fft_ncu.sh`
+- general-shape composition: `results/general_shape_*`,
+  `docs/general_shape_results.md`
 
 Run `./scripts/reproduce_v100_analysis.sh` to regenerate derived artifacts from
 the checked-in raw measurements. It does not recollect timings or counters.

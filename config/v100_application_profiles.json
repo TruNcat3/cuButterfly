@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "target": {
+    "name": "v100-sm70-80sm",
+    "compute_major": 7,
+    "compute_minor": 0,
+    "multiprocessors": 80
+  },
+  "profiles": [
+    {"operator": "fft", "storage": "complex-fp32", "direction": "forward", "placement": "in-place", "logN": 8, "batches": [1, 4, 16, 64, 256, 1024, 4096, 16384, 65536], "implementation": "cuButterfly-cuFFTDx"},
+    {"operator": "fft", "storage": "complex-fp32", "direction": "forward", "placement": "in-place", "logN": 14, "batches": [1, 4, 16, 64, 256, 1024], "implementation": "cuButterfly-cuFFTDx-direct"},
+    {"operator": "fft", "storage": "complex-fp32", "direction": "forward", "placement": "in-place", "logN": 18, "batches": [1, 2, 4, 8, 16, 32, 64], "implementation": "cuButterfly-cuFFTDx-online"},
+    {"operator": "fft", "storage": "complex-fp32", "direction": "forward", "placement": "in-place", "logN": 20, "batches": [1, 2, 4, 8, 16], "implementation": "cuButterfly-cuFFTDx-online"},
+    {"operator": "fwht", "storage": "fp32", "direction": "forward", "placement": "out-of-place", "logN": 8, "batches": [1, 4, 16, 64, 256, 1024, 4096, 16384, 65536], "implementation": "cuButterfly-warp-register"},
+    {"operator": "fwht", "storage": "fp32", "direction": "forward", "placement": "out-of-place", "logN": 15, "batches": [1, 4, 16, 32, 128, 256, 512], "implementation": "cuButterfly-piecewise"},
+    {"operator": "fwht", "storage": "fp32", "direction": "forward", "placement": "out-of-place", "logN": 20, "batches": [1, 2, 4, 8, 16], "implementation": "cuButterfly-online-radix4"},
+    {"operator": "ntt", "storage": "uint32", "direction": "forward", "placement": "out-of-place", "modulus": 1073692673, "logN": 12, "batches": [1, 4, 16, 64, 256, 1024, 4096], "implementation": "cuNTT-Hybrid2D-radix4"},
+    {"operator": "ntt", "storage": "uint64", "direction": "forward", "placement": "out-of-place", "modulus": 1152921504606584833, "logN": 16, "batches": [1, 4, 16, 32, 64, 128, 256], "implementation": "cuNTT-Hybrid2D-radix4"}
+  ]
+}

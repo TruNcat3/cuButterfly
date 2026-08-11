@@ -3,6 +3,26 @@
 This roadmap separates implementation goals from evidence required for the
 research claim. Ordering may change after profiling or access to new hardware.
 
+## v0.6.0 Status: General Shapes And Professional Plan Surface
+
+Status: complete on the single-V100 release target. General-shape semantics,
+the professional plan surface, boundary selection, tests, raw evidence, and
+release documentation are checked in.
+The new C plan API separates standard exact-length semantics from explicit
+zero-extended embedding, lowers rank-two workloads to per-axis mappings, and
+adds exact static-profile/cache selection with actionable miss logs. Exact FFT
+selects between native cuFFT and Bluestein; modular Bluestein NTT is enabled
+only when its root requirements hold and now reuses the selected radix-4
+Hybrid2D core. Embedded and rank-two plans select and cache each physical axis.
+The initial Bluestein-only FFT reached 0.105x-0.179x of cuFFT; the new selector
+reaches parity by abstaining to direct cuFFT. Boundary fusion for embedded
+operators now removes contiguous output scatter, and selected FP32
+warp-register FWHT also fuses logical input and zero fill. The complete
+logical `32767 -> 32768,batch=256` FWHT path reaches 0.11759 ms, within 1.01x
+of the archived pre-padded Dao core. Structured fused input remains a generated
+but unselected candidate because it regresses on V100. See
+[v0.6 Implementation Status](docs/v0.6_implementation_status.md).
+
 ## v0.4.0 Status: Library And Resource-Model Integration
 
 Status: complete on V100. This release adds the public device API and package,
@@ -75,6 +95,11 @@ artifacts, and decision gates.
 
 ## Near Term Backlog
 
+- Search boundary residence jointly with processing unit, numeric contract,
+  logical padding ratio, batch alignment, and layout instead of promoting a
+  fusion family from one successful operator.
+- Add a padded-layout reuse contract for adjacent plan executions so an
+  application can retain physical data without repeated embedding work.
 - Extend the fixed-V100 regime model to stride, placement, direction,
   normalization, coefficient policy, and output-order neighborhoods using the
   same screen-follow-up-counter hierarchy.
