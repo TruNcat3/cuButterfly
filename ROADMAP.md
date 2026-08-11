@@ -5,8 +5,9 @@ research claim. Ordering may change after profiling or access to new hardware.
 
 ## v0.6.0 Status: General Shapes And Professional Plan Surface
 
-Status: implementation and single-V100 correctness/performance validation
-complete; release packaging and review remain.
+Status: complete on the single-V100 release target. General-shape semantics,
+the professional plan surface, boundary selection, tests, raw evidence, and
+release documentation are checked in.
 The new C plan API separates standard exact-length semantics from explicit
 zero-extended embedding, lowers rank-two workloads to per-axis mappings, and
 adds exact static-profile/cache selection with actionable miss logs. Exact FFT

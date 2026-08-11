@@ -18,7 +18,7 @@ processing-unit boundary, same-machine library comparisons, Nsight profiling
 scripts, and the raw CSV data used in the reports. It is a research artifact,
 not a drop-in replacement for cuFFT or a production cryptography library.
 
-The v0.6 development API adds a CUDA-library-style C plan surface, exact
+The v0.6 API adds a CUDA-library-style C plan surface, exact
 non-power-of-two FFT/compatible NTT lowering, explicit power-of-two embedding,
 rank-two axis mapping, caller-owned workspace, static application profiles,
 one-time measured tuning, and exact-key cache reuse. See the
@@ -397,7 +397,7 @@ software release as:
   author  = {TruNcat3},
   title   = {cuButterfly: Hardware-Mapped Space-Time Parallelism for Butterfly Computations on GPUs},
   year    = {2026},
-  version = {0.5.0},
+  version = {0.6.0},
   url     = {https://github.com/TruNcat3/cuButterfly}
 }
 ```

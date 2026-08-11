@@ -2,7 +2,7 @@
 
 All notable repository and research-artifact changes are recorded here.
 
-## 0.6.0 - Unreleased General Shapes And Plan API
+## 0.6.0 - 2026-08-11 General Shapes And Plan API
 
 ### Added
 
