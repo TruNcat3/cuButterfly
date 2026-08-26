@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "target": "v100-sm70",
+  "primary": {
+    "flow_tile_log_n": [5, 6, 7, 8],
+    "stage_space_by_tile": {"5": [5], "6": [2, 4, 6], "7": [7], "8": [2, 4, 8]},
+    "data_space_by_word": {"32": [16, 32], "64": [8, 16]},
+    "role_stages": [1],
+    "target_ctas_per_sm": 1,
+    "token_interleave": 1,
+    "data_time": [1, 2, 4, 8],
+    "pipeline_buffers": 2,
+    "layout": "hermes-xor",
+    "state": "inplace",
+    "handoff": "named-barrier"
+  },
+  "defaults": [
+    {"word_bits": [32, 64], "log_n": 10, "flow_tile_log_n": 5, "stage_space": 5, "data_space_by_word": {"32": 32, "64": 16}, "batch_min": 1, "batch_per_sm": 0, "role_stages": 5, "data_time": 10, "target_ctas_per_sm": 1, "token_interleave": 1, "compute_unit": "radix4"},
+    {"word_bits": [32], "log_n": 12, "flow_tile_log_n": 6, "stage_space": 6, "data_space_by_word": {"32": 32}, "batch_min": 1, "batch_per_sm": 2, "batch_offset": 1, "role_stages": 6, "data_time": 6, "target_ctas_per_sm": 1, "token_interleave": 1, "compute_unit": "radix4"},
+    {"word_bits": [32], "log_n": 12, "flow_tile_log_n": 6, "stage_space": 6, "data_space_by_word": {"32": 32}, "batch_min": 1, "batch_per_sm": 0, "role_stages": 6, "data_time": 12, "target_ctas_per_sm": 1, "token_interleave": 1, "compute_unit": "radix4"},
+    {"word_bits": [64], "log_n": 12, "flow_tile_log_n": 6, "stage_space": 6, "data_space_by_word": {"64": 16}, "batch_min": 1, "batch_per_sm": 0, "role_stages": 6, "data_time": 12, "target_ctas_per_sm": 1, "token_interleave": 1, "compute_unit": "radix4"}
+  ],
+  "ablations": [
+    {"word_bits": [32, 64], "flow_tile_log_n": 8, "stage_space": 8, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 1, "pipeline_buffers": 3, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier"},
+    {"word_bits": [32, 64], "flow_tile_log_n": 8, "stage_space": 8, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 1, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "atomic"},
+    {"word_bits": [32, 64], "flow_tile_log_n": 8, "stage_space": 8, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 1, "pipeline_buffers": 2, "layout": "linear", "state": "inplace", "handoff": "named-barrier"},
+    {"word_bits": [32, 64], "flow_tile_log_n": 8, "stage_space": 8, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 1, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "ping-pong", "handoff": "named-barrier"},
+    {"word_bits": [32, 64], "flow_tile_log_n": 5, "stage_space": 5, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 4, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 2},
+    {"word_bits": [32, 64], "flow_tile_log_n": 5, "stage_space": 5, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 4, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 5},
+    {"word_bits": [32, 64], "flow_tile_log_n": 6, "stage_space": 6, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 4, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 2},
+    {"word_bits": [32, 64], "flow_tile_log_n": 6, "stage_space": 6, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 4, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 3},
+    {"word_bits": [32, 64], "flow_tile_log_n": 6, "stage_space": 6, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 4, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 6},
+    {"word_bits": [32, 64], "flow_tile_log_n": 7, "stage_space": 7, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 2, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 7},
+    {"word_bits": [32, 64], "flow_tile_log_n": 8, "stage_space": 8, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 1, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 2},
+    {"word_bits": [32, 64], "flow_tile_log_n": 8, "stage_space": 8, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 1, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 4},
+    {"word_bits": [32, 64], "flow_tile_log_n": 8, "stage_space": 8, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 1, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 8},
+    {"word_bits": [32, 64], "flow_tile_log_n": 6, "stage_space": 6, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 8, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 2},
+    {"word_bits": [32, 64], "flow_tile_log_n": 6, "stage_space": 6, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 8, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 3},
+    {"word_bits": [32, 64], "flow_tile_log_n": 6, "stage_space": 6, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 8, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 6},
+    {"word_bits": [64], "flow_tile_log_n": 6, "stage_space": 6, "data_space_by_word": {"64": 16}, "data_time": 8, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 6, "target_ctas_per_sm": 3},
+    {"word_bits": [32, 64], "flow_tile_log_n": 5, "stage_space": 5, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 10, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 5, "token_interleave": 1},
+    {"word_bits": [32, 64], "flow_tile_log_n": 5, "stage_space": 5, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 10, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 5, "token_interleave": 2},
+    {"word_bits": [32, 64], "flow_tile_log_n": 6, "stage_space": 6, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 12, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 6, "token_interleave": 1},
+    {"word_bits": [32, 64], "flow_tile_log_n": 6, "stage_space": 6, "data_space_by_word": {"32": 32, "64": 16}, "data_time": 12, "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 6, "token_interleave": 2},
+    {"word_bits": [32, 64], "flow_tile_log_n": 5, "stage_space": 5, "data_space_by_word": {"32": 32, "64": 16}, "data_time": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 5, "token_interleave": 1},
+    {"word_bits": [32, 64], "flow_tile_log_n": 6, "stage_space": 6, "data_space_by_word": {"32": 32, "64": 16}, "data_time": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], "pipeline_buffers": 2, "layout": "hermes-xor", "state": "inplace", "handoff": "named-barrier", "role_stages": 6, "token_interleave": 1}
+  ]
+}

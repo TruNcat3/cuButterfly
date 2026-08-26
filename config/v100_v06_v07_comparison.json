@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "hardware": "v100-sm70",
+  "protocol": {"warmup": 30, "repeat": 500, "trials": 3, "seed": 20260817},
+  "workloads": [
+    {
+      "id": "ntt10_u64", "operator": "ntt", "precision": "uint64",
+      "modulus": "1152921504606584833", "modulus_bits": 60, "logN": 10,
+      "direction": "forward", "normalization": "none", "placement": "out-of-place",
+      "output_order": "natural", "batches": [1, 16, 80, 160, 256, 512],
+      "implementations": [
+        {"id": "v06", "name": "v0.6-fixed-baseline", "runner": "ntt", "reference": true,
+         "args": ["--backend", "baseline", "--word-bits", "64", "--output-order", "natural"]},
+        {"id": "v06_search", "name": "v0.6-search-tile256", "runner": "ntt",
+         "args": ["--backend", "tile256", "--word-bits", "64", "--output-order", "natural"]},
+        {"id": "v07", "name": "v0.7-base-hybrid-dataflow-Ur1-Td4", "runner": "ntt",
+         "args": ["--backend", "hybrid-dataflow", "--word-bits", "64", "--flow-tile-log", "5", "--stage-space", "5", "--data-space", "16", "--role-stages", "1", "--data-time", "4", "--token-interleave", "1"]},
+        {"id": "v07_search", "name": "v0.7-search-hybrid-dataflow-static-table", "runner": "ntt",
+         "args": ["--backend", "hybrid-dataflow", "--word-bits", "64"]}
+      ]
+    },
+    {
+      "id": "ntt12_u32", "operator": "ntt", "precision": "uint32",
+      "modulus": "1073479681", "modulus_bits": 30, "logN": 12,
+      "direction": "forward", "normalization": "none", "placement": "out-of-place",
+      "output_order": "natural", "batches": [1, 16, 80, 160, 256, 512],
+      "implementations": [
+        {"id": "v06", "name": "v0.6-fixed-hybrid2d-radix2", "runner": "ntt", "reference": true,
+         "args": ["--backend", "hybrid2d", "--compute-unit", "radix2", "--word-bits", "32", "--cross-twiddle", "fused", "--output-order", "natural"]},
+        {"id": "v06_search", "name": "v0.6-search-hybrid2d-radix4", "runner": "ntt",
+         "args": ["--backend", "hybrid2d", "--compute-unit", "radix4", "--word-bits", "32", "--cross-twiddle", "fused", "--output-order", "natural"]},
+        {"id": "v07", "name": "v0.7-base-hybrid-dataflow-Ur1-Td4", "runner": "ntt",
+         "args": ["--backend", "hybrid-dataflow", "--word-bits", "32", "--flow-tile-log", "6", "--stage-space", "6", "--data-space", "32", "--role-stages", "1", "--data-time", "4", "--token-interleave", "1"]},
+        {"id": "v07_search", "name": "v0.7-search-hybrid-dataflow-static-table", "runner": "ntt",
+         "args": ["--backend", "hybrid-dataflow", "--word-bits", "32"]}
+      ]
+    },
+    {
+      "id": "ntt12_u64", "operator": "ntt", "precision": "uint64",
+      "modulus": "1152921504606584833", "modulus_bits": 60, "logN": 12,
+      "direction": "forward", "normalization": "none", "placement": "out-of-place",
+      "output_order": "natural", "batches": [1, 16, 80, 160, 256, 512],
+      "implementations": [
+        {"id": "v06", "name": "v0.6-fixed-hybrid2d-radix2", "runner": "ntt", "reference": true,
+         "args": ["--backend", "hybrid2d", "--compute-unit", "radix2", "--word-bits", "64", "--cross-twiddle", "fused", "--output-order", "natural"]},
+        {"id": "v06_search", "name": "v0.6-search-hybrid2d-radix4", "runner": "ntt",
+         "args": ["--backend", "hybrid2d", "--compute-unit", "radix4", "--word-bits", "64", "--cross-twiddle", "fused", "--output-order", "natural"]},
+        {"id": "v07", "name": "v0.7-base-hybrid-dataflow-Ur1-Td4", "runner": "ntt",
+         "args": ["--backend", "hybrid-dataflow", "--word-bits", "64", "--flow-tile-log", "6", "--stage-space", "6", "--data-space", "16", "--role-stages", "1", "--data-time", "4", "--token-interleave", "1"]},
+        {"id": "v07_search", "name": "v0.7-search-hybrid-dataflow-static-table", "runner": "ntt",
+         "args": ["--backend", "hybrid-dataflow", "--word-bits", "64"]}
+      ]
+    }
+  ]
+}

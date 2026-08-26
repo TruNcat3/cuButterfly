@@ -13,6 +13,7 @@
 
 # Nsight binary reports are machine-specific; reduced CSV files remain tracked.
 *.nsys-rep
+*.ncu-rep
 *.sqlite
 
 # Local editor and OS files.

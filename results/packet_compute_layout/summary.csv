@@ -1,0 +1,16 @@
+batch,mode,kernel_ms,trials
+16,aggregate,1.090007,3
+16,per_packet_interleaved_rows,1.1554,3
+16,per_packet_warp_rows,1.133978,3
+16,wave_bitmap_interleaved_rows,1.14092,3
+16,wave_bitmap_warp_rows,1.149317,3
+32,aggregate,2.427331,3
+32,per_packet_interleaved_rows,2.523197,3
+32,per_packet_warp_rows,2.526208,3
+32,wave_bitmap_interleaved_rows,2.456597,3
+32,wave_bitmap_warp_rows,2.461737,3
+64,aggregate,4.960625,3
+64,per_packet_interleaved_rows,5.164626,3
+64,per_packet_warp_rows,5.174538,3
+64,wave_bitmap_interleaved_rows,5.021655,3
+64,wave_bitmap_warp_rows,5.045084,3

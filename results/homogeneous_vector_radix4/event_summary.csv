@@ -1,0 +1,10 @@
+trial,variant,kernel_ms
+1,v06,1.547223
+2,v06,1.451540
+3,v06,1.514537
+1,warp128_coefficient_reuse4_dual,1.320161
+2,warp128_coefficient_reuse4_dual,1.273754
+3,warp128_coefficient_reuse4_dual,1.275003
+1,warp128_vector_radix4_dual,1.238446
+2,warp128_vector_radix4_dual,1.238016
+3,warp128_vector_radix4_dual,1.239470

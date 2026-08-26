@@ -1,0 +1,12 @@
+implementation,category,sectors_per_row,predicted_sectors,source_theoretical_sectors,source_ideal_sectors,source_excessive_sectors,model_basis
+v06,external data,192,6291456,6291456.0,4194304.0,2097152.0,same input and boundary data movement
+v06,stage 0-1 coefficients,48,1572864,,,,CTA radix-4 pair
+v06,stage 2-3 coefficients,48,1572864,,,,CTA radix-4 pair
+v06,stage 4-5 coefficients,96,3145728,,,,CTA radix-4 pair
+v06,stage 6-7 coefficients,192,6291456,,,,CTA radix-4 pair
+v06,stage 8-9 coefficients,192,6291456,,,,CTA radix-4 pair
+v07-d6,external data,192,6291456,6291456.0,4194304.0,2097152.0,same logical input and boundary data
+v07-d6,stage 0-1 coefficients,48,1572864,1572864.0,1572864.0,0.0,register-local radix-4 pair
+v07-d6,stage 2-5 coefficients,128,4194304,,,,dense lane loads and shuffles
+v07-d6,stage 6 coefficients,512,16777216,,,,four half-warp 16-byte-stride loads per tile
+v07-d6,stage 7-9 coefficients,224,7340032,7118848.0,5767168.0,1351680.0,four-warp shared-tail continuation

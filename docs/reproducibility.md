@@ -201,6 +201,26 @@ Do not treat a silently selected fallback as a measured generated core.
 
 ## 5. External Baselines
 
+The matched v0.6/v0.7 NTT matrix is reproduced with:
+
+```bash
+python3 scripts/run_external_baseline_suite.py \
+  --manifest config/v100_v06_v07_comparison.json \
+  --output results/v100_v06_v07_r4_refresh_raw.csv
+python3 scripts/summarize_external_baseline_suite.py \
+  results/v100_v06_v07_r4_refresh_raw.csv \
+  --output results/v100_v06_v07_r4_refresh_summary.csv
+python3 scripts/summarize_v06_v07_comparison.py \
+  results/v100_v06_v07_r4_refresh_summary.csv \
+  --output results/v100_v06_v07_r4_refresh_comparison.csv \
+  --metrics results/v100_v06_v07_r4_refresh_metrics.json \
+  --markdown results/v100_v06_v07_r4_refresh.md
+```
+
+Use `--resume` on the collection command only when the manifest and existing
+raw file describe the same protocol. The runner keys completion by case ID and
+trial.
+
 ### Dao Fast Hadamard Transform
 
 ```bash
@@ -231,6 +251,18 @@ cuFFT uses the same `cubutterfly_bench` process and timing interface:
 ```
 
 ## 6. Nsight Compute
+
+### Hierarchical NTT dataflow
+
+```bash
+MODE=screen ./scripts/benchmark_hierarchical_dataflow.sh
+MODE=space WARMUP=20 REPEAT=100 ./scripts/benchmark_hierarchical_dataflow.sh
+sudo -E ./scripts/profile_hierarchical_dataflow_ncu.sh
+```
+
+`screen` holds total points near `2^22` while sweeping `logN=12..20` and both
+word widths. `space` scans rows/subgraphs per CTA, serial subgraph depth, and
+thread count at `logN=20,batch=4`; every result is reference-verified.
 
 Administrator-enabled representative collection:
 

@@ -1,0 +1,38 @@
+[
+  {
+    "numeric": "overall",
+    "shapes": 18,
+    "radix4_speedup_vs_pipeline": 3.769189670814371,
+    "radix4_throughput_vs_v06": 1.0351075455950138,
+    "radix4_wins": 8,
+    "parity": 1,
+    "v06_wins": 9
+  },
+  {
+    "numeric": "uint32/logN12",
+    "shapes": 6,
+    "radix4_speedup_vs_pipeline": 3.7771164177740015,
+    "radix4_throughput_vs_v06": 0.8037191173493984,
+    "radix4_wins": 2,
+    "parity": 0,
+    "v06_wins": 4
+  },
+  {
+    "numeric": "uint64/logN10",
+    "shapes": 6,
+    "radix4_speedup_vs_pipeline": 4.0545936652806445,
+    "radix4_throughput_vs_v06": 2.132962691180121,
+    "radix4_wins": 6,
+    "parity": 0,
+    "v06_wins": 0
+  },
+  {
+    "numeric": "uint64/logN12",
+    "shapes": 6,
+    "radix4_speedup_vs_pipeline": 3.4965220275119537,
+    "radix4_throughput_vs_v06": 0.6469472419410367,
+    "radix4_wins": 0,
+    "parity": 1,
+    "v06_wins": 5
+  }
+]

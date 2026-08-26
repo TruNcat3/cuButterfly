@@ -91,7 +91,8 @@ class ButterflyDesignSpaceTest(unittest.TestCase):
     def test_runtime_backends_are_bound_to_architecture_families(self):
         bindings = self.space["runtime_bindings"]
         self.assertEqual(set(bindings["ntt_backends"]),
-                         {"baseline", "tile256", "hybrid2d", "compact-stage", "stage-pipeline"})
+                         {"baseline", "tile256", "hybrid2d", "compact-stage", "stage-pipeline",
+                          "hybrid-dataflow", "hierarchical-barrier", "hierarchical-dataflow"})
         self.assertEqual(set(bindings["butterfly_backends"]),
                          {"temporal-tile", "hierarchical", "online-reorder", "warp-hybrid", "stage-pipeline", "cufft"})
 

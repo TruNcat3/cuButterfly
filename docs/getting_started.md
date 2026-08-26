@@ -85,6 +85,74 @@ compute-sanitizer --tool racecheck ./build/cubutterfly_tests
 
 ## NTT CLI
 
+The experimental resident graph-streaming backend is selected explicitly:
+
+```bash
+./build/cuntt_bench --backend hybrid-dataflow --logN 12 --batch 16 \
+  --compute-unit radix4 \
+  --flow-tile-log 6 --stage-space 6 --role-stages 6 \
+  --data-space 16 --data-time 12 --token-interleave 1 \
+  --pipeline-buffers 2 --dataflow-layout hermes-xor \
+  --dataflow-state inplace --stage-handoff named-barrier --verify
+```
+
+It has zero global workspace and rejects transforms that do not fit in one
+CTA's shared memory. It is not selected by `--auto-select`.
+
+The preserved v0.6 two-phase implementation is explicit:
+
+```bash
+./build/cuntt_bench --backend hierarchical-barrier \
+  --logN 20 --batch 4 --word-bits 32 --modulus 998244353 \
+  --n1-log 10 --rows-per-block 4 --data-time 1 \
+  --threads-per-block 256 --verify
+```
+
+This backend requires cooperative launch support and one full-size workspace
+for its online-transposed inter-layer boundary. `n1_log` selects the first
+resident graph layer; the second contains `logN-n1_log` stages. Both local
+lengths must currently be in `6..10`.
+
+At the generated `10+10` point, add `--hierarchical-core hybrid2d-radix4` to
+select the mature Hybrid2D local schedule as an explicit physical-unit
+ablation. The default is `dataflow-radix4`.
+
+The v0.7 backend accepts a variable subgraph decomposition and records direct
+evidence of overlap:
+
+```bash
+./build/cuntt_bench --backend hierarchical-dataflow \
+  --logN 15 --batch 2 --stage-partition 5,5,5 \
+  --segment-threads 256 --segment-cta-weights 5,5,5 \
+  --boundary-storage full-scratch --trace-pipeline --verify
+```
+
+For a large batch, `--boundary-storage ring --boundary-buffers 2` bounds each
+edge to two transform slots. Epoch tokens prevent a slot from being overwritten
+until every downstream task has loaded its prior transform.
+
+Adjacent segments overlap when `pipeline_segment_(i+1).start` is smaller than
+`pipeline_segment_i.end`. The streaming ABI provides generic radix-2/4/8
+subgraph cores with warp-level data-space unfolding. On V100, `logN=20`
+defaults to a generated `10+10` point that imports the mature four-row resident
+radix-4 core; use an explicit `7,7,6` partition to study the three-segment
+single-transform wavefront. The latter accepts `--segment-units 8|16|32`; its
+measured V100 default is 32 units per CTA with `6,6,8` role weights.
+
+`--compute-unit radix4` selects the primary resident physical unit. It combines
+two NTT stages before each CTA synchronization while retaining the full state
+on chip. `--compute-unit radix2` selects the original persistent-role pipeline
+as an architectural ablation; `radix8` is not generated for this backend.
+
+`--role-stages 1` selects the original one-stage-per-role stream.
+`--role-stages K` fuses `K` consecutive stages in registers and is available
+only for points emitted by the target manifest.
+`--token-interleave 2` selects the two-token register software-pipeline
+ablation. It is distinct from `--data-time`, which sets packet depth.
+`--target-ctas-per-sm K` selects a generated launch-bounds candidate. The V100
+default is `1`; higher targets are explicit physical-unit ablations, not runtime
+promises.
+
 ```bash
 ./build/cuntt_bench --help
 ```

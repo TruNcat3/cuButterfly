@@ -1,0 +1,5 @@
+==WARNING== Note: Running with uncontrolled GPU caches. Profiling results may be inconsistent.
+==PROF== Connected to process 2074871 (/home/wt/git/Hermes/cuNTT-v05/build-ncu-lineinfo/cuntt_bench)
+==PROF== Profiling "hierarchical_streaming_10x10_..." - 0 (1/1): 0%....50%....100% - 6 passes
+==PROF== Disconnected from process 2074871
+==PROF== Report: /home/wt/git/Hermes/cuNTT-v05/results/ncu_v07_sector_attribution/v06_source.ncu-rep

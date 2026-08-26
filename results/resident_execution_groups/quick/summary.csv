@@ -1,0 +1,4 @@
+batch,logical_subgraphs,execution_groups,logical_partition,execution_partition,materialized_boundaries,trials,kernel_ms,min_kernel_ms,max_kernel_ms
+1,4,2,5+5+5+5,10+10,1,1,0.433835,0.433835,0.433835
+1,4,3,5+5+5+5,5+5+10,2,1,1.081685,1.081685,1.081685
+1,4,4,5+5+5+5,5+5+5+5,3,1,1.117184,1.117184,1.117184

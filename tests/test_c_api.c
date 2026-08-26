@@ -315,6 +315,79 @@ static int run_arbitrary_ntt(cubutterflyHandle_t handle, cudaStream_t stream) {
     return 0;
 }
 
+static int run_hierarchical_ntt(cubutterflyHandle_t handle, cudaStream_t stream) {
+    const size_t extent = 4096;
+    uint32_t* host_output = (uint32_t*)malloc(extent * sizeof(uint32_t));
+    uint32_t* input = NULL;
+    uint32_t* output = NULL;
+    void* workspace = NULL;
+    cubutterflyDescriptor_t descriptor = NULL;
+    cubutterflyPlan_t plan = NULL;
+    size_t workspace_bytes = 0;
+    char algorithm[64];
+    size_t algorithm_bytes = sizeof(algorithm);
+    if (host_output == NULL)
+        return 1;
+    CHECK_CUB(cubutterflyCreateDescriptor(&descriptor));
+    CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_NTT));
+    CHECK_CUB(cubutterflySetDataType(descriptor, CUBUTTERFLY_DATA_UINT32, CUBUTTERFLY_COMPUTE_UINT32));
+    CHECK_CUB(cubutterflySetModulus(descriptor, 998244353, 32));
+    CHECK_CUB(cubutterflySetShape(descriptor, 1, &extent, 1));
+    CHECK_CUB(cubutterflySetAlgorithmPolicy(descriptor, CUBUTTERFLY_ALGORITHM_EXPLICIT,
+                                            "ntt-hierarchical-dataflow"));
+    CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &plan));
+    CHECK_CUB(cubutterflyPlanGetAlgorithmName(plan, algorithm, &algorithm_bytes));
+    if (strcmp(algorithm, "ntt-hierarchical-dataflow") != 0)
+        return 1;
+    CHECK_CUB(cubutterflyPlanGetWorkspaceSize(plan, &workspace_bytes));
+    if (workspace_bytes <= extent * sizeof(uint32_t))
+        return 1;
+    CHECK_CUDA(cudaMalloc((void**)&input, extent * sizeof(uint32_t)));
+    CHECK_CUDA(cudaMalloc((void**)&output, extent * sizeof(uint32_t)));
+    CHECK_CUDA(cudaMalloc(&workspace, workspace_bytes));
+    CHECK_CUDA(cudaMemsetAsync(input, 0, extent * sizeof(uint32_t), stream));
+    {
+        const uint32_t one = 1;
+        CHECK_CUDA(cudaMemcpyAsync(input, &one, sizeof(one), cudaMemcpyHostToDevice, stream));
+    }
+    CHECK_CUB(cubutterflyPlanSetWorkspace(plan, workspace, workspace_bytes));
+    CHECK_CUB(cubutterflyExecute(handle, plan, input, output));
+    CHECK_CUDA(cudaMemcpyAsync(host_output, output, extent * sizeof(uint32_t), cudaMemcpyDeviceToHost, stream));
+    CHECK_CUDA(cudaStreamSynchronize(stream));
+    for (size_t i = 0; i < extent; ++i)
+        if (host_output[i] != 1)
+            return 1;
+    cudaFree(workspace);
+    cudaFree(output);
+    cudaFree(input);
+    cubutterflyDestroyPlan(plan);
+    cubutterflyDestroyDescriptor(descriptor);
+    free(host_output);
+    return 0;
+}
+
+static int run_hierarchical_core_selection(cubutterflyHandle_t handle) {
+    const size_t extent = 1u << 20;
+    cubutterflyDescriptor_t descriptor = NULL;
+    cubutterflyPlan_t plan = NULL;
+    char algorithm[64];
+    size_t algorithm_bytes = sizeof(algorithm);
+    CHECK_CUB(cubutterflyCreateDescriptor(&descriptor));
+    CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_NTT));
+    CHECK_CUB(cubutterflySetDataType(descriptor, CUBUTTERFLY_DATA_UINT32, CUBUTTERFLY_COMPUTE_UINT32));
+    CHECK_CUB(cubutterflySetModulus(descriptor, 998244353, 32));
+    CHECK_CUB(cubutterflySetShape(descriptor, 1, &extent, 1));
+    CHECK_CUB(cubutterflySetAlgorithmPolicy(descriptor, CUBUTTERFLY_ALGORITHM_EXPLICIT,
+                                            "ntt-hierarchical-barrier-hybrid2d-radix4"));
+    CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &plan));
+    CHECK_CUB(cubutterflyPlanGetAlgorithmName(plan, algorithm, &algorithm_bytes));
+    if (strcmp(algorithm, "ntt-hierarchical-barrier-hybrid2d-radix4") != 0)
+        return 1;
+    cubutterflyDestroyPlan(plan);
+    cubutterflyDestroyDescriptor(descriptor);
+    return 0;
+}
+
 static int run_measure_cache(cubutterflyHandle_t handle) {
     const char* cache_path = "/tmp/cubutterfly_c_api_test.cache";
     size_t extent = 16;
@@ -622,6 +695,62 @@ static int run_strided_embedding_fwht(cubutterflyHandle_t handle, cudaStream_t s
     return 0;
 }
 
+static int run_appt_layout_query(cubutterflyHandle_t handle) {
+    const size_t extent = (size_t)1 << 20;
+    cubutterflyDescriptor_t descriptor = NULL;
+    cubutterflyPlan_t plan = NULL;
+    cubutterflyNttLayoutInfo_t layout;
+    char algorithm[128];
+    size_t algorithm_bytes = sizeof(algorithm);
+    CHECK_CUB(cubutterflyCreateDescriptor(&descriptor));
+    CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_NTT));
+    CHECK_CUB(cubutterflySetDataType(descriptor, CUBUTTERFLY_DATA_UINT32,
+                                     CUBUTTERFLY_COMPUTE_UINT32));
+    CHECK_CUB(cubutterflySetShape(descriptor, 1, &extent, 1));
+    CHECK_CUB(cubutterflySetModulus(descriptor, 998244353ULL, 32));
+    CHECK_CUB(cubutterflySetNttLayouts(
+        descriptor, CUBUTTERFLY_NTT_LAYOUT_NATURAL,
+        CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC));
+    CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &plan));
+    CHECK_CUB(cubutterflyPlanGetNttLayoutInfo(plan, &layout));
+    if (layout.log_n != 20 || layout.stage_count != 3 ||
+        layout.stage_partition[0] != 7 || layout.stage_partition[1] != 7 ||
+        layout.stage_partition[2] != 6 || layout.fragment_width != 32 ||
+        layout.bank_bits != 5 || !layout.xor_permutation ||
+        strstr(layout.compatibility_id, "appt-ntt-log20-7x7x6") == NULL)
+        return 1;
+    cubutterflyDestroyPlan(plan);
+
+    CHECK_CUB(cubutterflySetNttLayouts(
+        descriptor, CUBUTTERFLY_NTT_LAYOUT_NATURAL,
+        CUBUTTERFLY_NTT_LAYOUT_NATURAL));
+    CHECK_CUB(cubutterflySetAlgorithmPolicy(
+        descriptor, CUBUTTERFLY_ALGORITHM_EXPLICIT,
+        "ntt-appt-register-tail-grouped-writer-final-resident"));
+    CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &plan));
+    CHECK_CUB(cubutterflyPlanGetAlgorithmName(
+        plan, algorithm, &algorithm_bytes));
+    if (strcmp(algorithm,
+               "ntt-appt-register-tail-grouped-writer-final-resident") != 0)
+        return 1;
+    cubutterflyDestroyPlan(plan);
+
+    CHECK_CUB(cubutterflySetAlgorithmPolicy(
+        descriptor, CUBUTTERFLY_ALGORITHM_EXPLICIT,
+        "ntt-appt-register-tail-grouped-writer-final-resident-quarter"));
+    CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &plan));
+    algorithm_bytes = sizeof(algorithm);
+    CHECK_CUB(cubutterflyPlanGetAlgorithmName(
+        plan, algorithm, &algorithm_bytes));
+    if (strcmp(algorithm,
+               "ntt-appt-register-tail-grouped-writer-final-resident-quarter") !=
+        0)
+        return 1;
+    cubutterflyDestroyPlan(plan);
+    cubutterflyDestroyDescriptor(descriptor);
+    return 0;
+}
+
 int main(void) {
     cubutterflyHandle_t handle = NULL;
     cubutterflyDescriptor_t descriptor = NULL;
@@ -650,6 +779,12 @@ int main(void) {
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &plan));
     CHECK_CUB(cubutterflyPlanGetInputSize(plan, &input_bytes));
     CHECK_CUB(cubutterflyPlanGetOutputSize(plan, &output_bytes));
+    {
+        cubutterflyNttLayoutInfo_t layout;
+        if (cubutterflyPlanGetNttLayoutInfo(plan, &layout) !=
+            CUBUTTERFLY_STATUS_NOT_SUPPORTED)
+            return 1;
+    }
     if (input_bytes != sizeof(host_input) || output_bytes != sizeof(host_output))
         return 1;
 
@@ -670,7 +805,9 @@ int main(void) {
         return 1;
     if (run_2d_power_fft(handle, stream) != 0 || run_2d_ntt(handle, stream) != 0)
         return 1;
-    if (run_arbitrary_ntt(handle, stream) != 0)
+    if (run_arbitrary_ntt(handle, stream) != 0 || run_hierarchical_ntt(handle, stream) != 0 ||
+        run_hierarchical_core_selection(handle) != 0 ||
+        run_appt_layout_query(handle) != 0)
         return 1;
     if (run_measure_cache(handle) != 0)
         return 1;

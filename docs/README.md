@@ -23,6 +23,7 @@ Started](getting_started.md); architecture and paper readers should begin with
 | [Examples](examples.md) | Which minimal, build-checked example matches each integration style? |
 | [Device API](device_api.md) | What is the shortest device-pointer integration recipe? |
 | [Runtime Mapping Selector](runtime_selector.md) | How does a supported workload resolve to a calibrated mapping? |
+| [APPT Static Layout](appt_static_layout.md) | How does static output remap fixed-owner tail stores, and how is natural order restored online? |
 
 ## Reading Paths
 
@@ -39,6 +40,8 @@ Methodology](hardware_mapping_methodology.md) for resource demand and selection,
 then [Complete Butterfly Design Space](butterfly_design_space.md) for the formal
 object boundaries. [Research Positioning](cubutterfly_positioning.md) and
 [V100 Research Status](research_status.md) delimit the contribution and claims.
+The [APPT Static Layout](appt_static_layout.md) case study then shows how an
+online representation change follows from ownership and sector behavior.
 
 **Kernel and generator development.** Read [FFT Design
 Space](fft_design_space.md), [FFT Pipeline
@@ -83,6 +86,10 @@ comprehensive and scaling reports define the paper-facing comparison protocol.
 | [Structured 2x2 V100 Results](structured_2x2_v100_results.md) | Does a parameterized dense pair unit preserve the mapping methodology across precision and length? |
 | [V100 External Baselines](v100_external_baselines.md) | What do matching-protocol Dao FHT and GPU-NTT comparisons establish? |
 | [V100 Library/Base/Search Comparison](v100_three_way_comparison.md) | How much comes from search, and where does the selected point stand against specialized libraries? |
+| [V100 v0.6/v0.7 Comprehensive Comparison](v06_v07_comprehensive_comparison.md) | How do the mature and streaming NTT paths compare, and what is the current library boundary? |
+| [v0.6/v0.7 Crossover Attribution](../results/v06_v07_crossover/analysis.md) | Are version crossovers inherent, or do they expose missing candidate-space inclusion and CTA-wave boundaries? |
+| [Resident M/G Lowering versus v0.6](resident_v06_comparison.md) | Which v0.7 costs come from logical-boundary materialization, and which remain in physical-core coverage? |
+| [v0.7 Global-Load Sector Root Cause](v07_sector_root_cause.md) | Why can identical external dataflow generate more cache-request sectors, and what is actually pipelined? |
 | [V100 Research Status](research_status.md) | Which claims are closed, what are the current performance boundaries, and what remains? |
 | [General-Shape V100 Selection Results](general_shape_results.md) | How much do composition and physical-core selection recover, and which boundaries remain? |
 | [v0.6 Implementation Status](v0.6_implementation_status.md) | What is implemented, validated, selected by default, retained only as a candidate, or deferred? |
@@ -95,6 +102,14 @@ Repository maintenance and research priorities are documented in
 [`CONTRIBUTING.md`](../CONTRIBUTING.md) and [`ROADMAP.md`](../ROADMAP.md).
 
 ## Architecture And Mapping
+
+- [Hybrid Dataflow NTT](hybrid_dataflow_ntt.md): strict on-chip graph streaming,
+  four unfolding factors, generated points, and the StagePipeline distinction.
+- [Hierarchical Dataflow NTT](hierarchical_dataflow_ntt.md): one-launch,
+  multi-CTA graph execution with one online-reordered inter-layer boundary.
+- [Homogeneous Two-Level Subgraph Template](homogeneous_subgraph_template.md):
+  generated `K0+K1` roles, per-role data-time traversal, warp-scheduler
+  boundary, and the V100 `10+10` control experiment.
 
 - [Hybrid2D GPU Mapping](hybrid2d_architecture.md): Cooley-Tukey/NTT
   factorization and current CUDA realization.

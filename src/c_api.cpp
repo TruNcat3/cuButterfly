@@ -51,6 +51,8 @@ struct cubutterflyDescriptor {
     bool normalize_inverse = true;
     std::uint64_t modulus = cuntt::kDefaultModulus;
     std::uint32_t word_bits = 64;
+    cubutterflyNttLayout_t input_ntt_layout = CUBUTTERFLY_NTT_LAYOUT_NATURAL;
+    cubutterflyNttLayout_t output_ntt_layout = CUBUTTERFLY_NTT_LAYOUT_NATURAL;
     std::vector<std::vector<cubutterflyMatrix2x2_t>> stage_matrices{2};
 };
 
@@ -82,6 +84,11 @@ struct cubutterflyPlan {
 
 namespace {
 
+class unsupported_error : public std::runtime_error {
+  public:
+    explicit unsupported_error(const char* message) : std::runtime_error(message) {}
+};
+
 template <typename Function>
 cubutterflyStatus_t protect(Function&& function) noexcept {
     try {
@@ -93,6 +100,8 @@ cubutterflyStatus_t protect(Function&& function) noexcept {
         return CUBUTTERFLY_STATUS_INVALID_VALUE;
     } catch (const std::bad_alloc&) {
         return CUBUTTERFLY_STATUS_ALLOC_FAILED;
+    } catch (const unsupported_error&) {
+        return CUBUTTERFLY_STATUS_NOT_SUPPORTED;
     } catch (const std::logic_error&) {
         return CUBUTTERFLY_STATUS_INTERNAL_ERROR;
     } catch (const std::runtime_error&) {
@@ -457,6 +466,14 @@ cuntt::PlanConfig make_axis_ntt_config(const cubutterflyDescriptor& descriptor,
     config.modulus = descriptor.modulus;
     config.inverse = descriptor.direction == CUBUTTERFLY_DIRECTION_INVERSE;
     config.word_bits = descriptor.word_bits;
+    config.input_order = descriptor.input_ntt_layout ==
+                                 CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC
+                             ? cuntt::InputOrder::ApptStatic
+                             : cuntt::InputOrder::Natural;
+    config.output_order = descriptor.output_ntt_layout ==
+                                  CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC
+                              ? cuntt::OutputOrder::ApptStatic
+                              : cuntt::OutputOrder::Natural;
     config.auto_allocate_workspace = false;
     if (config.log_n >= 12 && config.log_n <= 20) {
         config.backend = cuntt::Backend::Hybrid2D;
@@ -612,6 +629,59 @@ std::string butterfly_algorithm_id(const cuntt::ButterflyConfig& config) {
 }
 
 std::string ntt_algorithm_id(const cuntt::PlanConfig& config) {
+    if (config.backend == cuntt::Backend::HierarchicalDataflow &&
+        !config.subgraph_mappings.empty() &&
+        (config.subgraph_mappings.front().core ==
+             cuntt::NttSubgraphCore::ApptOnlineRegisterTail ||
+         config.subgraph_mappings.front().core ==
+             cuntt::NttSubgraphCore::ApptOnlineRegisterTailWarp ||
+         config.subgraph_mappings.front().core ==
+             cuntt::NttSubgraphCore::ApptOnlineRegisterTailColumnWarp ||
+         config.subgraph_mappings.front().core ==
+             cuntt::NttSubgraphCore::ApptOnlineRegisterTailRadix8 ||
+         config.subgraph_mappings.front().core ==
+             cuntt::NttSubgraphCore::ApptOnlineRegisterTailGrouped ||
+         config.subgraph_mappings.front().core ==
+             cuntt::NttSubgraphCore::ApptOnlineRegisterTailGroupedWriterFinal ||
+         config.subgraph_mappings.front().core == cuntt::NttSubgraphCore::
+             ApptOnlineRegisterTailGroupedWriterFinalDataTime ||
+         config.subgraph_mappings.front().core == cuntt::NttSubgraphCore::
+             ApptOnlineRegisterTailGroupedWriterFinalResident ||
+         config.subgraph_mappings.front().core == cuntt::NttSubgraphCore::
+             ApptOnlineRegisterTailGroupedWriterFinalResidentQuarter)) {
+        if (config.subgraph_mappings.front().core == cuntt::NttSubgraphCore::
+                ApptOnlineRegisterTailGroupedWriterFinalResidentQuarter) {
+            return "ntt-appt-register-tail-grouped-writer-final-resident-quarter";
+        }
+        if (config.subgraph_mappings.front().core == cuntt::NttSubgraphCore::
+                ApptOnlineRegisterTailGroupedWriterFinalResident) {
+            return "ntt-appt-register-tail-grouped-writer-final-resident";
+        }
+        if (config.subgraph_mappings.front().core == cuntt::NttSubgraphCore::
+                ApptOnlineRegisterTailGroupedWriterFinalDataTime) {
+            return "ntt-appt-register-tail-grouped-writer-final-data-time";
+        }
+        if (config.subgraph_mappings.front().core ==
+            cuntt::NttSubgraphCore::ApptOnlineRegisterTailGroupedWriterFinal) {
+            return "ntt-appt-register-tail-grouped-writer-final";
+        }
+        if (config.subgraph_mappings.front().core ==
+            cuntt::NttSubgraphCore::ApptOnlineRegisterTailGrouped) {
+            return "ntt-appt-register-tail-grouped";
+        }
+        if (config.subgraph_mappings.front().core ==
+            cuntt::NttSubgraphCore::ApptOnlineRegisterTailRadix8) {
+            return "ntt-appt-register-tail-radix8";
+        }
+        if (config.subgraph_mappings.front().core ==
+            cuntt::NttSubgraphCore::ApptOnlineRegisterTailColumnWarp) {
+            return "ntt-appt-register-tail-column-warp";
+        }
+        return config.subgraph_mappings.front().core ==
+                       cuntt::NttSubgraphCore::ApptOnlineRegisterTailWarp
+                   ? "ntt-appt-register-tail-warp"
+                   : "ntt-appt-register-tail";
+    }
     if (config.backend == cuntt::Backend::Baseline)
         return "ntt-baseline-radix2";
     if (config.backend == cuntt::Backend::Tile256)
@@ -619,6 +689,22 @@ std::string ntt_algorithm_id(const cuntt::PlanConfig& config) {
     if (config.backend == cuntt::Backend::Hybrid2D)
         return config.compute_unit == cuntt::ComputeUnit::Radix4 ? "ntt-hybrid-radix4"
                                                                  : "ntt-hybrid-radix2";
+    if (config.backend == cuntt::Backend::HybridDataflow) {
+        std::ostringstream name;
+        name << "ntt-hybrid-dataflow-t" << config.flow_tile_log_n << "-us" << config.stage_space
+             << "-ur" << config.role_stages << "-ud" << config.data_space << "-td" << config.data_time
+             << "-ti" << config.token_interleave
+             << "-rb" << config.target_ctas_per_sm << "-q" << config.pipeline_buffers << '-'
+             << cuntt::dataflow_layout_name(config.dataflow_layout) << '-'
+             << cuntt::dataflow_state_mode_name(config.dataflow_state_mode);
+        return name.str();
+    }
+    if (config.backend == cuntt::Backend::HierarchicalBarrier)
+        return config.hierarchical_core == cuntt::HierarchicalCore::Hybrid2DRadix4
+                   ? "ntt-hierarchical-barrier-hybrid2d-radix4"
+                   : "ntt-hierarchical-barrier";
+    if (config.backend == cuntt::Backend::HierarchicalDataflow)
+        return "ntt-hierarchical-dataflow";
     throw std::invalid_argument("NTT configuration has no public algorithm ID");
 }
 
@@ -635,6 +721,79 @@ void apply_ntt_algorithm(cuntt::PlanConfig& config, const std::string& algorithm
     } else if (algorithm == "ntt-hybrid-radix4") {
         config.backend = cuntt::Backend::Hybrid2D;
         config.compute_unit = cuntt::ComputeUnit::Radix4;
+    } else if (algorithm == "ntt-hybrid-dataflow") {
+        config.backend = cuntt::Backend::HybridDataflow;
+        config.compute_unit = cuntt::ComputeUnit::Radix2;
+    } else if (algorithm == "ntt-appt-register-tail" ||
+               algorithm == "ntt-appt-register-tail-warp" ||
+               algorithm == "ntt-appt-register-tail-column-warp" ||
+               algorithm == "ntt-appt-register-tail-radix8" ||
+               algorithm == "ntt-appt-register-tail-grouped" ||
+               algorithm == "ntt-appt-register-tail-grouped-writer-final" ||
+               algorithm ==
+                   "ntt-appt-register-tail-grouped-writer-final-data-time" ||
+               algorithm ==
+                   "ntt-appt-register-tail-grouped-writer-final-resident" ||
+               algorithm ==
+                   "ntt-appt-register-tail-grouped-writer-final-resident-quarter") {
+        config.backend = cuntt::Backend::HierarchicalDataflow;
+        config.compute_unit = cuntt::ComputeUnit::Radix4;
+        config.stage_partition = {7, 7, 6};
+        config.subgraph_mappings.resize(3);
+        for (auto& mapping : config.subgraph_mappings) {
+            mapping.core = algorithm == "ntt-appt-register-tail-warp"
+                               ? cuntt::NttSubgraphCore::ApptOnlineRegisterTailWarp
+                           : algorithm == "ntt-appt-register-tail-column-warp"
+                               ? cuntt::NttSubgraphCore::ApptOnlineRegisterTailColumnWarp
+                           : algorithm == "ntt-appt-register-tail-radix8"
+                               ? cuntt::NttSubgraphCore::ApptOnlineRegisterTailRadix8
+                           : algorithm == "ntt-appt-register-tail-grouped"
+                               ? cuntt::NttSubgraphCore::ApptOnlineRegisterTailGrouped
+                           : algorithm ==
+                                     "ntt-appt-register-tail-grouped-writer-final"
+                               ? cuntt::NttSubgraphCore::
+                                     ApptOnlineRegisterTailGroupedWriterFinal
+                           : algorithm ==
+                                     "ntt-appt-register-tail-grouped-writer-final-data-time"
+                               ? cuntt::NttSubgraphCore::
+                                     ApptOnlineRegisterTailGroupedWriterFinalDataTime
+                           : algorithm ==
+                                     "ntt-appt-register-tail-grouped-writer-final-resident"
+                               ? cuntt::NttSubgraphCore::
+                                     ApptOnlineRegisterTailGroupedWriterFinalResident
+                           : algorithm ==
+                                     "ntt-appt-register-tail-grouped-writer-final-resident-quarter"
+                               ? cuntt::NttSubgraphCore::
+                                     ApptOnlineRegisterTailGroupedWriterFinalResidentQuarter
+                               : cuntt::NttSubgraphCore::ApptOnlineRegisterTail;
+            mapping.units_per_cta = 8;
+            mapping.data_space = 16;
+            mapping.data_time = 4;
+            mapping.role_stages = 2;
+            mapping.token_interleave = 1;
+            mapping.cta_weight = 0;
+        }
+        if (algorithm ==
+                "ntt-appt-register-tail-grouped-writer-final-resident" ||
+            algorithm ==
+                "ntt-appt-register-tail-grouped-writer-final-resident-quarter") {
+            config.subgraph_mappings[0].data_space = 32;
+            config.subgraph_mappings[1].data_space = 16;
+            config.subgraph_mappings[2].data_space = 16;
+            config.output_order = cuntt::OutputOrder::Natural;
+        }
+    } else if (algorithm == "ntt-hierarchical-dataflow") {
+        config.backend = cuntt::Backend::HierarchicalDataflow;
+        config.compute_unit = cuntt::ComputeUnit::Radix2;
+    } else if (algorithm == "ntt-hierarchical-barrier") {
+        config.backend = cuntt::Backend::HierarchicalBarrier;
+        config.compute_unit = cuntt::ComputeUnit::Radix4;
+        config.hierarchical_core = cuntt::HierarchicalCore::DataflowRadix4;
+    } else if (algorithm == "ntt-hierarchical-barrier-hybrid2d-radix4" ||
+               algorithm == "ntt-hierarchical-dataflow-hybrid2d-radix4") {
+        config.backend = cuntt::Backend::HierarchicalBarrier;
+        config.compute_unit = cuntt::ComputeUnit::Radix4;
+        config.hierarchical_core = cuntt::HierarchicalCore::Hybrid2DRadix4;
     } else {
         throw std::invalid_argument("unknown explicit NTT algorithm");
     }
@@ -832,7 +991,10 @@ double measure_ntt(cuntt::PlanConfig config, cudaStream_t stream) {
 
 std::pair<std::string, double> tune_ntt(const cuntt::PlanConfig& base, cudaStream_t stream) {
     const std::vector<std::string> candidates{"ntt-baseline-radix2", "ntt-tile256-radix2",
-                                               "ntt-hybrid-radix2", "ntt-hybrid-radix4"};
+                                               "ntt-hybrid-radix2", "ntt-hybrid-radix4",
+                                               "ntt-hierarchical-dataflow",
+                                               "ntt-hierarchical-barrier",
+                                               "ntt-hierarchical-barrier-hybrid2d-radix4"};
     std::pair<std::string, double> best{"", std::numeric_limits<double>::infinity()};
     for (const auto& name : candidates) {
         try {
@@ -1065,6 +1227,21 @@ cubutterflyStatus_t cubutterflySetModulus(cubutterflyDescriptor_t descriptor, ui
     return protect([&] { require(descriptor != nullptr, "descriptor must be non-null"); require(word_bits == 32 || word_bits == 64, "word width must be 32 or 64"); descriptor->modulus = modulus; descriptor->word_bits = word_bits; });
 }
 
+cubutterflyStatus_t cubutterflySetNttLayouts(
+    cubutterflyDescriptor_t descriptor, cubutterflyNttLayout_t input_layout,
+    cubutterflyNttLayout_t output_layout) {
+    return protect([&] {
+        require(descriptor != nullptr, "descriptor must be non-null");
+        require((input_layout == CUBUTTERFLY_NTT_LAYOUT_NATURAL ||
+                 input_layout == CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC) &&
+                    (output_layout == CUBUTTERFLY_NTT_LAYOUT_NATURAL ||
+                     output_layout == CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC),
+                "unknown NTT layout");
+        descriptor->input_ntt_layout = input_layout;
+        descriptor->output_ntt_layout = output_layout;
+    });
+}
+
 cubutterflyStatus_t cubutterflySetStageMatrices(cubutterflyDescriptor_t descriptor, uint32_t axis,
                                                 const cubutterflyMatrix2x2_t* matrices, size_t count) {
     return protect([&] {
@@ -1079,6 +1256,17 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
         require(handle != nullptr && descriptor != nullptr && plan != nullptr, "handle, descriptor, and plan pointer must be non-null");
         auto resolved = *descriptor;
         validate_storage(resolved);
+        const bool appt_layout_requested =
+            resolved.input_ntt_layout == CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC ||
+            resolved.output_ntt_layout == CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC;
+        if (appt_layout_requested &&
+            !(resolved.op == CUBUTTERFLY_OPERATOR_NTT && resolved.rank == 1 &&
+              resolved.extents[0] == (1ULL << 20) &&
+              resolved.length_mode == CUBUTTERFLY_LENGTH_STANDARD &&
+              resolved.placement == CUBUTTERFLY_PLACEMENT_OUT_OF_PLACE)) {
+            throw unsupported_error(
+                "APPT static layout currently requires a rank-1, logN=20, out-of-place NTT");
+        }
         std::vector<std::size_t> physical_extents = resolved.extents;
         bool standard_arbitrary = false;
         if (resolved.length_mode == CUBUTTERFLY_LENGTH_ZERO_EXTENDED_EMBEDDING) {
@@ -1396,9 +1584,45 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
             config.modulus = resolved.modulus;
             config.inverse = resolved.direction == CUBUTTERFLY_DIRECTION_INVERSE;
             config.word_bits = resolved.word_bits;
+            config.input_order = resolved.input_ntt_layout ==
+                                         CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC
+                                     ? cuntt::InputOrder::ApptStatic
+                                     : cuntt::InputOrder::Natural;
+            config.output_order = resolved.output_ntt_layout ==
+                                          CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC
+                                      ? cuntt::OutputOrder::ApptStatic
+                                      : cuntt::OutputOrder::Natural;
             config.auto_allocate_workspace = false;
             config.auto_select = measured;
-            if (resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_EXPLICIT) {
+            if (appt_layout_requested) {
+                config.auto_select = false;
+                if (resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_EXPLICIT &&
+                    resolved.explicit_algorithm != "ntt-appt-register-tail" &&
+                    resolved.explicit_algorithm !=
+                        "ntt-appt-register-tail-warp" &&
+                    resolved.explicit_algorithm !=
+                        "ntt-appt-register-tail-column-warp" &&
+                    resolved.explicit_algorithm !=
+                        "ntt-appt-register-tail-radix8" &&
+                    resolved.explicit_algorithm !=
+                        "ntt-appt-register-tail-grouped" &&
+                    resolved.explicit_algorithm !=
+                        "ntt-appt-register-tail-grouped-writer-final" &&
+                    resolved.explicit_algorithm !=
+                        "ntt-appt-register-tail-grouped-writer-final-data-time" &&
+                    resolved.explicit_algorithm !=
+                        "ntt-appt-register-tail-grouped-writer-final-resident" &&
+                    resolved.explicit_algorithm !=
+                        "ntt-appt-register-tail-grouped-writer-final-resident-quarter") {
+                    throw unsupported_error(
+                        "APPT static layout requires an APPT register-tail algorithm");
+                }
+                apply_ntt_algorithm(
+                    config,
+                    resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_EXPLICIT
+                        ? resolved.explicit_algorithm
+                        : "ntt-appt-register-tail");
+            } else if (resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_EXPLICIT) {
                 apply_ntt_algorithm(config, resolved.explicit_algorithm);
             } else if (!cached_algorithm.empty()) {
                 apply_ntt_algorithm(config, cached_algorithm);
@@ -1427,8 +1651,7 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
                                                   : "no measured profile entry; selected by the static resource model");
             created->ntt = std::make_unique<cuntt::Plan>(config);
             created->ntt->set_stream(handle->stream);
-            created->algorithm = std::string("ntt-") + cuntt::backend_name(created->ntt->config().backend) +
-                                 "-" + cuntt::compute_unit_name(created->ntt->config().compute_unit);
+            created->algorithm = ntt_algorithm_id(created->ntt->config());
             created->workspace_bytes = created->ntt->workspace_size();
         } else {
             cuntt::ButterflyConfig config;
@@ -1506,6 +1729,53 @@ cubutterflyStatus_t cubutterflyPlanGetPhysicalExtents(cubutterflyPlan_t plan, si
 cubutterflyStatus_t cubutterflyPlanGetSelectionSource(cubutterflyPlan_t plan, cubutterflySelectionSource_t* source) { return protect([&] { require(plan != nullptr && source != nullptr, "plan and output must be non-null"); *source = plan->selection_source; }); }
 cubutterflyStatus_t cubutterflyPlanGetAlgorithmName(cubutterflyPlan_t plan, char* name, size_t* bytes) { return protect([&] { require(plan != nullptr, "plan must be non-null"); copy_text(plan->algorithm, name, bytes); }); }
 cubutterflyStatus_t cubutterflyPlanGetSelectionReason(cubutterflyPlan_t plan, char* reason, size_t* bytes) { return protect([&] { require(plan != nullptr, "plan must be non-null"); copy_text(plan->reason, reason, bytes); }); }
+
+cubutterflyStatus_t cubutterflyPlanGetNttLayoutInfo(
+    cubutterflyPlan_t plan, cubutterflyNttLayoutInfo_t* info) {
+    if (plan == nullptr || info == nullptr) {
+        return CUBUTTERFLY_STATUS_INVALID_VALUE;
+    }
+    if (plan->ntt == nullptr || plan->composite ||
+        plan->ntt->config().subgraph_mappings.empty() ||
+        (plan->ntt->config().subgraph_mappings.front().core !=
+             cuntt::NttSubgraphCore::ApptOnlineRegisterTail &&
+         plan->ntt->config().subgraph_mappings.front().core !=
+             cuntt::NttSubgraphCore::ApptOnlineRegisterTailWarp &&
+         plan->ntt->config().subgraph_mappings.front().core !=
+             cuntt::NttSubgraphCore::ApptOnlineRegisterTailColumnWarp &&
+         plan->ntt->config().subgraph_mappings.front().core !=
+             cuntt::NttSubgraphCore::ApptOnlineRegisterTailRadix8 &&
+         plan->ntt->config().subgraph_mappings.front().core !=
+             cuntt::NttSubgraphCore::ApptOnlineRegisterTailGrouped &&
+         plan->ntt->config().subgraph_mappings.front().core !=
+             cuntt::NttSubgraphCore::ApptOnlineRegisterTailGroupedWriterFinal &&
+         plan->ntt->config().subgraph_mappings.front().core !=
+             cuntt::NttSubgraphCore::
+                 ApptOnlineRegisterTailGroupedWriterFinalDataTime &&
+         plan->ntt->config().subgraph_mappings.front().core !=
+             cuntt::NttSubgraphCore::
+                 ApptOnlineRegisterTailGroupedWriterFinalResident)) {
+        return CUBUTTERFLY_STATUS_NOT_SUPPORTED;
+    }
+    return protect([&] {
+        const auto layout = plan->ntt->appt_layout_info();
+        require(layout.stage_partition.size() <= 3,
+                "layout stage partition exceeds the C ABI capacity");
+        std::memset(info, 0, sizeof(*info));
+        info->log_n = layout.log_n;
+        info->stage_count =
+            static_cast<std::uint32_t>(layout.stage_partition.size());
+        for (std::size_t index = 0; index < layout.stage_partition.size();
+             ++index) {
+            info->stage_partition[index] = layout.stage_partition[index];
+        }
+        info->fragment_width = layout.fragment_width;
+        info->bank_bits = layout.bank_bits;
+        info->xor_permutation = layout.xor_permutation ? 1 : 0;
+        std::strncpy(info->compatibility_id, layout.compatibility_id.c_str(),
+                     sizeof(info->compatibility_id) - 1);
+    });
+}
 
 cubutterflyStatus_t cubutterflyPlanSetWorkspace(cubutterflyPlan_t plan, void* workspace, size_t bytes) {
     return protect([&] {

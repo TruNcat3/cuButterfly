@@ -220,6 +220,11 @@ graph, mapping, unit, layout, realization, and selector is specified in
 
 ## 8. Current Claim Boundary
 
+The experimental NTT [Hybrid Dataflow backend](hybrid_dataflow_ntt.md) is the
+first strict realization of fixed-size subgraph streaming across both stage and
+data dimensions. It is separated from the older StagePipeline baseline so that
+the architectural contribution can be tested against subkernel time reuse.
+
 The artifact demonstrates on V100 that one mapping vocabulary survives changes
 in operator and processing unit, that the best factorization changes with
 length, batch, and precision, and that counter-guided changes predict measured

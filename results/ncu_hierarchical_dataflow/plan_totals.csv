@@ -1,0 +1,5 @@
+label,word_bits,backend,kernel_count,time_us,dram_read_mib,dram_write_mib,warp_instructions,integer_thread_instructions,active_warps_pct,barrier_stall_pct,long_scoreboard_stall_pct,registers_per_thread,shared_mem_bytes,occupancy_register_block_limit,occupancy_shared_block_limit,occupancy_warp_block_limit
+hierarchical_w32_n20_b4,32,hierarchical-dataflow,1,268.96,61.812744140625,34.1727294921875,44121864.0,1027577244.0,56.07,13.31,35.93,38.0,16400.0,6.0,5.0,8.0
+hybrid2d_w32_n20_b4,32,hybrid2d,2,326.848,64.0029296875,33.0086669921875,47218688.0,1043339264.0,93.41055218327784,13.014709222635599,16.060763657724692,32.0,8200.0,4.0,7.0,4.0
+hierarchical_w64_n20_b4,64,hierarchical-dataflow,1,515.52,128.36541748046875,70.23110961914062,83027915.0,2060173583.0,49.55,12.78,24.85,48.0,16400.0,2.0,3.0,4.0
+hybrid2d_w64_n20_b4,64,hybrid2d,2,480.288,128.38589477539062,68.58425903320312,78807040.0,1923094528.0,94.54715570657605,9.346648011193283,32.411894863082146,32.0,16400.0,4.0,5.0,4.0

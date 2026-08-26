@@ -176,13 +176,25 @@ semantic references; they are not performance implementations.
 | `batch` | number of contiguous transforms |
 | `modulus` | prime modulus admitting the requested power-of-two root |
 | `inverse` | forward or inverse transform |
-| `backend` | `Baseline`, `Tile256`, `Hybrid2D`, `CompactStage`, or `StagePipeline` |
+| `input_order` | natural or a compatible APPT static input layout |
+| `output_order` | natural, supported bit-reversed output, or APPT static output |
+| `backend` | `Baseline`, `Tile256`, `Hybrid2D`, `CompactStage`, `StagePipeline`, `HybridDataflow`, `HierarchicalBarrier`, or `HierarchicalDataflow` |
+| `appt_role_mapping` | independent producer/tail/writer service weights, fragment width, and writer tiles per CTA |
 | `stage_space` | StagePipeline unfolding; zero selects its default |
 | `stage_handoff` | `Atomic` or `NamedBarrier` |
 | `n1_log` | Hybrid2D first factor; zero selects a device-derived default |
 | `rows_per_block` | Hybrid2D row grouping; zero selects a device-derived default |
 | `threads_per_block` | Hybrid2D CTA size; zero selects a device-derived default |
 | `compute_unit` | `Auto`, `Radix2`, `Radix4`, or `Radix8` |
+| `hierarchical_core` | `DataflowRadix4` default or generated `Hybrid2DRadix4` physical-unit ablation |
+| `stage_partition` | ordered v0.7 subgraph stage counts; its length is the large-stage count `M` (`2..8`), each generic entry is `2..10`, and entries sum to `log_n` |
+| `subgraph_mappings` | per-subgraph core, thread count, unfolding, and CTA service weight |
+| `boundary_mappings` | per-logical-edge `FullScratch`, `Ring`, or `ResidentFused` realization and buffer count |
+| `execution_group_mappings` | optional physical codelet mappings after resident-fused lowering; its count is physical `G`, not logical `M` |
+| `ready_window` | readiness control; packet-streaming NTT uses `1/2/4/8/16` as 32-cycle polling-backoff quanta (default `2`), while other fixed-role kernels retain the scan-window value for future task stealing |
+| `packet_readiness_mode` | experimental packet-streaming publication identity: `PerPacket` uses one word per packet; `WaveBitmap` retains packet identity as bits and polls four masked words per q-wave |
+| `packet_compute_layout` | experimental online stage-0/1 mapping: `InterleavedRows` mixes four rows per warp; `WarpRows` assigns one row to each warp for a controlled bank/broadcast ablation |
+| `packet_fold_wave_barriers` | experimental packet-core synchronization ablation; folds the end-of-wave barrier into the next wave's staging barrier and retains one final barrier (default `false`) |
 | `word_bits` | physical word width, 32 or 64 |
 | `cross_twiddle_placement` | `FirstPass`, `SecondPass`, `Fused`, or legacy `FusedBarrett` alias |
 | `modular_multiply` | `Shoup` or `Barrett` |
@@ -193,6 +205,12 @@ semantic references; they are not performance implementations.
 `kDefaultModulus` is `1152921504606584833`. Input coefficients must be reduced
 modulo the selected modulus.
 
+`Plan::config()` preserves the resolved logical `stage_partition`, mappings,
+and boundary policies. Resident-fused edges are lowered internally; the
+resolved physical choices are exposed in `execution_group_mappings`. The CLI
+prints `logical_subgraphs`, `execution_stage_partition`, `execution_groups`,
+and `materialized_boundaries` so measurements cannot conflate `M` with `G`.
+
 ## NTT Plan
 
 | Member | Contract |
@@ -202,6 +220,7 @@ modulo the selected modulus.
 | `selection()` | automatic-selection decision metadata |
 | `points_per_transform()` | `2^log_n` |
 | `data_size()` | bytes for all contiguous batches |
+| `pipeline_trace()` | per-physical-execution-group `%globaltimer` start/end records after a v0.7 execution |
 | `workspace_size()` | minimum scratch bytes |
 | `set_stream`, `stream` | bind/query the CUDA stream |
 | `set_workspace`, `workspace` | bind/query caller-owned or internal scratch |

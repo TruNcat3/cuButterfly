@@ -1,0 +1,31 @@
+{
+  "shapes": 10,
+  "by_operator": {
+    "fft": {
+      "shapes": 4,
+      "geomean_searched_vs_library": 1.0198360779434346,
+      "geomean_searched_vs_base": 2.9128928935601626,
+      "faster": 1,
+      "parity": 3,
+      "slower": 0
+    },
+    "fwht": {
+      "shapes": 3,
+      "geomean_searched_vs_library": 0.9163889378542345,
+      "geomean_searched_vs_base": 3.2537409816773133,
+      "faster": 0,
+      "parity": 1,
+      "slower": 2
+    },
+    "ntt": {
+      "shapes": 3,
+      "geomean_searched_vs_library": 1.3117204618847533,
+      "geomean_searched_vs_base": 1.0853929036677707,
+      "faster": 3,
+      "parity": 0,
+      "slower": 0
+    }
+  },
+  "overall_geomean_searched_vs_library": 1.0650953484640957,
+  "overall_geomean_searched_vs_base": 2.2393438943075563
+}

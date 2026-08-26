@@ -1,0 +1,5 @@
+==WARNING== Note: Running with uncontrolled GPU caches. Profiling results may be inconsistent.
+==PROF== Connected to process 2075253 (/home/wt/git/Hermes/cuNTT-v05/build-ncu-lineinfo/cuntt_bench)
+==PROF== Profiling "hierarchical_homogeneous_warp..." - 0 (1/1): 0%....50%....100% - 6 passes
+==PROF== Disconnected from process 2075253
+==PROF== Report: /home/wt/git/Hermes/cuNTT-v05/results/ncu_v07_sector_attribution/v07_d6_source.ncu-rep

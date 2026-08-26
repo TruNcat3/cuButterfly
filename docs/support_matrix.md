@@ -42,7 +42,16 @@ restrictions are rejected during `Plan` construction:
 - CompactStage currently supports its documented forward 64-bit `logN=20`
   path, with output order controlling workspace behavior;
 - StagePipeline currently supports forward, natural-order 64-bit `logN=8`;
-- 32-bit words currently require Hybrid2D and a modulus below `2^31`.
+- HybridDataflow supports generated forward/inverse uint32/uint64 points with
+  strict one-CTA residency, a primary resident radix-4 unit, and the generated
+  radix-2 fused-role pipeline as an ablation;
+  unsupported sizes fail rather than spill to global workspace;
+- HierarchicalDataflow supports forward/inverse uint32/uint64 `logN=12..20`
+  when each of its two resident layers is in `logN=6..10`; it requires
+  cooperative launch support, natural output, fused Shoup radix-4, and one
+  full-size caller-visible workspace for the online-reordered boundary;
+- 32-bit words currently require Hybrid2D or HybridDataflow and a modulus below
+  `2^31`.
 
 FP16/BF16 results are narrowed after every logical butterfly output. V100 has
 no native BF16 arithmetic path, so BF16 `Native` measurements on `sm_70` are

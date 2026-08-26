@@ -1,0 +1,87 @@
+{
+  "schema": "cuntt-homogeneous-two-level-search-v1",
+  "device": "Tesla V100-SXM2-16GB",
+  "shape": {
+    "logN": 20,
+    "stage_partition": [10, 10],
+    "boundary_storage": "full-scratch"
+  },
+  "logical_space": {
+    "producer_data_time": [1, 2, 4],
+    "consumer_data_time": [1, 2, 4],
+    "cta_weight_pairs": [[8, 12], [9, 11], [10, 10]],
+    "batch": [1, 4, 16],
+    "word_bits": [32, 64]
+  },
+  "physical_instance": {
+    "core": [
+      "homogeneous-radix4",
+      "homogeneous-warp-radix2",
+      "homogeneous-warp256-radix2",
+      "homogeneous-warp256-static-radix2",
+      "homogeneous-warp256-static-io-radix2",
+      "homogeneous-warp256-coefficient-reuse-static-io-radix2",
+      "homogeneous-warp128-static-io-radix2",
+      "homogeneous-warp128-coefficient-reuse-static-io-radix2",
+      "homogeneous-warp128-vector-radix4-static-io",
+      "homogeneous-warp128-vector-radix4-packed-stage6-static-io",
+      "homogeneous-warp128-vector-radix4-packed-stage6-distributed-static-io",
+      "homogeneous-warp128-packet-shared-radix4-static-io"
+    ],
+    "threads_per_block": [128, 256],
+    "units_per_cta": [4, 8],
+    "row_packet_data_space": {
+      "uint32": [4, 8],
+      "uint64": [2, 4]
+    },
+    "coefficient_reuse_stages": [1, 2, 3, 4, 5, 6, 7],
+    "target_ctas_per_sm": [2, 3, 4]
+  },
+  "control": {
+    "core": "dataflow-radix4",
+    "producer_data_time": 1,
+    "consumer_data_time": 1,
+    "cta_weight_pair": [9, 11]
+  },
+  "measured_uint32_half_packet": {
+    "rows": 4,
+    "threads_per_block": 128,
+    "target_ctas_per_sm": 3,
+    "data_time_pair": [1, 1],
+    "cta_weight_by_batch": {
+      "1": [11, 9],
+      "4": [8, 7],
+      "16": [17, 13]
+    },
+    "coefficient_reuse_depth_by_core": {
+      "homogeneous-warp256-coefficient-reuse-static-io-radix2": 1,
+      "homogeneous-warp128-coefficient-reuse-static-io-radix2": 4,
+      "homogeneous-warp128-vector-radix4-static-io": 6
+    },
+    "selected_dual_warp128": {
+      "core": "homogeneous-warp128-vector-radix4-static-io",
+      "coefficient_distribution": "lane-distributed-shuffle",
+      "coefficient_reuse_stages": 6,
+      "threads_per_block": 256,
+      "units_per_cta": 8,
+      "target_ctas_per_sm": 2
+    },
+    "experimental_packed_stage6": {
+      "core": "homogeneous-warp128-vector-radix4-packed-stage6-static-io",
+      "coefficient_distribution": "aligned-stage6-vector-load",
+      "coefficient_reuse_stages": 6,
+      "threads_per_block": 256,
+      "units_per_cta": 8,
+      "target_ctas_per_sm": 2
+    },
+    "experimental_packed_stage6_distributed": {
+      "core": "homogeneous-warp128-vector-radix4-packed-stage6-distributed-static-io",
+      "coefficient_distribution": "aligned-stage6-pair-load-all-lanes",
+      "coefficient_reuse_stages": 6,
+      "threads_per_block": 256,
+      "units_per_cta": 8,
+      "target_ctas_per_sm": 2
+    }
+  },
+  "note": "The GPU warp scheduler hides latency among resident ready warps; it does not construct the logical subgraph, preserve its layout, or choose per-role data-time traversal."
+}

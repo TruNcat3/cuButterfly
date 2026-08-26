@@ -16,7 +16,7 @@ extern "C" {
 #endif
 
 #define CUBUTTERFLY_VERSION_MAJOR 0
-#define CUBUTTERFLY_VERSION_MINOR 6
+#define CUBUTTERFLY_VERSION_MINOR 7
 #define CUBUTTERFLY_VERSION_PATCH 0
 
 typedef struct cubutterflyHandle* cubutterflyHandle_t;
@@ -78,6 +78,21 @@ typedef enum cubutterflyLengthMode {
     CUBUTTERFLY_LENGTH_STANDARD = 0,
     CUBUTTERFLY_LENGTH_ZERO_EXTENDED_EMBEDDING
 } cubutterflyLengthMode_t;
+
+typedef enum cubutterflyNttLayout {
+    CUBUTTERFLY_NTT_LAYOUT_NATURAL = 0,
+    CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC
+} cubutterflyNttLayout_t;
+
+typedef struct cubutterflyNttLayoutInfo {
+    uint32_t log_n;
+    uint32_t stage_count;
+    uint32_t stage_partition[3];
+    uint32_t fragment_width;
+    uint32_t bank_bits;
+    int xor_permutation;
+    char compatibility_id[64];
+} cubutterflyNttLayoutInfo_t;
 
 typedef enum cubutterflyAlgorithmPolicy {
     CUBUTTERFLY_ALGORITHM_DEFAULT = 0,
@@ -152,6 +167,10 @@ CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetAlgorithmPolicy(cubutterflyDesc
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetModulus(cubutterflyDescriptor_t descriptor,
                                                         uint64_t modulus,
                                                         uint32_t word_bits);
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetNttLayouts(
+    cubutterflyDescriptor_t descriptor,
+    cubutterflyNttLayout_t input_layout,
+    cubutterflyNttLayout_t output_layout);
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetStageMatrices(cubutterflyDescriptor_t descriptor,
                                                               uint32_t axis,
                                                               const cubutterflyMatrix2x2_t* matrices,
@@ -175,6 +194,9 @@ CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyPlanGetAlgorithmName(cubutterflyPl
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyPlanGetSelectionReason(cubutterflyPlan_t plan,
                                                                     char* reason,
                                                                     size_t* bytes);
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyPlanGetNttLayoutInfo(
+    cubutterflyPlan_t plan,
+    cubutterflyNttLayoutInfo_t* info);
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyPlanSetWorkspace(cubutterflyPlan_t plan,
                                                               void* workspace,
                                                               size_t bytes);

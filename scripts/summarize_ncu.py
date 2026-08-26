@@ -10,20 +10,39 @@ METRICS = {
     "gpu__time_duration.sum": ("time_us", 1.0e-3),
     "dram__bytes_read.sum": ("dram_read_mib", 1.0 / (1024.0 * 1024.0)),
     "dram__bytes_write.sum": ("dram_write_mib", 1.0 / (1024.0 * 1024.0)),
+    "l1tex__t_sectors_pipe_lsu_mem_global_op_ld.sum": ("global_load_sectors", 1.0),
+    "l1tex__t_sectors_pipe_lsu_mem_global_op_st.sum": ("global_store_sectors", 1.0),
+    "l1tex__t_sectors_pipe_lsu_mem_local_op_ld.sum": ("local_load_sectors", 1.0),
+    "l1tex__t_sectors_pipe_lsu_mem_local_op_st.sum": ("local_store_sectors", 1.0),
     "dram__throughput.avg.pct_of_peak_sustained_elapsed": ("dram_peak_pct", 1.0),
     "lts__t_sector_hit_rate.pct": ("l2_hit_pct", 1.0),
     "l1tex__t_sector_hit_rate.pct": ("l1_hit_pct", 1.0),
     "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": ("shared_load_bank_conflicts", 1.0),
     "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": ("shared_store_bank_conflicts", 1.0),
     "smsp__inst_executed.sum": ("warp_instructions", 1.0),
+    "smsp__inst_executed.avg.per_cycle_active": ("instructions_per_active_cycle", 1.0),
     "smsp__sass_thread_inst_executed_op_integer_pred_on.sum": ("integer_thread_instructions", 1.0),
+    "smsp__sass_thread_inst_executed_op_memory_pred_on.sum": ("memory_thread_instructions", 1.0),
+    "smsp__sass_thread_inst_executed_op_control_pred_on.sum": ("control_thread_instructions", 1.0),
+    "smsp__sass_thread_inst_executed_op_misc_pred_on.sum": ("misc_thread_instructions", 1.0),
+    "smsp__sass_thread_inst_executed_op_conversion_pred_on.sum": ("conversion_thread_instructions", 1.0),
+    "smsp__sass_inst_executed_op_global.sum": ("global_warp_instructions", 1.0),
+    "smsp__sass_inst_executed_op_shared.sum": ("shared_warp_instructions", 1.0),
+    "smsp__inst_executed_pipe_adu.sum": ("adu_warp_instructions", 1.0),
+    "smsp__inst_executed_pipe_alu.sum": ("alu_warp_instructions", 1.0),
+    "smsp__inst_executed_pipe_cbu.sum": ("cbu_warp_instructions", 1.0),
+    "smsp__inst_executed_pipe_lsu.sum": ("lsu_warp_instructions", 1.0),
+    "smsp__inst_executed_pipe_xu.sum": ("xu_warp_instructions", 1.0),
     "smsp__sass_thread_inst_executed_op_fp32_pred_on.sum": ("fp32_thread_instructions", 1.0),
     "smsp__sass_thread_inst_executed_op_fp64_pred_on.sum": ("fp64_thread_instructions", 1.0),
     "smsp__inst_executed_pipe_tensor.sum": ("tensor_warp_instructions", 1.0),
     "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": ("tensor_active_pct", 1.0),
     "sm__warps_active.avg.pct_of_peak_sustained_active": ("active_warps_pct", 1.0),
     "smsp__warp_issue_stalled_barrier_per_warp_active.pct": ("barrier_stall_pct", 1.0),
+    "smsp__warp_issue_stalled_wait_per_warp_active.pct": ("wait_stall_pct", 1.0),
     "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": ("long_scoreboard_stall_pct", 1.0),
+    "smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct": ("short_scoreboard_stall_pct", 1.0),
+    "smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct": ("mio_throttle_stall_pct", 1.0),
     "launch__registers_per_thread": ("registers_per_thread", 1.0),
     "launch__shared_mem_per_block": ("shared_mem_bytes", 1.0),
     "launch__waves_per_multiprocessor": ("waves_per_sm", 1.0),
@@ -112,6 +131,17 @@ def read_ncu_csv(path):
     raise ValueError(f"no supported NCU CSV header found in {path}")
 
 
+def is_derived_csv(path):
+    """Identify this script's output and the APPT analysis, not malformed NCU input."""
+    for line in path.read_text(errors="replace").splitlines():
+        if not line.strip():
+            continue
+        header = set(next(csv.reader([line]), []))
+        return ({"label", "kernel_id", "kernel_name"} <= header or
+                {"implementation", "batch1_us", "batch4_us"} <= header)
+    return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Pivot Nsight Compute raw CSV files into one row per kernel.")
     parser.add_argument("inputs", nargs="+", type=pathlib.Path)
@@ -120,7 +150,14 @@ def main():
 
     records = []
     for path in args.inputs:
+        if ((args.output and path.resolve() == args.output.resolve()) or
+                is_derived_csv(path)):
+            print(f"skip derived CSV: {path}", file=sys.stderr)
+            continue
         records.extend(read_ncu_csv(path))
+
+    if not records:
+        raise ValueError("no NCU kernel records found in the supplied inputs")
 
     fields = ["label", "kernel_id", "kernel_name", "grid_size", "block_size"] + [value[0] for value in METRICS.values()]
     output = args.output.open("w", newline="") if args.output else sys.stdout

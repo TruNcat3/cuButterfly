@@ -39,6 +39,13 @@ the explicit pack path.
 The complete release boundary is summarized in the
 [v0.6 Implementation Status](docs/v0.6_implementation_status.md).
 
+The current research line also implements the APPT static boundary for the
+`logN=20, 7+7+6` register-tail NTT. Tail CTAs publish a searched XOR layout;
+compatible plans can consume it directly, while resident writer CTAs convert
+it to natural order inside the same cooperative launch. The mapping formula,
+three-role execution, preliminary V100 results, and reproduction commands are
+documented in [APPT Static Layout and Online Writer](docs/appt_static_layout.md).
+
 ## Why This Design
 
 A fast butterfly kernel needs more than a fast butterfly instruction. It must
@@ -72,6 +79,19 @@ not create a third dependency dimension. None of these factors is a fixed tile
 constant: register capacity, shared memory, warp and barrier behavior, SM count,
 cache, and memory service determine the useful values on each GPU.
 
+The HybridDataflow realization additionally exposes `Ur`, the number of
+consecutive stages fused inside one register-resident role. `Ur` refines the
+physical implementation of `Us`; it is not a fifth architecture dimension.
+Increasing it replaces shared role edges with register/shuffle exchange and
+reassigns the released stage warps to independent `Td` tokens.
+`Ti` independently controls whether multiple token states are alternated
+stage-by-stage inside a warp. Keeping `Ti` distinct from packet depth lets the
+generator measure instruction interleaving without conflating it with `Td`
+packet-boundary amortization.
+Measured V100 defaults are generated from the target manifest. The resolved
+plan reports either `hybrid-dataflow-generated-static-table` or
+`hybrid-dataflow-resource-fallback`, so table coverage is visible to callers.
+
 ![cuButterfly concept: a regular butterfly graph is factorized in space and time, combined with a GPU profile and replaceable processing units, and calibrated by measured counters.](figures/cubutterfly_concept.svg)
 
 The editable Graphviz source is
@@ -85,6 +105,23 @@ requires an explicit transport such as shuffle, shared memory, or a barrier.
 The chosen processing unit consumes that schedule. When the next stage group
 needs another ownership or layout, its output store performs an online reorder
 or a global handoff.
+
+For hierarchical NTT, logical decomposition and physical materialization are
+separate axes. `stage_partition` defines `M` reusable logical subgraphs;
+`resident-fused` edges lower adjacent subgraphs into `G` physical execution
+groups. Workspace and global traffic then scale with `G-1`, while the public
+configuration retains `M` for architecture-level analysis and uses
+`execution_group_mappings` to select each physical codelet.
+
+The matched V100 version matrix shows why both layers matter. Lowering four
+logical subgraphs into two resident physical groups improves the former
+full-scratch v0.7 path by 3.598x geometric mean. When both versions use the
+same generated 10+10 physical core they agree within 0.66%. The controlled
+M/G candidates reach 0.394x v0.6-best across 30 precision/length/batch points
+because 6--9-stage execution groups still use a generic descriptor core. This
+is a lowering ablation, not the complete v0.7 selector; previously optimized
+HybridDataflow and packet-shared cores are excluded. See
+[`docs/resident_v06_comparison.md`](docs/resident_v06_comparison.md).
 
 Temporal reuse does not mean that all values always remain in registers, and a
 single CUDA source kernel does not provide ordinary CTAs with a grid-wide
@@ -113,9 +150,83 @@ M = (Us, Ts, Ud, Td, Ub, Tb, Hs, Rs, Rd, Rb, L, F, Q)
 
 ## Implemented Scope
 
+The `research/v0.7.0-hybrid-dataflow` line contains explicit NTT research
+backends. `HybridDataflow` keeps a complete transform in one CTA and has no
+global intermediate. `HierarchicalBarrier` preserves the v0.6 two-layer
+cooperative implementation and its grid-wide phase boundary.
+`HierarchicalDataflow` is the v0.7 readiness-driven implementation: a variable
+stage partition maps fixed-size subgraphs to interleaved persistent CTA roles,
+and each producer publishes one counter per dependency wave. Its generic V100
+mapping executes eight warp-local subgraphs per 256-thread CTA; the generated
+`logN=20` `10+10` point reuses the mature resident radix-4 core. An explicit
+generated `7+7+6` point adds a true single-transform dependency wave and makes
+units per CTA, role weights, and residency independent search dimensions. It
+currently validates the architecture but does not outperform the mature path.
+The homogeneous `10+10` template now also exposes 1024-point-per-warp and
+256-point-per-warp physical cores. The smaller warp tile is consistently
+faster, but currently reaches only 0.305x--0.571x v0.6 throughput because its
+radix-2 instruction stream and strided edge accesses outweigh the reduced
+barrier scope. This is a physical-core result, not a rejection of the four-axis
+schedule; the next candidate combines warp ownership with radix-4/8 execution
+and a coalesced static writer.
+The first APPT-style static writer is now generated: it batches word-size-aware
+row packets, XOR-swizzles the shared transpose, and fills complete 32-byte
+sectors at both graph edges. Without changing the radix-2 arithmetic, this
+improves the warp256 core by 1.12x--1.81x and raises batch-16 throughput to
+0.514x/0.547x v0.6 for uint32/uint64. This isolates layout as a real recovered
+cost; arithmetic-core instruction efficiency remains the next boundary.
+The follow-up static-IO core also coalesces producer input and moves consumer
+bit reversal into shared memory. Row-packet width remains a generated
+`data_space` parameter, while the physical shared layout is selected jointly
+with word width. Packet-wide XOR cuts matched shared conflicts by about 3--4x;
+a uint32 four-row specialization then uses row-major bank skew to reduce the
+kernel from 172 to 164 registers and restore three CTAs/SM. With measured role
+weights it reaches 0.837x/0.831x/0.822x v0.6 at batch 1/4/16. Uint64 continues
+to select the full XOR-AoS packet at 0.573x--0.631x. The remaining boundary is
+physical-core latency hiding rather than a universal radix replacement:
+confirmation NCU reports zero shared-store conflicts and only 7.44% barrier
+stall, but 164 registers leave 12 resident warps versus v0.6's 32 and
+fixed-latency wait stall remains 18.46%. The next generated cores therefore
+screen 128/64 points per warp with radix-4/8 as an internal codelet choice.
+That occupancy screen now reaches four 128-thread CTAs/SM without local memory,
+but only 0.680x/0.659x v0.6 throughput at uint32 batch 16, below the 256-point
+core's 0.804x. Smaller state alone is therefore not enough: the next generated
+core separates prefix and merge warps so independent rows overlap instead of
+rendezvousing after every prefix.
+The selectable `appt-pipeline` core implements the stricter four-axis mapping:
+warp stages form one fixed physical subgraph, register-resident tokens stream
+between adjacent roles, and the same roles are reused across stage-time folds.
+Fold boundaries use an online token-major permutation inside the same
+cooperative kernel. This exposes `Us`, `Td`, role-stage fusion, channel depth,
+and CTA residency as measured design dimensions instead of fixed CTA roles.
+The `appt-online` candidate specializes the V100 `logN=20,7+7+6` dependency
+graph into three concurrent CTA roles. It publishes reordered packet groups
+directly to the next fold and removes fold-wide drain/transpose barriers; it
+uses two N-sized boundary buffers and remains an explicit research option.
+The schedule now has a family of interchangeable physical subgraph cores.
+`appt-online` uses warp-register radix-2 exchange and
+`appt-online-radix4` uses a CTA-resident shared-memory radix-4 codelet. Three
+tail-fusion points expose the occupancy/traffic tradeoff directly:
+`fused-tail` removes state2 with a 64-row tile, `split-tail` restores residency
+with a half-size global handoff, and `register-tail` keeps a 32-row tile while
+retaining the closed low half across shared memory and registers. On V100 the
+register-tail point is the fastest online core in all tested 32/64-bit,
+batch-1/4 cases, reaching 0.664x--0.732x v0.6 throughput at batch 1 and
+0.470x--0.625x at batch 4. Its local coefficient tree is loaded once per CTA
+instead of once per row and is preserved across both dependency-closed tail
+halves. It is a substantial physical-core improvement, not
+yet a replacement for the mature resident 10+10 implementation. Core choice,
+resource budget, and role service weights are searched jointly; see
+[`results/appt_tail_cores/analysis.md`](results/appt_tail_cores/analysis.md).
+Per-fold `segment-data-space` values also select 1/2/4-way online publication
+microgroups, so boundary coalescing and final-output coalescing can be searched
+independently rather than being tied to one kernel-wide tile.
+See [Hybrid Dataflow NTT](docs/hybrid_dataflow_ntt.md) and [Hierarchical
+Dataflow NTT](docs/hierarchical_dataflow_ntt.md).
+
 | Operator | Numeric forms | Processing-unit candidates | Mapping families |
 |:--|:--|:--|:--|
-| NTT | 32/64-bit words, compatible primes below `2^63` | radix-2/4/8, Shoup, Barrett, fused coset twiddles | baseline, local tile, Hybrid2D, compact stage, stage pipeline |
+| NTT | 32/64-bit words, compatible primes below `2^63` | radix-2/4/8, Shoup, Barrett, fused coset twiddles | baseline, local tile, Hybrid2D, compact stage, stage pipeline, experimental resident hybrid dataflow |
 | FFT | FP16/BF16 storage with native or FP32 accumulation, FP32, FP64, legacy FP16/FP32 WMMA | radix-2/4/8, four-multiply, Gauss-3, thread/CTA/WMMA DFT8, FP32/FP64 cuFFTDx | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
 | FWHT | FP16/BF16 storage with native or FP32 accumulation, FP32, FP64 | radix-2/4/8, shared and warp-register exchange | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
 | Subset/superset zeta and Mobius | uint32 | asymmetric radix-2/4/8 | temporal tile, hierarchical, online reorder, warp hybrid, stage pipeline |
@@ -164,13 +275,16 @@ auto-selects a measured stable subset (27.74% leave-one-batch-out coverage,
 1.00013x geometric-mean and 1.01112x worst regret) and explicitly requests a
 short measurement outside that subset.
 
-The matching-protocol [library/base/search comparison](docs/v100_three_way_comparison.md)
-separates mapping-search gain from external-library position. Across ten
-representative V100 shapes, searched configurations are 2.349x faster than the
-fixed radix-2 base by geometric mean and 1.109x faster than the matched
-cuFFT/Dao FHT/GPU-NTT rows. Operator-level ratios are 1.015x for FFT, 1.054x
-for FWHT, and 1.313x for NTT; these summarize the selected matrix rather than
-all precisions and shapes.
+The current [v0.6/v0.7 comprehensive comparison](docs/v06_v07_comprehensive_comparison.md)
+separates mapping-search gain, generation-to-generation position, and external-
+library position. The final ten-shape library matrix reaches 1.019x cuFFT,
+1.052x Dao FHT, and 1.314x archived GPU-NTT throughput by operator geometric
+mean. The refreshed matched 18-shape NTT matrix shows that the resident radix-4
+v0.7 point improves the original streamed radix-2 base by 4.760x and reaches
+1.028x of v0.6-search throughput overall. It is 2.127x faster for uint64
+`logN=10`, but reaches only 0.785x/0.651x for uint32/uint64 `logN=12`; the
+remaining boundary is length- and residency-dependent. These are representative
+single-V100 results, not all-precision or universal claims.
 
 ### Same-Machine Library Comparisons
 
@@ -377,9 +491,11 @@ hypotheses, measured boundaries, manifest generator, and analysis commands are i
   scalar comprehensive run to 1.011x and is faster by median on 20/25 stable
   `logN=14..18` shapes. Tensor Core DFT8 helps the local unit but does not
   remove layout, synchronization, and composition costs.
-- FWHT closely tracks Dao FHT after importing its validated local register
-  hierarchy. This demonstrates processing-unit reuse, not independent invention
-  of that core.
+- FWHT reuses Dao's validated local register hierarchy. Separating exact
+  power-of-two execution from general-shape bounds/stride handling restores
+  the hot path: the current `logN=15` rows are 1.076x/1.077x faster than Dao
+  at batch 256/512. This demonstrates processing-unit reuse, not independent
+  invention of that core.
 - NTT comparisons pin modulus, output order, batch, library revision, and
   resident timing. Natural and native bit-reversed results are not mixed.
 - XOR-zeta currently has no external tuned-library baseline.
@@ -397,7 +513,7 @@ software release as:
   author  = {TruNcat3},
   title   = {cuButterfly: Hardware-Mapped Space-Time Parallelism for Butterfly Computations on GPUs},
   year    = {2026},
-  version = {0.6.0},
+  version = {0.7.0},
   url     = {https://github.com/TruNcat3/cuButterfly}
 }
 ```

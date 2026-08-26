@@ -159,7 +159,7 @@ __device__ __forceinline__ void exchange_warps(float (&values)[Traits::kChunks][
     }
 }
 
-template <std::uint32_t LogN>
+template <std::uint32_t LogN, bool ExactShape = false>
 __global__ __launch_bounds__(RegisterFwhtTraits<LogN>::kThreads) void register_fwht_kernel(const float* input, float* output,
                                                                                            std::uint64_t transforms,
                                                                                            std::uint64_t input_batch_distance,
@@ -175,14 +175,24 @@ __global__ __launch_bounds__(RegisterFwhtTraits<LogN>::kThreads) void register_f
         return;
 
     const std::uint64_t input_base = transform * input_batch_distance;
-    const std::uint64_t output_base = transform * output_batch_distance;
+    const std::uint64_t output_base = transform * (ExactShape ? input_batch_distance : output_batch_distance);
     float               values[Traits::kChunks][4];
 #pragma unroll
     for (std::uint32_t chunk = 0; chunk < Traits::kChunks; ++chunk) {
         const std::uint32_t vector_index = chunk * Traits::kThreads + threadIdx.x;
         const std::uint32_t vector_base = vector_index * 4;
-        if (input_element_stride == 1 && (input_base & 3U) == 0 &&
-            vector_base + 3 < logical_points) {
+        if constexpr (ExactShape) {
+            if (input_element_stride == 1 && (input_base & 3U) == 0) {
+                unpack_float4(reinterpret_cast<const float4*>(input + input_base)[vector_index], values[chunk]);
+            } else {
+#pragma unroll
+                for (std::uint32_t item = 0; item < 4; ++item) {
+                    const std::uint32_t index = vector_base + item;
+                    values[chunk][item] = input[input_base + static_cast<std::uint64_t>(index) * input_element_stride];
+                }
+            }
+        } else if (input_element_stride == 1 && (input_base & 3U) == 0 &&
+                   vector_base + 3 < logical_points) {
             unpack_float4(reinterpret_cast<const float4*>(input + input_base)[vector_index], values[chunk]);
         } else {
 #pragma unroll
@@ -225,7 +235,8 @@ __global__ __launch_bounds__(RegisterFwhtTraits<LogN>::kThreads) void register_f
 #pragma unroll
     for (std::uint32_t chunk = 0; chunk < Traits::kChunks; ++chunk) {
         const std::uint32_t vector_index = chunk * Traits::kThreads + threadIdx.x;
-        if (output_element_stride == 1 && (output_base & 3U) == 0) {
+        const std::uint64_t effective_output_stride = ExactShape ? input_element_stride : output_element_stride;
+        if (effective_output_stride == 1 && (output_base & 3U) == 0) {
             float4 result = pack_float4(values[chunk]);
             result.x *= scale;
             result.y *= scale;
@@ -236,7 +247,7 @@ __global__ __launch_bounds__(RegisterFwhtTraits<LogN>::kThreads) void register_f
 #pragma unroll
             for (std::uint32_t item = 0; item < 4; ++item) {
                 const std::uint32_t index                                         = vector_index * 4 + item;
-                output[output_base + static_cast<std::uint64_t>(index) * output_element_stride] = values[chunk][item] * scale;
+                output[output_base + static_cast<std::uint64_t>(index) * effective_output_stride] = values[chunk][item] * scale;
             }
         }
     }
@@ -247,7 +258,7 @@ void launch_register_fwht(const float* input, float* output, std::uint64_t trans
                           bool normalize, cudaStream_t stream) {
     using Traits      = RegisterFwhtTraits<LogN>;
     const float scale = normalize ? 1.0F / static_cast<float>(Traits::kN) : 1.0F;
-    register_fwht_kernel<LogN><<<static_cast<unsigned int>(transforms), Traits::kThreads, Traits::kSharedBytes, stream>>>(
+    register_fwht_kernel<LogN, true><<<static_cast<unsigned int>(transforms), Traits::kThreads, Traits::kSharedBytes, stream>>>(
         input, output, transforms, batch_distance, batch_distance, element_stride,
         element_stride, Traits::kN, scale);
 }

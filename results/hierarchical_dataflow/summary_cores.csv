@@ -1,0 +1,5 @@
+word_bits,logN,batch,backend,n1_log,rows_per_block,threads_per_block,data_time,target_ctas_per_sm,hierarchical_core,kernel_ms,correct
+32,20,4,hierarchical-dataflow,10,4,256,1,5,dataflow-radix4,0.270848,1
+32,20,4,hierarchical-dataflow,10,4,256,1,5,hybrid2d-radix4,0.305664,1
+64,20,4,hierarchical-dataflow,10,2,512,1,2,dataflow-radix4,0.518144,1
+64,20,4,hierarchical-dataflow,10,2,512,1,2,hybrid2d-radix4,0.531968,1

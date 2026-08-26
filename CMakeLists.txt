@@ -4,7 +4,7 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
     set(CMAKE_CUDA_ARCHITECTURES 70 CACHE STRING "CUDA architectures to compile for")
 endif()
 
-project(cuButterfly VERSION 0.6.0 LANGUAGES C CXX CUDA)
+project(cuButterfly VERSION 0.7.0 LANGUAGES C CXX CUDA)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -43,6 +43,8 @@ set(CUBUTTERFLY_FFT_PIPELINE_CANDIDATES "${CMAKE_CURRENT_SOURCE_DIR}/config/v100
     "Generated FFT pipeline candidate manifest")
 set(CUBUTTERFLY_FFT_DISPATCH_SPEC "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_fft_dispatch.json" CACHE FILEPATH
     "Measured FFT mapping dispatch table")
+set(CUNTT_HYBRID_DATAFLOW_SPEC "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_hybrid_dataflow.json" CACHE FILEPATH
+    "Generated HybridDataflow NTT design points")
 set(CUBUTTERFLY_RUNTIME_SELECTOR_SUMMARY "${CMAKE_CURRENT_SOURCE_DIR}/results/v100_scaling_full_summary.csv" CACHE FILEPATH
     "Measured scaling summary used to generate runtime selector latency anchors")
 set(CUNTT_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -54,6 +56,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CUBUTTERFLY_FFT_PIPELINE_SPEC}"
     "${CUBUTTERFLY_FFT_PIPELINE_CANDIDATES}"
     "${CUBUTTERFLY_FFT_DISPATCH_SPEC}"
+    "${CUNTT_HYBRID_DATAFLOW_SPEC}"
     "${CUBUTTERFLY_RUNTIME_SELECTOR_SUMMARY}"
     "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_comprehensive_suite.json"
     "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_space.json"
@@ -66,6 +69,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_runtime_selector.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_scaling_suite.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_design_points.py")
+list(APPEND CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_hybrid_dataflow.py")
 file(MAKE_DIRECTORY "${CUNTT_GENERATED_DIR}")
 execute_process(
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_design_points.py"
@@ -74,6 +78,15 @@ execute_process(
     ERROR_VARIABLE CUNTT_GENERATOR_ERROR)
 if(NOT CUNTT_GENERATOR_RESULT EQUAL 0)
     message(FATAL_ERROR "cuButterfly design-point generation failed: ${CUNTT_GENERATOR_ERROR}")
+endif()
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_hybrid_dataflow.py"
+            --spec "${CUNTT_HYBRID_DATAFLOW_SPEC}"
+            --header "${CUNTT_GENERATED_DIR}/generated_hybrid_dataflow_config.hpp"
+    RESULT_VARIABLE CUNTT_HYBRID_DATAFLOW_RESULT
+    ERROR_VARIABLE CUNTT_HYBRID_DATAFLOW_ERROR)
+if(NOT CUNTT_HYBRID_DATAFLOW_RESULT EQUAL 0)
+    message(FATAL_ERROR "HybridDataflow generation failed: ${CUNTT_HYBRID_DATAFLOW_ERROR}")
 endif()
 execute_process(
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/butterfly_design_space.py"
@@ -295,6 +308,10 @@ if(BUILD_TESTING)
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_butterfly_design_space.py")
     add_test(NAME design_point_generator
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_design_point_generator.py")
+    add_test(NAME hybrid_dataflow_generator
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_hybrid_dataflow_generator.py")
+    add_test(NAME hybrid_dataflow_schedule
+             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_hybrid_dataflow_schedule.py")
     add_test(NAME comprehensive_suite
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_comprehensive_suite.py")
     add_test(NAME scaling_suite
@@ -307,6 +324,42 @@ if(BUILD_TESTING)
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_external_baseline_suite.py")
     add_test(NAME scaling_ncu_analysis
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_scaling_ncu_analysis.py")
+    add_test(NAME packet_streaming_v06_comparison
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_packet_streaming_v06_comparison.py")
+    add_test(NAME packet_polling_backoff
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_packet_polling_backoff.py"
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_packet_streaming_ncu.py")
+    add_test(NAME packet_readiness_modes
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_packet_readiness_modes.py"
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_packet_readiness_modes_ncu.py")
+    add_test(NAME packet_compute_layout
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_packet_compute_layout.py"
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_packet_compute_layout_ncu.py")
+    add_test(NAME packet_warp_rows_weights
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_packet_warp_rows_weights.py")
+    add_test(NAME packet_folded_barriers
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_packet_folded_barriers.py")
+    add_test(NAME three_level_partitions
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_three_level_partitions.py")
+    add_test(NAME ntt_partition_space
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ntt_partition_space.py")
+    add_test(NAME stage_count_space
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_stage_count_space.py")
+    add_test(NAME resident_execution_groups
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_resident_execution_groups.py")
+    add_test(NAME resident_execution_groups_ncu
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_resident_execution_groups_ncu.py")
     add_test(NAME structured_2x2_ncu_analysis
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_structured_2x2_ncu.py")
     add_test(NAME structured_coefficient_policy_summary

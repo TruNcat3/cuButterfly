@@ -1,0 +1,62 @@
+[
+  {
+    "numeric": "overall",
+    "shapes": 18,
+    "v06_search_geomean": 1.3233053754753628,
+    "v07_search_geomean": 1.2428695462308255,
+    "v07_search_vs_v06_search_geomean": 0.2740430228795179,
+    "v07_search_wins": 0,
+    "parity": 0,
+    "v06_search_wins": 18
+  },
+  {
+    "numeric": "uint32",
+    "shapes": 6,
+    "v06_search_geomean": 1.1258305716824142,
+    "v07_search_geomean": 1.0652728903496484,
+    "v07_search_vs_v06_search_geomean": 0.21821231814794562,
+    "v07_search_wins": 0,
+    "parity": 0,
+    "v06_search_wins": 6
+  },
+  {
+    "numeric": "uint64",
+    "shapes": 12,
+    "v06_search_geomean": 1.434675216809763,
+    "v07_search_geomean": 1.3424801799015391,
+    "v07_search_vs_v06_search_geomean": 0.3071061352189202,
+    "v07_search_wins": 0,
+    "parity": 0,
+    "v06_search_wins": 12
+  },
+  {
+    "numeric": "uint32/logN12",
+    "shapes": 6,
+    "v06_search_geomean": 1.1258305716824142,
+    "v07_search_geomean": 1.0652728903496484,
+    "v07_search_vs_v06_search_geomean": 0.21821231814794562,
+    "v07_search_wins": 0,
+    "parity": 0,
+    "v06_search_wins": 6
+  },
+  {
+    "numeric": "uint64/logN10",
+    "shapes": 6,
+    "v06_search_geomean": 2.065590714565516,
+    "v07_search_geomean": 1.2897376299084897,
+    "v07_search_vs_v06_search_geomean": 0.49922578166200343,
+    "v07_search_wins": 0,
+    "parity": 0,
+    "v06_search_wins": 6
+  },
+  {
+    "numeric": "uint64/logN12",
+    "shapes": 6,
+    "v06_search_geomean": 0.9964669976554814,
+    "v07_search_geomean": 1.3973795845255315,
+    "v07_search_vs_v06_search_geomean": 0.18892088861098985,
+    "v07_search_wins": 0,
+    "parity": 0,
+    "v06_search_wins": 6
+  }
+]

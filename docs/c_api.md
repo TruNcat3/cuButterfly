@@ -67,6 +67,50 @@ into a selected warp-register unit. Its algorithm name includes
 The suffix is deliberately absent when the selected core, operator, direction,
 or layout uses the materialized pack fallback.
 
+Power-of-two NTT plans expose the hierarchical local-core choice through the
+explicit algorithm names `ntt-hierarchical-dataflow` (native dataflow radix-4)
+and `ntt-hierarchical-dataflow-hybrid2d-radix4` (the mature Hybrid2D radix-4
+schedule). The latter is currently specialized for `logN=20`, `n1_log=10`;
+runtime measurement considers it only where that shape is legal.
+
+Explicit `ntt-appt-register-tail`, `ntt-appt-register-tail-radix8`, and
+`ntt-appt-register-tail-grouped` plans may expose an APPT static boundary. The
+`ntt-appt-register-tail-grouped-writer-final` variant accepts a natural or APPT
+static input but requires natural output: it fuses the last butterfly stage
+with the static-to-natural writer. The
+`ntt-appt-register-tail-grouped-writer-final-data-time` variant additionally
+traverses a batch transform group inside each fixed spatial task. Grouped
+algorithms select an `a`-space group
+of 16 through the public preset; the research CLI exposes 8/16/32 for
+architecture scans.
+
+`ntt-appt-register-tail-grouped-writer-final-resident` is the experimental
+fixed-`a` composite core. It keeps stages 0--13 in one resident 128x128
+subgraph and requires natural output. The current 96 KiB V100 specialization
+is exposed for research and explicit-plan reproduction; it is not an automatic
+selection candidate.
+
+`ntt-appt-register-tail-grouped-writer-final-resident-quarter` preserves that
+dependency closure and boundary layout while using four 32-row execution
+quarters and a 48 KiB shared-memory budget. It is also explicit-only: the
+current V100 implementation restores two CTA/SM but still spills retained
+state, so automatic selection continues to prefer measured production cores.
+
+```c
+cubutterflySetNttLayouts(descriptor,
+    CUBUTTERFLY_NTT_LAYOUT_NATURAL,
+    CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC);
+cubutterflyCreatePlan(handle, descriptor, &plan);
+
+cubutterflyNttLayoutInfo_t layout;
+cubutterflyPlanGetNttLayoutInfo(plan, &layout);
+```
+
+The current C ABI supports this layout only for a packed rank-one, out-of-place
+logN=20 NTT. A consumer must compare `compatibility_id` before reusing a static
+buffer. Natural-to-static, static-to-natural, and static-to-static plans retain
+the same mathematical NTT; only the external index representation changes.
+
 ## Selection And Cache
 
 The default policy uses this order:

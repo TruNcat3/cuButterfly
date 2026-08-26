@@ -1,0 +1,218 @@
+{
+  "schema": "cuntt-ntt-partition-space-v2",
+  "shape": {
+    "logN": 20,
+    "batch": 1,
+    "word_bits": 32
+  },
+  "dimensions": {
+    "segment_count": [
+      4,
+      4
+    ],
+    "stage_log": [
+      2,
+      10
+    ],
+    "constraint": "sum(stage_partition) == logN",
+    "per_segment": [
+      "core",
+      "threads",
+      "units",
+      "data_space",
+      "data_time",
+      "cta_weight"
+    ],
+    "per_boundary": [
+      "storage",
+      "buffers",
+      "readiness",
+      "layout"
+    ],
+    "execution_group_count": [
+      2,
+      4
+    ],
+    "lowering_constraint": "resident-fused groups adjacent logical subgraphs; each execution group has at most 10 stages"
+  },
+  "preferred_stage_logs": [
+    6,
+    8,
+    10
+  ],
+  "partition_count": 375,
+  "partition_count_by_segments": {
+    "4": 375
+  },
+  "shortlist_policy": {
+    "top_per_segment_count": 1,
+    "boundary_penalty": 1.0,
+    "note": "static legality/shortlisting only; event timing ranks candidates"
+  },
+  "shortlist": [
+    {
+      "segment_count": 4,
+      "stage_partition": [
+        5,
+        5,
+        5,
+        5
+      ],
+      "logical_boundary_count": 3,
+      "minimum_execution_group_count": 2,
+      "minimum_materialized_boundary_count": 1,
+      "full_scratch_value_passes": 4,
+      "full_scratch_workspace_bytes": 12582912,
+      "minimum_full_scratch_workspace_bytes": 4194304,
+      "publication_tokens": 3072,
+      "minimum_publication_tokens": 1,
+      "task_counts": [
+        32768,
+        32768,
+        32768,
+        32768
+      ],
+      "stage_min": 5,
+      "stage_max": 5,
+      "stage_stddev": 0.0,
+      "default_cta_weights": [
+        5,
+        5,
+        5,
+        5
+      ],
+      "physical_templates": [
+        {
+          "kind": "homogeneous",
+          "cores": [
+            "radix2",
+            "radix2",
+            "radix2",
+            "radix2"
+          ]
+        },
+        {
+          "kind": "homogeneous",
+          "cores": [
+            "radix4",
+            "radix4",
+            "radix4",
+            "radix4"
+          ]
+        },
+        {
+          "kind": "homogeneous",
+          "cores": [
+            "radix8",
+            "radix8",
+            "radix8",
+            "radix8"
+          ]
+        },
+        {
+          "kind": "tail-specialized",
+          "cores": [
+            "radix4",
+            "radix4",
+            "radix4",
+            "radix8"
+          ]
+        }
+      ],
+      "execution_templates": [
+        {
+          "kind": "resident-fused",
+          "boundary_storage": [
+            "resident-fused",
+            "full-scratch",
+            "resident-fused"
+          ],
+          "execution_stage_partition": [
+            10,
+            10
+          ],
+          "execution_group_count": 2,
+          "materialized_boundary_count": 1
+        },
+        {
+          "kind": "resident-fused",
+          "boundary_storage": [
+            "full-scratch",
+            "full-scratch",
+            "resident-fused"
+          ],
+          "execution_stage_partition": [
+            5,
+            5,
+            10
+          ],
+          "execution_group_count": 3,
+          "materialized_boundary_count": 2
+        },
+        {
+          "kind": "resident-fused",
+          "boundary_storage": [
+            "full-scratch",
+            "resident-fused",
+            "full-scratch"
+          ],
+          "execution_stage_partition": [
+            5,
+            10,
+            5
+          ],
+          "execution_group_count": 3,
+          "materialized_boundary_count": 2
+        },
+        {
+          "kind": "resident-fused",
+          "boundary_storage": [
+            "resident-fused",
+            "full-scratch",
+            "full-scratch"
+          ],
+          "execution_stage_partition": [
+            10,
+            5,
+            5
+          ],
+          "execution_group_count": 3,
+          "materialized_boundary_count": 2
+        },
+        {
+          "kind": "full-scratch",
+          "boundary_storage": [
+            "full-scratch",
+            "full-scratch",
+            "full-scratch"
+          ],
+          "execution_stage_partition": [
+            5,
+            5,
+            5,
+            5
+          ],
+          "execution_group_count": 4,
+          "materialized_boundary_count": 3
+        },
+        {
+          "kind": "ring",
+          "boundary_storage": [
+            "ring",
+            "ring",
+            "ring"
+          ],
+          "execution_stage_partition": [
+            5,
+            5,
+            5,
+            5
+          ],
+          "execution_group_count": 4,
+          "materialized_boundary_count": 3
+        }
+      ],
+      "static_score": 5.0
+    }
+  ]
+}
