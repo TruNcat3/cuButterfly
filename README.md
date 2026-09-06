@@ -99,6 +99,12 @@ These are matched V100 measurements, not universal claims. The complete
 protocol, external-baseline coverage, raw CSV paths, and limitations are in
 the [v0.8 release overview](docs/release_v08.md).
 
+For prior-work context, see the [FFT library comparison](docs/fft_library_comparison.md),
+the [research positioning](docs/cubutterfly_positioning.md), and the
+[V100 external-baseline report](docs/v100_external_baselines.md). These pages
+explain what is a complete library baseline, what is an imported local
+processing unit, and which rows are actually protocol-matched.
+
 ### External-library summary
 
 The following compact view summarizes the selected V100 matrix in

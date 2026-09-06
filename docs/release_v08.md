@@ -39,8 +39,8 @@ its lowering contract is satisfied.
 
 | Workload family | v0.8 status | External comparison boundary |
 |:--|:--|:--|
-| FFT | Selected direct/online points reach parity or exceed cuFFT; saturated long-batch points remain below it. | cuFFT is the complete external reference for current FFT tables. |
-| FWHT | Warp-register and hierarchical candidates are selected by shape. | Dao FHT has only a limited set of strict matching rows. |
+| FFT | Selected direct/online points reach parity or exceed [cuFFT](https://docs.nvidia.com/cuda/cufft/); saturated long-batch points remain below it. | cuFFT is the complete external reference for current FFT tables; [VkFFT](https://github.com/DTolm/VkFFT) is included where the protocol matches. |
+| FWHT | Warp-register and hierarchical candidates are selected by shape. | [Dao FHT](https://github.com/Dao-AILab/fast-hadamard-transform) has only a limited set of strict matching rows. |
 | NTT | v0.8 search is effectively at parity with the mature v0.6 envelope in the latest uint32/uint64 confirmation. | GPU-NTT comparisons are sparse and protocol-specific. |
 | Structured 2x2 | Confirmed resident points are substantially faster than the v0.6 incumbent in the current V100 closure. | No equivalent external CUDA baseline is installed. |
 | Subset/superset/xor zeta | Confirmed resident points are substantially faster than the mature incumbent in the current V100 closure. | No equivalent external CUDA baseline is installed. |

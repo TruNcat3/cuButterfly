@@ -14,6 +14,11 @@ different stage/data unfolding, residence, layouts, or arithmetic cores. The
 purpose of the matrix is to measure this conditional selection behavior, not
 to claim that one kernel is optimal for every operator or GPU.
 
+For descriptions and source links for the external libraries, see [Research
+Positioning](cubutterfly_positioning.md), [FFT Library Comparison](fft_library_comparison.md),
+and [V100 External Baselines](v100_external_baselines.md). This report only
+joins an external row when the semantic and timing contracts match.
+
 ## Current V100 Screening Matrix
 
 The current build (`build-cuda118-cufftdx2`) has a fresh screening matrix with

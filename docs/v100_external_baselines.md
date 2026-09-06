@@ -1,5 +1,14 @@
 # V100 Matching-Protocol External Baselines
 
+This report is the runnable-baseline companion to [Research
+Positioning](../docs/cubutterfly_positioning.md). The external implementations
+are [Dao-AILab fast-hadamard-transform](https://github.com/Dao-AILab/fast-hadamard-transform)
+for FWHT and the pinned GPU-NTT comparator described in the [GPU-NTT gap
+analysis](gpu_ntt_gap_analysis.md) for NTT. FFT library baselines are tracked
+separately in [FFT Library Comparison](fft_library_comparison.md), including
+[NVIDIA cuFFT](https://docs.nvidia.com/cuda/cufft/) and
+[VkFFT](https://github.com/DTolm/VkFFT).
+
 ## Protocol
 
 This refresh runs each local/external pair with the same workload semantics,

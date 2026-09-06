@@ -52,6 +52,33 @@ point, modular integer arithmetic, and communication/synchronization.
 
 ## 3. Relationship to prior work
 
+The table below is the short navigation index for the work discussed here.
+The linked papers and project pages are context and comparison references; a
+link does not mean that the corresponding implementation is installed or
+directly comparable on the V100. The exact runnable baseline scope is defined
+in [FFT Library Comparison](fft_library_comparison.md) and [V100 External
+Baselines](v100_external_baselines.md).
+
+| Work | What it contributes | Primary link | Role in this repository |
+|:--|:--|:--|:--|
+| NVIDIA cuFFT | Complete vendor GPU FFT library | [CUDA documentation](https://docs.nvidia.com/cuda/cufft/) | External FFT baseline |
+| NVIDIA cuFFTDx | Device-side FFT building blocks | [CUDA documentation](https://docs.nvidia.com/cuda/cufftdx/) | Imported local processing unit |
+| VkFFT | Cross-platform complete GPU FFT | [GitHub](https://github.com/DTolm/VkFFT) | External FFT baseline |
+| TurboFFT | Generated and fused GPU FFT kernels | [GitHub](https://github.com/shixun404/TurboFFT) | Imported/archived FFT evidence |
+| Dao-AILab FHT | Tuned GPU FWHT implementation | [GitHub](https://github.com/Dao-AILab/fast-hadamard-transform) | External FWHT baseline |
+| GPU-NTT | CUDA NTT implementation | [Local gap report](gpu_ntt_gap_analysis.md) | Pinned archived NTT baseline |
+| FFTW | Adaptive FFT planning and codelets | [Paper](https://doi.org/10.1109/ICASSP.1998.681704), [project](http://www.fftw.org/) | Algorithm/planning context |
+| SPIRAL | Symbolic transform search and generation | [Paper](https://doi.org/10.1109/JPROC.2004.840306), [project](https://www.spiral.net/) | Algorithm/generator context |
+| MAESTRO | Analytical spatial/temporal dataflow mapping | [Paper](https://doi.org/10.1145/3352460.3358252) | Mapping prior art |
+| Timeloop | Systematic accelerator mapping and cost modeling | [Paper](https://doi.org/10.1109/ISPASS.2019.00042), [GitHub](https://github.com/NVlabs/timeloop) | Mapping/modeling prior art |
+| tcFFT | Tensor-Core half-precision FFT | [Paper](https://arxiv.org/abs/2104.11471) | FFT processing-unit prior art |
+| FlashFFTConv | Fused long-sequence FFT convolution | [Paper](https://arxiv.org/abs/2311.05908), [GitHub](https://github.com/HazyResearch/flash-fft-conv) | Fused-operator context |
+| HadaCore | Tensor-Core Hadamard transform | [Paper](https://arxiv.org/abs/2412.08832) | FWHT processing-unit prior art |
+| Butterfly factorization | Learned sparse linear transforms | [Paper](https://proceedings.mlr.press/v97/dao19a.html), [GitHub](https://github.com/HazyResearch/butterfly) | Graph/operator context |
+| Monarch | Block-structured matrices | [Paper](https://proceedings.mlr.press/v162/dao22a.html), [GitHub](https://github.com/HazyResearch/monarch) | Block-operator context |
+| NTTFusion | GPU NTT fusion and modular arithmetic | [Paper](https://doi.org/10.1109/ICCD58817.2023.00061) | NTT processing-unit prior art |
+| TensorFHE | Hardware/software FHE acceleration | [Paper](https://doi.org/10.1109/HPCA56546.2023.10071017) | NTT/FHE context |
+
 ### Transform generators: FFTW and SPIRAL
 
 FFTW selects plans and generates small codelets for DFT-family transforms.
@@ -151,10 +178,13 @@ The expanded search adds temporal-tile and warp/shared hybrid kernels, then
 introduces a reusable fused radix-4 processing unit. For contiguous, forward
 `N=256`, the joint search selects radix-4 temporal tiles for FWHT, FFT, and
 XOR-zeta; the XOR-zeta lead over radix-2 is only 4.7%, and broader shape/layout
-sweeps select other units. The FFT reaches 75.9% of cuFFT throughput. Thus a
-common graph mapping admits multiple processing units and kernel realizations,
-and the joint optimum depends on operator, shape, semantics, and layout. Full
-data and interpretation are in `cubutterfly_cross_operator_results.md`.
+sweeps select other units. The **initial fixed-size experiment** reached 75.9%
+of cuFFT throughput; this is historical design-space evidence, not the current
+long-FFT result. The current matched V100 library matrix is summarized in
+[V100 Three-Way Comparison](v100_three_way_comparison.md). Thus a common graph
+mapping admits multiple processing units and kernel realizations, and the joint
+optimum depends on operator, shape, semantics, and layout. Full data and
+interpretation are in [Comprehensive Butterfly Comparison](comprehensive_butterfly_comparison.md).
 
 The broader experiment should extend this common runtime as follows.
 
@@ -223,26 +253,15 @@ of the proposed cuButterfly mapping framework."
 
 ## 7. Primary references
 
-- FFTW, *An Adaptive Software Architecture for the FFT*:
-  https://doi.org/10.1109/ICASSP.1998.681704
-- SPIRAL, *Code Generation for DSP Transforms*:
-  https://doi.org/10.1109/JPROC.2004.840306
-- MAESTRO, *Understanding Reuse, Performance, and Hardware Cost of DNN
-  Dataflow*: https://doi.org/10.1145/3352460.3358252
-- Timeloop, *A Systematic Approach to DNN Accelerator Evaluation*:
-  https://doi.org/10.1109/ISPASS.2019.00042
-- tcFFT, *Accelerating Half-Precision FFT through Tensor Cores*:
-  https://arxiv.org/abs/2104.11471
-- FlashFFTConv, *Efficient Convolutions for Long Sequences with Tensor Cores*:
-  https://arxiv.org/abs/2311.05908
-- TurboFFT, *A High-Performance Fast Fourier Transform with Fault Tolerance on GPU*:
-  https://arxiv.org/abs/2405.02520
-- HadaCore, *Tensor Core Accelerated Hadamard Transform Kernel*:
-  https://arxiv.org/abs/2412.08832
-- *Learning Fast Algorithms for Linear Transforms Using Butterfly
-  Factorizations*, ICML 2019: https://proceedings.mlr.press/v97/dao19a.html
-- *Monarch: Expressive Structured Matrices for Efficient and Accurate
-  Training*, ICML 2022: https://proceedings.mlr.press/v162/dao22a.html
-- NTTFusion, *Efficient Number Theoretic Transform Acceleration on GPUs*:
-  https://doi.org/10.1109/ICCD58817.2023.00061
-- TensorFHE, HPCA 2023: https://doi.org/10.1109/HPCA56546.2023.10071017
+- [FFTW, *An Adaptive Software Architecture for the FFT*](https://doi.org/10.1109/ICASSP.1998.681704)
+- [SPIRAL, *Code Generation for DSP Transforms*](https://doi.org/10.1109/JPROC.2004.840306)
+- [MAESTRO, *Understanding Reuse, Performance, and Hardware Cost of DNN Dataflow*](https://doi.org/10.1145/3352460.3358252)
+- [Timeloop, *A Systematic Approach to DNN Accelerator Evaluation*](https://doi.org/10.1109/ISPASS.2019.00042)
+- [tcFFT, *Accelerating Half-Precision FFT through Tensor Cores*](https://arxiv.org/abs/2104.11471)
+- [FlashFFTConv, *Efficient Convolutions for Long Sequences with Tensor Cores*](https://arxiv.org/abs/2311.05908)
+- [TurboFFT, *A High-Performance Fast Fourier Transform with Fault Tolerance on GPU*](https://arxiv.org/abs/2405.02520)
+- [HadaCore, *Tensor Core Accelerated Hadamard Transform Kernel*](https://arxiv.org/abs/2412.08832)
+- [*Learning Fast Algorithms for Linear Transforms Using Butterfly Factorizations*, ICML 2019](https://proceedings.mlr.press/v97/dao19a.html)
+- [*Monarch: Expressive Structured Matrices for Efficient and Accurate Training*, ICML 2022](https://proceedings.mlr.press/v162/dao22a.html)
+- [NTTFusion, *Efficient Number Theoretic Transform Acceleration on GPUs*](https://doi.org/10.1109/ICCD58817.2023.00061)
+- [TensorFHE, HPCA 2023](https://doi.org/10.1109/HPCA56546.2023.10071017)

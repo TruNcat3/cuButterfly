@@ -62,6 +62,7 @@ Read the repository in this order when encountering it for the first time:
 | How are FFT stages generated and dispatched? | [FFT Design Space](fft_design_space.md), [FFT Pipeline Generator](fft_pipeline_generator.md) |
 | What must an implementation preserve? | [Architecture Guardrails](architecture_guardrails.md) |
 | How does APPT-style online layout fit the architecture? | [APPT Static Layout](appt_static_layout.md) |
+| How does cuButterfly relate to prior work and libraries? | [Research Positioning](cubutterfly_positioning.md), [FFT Library Comparison](fft_library_comparison.md) |
 
 ## Reproduce The Evidence
 
@@ -99,6 +100,9 @@ cuFFTDx, TurboFFT, Dao FHT, and GPU-NTT. The project does not claim that the
 arithmetic unit itself is novel in every case; its contribution is the
 parameterized mapping, residence, dataflow, lowering, and measured selection
 framework around regular layered butterfly graphs.
+
+For direct library tables and protocol notes, continue to [FFT Library
+Comparison](fft_library_comparison.md) and [V100 External Baselines](v100_external_baselines.md).
 
 ## Release And Maintenance
 

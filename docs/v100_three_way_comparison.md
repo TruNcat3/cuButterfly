@@ -1,5 +1,10 @@
 # V100 Library/Base/Search Comparison
 
+The external-library context and source links are collected in [Research
+Positioning](cubutterfly_positioning.md), [FFT Library Comparison](fft_library_comparison.md),
+and [V100 External Baselines](v100_external_baselines.md). This page focuses
+on the matched V100 base/search matrix.
+
 ## Question
 
 This experiment separates two performance questions:
