@@ -2,6 +2,21 @@
 
 ## 1. Capture The Environment
 
+For a new installation, calibrate the local GPU before reusing any mapping
+table. The one-command wrapper builds, tests, installs, and profiles the
+current device:
+
+```bash
+./scripts/install_with_hardware_profile.sh \
+  --build-dir build \
+  --prefix "$HOME/.local" \
+  --profile-dir "$HOME/.local/share/cuButterfly/hardware/local"
+```
+
+This produces a device-fingerprinted `hardware_profile.json` and a parameterized
+`unfolding_model.csv`. See [Hardware Profile Initialization](hardware_profile_install.md)
+for the profile schema, update policy, and mismatch check.
+
 Record these before interpreting a result:
 
 ```bash
@@ -56,6 +71,29 @@ python3 scripts/summarize_cubutterfly_designs.py \
   results/reproduction_raw.csv \
   --output results/reproduction_summary.csv
 ```
+
+The cross-operator v0.8 matrix uses a first-class operator/physical-group
+manifest. It is the preferred protocol for comparing the current v0.6
+incumbent, searched v0.8 candidates, and available library controls:
+
+```bash
+python3 scripts/run_cross_operator_comparison.py \
+  --manifest config/v100_cross_operator_profiles.json \
+  --batches 1 4 16 64 --warmup 100 --repeat 100 --trials 3 \
+  --output-dir results/cross_operator_v08
+```
+
+For Nsight Compute, run from the repository root as an administrator and keep
+the generated `profiles.json` beside the raw captures:
+
+```bash
+sudo -E ./scripts/profile_cross_operator_v08_ncu.sh \
+  --output-dir results/ncu_cross_operator_v08
+```
+
+`scripts/summarize_ncu.py --metadata ... --require-metadata` rejects a capture
+that cannot be associated with a declared operator, preventing a filename or
+kernel-name heuristic from mixing FFT, NTT, and coefficient-free transforms.
 
 The controlled single-GPU cross-workload suite validates semantic grouping,
 runs correctness preflights, randomizes trial order, and persists each sample:
@@ -305,3 +343,21 @@ tracked.
 
 This protocol is necessary to demonstrate portability of the methodology. A
 successful build on another architecture is not cross-GPU validation.
+## 9. Bounded HybridDataflow/cuFFTDx Envelope
+
+The first cuFFTDx integration is intentionally bounded to one block-resident
+local tile. To measure it against the native mixed-dataflow kernel, standalone
+cuFFTDx block launch, and external cuFFT, run:
+
+```bash
+BIN=$PWD/build-cuda118-cufftdx2/cubutterfly_bench \
+LOG_NS="8 9 10" BATCHES="1 4 16 64" TRIALS=3 \
+OUTPUT_DIR=$PWD/results/hybrid_cufftdx_adapter \
+./scripts/benchmark_hybrid_cufftdx_adapter.sh
+```
+
+The script writes `raw.csv`, `summary.csv`, and `analysis.md`. It uses
+`--verify` by default and records unsupported/resource-failed points with an
+error status rather than treating them as performance results. Use the Python
+entry point directly with `--dry-run` to inspect generated commands on a host
+without a CUDA device.

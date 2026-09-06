@@ -2,6 +2,172 @@
 
 All notable repository and research-artifact changes are recorded here.
 
+## 0.8.0 - 2026-09-06 Nested Physical Space Baseline
+
+### Added
+
+- Added the install-time hardware-profile workflow. The installation wrapper
+  builds the capability microbenchmark, records a device-fingerprinted local
+  profile, emits a parameterized unfolding model table, and provides a
+  mismatch check before tuning data is reused on another GPU.
+
+- V100 confirmed-search closure is now compiled into the runtime selector as
+  an exact resident mapping overlay. Structured 2x2 and zeta cells that were
+  confirmed with repeated current-code measurements report
+  `selection_confidence=confirmed-median`; unmeasured cells retain model or
+  calibrated fallback behavior.
+
+- Native confirmed resident mappings now clear inherited FFT processing-unit
+  state before lowering. This prevents a reused `ButterflyConfig` from sending
+  a zeta/structured point through the cuFFTDx block-adapter validator.
+
+- Broad cross-operator external-baseline coverage report. It includes the
+  current-build cuFFT/Dao-AILab-FHT matches and exact-contract archived
+  GPU-NTT comparisons, while explicitly leaving modulus/layout-mismatched
+  rows unmatched. Regenerate it with
+  `scripts/summarize_external_baseline_coverage.py`.
+
+- Corrected comparison closure to admit multiple mature incumbents and select
+  the fastest measured incumbent per semantic point. The FWHT manifest now
+  includes the v0.6 warp-register/radix-2 point, preventing the hierarchical
+  compatibility profile from being mistaken for the v0.6 performance floor.
+
+- Documented workload-conditional configuration as a first-class library
+  property: hardware, operator, precision, scale, direction, placement, and
+  layout select the architecture mapping and processing unit independently.
+
+- Fixed-protocol FFT dispatch validation launcher and JSON configuration for
+  reproducible auto-select, linear-layout, and cuFFT comparisons.
+
+- Search-provenance analysis for the expanded FFT matrix, distinguishing
+  physically measured candidates from runtime model selections and v0.6
+  fallbacks. The generated V100 FFT dispatch now preserves per-shape shared
+  layouts, enabling the NCU-validated XOR-swizzle choice for logN18 high
+  batch without applying it to unfavorable logN20 shapes.
+
+- Public `query_butterfly_lowering()` contract that separates architecture
+  mapping admission from processing-unit implementation. It reports role-local
+  versus CTA-collective ownership and rejects unsupported multi-role/data-time
+  lowerings before generation; the bounded cuFFTDx adapter remains explicitly
+  single-role until a collective subgroup codelet is generated.
+
+- Independent NTT work-distribution IR for GridTiled, TransformResident, and
+  ResidentQueue ownership after logical stage and execution-group lowering.
+- Strict v0.6 Hybrid2D radix-4 compatibility candidates and a generated
+  physical-core capability registry.
+- Stable mapping IDs plus CTA, resident-slot, grid-wave, and tail-fill
+  diagnostics in the plan and benchmark CSV.
+- v0.6/v0.7/v0.8 envelope benchmark with a 3% compatibility-regression gate
+  and a focused NCU collection script.
+- Native transform-ready `10+10` Hybrid2D radix-4 pipeline with resident
+  producer/consumer CTA roles and fused physical-core coefficient layout.
+- Independent producer/consumer physical-core selection inside the native
+  resident kernel, including Hybrid2D/Dataflow radix-4 mixed compositions.
+- Explicit `producer_ahead` startup-gate experiment for resident two-level and
+  fine-wave three-level schedules
+  mappings, with CLI/CSV identity and correctness/validation coverage.
+- Native `cooperative-phased` control and a phase-specialized DD GridTiled
+  control that isolate codelet cost from persistent CTA ownership.
+- Matched work-distribution NCU collection and analysis for v0.6, DD
+  GridTiled, DD ResidentQueue, and DD CooperativePhased at configurable batch.
+- Native dual-tile CooperativePhased mapping with two independent 128-thread
+  subgraphs per CTA, per-subgraph `data_space={1,2,4}`, SM70 named barriers,
+  exact forward/inverse coverage, and a focused NCU attribution protocol.
+- Five-trial comprehensive V100 protocol over two numeric widths, five
+  lengths, and six batches, plus a generated NTT runtime selector table and
+  machine-readable regime map.
+- Three-trial three-level role-service screens parameterized by numeric width;
+  the V100 uint32/uint64 evidence records the batch and precision-dependent
+  `stage_partition` role policy without changing the default selector.
+- Fixed cooperative three-level launches for 64-bit 8-stage partitions by
+  opting into the required dynamic shared-memory limit before occupancy
+  calculation.
+- Added width-specific partition and within-partition role-weight evidence for
+  the V100 resident mapping search, including the `8+6+6` uint64 candidate
+  screen and its batch-dependent `8:6:6`/`10:5:5` policy split.
+- Added a generic warp-packed radix-4 physical core. Per-role data-space
+  grouping fills stage-4/6 SIMD lanes with independent packets while retaining
+  packet-granular readiness and natural-order correctness.
+- Expanded generic physical-chain service tables to uint32/uint64, batch
+  1/4/16/48, G2/G3/G4, three G3 stage orders, and scalar/packed controls.
+- Added a bounded `HybridDataflow` plus cuFFTDx block adapter for FP32
+  `logN=3..10`. The adapter preserves the mixed-dataflow ownership contract,
+  is excluded from automatic selection, and is measured by a four-way
+  native/adapter/TemporalTile/cuFFT envelope script with explicit failure
+  records.
+- Recorded the cuFFTDx multi-role processing-unit boundary: a naive shared-tile
+  composition is rejected after V100 illegal-access evidence, so no unverified
+  core lowering is exposed; the generated workspace/role ownership contract
+  remains the next implementation milestone.
+- Moved HybridDataflow processing-unit lowering checks into plan validation:
+  native radix-2 admits only generated role/data points, while resident radix-4
+  admits its flow and CTA envelope; unsupported combinations now abstain before
+  kernel launch.
+- Added `ButterflyPlan::execution_realization()` and matching benchmark fields
+  for the post-lowering physical contract: resident single-role versus native
+  resident multi-role, data-time reuse, visible launches, whole-transform
+  on-chip residency, and materialized global boundaries. Added a reproducible
+  logN=8 architecture realization matrix separating native HybridDataflow,
+  bounded cuFFTDx, standalone cuFFTDx, and opaque cuFFT.
+- Added the public processing-unit capability registry, separating
+  `ComputeUnit`/`FftCore` ownership and multi-role lowering flags from the
+  backend mapping capability table.
+- Made the butterfly performance model consult the processing-unit registry
+  before scoring candidates, including the distinction between local-stage
+  envelopes and full FFT codelet lengths.
+- Added the first explicit subgroup role-local cuFFTDx codelet probe
+  (`Size=8`, `ElementsPerThread=8`, `FFTsPerBlock=32`) and its benchmark. It
+  validates one-warp packet ownership independently of the stage handoff
+  scheduler; it is not yet promoted as a multi-role HybridDataflow lowering.
+- Added an experimental complete two-role cuFFTDx resident adapter for
+  64-point FFTs. Two warp roles use a shared double-buffered packet channel and
+  per-slot ready flags in one launch, with a reproducible batch benchmark;
+  arbitrary stage partitions remain planner work.
+- Exposed the generated two-role adapter as the explicit
+  `FftCore::CufftDxRolePipeline64` processing-unit choice. Plan validation now
+  fills its exact N=64/FP32 mapping defaults, lowering queries report a real
+  multi-role resident execution, and the plan owns the cross-twiddle table
+  used by the packet consumer.
+- Generalized the resident role pipeline around a compile-time `PacketSize`
+  processing-unit point. The generated FP32 V100 family now instantiates
+  packet widths 4, 8, and 16 (complete transforms `N=16,64,256`); packet count,
+  shared-channel capacity, cross-twiddle table size, and normalization are
+  derived from the template. `CufftDxRolePipeline64` remains the 8-point
+  compatibility alias, while the generic point is selectable through
+  `ButterflyConfig::processing_unit_points`.
+
+### Current Evidence Boundary
+
+- GridTiled and the native resident-ready path pass forward correctness on
+  V100; the native path also has explicit inverse smoke coverage.
+- The complete 1,380-execution matrix covers 60 width/length/batch points.
+  Over 57 stable points, its candidate oracle is 1.138x the radix-2 base,
+  1.017x v0.6, and 2.705x one fixed v0.7 resident mapping.
+- DD GridTiled wins all six uint32 `logN=20` batches and the v0.6-compatible
+  mapping wins every other point. The deployed two-branch policy agrees with
+  the measured oracle at 60/60 points with 1.000000x stable regret.
+- Resident-ready remains generated for 10+10 and is retained as an explicit
+  research candidate. The complete matrix does not select it as a default;
+  large-batch resident ownership and the uint64 DD core remain search targets.
+- The phase-specialized DD GridTiled core takes 0.910/4.125/8.213 ms at
+  batch 16/80/160, beating paired v0.6 controls by 1.27x/1.25x/1.26x. The
+  persistent DD variants fall behind at large batch, so work distribution,
+  phase specialization, and physical codelet are now separate search axes.
+- The batch-80 dual-tile control improves one-CTA/SM CooperativePhased from
+  9.525 to 6.499 ms, validating inter-subgraph latency hiding, but remains
+  1.574x Grid time because the reused shared-memory codelet is inefficient at
+  128-thread width. It is an attribution candidate, not a selected default.
+
+## 0.7.0 - 2026-08-26 Hybrid Dataflow Research Baseline
+
+### Added
+
+- Variable logical stage partitions and resident execution-group lowering.
+- Hierarchical readiness, homogeneous warp subgraphs, APPT online/static
+  layouts, packet-shared radix-4, and matched NCU attribution experiments.
+- Frozen research baseline tagged `v0.7.0`; v0.8 retains these points as
+  candidates rather than rewriting their evidence.
+
 ## 0.6.0 - 2026-08-11 General Shapes And Plan API
 
 ### Added
@@ -148,6 +314,15 @@ All notable repository and research-artifact changes are recorded here.
 
 - Host-vector execution now submits through the same stream-aware kernel path
   as the application API and lazily creates its private staging buffers.
+- Added a benchmark-only `--shared-bank-width default|32|64` probe. On the
+  measured V100, an explicit 64-bit request is rejected after the runtime
+  reports fixed 32-bit banks; the valid direct1024 logN14/batch64 point has a
+  0.034652 ms median under the five-trial probe. Bank width is therefore not
+  included as a V100 selector dimension.
+- Added a current-build broad comparison screen covering six butterfly
+  operators at logN10/12/14 and a separate logN20 NTT screen. Results and
+  the publication-grade coverage boundary are recorded in
+  `docs/comprehensive_butterfly_comparison.md`.
 
 ### Current Evidence Boundary
 

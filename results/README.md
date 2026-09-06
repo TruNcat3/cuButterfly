@@ -4,6 +4,24 @@ This directory stores measured records and reduced reports. Raw measurements
 are immutable evidence; summaries and Markdown tables are reproducible derived
 artifacts.
 
+## v0.8 Frozen V100 Evidence
+
+The current release-facing reports are linked from
+[`docs/release_v08.md`](../docs/release_v08.md). The main v0.8 artifacts are:
+
+| Dataset | Purpose | Entry point |
+|:--|:--|:--|
+| `v08_search_current_v100_v2/` | Fresh current-code butterfly candidate search and screening | `raw.csv`, `summary.md` |
+| `v08_ntt_search_current_u32/`, `v08_ntt_search_current_u64/` | Width-specific NTT search and confirmation | `summary.md` |
+| `cross_operator_v08_wide_current/` | Broad current-build operator matrix | `comparison.md` |
+| `cross_operator_v08_external_baselines_current_v2/` | Matched external-baseline coverage | `comparison.md` |
+| `fft_three_way_v08_current/` | Clean v0.6/v0.8/cuFFT long-FFT protocol | `report.md`, `summary.csv` |
+| `ncu_cross_operator_v08/`, `ncu_fft_fp32_swizzle/` | Counter attribution and shared-layout evidence | reduced CSV/Markdown reports |
+
+These datasets are V100 evidence. A directory containing a scan or probe is
+not automatically a release result: use the linked report to check whether the
+rows are screening, confirmed, external, or placeholder evidence.
+
 ## Canonical V100 Evidence
 
 | Dataset | Purpose | Raw record | Reduced report |

@@ -3,11 +3,15 @@ message: "If you use this software or its experimental data, please cite it usin
 title: "cuButterfly: Hardware-Mapped Space-Time Parallelism for Butterfly Computations on GPUs"
 type: software
 authors:
-  - name: "TruNcat3"
+  - given-names: "Teng"
+    family-names: "Wang"
+    email: "wangt635@ustc.edu.cn"
+    affiliation: "High Efficient Intelligent Computing Lab, Suzhou Institute for Advanced Research of USTC, Suzhou, China"
 repository-code: "https://github.com/TruNcat3/cuButterfly"
 url: "https://github.com/TruNcat3/cuButterfly"
-version: 0.6.0
-date-released: 2026-08-11
+version: 0.8.0
+date-released: 2026-09-06
+abstract: "A CUDA research library and artifact for hardware-mapped space-time parallelism across regular layered butterfly computations."
 keywords:
   - butterfly computation
   - GPU

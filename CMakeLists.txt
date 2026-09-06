@@ -4,7 +4,7 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
     set(CMAKE_CUDA_ARCHITECTURES 70 CACHE STRING "CUDA architectures to compile for")
 endif()
 
-project(cuButterfly VERSION 0.7.0 LANGUAGES C CXX CUDA)
+project(cuButterfly VERSION 0.8.0 LANGUAGES C CXX CUDA)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -47,6 +47,12 @@ set(CUNTT_HYBRID_DATAFLOW_SPEC "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_hybrid_d
     "Generated HybridDataflow NTT design points")
 set(CUBUTTERFLY_RUNTIME_SELECTOR_SUMMARY "${CMAKE_CURRENT_SOURCE_DIR}/results/v100_scaling_full_summary.csv" CACHE FILEPATH
     "Measured scaling summary used to generate runtime selector latency anchors")
+set(CUBUTTERFLY_FFT14_DIRECT_SELECTOR_SUMMARY "${CMAKE_CURRENT_SOURCE_DIR}/results/fft14_dispatch_revalidation/raw.csv" CACHE FILEPATH
+    "Optional focused logN=14 dispatch CSV used to refresh direct-core latency anchors")
+set(CUBUTTERFLY_V08_NTT_SELECTOR_SUMMARY "${CMAKE_CURRENT_SOURCE_DIR}/results/v08_comprehensive_full/summary.csv" CACHE FILEPATH
+    "Measured v0.8 NTT matrix used to generate numeric/length selector anchors")
+set(CUBUTTERFLY_CONFIRMED_SELECTION_SPEC "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_v08_confirmed_selection.json" CACHE FILEPATH
+    "Exact V100 resident butterfly selections confirmed with repeated measurements")
 set(CUNTT_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CUNTT_DESIGN_SPEC}"
@@ -58,6 +64,9 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CUBUTTERFLY_FFT_DISPATCH_SPEC}"
     "${CUNTT_HYBRID_DATAFLOW_SPEC}"
     "${CUBUTTERFLY_RUNTIME_SELECTOR_SUMMARY}"
+    "${CUBUTTERFLY_FFT14_DIRECT_SELECTOR_SUMMARY}"
+    "${CUBUTTERFLY_V08_NTT_SELECTOR_SUMMARY}"
+    "${CUBUTTERFLY_CONFIRMED_SELECTION_SPEC}"
     "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_comprehensive_suite.json"
     "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_space.json"
     "${CMAKE_CURRENT_SOURCE_DIR}/config/v100_scaling_suite.json"
@@ -151,6 +160,9 @@ endif()
 execute_process(
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_runtime_selector.py"
             --summary "${CUBUTTERFLY_RUNTIME_SELECTOR_SUMMARY}"
+            --fft14-direct-summary "${CUBUTTERFLY_FFT14_DIRECT_SELECTOR_SUMMARY}"
+            --v08-ntt-summary "${CUBUTTERFLY_V08_NTT_SELECTOR_SUMMARY}"
+            --confirmed-selection "${CUBUTTERFLY_CONFIRMED_SELECTION_SPEC}"
             --header "${CUNTT_GENERATED_DIR}/generated_runtime_selector.hpp"
     RESULT_VARIABLE CUBUTTERFLY_RUNTIME_SELECTOR_RESULT
     ERROR_VARIABLE CUBUTTERFLY_RUNTIME_SELECTOR_ERROR)
@@ -176,6 +188,7 @@ add_library(cuntt STATIC
     src/butterfly.cu
     src/butterfly_reference.cpp
     src/general_kernels.cu
+    src/butterfly_performance_model.cpp
     src/mapping_selector.cpp
     src/ntt.cu
     src/reference.cpp)
@@ -252,6 +265,18 @@ add_executable(cubutterfly_bench apps/cubutterfly_bench.cpp)
 target_link_libraries(cubutterfly_bench PRIVATE cuntt)
 target_compile_options(cubutterfly_bench PRIVATE -Wall -Wextra -Wpedantic)
 
+if(CUBUTTERFLY_ENABLE_CUFFTDX)
+    add_executable(cufftdx_role_codelet_bench apps/cufftdx_role_codelet_bench.cpp)
+    target_link_libraries(cufftdx_role_codelet_bench PRIVATE cuntt)
+    target_include_directories(cufftdx_role_codelet_bench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_compile_options(cufftdx_role_codelet_bench PRIVATE -Wall -Wextra -Wpedantic)
+
+    add_executable(cufftdx_role_pipeline64_bench apps/cufftdx_role_pipeline64_bench.cpp)
+    target_link_libraries(cufftdx_role_pipeline64_bench PRIVATE cuntt)
+    target_include_directories(cufftdx_role_pipeline64_bench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_compile_options(cufftdx_role_pipeline64_bench PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 add_executable(cubutterfly_plan_bench apps/cubutterfly_plan_bench.cpp)
 target_link_libraries(cubutterfly_plan_bench PRIVATE cuntt)
 target_compile_options(cubutterfly_plan_bench PRIVATE -Wall -Wextra -Wpedantic)
@@ -278,7 +303,7 @@ if(CUBUTTERFLY_ENABLE_TURBOFFT)
 endif()
 
 add_executable(cuntt_hardware_microbench apps/hardware_microbench.cu)
-target_link_libraries(cuntt_hardware_microbench PRIVATE CUDA::cudart)
+target_link_libraries(cuntt_hardware_microbench PRIVATE CUDA::cudart stdc++)
 target_compile_options(cuntt_hardware_microbench PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-Wall,-Wextra>)
 
 if(CUBUTTERFLY_ENABLE_VKFFT)
@@ -351,6 +376,12 @@ if(BUILD_TESTING)
     add_test(NAME ntt_partition_space
              COMMAND "${Python3_EXECUTABLE}" -m pytest -q
                      "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ntt_partition_space.py")
+    add_test(NAME v08_comprehensive_analysis
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_v08_comprehensive.py")
+    add_test(NAME v08_selector_holdout_analysis
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_v08_selector_holdout.py")
     add_test(NAME stage_count_space
              COMMAND "${Python3_EXECUTABLE}" -m pytest -q
                      "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_stage_count_space.py")
@@ -528,6 +559,12 @@ install(TARGETS cuntt
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
 install(DIRECTORY include/cuntt include/cubutterfly DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(PROGRAMS
+    scripts/initialize_hardware_profile.py
+    scripts/check_hardware_profile.py
+    DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(FILES configs/hardware/gpu_profile_template.json
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/cuButterfly/hardware")
 
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cuButterflyConfig.cmake.in"

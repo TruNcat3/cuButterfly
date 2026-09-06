@@ -1,160 +1,89 @@
 # Documentation Index
 
-The documentation has two layers. The library layer starts from installation,
-plans, streams, workspace, errors, and API contracts. The research layer
-separates the architecture claim from kernel implementation and measurement
-evidence. Application users should begin with [Getting
-Started](getting_started.md); architecture and paper readers should begin with
-[Design Overview](design_overview.md).
+cuButterfly has two contracts: a usable CUDA library and a research artifact
+that explains how mappings were generated and measured. Choose a path below;
+the long experiment files remain available as source evidence rather than
+being repeated in the root README.
 
-## Library Documentation
+## Use The Library
 
-| Document | Question answered |
+| Need | Document |
 |:--|:--|
-| [Getting Started](getting_started.md) | How is the library configured, built, installed, tested, and called? |
-| [C Plan API](c_api.md) | How do handle, descriptor, plan, workspace, arbitrary shape, tuning cache, and logs compose? |
-| [General Shape Mapping](general_shapes.md) | How are exact, embedded, and rank-two workloads lowered to the same architecture mapping? |
-| [v0.6 Implementation Status](v0.6_implementation_status.md) | Which general-shape, API, selection, and boundary features are complete, and what remains outside the claim? |
-| [Programming Guide](programming_guide.md) | What are the plan, device, stream, layout, workspace, concurrency, and lifetime contracts? |
-| [API Reference](api_reference.md) | What does each public type, configuration field, and plan member mean? |
-| [Error Handling](error_handling.md) | Which exceptions are reported synchronously and where can asynchronous CUDA errors surface? |
-| [Capability and Compatibility Matrix](support_matrix.md) | Which operators, types, toolchains, optional components, and runtime features are supported? |
-| [Operator Catalog](operator_catalog.md) | What does each transform compute, which mappings does it reuse, and which operators come next? |
-| [Examples](examples.md) | Which minimal, build-checked example matches each integration style? |
-| [Device API](device_api.md) | What is the shortest device-pointer integration recipe? |
-| [Runtime Mapping Selector](runtime_selector.md) | How does a supported workload resolve to a calibrated mapping? |
-| [APPT Static Layout](appt_static_layout.md) | How does static output remap fixed-owner tail stores, and how is natural order restored online? |
+| Build and first run | [Getting Started](getting_started.md) |
+| C plan and device API | [C Plan API](c_api.md), [Device API](device_api.md) |
+| C++ types and fields | [API Reference](api_reference.md) |
+| Streams, workspaces, layouts, lifetime | [Programming Guide](programming_guide.md) |
+| Errors and unsupported combinations | [Error Handling](error_handling.md) |
+| Supported operators and numeric forms | [Capability Matrix](support_matrix.md), [Operator Catalog](operator_catalog.md) |
+| Examples | [Examples](examples.md) |
+| Runtime selection | [Runtime Mapping Selector](runtime_selector.md) |
+| Install-time GPU calibration | [Hardware Profile Initialization](hardware_profile_install.md) |
 
-## Reading Paths
+## Understand The Method
 
-**Application integration.** Follow [Getting Started](getting_started.md), run
-the [Examples](examples.md), then use the [Programming
-Guide](programming_guide.md) and [C++ API Reference](api_reference.md) as the
-contract. Check the [Capability and Compatibility Matrix](support_matrix.md)
-before depending on an optional backend, GPU, or execution feature.
-
-**Architecture and paper review.** Begin with the [Design
-Overview](design_overview.md) for the `D x S` iteration domain and its four
-space-time factors. Continue with [Hardware Mapping
-Methodology](hardware_mapping_methodology.md) for resource demand and selection,
-then [Complete Butterfly Design Space](butterfly_design_space.md) for the formal
-object boundaries. [Research Positioning](cubutterfly_positioning.md) and
-[V100 Research Status](research_status.md) delimit the contribution and claims.
-The [APPT Static Layout](appt_static_layout.md) case study then shows how an
-online representation change follows from ownership and sector behavior.
-
-**Kernel and generator development.** Read [FFT Design
-Space](fft_design_space.md), [FFT Pipeline
-Generator](fft_pipeline_generator.md), and [Processing-Unit Design
-Space](processing_unit_design_space.md). Together they show how a logical stage
-decomposition is lowered into physical execution groups, how online layout
-boundaries are generated, and where operator-specific codelets plug in.
-
-**Experimental reproduction.** Start with
-[Reproducibility](reproducibility.md), regenerate the derived tables, and use
-[Single-GPU Comprehensive Benchmark](comprehensive_benchmark.md) only when new
-timings are needed. The focused NCU reports explain mechanisms; the
-comprehensive and scaling reports define the paper-facing comparison protocol.
-
-## Primary Documents
-
-| Document | Question answered |
+| Question | Document |
 |:--|:--|
-| [Design Overview](design_overview.md) | Why are data and stage work each unfolded in space and time, and how does that map to a GPU? |
-| [Hardware Mapping Methodology](hardware_mapping_methodology.md) | How do the unfolding factors translate into GPU resource demand? |
-| [Complete Butterfly Design Space](butterfly_design_space.md) | How are graph, architecture, processing unit, layout, realization, selection, and hardware separated? |
-| [FFT Design Space](fft_design_space.md) | Which semantic, factorization, two-axis mapping, processing-unit, and hardware parameters are enumerable? |
-| [FFT Pipeline Generator](fft_pipeline_generator.md) | How are stage partitions, local units, boundaries, measured search, and runtime dispatch separated? |
-| [Candidate Implementations](implementation_candidates.md) | Which processing units and kernel forms are implemented or planned? |
-| [Getting Started](getting_started.md) | How is the project built and used? |
-| [Programming Guide](programming_guide.md) | How do plans, layouts, streams, workspaces, devices, concurrency, and determinism compose? |
-| [C Plan API](c_api.md) | What is the professional C integration and selection contract? |
-| [General Shape Mapping](general_shapes.md) | How do non-power-of-two and rank-two lowerings preserve operator semantics? |
-| [C++ API Reference](api_reference.md) | What is the contract of each installed public API type and member? |
-| [Error Handling](error_handling.md) | How are validation, backend, CUDA launch, and asynchronous failures reported? |
-| [Capability and Compatibility Matrix](support_matrix.md) | Which public semantics, optional builds, and runtime integrations are supported? |
-| [Operator Catalog](operator_catalog.md) | Which local pair updates are implemented and how do they share the architecture mapping? |
-| [Examples](examples.md) | Which build-checked program demonstrates each primary API path? |
-| [Device API](device_api.md) | How are plans, caller-owned CUDA memory, streams, and workspaces composed in an application? |
-| [Runtime Mapping Selector](runtime_selector.md) | How does a semantic workload resolve to a measured V100 mapping and an auditable decision? |
-| [Experimental Results](experiments.md) | Which experiment tests each architecture claim, what has been measured, and where are the gaps? |
-| [Single-GPU Comprehensive Benchmark](comprehensive_benchmark.md) | How are lengths, precision, semantics, implementations, and external baselines compared together? |
-| [V100 Comprehensive Results](comprehensive_v100_results.md) | What does the controlled full-suite comparison currently establish? |
-| [V100 Length/Batch Scaling](v100_scaling_results.md) | How do saturation and the best mapping change when length and batch are swept independently? |
-| [V100 Mapping Selector](v100_mapping_selector.md) | How accurately can the measured V100 mappings be selected with a held-out shape? |
-| [V100 Counter Attribution](v100_ncu_attribution.md) | Which hardware services explain the observed saturation and mapping crossovers? |
-| [Structured 2x2 V100 Results](structured_2x2_v100_results.md) | Does a parameterized dense pair unit preserve the mapping methodology across precision and length? |
-| [V100 External Baselines](v100_external_baselines.md) | What do matching-protocol Dao FHT and GPU-NTT comparisons establish? |
-| [V100 Library/Base/Search Comparison](v100_three_way_comparison.md) | How much comes from search, and where does the selected point stand against specialized libraries? |
-| [V100 v0.6/v0.7 Comprehensive Comparison](v06_v07_comprehensive_comparison.md) | How do the mature and streaming NTT paths compare, and what is the current library boundary? |
-| [v0.6/v0.7 Crossover Attribution](../results/v06_v07_crossover/analysis.md) | Are version crossovers inherent, or do they expose missing candidate-space inclusion and CTA-wave boundaries? |
-| [Resident M/G Lowering versus v0.6](resident_v06_comparison.md) | Which v0.7 costs come from logical-boundary materialization, and which remain in physical-core coverage? |
-| [v0.7 Global-Load Sector Root Cause](v07_sector_root_cause.md) | Why can identical external dataflow generate more cache-request sectors, and what is actually pipelined? |
-| [V100 Research Status](research_status.md) | Which claims are closed, what are the current performance boundaries, and what remains? |
-| [General-Shape V100 Selection Results](general_shape_results.md) | How much do composition and physical-core selection recover, and which boundaries remain? |
-| [v0.6 Implementation Status](v0.6_implementation_status.md) | What is implemented, validated, selected by default, retained only as a candidate, or deferred? |
-| [v0.3.0 Mapping-Selection Milestone](next_phase_v0.3.md) | Which falsifiable goal, execution order, and definition of done shaped this release? |
-| [Numeric-Regime Mapping Study](next_phase_numeric_regimes.md) | How are precision, arithmetic, length, batch, and core choice related to resource cliffs, and what did the first quick screen establish? |
-| [Reproducibility](reproducibility.md) | How are sweeps, external baselines, and profiler data reproduced? |
-| [Research Positioning](cubutterfly_positioning.md) | What is the intended contribution relative to prior work? |
+| What is the architecture claim? | [Design Overview](design_overview.md) |
+| How do both dimensions unfold in space and time? | [Hardware Mapping Methodology](hardware_mapping_methodology.md) |
+| How are graph, mapping, core, layout, and hardware separated? | [Complete Butterfly Design Space](butterfly_design_space.md) |
+| How are logical segments lowered to physical groups? | [v0.8 Nested Physical Space](v0.8_nested_physical_space.md) |
+| How are arbitrary physical group counts ranked? | [Performance Model](performance_model.md) |
+| Which local arithmetic cores are available? | [Processing-Unit Design Space](processing_unit_design_space.md), [Candidate Implementations](implementation_candidates.md) |
+| How are FFT stages generated and dispatched? | [FFT Design Space](fft_design_space.md), [FFT Pipeline Generator](fft_pipeline_generator.md) |
+| What must an implementation preserve? | [Architecture Guardrails](architecture_guardrails.md) |
+| How does APPT-style online layout fit the architecture? | [APPT Static Layout](appt_static_layout.md) |
 
-Repository maintenance and research priorities are documented in
-[`CONTRIBUTING.md`](../CONTRIBUTING.md) and [`ROADMAP.md`](../ROADMAP.md).
+## Reproduce The Evidence
 
-## Architecture And Mapping
+| Evidence | Document or entry point |
+|:--|:--|
+| v0.8 frozen release summary | [v0.8 Release Overview](release_v08.md) |
+| Research status and limitations | [Research Status](research_status.md) |
+| All-operator protocol | [Comprehensive Butterfly Comparison](comprehensive_butterfly_comparison.md) |
+| v0.6/v0.8 and library reconciliation | [Library Reconciliation](v08_v06_cufft_reconciliation.md) |
+| V100 library/base/search matrix | [V100 Three-Way Comparison](v100_three_way_comparison.md) |
+| V100 external baselines | [V100 External Baselines](v100_external_baselines.md) |
+| Length and batch scaling | [V100 Scaling](v100_scaling_results.md) |
+| NCU methodology | [NCU Profiling](ncu_profiling.md) |
+| Reproduction commands and evidence labels | [Reproducibility](reproducibility.md) |
+| Hardware capability and model generation | [Hardware Profile Initialization](hardware_profile_install.md) |
+| Raw and reduced artifacts | [`../results/README.md`](../results/README.md) |
 
-- [Hybrid Dataflow NTT](hybrid_dataflow_ntt.md): strict on-chip graph streaming,
-  four unfolding factors, generated points, and the StagePipeline distinction.
-- [Hierarchical Dataflow NTT](hierarchical_dataflow_ntt.md): one-launch,
-  multi-CTA graph execution with one online-reordered inter-layer boundary.
-- [Homogeneous Two-Level Subgraph Template](homogeneous_subgraph_template.md):
-  generated `K0+K1` roles, per-role data-time traversal, warp-scheduler
-  boundary, and the V100 `10+10` control experiment.
+Run the broad timing matrix with:
 
-- [Hybrid2D GPU Mapping](hybrid2d_architecture.md): Cooley-Tukey/NTT
-  factorization and current CUDA realization.
-- [Processing-Unit Design Space](processing_unit_design_space.md): local
-  arithmetic, coefficient, radix, and exchange choices.
-- [Generated Processing Units](generated_design_points.md): build-time
-  specialization for register DFT8, CTA DFT8, WMMA, register FWHT, and
-  register-resident Structured 2x2.
-- [Processing-Core Integration](core_integration_strategy.md): boundary between
-  an imported codelet and a complete external library.
-- [Feature Coverage](cubutterfly_feature_coverage.md): implemented semantic and
-  backend matrix.
+```bash
+python3 scripts/run_cross_operator_comparison.py --help
+```
 
-## Measurement Reports
+Run the privileged counter collection only on a machine with Nsight Compute:
 
-- [V100 Numeric-Regime Mapping Study](next_phase_numeric_regimes.md)
-- [V100 Numeric Boundary NCU Attribution](../results/v100_numeric_boundary_ncu_analysis.md)
-- [V100 Numeric Piecewise Selector](../results/v100_numeric_piecewise_report.md)
-- [V100 Library/Base/Search Comparison](v100_three_way_comparison.md)
-- [V100 Comprehensive Results](comprehensive_v100_results.md)
-- [V100 Length/Batch Scaling](v100_scaling_results.md)
-- [V100 Mapping Selector](v100_mapping_selector.md)
-- [V100 Counter Attribution](v100_ncu_attribution.md)
-- [V100 Matching-Protocol External Baselines](v100_external_baselines.md)
-- [V100 Initial NTT Results](v100_initial_results.md)
-- [V100 NTT Parameter Matrix](v100_matrix_results.md)
-- [GPU-NTT Gap Analysis](gpu_ntt_gap_analysis.md)
-- [Cross-Operator Results](cubutterfly_cross_operator_results.md)
-- [Structured 2x2 V100 Results](structured_2x2_v100_results.md)
-- [Structured 2x2 Counter Attribution](../results/ncu_structured_2x2_attribution.md)
-- [Large-Length Results](cubutterfly_large_results.md)
-- [CTA DFT8 Space-Time Mapping](fft_cta_space_time_results.md)
-- [FFT Library Comparison](fft_library_comparison.md)
-- [Nsight Compute Profiling](ncu_profiling.md)
-- [Cross-GPU Experiment Matrix](cross_gpu_experiment.md)
+```bash
+sudo -E ./scripts/profile_cross_operator_v08_ncu.sh
+```
+
+## Research Positioning
+
+[Research Positioning](cubutterfly_positioning.md) explains the distinction
+between this architecture mapping claim and operator-specific cores such as
+cuFFTDx, TurboFFT, Dao FHT, and GPU-NTT. The project does not claim that the
+arithmetic unit itself is novel in every case; its contribution is the
+parameterized mapping, residence, dataflow, lowering, and measured selection
+framework around regular layered butterfly graphs.
+
+## Release And Maintenance
+
+- [Changelog](../CHANGELOG.md) records versioned implementation and evidence changes.
+- [Roadmap](../ROADMAP.md) separates frozen v0.8 work from future cross-GPU validation.
+- [Contributing](../CONTRIBUTING.md) defines correctness, benchmark, and provenance requirements.
+- [Citation](../CITATION.cff) and [License](../LICENSE) contain the redistribution metadata.
 
 ## Evidence Labels
 
-Every performance statement should be read under one of these labels:
-
 | Label | Meaning |
 |:--|:--|
-| measured | Produced on the stated machine using a checked-in command and raw record |
-| derived | Computed from measured counters or timing using a stated equation |
-| external | Same-machine result from a pinned third-party implementation |
-| placeholder | Capture schema only; no performance value is claimed |
+| `measured` | Direct result from a checked-in command on the stated hardware. |
+| `derived` | Computed from measured values with a documented reduction. |
+| `external` | Third-party result under a matched semantic and timing protocol. |
+| `placeholder` | Future hardware or schema entry without a performance claim. |
 
-V100 is the only complete measured hardware profile in this revision.
+V100 is the only fully measured GPU in the v0.8 release boundary.

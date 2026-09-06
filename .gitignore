@@ -5,6 +5,9 @@
 /.cache/
 **/__pycache__/
 /results/v100_numeric_regime_suite.json
+/results/.gpu.lock
+/results/.locks/
+/results/local_hardware_profile/
 *.py[cod]
 *.o
 *.a

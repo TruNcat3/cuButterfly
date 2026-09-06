@@ -3,6 +3,119 @@
 This roadmap separates implementation goals from evidence required for the
 research claim. Ordering may change after profiling or access to new hardware.
 
+## Current Release Freeze: v0.8
+
+The v0.8 nested-physical-space architecture is temporarily frozen as the
+single-V100 research baseline. Its confirmed selection closure, public API,
+processing-unit lowering contract, cross-operator manifests, and reproducible
+reports are maintained as release evidence. New work should extend numeric or
+batch coverage without silently changing the frozen comparison protocol. Any
+new mapping must state whether it is a compatible v0.6 candidate, a native
+resident realization, or an experimental processing-unit lowering.
+
+## v0.8.0 Status: Nested Physical Space
+
+Status: native implementation and comprehensive V100 envelope complete.
+Logical four-axis mapping, execution grouping, CUDA ownership, and
+physical core are separate descriptors. The v0.6 Hybrid2D radix-4 family is a
+strict GridTiled compatibility subset and the generated cooperative 10+10 core
+is available as a native transform-ready resident pipeline with independent
+producer/consumer codelets. Plan/CSV wave diagnostics, generator v3, the
+384-sample three-generation envelope, regression gate, NCU command, docs, and
+tests are checked in. The subsequent five-trial matrix covers 60 semantic
+points and 1,380 candidate executions. DD GridTiled wins every uint32
+`logN=20` batch from 1 through 160; the v0.6-compatible GridTiled mapping wins
+all other covered width/length regimes. This two-branch rule matches the
+measured oracle at 60/60 points and is generated into the runtime selector.
+
+Matched NCU attribution is complete: CooperativePhased is arithmetic- and
+sector-equivalent to GridTiled, but exposes fewer active warps and lower IPC.
+The dual 128-thread subgraph control validates inter-subgraph latency hiding
+with a 1.466x gain at equal CTA residency, but its reused shared-memory codelet
+still trails the full-width phased and Grid controls. The next gate is
+held-out-batch/modulus validation of the deployed selector and a uint64 DD
+codelet study. CUDA Graph replay remains a separate repeated-call optimization
+and must not merge phase-specialized kernels. Generation of partitions whose
+dependency-closed publication unit is smaller than a whole transform follows.
+Cross-operator ownership lowering follows the NTT contract; cross-GPU
+calibration remains deferred.
+
+The explicit `producer_ahead` ResidentQueue startup gate is now available for
+controlled experiments. Its V100 screen degrades as the gate grows, confirming
+that delaying resident consumers is insufficient; the next implementation gate
+is per-dependency-closure publication with online reorder and work-conserving
+consumer scheduling.
+
+An experimental bounded FFT adapter now permits `HybridDataflow` to own a
+single block-resident FP32 `logN=3..10` cuFFTDx block tile (`stage_space` and
+`flow_tile_log_n` equal to the local transform, one role, `data_time=1`, linear
+layout, in-place state). This
+proves the processing-unit/ownership boundary without claiming multi-role
+overlap. The next implementation gate is embedding the cuFFTDx execute into
+multiple packet roles so block-resident subgraphs can actually pipeline; see
+[`Architecture Guardrails`](docs/architecture_guardrails.md).
+
+The first role-service screen is reproducible through
+`scripts/benchmark_three_level_role_weights.sh`. Its V100 data shows a
+batch-dependent crossover (`6:6:8` for small batches, `4:4:12` for larger
+batches). The matched uint64 confirmation selects `4:4:12` for all tested
+batches, so the eventual policy must key on numeric width as well as batch;
+repeated trials across nearby partitions and physical cores are still required
+before feeding this policy into automatic selection.
+
+The first matched uint64 partition screen now covers all six `6/7/8` stage
+orders at batch 1/4/16/64. `8+6+6` wins every batch with stage-proportional
+weights, while `6+6+8` is the nearest alternative. This establishes the
+search order for the next gate: choose the stage partition first, then tune
+role weights and physical-core parameters within that partition. The resident
+launcher also opts into V100's larger dynamic shared-memory budget for valid
+64-bit 8-stage points.
+
+The first within-partition uint64 role screen for `8+6+6` is also complete:
+`8:6:6` wins at batch 1/64 and `10:5:5` wins at batch 4/16. This confirms that
+partition and role service must be calibrated jointly; neither stage order nor
+role weights can be treated as a standalone global default.
+
+The primary model is now a generic physical-chain architecture equation in
+`scripts/three_level_architecture_model.py` (legacy filename retained). It
+separates logical segment count `M`, fused physical group count `G`, worker
+template, CTA allocation, and prefix/suffix topology. Existing three-level
+data identifies one `three-level-row-tile` realization; it is not a fixed
+global segmentation. `scripts/rank_physical_chain_architecture_candidates.py`
+enumerates arbitrary `G` and emits a per-`G` summary so no group count vanishes
+from a global Top-K. See [`docs/performance_model.md`](docs/performance_model.md).
+
+The next model layer is also implemented for the V100 uint64 three-level core.
+An isolated diagnostic template measures wait, codelet, and boundary service
+per role. The generated service table is indexed by realization, residency,
+stage depth, prefix/suffix topology, load regime, and role CTA concurrency; interpolation is bounded by actual
+measurements. It restores the measured batch-48 ordering between `6+6+8` and
+`8+6+6`. Readiness queueing outside those bounds remains an explicit
+measurement-required item rather than a fitted partition feature.
+
+The first generic-warp evidence gate across `G=2/3/4` is complete. A generated
+warp-packed radix-4 core maps data-space unfolding to `D=1/2/4/8` independent
+packets per worker and restores full lane use for stage-4/6 packets. Matched
+batch-48 G3/G4 speedups are 1.244x/2.014x at uint64 and 1.374x/2.737x at
+uint32. Width-specific service tables now cover batch 1/4/16/48, three G3
+orders, scalar/packed controls, and admit 1/3/1 exact candidates for G=2/3/4.
+The next gate is readiness/boundary co-design: packed large-batch G3/G4 remain
+limited by downstream wait and their additional materialized boundaries.
+
+The first model-guided follow-up is generated as a structured manifest. It
+keeps the union of each measured batch's model top five and measured winner,
+then evaluates six retained candidates at thirteen dense batch anchors. The
+runner supports verification, repeated trials, and resumable CSV collection;
+the result feeds directly back into the same grouped-holdout model.
+
+The historical regression follow-up is complete: all 234 executions pass verification. Dense
+batch anchors reduce nonlinear leave-one-batch-out geometric-mean regret from
+1.155x to 1.032x and raise top-5 recall from 75.0% to 92.3%. On interpolation-
+only holdouts, top-5 recall is 100% with 1.018x geometric-mean top-1 regret;
+therefore model-guided top-5 measurement is admitted inside the calibrated
+interval, while direct top-1 runtime dispatch and endpoint extrapolation still
+abstain. The executable policy is `scripts/select_three_level_candidates.py`.
+
 ## v0.6.0 Status: General Shapes And Professional Plan Surface
 
 Status: complete on the single-V100 release target. General-shape semantics,
