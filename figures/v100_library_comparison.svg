@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+<title id="title">V100 selected-matrix performance versus specialist libraries</title>
+<desc id="desc">Geometric mean throughput ratio for searched cuButterfly or cuNTT relative to cuFFT, Dao FHT, and GPU-NTT. A value of one is parity.</desc>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#17202a} .small{font-size:14px}.label{font-size:16px;font-weight:600} .value{font-size:15px;font-weight:700}</style>
+<text x="90" y="32" font-size="22" font-weight="700">V100 selected-matrix throughput vs specialist libraries</text>
+<text x="90" y="55" class="small">Geometric mean; 1.0 = external library parity</text>
+<line x1="90" y1="428.0" x2="922" y2="428.0" stroke="#d8dee8" stroke-width="1"/>
+<text x="76" y="433.0" text-anchor="end" class="small">0.0</text>
+<line x1="90" y1="306.6" x2="922" y2="306.6" stroke="#d8dee8" stroke-width="1"/>
+<text x="76" y="311.6" text-anchor="end" class="small">0.5</text>
+<line x1="90" y1="185.2" x2="922" y2="185.2" stroke="#b45309" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="76" y="190.2" text-anchor="end" class="small">1.0</text>
+<line x1="90" y1="76" x2="90" y2="428" stroke="#596579"/>
+<line x1="90" y1="428" x2="922" y2="428" stroke="#596579"/>
+<text x="22" y="252.0" transform="rotate(-90 22 252.0)" text-anchor="middle" class="small">Throughput ratio</text>
+<rect x="135.7" y="185.2" width="84" height="242.8" rx="3" fill="#9ca3af"/>
+<text x="177.7" y="177.2" text-anchor="middle" class="value">1.000x</text>
+<rect x="237.7" y="181.7" width="84" height="246.3" rx="3" fill="#2563eb"/>
+<text x="279.7" y="173.7" text-anchor="middle" class="value">1.015x</text>
+<text x="228.7" y="456" text-anchor="middle" class="label">FFT</text>
+<text x="228.7" y="477" text-anchor="middle" class="small">vs cuFFT</text>
+<rect x="413.0" y="185.2" width="84" height="242.8" rx="3" fill="#9ca3af"/>
+<text x="455.0" y="177.2" text-anchor="middle" class="value">1.000x</text>
+<rect x="515.0" y="172.1" width="84" height="255.9" rx="3" fill="#2563eb"/>
+<text x="557.0" y="164.1" text-anchor="middle" class="value">1.054x</text>
+<text x="506.0" y="456" text-anchor="middle" class="label">FWHT</text>
+<text x="506.0" y="477" text-anchor="middle" class="small">vs Dao FHT</text>
+<rect x="690.3" y="185.2" width="84" height="242.8" rx="3" fill="#9ca3af"/>
+<text x="732.3" y="177.2" text-anchor="middle" class="value">1.000x</text>
+<rect x="792.3" y="109.2" width="84" height="318.8" rx="3" fill="#2563eb"/>
+<text x="834.3" y="101.2" text-anchor="middle" class="value">1.313x</text>
+<text x="783.3" y="456" text-anchor="middle" class="label">NTT</text>
+<text x="783.3" y="477" text-anchor="middle" class="small">vs GPU-NTT</text>
+<rect x="660" y="490" width="14" height="14" fill="#2563eb"/>
+<text x="682" y="502" class="small">searched cuButterfly/cuNTT</text>
+<rect x="844" y="490" width="14" height="14" fill="#9ca3af"/>
+<text x="866" y="502" class="small">library</text>
+</svg>

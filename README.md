@@ -15,6 +15,24 @@ hardware-appropriate processing unit.
 > is suitable for reproducing the documented experiments and extending the
 > mapping space. Cross-GPU calibration remains future work.
 
+## Read This Repository In Order
+
+1. **Orient yourself:** read this page through the two figures below and the
+   [v0.8 release overview](docs/release_v08.md).
+2. **Use the library:** follow [Getting Started](docs/getting_started.md),
+   then the [Programming Guide](docs/programming_guide.md) and [C Plan API](docs/c_api.md).
+3. **Understand the method:** read [Design Overview](docs/design_overview.md),
+   [Hardware Mapping Methodology](docs/hardware_mapping_methodology.md), and
+   [v0.8 Nested Physical Space](docs/v0.8_nested_physical_space.md).
+4. **Understand the design space:** read [Architecture Guardrails](docs/architecture_guardrails.md),
+   [Processing-Unit Design Space](docs/processing_unit_design_space.md), and
+   [Runtime Selector](docs/runtime_selector.md).
+5. **Reproduce and audit:** use [Hardware Profile Initialization](docs/hardware_profile_install.md),
+   [Reproducibility](docs/reproducibility.md), and the [comparison evidence](docs/v100_three_way_comparison.md).
+
+The complete map, including older experiment notes and generated artifacts, is
+maintained in the [documentation index](docs/README.md).
+
 ## Core Idea
 
 The mapping layer and the arithmetic core are deliberately separate:
@@ -47,6 +65,16 @@ The conceptual figure is available as
 editable Graphviz source in
 [`figures/cubutterfly_concept.dot`](figures/cubutterfly_concept.dot).
 
+<p align="center">
+  <img src="figures/cubutterfly_concept.svg" alt="cuButterfly architecture mapping from a layered butterfly graph to hardware-selected GPU realization" width="100%">
+</p>
+
+**How to read the architecture figure:** the graph dimensions are unfolded
+independently; residence, transport, ownership, and boundaries are selected
+after the unfolding; the arithmetic core is replaceable; measurement feeds
+back into plan selection. This is the architecture claim, not a claim that
+every local arithmetic unit is newly invented here.
+
 ## What Is Frozen In v0.8
 
 | Area | Current evidence boundary |
@@ -70,6 +98,28 @@ cuButterfly has lower kernel time than cuFFT.
 These are matched V100 measurements, not universal claims. The complete
 protocol, external-baseline coverage, raw CSV paths, and limitations are in
 the [v0.8 release overview](docs/release_v08.md).
+
+### External-library summary
+
+The following compact view summarizes the selected V100 matrix in
+[`results/v100_three_way_comparison.md`](results/v100_three_way_comparison.md).
+Each gray bar is the matched specialist-library baseline; each blue bar is the
+searched cuButterfly/cuNTT throughput ratio. A value of `1.0x` means parity.
+
+<p align="center">
+  <img src="figures/v100_library_comparison.svg" alt="V100 selected matrix throughput ratios versus cuFFT, Dao FHT, and GPU-NTT" width="100%">
+</p>
+
+This is a representative matched matrix, not an all-shapes guarantee. FFT and
+FWHT have four and three shapes respectively; NTT uses three archived
+matching-protocol rows. Saturated long-batch FFT gaps and unsupported external
+operator baselines remain explicitly documented.
+
+The figure is reproducible with:
+
+```bash
+python3 scripts/generate_readme_performance_figure.py
+```
 
 ## Quick Start
 
@@ -113,7 +163,8 @@ V100 table to another GPU.
 
 ## Documentation
 
-The [documentation index](docs/README.md) separates four reading paths:
+The [documentation index](docs/README.md) preserves the reading order above
+and separates the detailed material into four paths:
 
 1. **Use the library:** build, plans, streams, layouts, workspaces, errors, and examples.
 2. **Understand the method:** design overview, hardware mapping, physical-chain model, and processing-unit lowering.
