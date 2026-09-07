@@ -13,8 +13,9 @@ Read the repository in this order when encountering it for the first time:
    terminology, evidence labels, and V100 limitations.
 2. [Getting Started](getting_started.md) and the [Programming Guide](programming_guide.md)
    explain the user-facing CUDA plan and workspace workflow.
-3. [Design Overview](design_overview.md) and [Hardware Mapping Methodology](hardware_mapping_methodology.md)
-   introduce the two-dimensional space/time unfolding.
+3. [Design Overview](design_overview.md) explains the Roofline-to-hybrid-dataflow
+   design argument, and [Hardware Mapping Methodology](hardware_mapping_methodology.md)
+   formalizes the two-dimensional space/time unfolding.
 4. [v0.8 Nested Physical Space](v0.8_nested_physical_space.md),
    [Architecture Guardrails](architecture_guardrails.md), and
    [Processing-Unit Design Space](processing_unit_design_space.md) define the

@@ -75,6 +75,20 @@ after the unfolding; the arithmetic core is replaceable; measurement feeds
 back into plan selection. This is the architecture claim, not a claim that
 every local arithmetic unit is newly invented here.
 
+### Why This Organization
+
+The design follows a hardware argument rather than a fixed tile recipe. A
+Roofline view exposes the first limit, dependence edges cap pure data-space
+expansion, and the live state plus handoff traffic cap pure stage-space
+expansion. cuButterfly therefore combines stage/data **space** and **time**:
+independent work is replicated only where the target GPU can feed it, while
+dependency-closed subgraphs reuse bounded register/shared state and change
+layout at required boundaries. A small hardware calibration then tests the
+predicted limiting service and selects the legal mapping and processing unit.
+
+The full derivation, including why existing specialized designs do not expose
+one common mapping vocabulary, is in [Why The Mapping Is Hybrid](docs/design_overview.md).
+
 ## What Is Frozen In v0.8
 
 | Area | Current evidence boundary |

@@ -20,6 +20,20 @@ organization of the dependency graph; a radix codelet, modular reduction,
 cuFFTDx block, register FWHT, or register Structured hierarchy remains a replaceable physical
 processing unit.
 
+This separation is also the portability model. A plan is selected for a
+semantic workload and hardware target, not for the operator name alone:
+
+```text
+(GPU, operator, precision, length, batch, direction, layout)
+    -> architecture mapping + processing-unit choice + lowering contract
+```
+
+Different lengths of the same operator may therefore use different stage
+partitions, data-time reuse, residence, and arithmetic cores. Different
+operators at the same length may use different cores as well. Cross-GPU
+deployment requires a new capability/calibration table; a point validated on
+V100 is not silently reused as an optimum on another GPU.
+
 The separation is represented by seven objects:
 
 ```text
@@ -35,6 +49,126 @@ H: target hardware capacities and service rates
 A complete external library is a baseline, not a processing unit, unless its
 local codelet can be isolated from its scheduler and measured under the same
 contract.
+
+## 1.1 Why The Mapping Is Hybrid
+
+The four-factor mapping is not a collection of convenient CUDA knobs. It
+follows from a bottleneck argument that applies to regular butterfly graphs,
+including the NTT formulation in the [APPT/Hermes work](appt_static_layout.md).
+
+### Step 1: Start With The Roofline Question
+
+For one workload, let `W` be executed arithmetic work, `Q` the bytes moved
+through the limiting memory level, and `I = W/Q` the arithmetic intensity. A
+first-order upper bound is:
+
+```text
+attainable throughput <= min(compute_peak, memory_bandwidth * I)
+```
+
+Butterflies have regular arithmetic and partner exchange, but their arithmetic
+per value is bounded. Once the working set or intermediate boundaries leave the
+register/shared-memory hierarchy, extra arithmetic units do not compensate for
+the additional movement. The optimization question is therefore not simply
+“how many threads can be launched?” It is “which dependency edges can be
+served at which memory and synchronization level while keeping the arithmetic
+units fed?”
+
+### Step 2: Why Pure Data-Space Expansion Is Not Sufficient
+
+Expanding `Ud` exposes more independent butterflies and is the natural first
+GPU mapping. It stops scaling when the next stage needs partner values that are
+owned by a different lane, warp, or CTA. The implementation must then pay for
+shuffle/shared transport, a barrier, or a global boundary. Increasing `Ud`
+also widens boundary transactions and the live state needed to keep all those
+groups in flight. Thus dependence does not make the whole transform serial;
+it limits how much *independent data work* can be expanded before transport and
+boundary service, rather than arithmetic, becomes the roofline limiter.
+
+### Step 3: Why Pure Stage-Space Expansion Is Not Sufficient
+
+Expanding `Us` keeps more dependent stages resident and can reduce stage-time
+folds. However, every resident stage needs state, coefficient/twiddle supply,
+and a legal handoff path. Beyond a device-dependent point, the extra stage
+replication increases register/shared-memory footprint, lowers CTA residency,
+and adds inter-stage synchronization or bank pressure. If stage groups are
+split across ownership domains, the saved stage fold is replaced by an
+intermediate read/write. Pure stage expansion therefore trades fewer logical
+folds for a larger working set and more transport; it is not a free increase in
+pipeline throughput.
+
+### Step 4: The Required Compromise Is Two-Dimensional And Space-Time
+
+The useful design must expose independent data work while reusing a bounded
+stage service, and expose stage work while reusing a bounded data tile:
+
+```text
+data:  D = Ud * Td       stage:  S = Us * Ts
+         replicate/reuse          replicate/reuse
+```
+
+`Ud` and `Us` determine what is concurrent. `Td` and `Ts` determine what is
+reused by the same physical workers. A mixed-dataflow realization assigns
+dependency-closed subgraphs to roles, keeps the legal portion resident in
+registers/shared memory, transports only the required edge values, and uses
+online reordering at a boundary when the consumer's layout differs. This
+balances four services that the roofline alone cannot collapse into one number:
+arithmetic issue, data movement, dependency transport, and live-state
+capacity.
+
+```mermaid
+flowchart LR
+    R[Roofline: compute or memory service limits throughput]
+    D[Pure data expansion\nUd grows\npartner transport dominates]
+    S[Pure stage expansion\nUs grows\nstate and synchronization dominate]
+    B[Bounded live state\nregister/shared residence]
+    H[Hybrid dataflow\nUd,Td + Us,Ts]
+    V[Measure counters\nfit hardware profile\nselect legal point]
+    R --> D
+    R --> S
+    D --> H
+    S --> H
+    H --> B
+    B --> V
+    V -. update mapping .-> H
+```
+
+This is also why the smallest conceptual unit is not a fixed radix kernel. It
+is a mapping tuple such as
+`(Us, Ts, Ud, Td, layout, residence, pipeline, processing_unit)`. A better
+radix, FFT codelet, or modular reducer can be substituted after the graph has
+been mapped; the mapping remains the object being studied.
+
+### Step 5: What The Prior-Work Review Adds
+
+The review behind this project found strong local solutions, but not one
+common, exposed analysis that connects all of these choices for every regular
+butterfly operator. cuFFT, cuFFTDx, TurboFFT, Dao FHT, GPU-NTT, and related
+systems provide valuable specialized kernels or plans. FFTW/SPIRAL and
+architecture-modeling tools provide complementary generation or cost-model
+ideas. Their optimization boundaries differ: a local codelet, an operator
+plan, an affine schedule, or a hardware model. The gap motivating cuButterfly
+is a shared mapping vocabulary that makes dependence, residence, handoff,
+layout, and arithmetic-core choice comparable across FFT, NTT, FWHT, and zeta
+graphs. This is a scope statement about the project's review, not a claim that
+those systems lack internal scheduling analysis.
+
+### Step 6: Analysis Must Close The Loop
+
+The reasoning is used operationally rather than left as motivation:
+
+1. Roofline estimates identify whether a candidate is likely compute-, memory-,
+   transport-, or state-limited.
+2. Legality checks reject mappings that exceed registers, shared memory, CTA
+   shape, synchronization, or numeric constraints.
+3. A small hardware-specific calibration set measures the predicted services
+   (for example bank conflicts, global sectors, occupancy, and barrier stalls).
+4. The selector chooses among the remaining mappings and processing units for
+   the requested operator, precision, length, batch, and layout.
+
+Consequently, a V100 result is evidence for a V100 mapping point, not a
+universal tile recipe. The same argument can be re-evaluated on another GPU by
+rebuilding its capability and service-rate profile.
 
 ## 2. Two Logical Dimensions, Four Unfolding Factors
 
@@ -147,6 +281,27 @@ groups. Several logical groups may be fused into one CTA-resident execution
 group when capacity and dependency scope permit. A global pass is introduced
 only when the next group needs a different ownership domain or cannot fit in
 the current resident state.
+
+## 4.1 Work Ownership Is A Separate Physical Axis
+
+The four unfolding factors describe how logical work is exposed and reused;
+they do not uniquely determine CUDA ownership. v0.8 therefore adds a physical
+work-distribution axis after logical subgraphs have been lowered into execution
+groups. `GridTiled` assigns dependency-closed tiles to ordinary CTAs,
+`TransformResident` assigns a complete transform to one CTA, and
+`ResidentQueue` lets a fixed cooperative CTA pool traverse ready subgraphs.
+The native `10+10` realization publishes readiness at whole-transform scope,
+because every second-group local NTT consumes rows produced across the complete
+first group, while four-row consumer tasks remain independently assigned.
+
+This axis is also independent from the processing unit. The same
+`hybrid2d-radix4` codelet can be owned by GridTiled CTAs or by a ResidentQueue.
+Within one ResidentQueue kernel, producer and consumer roles independently
+select `hybrid2d-radix4` or `dataflow-radix4`; this exposed that the consumer
+codelet, rather than the boundary layout, caused the first native performance
+gap. That separation makes v0.6 Hybrid2D a strict v0.8 candidate instead of a
+competing version-specific backend. The complete contract and current legality
+limits are in [v0.8 Nested Physical Space](v0.8_nested_physical_space.md).
 
 ## 5. Online Reordering
 
