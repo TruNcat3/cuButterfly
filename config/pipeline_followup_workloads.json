@@ -1,0 +1,17 @@
+{
+  "schema": "cubutterfly-install-search-v1",
+  "scope": "multi-group scheduling integration and large FFT follow-up; not the full acceptance matrix",
+  "workloads": [
+    {"operator":"fft","precision":"fp64","logN":24,"batch":1,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fft","precision":"fp32","logN":24,"batch":1,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fft","precision":"fp32","logN":22,"batch":4,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fft","precision":"fp32","logN":18,"batch":16,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fft","precision":"fp64","logN":18,"batch":4,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fft","precision":"fp32","logN":12,"batch":64,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fwht","precision":"fp32","logN":12,"batch":64,"placement":"out-of-place","normalization":"none"},
+    {"operator":"structured-2x2","precision":"fp32","logN":12,"batch":64,"placement":"out-of-place","normalization":"none","stage_matrix":"1,0.25,-0.5,1"},
+    {"operator":"subset-zeta","precision":"uint32","logN":12,"batch":64,"placement":"out-of-place","normalization":"none"},
+    {"operator":"superset-zeta","precision":"uint32","logN":12,"batch":64,"placement":"out-of-place","normalization":"none"},
+    {"operator":"ntt","precision":"word32","logN":12,"batch":64,"modulus":2013265921,"placement":"natural"}
+  ]
+}

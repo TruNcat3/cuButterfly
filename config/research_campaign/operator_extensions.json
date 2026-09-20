@@ -1,0 +1,194 @@
+{
+  "limitations": [
+    "No unsupported stride or per-stage matrix CLI is emitted.",
+    "Structured rows use the supported broadcast matrix contract.",
+    "The finite extension is not a complete application matrix or global optimum claim."
+  ],
+  "protocol": {
+    "compile_and_plan_time_in_timing": false,
+    "repeat": 100,
+    "verify": true,
+    "verify_batches": 0,
+    "warmup": 20
+  },
+  "runner": "cubutterfly_bench",
+  "schema": "cubutterfly-install-search-v1",
+  "scope": "bounded non-cryptographic operator extension; cubutterfly_bench full-batch verification",
+  "workloads": [
+    {
+      "batch": 64,
+      "direction": "forward",
+      "logN": 12,
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 64,
+      "direction": "inverse",
+      "logN": 12,
+      "normalization": "inverse",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 128,
+      "direction": "inverse",
+      "logN": 15,
+      "normalization": "inverse",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 16,
+      "batch_stride": 8198,
+      "direction": "inverse",
+      "element_stride": 2,
+      "logN": 12,
+      "normalization": "inverse",
+      "operator": "fwht",
+      "placement": "in-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 64,
+      "direction": "forward",
+      "logN": 12,
+      "normalization": "none",
+      "operator": "subset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 64,
+      "direction": "inverse",
+      "logN": 12,
+      "normalization": "none",
+      "operator": "subset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 64,
+      "direction": "inverse",
+      "logN": 16,
+      "normalization": "none",
+      "operator": "subset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 16,
+      "batch_stride": 8198,
+      "direction": "inverse",
+      "element_stride": 2,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "subset-zeta",
+      "placement": "in-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 64,
+      "direction": "forward",
+      "logN": 12,
+      "normalization": "none",
+      "operator": "superset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 64,
+      "direction": "inverse",
+      "logN": 12,
+      "normalization": "none",
+      "operator": "superset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 64,
+      "direction": "inverse",
+      "logN": 16,
+      "normalization": "none",
+      "operator": "superset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 16,
+      "batch_stride": 8198,
+      "direction": "inverse",
+      "element_stride": 2,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "superset-zeta",
+      "placement": "in-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 64,
+      "direction": "inverse",
+      "logN": 12,
+      "normalization": "inverse",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 64,
+      "direction": "forward",
+      "logN": 12,
+      "normalization": "none",
+      "operator": "structured-2x2",
+      "placement": "out-of-place",
+      "precision": "fp32",
+      "stage_matrix": "1,0.25,-0.5,1"
+    },
+    {
+      "batch": 64,
+      "direction": "inverse",
+      "logN": 12,
+      "normalization": "none",
+      "operator": "structured-2x2",
+      "placement": "out-of-place",
+      "precision": "fp32",
+      "stage_matrix": "1,0.25,-0.5,1"
+    },
+    {
+      "batch": 128,
+      "direction": "inverse",
+      "logN": 15,
+      "normalization": "none",
+      "operator": "structured-2x2",
+      "placement": "out-of-place",
+      "precision": "fp32",
+      "stage_matrix": "1,0.25,-0.5,1"
+    },
+    {
+      "batch": 16,
+      "batch_stride": 8198,
+      "direction": "inverse",
+      "element_stride": 2,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "structured-2x2",
+      "placement": "in-place",
+      "precision": "fp32",
+      "stage_matrix": "1,0.25,-0.5,1"
+    },
+    {
+      "batch": 64,
+      "direction": "inverse",
+      "logN": 12,
+      "normalization": "none",
+      "operator": "structured-2x2",
+      "placement": "out-of-place",
+      "precision": "fp64",
+      "stage_matrix": "1,0.25,-0.5,1"
+    }
+  ]
+}

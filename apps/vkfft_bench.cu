@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -79,6 +80,7 @@ struct Options {
     std::uint64_t total_points = 1ULL << 22;
     std::uint32_t warmup      = 20;
     std::uint32_t repeat      = 100;
+    std::string   placement   = "in-place";
     bool          verify      = false;
     bool          csv         = false;
 };
@@ -106,12 +108,15 @@ Options parse_options(int argc, char** argv) {
             options.warmup = static_cast<std::uint32_t>(std::stoul(take_arg(index, argc, argv)));
         } else if (argument == "--repeat") {
             options.repeat = static_cast<std::uint32_t>(std::stoul(take_arg(index, argc, argv)));
+        } else if (argument == "--placement") {
+            options.placement = take_arg(index, argc, argv);
         } else if (argument == "--verify") {
             options.verify = true;
         } else if (argument == "--csv") {
             options.csv = true;
         } else if (argument == "--help") {
             std::cout << "vkfft_bench [--library cufft|vkfft] [--logN 12] [--batch N | --total-points N] "
+                         "[--placement in-place|out-of-place] "
                          "[--warmup 20] [--repeat 100] [--verify] [--csv]\n";
             std::exit(0);
         } else {
@@ -120,6 +125,9 @@ Options parse_options(int argc, char** argv) {
     }
     if (options.library != "cufft" && options.library != "vkfft") {
         throw std::invalid_argument("library must be cufft or vkfft");
+    }
+    if (options.placement != "in-place" && options.placement != "out-of-place") {
+        throw std::invalid_argument("placement must be in-place or out-of-place");
     }
     if (options.log_n < 1 || options.log_n > 30 || options.repeat == 0) {
         throw std::invalid_argument("logN must be in [1, 30] and repeat must be positive");
@@ -212,6 +220,11 @@ Result run_cufft(const Options& options, const std::vector<cufftComplex>& input,
     int n = 1 << options.log_n;
     const std::size_t bytes = input.size() * sizeof(cufftComplex);
     DeviceBuffer buffer(bytes);
+    std::unique_ptr<DeviceBuffer> output_storage;
+    if (options.placement == "out-of-place") {
+        output_storage = std::make_unique<DeviceBuffer>(bytes);
+    }
+    void* destination = output_storage ? output_storage->get() : buffer.get();
     CHECK_CUDA(cudaMemcpy(buffer.get(), input.data(), bytes, cudaMemcpyHostToDevice));
     cufftHandle plan = 0;
     const auto plan_start = std::chrono::steady_clock::now();
@@ -219,7 +232,7 @@ Result run_cufft(const Options& options, const std::vector<cufftComplex>& input,
                               CUFFT_C2C, static_cast<int>(options.batch)));
     const auto plan_stop = std::chrono::steady_clock::now();
     auto launch = [&] {
-        CHECK_CUFFT(cufftExecC2C(plan, static_cast<cufftComplex*>(buffer.get()), static_cast<cufftComplex*>(buffer.get()), CUFFT_FORWARD));
+        CHECK_CUFFT(cufftExecC2C(plan, static_cast<cufftComplex*>(buffer.get()), static_cast<cufftComplex*>(destination), CUFFT_FORWARD));
     };
     Result result;
     result.plan_ms = std::chrono::duration<double, std::milli>(plan_stop - plan_start).count();
@@ -229,7 +242,7 @@ Result run_cufft(const Options& options, const std::vector<cufftComplex>& input,
         launch();
         CHECK_CUDA(cudaDeviceSynchronize());
         std::vector<cufftComplex> output(input.size());
-        CHECK_CUDA(cudaMemcpy(output.data(), buffer.get(), bytes, cudaMemcpyDeviceToHost));
+        CHECK_CUDA(cudaMemcpy(output.data(), destination, bytes, cudaMemcpyDeviceToHost));
         result.error = compare(output, *reference);
     }
     CHECK_CUFFT(cufftDestroy(plan));
@@ -241,8 +254,14 @@ Result run_vkfft(const Options& options, const std::vector<cufftComplex>& input,
     const std::uint64_t n = 1ULL << options.log_n;
     std::uint64_t bytes = input.size() * sizeof(cufftComplex);
     DeviceBuffer storage(bytes);
+    std::unique_ptr<DeviceBuffer> input_storage;
     void* buffer = storage.get();
-    CHECK_CUDA(cudaMemcpy(buffer, input.data(), bytes, cudaMemcpyHostToDevice));
+    void* input_buffer = buffer;
+    if (options.placement == "out-of-place") {
+        input_storage = std::make_unique<DeviceBuffer>(bytes);
+        input_buffer = input_storage->get();
+    }
+    CHECK_CUDA(cudaMemcpy(input_buffer, input.data(), bytes, cudaMemcpyHostToDevice));
 
     CHECK_CUDA(cudaFree(nullptr));
     CHECK_DRIVER(cuInit(0));
@@ -256,6 +275,11 @@ Result run_vkfft(const Options& options, const std::vector<cufftComplex>& input,
     configuration.buffer = &buffer;
     configuration.bufferSize = &bytes;
     configuration.makeForwardPlanOnly = 1;
+    if (options.placement == "out-of-place") {
+        configuration.isInputFormatted = 1;
+        configuration.inputBuffer = &input_buffer;
+        configuration.inputBufferSize = &bytes;
+    }
 
     VkFFTApplication application{};
     const auto plan_start = std::chrono::steady_clock::now();
@@ -268,7 +292,7 @@ Result run_vkfft(const Options& options, const std::vector<cufftComplex>& input,
     result.plan_ms = std::chrono::duration<double, std::milli>(plan_stop - plan_start).count();
     result.kernel_ms = time_launch(launch, options.warmup, options.repeat);
     if (reference != nullptr) {
-        CHECK_CUDA(cudaMemcpy(buffer, input.data(), bytes, cudaMemcpyHostToDevice));
+        CHECK_CUDA(cudaMemcpy(input_buffer, input.data(), bytes, cudaMemcpyHostToDevice));
         launch();
         CHECK_CUDA(cudaDeviceSynchronize());
         std::vector<cufftComplex> output(input.size());
@@ -311,7 +335,7 @@ int main(int argc, char** argv) {
         if (options.csv) {
             std::cout << "device,compute_capability,library,library_version,precision,direction,placement,logN,N,batch,warmup,repeat,plan_ms,kernel_ms,transforms_s,Gbutterfly_s,points_s,max_abs_error,relative_l2_error,correct\n";
             std::cout << '"' << properties.name << "\"," << properties.major << '.' << properties.minor << ',' << options.library
-                      << ',' << library_version << ",fp32,forward,in-place," << options.log_n << ',' << n << ',' << options.batch << ',' << options.warmup << ','
+                      << ',' << library_version << ",fp32,forward," << options.placement << ',' << options.log_n << ',' << n << ',' << options.batch << ',' << options.warmup << ','
                       << options.repeat << ',' << result.plan_ms << ',' << result.kernel_ms << ',' << transforms_s << ','
                       << butterflies_s / 1.0e9 << ',' << transforms_s * n << ',' << result.error.max_abs << ','
                       << result.error.relative_l2 << ',' << (options.verify ? static_cast<int>(correct) : -1) << '\n';

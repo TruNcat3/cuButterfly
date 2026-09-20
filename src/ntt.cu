@@ -11,10 +11,17 @@
 #include <vector>
 
 #include "cuntt/ntt.hpp"
+#include "cuntt/mixed_dataflow.hpp"
 #include "generated_hybrid_dataflow_config.hpp"
 #include "hybrid_dataflow.cuh"
 #include "mapping_selector.hpp"
 #include "stage_pipeline.cuh"
+#include "shared_iterative.cuh"
+#include "resident_mapping.hpp"
+#include "batch_pipeline.cuh"
+#include "ntt_traits.cuh"
+#include "jit_module.hpp"
+#include "stage_probe.hpp"
 
 namespace cuntt {
 namespace {
@@ -31,6 +38,7 @@ void check_cuda(cudaError_t status, const char* expression, const char* file, in
 #define CUNTT_CUDA_CHECK(expr) check_cuda((expr), #expr, __FILE__, __LINE__)
 
 thread_local cudaStream_t active_stream = nullptr;
+thread_local int active_stage_probe_group = -1;
 
 class LaunchStreamScope {
   public:
@@ -122,23 +130,7 @@ std::uint64_t barrett_precompute(std::uint64_t modulus, std::uint32_t modulus_bi
     return static_cast<std::uint64_t>((static_cast<unsigned __int128>(1) << (2 * modulus_bits + 1)) / modulus);
 }
 
-__device__ __forceinline__ std::uint64_t mul_shoup(std::uint64_t value, std::uint64_t twiddle, std::uint64_t twiddle_shoup, std::uint64_t modulus) {
-    const std::uint64_t quotient = __umul64hi(value, twiddle_shoup);
-    std::uint64_t       reduced  = value * twiddle - quotient * modulus;
-    if (reduced >= modulus) {
-        reduced -= modulus;
-    }
-    return reduced;
-}
-
-__device__ __forceinline__ std::uint32_t mul_shoup(std::uint32_t value, std::uint32_t twiddle, std::uint32_t twiddle_shoup, std::uint32_t modulus) {
-    const std::uint32_t quotient = __umulhi(value, twiddle_shoup);
-    std::uint32_t       reduced  = value * twiddle - quotient * modulus;
-    if (reduced >= modulus) {
-        reduced -= modulus;
-    }
-    return reduced;
-}
+using traits::mul_shoup;
 
 struct Wide128 {
     std::uint64_t low;
@@ -196,46 +188,8 @@ __device__ __forceinline__ void butterfly(std::uint64_t& left, std::uint64_t& ri
     right                   = u >= v ? u - v : modulus + u - v;
 }
 
-template <typename Word>
-struct NttStageOperatorT {
-    using Value = Word;
-    static constexpr bool kBitReverseInput = true;
-
-    const Word* twiddles;
-    const Word* twiddles_shoup;
-    Word        modulus;
-    Word        scale;
-    Word        scale_shoup;
-
-    __device__ __forceinline__ void apply(std::uint32_t stage, std::uint32_t offset, Value& left, Value& right) const {
-        const std::uint32_t twiddle_base = (1U << stage) - 1;
-        const Value u = left;
-        const Value v = mul_shoup(right, twiddles[twiddle_base + offset], twiddles_shoup[twiddle_base + offset], modulus);
-        const Value sum = u + v;
-        left  = sum >= modulus ? sum - modulus : sum;
-        right = u >= v ? u - v : modulus + u - v;
-    }
-
-    __device__ __forceinline__ Value finalize(Value value, std::uint32_t) const {
-        return scale == 1 ? value : mul_shoup(value, scale, scale_shoup, modulus);
-    }
-
-    __device__ __forceinline__ Value multiply(Value value, Value coefficient,
-                                               Value coefficient_shoup) const {
-        return mul_shoup(value, coefficient, coefficient_shoup, modulus);
-    }
-
-    __device__ __forceinline__ void apply_coefficient(
-        Value coefficient, Value coefficient_shoup, Value& left, Value& right) const {
-        const Value u = left;
-        const Value v = mul_shoup(right, coefficient, coefficient_shoup, modulus);
-        const Value sum = u + v;
-        left = sum >= modulus ? sum - modulus : sum;
-        right = u >= v ? u - v : modulus + u - v;
-    }
-};
-
-using NttStageOperator = NttStageOperatorT<std::uint64_t>;
+using traits::NttStageOperatorT;
+using traits::NttStageOperator;
 
 constexpr std::uint32_t kMaxStreamingSegments = 8;
 
@@ -5620,7 +5574,8 @@ void launch_stage_pipeline_ntt256(const PlanConfig& config, const std::uint64_t*
     const std::uint32_t     blocks = static_cast<std::uint32_t>((tiles + kPipelines * kTokensPerPipeline - 1) /
                                                              (kPipelines * kTokensPerPipeline));
     for (std::uint32_t stage_base = 0; stage_base < 8; stage_base += StageSpace) {
-        const std::uint64_t* stage_input = stage_base == 0 ? input : output;
+        if (active_stage_probe_group>=0 && stage_base!=static_cast<unsigned>(active_stage_probe_group)*StageSpace) continue;
+        const std::uint64_t* stage_input = stage_base == 0 || active_stage_probe_group>=0 ? input : output;
         constexpr std::size_t kHandoffPadding = NamedBarrier ? 16 * sizeof(int) : 0;
         const NttStageOperator op{twiddles, twiddles_shoup, config.modulus, 1, 0};
         detail::stage_pipeline_256_kernel<NttStageOperator, StageSpace, NamedBarrier><<<blocks, 256, kHandoffPadding, active_stream>>>(
@@ -8453,6 +8408,8 @@ void launch_hierarchical_streaming(
 }  // namespace
 
 class Plan::Impl {
+    friend class detail::StageProbeAdapter;
+
   public:
     explicit Impl(PlanConfig config) : config_(std::move(config)) {
         const bool automatic_selection = config_.auto_select;
@@ -8465,6 +8422,14 @@ class Plan::Impl {
         validate_config();
         lower_resident_execution_groups();
         validate_config();
+        if(config_.backend==Backend::SharedIterative) {
+            detail::validate_shared_resident_axes(config_.local_stage_partitions,config_.exchange_chunks,config_.stage_partition);
+            if(detail::resident_axes_requested(config_.local_stage_partitions,config_.exchange_chunks) &&
+               !detail::on_demand_compilation_enabled())
+                throw std::invalid_argument("shared resident processing units require on-demand compilation");
+        } else if(!config_.local_stage_partitions.empty() || !config_.exchange_chunks.empty())
+            throw std::invalid_argument("NTT resident local partitions require shared-iterative lowering");
+        dataflow_plan_ = make_dataflow_plan(config_);
         n_ = 1ULL << config_.log_n;
         if (config_.batch > std::numeric_limits<std::size_t>::max() / n_) {
             throw std::overflow_error("batch * N overflows size_t");
@@ -8477,7 +8442,18 @@ class Plan::Impl {
         build_twiddles();
         const std::size_t word_bytes          = config_.word_bits / 8;
         data_bytes_                           = total_points_ * word_bytes;
-        if (config_.backend == Backend::HierarchicalDataflow) {
+        if (config_.backend == Backend::SharedIterative) {
+            workspace_bytes_ = data_bytes_ * std::min<std::size_t>(2, config_.stage_partition.size()-1);
+            if (config_.stage_overlap) {
+                const auto buffers = 2 * (config_.stage_partition.size() - 1);
+                const auto limit = std::numeric_limits<std::size_t>::max();
+                if (config_.batch_tile_count > limit / n_ / word_bytes / buffers)
+                    throw std::overflow_error("NTT pipeline workspace overflows size_t");
+                pipeline_tile_elements_ = n_ * config_.batch_tile_count;
+                workspace_bytes_ = buffers * pipeline_tile_elements_ * word_bytes;
+                pipeline_ = std::make_unique<detail::BatchPipeline>(config_.stage_partition.size());
+            }
+        } else if (config_.backend == Backend::HierarchicalDataflow) {
             workspace_bytes_ = hierarchical_streaming_workspace_bytes(config_);
         } else {
             workspace_bytes_ = (config_.backend == Backend::Hybrid2D ||
@@ -8500,6 +8476,8 @@ class Plan::Impl {
             device_compact_roots_shoup_.allocate(root_bytes);
             CUNTT_CUDA_CHECK(cudaMemcpy(device_compact_roots_.get(), compact_roots_.data(), root_bytes, cudaMemcpyHostToDevice));
             CUNTT_CUDA_CHECK(cudaMemcpy(device_compact_roots_shoup_.get(), compact_roots_shoup_.data(), root_bytes, cudaMemcpyHostToDevice));
+            dataflow_plan_.executable = true;
+            dataflow_plan_.state = CandidateState::Compiled;
             return;
         }
         device_twiddles_.allocate(twiddle_bytes);
@@ -8529,10 +8507,19 @@ class Plan::Impl {
                     cudaMemcpy(device_root_powers_shoup_.get(), root_powers_shoup_.data(), root_power_shoup_bytes, cudaMemcpyHostToDevice));
             }
         }
+        if(config_.backend==Backend::SharedIterative && (detail::specialize_shared_templates() ||
+           detail::resident_axes_requested(config_.local_stage_partitions,config_.exchange_chunks))) {
+            shared_module_=detail::prepare_shared_module(config_);
+            shared_group_launch_=detail::prepared_group_launcher(shared_module_);
+            detail::attach_module_resources(dataflow_plan_,shared_module_,config_.inverse);
+        }
+        dataflow_plan_.executable = true;
+        dataflow_plan_.state = CandidateState::Compiled;
     }
 
     const PlanConfig& config() const noexcept { return logical_config_; }
     const SelectionInfo& selection() const noexcept { return selection_; }
+    const MixedDataflowPlan& dataflow_plan() const noexcept { return dataflow_plan_; }
 
     std::size_t points_per_transform() const noexcept { return n_; }
 
@@ -8830,6 +8817,20 @@ class Plan::Impl {
     }
 
     void resolve_hybrid2d_mapping() {
+        if (config_.backend == Backend::SharedIterative) {
+            int device=0; CUNTT_CUDA_CHECK(cudaGetDevice(&device));
+            CUNTT_CUDA_CHECK(cudaGetDeviceProperties(&device_properties_, device));
+            if (config_.stage_partition.empty()) {
+                auto local=config_.flow_tile_log_n ? config_.flow_tile_log_n : std::min(10U, config_.log_n);
+                for (auto remaining=config_.log_n; remaining;) {
+                    auto stages=std::min(local, remaining);
+                    config_.stage_partition.push_back(stages); remaining-=stages;
+                }
+            }
+            if (!config_.threads_per_block) config_.threads_per_block=128;
+            if (config_.compute_unit==ComputeUnit::Auto) config_.compute_unit=ComputeUnit::Radix2;
+            return;
+        }
         if (config_.cross_twiddle_placement == CrossTwiddlePlacement::FusedBarrett) {
             config_.cross_twiddle_placement = CrossTwiddlePlacement::Fused;
             config_.modular_multiply        = ModularMultiply::Barrett;
@@ -9598,15 +9599,41 @@ class Plan::Impl {
         if (config_.word_bits == 32 &&
             ((config_.backend != Backend::Hybrid2D && config_.backend != Backend::HybridDataflow &&
               config_.backend != Backend::HierarchicalBarrier &&
-              config_.backend != Backend::HierarchicalDataflow) || config_.modulus >= (1ULL << 31))) {
+              config_.backend != Backend::HierarchicalDataflow &&
+              config_.backend != Backend::SharedIterative) || config_.modulus >= (1ULL << 31))) {
             throw std::invalid_argument("32-bit words require hybrid2d or a dataflow backend and modulus < 2^31");
         }
-        if (config_.output_order == OutputOrder::BitReversed && config_.backend != Backend::CompactStage) {
-            throw std::invalid_argument("bit-reversed output is currently supported only by compact-stage");
+        if (config_.output_order == OutputOrder::BitReversed &&
+            config_.backend != Backend::CompactStage && config_.backend != Backend::SharedIterative) {
+            throw std::invalid_argument("bit-reversed output is currently supported only by compact-stage and shared-iterative");
         }
         const bool appt_static_capable =
             config_.backend == Backend::HierarchicalDataflow &&
             uses_appt_register_tail(config_);
+        if (config_.stage_overlap && (config_.backend != Backend::SharedIterative ||
+            config_.stage_partition.size() < 2 || !config_.batch_tile_count))
+            throw std::invalid_argument("NTT stage-overlap requires multiple shared groups and a positive batch tile");
+        if (config_.backend == Backend::SharedIterative) {
+            std::uint32_t total=0;
+            if (config_.compute_unit!=ComputeUnit::Radix2 || config_.modular_multiply!=ModularMultiply::Shoup)
+                throw std::invalid_argument("shared-iterative NTT implements the radix2 Shoup trait");
+            if (config_.threads_per_block<32 || config_.threads_per_block%32 ||
+                config_.threads_per_block>static_cast<unsigned>(device_properties_.maxThreadsPerBlock))
+                throw std::invalid_argument("shared-iterative NTT launch is outside device thread limits");
+            for (auto stages : config_.stage_partition) {
+                if (!stages || stages>config_.log_n-total)
+                    throw std::invalid_argument("shared-iterative NTT requires positive stages summing to logN");
+                total+=stages;
+                if (2ULL*(1ULL<<stages)*(config_.word_bits/8) >
+                    std::max(device_properties_.sharedMemPerBlock, device_properties_.sharedMemPerBlockOptin))
+                    throw std::invalid_argument("shared-iterative NTT live state exceeds shared memory capacity");
+                if (config_.batch > (static_cast<std::uint64_t>(device_properties_.maxGridSize[0]) >> (config_.log_n-stages)))
+                    throw std::invalid_argument("shared-iterative NTT grid exceeds device limits");
+            }
+            if (total!=config_.log_n) throw std::invalid_argument("shared-iterative NTT partition does not cover logN");
+            if (!config_.subgraph_mappings.empty() || !config_.boundary_mappings.empty() || !config_.execution_group_mappings.empty())
+                throw std::invalid_argument("shared-iterative NTT uses its partition, thread and layout axes; specialized streaming mappings are separate");
+        }
         if (config_.input_order == InputOrder::ApptStatic &&
             !appt_static_capable) {
             throw std::invalid_argument(
@@ -10225,7 +10252,7 @@ class Plan::Impl {
                 }
             }
         }
-        if (config_.backend == Backend::HybridDataflow && config_.word_bits == 32) {
+        if ((config_.backend == Backend::HybridDataflow || config_.backend == Backend::SharedIterative) && config_.word_bits == 32) {
             twiddles32_.reserve(twiddles_.size());
             twiddles_shoup32_.reserve(twiddles_shoup_.size());
             for (std::size_t index = 0; index < twiddles_.size(); ++index) {
@@ -10243,7 +10270,67 @@ class Plan::Impl {
         }
     }
 
+    template <typename Word>
+    void launch_shared(const void* input, void* output, void* scratch) {
+        const NttStageOperatorT<Word> op{device_twiddles_.as<Word>(),device_twiddles_shoup_.as<Word>(),
+            static_cast<Word>(config_.modulus),static_cast<Word>(inverse_n_),static_cast<Word>(inverse_n_shoup_)};
+        if (pipeline_) {
+            const auto max_stages=*std::max_element(config_.stage_partition.begin(),config_.stage_partition.end());
+            const auto max_shared=2ULL*(1ULL<<max_stages)*sizeof(Word);
+            if (!shared_group_launch_ && max_shared>48*1024)
+                CUNTT_CUDA_CHECK(cudaFuncSetAttribute(detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1>,
+                    cudaFuncAttributeMaxDynamicSharedMemorySize,static_cast<int>(max_shared)));
+            pipeline_->enqueue(config_.batch,config_.batch_tile_count,stream_,
+                [&](auto group,auto offset,auto count,auto slot,auto stream) {
+                    const auto* source=group ? static_cast<Word*>(scratch)+(2*(group-1)+slot)*pipeline_tile_elements_ :
+                        static_cast<const Word*>(input)+offset*n_;
+                    auto* destination=group+1==config_.stage_partition.size() ? static_cast<Word*>(output)+offset*n_ :
+                        static_cast<Word*>(scratch)+(2*group+slot)*pipeline_tile_elements_;
+                    if (shared_group_launch_) {
+                        const cubutterflyModuleInvocationV2 invocation{{source,destination,nullptr,count,n_,1,
+                            config_.inverse,config_.inverse,stream},device_twiddles_.data(),device_twiddles_shoup_.data(),
+                            config_.modulus,inverse_n_,inverse_n_shoup_};
+                        CUNTT_CUDA_CHECK(static_cast<cudaError_t>(shared_group_launch_(group,&invocation)));
+                    } else {
+                        const auto stages=config_.stage_partition[group];
+                        const auto first=dataflow_plan_.execution_groups[group].first_stage;
+                        detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1><<<static_cast<unsigned>(count<<(config_.log_n-stages)),
+                            config_.threads_per_block,2ULL*(1ULL<<stages)*sizeof(Word),stream>>>(source,destination,
+                                config_.log_n,first,stages,n_,1,config_.dataflow_layout==DataflowLayout::HermesXor,count,1,op,
+                                config_.output_order==OutputOrder::BitReversed);
+                    }
+                });
+            return;
+        }
+        const auto* source=static_cast<const Word*>(input);
+        unsigned first=0;
+        for (std::size_t group=0; group<config_.stage_partition.size(); ++group) {
+            const auto stages=config_.stage_partition[group];
+            auto* destination=group+1==config_.stage_partition.size() ? static_cast<Word*>(output) :
+                static_cast<Word*>(scratch)+(group%2)*total_points_;
+            const auto shared=2ULL*(1ULL<<stages)*sizeof(Word);
+            if (shared>48*1024) CUNTT_CUDA_CHECK(cudaFuncSetAttribute(detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1>,
+                cudaFuncAttributeMaxDynamicSharedMemorySize,static_cast<int>(shared)));
+            detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1><<<static_cast<unsigned>(config_.batch<<(config_.log_n-stages)),
+                config_.threads_per_block,shared,stream_>>>(source,destination,config_.log_n,first,stages,n_,1,
+                    config_.dataflow_layout==DataflowLayout::HermesXor,config_.batch,1,op,
+                    config_.output_order==OutputOrder::BitReversed);
+            CUNTT_CUDA_CHECK(cudaGetLastError()); source=destination; first+=stages;
+        }
+    }
+
     void launch_once(const void* input_pointer, void* output_pointer, void* scratch_pointer) {
+        if(shared_module_ && !pipeline_) {
+            const cubutterflyModuleInvocationV2 invocation{{input_pointer,output_pointer,scratch_pointer,config_.batch,n_,1,
+                config_.inverse,config_.inverse,stream_},device_twiddles_.data(),device_twiddles_shoup_.data(),
+                config_.modulus,inverse_n_,inverse_n_shoup_};
+            CUNTT_CUDA_CHECK(static_cast<cudaError_t>(shared_module_->launch(&invocation))); return;
+        }
+        if (config_.backend==Backend::SharedIterative) {
+            if (config_.word_bits==32) launch_shared<std::uint32_t>(input_pointer,output_pointer,scratch_pointer);
+            else launch_shared<std::uint64_t>(input_pointer,output_pointer,scratch_pointer);
+            return;
+        }
         constexpr std::uint32_t kThreads = 256;
         const auto*             input    = static_cast<const std::uint64_t*>(input_pointer);
         auto*                   output   = static_cast<std::uint64_t*>(output_pointer);
@@ -10346,14 +10433,18 @@ class Plan::Impl {
             const std::uint32_t n2_log = config_.log_n - config_.n1_log;
             const auto* input32   = static_cast<const std::uint32_t*>(input_pointer);
             auto*       output32  = static_cast<std::uint32_t*>(output_pointer);
-            auto*       scratch32 = static_cast<std::uint32_t*>(scratch_pointer);
+            auto*       scratch32 = static_cast<std::uint32_t*>(active_stage_probe_group==0 ? output_pointer :
+                active_stage_probe_group==1 ? const_cast<void*>(input_pointer) : scratch_pointer);
             const auto* input64   = input;
             auto*       output64  = output;
-            auto*       scratch64 = scratch;
+            auto*       scratch64 = active_stage_probe_group==0 ? output :
+                active_stage_probe_group==1 ? const_cast<std::uint64_t*>(input) : scratch;
 #define CUNTT_DISPATCH_PLACEMENT(WORD, TAG, UNIT, PLACEMENT, BARRETT)                                                                               \
+    if (active_stage_probe_group != 1)                                                                                                          \
     dispatch_hybrid2d_log<WORD, UNIT, PLACEMENT, BARRETT>(                                                                                          \
         config_, n2_log, true, input##TAG, scratch##TAG, output##TAG, device_twiddles_.as<WORD>(),                                                    \
         device_twiddles_shoup_.as<WORD>(), device_root_powers_.as<WORD>(), device_root_powers_shoup_.as<WORD>(), inverse_n_, inverse_n_shoup_);     \
+    if (active_stage_probe_group != 0)                                                                                                          \
     dispatch_hybrid2d_log<WORD, UNIT, PLACEMENT, BARRETT>(                                                                                          \
         config_, config_.n1_log, false, input##TAG, scratch##TAG, output##TAG, device_twiddles_.as<WORD>(),                                           \
         device_twiddles_shoup_.as<WORD>(), device_root_powers_.as<WORD>(), device_root_powers_shoup_.as<WORD>(), inverse_n_, inverse_n_shoup_)
@@ -10439,6 +10530,10 @@ class Plan::Impl {
     PlanConfig                 config_;
     PlanConfig                 logical_config_;
     SelectionInfo              selection_;
+    MixedDataflowPlan          dataflow_plan_;
+    const cubutterflyModuleV2* shared_module_=nullptr;
+    cubutterflyModuleGroupLaunchV2 shared_group_launch_=nullptr;
+    std::size_t pipeline_tile_elements_=0;
     std::size_t                n_            = 0;
     std::size_t                total_points_ = 0;
     std::size_t                data_bytes_ = 0;
@@ -10469,7 +10564,305 @@ class Plan::Impl {
     cudaStream_t               stream_ = nullptr;
     void*                      external_workspace_ = nullptr;
     std::size_t                external_workspace_bytes_ = 0;
+    // Destroy/drain private streams before freeing any referenced device data.
+    std::unique_ptr<detail::BatchPipeline> pipeline_;
 };
+
+namespace detail {
+
+StageProbeAdapter::StageProbeAdapter(Plan& plan) {
+    auto* impl = plan.impl_.get();
+    if (impl == nullptr) {
+        throw std::invalid_argument("cannot create an NTT stage probe for an empty plan");
+    }
+
+    groups_.reserve(impl->dataflow_plan_.execution_groups.size());
+    for (const auto& execution : impl->dataflow_plan_.execution_groups) {
+        StageProbeGroup group;
+        group.execution = execution;
+        group.reason = "NTT lowering has no independent physical group launcher";
+        groups_.push_back(std::move(group));
+    }
+
+    // Keep the probe on the caller-provided stream while preserving the plan's
+    // stream setting. Some existing lowerings use active_stream, while the
+    // batch pipeline reads Impl::stream_ when it is enqueued.
+    auto launch_whole = [impl](const void* input, void* output, void* workspace,
+                               cudaStream_t stream) {
+        const auto previous_stream = impl->stream_;
+        impl->stream_ = stream;
+        try {
+            LaunchStreamScope scope(stream);
+            impl->launch_once(input, output, workspace);
+        } catch (...) {
+            impl->stream_ = previous_stream;
+            throw;
+        }
+        impl->stream_ = previous_stream;
+    };
+    plan_launch_ = launch_whole;
+
+    if (impl->config_.stage_overlap) {
+        for (auto& group : groups_)
+            group.reason = "overlap requires independent bulk curves and separate composition validation";
+        return;
+    }
+
+    // These older backends describe one logical transform in the plan. Expose
+    // their real launches here rather than timing that transform as one stage.
+    if (impl->config_.backend==Backend::Hybrid2D || impl->config_.backend==Backend::StagePipeline) {
+        const auto prototype=groups_.empty() ? ExecutionGroup{} : groups_.front().execution;
+        groups_.clear();
+        std::vector<unsigned> partition;
+        if (impl->config_.backend==Backend::Hybrid2D)
+            partition={impl->config_.log_n-impl->config_.n1_log,impl->config_.n1_log};
+        else partition.assign(8/impl->config_.stage_space,impl->config_.stage_space);
+        unsigned first=0;
+        for (auto stages:partition) {
+            auto execution=prototype;
+            execution.first_stage=first; execution.stage_count=stages;
+            execution.stage_space=stages; execution.stage_time=1; execution.launch_count=1;
+            execution.core=backend_name(impl->config_.backend);
+            if (impl->config_.backend==Backend::Hybrid2D)
+                execution.grid_ctas=(impl->config_.batch << (impl->config_.log_n-stages))/impl->config_.rows_per_block;
+            else {
+                const auto batch_per_cta=2*(8/impl->config_.stage_space);
+                execution.grid_ctas=(impl->config_.batch+batch_per_cta-1)/batch_per_cta;
+            }
+            groups_.push_back({execution,true,"original physical launch"}); first+=stages;
+        }
+    }
+    if (impl->config_.backend==Backend::Baseline || impl->config_.backend==Backend::Tile256) {
+        groups_.clear();
+        const auto append=[&](unsigned first,unsigned stages,const char* core,unsigned threads,
+                              std::uint64_t grid,bool in_place) {
+            ExecutionGroup execution;
+            execution.first_stage=first; execution.stage_count=stages;
+            execution.stage_space=stages; execution.stage_time=1;
+            execution.threads=threads; execution.elements_per_thread=1;
+            execution.data_space=threads; execution.data_time=1;
+            execution.core=core; execution.exchange=ExchangePolicy::GlobalMemory;
+            execution.grid_ctas=grid; execution.launch_count=1;
+            groups_.push_back({execution,true,"original physical launch",in_place});
+        };
+        append(0,0,"bit-reverse-copy",256,(impl->total_points_+255)/256,false);
+        unsigned first=0;
+        if (impl->config_.backend==Backend::Tile256) {
+            first=std::min(impl->config_.log_n,8U);
+            append(0,first,"tile256-radix2",128,impl->total_points_>>first,true);
+        }
+        for (auto stage=first;stage<impl->config_.log_n;++stage)
+            append(stage,1,"global-radix2-shoup",256,(impl->total_points_/2+255)/256,true);
+        if (impl->config_.inverse)
+            append(impl->config_.log_n,0,"inverse-scale",256,(impl->total_points_+255)/256,true);
+        group_launch_=[impl,physical=groups_](unsigned group,const void* input,void* output,
+                                            void*,cudaStream_t stream) {
+            const auto& execution=physical.at(group).execution;
+            const auto* source=static_cast<const std::uint64_t*>(input);
+            auto* destination=static_cast<std::uint64_t*>(output);
+            const auto blocks=static_cast<unsigned>(execution.grid_ctas);
+            if (execution.core=="bit-reverse-copy")
+                bit_reverse_copy_kernel<<<blocks,256,0,stream>>>(source,destination,impl->total_points_,impl->config_.log_n);
+            else if (execution.core=="tile256-radix2")
+                tile_kernel<<<blocks,128,0,stream>>>(destination,execution.stage_count,impl->device_twiddles_.get(),
+                    impl->device_twiddles_shoup_.get(),impl->config_.modulus);
+            else if (execution.core=="inverse-scale")
+                scale_kernel<<<blocks,256,0,stream>>>(destination,impl->total_points_,impl->inverse_n_,
+                    impl->inverse_n_shoup_,impl->config_.modulus);
+            else {
+                const auto half=1ULL<<execution.first_stage;
+                stage_kernel<<<blocks,256,0,stream>>>(destination,impl->n_/2,impl->total_points_/2,impl->n_,half,half-1,
+                    impl->device_twiddles_.get(),impl->device_twiddles_shoup_.get(),impl->config_.modulus);
+            }
+            CUNTT_CUDA_CHECK(cudaGetLastError());
+        };
+        return;
+    }
+    const auto group_count = groups_.size();
+    if ((impl->config_.backend==Backend::Hybrid2D && group_count==2) ||
+        (impl->config_.backend==Backend::StagePipeline && group_count==8/impl->config_.stage_space)) {
+        for (std::size_t i=0;i<group_count;++i) {
+            auto& group=groups_[i]; group.independent=true;
+            group.reason="selected original physical launch";
+            if (impl->config_.backend==Backend::Hybrid2D) {
+                group.execution.stage_count=i ? impl->config_.n1_log : impl->config_.log_n-impl->config_.n1_log;
+                group.execution.first_stage=i ? impl->config_.log_n-impl->config_.n1_log : 0;
+            }
+        }
+        group_launch_=[launch_whole](unsigned group,const void* input,void* output,void* workspace,cudaStream_t stream) {
+            const auto previous=active_stage_probe_group; active_stage_probe_group=static_cast<int>(group);
+            try { launch_whole(input,output,workspace,stream); }
+            catch (...) { active_stage_probe_group=previous; throw; }
+            active_stage_probe_group=previous;
+        };
+        return;
+    }
+    if (impl->config_.backend == Backend::SharedIterative && group_count != 0) {
+        for (auto& group : groups_) {
+            group.independent = true;
+        }
+
+        if (impl->shared_group_launch_ != nullptr) {
+            for (auto& group : groups_) {
+                group.reason = "shared-iterative V2 module group launcher";
+            }
+            group_launch_ = [impl](unsigned group, const void* input, void* output,
+                                   void*, cudaStream_t stream) {
+                if (group >= impl->dataflow_plan_.execution_groups.size()) {
+                    throw std::invalid_argument("NTT stage probe group is out of range");
+                }
+                LaunchStreamScope scope(stream);
+                const cubutterflyModuleInvocationV2 invocation{
+                    {input, output, nullptr, impl->config_.batch, impl->n_, 1,
+                     impl->config_.inverse, impl->config_.inverse, stream},
+                    impl->device_twiddles_.data(),
+                    impl->device_twiddles_shoup_.data(),
+                    impl->config_.modulus,
+                    impl->inverse_n_,
+                    impl->inverse_n_shoup_};
+                CUNTT_CUDA_CHECK(static_cast<cudaError_t>(
+                    impl->shared_group_launch_(group, &invocation)));
+            };
+        } else {
+            cudaFuncAttributes attributes{};
+            if (impl->config_.word_bits == 32) {
+                CUNTT_CUDA_CHECK(cudaFuncGetAttributes(
+                    &attributes,
+                    detail::shared_iterative_kernel<
+                        NttStageOperatorT<std::uint32_t>,-1,-1,-1,-1,-1>));
+            } else if (impl->config_.word_bits == 64) {
+                CUNTT_CUDA_CHECK(cudaFuncGetAttributes(
+                    &attributes,
+                    detail::shared_iterative_kernel<
+                        NttStageOperatorT<std::uint64_t>,-1,-1,-1,-1,-1>));
+            } else {
+                throw std::invalid_argument("unsupported NTT word width for stage probe");
+            }
+
+            const auto word_bytes = impl->config_.word_bits / 8;
+            for (auto& group : groups_) {
+                const auto stages = group.execution.stage_count;
+                const auto dynamic_shared =
+                    2ULL * (1ULL << stages) * word_bytes;
+                group.reason = "shared-iterative precompiled kernel";
+                group.execution.compiler_resources_known = true;
+                group.execution.compiler_registers_per_thread =
+                    static_cast<std::uint32_t>(attributes.numRegs);
+                group.execution.compiler_local_resources_known = true;
+                group.execution.compiler_local_bytes_per_thread =
+                    static_cast<std::uint64_t>(attributes.localSizeBytes);
+                group.execution.live_shared_bytes =
+                    dynamic_shared + static_cast<std::uint64_t>(attributes.sharedSizeBytes);
+            }
+
+            group_launch_ = [impl](unsigned group, const void* input, void* output,
+                                   void*, cudaStream_t stream) {
+                if (group >= impl->dataflow_plan_.execution_groups.size() ||
+                    group >= impl->config_.stage_partition.size()) {
+                    throw std::invalid_argument("NTT stage probe group is out of range");
+                }
+                const auto stages = impl->config_.stage_partition[group];
+                if (stages == 0 || stages > impl->config_.log_n) {
+                    throw std::logic_error("NTT stage probe group has an invalid stage count");
+                }
+                const auto first =
+                    impl->dataflow_plan_.execution_groups[group].first_stage;
+                const auto blocks = static_cast<unsigned>(
+                    impl->config_.batch << (impl->config_.log_n - stages));
+                const auto writer_aligned =
+                    impl->config_.dataflow_layout == DataflowLayout::HermesXor;
+                LaunchStreamScope scope(stream);
+
+                if (impl->config_.word_bits == 32) {
+                    using Word = std::uint32_t;
+                    const auto shared = 2ULL * (1ULL << stages) * sizeof(Word);
+                    if (shared > 48 * 1024) {
+                        CUNTT_CUDA_CHECK(cudaFuncSetAttribute(
+                            detail::shared_iterative_kernel<
+                                NttStageOperatorT<Word>,-1,-1,-1,-1,-1>,
+                            cudaFuncAttributeMaxDynamicSharedMemorySize,
+                            static_cast<int>(shared)));
+                    }
+                    const NttStageOperatorT<Word> op{
+                        impl->device_twiddles_.as<Word>(),
+                        impl->device_twiddles_shoup_.as<Word>(),
+                        static_cast<Word>(impl->config_.modulus),
+                        static_cast<Word>(impl->inverse_n_),
+                        static_cast<Word>(impl->inverse_n_shoup_)};
+                    detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1>
+                        <<<blocks, impl->config_.threads_per_block, shared, stream>>>(
+                            static_cast<const Word*>(input), static_cast<Word*>(output),
+                            impl->config_.log_n, first, stages, impl->n_, 1,
+                            writer_aligned, impl->config_.batch, 1, op,
+                            impl->config_.output_order==OutputOrder::BitReversed);
+                } else if (impl->config_.word_bits == 64) {
+                    using Word = std::uint64_t;
+                    const auto shared = 2ULL * (1ULL << stages) * sizeof(Word);
+                    if (shared > 48 * 1024) {
+                        CUNTT_CUDA_CHECK(cudaFuncSetAttribute(
+                            detail::shared_iterative_kernel<
+                                NttStageOperatorT<Word>,-1,-1,-1,-1,-1>,
+                            cudaFuncAttributeMaxDynamicSharedMemorySize,
+                            static_cast<int>(shared)));
+                    }
+                    const NttStageOperatorT<Word> op{
+                        impl->device_twiddles_.as<Word>(),
+                        impl->device_twiddles_shoup_.as<Word>(),
+                        static_cast<Word>(impl->config_.modulus),
+                        static_cast<Word>(impl->inverse_n_),
+                        static_cast<Word>(impl->inverse_n_shoup_)};
+                    detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1>
+                        <<<blocks, impl->config_.threads_per_block, shared, stream>>>(
+                            static_cast<const Word*>(input), static_cast<Word*>(output),
+                            impl->config_.log_n, first, stages, impl->n_, 1,
+                            writer_aligned, impl->config_.batch, 1, op,
+                            impl->config_.output_order==OutputOrder::BitReversed);
+                } else {
+                    throw std::invalid_argument("unsupported NTT word width for stage probe");
+                }
+                CUNTT_CUDA_CHECK(cudaGetLastError());
+            };
+        }
+        return;
+    }
+
+    bool single_physical_launch = group_count == 1;
+    if (single_physical_launch) {
+        switch (impl->config_.backend) {
+            case Backend::HybridDataflow:
+            case Backend::HierarchicalBarrier:
+            case Backend::HierarchicalDataflow:
+                break;
+            case Backend::StagePipeline:
+                single_physical_launch = impl->config_.stage_space == 8;
+                break;
+            default:
+                single_physical_launch = false;
+                break;
+        }
+    }
+    if (single_physical_launch) {
+        groups_.front().independent = true;
+        groups_.front().reason =
+            "single physical kernel launch through NTT Plan::Impl";
+        group_launch_ = [launch_whole](unsigned group, const void* input,
+                                       void* output, void* workspace,
+                                       cudaStream_t stream) {
+            if (group != 0) {
+                throw std::invalid_argument("NTT stage probe group is out of range");
+            }
+            launch_whole(input, output, workspace, stream);
+        };
+        return;
+    }
+
+    group_launch_ = [](unsigned, const void*, void*, void*, cudaStream_t) {
+        throw std::logic_error(
+            "NTT lowering has no independent physical group launch");
+    };
+}
+
+}  // namespace detail
 
 DeviceInfo current_device_info() {
     DeviceInfo info;
@@ -10499,6 +10892,10 @@ const PlanConfig& Plan::config() const noexcept {
 
 const SelectionInfo& Plan::selection() const noexcept {
     return impl_->selection();
+}
+
+const MixedDataflowPlan& Plan::dataflow_plan() const noexcept {
+    return impl_->dataflow_plan();
 }
 
 std::size_t Plan::points_per_transform() const noexcept {

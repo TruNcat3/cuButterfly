@@ -2,6 +2,26 @@
 
 All notable repository and research-artifact changes are recorded here.
 
+## 0.9 Research Snapshot - 2026-09-20
+
+- Added public mapping and module interfaces, research-time specialization,
+  staged service calibration, evolutionary search and cross-operator acceptance.
+- Added portable SM70 build, CPU precompilation and target-local research entry
+  points with GPU/build/protocol identity checks and resumable results.
+- Froze 738 experiment contracts covering batch/precision, inverse transforms,
+  cryptographic compositions and a bounded general-shape FFT extension.
+- Added a V100 runbook and source packaging with explicit legacy build inputs.
+  SM70 compilation and CPU checks passed; new V100 GPU measurements are pending.
+
+## 0.9.0 - 2026-09-09 Layered Cross-Hardware Framework
+
+- Added the v0.9 architecture manifest and configure-time layer validation.
+- Separated reusable templates, platform profiles, parameter spaces, search and
+  calibration, and runtime selection in the documented architecture contract.
+- Kept `v100_*` inputs as explicitly named frozen compatibility evidence while
+  target-local GPU measurements remain fingerprinted and non-portable.
+- Promoted large-transform CTA/EPT mapping to install-time calibration data.
+
 ## 0.8.0 - 2026-09-06 Nested Physical Space Baseline
 
 ### Added

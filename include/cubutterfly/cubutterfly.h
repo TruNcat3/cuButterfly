@@ -16,7 +16,7 @@ extern "C" {
 #endif
 
 #define CUBUTTERFLY_VERSION_MAJOR 0
-#define CUBUTTERFLY_VERSION_MINOR 7
+#define CUBUTTERFLY_VERSION_MINOR 9
 #define CUBUTTERFLY_VERSION_PATCH 0
 
 typedef struct cubutterflyHandle* cubutterflyHandle_t;
@@ -81,7 +81,9 @@ typedef enum cubutterflyLengthMode {
 
 typedef enum cubutterflyNttLayout {
     CUBUTTERFLY_NTT_LAYOUT_NATURAL = 0,
-    CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC
+    CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC,
+    /* Output only, rank-1 power-of-two NTT with natural input. */
+    CUBUTTERFLY_NTT_LAYOUT_BIT_REVERSED
 } cubutterflyNttLayout_t;
 
 typedef struct cubutterflyNttLayoutInfo {
@@ -194,6 +196,10 @@ CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyPlanGetAlgorithmName(cubutterflyPl
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyPlanGetSelectionReason(cubutterflyPlan_t plan,
                                                                     char* reason,
                                                                     size_t* bytes);
+/* Full execution mapping, including mixed cores, layouts and every physical
+ * group. A rank-1 mapping can be passed to EXPLICIT without losing parameters. */
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyPlanGetMappingJson(cubutterflyPlan_t plan,
+                                                              char* json, size_t* bytes);
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyPlanGetNttLayoutInfo(
     cubutterflyPlan_t plan,
     cubutterflyNttLayoutInfo_t* info);

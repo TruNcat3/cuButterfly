@@ -88,7 +88,11 @@ class ComprehensiveSuiteTest(unittest.TestCase):
 
     def test_command_builder_applies_protocol_and_layout(self):
         case = next(case for case in self.document["cases"] if case["id"] == "fft8_stride_cub")
-        command = build_command(ROOT, self.document, case, self.document["protocols"]["full"], 17, False)
+        document = copy.deepcopy(self.document)
+        # Command construction needs an existing executable, not an unrelated
+        # build directory from the historical benchmark manifest.
+        document["binaries"][case["runner"]] = sys.executable
+        command = build_command(ROOT, document, case, document["protocols"]["full"], 17, False)
         self.assertIn("--element-stride", command)
         self.assertEqual(command[command.index("--element-stride") + 1], "2")
         self.assertEqual(command[command.index("--batch") + 1], "17")

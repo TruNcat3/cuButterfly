@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 import shutil
 import subprocess
@@ -25,8 +26,15 @@ def main() -> int:
     nvidia_smi = shutil.which("nvidia-smi")
     if not nvidia_smi:
         raise SystemExit("nvidia-smi is required; use --skip-device-check only for inspection")
+    query = [nvidia_smi]
+    visible = os.environ.get("CUDA_VISIBLE_DEVICES", "").strip()
+    if visible and visible not in {"NoDevFiles", "-1"}:
+        # CUDA remaps the first visible physical device to logical device 0.
+        # Query the same physical index (or UUID) instead of always checking GPU 0.
+        query.extend(["-i", visible.split(",", 1)[0].strip()])
+    query.extend(["--query-gpu=name", "--format=csv,noheader,nounits"])
     result = subprocess.run(
-        [nvidia_smi, "--query-gpu=name", "--format=csv,noheader,nounits"],
+        query,
         check=True,
         capture_output=True,
         text=True,

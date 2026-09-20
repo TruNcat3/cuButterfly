@@ -4,7 +4,34 @@
 #include <stdexcept>
 
 #include "external_fft_units.cuh"
+#include "fft_tile_layout.cuh"
 #include "generated_cufftdx_online_config.cuh"
+
+#ifndef CUBUTTERFLY_CUFFTDX_SM
+#define CUBUTTERFLY_CUFFTDX_SM 700
+#endif
+
+#ifndef CUBUTTERFLY_APPT_LAYOUT
+#define CUBUTTERFLY_APPT_LAYOUT 0
+#endif
+
+#ifndef CUBUTTERFLY_APPT_NPART_LOCAL
+#define CUBUTTERFLY_APPT_NPART_LOCAL 0
+#endif
+
+#ifndef CUBUTTERFLY_APPT_TRACE
+#define CUBUTTERFLY_APPT_TRACE 0
+#endif
+
+#ifndef CUBUTTERFLY_APPT_PARALLELISM
+#define CUBUTTERFLY_APPT_PARALLELISM 1
+#endif
+
+// Keep the experimental mapping disabled unless both stages explicitly opt in.
+// This prevents a direct/generic dispatch mismatch from corrupting scratch data.
+#ifndef CUBUTTERFLY_APPT_STAGE_CONTRACT
+#define CUBUTTERFLY_APPT_STAGE_CONTRACT 0
+#endif
 
 namespace cuntt::detail {
 namespace {
@@ -23,27 +50,27 @@ class LaunchStreamScope {
 template <unsigned int Size, cufftdx::fft_direction Direction>
 using BlockFft = decltype(cufftdx::Block() + cufftdx::Size<Size>() + cufftdx::Type<cufftdx::fft_type::c2c>() +
                           cufftdx::Direction<Direction>() + cufftdx::Precision<float>() + cufftdx::ElementsPerThread<8>() +
-                          cufftdx::FFTsPerBlock<1024 / Size>() + cufftdx::SM<700>());
+                          cufftdx::FFTsPerBlock<1024 / Size>() + cufftdx::SM<CUBUTTERFLY_CUFFTDX_SM>());
 
 template <unsigned int Size, unsigned int Threads, unsigned int Ept, cufftdx::fft_direction Direction>
 using OnlineBlockFft = decltype(cufftdx::Block() + cufftdx::Size<Size>() + cufftdx::Type<cufftdx::fft_type::c2c>() +
                                 cufftdx::Direction<Direction>() + cufftdx::Precision<float>() + cufftdx::ElementsPerThread<Ept>() +
-                                cufftdx::FFTsPerBlock<(Threads * Ept) / Size>() + cufftdx::SM<700>());
+                                cufftdx::FFTsPerBlock<(Threads * Ept) / Size>() + cufftdx::SM<CUBUTTERFLY_CUFFTDX_SM>());
 
 template <unsigned int Elements, cufftdx::fft_direction Direction>
 using Resident4096Fft = decltype(cufftdx::Block() + cufftdx::Size<64>() + cufftdx::Type<cufftdx::fft_type::c2c>() +
                                  cufftdx::Direction<Direction>() + cufftdx::Precision<float>() +
-                                 cufftdx::ElementsPerThread<Elements>() + cufftdx::FFTsPerBlock<64>() + cufftdx::SM<700>());
+                                 cufftdx::ElementsPerThread<Elements>() + cufftdx::FFTsPerBlock<64>() + cufftdx::SM<CUBUTTERFLY_CUFFTDX_SM>());
 
 template <unsigned int Size, unsigned int Elements, cufftdx::fft_direction Direction>
 using DirectFft = decltype(cufftdx::Block() + cufftdx::Size<Size>() + cufftdx::Type<cufftdx::fft_type::c2c>() +
                            cufftdx::Direction<Direction>() + cufftdx::Precision<float>() +
-                           cufftdx::ElementsPerThread<Elements>() + cufftdx::FFTsPerBlock<1>() + cufftdx::SM<700>());
+                           cufftdx::ElementsPerThread<Elements>() + cufftdx::FFTsPerBlock<1>() + cufftdx::SM<CUBUTTERFLY_CUFFTDX_SM>());
 
 template <unsigned int Elements, cufftdx::fft_direction Direction>
 using Persistent16384Fft = decltype(cufftdx::Block() + cufftdx::Size<128>() + cufftdx::Type<cufftdx::fft_type::c2c>() +
                                     cufftdx::Direction<Direction>() + cufftdx::Precision<float>() +
-                                    cufftdx::ElementsPerThread<Elements>() + cufftdx::FFTsPerBlock<32>() + cufftdx::SM<700>());
+                                    cufftdx::ElementsPerThread<Elements>() + cufftdx::FFTsPerBlock<32>() + cufftdx::SM<CUBUTTERFLY_CUFFTDX_SM>());
 
 template <class FFT>
 __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_block_kernel(
@@ -114,12 +141,35 @@ __device__ __forceinline__ Complex32 cross_root(const Complex32* twiddles, std::
     return negate ? Complex32{-root.real, -root.imag} : root;
 }
 
-template <class FFT>
+// APPT/Hermes-style physical placement. The low address bits encode the
+// conflict-free bank selected for the next subgraph; the remaining bits keep
+// the logical tile/transform identity. This is a bijection, so the suffix can
+// decode it without an extra permutation kernel.
+__device__ __forceinline__ std::uint64_t aptt_physical_index(
+    std::uint64_t logical, std::uint32_t total_elements, std::uint32_t n_part,
+    std::uint32_t parallelism) {
+#if !CUBUTTERFLY_APPT_LAYOUT || !CUBUTTERFLY_APPT_STAGE_CONTRACT
+    (void)total_elements;
+    (void)n_part;
+    (void)parallelism;
+    return logical;
+#else
+    const std::uint64_t bank_count = static_cast<std::uint64_t>(2U * parallelism);
+    const std::uint64_t bank = (logical ^ (logical / n_part)) % bank_count;
+    const std::uint64_t offset = logical / bank_count;
+    const std::uint64_t bank_span = static_cast<std::uint64_t>(total_elements) / bank_count;
+    return bank * bank_span + offset;
+#endif
+}
+
+template <class FFT, bool XorSwizzle>
 __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_first_kernel(
     const Complex32* input, Complex32* scratch, const Complex32* twiddles, std::uint64_t transforms,
     std::uint32_t log_n, std::uint32_t local_log_n, std::uint64_t batch_distance,
     std::uint64_t element_stride, bool recurrence_twiddle) {
     using Value = typename FFT::value_type;
+    using Layout = FftTileLayout<FFT::ffts_per_block, XorSwizzle>;
+    const std::uint32_t local_n         = 1U << local_log_n;
     const std::uint32_t remaining_log_n = log_n - local_log_n;
     const std::uint32_t remaining_n     = 1U << remaining_log_n;
     const std::uint64_t local_transform = static_cast<std::uint64_t>(blockIdx.x) * FFT::ffts_per_block + threadIdx.y;
@@ -147,11 +197,16 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_fir
                     const std::uint32_t staged_n2 =
                         static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
                     const std::uint64_t logical = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
-                    reinterpret_cast<float4*>(tile)[pair] =
+                    const float4 values =
                         *reinterpret_cast<const float4*>(input + staged_batch * batch_distance + logical);
+                    const auto physical = Layout::index(element, slot);
+                    // An odd XOR offset reverses the pair, but preserves its
+                    // aligned 16-byte footprint. Apply the same swap on export.
+                    reinterpret_cast<float4*>(tile)[physical / 2] = (physical & 1)
+                        ? make_float4(values.z, values.w, values.x, values.y) : values;
                 } else {
-                    tile[work] = Value{0.0F, 0.0F};
-                    tile[work + 1] = Value{0.0F, 0.0F};
+                    tile[Layout::index(element, slot)] = Value{0.0F, 0.0F};
+                    tile[Layout::index(element, slot + 1)] = Value{0.0F, 0.0F};
                 }
             }
         } else {
@@ -167,9 +222,9 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_fir
                         static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
                     const std::uint64_t logical = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
                     const Complex32 value = input[staged_batch * batch_distance + logical * element_stride];
-                    tile[work] = Value{value.real, value.imag};
+                    tile[Layout::index(element, slot)] = Value{value.real, value.imag};
                 } else {
-                    tile[work] = Value{0.0F, 0.0F};
+                    tile[Layout::index(element, slot)] = Value{0.0F, 0.0F};
                 }
             }
         }
@@ -186,9 +241,9 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_fir
                     static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
                 const std::uint64_t logical = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
                 const Complex32 value = input[staged_batch * batch_distance + logical * element_stride];
-                tile[work] = Value{value.real, value.imag};
+                tile[Layout::index(element, slot)] = Value{value.real, value.imag};
             } else {
-                tile[work] = Value{0.0F, 0.0F};
+                tile[Layout::index(element, slot)] = Value{0.0F, 0.0F};
             }
         }
     }
@@ -199,7 +254,7 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_fir
 #pragma unroll
     for (unsigned int item = 0; item < FFT::storage_size; ++item) {
         if (active && n1 < FFT::input_length) {
-            thread_data[item] = tile[n1 * FFT::ffts_per_block + threadIdx.y];
+            thread_data[item] = tile[Layout::index(n1, threadIdx.y)];
         } else {
             thread_data[item] = Value{0.0F, 0.0F};
         }
@@ -225,7 +280,7 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_fir
                                        : cross_root(twiddles, log_n, static_cast<std::uint64_t>(k1) * n2);
             const Complex32 crossed = {value.x * root.real - value.y * root.imag,
                                        value.x * root.imag + value.y * root.real};
-            tile[k1 * FFT::ffts_per_block + threadIdx.y] = Value{crossed.real, crossed.imag};
+            tile[Layout::index(k1, threadIdx.y)] = Value{crossed.real, crossed.imag};
         }
         if (recurrence_twiddle) {
             running_root = {running_root.real * root_step.real - running_root.imag * root_step.imag,
@@ -234,7 +289,7 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_fir
         k1 += FFT::stride;
     }
     __syncthreads();
-    if constexpr (FFT::ffts_per_block >= 2 && (FFT::ffts_per_block & 1) == 0) {
+    if constexpr (FFT::ffts_per_block >= 2 && (FFT::ffts_per_block & 1) == 0 && !CUBUTTERFLY_APPT_LAYOUT) {
         if (remaining_n >= 2 && element_stride == 1 && (batch_distance & 1) == 0) {
             constexpr std::uint32_t tile_pairs = tile_values / 2;
             for (std::uint32_t pair = flat_thread; pair < tile_pairs; pair += flat_threads) {
@@ -249,8 +304,20 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_fir
                         static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
                     const std::uint64_t reordered =
                         static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
-                    *reinterpret_cast<float4*>(scratch + staged_batch * batch_distance + reordered) =
-                        reinterpret_cast<const float4*>(tile)[pair];
+                    const std::uint32_t n_part = CUBUTTERFLY_APPT_NPART_LOCAL ? local_n : remaining_n;
+                    const std::uint64_t physical = aptt_physical_index(
+                        reordered, local_n * remaining_n, n_part, CUBUTTERFLY_APPT_PARALLELISM);
+#if CUBUTTERFLY_APPT_TRACE
+                    if (blockIdx.x == 0 && threadIdx.x == 0 && threadIdx.y == 0)
+                        printf("APPT write pair batch=%llu logical=%llu physical=%llu\\n",
+                               static_cast<unsigned long long>(staged_batch),
+                               static_cast<unsigned long long>(reordered),
+                               static_cast<unsigned long long>(physical));
+#endif
+                    const auto tile_index = Layout::index(element, slot);
+                    const float4 values = reinterpret_cast<const float4*>(tile)[tile_index / 2];
+                    *reinterpret_cast<float4*>(scratch + staged_batch * batch_distance + physical) =
+                        (tile_index & 1) ? make_float4(values.z, values.w, values.x, values.y) : values;
                 }
             }
         } else {
@@ -265,8 +332,18 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_fir
                         static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
                     const std::uint64_t reordered =
                         static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
-                    const Value value = tile[work];
-                    scratch[staged_batch * batch_distance + reordered * element_stride] = {value.x, value.y};
+                    const std::uint32_t n_part = CUBUTTERFLY_APPT_NPART_LOCAL ? local_n : remaining_n;
+                    const std::uint64_t physical = aptt_physical_index(
+                        reordered, local_n * remaining_n, n_part, CUBUTTERFLY_APPT_PARALLELISM);
+#if CUBUTTERFLY_APPT_TRACE
+                    if (blockIdx.x == 0 && threadIdx.x == 0 && threadIdx.y == 0)
+                        printf("APPT write scalar batch=%llu logical=%llu physical=%llu\\n",
+                               static_cast<unsigned long long>(staged_batch),
+                               static_cast<unsigned long long>(reordered),
+                               static_cast<unsigned long long>(physical));
+#endif
+                    const Value value = tile[Layout::index(element, slot)];
+                    scratch[staged_batch * batch_distance + physical * element_stride] = {value.x, value.y};
                 }
             }
         }
@@ -281,7 +358,7 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_fir
                 const std::uint32_t staged_n2 =
                     static_cast<std::uint32_t>(staged_transform) & (remaining_n - 1);
                 const std::uint64_t reordered = static_cast<std::uint64_t>(element) * remaining_n + staged_n2;
-                const Value value = tile[work];
+                const Value value = tile[Layout::index(element, slot)];
                 scratch[staged_batch * batch_distance + reordered * element_stride] = {value.x, value.y};
             }
         }
@@ -310,7 +387,17 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_sec
     for (unsigned int item = 0; item < FFT::storage_size; ++item) {
         if (active && n2 < FFT::input_length) {
             const std::uint64_t reordered = static_cast<std::uint64_t>(k1) * remaining_n + n2;
-            const Complex32 value = scratch[base + reordered * element_stride];
+            const std::uint32_t n_part = CUBUTTERFLY_APPT_NPART_LOCAL ? local_n : remaining_n;
+            const std::uint64_t physical = aptt_physical_index(
+                reordered, local_n * remaining_n, n_part, CUBUTTERFLY_APPT_PARALLELISM);
+#if CUBUTTERFLY_APPT_TRACE
+            if (blockIdx.x == 0 && threadIdx.x == 0 && threadIdx.y == 0)
+                printf("APPT read batch=%llu logical=%llu physical=%llu\\n",
+                       static_cast<unsigned long long>(transform),
+                       static_cast<unsigned long long>(reordered),
+                       static_cast<unsigned long long>(physical));
+#endif
+            const Complex32 value = scratch[base + physical * element_stride];
             thread_data[item] = Value{value.real, value.imag};
         } else {
             thread_data[item] = Value{0.0F, 0.0F};
@@ -566,7 +653,18 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_dir
         const Complex32 crossed = {value.x * root.real - value.y * root.imag,
                                    value.x * root.imag + value.y * root.real};
         const std::uint64_t reordered = static_cast<std::uint64_t>(k1) * remaining_n + n2;
-        scratch[base + reordered * element_stride] = crossed;
+        const std::uint32_t local_n = 1U << local_log_n;
+        const std::uint32_t n_part = CUBUTTERFLY_APPT_NPART_LOCAL ? local_n : remaining_n;
+        const std::uint64_t physical = aptt_physical_index(
+            reordered, local_n * remaining_n, n_part, CUBUTTERFLY_APPT_PARALLELISM);
+#if CUBUTTERFLY_APPT_TRACE
+        if (blockIdx.x == 0 && threadIdx.x == 0)
+            printf("APPT direct write batch=%llu logical=%llu physical=%llu\\n",
+                   static_cast<unsigned long long>(transform),
+                   static_cast<unsigned long long>(reordered),
+                   static_cast<unsigned long long>(physical));
+#endif
+        scratch[base + physical * element_stride] = crossed;
         if (recurrence_twiddle) {
             running_root = {running_root.real * root_step.real - running_root.imag * root_step.imag,
                             running_root.real * root_step.imag + running_root.imag * root_step.real};
@@ -594,7 +692,10 @@ __launch_bounds__(FFT::max_threads_per_block) __global__ void cufftdx_online_dir
 #pragma unroll
     for (unsigned int item = 0; item < FFT::storage_size; ++item) {
         const std::uint64_t reordered = static_cast<std::uint64_t>(k1) * remaining_n + n2;
-        const Complex32 value = scratch[base + reordered * element_stride];
+        const std::uint32_t n_part = CUBUTTERFLY_APPT_NPART_LOCAL ? local_n : remaining_n;
+        const std::uint64_t physical = aptt_physical_index(
+            reordered, local_n * remaining_n, n_part, CUBUTTERFLY_APPT_PARALLELISM);
+        const Complex32 value = scratch[base + physical * element_stride];
         thread_data[item] = Value{value.real, value.imag};
         n2 += FFT::stride;
     }
@@ -907,7 +1008,7 @@ void dispatch(std::uint32_t log_n, const Complex32* input, Complex32* output, st
     }
 }
 
-template <unsigned int Size, unsigned int Threads, unsigned int Ept, cufftdx::fft_direction Direction>
+template <unsigned int Size, unsigned int Threads, unsigned int Ept, cufftdx::fft_direction Direction, bool XorSwizzle>
 void launch_online_first(std::uint32_t log_n, std::uint32_t local_log_n, const Complex32* input,
                          Complex32* scratch, const Complex32* twiddles, std::uint64_t transforms,
                          std::uint64_t batch_distance, std::uint64_t element_stride, bool recurrence_twiddle) {
@@ -918,8 +1019,8 @@ void launch_online_first(std::uint32_t log_n, std::uint32_t local_log_n, const C
         constexpr std::size_t tile_bytes = Size * FFT::ffts_per_block * sizeof(typename FFT::value_type);
         constexpr std::size_t shared_bytes = FFT::shared_memory_size > tile_bytes ? FFT::shared_memory_size : tile_bytes;
         if constexpr (shared_bytes > 48U * 1024U)
-            cudaFuncSetAttribute(cufftdx_online_first_kernel<FFT>, cudaFuncAttributeMaxDynamicSharedMemorySize, shared_bytes);
-        cufftdx_online_first_kernel<FFT><<<blocks, FFT::block_dim, shared_bytes, active_stream>>>(
+            cudaFuncSetAttribute(cufftdx_online_first_kernel<FFT, XorSwizzle>, cudaFuncAttributeMaxDynamicSharedMemorySize, shared_bytes);
+        cufftdx_online_first_kernel<FFT, XorSwizzle><<<blocks, FFT::block_dim, shared_bytes, active_stream>>>(
             input, scratch, twiddles, transforms, log_n, local_log_n, batch_distance, element_stride, recurrence_twiddle);
     } else {
         throw std::invalid_argument("cuFFTDx prefix thread/EPT point cannot cover an integer number of FFTs");
@@ -1114,10 +1215,13 @@ template <unsigned int Size, cufftdx::fft_direction Direction>
 void dispatch_online_first_threads(std::uint32_t threads, std::uint32_t ept, std::uint32_t log_n, std::uint32_t local_log_n,
                                    const Complex32* input, Complex32* scratch, const Complex32* twiddles,
                                    std::uint64_t transforms, std::uint64_t batch_distance,
-                                   std::uint64_t element_stride, bool recurrence_twiddle) {
+                                   std::uint64_t element_stride, bool recurrence_twiddle, bool xor_swizzle) {
     switch ((ept << 16) | threads) {
 #define CUNTT_CUFFTDX_ONLINE_LAUNCH(Threads, Ept) \
-        launch_online_first<Size, Threads, Ept, Direction>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle)
+        do { \
+            if (xor_swizzle) launch_online_first<Size, Threads, Ept, Direction, true>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); \
+            else launch_online_first<Size, Threads, Ept, Direction, false>(log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); \
+        } while (false)
 #include "generated_cufftdx_online_dispatch.inc"
 #undef CUNTT_CUFFTDX_ONLINE_LAUNCH
         default: throw std::invalid_argument("requested cuFFTDx prefix thread/EPT point was not generated");
@@ -1213,16 +1317,16 @@ template <cufftdx::fft_direction Direction>
 void dispatch_online_first(std::uint32_t log_n, std::uint32_t local_log_n, const Complex32* input,
                            Complex32* scratch, const Complex32* twiddles, std::uint64_t transforms,
                            std::uint64_t batch_distance, std::uint64_t element_stride, bool recurrence_twiddle,
-                           std::uint32_t threads, std::uint32_t ept, bool contiguous_input) {
+                           std::uint32_t threads, std::uint32_t ept, bool contiguous_input, bool xor_swizzle) {
     switch (local_log_n) {
-        case 3: if (contiguous_input) break; dispatch_online_first_threads<8, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 4: if (contiguous_input) break; dispatch_online_first_threads<16, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 5: if (contiguous_input) break; dispatch_online_first_threads<32, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 6: if (contiguous_input) break; dispatch_online_first_threads<64, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 7: if (contiguous_input) break; dispatch_online_first_threads<128, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 8: if (contiguous_input) break; dispatch_online_first_threads<256, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 9: if (contiguous_input) break; dispatch_online_first_threads<512, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
-        case 10: if (contiguous_input) break; dispatch_online_first_threads<1024, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle); return;
+        case 3: if (contiguous_input) break; dispatch_online_first_threads<8, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, xor_swizzle); return;
+        case 4: if (contiguous_input) break; dispatch_online_first_threads<16, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, xor_swizzle); return;
+        case 5: if (contiguous_input) break; dispatch_online_first_threads<32, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, xor_swizzle); return;
+        case 6: if (contiguous_input) break; dispatch_online_first_threads<64, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, xor_swizzle); return;
+        case 7: if (contiguous_input) break; dispatch_online_first_threads<128, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, xor_swizzle); return;
+        case 8: if (contiguous_input) break; dispatch_online_first_threads<256, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, xor_swizzle); return;
+        case 9: if (contiguous_input) break; dispatch_online_first_threads<512, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, xor_swizzle); return;
+        case 10: if (contiguous_input) break; dispatch_online_first_threads<1024, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, xor_swizzle); return;
         case 11: dispatch_online_direct_first_threads<2048, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, contiguous_input); return;
         case 12: dispatch_online_direct_first_threads<4096, Direction>(threads, ept, log_n, local_log_n, input, scratch, twiddles, transforms, batch_distance, element_stride, recurrence_twiddle, contiguous_input); return;
         default: throw std::invalid_argument("cufftdx online first pass supports logN=3..12");
@@ -1428,15 +1532,15 @@ void launch_cufftdx_online_reorder(std::uint32_t log_n, std::uint32_t local_log_
                                    const Complex32* twiddles,
                                    std::uint64_t transforms, std::uint64_t batch_distance,
                                    std::uint64_t element_stride, bool inverse, bool normalize,
-                                   CrossTwiddleMode cross_twiddle, std::uint32_t prefix_threads,
+                                   CrossTwiddleMode cross_twiddle, SharedLayout shared_layout, std::uint32_t prefix_threads,
                                    std::uint32_t suffix_threads, std::uint32_t prefix_ept,
-                                   std::uint32_t suffix_ept, DirectBoundary direct_boundary, cudaStream_t stream) {
+                                   std::uint32_t suffix_ept, DirectBoundary direct_boundary, cudaStream_t stream, unsigned stage) {
     const LaunchStreamScope stream_scope(stream);
     const bool recurrence_twiddle = cross_twiddle == CrossTwiddleMode::Recurrence;
     const bool suffix_tiled_transpose = direct_boundary == DirectBoundary::TiledTranspose;
     const bool prefix_tiled_transpose = direct_boundary == DirectBoundary::PrefixTiledTranspose;
     const Complex32* prefix_input = input;
-    if (prefix_tiled_transpose) {
+    if (prefix_tiled_transpose && stage != 2) {
         if (workspace == nullptr)
             throw std::invalid_argument("prefix tiled transpose requires a workspace buffer");
         launch_transpose_complex32(input, workspace, 1U << local_log_n,
@@ -1445,17 +1549,17 @@ void launch_cufftdx_online_reorder(std::uint32_t log_n, std::uint32_t local_log_
         prefix_input = workspace;
     }
     if (inverse) {
-        dispatch_online_first<cufftdx::fft_direction::inverse>(log_n, local_log_n, prefix_input, scratch, twiddles,
+        if (stage != 2) dispatch_online_first<cufftdx::fft_direction::inverse>(log_n, local_log_n, prefix_input, scratch, twiddles,
                                                                transforms, batch_distance, element_stride, recurrence_twiddle,
-                                                               prefix_threads, prefix_ept, prefix_tiled_transpose);
-        dispatch_online_second<cufftdx::fft_direction::inverse>(log_n, local_log_n, scratch, output, transforms,
+                                                               prefix_threads, prefix_ept, prefix_tiled_transpose, shared_layout == SharedLayout::XorSwizzle);
+        if (stage != 1) dispatch_online_second<cufftdx::fft_direction::inverse>(log_n, local_log_n, scratch, output, transforms,
                                                                 batch_distance, element_stride, normalize, suffix_threads, suffix_ept,
                                                                 suffix_tiled_transpose);
     } else {
-        dispatch_online_first<cufftdx::fft_direction::forward>(log_n, local_log_n, prefix_input, scratch, twiddles,
+        if (stage != 2) dispatch_online_first<cufftdx::fft_direction::forward>(log_n, local_log_n, prefix_input, scratch, twiddles,
                                                                transforms, batch_distance, element_stride, recurrence_twiddle,
-                                                               prefix_threads, prefix_ept, prefix_tiled_transpose);
-        dispatch_online_second<cufftdx::fft_direction::forward>(log_n, local_log_n, scratch, output, transforms,
+                                                               prefix_threads, prefix_ept, prefix_tiled_transpose, shared_layout == SharedLayout::XorSwizzle);
+        if (stage != 1) dispatch_online_second<cufftdx::fft_direction::forward>(log_n, local_log_n, scratch, output, transforms,
                                                                 batch_distance, element_stride, false, suffix_threads, suffix_ept,
                                                                 suffix_tiled_transpose);
     }

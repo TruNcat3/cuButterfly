@@ -1,0 +1,8 @@
+{
+  "schema": "cubutterfly-install-search-v1",
+  "scope": "Focused FP64 factor/core/data-prefetch integration on the active GPU; not full FFT acceptance",
+  "workloads": [
+    {"operator":"fft","precision":"fp64","logN":24,"batch":1,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fft","precision":"fp64","logN":18,"batch":1,"placement":"out-of-place","normalization":"none"}
+  ]
+}

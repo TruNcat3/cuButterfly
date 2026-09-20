@@ -121,7 +121,7 @@ static int run_2d_arbitrary_fft(cubutterflyHandle_t handle, cudaStream_t stream)
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &forward));
     CHECK_CUB(cubutterflyPlanGetPhysicalExtents(forward, physical, 2));
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(forward, &workspace_bytes));
-    if (physical[0] != extents[0] || physical[1] != extents[1])
+    if (physical[0] != 8 || physical[1] != 16)
         return 1;
     CHECK_CUDA(cudaMalloc((void**)&input, sizeof(original)));
     CHECK_CUDA(cudaMalloc((void**)&output, sizeof(spectrum)));
@@ -751,7 +751,80 @@ static int run_appt_layout_query(cubutterflyHandle_t handle) {
     return 0;
 }
 
-int main(void) {
+static int run_ntt_output_order(cubutterflyHandle_t handle, cudaStream_t stream,
+                                unsigned word_bits, int inverse, int measure) {
+    const size_t extent = 8, batch = 2;
+    const size_t bytes = extent * batch * (word_bits / 8);
+    uint64_t input64[16], natural64[16], reversed64[16];
+    uint32_t input32[16], natural32[16], reversed32[16];
+    for (unsigned i = 0; i < 16; ++i) input32[i] = (uint32_t)(input64[i] = i * 17 + 3);
+    void* input = NULL;
+    void* output = NULL;
+    cubutterflyDescriptor_t descriptor = NULL;
+    CHECK_CUB(cubutterflyCreateDescriptor(&descriptor));
+    CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_NTT));
+    CHECK_CUB(cubutterflySetDataType(descriptor,
+        word_bits == 32 ? CUBUTTERFLY_DATA_UINT32 : CUBUTTERFLY_DATA_UINT64,
+        word_bits == 32 ? CUBUTTERFLY_COMPUTE_UINT32 : CUBUTTERFLY_COMPUTE_UINT64));
+    CHECK_CUB(cubutterflySetModulus(descriptor, word_bits == 32 ? 998244353ULL : 576460756061519873ULL, word_bits));
+    CHECK_CUB(cubutterflySetShape(descriptor, 1, &extent, batch));
+    CHECK_CUB(cubutterflySetDirection(descriptor,
+        inverse ? CUBUTTERFLY_DIRECTION_INVERSE : CUBUTTERFLY_DIRECTION_FORWARD, 1));
+    CHECK_CUDA(cudaMalloc(&input, bytes));
+    CHECK_CUDA(cudaMalloc(&output, bytes));
+    CHECK_CUDA(cudaMemcpyAsync(input, word_bits == 32 ? (void*)input32 : (void*)input64,
+                               bytes, cudaMemcpyHostToDevice, stream));
+    for (int reverse = 0; reverse < 2; ++reverse) {
+        cubutterflyPlan_t plan = NULL;
+        void* workspace = NULL;
+        size_t workspace_bytes = 0;
+        CHECK_CUB(cubutterflySetNttLayouts(descriptor, CUBUTTERFLY_NTT_LAYOUT_NATURAL,
+            reverse ? CUBUTTERFLY_NTT_LAYOUT_BIT_REVERSED : CUBUTTERFLY_NTT_LAYOUT_NATURAL));
+        CHECK_CUB(cubutterflySetAlgorithmPolicy(descriptor,
+            reverse && measure ? CUBUTTERFLY_ALGORITHM_MEASURE :
+            reverse && !inverse ? CUBUTTERFLY_ALGORITHM_DEFAULT : CUBUTTERFLY_ALGORITHM_EXPLICIT,
+            "ntt-shared-iterative"));
+        CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &plan));
+        if (reverse && measure) {
+            cubutterflySelectionSource_t source;
+            CHECK_CUB(cubutterflyPlanGetSelectionSource(plan, &source));
+            if (source != CUBUTTERFLY_SELECTION_RUNTIME_MEASURED) return 1;
+        }
+        CHECK_CUB(cubutterflyPlanGetWorkspaceSize(plan, &workspace_bytes));
+        if (workspace_bytes) {
+            CHECK_CUDA(cudaMalloc(&workspace, workspace_bytes));
+            CHECK_CUB(cubutterflyPlanSetWorkspace(plan, workspace, workspace_bytes));
+        }
+        CHECK_CUB(cubutterflyExecute(handle, plan, input, output));
+        void* host = word_bits == 32 ? (reverse ? (void*)reversed32 : (void*)natural32)
+                                      : (reverse ? (void*)reversed64 : (void*)natural64);
+        CHECK_CUDA(cudaMemcpyAsync(host, output, bytes, cudaMemcpyDeviceToHost, stream));
+        CHECK_CUDA(cudaStreamSynchronize(stream));
+        CHECK_CUB(cubutterflyDestroyPlan(plan));
+        cudaFree(workspace);
+    }
+    for (unsigned b = 0; b < batch; ++b) for (unsigned i = 0; i < extent; ++i) {
+        const unsigned j = ((i & 1U) << 2) | (i & 2U) | ((i & 4U) >> 2);
+        if (word_bits == 32 ? reversed32[b*extent+i] != natural32[b*extent+j]
+                            : reversed64[b*extent+i] != natural64[b*extent+j]) return 1;
+    }
+    // Unsupported input permutations and composite semantics must not silently
+    // turn into natural-order execution.
+    if (cubutterflySetNttLayouts(descriptor, CUBUTTERFLY_NTT_LAYOUT_BIT_REVERSED,
+                                CUBUTTERFLY_NTT_LAYOUT_NATURAL) == CUBUTTERFLY_STATUS_SUCCESS) return 1;
+    for (unsigned shape = 0; shape < 2; ++shape) {
+        const size_t extents[2] = {shape ? 8 : 7, 8};
+        cubutterflyPlan_t invalid = NULL;
+        CHECK_CUB(cubutterflySetShape(descriptor, shape ? 2 : 1, extents, 1));
+        if (cubutterflyCreatePlan(handle, descriptor, &invalid) != CUBUTTERFLY_STATUS_NOT_SUPPORTED) return 1;
+    }
+    cudaFree(input); cudaFree(output);
+    CHECK_CUB(cubutterflyDestroyDescriptor(descriptor));
+    printf("PASS C API bit-reversed word%u inverse=%d measure=%d\n", word_bits, inverse, measure);
+    return 0;
+}
+
+int main(int argc, char** argv) {
     cubutterflyHandle_t handle = NULL;
     cubutterflyDescriptor_t descriptor = NULL;
     cubutterflyPlan_t plan = NULL;
@@ -771,6 +844,14 @@ int main(void) {
     CHECK_CUDA(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking));
     CHECK_CUB(cubutterflyCreate(&handle));
     CHECK_CUB(cubutterflySetStream(handle, stream));
+    if (argc == 2 && (strcmp(argv[1], "--ntt-output-order") == 0 ||
+                      strcmp(argv[1], "--ntt-output-order-measure") == 0)) {
+        const int measure = strcmp(argv[1], "--ntt-output-order-measure") == 0;
+        for (unsigned bits = 32; bits <= 64; bits += 32) for (int inverse = 0; inverse < 2; ++inverse)
+            if (run_ntt_output_order(handle, stream, bits, inverse, measure)) return 1;
+        cubutterflyDestroy(handle); cudaStreamDestroy(stream);
+        return 0;
+    }
     CHECK_CUB(cubutterflySetLogCallback(handle, log_message, &warnings));
     CHECK_CUB(cubutterflyCreateDescriptor(&descriptor));
     CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_FWHT));
@@ -811,6 +892,8 @@ int main(void) {
         return 1;
     if (run_measure_cache(handle) != 0)
         return 1;
+    for (unsigned bits = 32; bits <= 64; bits += 32) for (int inverse = 0; inverse < 2; ++inverse)
+        if (run_ntt_output_order(handle, stream, bits, inverse, 0)) return 1;
     if (run_2d_zeta(handle, stream) != 0 || run_2d_structured(handle, stream) != 0)
         return 1;
     if (warnings == 0)

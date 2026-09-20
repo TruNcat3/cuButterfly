@@ -68,7 +68,7 @@ def main():
                 formatted[field] = f"{row[field]:.6f}"
             writer.writerow(formatted)
     if args.markdown:
-        lines = ["# V100 Matching-Protocol External Baselines", "",
+        lines = ["# Matching-Protocol External Baselines", "",
                  "All rows use 1000 warmups, 100 repetitions, five independent process trials, and correctness checks.", "",
                  "Rows below 0.020 ms are retained but are not used for stable latency claims.", "",
                  "| Operator | logN | Batch | Output | Implementation | Median ms | vs cuButterfly/cuNTT | Timing quality |",

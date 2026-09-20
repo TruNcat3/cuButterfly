@@ -4,6 +4,7 @@ import csv
 import io
 import json
 import math
+import os
 import pathlib
 import random
 import shlex
@@ -210,10 +211,42 @@ def parse_csv_record(output):
 def execute(command):
     completed = subprocess.run(command, check=False, capture_output=True, text=True)
     if completed.returncode:
+        command_text = " ".join(shlex.quote(str(value)) for value in command)
         raise RuntimeError(
-            f"command failed with exit code {completed.returncode}: {shlex.join(command)}\n"
+            f"command failed with exit code {completed.returncode}: {command_text}\n"
             f"stdout:\n{completed.stdout}\nstderr:\n{completed.stderr}")
     return parse_csv_record(completed.stdout)
+
+
+def visible_gpu():
+    return os.environ.get("CUDA_VISIBLE_DEVICES", "0").split(",", 1)[0]
+
+
+def require_exclusive_gpu(idle_context_memory_mb=64):
+    gpu = visible_gpu()
+    utilization = subprocess.run(
+        ["nvidia-smi", "-i", gpu, "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+    processes = subprocess.run(
+        ["nvidia-smi", "-i", gpu, "--query-compute-apps=pid,process_name,used_memory",
+         "--format=csv,noheader,nounits"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+    if not processes:
+        return
+    active = []
+    gpu_busy = int(float(utilization or "0")) > 0
+    for line in processes.splitlines():
+        fields = [field.strip() for field in line.split(",")]
+        try:
+            memory_mb = float(fields[-1].split()[0])
+        except (IndexError, ValueError):
+            memory_mb = float("inf")
+        if gpu_busy or memory_mb > idle_context_memory_mb:
+            active.append(line)
+    if active:
+        raise RuntimeError(f"target GPU {gpu} is not exclusive; active compute processes: {'; '.join(active)}")
 
 
 def validate_record(case, batch, record):
@@ -258,8 +291,12 @@ def main():
     parser.add_argument("--output", "-o", type=pathlib.Path, default=pathlib.Path("results/comprehensive_v100_quick_raw.csv"))
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--skip-verify", action="store_true")
+    parser.add_argument("--require-exclusive-gpu", action="store_true")
+    parser.add_argument("--idle-context-memory-mb", type=int, default=64)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+    if args.idle_context_memory_mb < 0:
+        raise ValueError("idle context memory cannot be negative")
 
     root = pathlib.Path(__file__).resolve().parents[1]
     manifest_path = args.manifest if args.manifest.is_absolute() else root / args.manifest
@@ -277,7 +314,8 @@ def main():
     if args.dry_run:
         for case, trial in pending:
             command = build_command(root, document, case, protocol, case_batch(case, protocol), False)
-            print(f"trial={trial} case={case['id']} {shlex.join(command)}")
+            command_text = " ".join(shlex.quote(str(value)) for value in command)
+            print(f"trial={trial} case={case['id']} {command_text}")
         print(f"cases={len(cases)} pending_runs={len(pending)}")
         return
 
@@ -296,7 +334,11 @@ def main():
             preflights[case["id"]] = preflight_cache[cache_key]
             continue
         print(f"verify case={case['id']} batch={verify_batch}", flush=True)
+        if args.require_exclusive_gpu:
+            require_exclusive_gpu(args.idle_context_memory_mb)
         record = execute(command)
+        if args.require_exclusive_gpu:
+            require_exclusive_gpu(args.idle_context_memory_mb)
         validate_record(case, verify_batch, record)
         if record.get("correct") != "1":
             raise RuntimeError(f"correctness preflight failed for {case['id']}: {record}")
@@ -307,7 +349,11 @@ def main():
         batch = case_batch(case, protocol)
         command = build_command(root, document, case, protocol, batch, False)
         print(f"run={run_index}/{len(pending)} trial={trial} case={case['id']} batch={batch}", flush=True)
+        if args.require_exclusive_gpu:
+            require_exclusive_gpu(args.idle_context_memory_mb)
         measured = execute(command)
+        if args.require_exclusive_gpu:
+            require_exclusive_gpu(args.idle_context_memory_mb)
         semantics = validate_record(case, batch, measured)
         preflight = preflights[case["id"]]
         records.append({

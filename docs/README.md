@@ -1,15 +1,46 @@
 # Documentation Index
 
+> Note: Paths marked `local artifact` are local experiment records and are not included in this source release.
+
 cuButterfly has two contracts: a usable CUDA library and a research artifact
 that explains how mappings were generated and measured. Choose a path below;
 the long experiment files remain available as source evidence rather than
 being repeated in the root README.
 
-## Recommended Reading Order
+The [2026-09-12 all-application method and implementation audit](method_implementation_audit_20260912.md)
+records the executable coverage and gaps observed at that audit. Later changes
+and pending work are maintained in the current section of
+[refactor progress](framework_refactor_progress.md).
 
-Read the repository in this order when encountering it for the first time:
+The [unified planner guide](unified_planner.md) documents the implemented public
+API, compile policy, incremental registry and installation search. The
+[refactor progress](framework_refactor_progress.md) separates verified changes
+from remaining performance acceptance work.
 
-1. [v0.8 Release Overview](release_v08.md) establishes the frozen scope,
+## Reading by Task
+
+Use [unified planner](unified_planner.md) for current API/lowering/search behavior,
+[hardware calibration](hardware_profile_install.md) for migration and experiment
+recovery, and [refactor progress](framework_refactor_progress.md) for the active
+milestone. [AGENTS.md](../AGENTS.md) records the concise research working conventions.
+Per-model and memory-capacity commands and evidence are in the
+[hardware notes](hardware/README.md), with a template for adding another GPU.
+The [research acceptance workflow](research_acceptance.md) runs searched
+cross-operator implementations against matching baselines with resumable trials.
+The [portable V100 campaign](hardware/v100.md) prepares a target-local build,
+calibrates the target and runs the shared experiment matrix. The
+[application coverage roadmap](application_coverage_roadmap.md) separates
+existing semantics needing measurement from missing benchmark contracts and new lowerings.
+The cuButterfly paper working draft (local artifact: `../paper/README.md`; not included in this source release) organizes the method,
+theoretical conditions, frozen V100/A100 evidence and pending experiments in
+the supplied ISCA2026 format. Its partial results do not qualify the full matrix.
+Consult paper and architecture sections when the task changes method assumptions.
+
+The following is an optional first-time orientation, not a prerequisite for edits:
+
+1. [v0.9 Framework Release](release_v09.md) establishes the layered framework
+   and hardware-profile boundary. [v0.8 Release Overview](release_v08.md)
+   establishes the frozen V100 evidence scope,
    terminology, evidence labels, and V100 limitations.
 2. [Getting Started](getting_started.md) and the [Programming Guide](programming_guide.md)
    explain the user-facing CUDA plan and workspace workflow.
@@ -20,7 +51,7 @@ Read the repository in this order when encountering it for the first time:
    [Architecture Guardrails](architecture_guardrails.md), and
    [Processing-Unit Design Space](processing_unit_design_space.md) define the
    architecture/core boundary and legal lowering contracts.
-5. [Runtime Selector](runtime_selector.md) and [Hardware Profile Initialization](hardware_profile_install.md)
+5. [Unified Planner](unified_planner.md) and [Hardware Profile Initialization](hardware_profile_install.md)
    explain how a target GPU chooses a point in that space.
 6. [Reproducibility](reproducibility.md), [V100 Three-Way Comparison](v100_three_way_comparison.md),
    and [Comprehensive Butterfly Comparison](comprehensive_butterfly_comparison.md)
@@ -47,7 +78,9 @@ Read the repository in this order when encountering it for the first time:
 | Errors and unsupported combinations | [Error Handling](error_handling.md) |
 | Supported operators and numeric forms | [Capability Matrix](support_matrix.md), [Operator Catalog](operator_catalog.md) |
 | Examples | [Examples](examples.md) |
-| Runtime selection | [Runtime Mapping Selector](runtime_selector.md) |
+| Current runtime selection | [Unified Planner](unified_planner.md) |
+| Historical generated selector | [Runtime Mapping Selector](runtime_selector.md) |
+| Unified runtime migration and remaining gaps | [Mixed-Dataflow Runtime](mixed_dataflow_runtime.md) |
 | Install-time GPU calibration | [Hardware Profile Initialization](hardware_profile_install.md) |
 
 ## Understand The Method
@@ -70,7 +103,8 @@ Read the repository in this order when encountering it for the first time:
 | Evidence | Document or entry point |
 |:--|:--|
 | v0.8 frozen release summary | [v0.8 Release Overview](release_v08.md) |
-| Research status and limitations | [Research Status](research_status.md) |
+| Current research status and recovery | [Refactor Progress](framework_refactor_progress.md) |
+| Earlier research status and limitations | [Research Status](research_status.md) |
 | All-operator protocol | [Comprehensive Butterfly Comparison](comprehensive_butterfly_comparison.md) |
 | v0.6/v0.8 and library reconciliation | [Library Reconciliation](v08_v06_cufft_reconciliation.md) |
 | V100 library/base/search matrix | [V100 Three-Way Comparison](v100_three_way_comparison.md) |
@@ -121,4 +155,7 @@ Comparison](fft_library_comparison.md) and [V100 External Baselines](v100_extern
 | `external` | Third-party result under a matched semantic and timing protocol. |
 | `placeholder` | Future hardware or schema entry without a performance claim. |
 
-V100 is the only fully measured GPU in the v0.8 release boundary.
+V100 remains the fully measured, reproducible GPU in the v0.8 release
+boundary. Other GPUs can now generate target-local profiles during
+installation; those local measurements do not change the frozen V100 baseline
+or imply portable performance claims.

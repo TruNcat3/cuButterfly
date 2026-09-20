@@ -1,5 +1,9 @@
 # Getting Started
 
+For the current C/C++ planner, research compilation and hardware registry, see
+the [unified planner guide](unified_planner.md). Backend examples below include
+explicit historical experiments; their parameters are not portable search defaults.
+
 ## Requirements
 
 - Linux with an NVIDIA GPU
@@ -14,11 +18,34 @@ another GPU is supported, but the V100-selected mappings are not portable
 performance defaults.
 
 On hosts with multiple CUDA installations, CMake may otherwise find an older
-`/usr/bin/nvcc`. The published clean-clone validation uses CUDA 11.8 and GCC 11.
+`/usr/bin/nvcc`. The archived V100 clean-clone validation used CUDA 11.8 and GCC 11.
 CUDA 11.5 with GCC 11 fails in the standard library before compiling project
 code; select a compatible CUDA/host-compiler pair explicitly.
 
 ## Configure And Build
+
+For a new machine, the recommended path is the unified installer. It detects
+the first visible GPU architecture, builds the matching target, initializes
+the hardware profile, records a bounded operator search in the dynamic registry,
+then verifies and installs the package:
+
+```bash
+./scripts/install_with_hardware_profile.sh \
+  --build-dir build-local \
+  --prefix "$HOME/.local"
+```
+
+Add `--enable-cufftdx` to install MathDx and include the cuFFTDx processing
+unit in the calibration. Select the intended GPU before installation; the default
+profile path includes its model, SM and memory capacity. For an already installed
+research environment, reuse the existing build and
+[resume calibration](hardware_profile_install.md#shared-gpu-waiting-and-recovery)
+instead of reinstalling. Enable `CUBUTTERFLY_COMPILE_MODE=research` when exploring
+on-demand mappings; plan/JIT time is excluded from kernel timing.
+
+The explicit CMake example below reproduces the archived V100 configuration.
+Choose the CUDA toolchain and architecture appropriate to the target device
+when configuring a different manual build.
 
 ```bash
 cmake -S . -B build \
@@ -38,8 +65,9 @@ cmake -S . -B build \
   -DCUNTT_DESIGN_SPEC="$PWD/config/v100_design_points.json"
 ```
 
-For a new GPU, copy the JSON specification and GPU profile instead of editing
-the V100 records in place.
+For hardware migration, keep the archived V100 records intact and generate a
+target-local profile. A custom processing-unit JSON is optional; it is not
+required merely because the GPU model changes.
 
 ### Optional FFT Processing Units
 
@@ -59,21 +87,29 @@ cmake -S . -B build \
 cmake --build build -j
 ```
 
-The cuFFTDx adapter supports FP32 forward/inverse block FFTs at `logN=3..10`
-and direct-strided online dimensions at `logN=11..12`, including strided and
-in-place plan semantics. The current TurboFFT artifact
+The compiled cuFFTDx units depend on the build's generated inventory. Inspect
+`cubutterfly_bench --list-processing-units` for available precision/length/thread/EPT
+combinations and `--list-design-points` for a workload's projected mappings.
+The unified planner also supports standalone register FFT modules in FP32/FP64.
+The TurboFFT artifact
 adapter supports the generated FP32 forward, contiguous, out-of-place kernels
 actually present upstream at `logN=7..10`.
 
 ## Test
 
+For a new build or a full correctness milestone:
+
 ```bash
 cmake --build build --target test
 ```
 
-This runs `cuntt_tests` and `cubutterfly_tests`. The tests compare CUDA results
-against CPU references across lengths, directions, radices, layouts, tails,
-generated units, and supported numeric types.
+This runs the registered CTest suite, including numerical and public API checks.
+The tests compare CUDA results against CPU references across lengths, directions,
+radices, layouts, tails, generated units and supported numeric types. During
+iteration, use `ctest --test-dir <build-dir> -R <affected-tests> --output-on-failure`
+for the changed contracts and broaden only when changes or failures justify it.
+Keep valid earlier results tied to their build; full performance acceptance has
+its own calibrated, exclusive-GPU protocol in the unified planner guide.
 
 Optional memory checking:
 
@@ -188,11 +224,11 @@ end-to-end rates.
 For the unified C plan surface, arbitrary lengths, and rank-two shapes, use:
 
 ```bash
-# Exact 3x5 FP32 FFT; default selects direct cuFFT when it wins
+# Exact 3x5 FP32 FFT using the internal default composition
 ./build/cubutterfly_plan_bench --operator fft --shape 3x5 --repeat 100
 ./build/cubutterfly_plan_bench --operator fft --shape 3x5 --compare-cufft --repeat 100
 
-# Retain Bluestein as an explicit research composition
+# Explicit Bluestein composition using external cuFFT cores as a baseline
 ./build/cubutterfly_plan_bench --operator fft --shape 3x5 \
   --algorithm bluestein-cufft-power2-core --repeat 100
 

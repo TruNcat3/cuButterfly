@@ -1,0 +1,9 @@
+{
+  "schema": "cubutterfly-install-search-v1",
+  "scope": "bounded staged-model and evolutionary-workflow validation; not comprehensive acceptance",
+  "workloads": [
+    {"operator": "fft", "precision": "fp32", "logN": 12, "batch": 32},
+    {"operator": "fft", "precision": "fp32", "logN": 18, "batch": 16},
+    {"operator": "fwht", "precision": "fp32", "logN": 12, "batch": 32}
+  ]
+}

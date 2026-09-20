@@ -1,4 +1,6 @@
 #include "bluestein_ntt.hpp"
+#include "plan_registry.hpp"
+#include <nlohmann/json.hpp>
 
 #include "cuntt/ntt.hpp"
 
@@ -122,11 +124,12 @@ class BluesteinNttPlan::Impl {
                cuntt::ComputeUnit::Radix2) {}
 
     Impl(std::size_t n, std::size_t m, std::size_t batch, std::uint64_t modulus,
-         bool inverse, cuntt::Backend core_backend, cuntt::ComputeUnit core_compute_unit)
+         bool inverse, cuntt::Backend core_backend, cuntt::ComputeUnit core_compute_unit,
+         const cuntt::PlanConfig* mapping = nullptr, const std::string& replay = {})
         : n_(n), m_(m), batch_(batch), modulus_(modulus), inverse_(inverse),
           core_backend_(core_backend), core_compute_unit_(core_compute_unit),
-          forward_(core_config(m, batch, modulus, false, core_backend, core_compute_unit)),
-          inverse_core_(core_config(m, batch, modulus, true, core_backend, core_compute_unit)) {
+          forward_(core_config(m, batch, modulus, false, core_backend, core_compute_unit, mapping, replay)),
+          inverse_core_(core_config(m, batch, modulus, true, core_backend, core_compute_unit, mapping, replay)) {
         if (n_ < 2 || m_ < 2 * n_ - 1 || batch_ == 0)
             throw std::invalid_argument("invalid Bluestein NTT shape");
         if ((modulus_ - 1) % m_ != 0)
@@ -155,6 +158,11 @@ class BluesteinNttPlan::Impl {
 
     std::size_t workspace_size() const noexcept {
         return 2 * data_bytes() + align_16(std::max(forward_.workspace_size(), inverse_core_.workspace_size()));
+    }
+
+    std::string mapping_json() const {
+        return "{\"kind\":\"bluestein-ntt\",\"forward\":" + serialize_mapping(forward_.config()) +
+               ",\"inverse\":" + serialize_mapping(inverse_core_.config()) + "}";
     }
 
     void execute(const std::uint64_t* input, std::uint64_t* output, void* workspace,
@@ -193,13 +201,15 @@ class BluesteinNttPlan::Impl {
     static cuntt::PlanConfig core_config(std::size_t m, std::size_t batch,
                                          std::uint64_t modulus, bool inverse,
                                          cuntt::Backend backend,
-                                         cuntt::ComputeUnit compute_unit) {
+                                         cuntt::ComputeUnit compute_unit, const cuntt::PlanConfig* mapping = nullptr,
+                                         const std::string& replay = {}) {
         if (m == 0 || (m & (m - 1)) != 0)
             throw std::invalid_argument("Bluestein NTT convolution length must be a power of two");
         std::uint32_t log_m = 0;
         for (auto value = m; value > 1; value >>= 1)
             ++log_m;
-        cuntt::PlanConfig config;
+        cuntt::PlanConfig config = mapping ? *mapping : cuntt::PlanConfig{};
+        config.auto_select = false;
         config.log_n = log_m;
         config.batch = batch;
         config.modulus = modulus;
@@ -208,6 +218,7 @@ class BluesteinNttPlan::Impl {
         config.compute_unit = compute_unit;
         config.word_bits = 64;
         config.auto_allocate_workspace = false;
+        if(!replay.empty()) apply_serialized_mapping(nlohmann::json::parse(replay).at(inverse ? "inverse" : "forward").dump(),config);
         return config;
     }
 
@@ -242,7 +253,8 @@ class BluesteinNttPlan::Impl {
             check_cuda(cudaMemcpy(chirp_, chirp.data(), chirp_bytes, cudaMemcpyHostToDevice), "upload Bluestein NTT chirp");
             check_cuda(cudaMemcpy(chirp_shoup_, chirp_shoup.data(), chirp_bytes, cudaMemcpyHostToDevice), "upload Bluestein NTT chirp Shoup table");
             check_cuda(cudaMemcpy(temporary, kernel.data(), kernel_bytes, cudaMemcpyHostToDevice), "upload Bluestein NTT kernel");
-            auto init_config = core_config(m_, 1, modulus_, false, core_backend_, core_compute_unit_);
+            const auto& mapping = forward_.config();
+            auto init_config = core_config(m_, 1, modulus_, false, core_backend_, core_compute_unit_, &mapping);
             init_config.auto_allocate_workspace = true;
             cuntt::Plan init_plan(init_config);
             init_plan.execute_async(temporary, kernel_fft_);
@@ -284,13 +296,14 @@ class BluesteinNttPlan::Impl {
 BluesteinNttPlan::BluesteinNttPlan(std::size_t length, std::size_t convolution_length,
                                    std::size_t batch, std::uint64_t modulus, bool inverse,
                                    cuntt::Backend core_backend,
-                                   cuntt::ComputeUnit core_compute_unit)
+                                   cuntt::ComputeUnit core_compute_unit, const cuntt::PlanConfig* mapping, const std::string& replay)
     : impl_(std::make_unique<Impl>(length, convolution_length, batch, modulus, inverse,
-                                   core_backend, core_compute_unit)) {}
+                                   core_backend, core_compute_unit, mapping, replay)) {}
 
 BluesteinNttPlan::~BluesteinNttPlan() = default;
 
 std::size_t BluesteinNttPlan::workspace_size() const noexcept { return impl_->workspace_size(); }
+std::string BluesteinNttPlan::mapping_json() const { return impl_->mapping_json(); }
 
 void BluesteinNttPlan::execute(const std::uint64_t* input, std::uint64_t* output,
                                void* workspace, std::size_t input_stride,

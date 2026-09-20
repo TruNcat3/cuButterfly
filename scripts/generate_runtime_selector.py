@@ -2,6 +2,10 @@
 import argparse
 import csv
 import pathlib
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from generated_files import write_if_changed
 
 
 TABLES = {
@@ -56,12 +60,18 @@ def generate_header(path, tables):
         lines.append(f"inline constexpr std::array<GeneratedLatencyAnchor, {len(anchors)}> k{name}Anchors = {{{{{values}}}}};")
     lines.extend(["}  // namespace cuntt::detail", ""])
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(lines))
+    write_if_changed(path, "\n".join(lines))
 
 
 def main():
     parser = argparse.ArgumentParser(description="Generate runtime selector latency anchors from measured scaling data.")
     parser.add_argument("--summary", type=pathlib.Path, required=True)
+    # These inputs were added to the v0.8 CMake interface before their
+    # generated selector overlays were checked in. Accept them so older
+    # summaries remain usable while keeping the base-table generator stable.
+    parser.add_argument("--fft14-direct-summary", type=pathlib.Path)
+    parser.add_argument("--v08-ntt-summary", type=pathlib.Path)
+    parser.add_argument("--confirmed-selection", type=pathlib.Path)
     parser.add_argument("--header", type=pathlib.Path, required=True)
     args = parser.parse_args()
     generate_header(args.header, load_tables(args.summary))

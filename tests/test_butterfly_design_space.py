@@ -92,9 +92,9 @@ class ButterflyDesignSpaceTest(unittest.TestCase):
         bindings = self.space["runtime_bindings"]
         self.assertEqual(set(bindings["ntt_backends"]),
                          {"baseline", "tile256", "hybrid2d", "compact-stage", "stage-pipeline",
-                          "hybrid-dataflow", "hierarchical-barrier", "hierarchical-dataflow"})
+                          "hybrid-dataflow", "hierarchical-barrier", "hierarchical-dataflow", "shared-iterative"})
         self.assertEqual(set(bindings["butterfly_backends"]),
-                         {"temporal-tile", "hierarchical", "online-reorder", "warp-hybrid", "stage-pipeline", "cufft"})
+                         {"temporal-tile", "hierarchical", "online-reorder", "warp-hybrid", "stage-pipeline", "cufft", "shared-iterative"})
 
     def test_filtered_processing_layout_realization_product_is_enumerable(self):
         choices = expand_design_choices(self.space, "fft", {

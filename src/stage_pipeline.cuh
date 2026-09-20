@@ -6,9 +6,19 @@
 
 namespace cuntt::detail {
 
+__device__ __forceinline__ std::uint32_t global_writer_aligned_index(std::uint32_t logical,
+                                                                       std::uint32_t log_n) {
+    // Rotate the lowest address bit to the highest stage bit.  Both sides of
+    // the boundary use this bijection, so the transform remains natural while
+    // adjacent writers feed distinct next-stage transaction groups.
+    if (log_n <= 1) return logical;
+    return (logical >> 1) | ((logical & 1U) << (log_n - 1));
+}
+
 template <typename Operator, std::uint32_t LocalLogN, bool Radix4, bool ReorderOutput = false, bool Radix8 = false, bool FinalizeOutput = false>
 __global__ void hierarchical_prefix_kernel(const typename Operator::Value* input, typename Operator::Value* output, std::uint64_t total_transforms,
-                                           std::uint32_t log_n, std::uint64_t batch_distance, std::uint64_t element_stride, Operator op) {
+                                           std::uint32_t log_n, std::uint64_t batch_distance, std::uint64_t element_stride, Operator op,
+                                           bool writer_aligned = false) {
     using Value = typename Operator::Value;
     extern __shared__ __align__(16) unsigned char storage[];
     Value*                                        tile = reinterpret_cast<Value*>(storage);
@@ -153,7 +163,8 @@ __global__ void hierarchical_prefix_kernel(const typename Operator::Value* input
 
     for (std::uint32_t index = threadIdx.x; index < local_n; index += blockDim.x) {
         const std::uint32_t global_index = chunk * local_n + index;
-        const std::uint32_t output_index = ReorderOutput ? index * chunks_per_transform + chunk : global_index;
+        const std::uint32_t reordered = index * chunks_per_transform + chunk;
+        const std::uint32_t output_index = ReorderOutput ? (writer_aligned ? global_writer_aligned_index(reordered, log_n) : reordered) : global_index;
         const Value         value        = FinalizeOutput ? op.finalize(tile[index], local_n) : tile[index];
         output[base + static_cast<std::uint64_t>(output_index) * element_stride] = value;
     }
@@ -162,7 +173,8 @@ __global__ void hierarchical_prefix_kernel(const typename Operator::Value* input
 template <typename Operator, std::uint32_t RemainingLogN, bool Radix4, bool Radix8 = false>
 __global__ void online_reorder_suffix_kernel(const typename Operator::Value* input, typename Operator::Value* output, std::uint64_t total_transforms,
                                              std::uint32_t log_n, std::uint32_t local_log_n, std::uint64_t batch_distance,
-                                             std::uint64_t element_stride, std::uint32_t columns_per_tile, Operator op) {
+                                             std::uint64_t element_stride, std::uint32_t columns_per_tile, Operator op,
+                                             bool writer_aligned = false) {
     using Value = typename Operator::Value;
     extern __shared__ __align__(16) unsigned char storage[];
     Value*                                        tile = reinterpret_cast<Value*>(storage);
@@ -181,7 +193,8 @@ __global__ void online_reorder_suffix_kernel(const typename Operator::Value* inp
     for (std::uint32_t work = threadIdx.x; work < active_columns * remaining_n; work += blockDim.x) {
         const std::uint32_t column_slot     = work / remaining_n;
         const std::uint32_t index           = work - column_slot * remaining_n;
-        const std::uint64_t reordered_index = static_cast<std::uint64_t>(column_base + column_slot) * remaining_n + index;
+            const auto canonical = static_cast<std::uint32_t>((column_base + column_slot) * remaining_n + index);
+            const std::uint64_t reordered_index = writer_aligned ? global_writer_aligned_index(canonical, log_n) : canonical;
         tile[work]                          = input[base + reordered_index * element_stride];
     }
     __syncthreads();

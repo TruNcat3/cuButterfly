@@ -1,14 +1,18 @@
 #include "mapping_selector.hpp"
+#include "plan_registry.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstring>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
 
 #include "generated_fft_dispatch.cuh"
+#include "generated_local_selector.hpp"
 #include "generated_runtime_selector.hpp"
+#include "cuntt/mixed_dataflow.hpp"
 
 #ifndef CUBUTTERFLY_HAS_CUFFTDX
 #define CUBUTTERFLY_HAS_CUFFTDX 0
@@ -16,6 +20,8 @@
 
 namespace cuntt::detail {
 namespace {
+
+void validate_selected_plan(const ButterflyConfig& config);
 
 template <std::size_t Size>
 double predict_latency(const std::array<GeneratedLatencyAnchor, Size>& anchors, std::size_t batch, std::string& confidence) {
@@ -49,13 +55,6 @@ double predict_latency(const std::array<GeneratedLatencyAnchor, Size>& anchors, 
     return std::exp(y0 + slope * (std::log2(static_cast<double>(batch)) - x0));
 }
 
-void require_v100() {
-    const auto device = current_device_info();
-    if (device.compute_major != 7 || device.compute_minor != 0) {
-        throw std::invalid_argument("automatic mapping selection is currently calibrated only for V100 sm_70");
-    }
-}
-
 SelectionInfo make_info(const char* implementation, std::size_t batch, double predicted_ms, std::string confidence,
                         std::size_t working_set_bytes, bool online_boundary, bool register_resident) {
     const auto device = current_device_info();
@@ -76,6 +75,243 @@ SelectionInfo make_info(const char* implementation, std::size_t batch, double pr
     return {true, true, "v100-sm70", implementation, std::move(confidence), reason.str(), predicted_ms};
 }
 
+const LocalSelectorPoint* find_local_point(const ButterflyConfig& config) {
+    if (kLocalSelectorPoints.empty())
+        return nullptr;
+    const auto device = current_device_info();
+    if (std::strcmp(device.name.c_str(), kLocalSelectorDeviceName) != 0)
+        return nullptr;
+    if (device.compute_major != kLocalSelectorComputeMajor || device.compute_minor != kLocalSelectorComputeMinor)
+        return nullptr;
+#ifdef CUBUTTERFLY_LOCAL_SELECTOR_DATA
+    if (kLocalSelectorMemoryBytes && device.global_memory_bytes != kLocalSelectorMemoryBytes)
+        return nullptr;
+#else
+    if (config.inverse || config.element_stride != 1 ||
+        (config.batch_stride != 0 && config.batch_stride != (std::size_t{1} << config.log_n)))
+        return nullptr;
+#endif
+    const char* operator_name  = butterfly_operator_name(config.op);
+    const char* precision_name = butterfly_precision_name(config.precision);
+    const char* placement_name = butterfly_placement_name(config.placement);
+    for (const auto& point : kLocalSelectorPoints) {
+        if (point.log_n == config.log_n && point.batch == config.batch &&
+            std::strcmp(point.operator_name, operator_name) == 0 &&
+            std::strcmp(point.precision, precision_name) == 0 &&
+            std::strcmp(point.placement, placement_name) == 0
+#ifdef CUBUTTERFLY_LOCAL_SELECTOR_DATA
+            && local_semantics_match(point, config)
+#endif
+            )
+            return &point;
+    }
+    return nullptr;
+}
+
+const LocalSelectorPoint* find_local_ntt_point(const PlanConfig& config) {
+    if (kLocalSelectorPoints.empty())
+        return nullptr;
+    const auto device = current_device_info();
+#ifdef CUBUTTERFLY_LOCAL_SELECTOR_DATA
+    if (kLocalSelectorMemoryBytes && device.global_memory_bytes != kLocalSelectorMemoryBytes)
+        return nullptr;
+#endif
+    if (std::strcmp(device.name.c_str(), kLocalSelectorDeviceName) != 0 ||
+        device.compute_major != kLocalSelectorComputeMajor || device.compute_minor != kLocalSelectorComputeMinor ||
+        config.inverse)
+        return nullptr;
+    const std::string precision = std::string("word") + std::to_string(config.word_bits);
+    const char* order = output_order_name(config.output_order);
+    for (const auto& point : kLocalSelectorPoints) {
+        if (std::strcmp(point.operator_name, "ntt") == 0 && point.log_n == config.log_n && point.batch == config.batch &&
+            point.modulus == config.modulus && std::strcmp(point.precision, precision.c_str()) == 0 &&
+            std::strcmp(point.placement, order) == 0)
+            return &point;
+    }
+    return nullptr;
+}
+
+NttSelectionResult select_local_ntt_mapping(PlanConfig config, const LocalSelectorPoint& point) {
+    config.auto_select = false;
+    config.backend = Backend::Hybrid2D;
+    config.compute_unit = ComputeUnit::Radix4;
+    config.cross_twiddle_placement = CrossTwiddlePlacement::Fused;
+    SelectionInfo info{true, true, kLocalSelectorTarget, point.candidate, "calibrated-local",
+                       std::string("local calibrated ") + kLocalSelectorTarget + "; exact measured NTT workload point",
+                       point.kernel_ms};
+    return {std::move(config), std::move(info)};
+}
+
+#ifndef CUBUTTERFLY_LOCAL_SELECTOR_DATA
+// Compatibility for pre-data-schema generated headers only. New calibrations
+// serialize their complete mappings and never extend this name table.
+bool apply_local_candidate(const char* candidate, ButterflyConfig& config, bool& online_boundary, bool& register_resident) {
+    if (std::strcmp(candidate, "fft-log8-cufft") == 0 || std::strcmp(candidate, "fft-log12-cufft") == 0 ||
+        std::strcmp(candidate, "fft-log16-cufft") == 0) {
+        config.backend = ButterflyBackend::CuFft;
+        return true;
+    }
+    if (std::strcmp(candidate, "fft-log8-cta-dft8") == 0) {
+        config.backend = ButterflyBackend::TemporalTile;
+        config.fft_core = FftCore::CtaDft8;
+        config.compute_unit = ComputeUnit::Radix8;
+        config.local_exchange = LocalExchange::SharedMemory;
+        config.tile_threads = 128;
+        return true;
+    }
+    if (std::strcmp(candidate, "fft-log12-scalar-hierarchical") == 0) {
+        config.backend = ButterflyBackend::Hierarchical;
+        config.fft_core = FftCore::Scalar;
+        config.compute_unit = ComputeUnit::Radix4;
+        config.local_exchange = LocalExchange::SharedMemory;
+        config.tile_threads = 256;
+        config.local_stages = 8;
+        return true;
+    }
+    if (std::strcmp(candidate, "fft-log12-shared-temporal-radix4") == 0) {
+        config.backend = ButterflyBackend::TemporalTile;
+        config.fft_core = FftCore::Scalar;
+        config.compute_unit = ComputeUnit::Radix4;
+        config.local_exchange = LocalExchange::SharedMemory;
+        config.tile_threads = 256;
+        return true;
+    }
+    if (std::strcmp(candidate, "fft-log12-cufftdx-direct") == 0) {
+        config.backend = ButterflyBackend::TemporalTile;
+        config.fft_core = FftCore::CufftDxDirect;
+        config.tile_threads = 1024;
+        register_resident = true;
+        return true;
+    }
+    if (std::strcmp(candidate, "fft-log12-cufftdx-direct512") == 0) {
+        config.backend = ButterflyBackend::TemporalTile;
+        config.fft_core = FftCore::CufftDxDirect;
+        config.tile_threads = 512;
+        register_resident = true;
+        return true;
+    }
+    if (std::strcmp(candidate, "fft-log12-cufftdx-online") == 0) {
+        config.backend = ButterflyBackend::OnlineReorder;
+        config.fft_core = FftCore::CufftDxBlock;
+        config.local_stages = 6;
+        config.reorder_columns = 1;
+        config.prefix_threads = 512;
+        config.suffix_threads = 512;
+        config.prefix_ept = 8;
+        config.suffix_ept = 8;
+        online_boundary = true;
+        return true;
+    }
+    if (std::strcmp(candidate, "fft-log16-cufftdx-online") == 0) {
+        config.backend = ButterflyBackend::OnlineReorder;
+        config.fft_core = FftCore::CufftDxBlock;
+        config.local_stages = 8;
+        config.reorder_columns = 1;
+        config.prefix_threads = 128;
+        config.suffix_threads = 128;
+        config.prefix_ept = 8;
+        config.suffix_ept = 8;
+        config.cross_twiddle = CrossTwiddleMode::Recurrence;
+        online_boundary = true;
+        return true;
+    }
+    if (std::strcmp(candidate, "fft-log16-fp64-cufftdx-online") == 0) {
+        config.backend = ButterflyBackend::OnlineReorder;
+        config.fft_core = FftCore::CufftDxBlock;
+        config.local_stages = 8;
+        config.reorder_columns = 1;
+        config.prefix_threads = 256;
+        config.suffix_threads = 256;
+        config.prefix_ept = 8;
+        config.suffix_ept = 8;
+        config.cross_twiddle = CrossTwiddleMode::Table;
+        online_boundary = true;
+        return true;
+    }
+    if (std::strcmp(candidate, "fft-log18-cufftdx-online-inplace") == 0 ||
+        std::strcmp(candidate, "fft-log18-cufftdx-online-inplace-batch64") == 0 ||
+        std::strcmp(candidate, "fft-log18-cufftdx-online-inplace-s10") == 0 ||
+        std::strcmp(candidate, "fft-log20-cufftdx-online-inplace") == 0 ||
+        std::strcmp(candidate, "fft-log20-cufftdx-online-inplace-batch16") == 0 ||
+        std::strcmp(candidate, "fft-log20-cufftdx-online-inplace-s8") == 0) {
+        config.backend = ButterflyBackend::OnlineReorder;
+        config.fft_core = FftCore::CufftDxBlock;
+        config.local_stages = std::strcmp(candidate, "fft-log18-cufftdx-online-inplace-batch64") == 0 ? 9 :
+                              (std::strcmp(candidate, "fft-log18-cufftdx-online-inplace") == 0 ? 8 :
+                               (std::strcmp(candidate, "fft-log20-cufftdx-online-inplace-s8") == 0 ? 8 : 10));
+        config.reorder_columns = 1;
+        config.prefix_threads = 256;
+        config.suffix_threads = 256;
+        config.prefix_ept = config.local_stages == 9 ? 8 : 16;
+        config.suffix_ept = config.local_stages == 9 ? 8 : 16;
+        config.cross_twiddle = CrossTwiddleMode::Recurrence;
+        online_boundary = true;
+        return true;
+    }
+    if (std::strcmp(candidate, "fft-log12-cufftdx-resident") == 0) {
+        config.backend = ButterflyBackend::OnlineReorder;
+        config.fft_core = FftCore::CufftDxResident;
+        config.local_stages = 6;
+        config.reorder_columns = 1;
+        config.tile_threads = 512;
+        online_boundary = true;
+        register_resident = true;
+        return true;
+    }
+    if (std::strcmp(candidate, "fwht-log15-warp-register") == 0) {
+        config.backend = ButterflyBackend::TemporalTile;
+        config.local_exchange = LocalExchange::WarpRegister;
+        config.compute_unit = ComputeUnit::Radix2;
+        config.tile_threads = 256;
+        register_resident = true;
+        return true;
+    }
+    if (std::strcmp(candidate, "subset-zeta-log12-hierarchical") == 0 ||
+        std::strcmp(candidate, "superset-zeta-log12-hierarchical") == 0 ||
+        std::strcmp(candidate, "xor-zeta-log12-hierarchical") == 0) {
+        config.backend = ButterflyBackend::Hierarchical;
+        config.compute_unit = ComputeUnit::Radix4;
+        config.tile_threads = 256;
+        config.local_stages = 8;
+        return true;
+    }
+    if (std::strcmp(candidate, "structured-2x2-log12-hierarchical") == 0) {
+        config.backend = ButterflyBackend::Hierarchical;
+        config.compute_unit = ComputeUnit::Radix4;
+        config.tile_threads = 256;
+        config.local_stages = 8;
+        config.stage_matrices = {{0.9238795, -0.3826834, 0.3826834, 0.9238795}};
+        return true;
+    }
+    return false;
+}
+
+#endif
+
+ButterflySelectionResult select_local_mapping(ButterflyConfig config, const LocalSelectorPoint& point) {
+    config.auto_select = false;
+    bool online_boundary = false;
+    bool register_resident = false;
+#ifdef CUBUTTERFLY_LOCAL_SELECTOR_DATA
+    if (!apply_measured_local_candidate(point, config))
+        throw std::invalid_argument("local calibration has no serialized mapping for this point");
+    online_boundary = config.backend == ButterflyBackend::OnlineReorder;
+    register_resident = config.local_exchange == LocalExchange::WarpRegister;
+#else
+    if (!apply_local_candidate(point.candidate, config, online_boundary, register_resident))
+        throw std::invalid_argument(std::string("local calibration candidate is not understood by this library: ") + point.candidate);
+#endif
+    std::ostringstream reason;
+    reason << "local calibrated " << kLocalSelectorTarget << "; exact measured workload point";
+    if (online_boundary)
+        reason << "; boundary permutation is fused with the selected local path";
+    if (register_resident)
+        reason << "; local exchange is register/resident";
+    validate_selected_plan(config);
+    SelectionInfo info{true, true, kLocalSelectorTarget, point.candidate, "calibrated-local", reason.str(), point.kernel_ms};
+    return {std::move(config), std::move(info)};
+}
+
 void reject_explicit_butterfly_mapping(const ButterflyConfig& config) {
     if (!config.stage_partition.empty() || !config.segment_mappings.empty() || !config.boundaries.empty() ||
         !config.execution_group_mappings.empty()) {
@@ -83,10 +319,33 @@ void reject_explicit_butterfly_mapping(const ButterflyConfig& config) {
     }
 }
 
+void validate_selected_plan(const ButterflyConfig& config) {
+    const auto plan = make_dataflow_plan(config);
+    const auto status = check_lowering(plan);
+    if (status != LoweringStatus::Supported && status != LoweringStatus::RequiresBackendValidation) {
+        throw std::invalid_argument(std::string("selected butterfly plan cannot be lowered: ") +
+                                    lowering_status_name(status));
+    }
+    // Imported codelets have their own per-segment launch/resource validation.
+    if (plan.dispatch == DataflowDispatch::ExternalFft)
+        return;
+    const auto hardware = query_hardware_resource_model();
+    const auto estimate = estimate_resources(plan, hardware);
+    if (!estimate.feasible) {
+        throw std::invalid_argument("selected butterfly plan exceeds active GPU resources: " + estimate.reason);
+    }
+}
+
 }  // namespace
 
-ButterflySelectionResult select_butterfly_mapping(ButterflyConfig config) {
-    require_v100();
+ButterflySelectionResult select_legacy_butterfly_mapping(ButterflyConfig config) {
+    reject_explicit_butterfly_mapping(config);
+    const auto device = current_device_info();
+    if (const auto* point = find_local_point(config))
+        return select_local_mapping(std::move(config), *point);
+    if (device.compute_major != 7 || device.compute_minor != 0) {
+        throw std::invalid_argument("automatic mapping selection has no validated local point for this GPU/workload; rerun install-time calibration or choose an explicit mapping");
+    }
     reject_explicit_butterfly_mapping(config);
     const std::size_t contiguous_stride = std::size_t{1} << config.log_n;
     if (config.inverse || config.element_stride != 1 ||
@@ -221,11 +480,17 @@ ButterflySelectionResult select_butterfly_mapping(ButterflyConfig config) {
     const std::size_t working_set = batch * (std::size_t{1} << config.log_n) * element_bytes * 2;
     auto info = make_info(implementation, batch, predicted_ms, std::move(confidence), working_set,
                           online_boundary, register_resident);
+    validate_selected_plan(config);
     return {std::move(config), std::move(info)};
 }
 
-NttSelectionResult select_ntt_mapping(PlanConfig config) {
-    require_v100();
+NttSelectionResult select_legacy_ntt_mapping(PlanConfig config) {
+    const auto device = current_device_info();
+    if (device.compute_major != 7 || device.compute_minor != 0) {
+        if (const auto* point = find_local_ntt_point(config))
+            return select_local_ntt_mapping(std::move(config), *point);
+        throw std::invalid_argument("automatic NTT selection has no validated local point for this GPU/workload; rerun install-time calibration or choose an explicit mapping");
+    }
     if (config.inverse) {
         throw std::invalid_argument("automatic NTT selection currently requires a forward transform");
     }
@@ -263,6 +528,19 @@ NttSelectionResult select_ntt_mapping(PlanConfig config) {
     const std::size_t working_set = batch * (std::size_t{1} << config.log_n) * (config.word_bits / 8) * 2;
     auto info = make_info(implementation, batch, predicted_ms, std::move(confidence), working_set, online_boundary, false);
     return {std::move(config), std::move(info)};
+}
+
+ButterflySelectionResult select_butterfly_mapping(ButterflyConfig config) {
+    reject_explicit_butterfly_mapping(config);
+    if (auto selected = registry_butterfly_mapping(config)) return std::move(*selected);
+    try { return select_legacy_butterfly_mapping(config); }
+    catch (const std::invalid_argument&) { return select_portable_butterfly(config); }
+}
+
+NttSelectionResult select_ntt_mapping(PlanConfig config) {
+    if (auto selected = registry_ntt_mapping(config)) return std::move(*selected);
+    try { return select_legacy_ntt_mapping(config); }
+    catch (const std::invalid_argument&) { return select_portable_ntt(config); }
 }
 
 }  // namespace cuntt::detail

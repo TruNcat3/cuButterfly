@@ -1,6 +1,8 @@
 #include "bluestein_fft.hpp"
+#include <nlohmann/json.hpp>
 
 #include "cuntt/butterfly.hpp"
+#include "plan_registry.hpp"
 
 #include <cufft.h>
 
@@ -106,19 +108,28 @@ unsigned int blocks_for(std::size_t count) {
 class BluesteinFftPlan::Impl {
   public:
     Impl(std::size_t n, std::size_t m, std::size_t batch, bool inverse,
-         bool normalize_inverse, bool fp64)
+         bool normalize_inverse, bool fp64, bool external_cufft, const std::string& replay)
         : n_(n), m_(m), batch_(batch), inverse_(inverse),
-          normalize_inverse_(normalize_inverse), fp64_(fp64) {
-        if (n_ == 0 || m_ < 2 * n_ - 1 || batch_ == 0 || m_ > static_cast<std::size_t>(INT32_MAX))
+          normalize_inverse_(normalize_inverse), fp64_(fp64), external_(external_cufft), replay_(replay) {
+        if (n_ == 0 || m_ < 2 * n_ - 1 || batch_ == 0 || (m_ & (m_ - 1)) ||
+            m_ > static_cast<std::size_t>(INT32_MAX) || batch_ > static_cast<std::size_t>(INT32_MAX) ||
+            batch_ > SIZE_MAX / m_ / (fp64_ ? sizeof(Complex64) : sizeof(Complex32)))
             throw std::invalid_argument("invalid Bluestein shape");
-        int length = static_cast<int>(m_);
-        check_cufft(cufftPlanMany(&plan_, 1, &length, nullptr, 1, length, nullptr, 1, length,
+        if (external_) {
+            int length = static_cast<int>(m_);
+            check_cufft(cufftPlanMany(&plan_, 1, &length, nullptr, 1, length, nullptr, 1, length,
                                   fp64_ ? CUFFT_Z2Z : CUFFT_C2C, static_cast<int>(batch_)),
                     "create Bluestein batch plan");
+        } else {
+            auto config = core_config(batch_, false);
+            forward_ = std::make_unique<ButterflyPlan>(config);
+            config = core_config(batch_, true);
+            inverse_plan_ = std::make_unique<ButterflyPlan>(config);
+        }
         try {
             build_kernel();
         } catch (...) {
-            cufftDestroy(plan_);
+            if (plan_) cufftDestroy(plan_);
             plan_ = 0;
             cudaFree(kernel_fft_);
             kernel_fft_ = nullptr;
@@ -134,7 +145,13 @@ class BluesteinFftPlan::Impl {
     }
 
     std::size_t workspace_size() const noexcept {
-        return m_ * batch_ * (fp64_ ? sizeof(Complex64) : sizeof(Complex32));
+        return data_workspace_size() + (external_ ? 0 : std::max(forward_->workspace_size(), inverse_plan_->workspace_size()));
+    }
+
+    std::string mapping_json() const {
+        if (external_) return "{\"kind\":\"external\",\"backend\":\"cufft\"}";
+        return "{\"kind\":\"bluestein\",\"forward\":" + serialize_mapping(forward_->config()) +
+               ",\"inverse\":" + serialize_mapping(inverse_plan_->config()) + "}";
     }
 
     void execute(const void* input, void* output, void* workspace,
@@ -143,8 +160,14 @@ class BluesteinFftPlan::Impl {
                  cudaStream_t stream) {
         if (input == nullptr || output == nullptr || workspace == nullptr)
             throw std::invalid_argument("Bluestein input, output, and workspace must be non-null");
-        check_cufft(cufftSetStream(plan_, stream), "set Bluestein stream");
-        check_cuda(cudaMemsetAsync(workspace, 0, workspace_size(), stream), "clear Bluestein workspace");
+        if (external_) check_cufft(cufftSetStream(plan_, stream), "set Bluestein stream");
+        else {
+            auto* scratch = static_cast<unsigned char*>(workspace) + data_workspace_size();
+            forward_->set_stream(stream); inverse_plan_->set_stream(stream);
+            if (forward_->workspace_size()) forward_->set_workspace(scratch, forward_->workspace_size());
+            if (inverse_plan_->workspace_size()) inverse_plan_->set_workspace(scratch, inverse_plan_->workspace_size());
+        }
+        check_cuda(cudaMemsetAsync(workspace, 0, data_workspace_size(), stream), "clear Bluestein workspace");
         if (fp64_)
             execute_typed(static_cast<const Complex64*>(input), static_cast<Complex64*>(output),
                           static_cast<Complex64*>(workspace), input_stride, input_batch_stride,
@@ -156,6 +179,28 @@ class BluesteinFftPlan::Impl {
     }
 
   private:
+    std::size_t data_workspace_size() const noexcept {
+        return m_ * batch_ * (fp64_ ? sizeof(Complex64) : sizeof(Complex32));
+    }
+    ButterflyConfig core_config(std::size_t batch, bool inverse) const {
+        ButterflyConfig config;
+        config.op = ButterflyOperator::Fft;
+        config.precision = fp64_ ? ButterflyPrecision::Fp64 : ButterflyPrecision::Fp32;
+        config.log_n = 0;
+        for (auto size = m_; size > 1; size >>= 1) ++config.log_n;
+        config.batch = batch;
+        config.placement = ButterflyPlacement::InPlace;
+        config.inverse = inverse;
+        config.normalize_inverse = false;
+        config.auto_select = true;
+        config.auto_allocate_workspace = false;
+        if(!replay_.empty()) {
+            const auto mapping=nlohmann::json::parse(replay_);
+            apply_serialized_mapping(mapping.at(inverse ? "inverse" : "forward").dump(),config);
+            config.auto_select=false;
+        }
+        return config;
+    }
     template <typename Complex>
     void execute_typed(const Complex* input, Complex* output, Complex* workspace,
                        std::size_t input_stride, std::size_t input_batch_stride,
@@ -165,7 +210,8 @@ class BluesteinFftPlan::Impl {
         bluestein_pack_kernel<<<blocks_for(n_ * batch_), 256, 0, stream>>>(
             input, workspace, n_, m_, batch_, input_stride, input_batch_stride, sign);
         check_cuda(cudaGetLastError(), "launch Bluestein pack");
-        if constexpr (std::is_same_v<Complex, Complex64>)
+        if (!external_) forward_->execute_async(workspace, workspace);
+        else if constexpr (std::is_same_v<Complex, Complex64>)
             check_cufft(cufftExecZ2Z(plan_, reinterpret_cast<cufftDoubleComplex*>(workspace),
                                      reinterpret_cast<cufftDoubleComplex*>(workspace), CUFFT_FORWARD),
                         "execute Bluestein forward FFT");
@@ -176,7 +222,8 @@ class BluesteinFftPlan::Impl {
         bluestein_multiply_kernel<<<blocks_for(m_ * batch_), 256, 0, stream>>>(
             workspace, static_cast<const Complex*>(kernel_fft_), m_, batch_);
         check_cuda(cudaGetLastError(), "launch Bluestein pointwise multiply");
-        if constexpr (std::is_same_v<Complex, Complex64>)
+        if (!external_) inverse_plan_->execute_async(workspace, workspace);
+        else if constexpr (std::is_same_v<Complex, Complex64>)
             check_cufft(cufftExecZ2Z(plan_, reinterpret_cast<cufftDoubleComplex*>(workspace),
                                      reinterpret_cast<cufftDoubleComplex*>(workspace), CUFFT_INVERSE),
                         "execute Bluestein inverse FFT");
@@ -210,6 +257,16 @@ class BluesteinFftPlan::Impl {
         try {
             check_cuda(cudaMalloc(&kernel_fft_, bytes), "allocate Bluestein kernel FFT");
             check_cuda(cudaMemcpy(temporary, values.data(), bytes, cudaMemcpyHostToDevice), "upload Bluestein kernel");
+            if (!external_) {
+                auto config = core_config(1, false);
+                config.placement = ButterflyPlacement::OutOfPlace;
+                config.auto_allocate_workspace = true;
+                ButterflyPlan kernel(config);
+                kernel.execute_async(static_cast<const Complex*>(temporary), static_cast<Complex*>(kernel_fft_));
+                check_cuda(cudaStreamSynchronize(nullptr), "wait for internal Bluestein kernel initialization");
+                cudaFree(temporary);
+                return;
+            }
             int length = static_cast<int>(m_);
             check_cufft(cufftPlan1d(&kernel_plan, length,
                                     fp64_ ? CUFFT_Z2Z : CUFFT_C2C, 1), "create Bluestein kernel plan");
@@ -245,19 +302,23 @@ class BluesteinFftPlan::Impl {
     bool inverse_;
     bool normalize_inverse_;
     bool fp64_;
+    bool external_;
+    std::string replay_;
+    std::unique_ptr<ButterflyPlan> forward_, inverse_plan_;
     cufftHandle plan_ = 0;
     void* kernel_fft_ = nullptr;
 };
 
 BluesteinFftPlan::BluesteinFftPlan(std::size_t length, std::size_t convolution_length,
                                    std::size_t batch, bool inverse, bool normalize_inverse,
-                                   bool fp64)
+                                   bool fp64, bool external_cufft, const std::string& replay)
     : impl_(std::make_unique<Impl>(length, convolution_length, batch, inverse,
-                                   normalize_inverse, fp64)) {}
+                                   normalize_inverse, fp64, external_cufft, replay)) {}
 
 BluesteinFftPlan::~BluesteinFftPlan() = default;
 
 std::size_t BluesteinFftPlan::workspace_size() const noexcept { return impl_->workspace_size(); }
+std::string BluesteinFftPlan::mapping_json() const { return impl_->mapping_json(); }
 
 void BluesteinFftPlan::execute(const void* input, void* output, void* workspace,
                                std::size_t input_stride, std::size_t input_batch_stride,

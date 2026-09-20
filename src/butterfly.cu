@@ -12,12 +12,35 @@
 
 #include "cuntt/butterfly.hpp"
 #include "external_fft_units.cuh"
+#include "fft_register_dispatch.hpp"
+#include "jit_module.hpp"
 #include "generated_fft_dispatch.cuh"
 #include "generated_unit_api.cuh"
 #include "mapping_selector.hpp"
 #include "stage_pipeline.cuh"
+#include "shared_iterative.cuh"
+#include "resident_mapping.hpp"
+#include "operator_traits.cuh"
+#include "batch_pipeline.cuh"
+#include "fft_factor_plan.hpp"
+#include "factor_pipeline.cuh"
+#include "stage_probe.hpp"
 
 namespace cuntt {
+std::vector<FftOnlineProcessingUnit> fft_online_processing_units() {
+    std::vector<FftOnlineProcessingUnit> units;
+    for (auto precision : {ButterflyPrecision::Fp32, ButterflyPrecision::Fp64}) {
+        const auto available = precision == ButterflyPrecision::Fp64
+                                   ? detail::cufftdx_fp64_online_available : detail::cufftdx_online_available;
+        for (std::uint32_t stages = 1; stages <= 20; ++stages)
+            for (std::uint32_t threads = 32; threads <= 1024; threads *= 2)
+                for (std::uint32_t ept = 1; ept <= 32; ept *= 2)
+                    if (available(stages, threads, ept))
+                        units.push_back({precision, stages, threads, ept});
+    }
+    return units;
+}
+
 namespace {
 
 void check_cuda(cudaError_t status, const char* expression, const char* file, int line) {
@@ -42,6 +65,7 @@ void check_cufft(cufftResult status, const char* expression, const char* file, i
 #define CUB_CUFFT_CHECK(expr) check_cufft((expr), #expr, __FILE__, __LINE__)
 
 thread_local cudaStream_t active_stream = nullptr;
+thread_local int active_probe_group = -1;
 
 class LaunchStreamScope {
   public:
@@ -86,331 +110,7 @@ class DeviceBuffer {
     void* pointer_ = nullptr;
 };
 
-template <typename Storage>
-struct LowStorage;
-
-template <>
-struct LowStorage<Fp16> {
-    __host__ __device__ static float widen(Fp16 value) { return __half2float(value); }
-    __host__ __device__ static Fp16 narrow(float value) { return __float2half_rn(value); }
-    __device__ static Fp16 add(Fp16 left, Fp16 right) { return __hadd(left, right); }
-    __device__ static Fp16 sub(Fp16 left, Fp16 right) { return __hsub(left, right); }
-    __device__ static Fp16 mul(Fp16 left, Fp16 right) { return __hmul(left, right); }
-    __device__ static Fp16 shuffle(Fp16 value, std::uint32_t mask) {
-        const auto bits = __shfl_xor_sync(0xffffffffU, static_cast<unsigned int>(__half_as_ushort(value)), mask);
-        return __ushort_as_half(static_cast<unsigned short>(bits));
-    }
-};
-
-template <>
-struct LowStorage<Bf16> {
-    __host__ __device__ static float widen(Bf16 value) { return __bfloat162float(value); }
-    __host__ __device__ static Bf16 narrow(float value) { return __float2bfloat16_rn(value); }
-    // V100 has no native BF16 arithmetic. Explicit narrowing makes the
-    // emulated-native contract deterministic and visible to the experiment.
-    __device__ static Bf16 add(Bf16 left, Bf16 right) { return narrow(widen(left) + widen(right)); }
-    __device__ static Bf16 sub(Bf16 left, Bf16 right) { return narrow(widen(left) - widen(right)); }
-    __device__ static Bf16 mul(Bf16 left, Bf16 right) { return narrow(widen(left) * widen(right)); }
-    __device__ static Bf16 shuffle(Bf16 value, std::uint32_t mask) {
-        __nv_bfloat16_raw raw = static_cast<__nv_bfloat16_raw>(value);
-        raw.x = static_cast<unsigned short>(
-            __shfl_xor_sync(0xffffffffU, static_cast<unsigned int>(raw.x), mask));
-        return Bf16(raw);
-    }
-};
-
-template <typename Storage, bool Native>
-struct LowMath {
-    static __device__ Storage add(Storage left, Storage right) {
-        if constexpr (Native)
-            return LowStorage<Storage>::add(left, right);
-        return LowStorage<Storage>::narrow(LowStorage<Storage>::widen(left) + LowStorage<Storage>::widen(right));
-    }
-    static __device__ Storage sub(Storage left, Storage right) {
-        if constexpr (Native)
-            return LowStorage<Storage>::sub(left, right);
-        return LowStorage<Storage>::narrow(LowStorage<Storage>::widen(left) - LowStorage<Storage>::widen(right));
-    }
-    static __device__ Storage mul(Storage left, Storage right) {
-        if constexpr (Native)
-            return LowStorage<Storage>::mul(left, right);
-        return LowStorage<Storage>::narrow(LowStorage<Storage>::widen(left) * LowStorage<Storage>::widen(right));
-    }
-    static __device__ Storage linear(Storage c0, Storage x0, Storage c1, Storage x1) {
-        if constexpr (Native)
-            return add(mul(c0, x0), mul(c1, x1));
-        return LowStorage<Storage>::narrow(LowStorage<Storage>::widen(c0) * LowStorage<Storage>::widen(x0) +
-                                           LowStorage<Storage>::widen(c1) * LowStorage<Storage>::widen(x1));
-    }
-};
-
-template <typename Storage>
-struct LowComplexType;
-
-template <>
-struct LowComplexType<Fp16> { using type = Complex16; };
-template <>
-struct LowComplexType<Bf16> { using type = ComplexBf16; };
-
-template <typename Real>
-struct FwhtOperator {
-    using Value                            = Real;
-    static constexpr bool kBitReverseInput = false;
-
-    bool inverse;
-    bool normalize_inverse;
-
-    __device__ __forceinline__ void apply(std::uint32_t, std::uint32_t, Value& left, Value& right) const {
-        const Real a = left;
-        const Real b = right;
-        left         = a + b;
-        right        = a - b;
-    }
-
-    __device__ __forceinline__ Value shuffle(Value value, std::uint32_t mask) const { return __shfl_xor_sync(0xffffffffU, value, mask); }
-
-    __device__ __forceinline__ Value apply_lane(std::uint32_t, std::uint32_t, Value self, Value partner, bool right_lane) const {
-        return right_lane ? partner - self : self + partner;
-    }
-
-    __device__ __forceinline__ Value finalize(Value value, std::uint32_t n) const {
-        return inverse && normalize_inverse ? value / static_cast<Real>(n) : value;
-    }
-};
-
-template <typename Storage, bool Native>
-struct LowFwhtOperator {
-    using Value                            = Storage;
-    static constexpr bool kBitReverseInput = false;
-
-    bool inverse;
-    bool normalize_inverse;
-
-    __device__ __forceinline__ void apply(std::uint32_t, std::uint32_t, Value& left, Value& right) const {
-        const Storage a = left;
-        const Storage b = right;
-        left            = LowMath<Storage, Native>::add(a, b);
-        right           = LowMath<Storage, Native>::sub(a, b);
-    }
-    __device__ __forceinline__ Value shuffle(Value value, std::uint32_t mask) const {
-        return LowStorage<Storage>::shuffle(value, mask);
-    }
-    __device__ __forceinline__ Value apply_lane(std::uint32_t, std::uint32_t, Value self, Value partner, bool right_lane) const {
-        return right_lane ? LowMath<Storage, Native>::sub(partner, self) : LowMath<Storage, Native>::add(self, partner);
-    }
-    __device__ __forceinline__ Value finalize(Value value, std::uint32_t n) const {
-        if (!inverse || !normalize_inverse)
-            return value;
-        return LowStorage<Storage>::narrow(LowStorage<Storage>::widen(value) / static_cast<float>(n));
-    }
-};
-
-template <typename Real>
-struct DeviceMatrix2x2 {
-    Real m00;
-    Real m01;
-    Real m10;
-    Real m11;
-};
-
-template <typename Real>
-struct Structured2x2Operator {
-    using Value                            = Real;
-    static constexpr bool kBitReverseInput = false;
-
-    const DeviceMatrix2x2<Real>* matrices;
-    bool inverse = false;
-    bool normalize_inverse = false;
-
-    __device__ __forceinline__ void apply(std::uint32_t stage, std::uint32_t, Value& left, Value& right) const {
-        const auto matrix = matrices[stage];
-        const Real a      = left;
-        const Real b      = right;
-        left              = matrix.m00 * a + matrix.m01 * b;
-        right             = matrix.m10 * a + matrix.m11 * b;
-    }
-
-    __device__ __forceinline__ Value shuffle(Value value, std::uint32_t mask) const {
-        return __shfl_xor_sync(0xffffffffU, value, mask);
-    }
-
-    __device__ __forceinline__ Value apply_lane(std::uint32_t stage, std::uint32_t, Value self, Value partner,
-                                                 bool right_lane) const {
-        const auto matrix = matrices[stage];
-        return right_lane ? matrix.m10 * partner + matrix.m11 * self
-                          : matrix.m00 * self + matrix.m01 * partner;
-    }
-
-    __device__ __forceinline__ Value finalize(Value value, std::uint32_t) const { return value; }
-};
-
-template <typename Storage, bool Native>
-struct LowStructured2x2Operator {
-    using Value                            = Storage;
-    static constexpr bool kBitReverseInput = false;
-
-    const DeviceMatrix2x2<Storage>* matrices;
-    bool inverse = false;
-    bool normalize_inverse = false;
-
-    __device__ __forceinline__ void apply(std::uint32_t stage, std::uint32_t, Value& left, Value& right) const {
-        const auto matrix = matrices[stage];
-        const Storage a = left;
-        const Storage b = right;
-        left  = LowMath<Storage, Native>::linear(matrix.m00, a, matrix.m01, b);
-        right = LowMath<Storage, Native>::linear(matrix.m10, a, matrix.m11, b);
-    }
-    __device__ __forceinline__ Value shuffle(Value value, std::uint32_t mask) const {
-        return LowStorage<Storage>::shuffle(value, mask);
-    }
-    __device__ __forceinline__ Value apply_lane(std::uint32_t stage, std::uint32_t, Value self, Value partner,
-                                                 bool right_lane) const {
-        const auto matrix = matrices[stage];
-        return right_lane ? LowMath<Storage, Native>::linear(matrix.m10, partner, matrix.m11, self)
-                          : LowMath<Storage, Native>::linear(matrix.m00, self, matrix.m01, partner);
-    }
-    __device__ __forceinline__ Value finalize(Value value, std::uint32_t) const { return value; }
-};
-
-template <typename Complex, typename Real>
-struct FftOperator {
-    using Value                            = Complex;
-    static constexpr bool kBitReverseInput = true;
-
-    const Complex*  twiddles;
-    bool            inverse;
-    bool            normalize_inverse;
-    ComplexMultiply multiply;
-
-    __device__ __forceinline__ void apply(std::uint32_t stage, std::uint32_t offset, Value& left, Value& right) const {
-        const Complex root = twiddles[(1U << stage) - 1 + offset];
-        Real          vr;
-        Real          vi;
-        if (multiply == ComplexMultiply::Gauss3) {
-            const Real p0 = right.real * root.real;
-            const Real p1 = right.imag * root.imag;
-            const Real p2 = (right.real + right.imag) * (root.real + root.imag);
-            vr            = p0 - p1;
-            vi            = p2 - p0 - p1;
-        } else {
-            vr = right.real * root.real - right.imag * root.imag;
-            vi = right.real * root.imag + right.imag * root.real;
-        }
-        const Real lr = left.real;
-        const Real li = left.imag;
-        left          = {lr + vr, li + vi};
-        right         = {lr - vr, li - vi};
-    }
-
-    __device__ __forceinline__ Value shuffle(Value value, std::uint32_t mask) const {
-        return {__shfl_xor_sync(0xffffffffU, value.real, mask), __shfl_xor_sync(0xffffffffU, value.imag, mask)};
-    }
-
-    __device__ __forceinline__ Value apply_lane(std::uint32_t stage, std::uint32_t offset, Value self, Value partner, bool right_lane) const {
-        const Complex left  = right_lane ? partner : self;
-        const Complex right = right_lane ? self : partner;
-        const Complex root  = twiddles[(1U << stage) - 1 + offset];
-        Real          vr;
-        Real          vi;
-        if (multiply == ComplexMultiply::Gauss3) {
-            const Real p0 = right.real * root.real;
-            const Real p1 = right.imag * root.imag;
-            const Real p2 = (right.real + right.imag) * (root.real + root.imag);
-            vr            = p0 - p1;
-            vi            = p2 - p0 - p1;
-        } else {
-            vr = right.real * root.real - right.imag * root.imag;
-            vi = right.real * root.imag + right.imag * root.real;
-        }
-        return right_lane ? Value{left.real - vr, left.imag - vi} : Value{left.real + vr, left.imag + vi};
-    }
-
-    __device__ __forceinline__ Value finalize(Value value, std::uint32_t n) const {
-        if (!inverse || !normalize_inverse) {
-            return value;
-        }
-        const Real scale = Real{1} / static_cast<Real>(n);
-        return {value.real * scale, value.imag * scale};
-    }
-};
-
-template <typename Storage, bool Native>
-struct LowFftOperator {
-    using Value                            = typename LowComplexType<Storage>::type;
-    static constexpr bool kBitReverseInput = true;
-
-    const Value* twiddles;
-    bool inverse;
-    bool normalize_inverse;
-    ComplexMultiply multiply;
-
-    __device__ __forceinline__ Value product(Value right, Value root) const {
-        if constexpr (Native) {
-            const Storage rr = LowMath<Storage, true>::mul(right.real, root.real);
-            const Storage ii = LowMath<Storage, true>::mul(right.imag, root.imag);
-            const Storage ri = LowMath<Storage, true>::mul(right.real, root.imag);
-            const Storage ir = LowMath<Storage, true>::mul(right.imag, root.real);
-            return {LowMath<Storage, true>::sub(rr, ii), LowMath<Storage, true>::add(ri, ir)};
-        }
-        const float rr = LowStorage<Storage>::widen(right.real);
-        const float ri = LowStorage<Storage>::widen(right.imag);
-        const float wr = LowStorage<Storage>::widen(root.real);
-        const float wi = LowStorage<Storage>::widen(root.imag);
-        return {LowStorage<Storage>::narrow(rr * wr - ri * wi), LowStorage<Storage>::narrow(rr * wi + ri * wr)};
-    }
-    __device__ __forceinline__ void apply(std::uint32_t stage, std::uint32_t offset, Value& left, Value& right) const {
-        const Value weighted = product(right, twiddles[(1U << stage) - 1 + offset]);
-        const Value original = left;
-        left  = {LowMath<Storage, Native>::add(original.real, weighted.real),
-                 LowMath<Storage, Native>::add(original.imag, weighted.imag)};
-        right = {LowMath<Storage, Native>::sub(original.real, weighted.real),
-                 LowMath<Storage, Native>::sub(original.imag, weighted.imag)};
-    }
-    __device__ __forceinline__ Value shuffle(Value value, std::uint32_t mask) const {
-        return {LowStorage<Storage>::shuffle(value.real, mask), LowStorage<Storage>::shuffle(value.imag, mask)};
-    }
-    __device__ __forceinline__ Value apply_lane(std::uint32_t stage, std::uint32_t offset, Value self, Value partner, bool right_lane) const {
-        Value left = right_lane ? partner : self;
-        Value right = right_lane ? self : partner;
-        apply(stage, offset, left, right);
-        return right_lane ? right : left;
-    }
-    __device__ __forceinline__ Value finalize(Value value, std::uint32_t n) const {
-        if (!inverse || !normalize_inverse)
-            return value;
-        const float scale = 1.0F / static_cast<float>(n);
-        return {LowStorage<Storage>::narrow(LowStorage<Storage>::widen(value.real) * scale),
-                LowStorage<Storage>::narrow(LowStorage<Storage>::widen(value.imag) * scale)};
-    }
-};
-
-template <bool UpdateLeft>
-struct BooleanZetaOperator {
-    using Value                            = std::uint32_t;
-    static constexpr bool kBitReverseInput = false;
-
-    bool inverse;
-
-    __device__ __forceinline__ void apply(std::uint32_t, std::uint32_t, Value& left, Value& right) const {
-        if constexpr (UpdateLeft) {
-            left = inverse ? left - right : left + right;
-        } else {
-            right = inverse ? right - left : right + left;
-        }
-    }
-
-    __device__ __forceinline__ Value shuffle(Value value, std::uint32_t mask) const { return __shfl_xor_sync(0xffffffffU, value, mask); }
-
-    __device__ __forceinline__ Value apply_lane(std::uint32_t, std::uint32_t, Value self, Value partner, bool right_lane) const {
-        if constexpr (UpdateLeft) {
-            return right_lane ? self : (inverse ? self - partner : self + partner);
-        } else {
-            return right_lane ? (inverse ? self - partner : partner + self) : self;
-        }
-    }
-
-    __device__ __forceinline__ Value finalize(Value value, std::uint32_t) const { return value; }
-};
+using namespace traits;
 
 template <typename Complex, typename Real>
 __global__ void scale_inverse_fft_kernel(Complex* values, std::uint64_t count, Real scale) {
@@ -428,7 +128,8 @@ void launch_stage_pipeline(const ButterflyConfig& config, const typename Operato
     const std::uint64_t     tiles              = config.batch;
     const auto              blocks = static_cast<std::uint32_t>((tiles + kPipelines * kTokensPerPipeline - 1) / (kPipelines * kTokensPerPipeline));
     for (std::uint32_t stage_base = 0; stage_base < 8; stage_base += StageSpace) {
-        const auto*           stage_input     = stage_base == 0 ? input : output;
+        if (active_probe_group >= 0 && stage_base != static_cast<unsigned>(active_probe_group)*StageSpace) continue;
+        const auto*           stage_input     = stage_base == 0 || active_probe_group >= 0 ? input : output;
         constexpr std::size_t kHandoffPadding = NamedBarrier ? PipelineWarps * 2 * sizeof(int) : 0;
         detail::stage_pipeline_256_kernel<Operator, StageSpace, NamedBarrier, PipelineWarps><<<blocks, PipelineWarps * 32, kHandoffPadding, active_stream>>>(
             stage_input, output, tiles, stage_base, config.batch_stride, config.batch_stride, config.element_stride, op);
@@ -519,6 +220,12 @@ void dispatch_temporal_length(const ButterflyConfig& config, const typename Oper
         case 10:
             launch_temporal_tile<Operator, 10>(config, input, output, op);
             break;
+        case 11:
+            launch_temporal_tile<Operator, 11>(config, input, output, op);
+            break;
+        case 12:
+            launch_temporal_tile<Operator, 12>(config, input, output, op);
+            break;
         default:
             throw std::logic_error("unresolved temporal butterfly length");
     }
@@ -578,30 +285,65 @@ void launch_online_reorder(const ButterflyConfig& config, const typename Operato
     const std::uint32_t   local_n             = 1U << LocalLogN;
     const std::uint32_t   column_tiles        = (local_n + config.reorder_columns - 1) / config.reorder_columns;
     const std::uint64_t   suffix_tiles        = static_cast<std::uint64_t>(config.batch) * column_tiles;
+    if (active_probe_group >= 0) {
+        const bool aligned=config.shared_layout==SharedLayout::WriterAligned;
+        if (!active_probe_group) {
+            if (config.compute_unit==ComputeUnit::Radix8)
+                detail::hierarchical_prefix_kernel<Operator,LocalLogN,false,true,true>
+                    <<<static_cast<unsigned>(prefix_tiles),config.tile_threads,prefix_shared_bytes,active_stream>>>(
+                        input,output,config.batch,config.log_n,config.batch_stride,config.element_stride,op,aligned);
+            else if (config.compute_unit==ComputeUnit::Radix4)
+                detail::hierarchical_prefix_kernel<Operator,LocalLogN,true,true>
+                    <<<static_cast<unsigned>(prefix_tiles),config.tile_threads,prefix_shared_bytes,active_stream>>>(
+                        input,output,config.batch,config.log_n,config.batch_stride,config.element_stride,op,aligned);
+            else detail::hierarchical_prefix_kernel<Operator,LocalLogN,false,true>
+                <<<static_cast<unsigned>(prefix_tiles),config.tile_threads,prefix_shared_bytes,active_stream>>>(
+                    input,output,config.batch,config.log_n,config.batch_stride,config.element_stride,op,aligned);
+        } else {
+            if (config.compute_unit==ComputeUnit::Radix8)
+                detail::online_reorder_suffix_kernel<Operator,RemainingLogN,false,true>
+                    <<<static_cast<unsigned>(suffix_tiles),config.tile_threads,suffix_shared_bytes,active_stream>>>(
+                        input,output,config.batch,config.log_n,LocalLogN,config.batch_stride,config.element_stride,config.reorder_columns,op,aligned);
+            else if (config.compute_unit==ComputeUnit::Radix4)
+                detail::online_reorder_suffix_kernel<Operator,RemainingLogN,true>
+                    <<<static_cast<unsigned>(suffix_tiles),config.tile_threads,suffix_shared_bytes,active_stream>>>(
+                        input,output,config.batch,config.log_n,LocalLogN,config.batch_stride,config.element_stride,config.reorder_columns,op,aligned);
+            else detail::online_reorder_suffix_kernel<Operator,RemainingLogN,false>
+                <<<static_cast<unsigned>(suffix_tiles),config.tile_threads,suffix_shared_bytes,active_stream>>>(
+                    input,output,config.batch,config.log_n,LocalLogN,config.batch_stride,config.element_stride,config.reorder_columns,op,aligned);
+        }
+        CUB_CUDA_CHECK(cudaGetLastError()); return;
+    }
     if (config.compute_unit == ComputeUnit::Radix8) {
         detail::hierarchical_prefix_kernel<Operator, LocalLogN, false, true, true>
             <<<static_cast<unsigned int>(prefix_tiles), config.tile_threads, prefix_shared_bytes, active_stream>>>(input, scratch, config.batch, config.log_n,
-                                                                                                    config.batch_stride, config.element_stride, op);
+                                                                                                    config.batch_stride, config.element_stride, op,
+                                                                                                    config.shared_layout == SharedLayout::WriterAligned);
         CUB_CUDA_CHECK(cudaGetLastError());
         detail::online_reorder_suffix_kernel<Operator, RemainingLogN, false, true>
             <<<static_cast<unsigned int>(suffix_tiles), config.tile_threads, suffix_shared_bytes, active_stream>>>(
-                scratch, output, config.batch, config.log_n, LocalLogN, config.batch_stride, config.element_stride, config.reorder_columns, op);
+                scratch, output, config.batch, config.log_n, LocalLogN, config.batch_stride, config.element_stride, config.reorder_columns, op,
+                config.shared_layout == SharedLayout::WriterAligned);
     } else if (config.compute_unit == ComputeUnit::Radix4) {
         detail::hierarchical_prefix_kernel<Operator, LocalLogN, true, true>
             <<<static_cast<unsigned int>(prefix_tiles), config.tile_threads, prefix_shared_bytes, active_stream>>>(input, scratch, config.batch, config.log_n,
-                                                                                                    config.batch_stride, config.element_stride, op);
+                                                                                                    config.batch_stride, config.element_stride, op,
+                                                                                                    config.shared_layout == SharedLayout::WriterAligned);
         CUB_CUDA_CHECK(cudaGetLastError());
         detail::online_reorder_suffix_kernel<Operator, RemainingLogN, true>
             <<<static_cast<unsigned int>(suffix_tiles), config.tile_threads, suffix_shared_bytes, active_stream>>>(
-                scratch, output, config.batch, config.log_n, LocalLogN, config.batch_stride, config.element_stride, config.reorder_columns, op);
+                scratch, output, config.batch, config.log_n, LocalLogN, config.batch_stride, config.element_stride, config.reorder_columns, op,
+                config.shared_layout == SharedLayout::WriterAligned);
     } else {
         detail::hierarchical_prefix_kernel<Operator, LocalLogN, false, true>
             <<<static_cast<unsigned int>(prefix_tiles), config.tile_threads, prefix_shared_bytes, active_stream>>>(input, scratch, config.batch, config.log_n,
-                                                                                                    config.batch_stride, config.element_stride, op);
+                                                                                                    config.batch_stride, config.element_stride, op,
+                                                                                                    config.shared_layout == SharedLayout::WriterAligned);
         CUB_CUDA_CHECK(cudaGetLastError());
         detail::online_reorder_suffix_kernel<Operator, RemainingLogN, false>
             <<<static_cast<unsigned int>(suffix_tiles), config.tile_threads, suffix_shared_bytes, active_stream>>>(
-                scratch, output, config.batch, config.log_n, LocalLogN, config.batch_stride, config.element_stride, config.reorder_columns, op);
+                scratch, output, config.batch, config.log_n, LocalLogN, config.batch_stride, config.element_stride, config.reorder_columns, op,
+                config.shared_layout == SharedLayout::WriterAligned);
     }
     CUB_CUDA_CHECK(cudaGetLastError());
 }
@@ -699,6 +441,7 @@ void launch_hierarchical(const ButterflyConfig& config, const typename Operator:
 }  // namespace
 
 class ButterflyPlan::Impl {
+    friend class detail::StageProbeAdapter;
   public:
     explicit Impl(ButterflyConfig config) : config_(std::move(config)) {
         const bool automatic_selection = config_.auto_select;
@@ -707,8 +450,10 @@ class ButterflyPlan::Impl {
             config_       = std::move(selected.config);
             selection_    = std::move(selected.info);
         }
-        if (config_.log_n == 0 || config_.log_n > 20) {
-            throw std::invalid_argument("butterfly log_n must be in [1, 20]");
+        if (config_.log_n == 0 || config_.log_n > 30 ||
+            (config_.log_n > 20 && config_.backend != ButterflyBackend::SharedIterative && config_.backend != ButterflyBackend::FactorStreamed &&
+             config_.backend != ButterflyBackend::CuFft && config_.fft_core != FftCore::RegisterTile)) {
+            throw std::invalid_argument("butterfly log_n must be in [1, 20]; shared-iterative and cuFFT allow [1, 30], register-tile validates its unit dimensions");
         }
         if (config_.op == ButterflyOperator::Structured2x2) {
             if (config_.precision != ButterflyPrecision::Fp16 && config_.precision != ButterflyPrecision::Bf16 &&
@@ -732,7 +477,83 @@ class ButterflyPlan::Impl {
         } else if (!config_.stage_matrices.empty()) {
             throw std::invalid_argument("stage_matrices requires the structured-2x2 operator");
         }
+        if (config_.prefix_codelet != "native" && config_.prefix_codelet != "cufftdx-thread")
+            throw std::invalid_argument("prefix_codelet must be native or cufftdx-thread");
+        if (config_.prefix_shared_layout != "linear" && config_.prefix_shared_layout != "xor")
+            throw std::invalid_argument("prefix_shared_layout must be linear or xor");
+        if (config_.prefix_codelet_lanes == 0 ||
+            (config_.prefix_codelet_lanes & (config_.prefix_codelet_lanes - 1)) != 0)
+            throw std::invalid_argument("prefix_codelet_lanes must be a positive power of two");
+        if (config_.prefix_codelet_lanes > 1 &&
+            !(config_.backend == ButterflyBackend::OnlineReorder && config_.fft_core == FftCore::RegisterTile))
+            throw std::invalid_argument("cooperative prefix codelet lanes apply only to online register-tile FFTs");
+        if ((config_.prefix_codelet != "native" || config_.prefix_shared_layout != "linear") &&
+            !(config_.backend == ButterflyBackend::OnlineReorder && config_.fft_core == FftCore::RegisterTile))
+            throw std::invalid_argument("prefix codelet/layout applies only to online register-tile FFTs");
+        if (!config_.factor_io_policies.empty() && config_.backend != ButterflyBackend::FactorStreamed)
+            throw std::invalid_argument("factor_io_policies applies only to factor-streamed FFTs");
+        if ((!config_.local_stage_partitions.empty() || !config_.exchange_chunks.empty()) &&
+            config_.backend!=ButterflyBackend::SharedIterative &&
+            !(config_.backend==ButterflyBackend::OnlineReorder && config_.fft_core==FftCore::RegisterTile))
+            throw std::invalid_argument("resident local partitions/exchange chunks require a supported shared or register lowering");
+        const auto validate_physical_axes = [&](const std::vector<FftSegmentMapping>& mappings) {
+            for (const auto& mapping : mappings) {
+                if (mapping.codelet != "native" &&
+                    !(config_.backend == ButterflyBackend::OnlineReorder && config_.fft_core == FftCore::RegisterTile))
+                    throw std::invalid_argument("non-native group codelet applies only to online register-tile FFTs");
+                if (mapping.io_policy != "dynamic" && config_.backend != ButterflyBackend::FactorStreamed)
+                    throw std::invalid_argument("non-dynamic group I/O policy applies only to factor-streamed FFTs");
+            }
+        };
+        validate_physical_axes(config_.segment_mappings);
+        validate_physical_axes(config_.execution_group_mappings);
+        if(config_.backend==ButterflyBackend::FactorStreamed) {
+            detail::normalize_factor_mapping(config_);
+            execution_stage_partition_=config_.factor_partition;
+            detail::prepare_register_module(config_);
+            register_module_=detail::prepared_register_module(config_);
+            if(register_module_) register_group_launch_=detail::prepared_group_launcher(register_module_);
+            if(config_.factor_slices>1) {
+                factor_range_launch_=detail::prepared_range_launcher(register_module_);
+                if(config_.factor_overlap) factor_pipeline_=std::make_unique<detail::FactorPipeline>(
+                    static_cast<unsigned>(config_.factor_partition.size()),config_.factor_slices);
+            }
+        } else {
+        if(!config_.factor_partition.empty() || config_.data_tiles_per_cta!=1 || config_.prefetch_depth ||
+           config_.factor_slices!=1 || config_.factor_overlap)
+            throw std::invalid_argument("factor partition and CTA data prefetch require factor-streamed backend");
         const bool explicit_stage_partition = !config_.stage_partition.empty();
+        if (config_.backend == ButterflyBackend::SharedIterative && config_.stage_partition.empty()) {
+            if (config_.local_stages == 0) throw std::invalid_argument("shared iteration needs a positive stage tile");
+            for (std::uint32_t remaining = config_.log_n; remaining; ) {
+                const auto stages = std::min(remaining, config_.local_stages);
+                config_.stage_partition.push_back(stages);
+                remaining -= stages;
+            }
+        }
+        if (config_.backend == ButterflyBackend::SharedIterative) {
+            if (config_.fft_core != FftCore::Scalar || config_.local_exchange != LocalExchange::SharedMemory ||
+                (config_.compute_unit != ComputeUnit::Radix2 && config_.compute_unit != ComputeUnit::Auto) ||
+                (config_.shared_layout != SharedLayout::Linear && config_.shared_layout != SharedLayout::WriterAligned))
+                throw std::invalid_argument("shared-iterative requires scalar radix2 and linear/writer-aligned shared exchange");
+            if (!config_.segment_mappings.empty() || !config_.execution_group_mappings.empty())
+                throw std::invalid_argument("shared-iterative uses tile_threads for each physical group");
+            if (config_.boundaries.empty())
+                config_.boundaries.assign(config_.stage_partition.size() - 1, FftBoundaryMapping{});
+            if (config_.boundaries.size() + 1 != config_.stage_partition.size())
+                throw std::invalid_argument("shared-iterative requires one boundary per logical edge");
+            std::uint32_t group = 0;
+            for (std::size_t i = 0; i < config_.stage_partition.size(); ++i) {
+                group += config_.stage_partition[i];
+                if (i + 1 == config_.stage_partition.size() || config_.boundaries[i].residency != FftBoundaryResidency::Fused) {
+                    execution_stage_partition_.push_back(group);
+                    group = 0;
+                }
+            }
+        }
+        if (config_.shared_layout == SharedLayout::WriterAligned &&
+            config_.backend != ButterflyBackend::SharedIterative && config_.backend != ButterflyBackend::OnlineReorder)
+            throw std::invalid_argument("writer-aligned layout requires an iterative or online-reorder backend");
         if (config_.backend == ButterflyBackend::OnlineReorder && config_.stage_partition.empty()) {
             config_.stage_partition = {config_.local_stages, config_.log_n - config_.local_stages};
         }
@@ -746,8 +567,15 @@ class ButterflyPlan::Impl {
             if (stage_sum != config_.log_n)
                 throw std::invalid_argument("stage partition must sum to log_n");
             if (config_.backend != ButterflyBackend::OnlineReorder) {
-                if (explicit_stage_partition)
-                    throw std::invalid_argument("explicit stage partitions currently require online-reorder");
+                if (explicit_stage_partition && config_.backend != ButterflyBackend::SharedIterative) {
+                    std::vector<std::uint32_t> canonical{config_.log_n};
+                    if (config_.backend == ButterflyBackend::Hierarchical && config_.local_stages < config_.log_n) {
+                        canonical = {config_.local_stages};
+                        canonical.insert(canonical.end(), config_.log_n - config_.local_stages, 1U);
+                    }
+                    if (config_.stage_partition != canonical && config_.stage_partition != std::vector<std::uint32_t>{config_.log_n})
+                        throw std::invalid_argument("this backend has a fixed physical partition; use online-reorder or shared-iterative for other partitions");
+                }
             } else {
                 if (config_.stage_partition.size() < 2 || config_.stage_partition.size() > 8)
                     throw std::invalid_argument("online-reorder requires decomposition_count in [2, 8]");
@@ -756,6 +584,10 @@ class ButterflyPlan::Impl {
                     config_.segment_mappings.reserve(config_.stage_partition.size());
                     for (std::size_t segment = 0; segment < config_.stage_partition.size(); ++segment) {
                         FftSegmentMapping mapping;
+                        if (config_.fft_core == FftCore::RegisterTile)
+                            mapping.core = segment == 0 ? FftCore::RegisterTile : FftCore::CufftDxBlock;
+                        if (config_.fft_core == FftCore::RegisterTile && segment == 0)
+                            mapping.codelet = config_.prefix_codelet;
                         if (config_.stage_partition.size() == 2) {
                             mapping.threads = segment == 0 ? config_.prefix_threads : config_.suffix_threads;
                             mapping.ept = segment == 0 ? config_.prefix_ept : config_.suffix_ept;
@@ -768,6 +600,11 @@ class ButterflyPlan::Impl {
                 }
                 if (config_.segment_mappings.size() != config_.stage_partition.size())
                     throw std::invalid_argument("segment_mappings count must equal decomposition_count");
+                if (config_.fft_core == FftCore::RegisterTile && config_.stage_partition.size() == 2) {
+                    if (config_.segment_mappings[0].codelet != config_.prefix_codelet ||
+                        config_.segment_mappings[1].codelet != "native")
+                        throw std::invalid_argument("register-tile execution codelets disagree with prefix_codelet");
+                }
                 if (config_.boundaries.empty()) {
                     config_.boundaries.assign(config_.stage_partition.size() - 1,
                                               FftBoundaryMapping{config_.cross_twiddle, config_.direct_boundary});
@@ -815,18 +652,59 @@ class ButterflyPlan::Impl {
                 if (config_.execution_group_mappings.size() != execution_stage_partition_.size())
                     throw std::invalid_argument("execution group mapping count does not match fused boundary lowering");
                 if (config_.stage_partition.size() == 2) {
+                    // Physical descriptors already carry the concrete launch
+                    // shape.  Accept an omitted zero shape and project it
+                    // from the selected prefix/suffix axes, including when a
+                    // replay supplies only execution-group records.
+                    if (config_.fft_core == FftCore::RegisterTile &&
+                        config_.execution_group_mappings.size() == 2) {
+                        if ((config_.segment_mappings[0].threads == 0 || config_.segment_mappings[0].ept == 0) &&
+                            config_.execution_group_mappings[0].threads != 0)
+                            config_.segment_mappings[0] = config_.execution_group_mappings[0];
+                        if ((config_.segment_mappings[1].threads == 0 || config_.segment_mappings[1].ept == 0) &&
+                            config_.execution_group_mappings[1].threads != 0)
+                            config_.segment_mappings[1] = config_.execution_group_mappings[1];
+                        if (config_.segment_mappings[0].threads == 0 && config_.prefix_threads != 0) {
+                            config_.segment_mappings[0].threads = config_.prefix_threads;
+                            config_.segment_mappings[0].ept = config_.prefix_ept;
+                        } else if (config_.segment_mappings[0].ept == 0 && config_.prefix_ept != 0) {
+                            config_.segment_mappings[0].ept = config_.prefix_ept;
+                        }
+                        if (config_.segment_mappings[1].threads == 0 && config_.suffix_threads != 0) {
+                            config_.segment_mappings[1].threads = config_.suffix_threads;
+                            config_.segment_mappings[1].ept = config_.suffix_ept;
+                        } else if (config_.segment_mappings[1].ept == 0 && config_.suffix_ept != 0) {
+                            config_.segment_mappings[1].ept = config_.suffix_ept;
+                        }
+                    }
                     config_.prefix_threads = config_.segment_mappings[0].threads;
                     config_.prefix_ept = config_.segment_mappings[0].ept;
                     config_.suffix_threads = config_.segment_mappings[1].threads;
                     config_.suffix_ept = config_.segment_mappings[1].ept;
                     config_.cross_twiddle = config_.boundaries[0].cross_twiddle;
                     config_.direct_boundary = config_.boundaries[0].layout;
+                    if (config_.fft_core == FftCore::RegisterTile) {
+                        if (config_.execution_group_mappings[0].threads == 0 ||
+                            config_.execution_group_mappings[0].ept == 0) {
+                            config_.execution_group_mappings[0].threads = config_.prefix_threads;
+                            config_.execution_group_mappings[0].ept = config_.prefix_ept;
+                        }
+                        if (config_.execution_group_mappings[1].threads == 0 ||
+                            config_.execution_group_mappings[1].ept == 0) {
+                            config_.execution_group_mappings[1].threads = config_.suffix_threads;
+                            config_.execution_group_mappings[1].ept = config_.suffix_ept;
+                        }
+                    }
                 }
             }
         }
+        const bool fp32_fft_shared_tile = config_.op == ButterflyOperator::Fft &&
+                                          config_.precision == ButterflyPrecision::Fp32 &&
+                                          config_.fft_core == FftCore::Scalar &&
+                                          config_.log_n <= 12;
         if (config_.backend == ButterflyBackend::TemporalTile && config_.local_exchange == LocalExchange::SharedMemory &&
-            config_.log_n > 10 && config_.fft_core != FftCore::CufftDxDirect) {
-            throw std::invalid_argument("temporal-tile requires log_n in [1, 10]");
+            config_.log_n > 10 && config_.fft_core != FftCore::CufftDxDirect && !fp32_fft_shared_tile) {
+            throw std::invalid_argument("temporal-tile requires log_n in [1, 10], except FP32 scalar FFT shared tiles up to log_n=12");
         }
         if (config_.local_exchange == LocalExchange::WarpRegister) {
             const bool fwht_point = config_.op == ButterflyOperator::Fwht &&
@@ -846,15 +724,19 @@ class ButterflyPlan::Impl {
             (config_.local_stages < 5 || config_.local_stages > 10 || config_.local_stages >= config_.log_n)) {
             throw std::invalid_argument("hierarchical requires local_stages in [5, 10] and smaller than log_n");
         }
-        const std::uint32_t online_max_dimension = config_.fft_core == FftCore::CufftDxBlock ? 12U : 10U;
+        const bool imported_online_unit = config_.fft_core == FftCore::CufftDxBlock || config_.fft_core == FftCore::RegisterTile;
         if (config_.backend == ButterflyBackend::OnlineReorder && config_.stage_partition.size() == 2 &&
-            (config_.local_stages < 5 || config_.local_stages > online_max_dimension ||
-             config_.local_stages >= config_.log_n || config_.log_n - config_.local_stages > online_max_dimension)) {
+            (config_.local_stages == 0 || config_.local_stages >= config_.log_n ||
+             (!imported_online_unit && (config_.local_stages < 5 || config_.local_stages > 10 ||
+                                       config_.log_n - config_.local_stages > 10)))) {
             throw std::invalid_argument(
                 "online-reorder dimensions exceed the selected processing unit's supported range");
         }
+        // Imported dimensions and launch mappings are validated below through
+        // the same availability predicates exported by the compiled-unit API.
+        // Scalar local-stage restrictions must not prune imported units.
         if (config_.backend == ButterflyBackend::OnlineReorder) {
-            if (config_.fft_core == FftCore::CufftDxBlock) {
+            if (config_.fft_core == FftCore::CufftDxBlock || config_.fft_core == FftCore::RegisterTile) {
                 config_.reorder_columns = 1;
             } else {
                 const std::uint32_t local_n     = 1U << config_.local_stages;
@@ -1025,6 +907,7 @@ class ButterflyPlan::Impl {
         }
         if (config_.fft_core != FftCore::Scalar) {
             const bool cufftdx_online = (config_.fft_core == FftCore::CufftDxBlock ||
+                                         config_.fft_core == FftCore::RegisterTile ||
                                          config_.fft_core == FftCore::CufftDxResident) &&
                                         config_.backend == ButterflyBackend::OnlineReorder;
             if (config_.op != ButterflyOperator::Fft || config_.local_exchange != LocalExchange::SharedMemory ||
@@ -1060,6 +943,25 @@ class ButterflyPlan::Impl {
                                                                    config_.suffix_threads, config_.suffix_ept));
                 if ((config_.precision != ButterflyPrecision::Fp32 && !fp64) || !supported)
                     throw std::invalid_argument("cufftdx-block precision or compiled local FFT mapping is unsupported");
+            } else if (config_.fft_core == FftCore::RegisterTile) {
+                detail::validate_register_tile(config_);
+                register_module_ = detail::prepared_register_module(config_);
+                if (register_module_) register_group_launch_=detail::prepared_group_launcher(register_module_);
+                if (execution_stage_partition_ != config_.stage_partition ||
+                    config_.execution_group_mappings.size() != 2)
+                    throw std::invalid_argument("register-tile requires two explicit physical groups");
+                for (std::size_t group = 0; group < 2; ++group) {
+                    const auto& mapping = config_.execution_group_mappings[group];
+                    const auto expected_core = group == 0 ? FftCore::RegisterTile : FftCore::CufftDxBlock;
+                    if (mapping.core != expected_core || mapping.exchange != LocalExchange::SharedMemory ||
+                        mapping.threads != (group == 0 ? config_.prefix_threads : config_.suffix_threads) ||
+                        mapping.ept != (group == 0 ? config_.prefix_ept : config_.suffix_ept) ||
+                        mapping.codelet != (group == 0 ? config_.prefix_codelet : "native") ||
+                        mapping.io_policy != "dynamic")
+                        throw std::invalid_argument("register-tile execution mapping disagrees with selected prefix/suffix units");
+                }
+                config_.prefix_units_per_cta = config_.prefix_threads * config_.prefix_ept / (1U << config_.local_stages);
+                config_.suffix_units_per_cta = config_.suffix_threads * config_.suffix_ept / (1U << (config_.log_n-config_.local_stages));
             } else if (config_.fft_core == FftCore::CufftDxDirect) {
                 if (config_.precision != ButterflyPrecision::Fp32 || !detail::cufftdx_direct_available(config_.log_n) ||
                     !resident_tile_threads || (config_.log_n == 14 && config_.tile_threads == 256)) {
@@ -1088,7 +990,7 @@ class ButterflyPlan::Impl {
         }
         if (config_.backend == ButterflyBackend::StagePipeline && config_.op == ButterflyOperator::Fft &&
             config_.precision == ButterflyPrecision::Fp64) {
-            throw std::invalid_argument("FP64 complex stage-pipeline exceeds the V100 per-CTA shared-memory limit");
+            throw std::invalid_argument("FP64 complex stage-pipeline has no instantiated lowering");
         }
         if (config_.compute_unit == ComputeUnit::Auto) {
             config_.compute_unit = config_.backend == ButterflyBackend::CuFft ? ComputeUnit::Auto : ComputeUnit::Radix2;
@@ -1096,7 +998,8 @@ class ButterflyPlan::Impl {
         if (config_.fft_core == FftCore::ThreadDft8 || config_.fft_core == FftCore::CtaDft8 || config_.fft_core == FftCore::WmmaDft8) {
             config_.compute_unit = ComputeUnit::Radix8;
         } else if (config_.fft_core == FftCore::CufftDxBlock || config_.fft_core == FftCore::CufftDxDirect ||
-                   config_.fft_core == FftCore::CufftDxResident || config_.fft_core == FftCore::TurboFftGenerated) {
+                   config_.fft_core == FftCore::CufftDxResident || config_.fft_core == FftCore::TurboFftGenerated ||
+                   config_.fft_core == FftCore::RegisterTile) {
             config_.compute_unit = ComputeUnit::Auto;
         }
         if (config_.local_exchange == LocalExchange::WarpRegister && config_.compute_unit != ComputeUnit::Radix2) {
@@ -1115,19 +1018,30 @@ class ButterflyPlan::Impl {
             (config_.op != ButterflyOperator::Fft || config_.backend == ButterflyBackend::CuFft)) {
             throw std::invalid_argument("Gauss complex multiplication requires a self-kernel FFT backend");
         }
-        if (config_.shared_layout == SharedLayout::XorSwizzle &&
-            (config_.op != ButterflyOperator::Fft || config_.precision != ButterflyPrecision::Fp64 ||
-             config_.backend != ButterflyBackend::OnlineReorder || config_.fft_core != FftCore::CufftDxBlock ||
-             config_.stage_partition.size() != 2 || config_.local_stages < 7 || config_.local_stages > 9 ||
-             config_.log_n - config_.local_stages < 7 || config_.log_n - config_.local_stages > 9)) {
-            throw std::invalid_argument(
-                "xor-swizzle shared layout requires FP64 online cuFFTDx with two logN=7..9 segments");
+        if (config_.shared_layout == SharedLayout::XorSwizzle) {
+            const bool fp64_supported = config_.precision == ButterflyPrecision::Fp64 &&
+                config_.stage_partition.size() == 2 && config_.local_stages >= 7 &&
+                config_.local_stages <= 9 && config_.log_n - config_.local_stages >= 7 &&
+                config_.log_n - config_.local_stages <= 9;
+            // FP32 placement is currently the prefix tile only. Do not report
+            // it as executed on a direct prefix or a multisegment path.
+            const bool fp32_supported = config_.precision == ButterflyPrecision::Fp32 &&
+                execution_stage_partition_.size() == 2 &&
+                execution_stage_partition_[0] >= 3 && execution_stage_partition_[0] <= 10;
+            if (config_.op != ButterflyOperator::Fft ||
+                config_.backend != ButterflyBackend::OnlineReorder ||
+                config_.fft_core != FftCore::CufftDxBlock || !(fp64_supported || fp32_supported))
+                throw std::invalid_argument(
+                    "xor-swizzle requires FP32 online cuFFTDx with two groups and prefix logN=3..10, "
+                    "or FP64 with two logN=7..9 segments");
         }
         if (config_.cross_twiddle == CrossTwiddleMode::Recurrence &&
             (config_.op != ButterflyOperator::Fft || config_.backend != ButterflyBackend::OnlineReorder ||
-             (config_.fft_core != FftCore::CufftDxBlock && config_.fft_core != FftCore::CufftDxResident))) {
+             (config_.fft_core != FftCore::CufftDxBlock && config_.fft_core != FftCore::CufftDxResident &&
+              config_.fft_core != FftCore::RegisterTile))) {
             throw std::invalid_argument("cross-twiddle recurrence currently requires an online-reorder cuFFTDx FFT");
         }
+        } // Legacy lowerings have their own processing-unit constraints.
         if (config_.batch > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
             throw std::invalid_argument("butterfly batch exceeds backend integer limits");
         }
@@ -1136,10 +1050,12 @@ class ButterflyPlan::Impl {
             config_.pipeline_warps = 0;
         }
         if (config_.backend != ButterflyBackend::TemporalTile && config_.backend != ButterflyBackend::Hierarchical &&
-            config_.backend != ButterflyBackend::OnlineReorder) {
+            config_.backend != ButterflyBackend::OnlineReorder && config_.backend != ButterflyBackend::SharedIterative &&
+            config_.backend != ButterflyBackend::FactorStreamed) {
             config_.tile_threads = 0;
         }
-        if (config_.backend != ButterflyBackend::Hierarchical && config_.backend != ButterflyBackend::OnlineReorder)
+        if (config_.backend != ButterflyBackend::Hierarchical && config_.backend != ButterflyBackend::OnlineReorder &&
+            config_.backend != ButterflyBackend::SharedIterative && config_.backend != ButterflyBackend::FactorStreamed)
             config_.local_stages = 0;
         if (config_.backend != ButterflyBackend::OnlineReorder)
             config_.reorder_columns = 0;
@@ -1202,14 +1118,62 @@ class ButterflyPlan::Impl {
             throw std::invalid_argument("butterfly allocation size overflows size_t");
         }
         data_bytes_ = data_elements_ * element_bytes;
+        if (config_.backend == ButterflyBackend::SharedIterative) {
+            int device = 0; cudaDeviceProp properties{};
+            CUB_CUDA_CHECK(cudaGetDevice(&device));
+            CUB_CUDA_CHECK(cudaGetDeviceProperties(&properties, device));
+            for (auto stages : execution_stage_partition_) {
+                const auto live_bytes = 2ULL * (1ULL << stages) * element_bytes;
+                if (live_bytes > properties.sharedMemPerBlockOptin)
+                    throw std::invalid_argument("shared-iterative dependency-closed live state exceeds CTA shared capacity");
+                if ((static_cast<std::uint64_t>(config_.batch) << (config_.log_n - stages)) >
+                    static_cast<std::uint64_t>(properties.maxGridSize[0]))
+                    throw std::invalid_argument("shared-iterative grid exceeds device capacity");
+            }
+            if (execution_stage_partition_.size() > 1) workspace_buffers_ = execution_stage_partition_.size() > 2 ? 2 : 1;
+        }
         if (config_.backend == ButterflyBackend::Hierarchical || config_.backend == ButterflyBackend::OnlineReorder)
             workspace_buffers_ = 1;
+        if(config_.backend==ButterflyBackend::FactorStreamed) {
+            workspace_buffers_=std::min<std::size_t>(2,execution_stage_partition_.size()-1);
+            if(config_.factor_slices>1) workspace_buffers_=execution_stage_partition_.size()-1;
+            const auto projected=make_dataflow_plan(config_);
+            for(const auto& g:projected.execution_groups) if(g.grid_ctas>static_cast<std::uint64_t>(std::numeric_limits<int>::max()))
+                throw std::invalid_argument("factor grid exceeds CUDA launch limit");
+        }
         if (config_.direct_boundary == DirectBoundary::PrefixTiledTranspose ||
             (config_.backend == ButterflyBackend::OnlineReorder && execution_stage_partition_.size() > 2))
             workspace_buffers_ = 2;
         if (workspace_buffers_ != 0 && data_bytes_ > kMaxSize / workspace_buffers_)
             throw std::invalid_argument("butterfly workspace size overflows size_t");
-        workspace_bytes_ = workspace_buffers_ * data_bytes_;
+        workspace_buffer_bytes_ = data_bytes_;
+        if (config_.stage_overlap) {
+            const bool shared = config_.backend == ButterflyBackend::SharedIterative;
+            const bool imported = config_.backend == ButterflyBackend::OnlineReorder &&
+                                  (config_.fft_core == FftCore::CufftDxBlock || config_.fft_core == FftCore::RegisterTile);
+            if ((!shared && !(imported && config_.op == ButterflyOperator::Fft && execution_stage_partition_.size() == 2)) ||
+                execution_stage_partition_.size() < 2 || config_.batch_tile_count == 0)
+                throw std::invalid_argument("stage-overlap requires multiple shared groups or a two-group FFT adapter and a positive batch tile");
+            if (shared) workspace_buffers_ = execution_stage_partition_.size() - 1;
+            if (config_.batch_stride > kMaxSize / config_.batch_tile_count)
+                throw std::invalid_argument("pipeline tile extent overflows size_t");
+            pipeline_tile_elements_ = config_.batch_stride * config_.batch_tile_count;
+            if (pipeline_tile_elements_ > kMaxSize / (2 * element_bytes))
+                throw std::invalid_argument("pipeline workspace overflows size_t");
+            workspace_buffer_bytes_ = 2 * pipeline_tile_elements_ * element_bytes;
+            if (workspace_buffer_bytes_ > kMaxSize / workspace_buffers_)
+                throw std::invalid_argument("pipeline workspace buffers overflow size_t");
+            pipeline_ = std::make_unique<detail::BatchPipeline>(execution_stage_partition_.size());
+        }
+        workspace_bytes_ = workspace_buffers_ * workspace_buffer_bytes_;
+        if(config_.backend==ButterflyBackend::SharedIterative) {
+            detail::validate_shared_resident_axes(config_.local_stage_partitions,config_.exchange_chunks,execution_stage_partition_);
+            if(detail::resident_axes_requested(config_.local_stage_partitions,config_.exchange_chunks) &&
+               !detail::on_demand_compilation_enabled())
+                throw std::invalid_argument("shared resident processing units require on-demand compilation");
+        }
+        dataflow_plan_ = make_dataflow_plan(config_);
+        if (register_module_) detail::attach_module_resources(dataflow_plan_,register_module_,config_.inverse);
         if (config_.auto_allocate_workspace)
             internal_workspace_.allocate(workspace_bytes_);
 
@@ -1225,7 +1189,8 @@ class ButterflyPlan::Impl {
             }
         }
 
-        if (config_.op == ButterflyOperator::Fft && config_.backend != ButterflyBackend::CuFft) {
+        if (config_.op == ButterflyOperator::Fft && config_.backend != ButterflyBackend::CuFft &&
+            config_.fft_core != FftCore::RegisterTile && config_.backend != ButterflyBackend::FactorStreamed) {
             constexpr double kPi = 3.141592653589793238462643383279502884;
             if (config_.precision == ButterflyPrecision::Fp64) {
                 std::vector<Complex64> twiddles(points_ - 1);
@@ -1267,10 +1232,22 @@ class ButterflyPlan::Impl {
             CUB_CUFFT_CHECK(cufftPlanMany(&cufft_plan_, 1, &length, &length, element_stride, distance, &length, element_stride, distance, type,
                                           static_cast<int>(config_.batch)));
         }
+        if(config_.backend==ButterflyBackend::SharedIterative && (detail::specialize_shared_templates() ||
+           detail::resident_axes_requested(config_.local_stage_partitions,config_.exchange_chunks))) {
+            auto physical=config_; physical.stage_partition=execution_stage_partition_;
+            shared_module_=detail::prepare_shared_module(physical);
+            shared_group_launch_=detail::prepared_group_launcher(shared_module_);
+            detail::attach_module_resources(dataflow_plan_,shared_module_,config_.inverse);
+        }
+        // Runtime validation and backend setup above certify this legacy projection.
+        dataflow_plan_.executable = true;
+        dataflow_plan_.state = CandidateState::Compiled;
         config_.auto_select = automatic_selection;
     }
 
     ~Impl() {
+        pipeline_.reset(); // drain private streams before any device buffer is freed
+        factor_pipeline_.reset();
         if (cufft_plan_ != 0) {
             cufftDestroy(cufft_plan_);
         }
@@ -1278,6 +1255,7 @@ class ButterflyPlan::Impl {
 
     const ButterflyConfig& config() const noexcept { return config_; }
     const SelectionInfo& selection() const noexcept { return selection_; }
+    const MixedDataflowPlan& dataflow_plan() const noexcept { return dataflow_plan_; }
 
     std::size_t data_size() const noexcept { return data_bytes_; }
     std::size_t workspace_size() const noexcept { return workspace_bytes_; }
@@ -1535,7 +1513,7 @@ class ButterflyPlan::Impl {
     void* auxiliary_buffer() const noexcept {
         if (workspace_buffers_ < 2 || workspace() == nullptr)
             return nullptr;
-        return static_cast<void*>(static_cast<unsigned char*>(workspace()) + data_bytes_);
+        return static_cast<void*>(static_cast<unsigned char*>(workspace()) + workspace_buffer_bytes_);
     }
 
     template <typename Value>
@@ -1545,6 +1523,30 @@ class ButterflyPlan::Impl {
 
     void launch_once(const void* input_buffer, void* output_buffer, void* scratch, void* auxiliary) {
         const LaunchStreamScope stream_scope(stream_);
+        if(config_.backend==ButterflyBackend::FactorStreamed) {
+            const cubutterflyModuleInvocationV1 a{input_buffer,output_buffer,scratch,config_.batch,
+                config_.batch_stride,config_.element_stride,config_.inverse,config_.normalize_inverse,stream_};
+            if(config_.factor_slices>1) {
+                auto launch=[&](unsigned group,unsigned slice,cudaStream_t stream) {
+                    auto io=a; io.stream=stream;
+                    auto* base=static_cast<unsigned char*>(scratch);
+                    io.input=group ? base+(group-1)*workspace_buffer_bytes_ : input_buffer;
+                    io.output=group+1==execution_stage_partition_.size() ? output_buffer : base+group*workspace_buffer_bytes_;
+                    const auto r=detail::factor_tile_range(config_,group,slice);
+                    const cubutterflyModuleTileRangeV1 invocation{io,r.first,r.count,r.period,r.span};
+                    CUB_CUDA_CHECK(static_cast<cudaError_t>(factor_range_launch_(group,&invocation)));
+                };
+                if(factor_pipeline_) factor_pipeline_->enqueue(stream_,launch);
+                else {
+                    for(unsigned group=0;group<execution_stage_partition_.size();++group)
+                        for(unsigned slice=0;slice<(group+1==execution_stage_partition_.size() ? 1U : config_.factor_slices);++slice)
+                            launch(group,slice,stream_);
+                }
+                return;
+            }
+            CUB_CUDA_CHECK(static_cast<cudaError_t>(register_module_->launch(&a)));
+            return;
+        }
         if (config_.backend == ButterflyBackend::CuFft) {
             if (config_.precision == ButterflyPrecision::Fp64) {
                 CUB_CUFFT_CHECK(cufftExecZ2Z(cufft_plan_, reinterpret_cast<cufftDoubleComplex*>(const_cast<void*>(input_buffer)),
@@ -1625,8 +1627,35 @@ class ButterflyPlan::Impl {
                 CUB_CUDA_CHECK(cudaGetLastError());
                 return;
             }
+            if (config_.fft_core == FftCore::RegisterTile) {
+                if (pipeline_) {
+                    const auto width=config_.precision==ButterflyPrecision::Fp64 ? sizeof(Complex64) : sizeof(Complex32);
+                    pipeline_->enqueue(config_.batch,config_.batch_tile_count,stream_,
+                        [&](std::size_t group,std::size_t offset,std::size_t count,std::size_t slot,cudaStream_t stream) {
+                            auto* ring=static_cast<char*>(scratch)+slot*pipeline_tile_elements_*width;
+                            const void* source=group ? ring : static_cast<const char*>(input_buffer)+offset*config_.batch_stride*width;
+                            void* destination=group ? static_cast<char*>(output_buffer)+offset*config_.batch_stride*width : ring;
+                            if (register_group_launch_) {
+                                const cubutterflyModuleInvocationV1 invocation{source,destination,nullptr,count,
+                                    config_.batch_stride,config_.element_stride,config_.inverse,config_.normalize_inverse,stream};
+                                CUB_CUDA_CHECK(static_cast<cudaError_t>(register_group_launch_(group,&invocation)));
+                            } else detail::launch_register_tile_group(config_,group,source,destination,count,stream);
+                        });
+                } else if(register_module_) {
+                    const cubutterflyModuleInvocationV1 invocation{input_buffer,output_buffer,scratch,
+                        config_.batch,config_.batch_stride,config_.element_stride,config_.inverse,config_.normalize_inverse,stream_};
+                    CUB_CUDA_CHECK(static_cast<cudaError_t>(register_module_->launch(&invocation)));
+                } else detail::launch_register_tile(config_, input_buffer, output_buffer, scratch, stream_);
+                CUB_CUDA_CHECK(cudaGetLastError());
+                return;
+            }
             if (config_.fft_core == FftCore::CufftDxBlock) {
                 if (config_.precision == ButterflyPrecision::Fp64) {
+                    if (pipeline_) {
+                        launch_fft_pipeline(static_cast<const Complex64*>(input_buffer), static_cast<Complex64*>(output_buffer),
+                                            static_cast<Complex64*>(scratch), static_cast<Complex64*>(auxiliary));
+                        return;
+                    }
                     if (config_.backend == ButterflyBackend::OnlineReorder) {
                         const auto& prefix = config_.execution_group_mappings[0];
                         const auto& suffix = config_.execution_group_mappings[1];
@@ -1648,6 +1677,11 @@ class ButterflyPlan::Impl {
                     CUB_CUDA_CHECK(cudaGetLastError());
                     return;
                 }
+                if (pipeline_) {
+                    launch_fft_pipeline(static_cast<const Complex32*>(input_buffer), static_cast<Complex32*>(output_buffer),
+                                        static_cast<Complex32*>(scratch), static_cast<Complex32*>(auxiliary));
+                    return;
+                }
                 if (config_.backend == ButterflyBackend::OnlineReorder) {
                     if (execution_stage_partition_.size() > 2) {
                         detail::launch_cufftdx_multisegment(
@@ -1667,7 +1701,7 @@ class ButterflyPlan::Impl {
                             static_cast<Complex32*>(scratch), static_cast<Complex32*>(auxiliary),
                             device_twiddles_.as<Complex32>(), config_.batch,
                             config_.batch_stride, config_.element_stride, config_.inverse,
-                            config_.inverse && config_.normalize_inverse, boundary.cross_twiddle,
+                            config_.inverse && config_.normalize_inverse, boundary.cross_twiddle, config_.shared_layout,
                             prefix.threads, suffix.threads, prefix.ept, suffix.ept, boundary.layout, stream_);
                     }
                 } else {
@@ -1785,10 +1819,154 @@ class ButterflyPlan::Impl {
         }
     }
 
+    template <typename Value>
+    void launch_fft_pipeline(const Value* input, Value* output, Value* scratch, Value* auxiliary) {
+        const auto& prefix = config_.execution_group_mappings[0];
+        const auto& suffix = config_.execution_group_mappings[1];
+        const auto& boundary = execution_boundaries_[0];
+        auto launch_stage = [&](unsigned stage, std::size_t offset, std::size_t count,
+                                std::size_t slot, cudaStream_t stream) {
+            const auto* tile_input = input + offset * config_.batch_stride;
+            auto* tile_output = output + offset * config_.batch_stride;
+            auto* tile_scratch = scratch + slot * pipeline_tile_elements_;
+            if constexpr (std::is_same_v<Value, Complex64>) {
+                detail::launch_cufftdx_fp64_online_reorder(config_.log_n, execution_stage_partition_[0],
+                    tile_input, tile_output, tile_scratch, device_twiddles_.as<Complex64>(), count,
+                    config_.batch_stride, config_.element_stride, config_.inverse,
+                    config_.inverse && config_.normalize_inverse, boundary.cross_twiddle, config_.shared_layout,
+                    prefix.threads, suffix.threads, prefix.ept, suffix.ept, stream, stage);
+            } else {
+                auto* tile_auxiliary = auxiliary ? auxiliary + slot * pipeline_tile_elements_ : nullptr;
+                detail::launch_cufftdx_online_reorder(config_.log_n, execution_stage_partition_[0],
+                    tile_input, tile_output, tile_scratch, tile_auxiliary, device_twiddles_.as<Complex32>(), count,
+                    config_.batch_stride, config_.element_stride, config_.inverse,
+                    config_.inverse && config_.normalize_inverse, boundary.cross_twiddle, config_.shared_layout,
+                    prefix.threads, suffix.threads, prefix.ept, suffix.ept, boundary.layout, stream, stage);
+            }
+        };
+        pipeline_->enqueue(config_.batch, config_.batch_tile_count, stream_,
+            [&](auto offset, auto count, auto slot, auto stream) { launch_stage(1, offset, count, slot, stream); },
+            [&](auto offset, auto count, auto slot, auto stream) { launch_stage(2, offset, count, slot, stream); });
+    }
+
     template <typename Operator>
     void launch_operator(const typename Operator::Value* input, typename Operator::Value* output, Operator op,
                          typename Operator::Value* scratch) {
-        if (config_.local_exchange == LocalExchange::WarpRegister) {
+        if (!dataflow_plan_.executable)
+            throw std::logic_error("butterfly execution requires a lowered plan");
+        if (probe_group_ >= 0) {
+            using Value = typename Operator::Value;
+            const auto& group = dataflow_plan_.execution_groups.at(probe_group_);
+            if (config_.backend == ButterflyBackend::SharedIterative) {
+                if (shared_group_launch_) {
+                    const cubutterflyModuleInvocationV2 invocation{{input,output,nullptr,config_.batch,
+                        config_.batch_stride,config_.element_stride,config_.inverse,config_.normalize_inverse,stream_},
+                        config_.op==ButterflyOperator::Fft ? device_twiddles_.data() : device_operator_coefficients_.data(),
+                        nullptr,0,0,0};
+                    CUB_CUDA_CHECK(static_cast<cudaError_t>(shared_group_launch_(probe_group_,&invocation)));
+                } else {
+                    const auto shared=2ULL*(1ULL<<group.stage_count)*sizeof(Value);
+                    if (shared>48*1024) CUB_CUDA_CHECK(cudaFuncSetAttribute(detail::shared_iterative_kernel<Operator>,
+                        cudaFuncAttributeMaxDynamicSharedMemorySize,static_cast<int>(shared)));
+                    const auto tiles=std::max(1U,std::min(4U,static_cast<unsigned>(dataflow_plan_.batch_tile_count)));
+                    const auto blocks=((config_.batch+tiles-1)/tiles)<<(config_.log_n-group.stage_count);
+                    detail::shared_iterative_kernel<Operator><<<static_cast<unsigned>(blocks),config_.tile_threads,shared,stream_>>>(
+                        input,output,config_.log_n,group.first_stage,group.stage_count,config_.batch_stride,
+                        config_.element_stride,config_.shared_layout==SharedLayout::WriterAligned,config_.batch,tiles,op);
+                }
+                CUB_CUDA_CHECK(cudaGetLastError());
+                return;
+            }
+            if (dataflow_plan_.dispatch == DataflowDispatch::Hierarchical) {
+                if (!probe_group_) dispatch_hierarchical_prefix(config_,input,output,op);
+                else {
+                    const auto butterflies=static_cast<std::uint64_t>(config_.batch)*points_/2;
+                    detail::hierarchical_stage_kernel<Operator><<<static_cast<unsigned>((butterflies+255)/256),256,0,stream_>>>(
+                        input,output,config_.batch,config_.log_n,group.first_stage,config_.batch_stride,
+                        config_.element_stride,group.first_stage+1==config_.log_n,op);
+                    CUB_CUDA_CHECK(cudaGetLastError());
+                }
+                return;
+            }
+            if (dataflow_plan_.dispatch == DataflowDispatch::OnlineReorder) {
+                dispatch_online_reorder(config_,input,output,scratch,op); return;
+            }
+            if (dataflow_plan_.dispatch == DataflowDispatch::StagePipeline) {
+                if constexpr (sizeof(Value)<=sizeof(Complex32)) {
+                    if (config_.stage_handoff==StageHandoff::NamedBarrier)
+                        dispatch_pipeline_warps<Operator,true>(config_,input,output,op);
+                    else dispatch_pipeline_warps<Operator,false>(config_,input,output,op);
+                    return;
+                }
+            }
+            throw std::logic_error("generic physical group probe is unavailable for this lowering");
+        }
+        if (config_.backend == ButterflyBackend::SharedIterative) {
+            using Value = typename Operator::Value;
+            if(shared_module_ && !pipeline_) {
+                const cubutterflyModuleInvocationV2 invocation{{input,output,scratch,config_.batch,config_.batch_stride,
+                    config_.element_stride,config_.inverse,config_.normalize_inverse,stream_},
+                    config_.op==ButterflyOperator::Fft ? device_twiddles_.data() : device_operator_coefficients_.data(),
+                    nullptr,0,0,0};
+                CUB_CUDA_CHECK(static_cast<cudaError_t>(shared_module_->launch(&invocation)));
+                return;
+            }
+            if (pipeline_) {
+                const auto max_stages = *std::max_element(execution_stage_partition_.begin(), execution_stage_partition_.end());
+                const auto max_shared = 2ULL * (1ULL << max_stages) * sizeof(Value);
+                if (!shared_group_launch_ && max_shared > 48 * 1024)
+                    CUB_CUDA_CHECK(cudaFuncSetAttribute(detail::shared_iterative_kernel<Operator>,
+                        cudaFuncAttributeMaxDynamicSharedMemorySize, static_cast<int>(max_shared)));
+                auto launch_stage = [&](std::size_t group, std::size_t offset, std::size_t count,
+                                        std::size_t slot, cudaStream_t stream) {
+                    const auto stages = execution_stage_partition_[group];
+                    const auto first = dataflow_plan_.execution_groups[group].first_stage;
+                    const auto* source = group ? scratch + (2 * (group - 1) + slot) * pipeline_tile_elements_ :
+                        input + offset * config_.batch_stride;
+                    auto* destination = group + 1 == execution_stage_partition_.size() ? output + offset * config_.batch_stride :
+                        scratch + (2 * group + slot) * pipeline_tile_elements_;
+                    if (shared_group_launch_) {
+                        const cubutterflyModuleInvocationV2 invocation{{source,destination,nullptr,count,config_.batch_stride,
+                            config_.element_stride,config_.inverse,config_.normalize_inverse,stream},
+                            config_.op==ButterflyOperator::Fft ? device_twiddles_.data() : device_operator_coefficients_.data(),
+                            nullptr,0,0,0};
+                        CUB_CUDA_CHECK(static_cast<cudaError_t>(shared_group_launch_(group,&invocation)));
+                        return;
+                    }
+                    const auto shared = 2ULL * (1ULL << stages) * sizeof(Value);
+                    const auto blocks = static_cast<unsigned int>(count << (config_.log_n - stages));
+                    detail::shared_iterative_kernel<Operator><<<blocks, config_.tile_threads, shared, stream>>>(
+                        source, destination, config_.log_n, first, stages, config_.batch_stride,
+                        config_.element_stride, config_.shared_layout == SharedLayout::WriterAligned,
+                        count, 1, op);
+                };
+                pipeline_->enqueue(config_.batch, config_.batch_tile_count, stream_, launch_stage);
+                return;
+            }
+            const Value* source = input;
+            std::uint32_t first = 0;
+            for (std::size_t group = 0; group < execution_stage_partition_.size(); ++group) {
+                const auto stages = execution_stage_partition_[group];
+                Value* destination = group + 1 == execution_stage_partition_.size() ? output :
+                    scratch + (group % 2) * data_elements_;
+                const auto shared = 2ULL * (1ULL << stages) * sizeof(Value);
+                if (shared > 48 * 1024)
+                    CUB_CUDA_CHECK(cudaFuncSetAttribute(detail::shared_iterative_kernel<Operator>,
+                        cudaFuncAttributeMaxDynamicSharedMemorySize, static_cast<int>(shared)));
+                const auto batch_tiles = std::max(1U, std::min(4U, static_cast<unsigned int>(dataflow_plan_.batch_tile_count)));
+                const auto batch_groups = (config_.batch + batch_tiles - 1) / batch_tiles;
+                const auto tiled_blocks = static_cast<unsigned int>(batch_groups << (config_.log_n - stages));
+                detail::shared_iterative_kernel<Operator><<<tiled_blocks, config_.tile_threads, shared, stream_>>>(
+                    source, destination, config_.log_n, first, stages, config_.batch_stride,
+                    config_.element_stride, config_.shared_layout == SharedLayout::WriterAligned,
+                    config_.batch, batch_tiles, op);
+                CUB_CUDA_CHECK(cudaGetLastError());
+                source = destination;
+                first += stages;
+            }
+            return;
+        }
+        if (dataflow_plan_.dispatch == DataflowDispatch::WarpRegister) {
             if constexpr (std::is_same_v<typename Operator::Value, float>) {
                 detail::launch_generated_register_fwht(config_.log_n, input, output, config_.batch, config_.batch_stride,
                                                        config_.element_stride, op.inverse && op.normalize_inverse, stream_);
@@ -1798,24 +1976,26 @@ class ButterflyPlan::Impl {
                 throw std::logic_error("warp-register dispatch reached an unsupported value type");
             }
         }
-        if (config_.backend == ButterflyBackend::TemporalTile) {
+        if (dataflow_plan_.dispatch == DataflowDispatch::TemporalTile) {
             dispatch_temporal_length(config_, input, output, op);
             return;
         }
-        if (config_.backend == ButterflyBackend::Hierarchical) {
+        if (dataflow_plan_.dispatch == DataflowDispatch::Hierarchical) {
             launch_hierarchical(config_, input, output, scratch, data_bytes_, op);
             return;
         }
-        if (config_.backend == ButterflyBackend::OnlineReorder) {
+        if (dataflow_plan_.dispatch == DataflowDispatch::OnlineReorder) {
             dispatch_online_reorder(config_, input, output, scratch, op);
             return;
         }
-        if (config_.backend == ButterflyBackend::WarpHybrid) {
+        if (dataflow_plan_.dispatch == DataflowDispatch::WarpHybrid) {
             detail::warp_hybrid_256_kernel<Operator><<<static_cast<unsigned int>(config_.batch), 256, 0, stream_>>>(
                 input, output, config_.batch, config_.warp_stages, config_.batch_stride, config_.element_stride, op);
             CUB_CUDA_CHECK(cudaGetLastError());
             return;
         }
+        if (dataflow_plan_.dispatch != DataflowDispatch::StagePipeline)
+            throw std::logic_error("no generic kernel registered for the lowered dispatch");
         if constexpr (sizeof(typename Operator::Value) > sizeof(Complex32)) {
             throw std::logic_error("selected stage-pipeline value type is not instantiated");
         } else {
@@ -1828,7 +2008,15 @@ class ButterflyPlan::Impl {
     }
 
     ButterflyConfig config_;
+    int probe_group_ = -1;
+    const cubutterflyModuleV1* register_module_ = nullptr;
+    cubutterflyModuleGroupLaunchV1 register_group_launch_ = nullptr;
+    cubutterflyModuleRangeLaunchV1 factor_range_launch_ = nullptr;
+    std::unique_ptr<detail::FactorPipeline> factor_pipeline_;
+    const cubutterflyModuleV2* shared_module_ = nullptr;
+    cubutterflyModuleGroupLaunchV2 shared_group_launch_ = nullptr;
     SelectionInfo   selection_;
+    MixedDataflowPlan dataflow_plan_;
     std::vector<std::uint32_t> execution_stage_partition_;
     std::vector<FftBoundaryMapping> execution_boundaries_;
     std::size_t     data_bytes_    = 0;
@@ -1836,6 +2024,9 @@ class ButterflyPlan::Impl {
     std::size_t     points_        = 0;
     std::size_t     workspace_bytes_ = 0;
     std::size_t     workspace_buffers_ = 0;
+    std::size_t     workspace_buffer_bytes_ = 0;
+    std::size_t     pipeline_tile_elements_ = 0;
+    std::unique_ptr<detail::BatchPipeline> pipeline_;
     cudaStream_t    stream_ = nullptr;
     void*           external_workspace_ = nullptr;
     std::size_t     external_workspace_bytes_ = 0;
@@ -1846,6 +2037,79 @@ class ButterflyPlan::Impl {
     DeviceBuffer    device_operator_coefficients_;
     cufftHandle     cufft_plan_ = 0;
 };
+
+detail::StageProbeAdapter::StageProbeAdapter(ButterflyPlan& plan) {
+    auto* impl=plan.impl_.get();
+    if (!impl) throw std::invalid_argument("cannot probe an empty Butterfly plan");
+    const auto& c=impl->config_;
+    const bool bulk=!c.stage_overlap && !c.factor_overlap;
+    for (const auto& execution : impl->dataflow_plan_.execution_groups) {
+        const bool shared=c.backend==ButterflyBackend::SharedIterative;
+        const bool reg=c.fft_core==FftCore::RegisterTile && c.backend==ButterflyBackend::OnlineReorder;
+        const bool factor=c.backend==ButterflyBackend::FactorStreamed && c.factor_slices==1 && impl->register_group_launch_;
+        const bool hierarchical=impl->dataflow_plan_.dispatch==DataflowDispatch::Hierarchical && c.fft_core==FftCore::Scalar;
+        const bool generic_segmented=c.fft_core==FftCore::Scalar &&
+            (impl->dataflow_plan_.dispatch==DataflowDispatch::OnlineReorder || impl->dataflow_plan_.dispatch==DataflowDispatch::StagePipeline);
+        const bool online=c.fft_core==FftCore::CufftDxBlock && c.backend==ButterflyBackend::OnlineReorder &&
+            impl->execution_stage_partition_.size()==2;
+        const bool single=impl->dataflow_plan_.execution_groups.size()==1 && execution.launch_count==1 &&
+            c.backend!=ButterflyBackend::CuFft && c.fft_core!=FftCore::CufftDxResident;
+        const bool independent=bulk && (shared || reg || factor || hierarchical || generic_segmented || online || single);
+        groups_.push_back({execution,independent,independent ? "" :
+            "independent physical entry unavailable; overlap requires its own composition measurement"});
+    }
+    plan_launch_=[impl](const void* input,void* output,void* workspace,cudaStream_t stream) {
+        const auto previous=impl->stream_;
+        impl->set_stream(stream);
+        auto* scratch=workspace ? workspace : impl->workspace();
+        auto* auxiliary=impl->workspace_buffers_>=2 && scratch ?
+            static_cast<void*>(static_cast<unsigned char*>(scratch)+impl->workspace_buffer_bytes_) : nullptr;
+        try { impl->launch_once(input,output,scratch,auxiliary); }
+        catch (...) { impl->set_stream(previous); throw; }
+        impl->set_stream(previous);
+    };
+    group_launch_=[whole=plan_launch_,impl](unsigned group,const void* input,void* output,void* workspace,cudaStream_t stream) {
+        const auto& config=impl->config_;
+        if (impl->dataflow_plan_.execution_groups.size()==1) {
+            whole(input,output,workspace,stream); return;
+        }
+        if (impl->register_group_launch_) {
+            const cubutterflyModuleInvocationV1 invocation{input,output,nullptr,config.batch,config.batch_stride,
+                config.element_stride,config.inverse,config.normalize_inverse,stream};
+            CUB_CUDA_CHECK(static_cast<cudaError_t>(impl->register_group_launch_(group,&invocation))); return;
+        }
+        if (config.fft_core==FftCore::RegisterTile) {
+            detail::launch_register_tile_group(config,group,input,output,config.batch,stream); return;
+        }
+        if (config.fft_core==FftCore::CufftDxBlock && config.backend==ButterflyBackend::OnlineReorder) {
+            const auto& prefix=config.execution_group_mappings[0];
+            const auto& suffix=config.execution_group_mappings[1];
+            const auto& boundary=impl->execution_boundaries_[0];
+            void* scratch=group ? const_cast<void*>(input) : output;
+            if (config.precision==ButterflyPrecision::Fp64)
+                detail::launch_cufftdx_fp64_online_reorder(config.log_n,impl->execution_stage_partition_[0],
+                    static_cast<const Complex64*>(input),static_cast<Complex64*>(output),static_cast<Complex64*>(scratch),
+                    impl->device_twiddles_.as<Complex64>(),config.batch,config.batch_stride,config.element_stride,
+                    config.inverse,config.inverse&&config.normalize_inverse,boundary.cross_twiddle,config.shared_layout,
+                    prefix.threads,suffix.threads,prefix.ept,suffix.ept,stream,group+1);
+            else detail::launch_cufftdx_online_reorder(config.log_n,impl->execution_stage_partition_[0],
+                static_cast<const Complex32*>(input),static_cast<Complex32*>(output),static_cast<Complex32*>(scratch),
+                static_cast<Complex32*>(workspace),impl->device_twiddles_.as<Complex32>(),config.batch,
+                config.batch_stride,config.element_stride,config.inverse,config.inverse&&config.normalize_inverse,
+                boundary.cross_twiddle,config.shared_layout,prefix.threads,suffix.threads,prefix.ept,suffix.ept,
+                boundary.layout,stream,group+1);
+            CUB_CUDA_CHECK(cudaGetLastError()); return;
+        }
+        const auto previous_stream=impl->stream_;
+        const auto previous_probe=active_probe_group;
+        active_probe_group=static_cast<int>(group);
+        impl->stream_=stream; impl->probe_group_=static_cast<int>(group);
+        try { impl->launch_once(input,output,workspace,nullptr); }
+        catch (...) { impl->probe_group_=-1; impl->stream_=previous_stream; active_probe_group=previous_probe; throw; }
+        impl->probe_group_=-1; impl->stream_=previous_stream;
+        active_probe_group=previous_probe;
+    };
+}
 
 ButterflyPlan::ButterflyPlan(ButterflyConfig config) : impl_(std::make_unique<Impl>(std::move(config))) {
 }
@@ -1860,6 +2124,10 @@ const ButterflyConfig& ButterflyPlan::config() const noexcept {
 
 const SelectionInfo& ButterflyPlan::selection() const noexcept {
     return impl_->selection();
+}
+
+const MixedDataflowPlan& ButterflyPlan::dataflow_plan() const noexcept {
+    return impl_->dataflow_plan();
 }
 
 std::size_t ButterflyPlan::data_size() const noexcept {

@@ -1,0 +1,20 @@
+{
+  "schema": "cubutterfly-install-search-v1",
+  "scope": "library-exported candidates for all six applications, including permitted on-demand specializations",
+  "workloads": [
+    {"precision": "fp32", "logN": 16, "batch": 64, "placement": "out-of-place", "normalization": "none"},
+    {"precision": "fp64", "logN": 16, "batch": 64, "placement": "out-of-place", "normalization": "none"},
+    {"precision": "fp32", "logN": 18, "batch": 16, "placement": "in-place", "normalization": "none"},
+    {"precision": "fp32", "logN": 18, "batch": 64, "placement": "in-place", "normalization": "none"},
+    {"precision": "fp32", "logN": 20, "batch": 4, "placement": "in-place", "normalization": "none"},
+    {"precision": "fp32", "logN": 20, "batch": 16, "placement": "in-place", "normalization": "none"},
+    {"operator": "fwht", "precision": "fp32", "logN": 15, "batch": 128, "placement": "out-of-place", "normalization": "none"},
+    {"operator": "fwht", "precision": "fp64", "logN": 12, "batch": 64, "placement": "out-of-place", "normalization": "none"},
+    {"operator": "subset-zeta", "precision": "uint32", "logN": 12, "batch": 1024, "placement": "out-of-place", "normalization": "none"},
+    {"operator": "superset-zeta", "precision": "uint32", "logN": 12, "batch": 1024, "placement": "out-of-place", "normalization": "none"},
+    {"operator": "xor-zeta", "precision": "uint32", "logN": 12, "batch": 1024, "placement": "out-of-place", "normalization": "none"},
+    {"operator": "structured-2x2", "precision": "fp32", "logN": 12, "batch": 1024, "placement": "out-of-place", "normalization": "none", "stage_matrix": "1,0.25,-0.5,1"},
+    {"operator": "ntt", "precision": "word32", "logN": 12, "batch": 128, "modulus": 998244353, "placement": "natural"},
+    {"operator": "ntt", "precision": "word64", "logN": 16, "batch": 16, "modulus": 576460756061519873, "placement": "natural"}
+  ]
+}

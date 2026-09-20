@@ -1,0 +1,625 @@
+{
+  "kind": "core",
+  "schema": "cubutterfly-install-search-v1",
+  "scope": "portable semantic snapshot of the original comprehensive workload cohort",
+  "workloads": [
+    {
+      "batch": 32,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 16,
+      "logN": 18,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 32,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1,
+      "logN": 8,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 4,
+      "logN": 8,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 16384,
+      "logN": 8,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 4,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1024,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1,
+      "logN": 16,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 4,
+      "logN": 16,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 64,
+      "logN": 16,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1,
+      "logN": 18,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 4,
+      "logN": 18,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1,
+      "logN": 20,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 4,
+      "logN": 20,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1,
+      "logN": 22,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 4,
+      "logN": 22,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 16,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 1,
+      "logN": 16,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 16,
+      "logN": 16,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 1,
+      "logN": 18,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 16,
+      "logN": 18,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 1,
+      "logN": 20,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 16,
+      "logN": 20,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 32,
+      "direction": "inverse",
+      "logN": 12,
+      "normalization": "inverse",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 8,
+      "direction": "inverse",
+      "logN": 16,
+      "normalization": "inverse",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 32,
+      "batch_stride": 519,
+      "element_stride": 2,
+      "logN": 8,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 256,
+      "logN": 8,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "in-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1,
+      "logN": 8,
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 16384,
+      "logN": 8,
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1024,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1,
+      "logN": 15,
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 128,
+      "logN": 15,
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1,
+      "logN": 20,
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 4,
+      "logN": 20,
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 32,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 32,
+      "direction": "inverse",
+      "logN": 12,
+      "normalization": "inverse",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 1,
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1024,
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 64,
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 4,
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "576460756061519873",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "576460756061519873",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "576460756061519873",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "576460756061519873",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "576460756061519873",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "576460756061519873",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 4,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "576460756061519873",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "576460756061519873",
+      "operator": "ntt",
+      "output_order": "bit-reversed",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "logN": 8,
+      "normalization": "none",
+      "operator": "subset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 4096,
+      "logN": 8,
+      "normalization": "none",
+      "operator": "subset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 1,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "subset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 256,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "subset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 1,
+      "logN": 20,
+      "normalization": "none",
+      "operator": "subset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 1,
+      "logN": 8,
+      "normalization": "none",
+      "operator": "superset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 4096,
+      "logN": 8,
+      "normalization": "none",
+      "operator": "superset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 1,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "superset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 256,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "superset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 1,
+      "logN": 20,
+      "normalization": "none",
+      "operator": "superset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 1,
+      "logN": 8,
+      "normalization": "none",
+      "operator": "structured-2x2",
+      "placement": "out-of-place",
+      "precision": "fp32",
+      "stage_matrix": "1,0.25,-0.5,1"
+    },
+    {
+      "batch": 4,
+      "logN": 8,
+      "normalization": "none",
+      "operator": "structured-2x2",
+      "placement": "out-of-place",
+      "precision": "fp32",
+      "stage_matrix": "1,0.25,-0.5,1"
+    },
+    {
+      "batch": 1,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "structured-2x2",
+      "placement": "out-of-place",
+      "precision": "fp32",
+      "stage_matrix": "1,0.25,-0.5,1"
+    },
+    {
+      "batch": 4,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "structured-2x2",
+      "placement": "out-of-place",
+      "precision": "fp32",
+      "stage_matrix": "1,0.25,-0.5,1"
+    },
+    {
+      "batch": 1,
+      "logN": 20,
+      "normalization": "none",
+      "operator": "structured-2x2",
+      "placement": "out-of-place",
+      "precision": "fp32",
+      "stage_matrix": "1,0.25,-0.5,1"
+    },
+    {
+      "batch": 4,
+      "logN": 20,
+      "normalization": "none",
+      "operator": "structured-2x2",
+      "placement": "out-of-place",
+      "precision": "fp32",
+      "stage_matrix": "1,0.25,-0.5,1"
+    },
+    {
+      "batch": 32,
+      "logN": 12,
+      "normalization": "none",
+      "operator": "xor-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 1,
+      "logN": 23,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 4,
+      "logN": 23,
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include "benchmark_verification.hpp"
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
@@ -8,6 +9,7 @@
 #include <vector>
 
 #include "cuntt/ntt.hpp"
+#include "cubutterfly/mapping.hpp"
 
 namespace {
 
@@ -129,7 +131,8 @@ void print_usage() {
               << "            [--word-bits 32|64]\n"
               << "            [--input-order natural|appt-static]\n"
               << "            [--output-order natural|bit-reversed|appt-static]\n"
-              << "            [--auto-select] [--trace-pipeline] [--profile-appt-roles] [--warmup 5] [--repeat 20] [--modulus Q] [--inverse] [--verify] [--csv]\n";
+              << "            [--auto-select] [--trace-pipeline] [--profile-appt-roles] [--warmup 5] [--repeat 20] [--modulus Q] [--inverse] [--verify] [--verify-batches 0] [--csv]\n"
+              << "            [--stage-overlap] [--batch-tile-count 1] [--mapping-json JSON] [--list-design-points]\n";
 }
 
 std::uint32_t reverse_bits(std::uint32_t value, std::uint32_t bits) {
@@ -141,14 +144,14 @@ std::uint32_t reverse_bits(std::uint32_t value, std::uint32_t bits) {
 }
 
 bool verify_output(const std::vector<std::uint64_t>& input, const std::vector<std::uint64_t>& output, const cuntt::PlanConfig& config,
-                   std::size_t& mismatch_index) {
+                   std::size_t& mismatch_index, std::size_t batch_limit) {
     const std::size_t n = 1ULL << config.log_n;
     cuntt::ApptLayoutInfo layout;
     layout.log_n = config.log_n;
     layout.stage_partition = config.stage_partition;
     layout.fragment_width = config.appt_role_mapping.fragment_width;
     layout.xor_permutation = true;
-    for (std::size_t batch_index = 0; batch_index < config.batch; ++batch_index) {
+    for (const auto batch_index : verification_batches(config.batch, batch_limit)) {
         std::vector<std::uint64_t> expected(n);
         for (std::size_t index = 0; index < n; ++index) {
             const std::size_t source = config.input_order == cuntt::InputOrder::ApptStatic
@@ -191,7 +194,10 @@ int main(int argc, char** argv) {
     std::uint32_t     warmup = 5;
     std::uint32_t     repeat = 20;
     bool              verify = false;
+    std::size_t verify_batch_limit = 0;
     bool              csv    = false;
+    bool list_design_points = false;
+    std::string mapping_json;
     bool              trace_pipeline = false;
     std::vector<cuntt::NttSubgraphCore> segment_cores;
     std::vector<std::uint32_t> segment_threads;
@@ -218,7 +224,11 @@ int main(int argc, char** argv) {
                 print_usage();
                 return 0;
             }
-            if (arg == "--logN") {
+            if (arg == "--list-design-points") {
+                list_design_points = true;
+            } else if (arg == "--mapping-json") {
+                mapping_json = take_arg(i, argc, argv);
+            } else if (arg == "--logN") {
                 config.log_n = static_cast<std::uint32_t>(std::stoul(take_arg(i, argc, argv)));
             } else if (arg == "--batch") {
                 config.batch = static_cast<std::size_t>(std::stoull(take_arg(i, argc, argv)));
@@ -346,10 +356,16 @@ int main(int argc, char** argv) {
                 config.modulus = std::stoull(take_arg(i, argc, argv));
             } else if (arg == "--inverse") {
                 config.inverse = true;
+            } else if (arg == "--stage-overlap") {
+                config.stage_overlap = true;
+            } else if (arg == "--batch-tile-count") {
+                config.batch_tile_count = static_cast<std::uint32_t>(std::stoul(take_arg(i, argc, argv)));
             } else if (arg == "--auto-select") {
                 config.auto_select = true;
             } else if (arg == "--verify") {
                 verify = true;
+            } else if (arg == "--verify-batches") {
+                verify_batch_limit = std::stoull(take_arg(i, argc, argv));
             } else if (arg == "--trace-pipeline") {
                 trace_pipeline = true;
             } else if (arg == "--profile-appt-roles") {
@@ -450,6 +466,12 @@ int main(int argc, char** argv) {
             }
         }
 
+        if (list_design_points) {
+            for (const auto& candidate : cubutterfly::portable_ntt_candidates(config))
+                std::cout << cubutterfly::serialize_mapping(candidate) << '\n';
+            return 0;
+        }
+        if (!mapping_json.empty()) cubutterfly::apply_serialized_mapping(mapping_json, config);
         const auto  device = cuntt::current_device_info();
         cuntt::Plan plan(config);
         config                       = plan.config();
@@ -495,7 +517,7 @@ int main(int argc, char** argv) {
         bool        correct        = true;
         std::size_t mismatch_index = 0;
         if (verify) {
-            correct = verify_output(input, output, config, mismatch_index);
+            correct = verify_output(input, output, config, mismatch_index, verify_batch_limit);
         }
 
         std::cout << std::fixed << std::setprecision(6);
@@ -503,7 +525,7 @@ int main(int argc, char** argv) {
             std::cout << "device,compute_capability,auto_select,selection_target,selected_implementation,selection_confidence,predicted_kernel_ms,selection_reason,backend,stage_space,stage_handoff,flow_tile_log,data_space,role_stages,target_ctas_per_sm,data_time,token_interleave,pipeline_buffers,dataflow_layout,dataflow_state,compute_unit,word_bits,logN,N,batch,modulus,modulus_bits,n1_"
                          "log,rows_per_block,threads_"
                          "per_block,hierarchical_core,stage_partition,logical_subgraphs,execution_stage_partition,execution_groups,materialized_boundaries,segment_cores,segment_threads,segment_units,segment_data_space,segment_data_time,segment_role_stages,segment_token_interleave,segment_coefficient_reuse_stages,segment_cta_weights,execution_group_cores,boundary_storage,boundary_buffers,ready_window,packet_readiness,packet_compute_layout,packet_fold_wave_barriers,inverse,warmup,repeat,h2d_ms,kernel_ms,timed_region_wall_ms,host_timing_overhead_ms,"
-                         "appt_producer_weight,appt_tail_weight,appt_writer_weight,appt_fragment_width,appt_writer_tiles,appt_data_time_roles,input_order,output_order,appt_layout_id,d2h_ms,kernel_ntt_s,end_to_end_ntt_s,kernel_points_s,cross_twiddle,mod_multiply,correct\n";
+                         "appt_producer_weight,appt_tail_weight,appt_writer_weight,appt_fragment_width,appt_writer_tiles,appt_data_time_roles,input_order,output_order,appt_layout_id,d2h_ms,kernel_ntt_s,end_to_end_ntt_s,kernel_points_s,cross_twiddle,mod_multiply,correct,mapping_json,runtime_fingerprint,execution_groups_json,stage_overlap,batch_tile_count,verified_batches\n";
             std::cout << '"' << device.name << "\"," << device.compute_major << '.' << device.compute_minor << ','
                       << static_cast<int>(selection.automatic) << ",\"" << selection.target << "\",\"" << selection.implementation
                       << "\",\"" << selection.confidence << "\"," << selection.predicted_kernel_ms << ",\"" << selection.reason << "\","
@@ -555,10 +577,28 @@ int main(int argc, char** argv) {
                       << stats.kernel_ntt_per_second << ',' << stats.end_to_end_ntt_per_second << ',' << stats.kernel_points_per_second << ','
                       << cuntt::cross_twiddle_placement_name(config.cross_twiddle_placement) << ','
                       << cuntt::modular_multiply_name(config.modular_multiply) << ','
-                      << (verify ? static_cast<int>(correct) : -1) << '\n';
+                      << (verify ? static_cast<int>(correct) : -1) << ','
+                      << cubutterfly::csv_field(cubutterfly::serialize_mapping(config)) << ','
+                      << cubutterfly::runtime_fingerprint() << ',' << cubutterfly::csv_field(cubutterfly::execution_groups_json(plan.dataflow_plan()))
+                      << ',' << static_cast<int>(config.stage_overlap) << ',' << config.batch_tile_count
+                      << ',' << (verify ? verification_batches(config.batch,verify_batch_limit).size() : 0) << '\n';
         } else {
+            const auto& dataflow = plan.dataflow_plan();
+            const auto hardware = cuntt::query_hardware_resource_model();
+            const auto estimate = cuntt::estimate_resources(dataflow, hardware);
             std::cout << "device: " << device.name << " (sm_" << device.compute_major << device.compute_minor << ")\n"
                       << "backend: " << cuntt::backend_name(config.backend) << "\n"
+                      << "dataflow_operator: " << cuntt::dataflow_operator_name(dataflow.graph.op) << "\n"
+                      << "dataflow_dispatch: " << cuntt::dataflow_dispatch_name(dataflow.dispatch) << "\n"
+                      << "dataflow_subgraph_logN: " << dataflow.subgraph_log_n << "\n"
+                      << "dataflow_stage_partition: " << join_u32(dataflow.stage_partition) << "\n"
+                      << "dataflow_boundary: " << cuntt::boundary_policy_name(dataflow.boundary) << "\n"
+                      << "dataflow_exchange: " << cuntt::exchange_policy_name(dataflow.exchange) << "\n"
+                      << "dataflow_persistent: " << (dataflow.persistent ? "yes" : "no") << "\n"
+                      << "dataflow_resources: feasible=" << (estimate.feasible ? "yes" : "no")
+                      << ", resident_ctas=" << estimate.resident_ctas
+                      << ", grid_waves=" << estimate.grid_waves
+                      << ", boundary_bytes=" << estimate.boundary_bytes << "\n"
                       << "auto_select: " << (selection.automatic ? "yes" : "no") << "\n";
             if (selection.automatic) {
                 std::cout << "selected_implementation: " << selection.implementation << "\n"

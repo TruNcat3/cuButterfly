@@ -11,14 +11,22 @@ an architecture mapping problem rather than one fixed kernel: the same layered
 butterfly graph is unfolded across data and stage dimensions, then lowered to a
 hardware-appropriate processing unit.
 
-> **Release status:** v0.8 is a temporarily frozen V100 research baseline. It
-> is suitable for reproducing the documented experiments and extending the
-> mapping space. Cross-GPU calibration remains future work.
+> **Release status:** v0.9 is the cross-hardware framework release. v0.8 remains a frozen V100 research baseline for the
+> documented experiments. The install workflow also supports target-local
+> GPU detection and calibration (including A100); those profiles are local
+> tuning artifacts, not portable cross-GPU performance claims.
+
+For the current V100 research campaign, follow the [target-machine runbook](docs/hardware/v100.md).
+It covers SM70 CPU builds and precompilation, target-local calibration, searched
+comparisons, and resumable execution of the portable 738-contract matrix.
+New-version V100 GPU measurements remain pending; see the runbook for memory
+deferrals, baseline coverage and the distinction from historical v0.8 results.
 
 ## Read This Repository In Order
 
 1. **Orient yourself:** read this page through the two figures below and the
-   [v0.8 release overview](docs/release_v08.md).
+   [v0.9 framework release](docs/release_v09.md) defines the layer boundaries;
+   the [v0.8 release overview](docs/release_v08.md) preserves the V100 evidence.
 2. **Use the library:** follow [Getting Started](docs/getting_started.md),
    then the [Programming Guide](docs/programming_guide.md) and [C Plan API](docs/c_api.md).
 3. **Understand the method:** read [Design Overview](docs/design_overview.md),
@@ -97,7 +105,7 @@ one common mapping vocabulary, is in [Why The Mapping Is Hybrid](docs/design_ove
 | Operators | FFT, NTT, FWHT, Structured 2x2, subset/superset zeta, and legacy xor-zeta paths are implemented with documented contracts. |
 | Selection | V100 confirmed cells are compiled into the runtime selector; exact measured cells report `confirmed-median`, while uncovered cells fall back to calibrated/model behavior. |
 | Performance | Many non-FFT resident points exceed the mature v0.6 path. FFT reaches cuFFT parity or better for selected shapes, while saturated long-batch FFT points remain below cuFFT. |
-| Portability | V100 is the only fully measured GPU. A100/H100/RTX and other cards are placeholders, not performance claims. |
+| Portability | V100 remains the fully measured, reproducible release baseline. A100 and other GPUs can generate target-local profiles during installation, but those measurements are not portable performance claims. |
 
 Representative long-FFT three-way results are shown below; ratios above 1 mean
 cuButterfly has lower kernel time than cuFFT.

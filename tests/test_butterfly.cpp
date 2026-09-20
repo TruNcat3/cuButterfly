@@ -15,6 +15,20 @@ namespace {
 
 constexpr std::size_t kBatch = 17;
 
+void check_dataflow_projection(const cuntt::ButterflyPlan& plan) {
+    const auto& flow = plan.dataflow_plan();
+    const auto& config = plan.config();
+    if (!flow.executable || flow.dispatch == cuntt::DataflowDispatch::Unresolved ||
+        flow.graph.log_n != config.log_n || flow.graph.batch != config.batch ||
+        flow.graph.element_stride != config.element_stride || flow.graph.batch_stride != config.batch_stride ||
+        flow.graph.inverse != config.inverse)
+        throw std::runtime_error("runtime plan does not preserve the resolved dataflow contract");
+    if (config.backend == cuntt::ButterflyBackend::Hierarchical &&
+        (flow.dispatch != cuntt::DataflowDispatch::Hierarchical || flow.persistent ||
+         flow.stage_partition.size() != config.log_n - config.local_stages + 1))
+        throw std::runtime_error("hierarchical launch schedule differs from dataflow projection");
+}
+
 void check_cuda(cudaError_t status, const char* operation) {
     if (status != cudaSuccess)
         throw std::runtime_error(std::string(operation) + ": " + cudaGetErrorString(status));
@@ -69,6 +83,7 @@ void test_fwht(cuntt::ButterflyBackend backend, std::uint32_t stage_space, std::
     config.reorder_columns   = reorder_columns;
     config.local_exchange    = local_exchange;
     cuntt::ButterflyPlan plan(config);
+    check_dataflow_projection(plan);
     std::vector<float>   output;
     plan.execute(input, output, 0, 1);
 
@@ -123,6 +138,7 @@ void test_fft(cuntt::ButterflyBackend backend, std::uint32_t stage_space, std::u
     config.prefix_ept        = prefix_ept;
     config.suffix_ept        = suffix_ept;
     cuntt::ButterflyPlan          plan(config);
+    check_dataflow_projection(plan);
     std::vector<cuntt::Complex32> output;
     plan.execute(input, output, 0, 1);
 
@@ -179,6 +195,7 @@ void test_low_precision_contract(cuntt::ButterflyPrecision precision, cuntt::But
         config.local_stages = 5;
         config.reorder_columns = 1;
         cuntt::ButterflyPlan plan(config);
+        check_dataflow_projection(plan);
         std::vector<Storage> output;
         plan.execute(input, output, 0, 1);
         std::vector<float> expected;
@@ -286,6 +303,7 @@ void test_xor_zeta(cuntt::ButterflyBackend backend, std::uint32_t stage_space, s
     config.local_stages    = local_stages;
     config.reorder_columns = reorder_columns;
     cuntt::ButterflyPlan       plan(config);
+    check_dataflow_projection(plan);
     std::vector<std::uint32_t> output;
     plan.execute(input, output, 0, 1);
 
@@ -376,6 +394,7 @@ void test_structured_2x2(cuntt::ButterflyBackend backend, cuntt::ButterflyPrecis
     config.reorder_columns = 1;
 
     cuntt::ButterflyPlan plan(config);
+    check_dataflow_projection(plan);
     std::mt19937 random(0x2b2bU + log_n + static_cast<unsigned int>(inverse));
     if (precision == cuntt::ButterflyPrecision::Fp64) {
         std::uniform_real_distribution<double> distribution(-1.0, 1.0);
@@ -618,6 +637,7 @@ void test_device_api() {
     config.auto_allocate_workspace = false;
 
     cuntt::ButterflyPlan plan(config);
+    check_dataflow_projection(plan);
     if (plan.data_size() != batch * points * sizeof(float) || plan.workspace_size() != plan.data_size())
         throw std::runtime_error("device API size query mismatch");
     if (plan.workspace() != nullptr)
@@ -709,6 +729,11 @@ void test_device_api() {
 }
 
 void test_runtime_selector() {
+    const auto device = cuntt::current_device_info();
+    if (device.compute_major != 7 || device.compute_minor != 0) {
+        std::cout << "SKIP V100-specific selector anchors on " << device.name << '\n';
+        return;
+    }
     cuntt::ButterflyConfig config;
     config.op          = cuntt::ButterflyOperator::Fwht;
     config.precision   = cuntt::ButterflyPrecision::Fp32;
@@ -771,6 +796,13 @@ void test_runtime_selector() {
 
 int main() {
     try {
+        const auto hardware = cuntt::query_hardware_resource_model();
+        const auto device = cuntt::current_device_info();
+        if (hardware.device_name != device.name || hardware.memory_bytes != device.global_memory_bytes ||
+            hardware.sm_count != static_cast<std::uint32_t>(device.multiprocessors) ||
+            hardware.compute_major != device.compute_major || hardware.compute_minor != device.compute_minor ||
+            hardware.max_threads_per_block == 0 || hardware.shared_bytes_per_block == 0)
+            throw std::runtime_error("mixed-dataflow hardware query disagrees with active device");
         test_device_api();
         test_runtime_selector();
         for (const auto accumulation : {cuntt::ButterflyAccumulation::Native,
@@ -935,6 +967,12 @@ int main() {
         test_fft(cuntt::ButterflyBackend::StagePipeline, 2, 0, 8, 128, cuntt::ComputeUnit::Radix2, 8, false, true, 10, 1,
                  cuntt::ComplexMultiply::Gauss3);
         test_fft(cuntt::ButterflyBackend::CuFft, 0, 0, 0, 128, cuntt::ComputeUnit::Auto, 12, true);
+        // FP32 shared-memory tiles cover logN=12 without a materialized
+        // prefix/suffix boundary on GPUs with sufficient dynamic shared memory.
+        test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, 256,
+                 cuntt::ComputeUnit::Radix4, 12, false, true, 0, 0,
+                 cuntt::ComplexMultiply::FourMul, cuntt::FftCore::Scalar,
+                 cuntt::ButterflyPrecision::Fp32);
         for (const auto placement : {cuntt::ButterflyPlacement::OutOfPlace, cuntt::ButterflyPlacement::InPlace}) {
             test_layout(cuntt::ButterflyBackend::TemporalTile, 10, placement);
             test_layout(cuntt::ButterflyBackend::WarpHybrid, 8, placement);

@@ -1,0 +1,3175 @@
+{
+  "kind": "composed",
+  "schema": "cubutterfly-composed-workload-v1",
+  "scope": "portable semantic snapshot of composed crypto contracts",
+  "workloads": [
+    {
+      "application": "KoalaBear",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2130706433"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        50
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        62
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        50
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "Dilithium",
+      "batch": 7,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417"
+      ],
+      "modulus_bits": [
+        23
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word32-prefix-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix",
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word64-prefix-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix",
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "KoalaBear",
+      "batch": 1,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2130706433"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193",
+        "582090251837636609",
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        40,
+        50,
+        60,
+        62
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "KoalaBear",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2130706433"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word64-prefix-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix",
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193",
+        "582090251837636609",
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        40,
+        50,
+        60,
+        62
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word64-prefix-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "582090251837636609"
+      ],
+      "modulus_bits": [
+        60
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "KoalaBear",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2130706433"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        62
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "582090251837636609"
+      ],
+      "modulus_bits": [
+        60
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "BabyBear",
+      "batch": 16,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2013265921"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word64-prefix-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix",
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "KoalaBear",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2130706433"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417",
+        "1073479681",
+        "2013265921",
+        "2130706433"
+      ],
+      "modulus_bits": [
+        23,
+        30,
+        31,
+        31
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word32-prefix-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "KoalaBear",
+      "batch": 7,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2130706433"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "Dilithium",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 8,
+      "mode": "coset",
+      "moduli": [
+        "8380417"
+      ],
+      "modulus_bits": [
+        23
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193",
+        "582090251837636609",
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        40,
+        50,
+        60,
+        62
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word64-prefix-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        62
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "Dilithium",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 8,
+      "mode": "coset",
+      "moduli": [
+        "8380417"
+      ],
+      "modulus_bits": [
+        23
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "Dilithium",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 8,
+      "mode": "coset",
+      "moduli": [
+        "8380417"
+      ],
+      "modulus_bits": [
+        23
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "582090251837636609"
+      ],
+      "modulus_bits": [
+        60
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "582090251837636609"
+      ],
+      "modulus_bits": [
+        60
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "582090251837636609"
+      ],
+      "modulus_bits": [
+        60
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-word32-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "1073479681"
+      ],
+      "modulus_bits": [
+        30
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        50
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "BabyBear",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2013265921"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        40,
+        50
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "582090251837636609"
+      ],
+      "modulus_bits": [
+        60
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        62
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "KoalaBear",
+      "batch": 16,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2130706433"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-word32-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "1073479681"
+      ],
+      "modulus_bits": [
+        30
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417",
+        "1073479681",
+        "2013265921",
+        "2130706433"
+      ],
+      "modulus_bits": [
+        23,
+        30,
+        31,
+        31
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word32-prefix-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "BabyBear",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2013265921"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417",
+        "1073479681",
+        "2013265921",
+        "2130706433"
+      ],
+      "modulus_bits": [
+        23,
+        30,
+        31,
+        31
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word32-prefix-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-word32-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "1073479681"
+      ],
+      "modulus_bits": [
+        30
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193",
+        "582090251837636609",
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        40,
+        50,
+        60,
+        62
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "KoalaBear",
+      "batch": 1,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2130706433"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193",
+        "582090251837636609",
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        40,
+        50,
+        60,
+        62
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        40,
+        50
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "Dilithium",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 8,
+      "mode": "coset",
+      "moduli": [
+        "8380417"
+      ],
+      "modulus_bits": [
+        23
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "BabyBear",
+      "batch": 1,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2013265921"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-word32-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "1073479681"
+      ],
+      "modulus_bits": [
+        30
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word64-prefix-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix",
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "Dilithium",
+      "batch": 16,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417"
+      ],
+      "modulus_bits": [
+        23
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word32-prefix-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix",
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "582090251837636609"
+      ],
+      "modulus_bits": [
+        60
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "Dilithium",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 8,
+      "mode": "coset",
+      "moduli": [
+        "8380417"
+      ],
+      "modulus_bits": [
+        23
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417",
+        "1073479681"
+      ],
+      "modulus_bits": [
+        23,
+        30
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word32-prefix-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        40,
+        50
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        62
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word64-prefix-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix",
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "BabyBear",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2013265921"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        40,
+        50
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word64-prefix-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        62
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        50
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        50
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-word32-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "1073479681"
+      ],
+      "modulus_bits": [
+        30
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417",
+        "1073479681"
+      ],
+      "modulus_bits": [
+        23,
+        30
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word32-prefix-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "BabyBear",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2013265921"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        40,
+        50
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        40,
+        50
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "582090251837636609"
+      ],
+      "modulus_bits": [
+        60
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        62
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        40,
+        50
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word64-prefix-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        50
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        40,
+        50
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-word32-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "1073479681"
+      ],
+      "modulus_bits": [
+        30
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "KoalaBear",
+      "batch": 16,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2130706433"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-word32-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "1073479681"
+      ],
+      "modulus_bits": [
+        30
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193",
+        "582090251837636609",
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        40,
+        50,
+        60,
+        62
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        50
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        50
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "Dilithium",
+      "batch": 1,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417"
+      ],
+      "modulus_bits": [
+        23
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word32-prefix-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix",
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        40,
+        50
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word64-prefix-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "582090251837636609"
+      ],
+      "modulus_bits": [
+        60
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417",
+        "1073479681"
+      ],
+      "modulus_bits": [
+        23,
+        30
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word32-prefix-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "BabyBear",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2013265921"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        40,
+        50
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word64-prefix-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "BabyBear",
+      "batch": 1,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2013265921"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        62
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193",
+        "582090251837636609",
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        40,
+        50,
+        60,
+        62
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word64-prefix-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        62
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        50
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193",
+        "582090251837636609",
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        40,
+        50,
+        60,
+        62
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word64-prefix-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        62
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        40,
+        50
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word64-prefix-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "Dilithium",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 8,
+      "mode": "coset",
+      "moduli": [
+        "8380417"
+      ],
+      "modulus_bits": [
+        23
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417",
+        "1073479681"
+      ],
+      "modulus_bits": [
+        23,
+        30
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word32-prefix-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-word32-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "1073479681"
+      ],
+      "modulus_bits": [
+        30
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "582090251837636609"
+      ],
+      "modulus_bits": [
+        60
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "582090251837636609"
+      ],
+      "modulus_bits": [
+        60
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        50
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "BabyBear",
+      "batch": 7,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2013265921"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        62
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193",
+        "582090251837636609",
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        40,
+        50,
+        60,
+        62
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word64-prefix-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "KoalaBear",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2130706433"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193",
+        "582090251837636609",
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        40,
+        50,
+        60,
+        62
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "582090251837636609"
+      ],
+      "modulus_bits": [
+        60
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "Dilithium",
+      "batch": 7,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417"
+      ],
+      "modulus_bits": [
+        23
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word32-prefix-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix",
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-word32-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "1073479681"
+      ],
+      "modulus_bits": [
+        30
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-word32-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "forward",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "1073479681"
+      ],
+      "modulus_bits": [
+        30
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "BabyBear",
+      "batch": 16,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2013265921"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "BabyBear",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2013265921"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "Dilithium",
+      "batch": 16,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417"
+      ],
+      "modulus_bits": [
+        23
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word32-prefix-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix",
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417",
+        "1073479681",
+        "2013265921",
+        "2130706433"
+      ],
+      "modulus_bits": [
+        23,
+        30,
+        31,
+        31
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word32-prefix-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-word32-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "1073479681"
+      ],
+      "modulus_bits": [
+        30
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417",
+        "1073479681",
+        "2013265921",
+        "2130706433"
+      ],
+      "modulus_bits": [
+        23,
+        30,
+        31,
+        31
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word32-prefix-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "Dilithium",
+      "batch": 1,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417"
+      ],
+      "modulus_bits": [
+        23
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word32-prefix-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix",
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "KoalaBear",
+      "batch": 7,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2130706433"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417",
+        "1073479681",
+        "2013265921",
+        "2130706433"
+      ],
+      "modulus_bits": [
+        23,
+        30,
+        31,
+        31
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word32-prefix-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 32
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417",
+        "1073479681"
+      ],
+      "modulus_bits": [
+        23,
+        30
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word32-prefix-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word64-prefix-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix",
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 16,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193",
+        "582090251837636609",
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        40,
+        50,
+        60,
+        62
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        40,
+        50
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word64-prefix-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "KoalaBear",
+      "batch": 7,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2130706433"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "BabyBear",
+      "batch": 7,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "2013265921"
+      ],
+      "modulus_bits": [
+        31
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        50
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-word32-ntt",
+      "batch": 1,
+      "composition": "single-modulus",
+      "direction": "forward",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "1073479681"
+      ],
+      "modulus_bits": [
+        30
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 32
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 7,
+      "composition": "single-modulus",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "568447511560193"
+      ],
+      "modulus_bits": [
+        50
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 20,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713"
+      ],
+      "modulus_bits": [
+        40
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [
+        "rns-word64-mixed-large-L1"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 1,
+      "composition": "rns",
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "negacyclic",
+      "moduli": [
+        "550829555713",
+        "568447511560193",
+        "582090251837636609",
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        40,
+        50,
+        60,
+        62
+      ],
+      "rns_channel_count": 4,
+      "rns_memberships": [
+        "rns-word64-prefix-L4"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 64
+    },
+    {
+      "application": "synthetic-primitive-root-ntt",
+      "batch": 16,
+      "composition": "single-modulus",
+      "coset_generator": 7,
+      "direction": "inverse",
+      "logN": 16,
+      "mode": "coset",
+      "moduli": [
+        "2391411402133733377"
+      ],
+      "modulus_bits": [
+        62
+      ],
+      "rns_channel_count": 1,
+      "rns_memberships": [],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "single-modulus"
+      ],
+      "word_bits": 64
+    },
+    {
+      "batch": 7,
+      "composition": "rns",
+      "direction": "forward",
+      "logN": 8,
+      "mode": "negacyclic",
+      "moduli": [
+        "8380417",
+        "1073479681"
+      ],
+      "modulus_bits": [
+        23,
+        30
+      ],
+      "rns_channel_count": 2,
+      "rns_memberships": [
+        "rns-word32-prefix-L2"
+      ],
+      "rns_stream_order": "single-stream",
+      "suites": [
+        "rns-prefix"
+      ],
+      "word_bits": 32
+    }
+  ]
+}

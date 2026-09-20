@@ -5,6 +5,10 @@
 
 #include "external_fft_units.cuh"
 
+#ifndef CUBUTTERFLY_CUFFTDX_SM
+#define CUBUTTERFLY_CUFFTDX_SM 700
+#endif
+
 namespace cuntt::detail {
 namespace {
 
@@ -23,13 +27,13 @@ template <unsigned Size, cufftdx::fft_direction Direction>
 using Fp64BlockFft = decltype(cufftdx::Block() + cufftdx::Size<Size>() +
                               cufftdx::Type<cufftdx::fft_type::c2c>() + cufftdx::Direction<Direction>() +
                               cufftdx::Precision<double>() + cufftdx::ElementsPerThread<8>() +
-                              cufftdx::FFTsPerBlock<1024 / Size>() + cufftdx::SM<700>());
+                              cufftdx::FFTsPerBlock<1024 / Size>() + cufftdx::SM<CUBUTTERFLY_CUFFTDX_SM>());
 
 template <unsigned Size, unsigned Threads, unsigned Ept, cufftdx::fft_direction Direction>
 using Fp64OnlineFft = decltype(cufftdx::Block() + cufftdx::Size<Size>() +
                                cufftdx::Type<cufftdx::fft_type::c2c>() + cufftdx::Direction<Direction>() +
                                cufftdx::Precision<double>() + cufftdx::ElementsPerThread<Ept>() +
-                               cufftdx::FFTsPerBlock<(Threads * Ept) / Size>() + cufftdx::SM<700>());
+                               cufftdx::FFTsPerBlock<(Threads * Ept) / Size>() + cufftdx::SM<CUBUTTERFLY_CUFFTDX_SM>());
 
 template <class FFT>
 __launch_bounds__(FFT::max_threads_per_block) __global__ void fp64_block_kernel(
@@ -419,7 +423,7 @@ void launch_cufftdx_fp64_online_reorder(std::uint32_t log_n, std::uint32_t local
                                         bool inverse, bool normalize, CrossTwiddleMode cross_twiddle,
                                         SharedLayout shared_layout, std::uint32_t prefix_threads,
                                         std::uint32_t suffix_threads, std::uint32_t prefix_ept,
-                                        std::uint32_t suffix_ept, cudaStream_t stream) {
+                                        std::uint32_t suffix_ept, cudaStream_t stream, unsigned stage) {
     const LaunchStreamScope stream_scope(stream);
     const std::uint32_t remaining_log_n = log_n - local_log_n;
     if (local_log_n < 7 || local_log_n > 9 || remaining_log_n < 7 || remaining_log_n > 9)
@@ -427,20 +431,20 @@ void launch_cufftdx_fp64_online_reorder(std::uint32_t log_n, std::uint32_t local
     const bool recurrence_twiddle = cross_twiddle == CrossTwiddleMode::Recurrence;
     const bool xor_swizzle = shared_layout == SharedLayout::XorSwizzle;
     if (inverse) {
-        dispatch_fp64_online_size<cufftdx::fft_direction::inverse, true>(
+        if (stage != 2) dispatch_fp64_online_size<cufftdx::fft_direction::inverse, true>(
             local_log_n, log_n, local_log_n, prefix_threads, prefix_ept,
             input, scratch, twiddles, transforms,
             batch_distance, element_stride, recurrence_twiddle, xor_swizzle);
-        dispatch_fp64_online_size<cufftdx::fft_direction::inverse, false>(
+        if (stage != 1) dispatch_fp64_online_size<cufftdx::fft_direction::inverse, false>(
             remaining_log_n, log_n, local_log_n, suffix_threads, suffix_ept,
             scratch, output, nullptr, transforms,
             batch_distance, element_stride, normalize, false);
     } else {
-        dispatch_fp64_online_size<cufftdx::fft_direction::forward, true>(
+        if (stage != 2) dispatch_fp64_online_size<cufftdx::fft_direction::forward, true>(
             local_log_n, log_n, local_log_n, prefix_threads, prefix_ept,
             input, scratch, twiddles, transforms,
             batch_distance, element_stride, recurrence_twiddle, xor_swizzle);
-        dispatch_fp64_online_size<cufftdx::fft_direction::forward, false>(
+        if (stage != 1) dispatch_fp64_online_size<cufftdx::fft_direction::forward, false>(
             remaining_log_n, log_n, local_log_n, suffix_threads, suffix_ept,
             scratch, output, nullptr, transforms,
             batch_distance, element_stride, false, false);

@@ -8,6 +8,8 @@ import subprocess
 import sys
 import tempfile
 
+from run_comprehensive_suite import require_exclusive_gpu
+
 
 FIELDS = (
     "case_id", "group", "trial", "implementation", "reference", "runner", "device",
@@ -44,11 +46,11 @@ def expand(document):
     return cases
 
 
-def execute(root, case, protocol, fht_python, gpuntt_binary):
+def execute(root, case, protocol, fht_python, gpuntt_binary, butterfly_binary=None, ntt_binary=None):
     common = ["--logN", str(case["logN"]), "--batch", str(case["batch"]),
               "--warmup", str(protocol["warmup"]), "--repeat", str(protocol["repeat"])]
     if case["runner"] == "butterfly":
-        command = [str(root / "build/cubutterfly_bench"), "--operator", case["operator"],
+        command = [str(butterfly_binary or root / "build/cubutterfly_bench"), "--operator", case["operator"],
                    "--precision", case["precision"], "--normalization", case["normalization"],
                    "--placement", case["placement"],
                    *common, *case["args"], "--verify", "--csv"]
@@ -57,7 +59,7 @@ def execute(root, case, protocol, fht_python, gpuntt_binary):
         correct = row.get("correct") == "1"
         throughput = row.get("transforms_s", "")
     elif case["runner"] == "ntt":
-        command = [str(root / "build/cuntt_bench"), *common, "--modulus", case["modulus"],
+        command = [str(ntt_binary or root / "build/cuntt_bench"), *common, "--modulus", case["modulus"],
                    *case["args"], "--verify", "--csv"]
         result = subprocess.run(command, cwd=root, text=True, capture_output=True, check=True)
         row = read_one_csv(result.stdout)
@@ -95,7 +97,7 @@ def execute(root, case, protocol, fht_python, gpuntt_binary):
     if not correct:
         raise RuntimeError(f"correctness failed for {case['id']}")
     return {
-        "device": row.get("device", "Tesla V100-SXM2-16GB"),
+        "device": row.get("device", "unreported"),
         "backend": row.get("backend", row.get("implementation", case["runner"])),
         "kernel_ms": row["kernel_ms"],
         "throughput_s": throughput,
@@ -109,6 +111,9 @@ def main():
     parser.add_argument("--output", type=pathlib.Path, default=pathlib.Path("results/v100_external_baselines_raw.csv"))
     parser.add_argument("--fht-python", type=pathlib.Path, default=pathlib.Path(sys.executable))
     parser.add_argument("--gpuntt-binary", type=pathlib.Path)
+    parser.add_argument("--butterfly-binary", type=pathlib.Path)
+    parser.add_argument("--ntt-binary", type=pathlib.Path)
+    parser.add_argument("--require-exclusive-gpu", action="store_true")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--only", nargs="+")
     args = parser.parse_args()
@@ -133,7 +138,12 @@ def main():
     records = list(existing)
     for index, (case, trial) in enumerate(pending, 1):
         print(f"[{index}/{len(pending)}] {case['id']} trial={trial}", flush=True)
-        measured = execute(root, case, document["protocol"], args.fht_python, args.gpuntt_binary)
+        if args.require_exclusive_gpu:
+            require_exclusive_gpu(0)
+        measured = execute(root, case, document["protocol"], args.fht_python, args.gpuntt_binary,
+                           args.butterfly_binary, args.ntt_binary)
+        if args.require_exclusive_gpu:
+            require_exclusive_gpu(0)
         record = {
             "case_id": case["id"], "group": case["group"], "trial": trial,
             "implementation": case["name"], "reference": int(case.get("reference", False)),

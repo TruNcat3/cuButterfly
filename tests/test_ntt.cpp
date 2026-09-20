@@ -43,6 +43,16 @@ class TestDeviceBuffer {
     void* pointer_ = nullptr;
 };
 
+void check_ntt_dataflow_projection(const cuntt::Plan& plan) {
+    const auto& flow = plan.dataflow_plan();
+    const auto& config = plan.config();
+    if (!flow.executable || flow.graph.op != cuntt::DataflowOperator::Ntt ||
+        flow.graph.log_n != config.log_n || flow.graph.batch != config.batch ||
+        flow.graph.word_bits != config.word_bits || flow.dispatch == cuntt::DataflowDispatch::Unresolved ||
+        flow.stage_partition.empty())
+        throw std::runtime_error("NTT plan does not expose a resolved mixed-dataflow projection");
+}
+
 std::vector<std::uint64_t> make_input(std::size_t count, std::uint64_t modulus, std::uint64_t seed) {
     std::mt19937_64            random(seed);
     std::vector<std::uint64_t> values(count);
@@ -109,6 +119,7 @@ void test_compact_stage_backend() {
         config.backend      = cuntt::Backend::CompactStage;
         config.output_order = order;
         cuntt::Plan                plan(config);
+        check_ntt_dataflow_projection(plan);
         std::vector<std::uint64_t> output;
         plan.execute(input, output, 0, 1);
 
@@ -137,6 +148,7 @@ void test_device_api() {
     config.backend                  = cuntt::Backend::Hybrid2D;
     config.auto_allocate_workspace = false;
     cuntt::Plan plan(config);
+    check_ntt_dataflow_projection(plan);
     if (plan.data_size() != input.size() * sizeof(std::uint64_t) || plan.workspace_size() != plan.data_size() || plan.workspace() != nullptr) {
         throw std::runtime_error("hybrid2d device API size query mismatch");
     }
@@ -176,6 +188,7 @@ void test_device_api() {
     pipeline_config.backend                  = cuntt::Backend::StagePipeline;
     pipeline_config.auto_allocate_workspace = false;
     cuntt::Plan pipeline_plan(pipeline_config);
+    check_ntt_dataflow_projection(pipeline_plan);
     if (pipeline_plan.workspace_size() != 0 || pipeline_plan.workspace() != nullptr) {
         throw std::runtime_error("stage-pipeline unexpectedly requires workspace");
     }
@@ -183,6 +196,11 @@ void test_device_api() {
 }
 
 void test_runtime_selector() {
+    const auto device = cuntt::current_device_info();
+    if (device.compute_major != 7 || device.compute_minor != 0) {
+        std::cout << "SKIP V100-specific NTT selector anchors on " << device.name << '\n';
+        return;
+    }
     cuntt::PlanConfig config;
     config.log_n       = 16;
     config.batch       = 4;
@@ -241,6 +259,11 @@ void test_stage_pipeline_backend() {
 }
 
 void test_hybrid_dataflow_backend() {
+    const auto device = cuntt::current_device_info();
+    if (device.compute_major != 7 || device.compute_minor != 0) {
+        std::cout << "SKIP V100-specific HybridDataflow defaults on " << device.name << '\n';
+        return;
+    }
     struct TestCase {
         std::uint32_t log_n;
         std::size_t batch;
@@ -591,6 +614,11 @@ void test_hierarchical_dataflow_backend() {
 }
 
 void test_true_hierarchical_streaming_backend() {
+    const auto device = cuntt::current_device_info();
+    if (device.compute_major != 7 || device.compute_minor != 0) {
+        std::cout << "SKIP V100-specific hierarchical streaming defaults on " << device.name << '\n';
+        return;
+    }
     constexpr std::uint64_t kModulus30 = 1073479681ULL;
     struct Case {
         std::uint32_t log_n;

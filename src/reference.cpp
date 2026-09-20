@@ -47,11 +47,14 @@ const char* backend_name(Backend backend) noexcept {
             return "hierarchical-barrier";
         case Backend::HierarchicalDataflow:
             return "hierarchical-dataflow";
+        case Backend::SharedIterative:
+            return "shared-iterative";
     }
     return "unknown";
 }
 
 Backend parse_backend(const std::string& name) {
+    if (name == "shared-iterative") return Backend::SharedIterative;
     if (name == "baseline") {
         return Backend::Baseline;
     }

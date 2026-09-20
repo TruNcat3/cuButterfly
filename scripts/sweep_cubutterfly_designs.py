@@ -2,11 +2,58 @@
 import argparse
 import csv
 import json
+import os
 import pathlib
 import subprocess
+import time
 
 from fft_design_space import load_codegen_points
 from residency_features import RESOURCE_FEATURE_FIELDS, derive_residency_features
+
+
+def visible_gpu() -> str:
+    visible = os.environ.get("CUDA_VISIBLE_DEVICES", "").strip()
+    if visible in ("", "-1", "NoDevFiles"):
+        return "0"
+    return visible.split(",", 1)[0].strip()
+
+
+def require_exclusive_gpu(idle_context_memory_mb: int = 64) -> None:
+    gpu = visible_gpu()
+    utilization = int(subprocess.run(
+        ["nvidia-smi", "-i", gpu, "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip() or "0")
+    completed = subprocess.run(
+        ["nvidia-smi", "-i", gpu, "--query-compute-apps=pid,process_name,used_memory", "--format=csv,noheader,nounits"],
+        check=True, capture_output=True, text=True,
+    )
+    processes = []
+    for line in completed.stdout.splitlines():
+        if not line.strip():
+            continue
+        fields = [field.strip() for field in line.split(",")]
+        try:
+            memory_mb = int(fields[-1])
+        except (IndexError, ValueError):
+            memory_mb = idle_context_memory_mb + 1
+        if utilization == 0 and memory_mb <= idle_context_memory_mb:
+            continue
+        processes.append(line.strip())
+    if processes:
+        raise RuntimeError(f"target GPU {gpu} is not exclusive; active compute processes: {'; '.join(processes)}")
+
+
+def wait_for_exclusive_gpu(timeout_seconds: int, poll_seconds: int, idle_context_memory_mb: int) -> None:
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        try:
+            require_exclusive_gpu(idle_context_memory_mb)
+            return
+        except RuntimeError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(poll_seconds)
 
 
 def load_resource_profile(path):
@@ -30,7 +77,11 @@ def candidate_resource_key(operator, precision, config, log_n):
 
 
 def base_configurations(operator, precision, log_n, tile_threads, hierarchical_local_stages, reorder_column_options):
-    if log_n <= 10:
+    # FP32 scalar FFT tiles up to logN=12 fit in the A100 shared-memory
+    # budget and keep all stages in one CTA.  Keep this capability explicit
+    # so older operators and precisions retain their original bounds.
+    shared_fft_tile = operator == "fft" and precision == "fp32" and log_n in (11, 12)
+    if log_n <= 10 or shared_fft_tile:
         for compute_unit in ("radix2", "radix4", "radix8"):
             for threads in tile_threads:
                 yield {
@@ -236,7 +287,7 @@ def configurations(operator, precision, log_n, tile_threads, hierarchical_local_
                                     }
 
 
-def run(binary, operator, precision, config, log_n, direction, normalization, placement, batch, element_stride, batch_stride, warmup, repeat):
+def run(binary, operator, precision, config, log_n, direction, normalization, placement, batch, element_stride, batch_stride, warmup, repeat, verify):
     command = [
         str(binary), "--operator", operator, "--backend", config["backend"],
         "--compute-unit", config["compute_unit"], "--precision", precision, "--logN", str(log_n),
@@ -250,6 +301,8 @@ def run(binary, operator, precision, config, log_n, direction, normalization, pl
         "--batch-stride", str(batch_stride),
         "--element-stride", str(element_stride),
     ]
+    if verify:
+        command.append("--verify")
     if operator == "structured-2x2":
         command += ["--stage-matrix", "1,0.25,-0.5,1"]
     if direction == "inverse":
@@ -322,15 +375,35 @@ def main():
     parser.add_argument("--warmup", type=int, default=20)
     parser.add_argument("--repeat", type=int, default=100)
     parser.add_argument("--trials", type=int, default=5)
+    parser.add_argument("--verify", action="store_true", help="run the benchmark correctness check for every candidate")
+    parser.add_argument("--require-exclusive-gpu", action="store_true",
+                        help="abort if another compute process appears on the selected CUDA-visible GPU")
+    parser.add_argument("--wait-for-exclusive-gpu", action="store_true",
+                        help="wait for an exclusive GPU before starting and retain the exclusive checks")
+    parser.add_argument("--exclusive-timeout", type=int, default=1800,
+                        help="maximum seconds to wait for exclusive GPU access (default: 1800)")
+    parser.add_argument("--exclusive-poll", type=int, default=15,
+                        help="seconds between exclusive GPU checks (default: 15)")
+    parser.add_argument("--idle-context-memory-mb", type=int, default=64,
+                        help="ignore idle CUDA contexts at or below this size (default: 64 MiB)")
     parser.add_argument("--hardware-profile", type=pathlib.Path,
                         help="GPU allocation/capacity JSON used to derive candidate residency features.")
     parser.add_argument("--resource-profile", type=pathlib.Path,
                         help="Compiled per-kernel register/shared resource CSV.")
     parser.add_argument("--output", "-o", required=True, type=pathlib.Path)
+    parser.add_argument("--resume", action="store_true",
+                        help="resume completed candidates from OUTPUT.partial")
     args = parser.parse_args()
 
     if not args.binary.is_file():
         raise FileNotFoundError(f"benchmark binary not found: {args.binary}")
+    if args.wait_for_exclusive_gpu:
+        if args.exclusive_timeout <= 0 or args.exclusive_poll <= 0 or args.idle_context_memory_mb < 0:
+            raise ValueError("exclusive timeout and poll values must be positive; idle context memory cannot be negative")
+        args.require_exclusive_gpu = True
+        wait_for_exclusive_gpu(args.exclusive_timeout, args.exclusive_poll, args.idle_context_memory_mb)
+    elif args.require_exclusive_gpu:
+        require_exclusive_gpu(args.idle_context_memory_mb)
     if bool(args.hardware_profile) != bool(args.resource_profile):
         raise ValueError("--hardware-profile and --resource-profile must be supplied together")
     hardware = json.loads(args.hardware_profile.read_text()) if args.hardware_profile else None
@@ -338,6 +411,33 @@ def main():
     previous_features = {}
     compiled_fft_points = load_codegen_points(args.fft_codegen_spec)
     records = []
+    partial = args.output.with_name(args.output.name + ".partial")
+    completed_candidates = set()
+    if partial.exists():
+        if not args.resume:
+            raise FileExistsError(f"partial checkpoint exists: {partial}; pass --resume or move it aside")
+        with partial.open(newline="") as source:
+            records = list(csv.DictReader(source))
+        counts = {}
+        for row in records:
+            try:
+                index = int(row["candidate_index"])
+            except (KeyError, ValueError):
+                continue
+            counts[index] = counts.get(index, 0) + 1
+        completed_candidates = {index for index, count in counts.items() if count >= args.trials}
+    candidate_index = 0
+
+    def checkpoint(rows):
+        if not rows:
+            return
+        exists = partial.exists()
+        with partial.open("a", newline="") as destination:
+            writer = csv.DictWriter(destination, fieldnames=list(rows[0].keys()), lineterminator="\n")
+            if not exists:
+                writer.writeheader()
+            writer.writerows(rows)
+            destination.flush()
     for operator in args.operators:
         integer_zeta = operator in ("subset-zeta", "superset-zeta", "xor-zeta")
         precisions = ("uint32",) if integer_zeta else args.precisions
@@ -376,6 +476,9 @@ def main():
                                     suffix_key = (log_n - config["local_stages"], config["suffix_threads"], config["suffix_ept"])
                                     if prefix_key not in compiled_fft_points or suffix_key not in compiled_fft_points:
                                         continue
+                                candidate_index += 1
+                                if candidate_index in completed_candidates:
+                                    continue
                                 features = None
                                 resource_key = candidate_resource_key(operator, precision, config, log_n)
                                 resource = resource_profile.get(resource_key)
@@ -393,20 +496,40 @@ def main():
                                     previous_features[family] = features
                                     if not features["hardware_feasible"]:
                                         continue
+                                candidate_rows = []
                                 for trial in range(1, args.trials + 1):
+                                    if args.require_exclusive_gpu:
+                                        require_exclusive_gpu(args.idle_context_memory_mb)
                                     row = run(args.binary, operator, precision, config, log_n, direction, normalization, placement, batch,
-                                              args.element_stride, batch_stride, args.warmup, args.repeat)
+                                              args.element_stride, batch_stride, args.warmup, args.repeat, args.verify)
+                                    if args.require_exclusive_gpu:
+                                        require_exclusive_gpu(args.idle_context_memory_mb)
                                     feature_row = ({field: features[field] for field in RESOURCE_FEATURE_FIELDS}
                                                    if features is not None else
                                                    {field: "" for field in RESOURCE_FEATURE_FIELDS})
-                                    row = {"trial": trial, **row, **feature_row}
+                                    row = {
+                                        "candidate_index": candidate_index,
+                                        "trial": trial,
+                                        "measurement_exclusive_gpu": int(args.require_exclusive_gpu),
+                                        "measurement_visible_gpu": visible_gpu(),
+                                        **row,
+                                        **feature_row,
+                                    }
                                     records.append(row)
+                                    candidate_rows.append(row)
+                                checkpoint(candidate_rows)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open("w", newline="") as destination:
+    temporary = args.output.with_name(args.output.name + ".tmp")
+    with temporary.open("w", newline="") as destination:
         writer = csv.DictWriter(destination, fieldnames=records[0].keys(), lineterminator="\n")
         writer.writeheader()
         writer.writerows(records)
+    temporary.replace(args.output)
+    # Path.unlink(missing_ok=...) was added after the Python 3.7 runtime used
+    # by the shared conda environment.
+    if partial.exists():
+        partial.unlink()
 
 
 if __name__ == "__main__":

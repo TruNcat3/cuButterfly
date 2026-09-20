@@ -6,9 +6,13 @@
 #include <string>
 #include <vector>
 
+#include "cuntt/mixed_dataflow.hpp"
+
 #include <cuda_runtime_api.h>
 
 namespace cuntt {
+
+namespace detail { class StageProbeAdapter; }
 
 constexpr std::uint64_t kDefaultModulus = 1152921504606584833ULL;
 
@@ -21,6 +25,7 @@ enum class Backend {
     HybridDataflow,
     HierarchicalBarrier,
     HierarchicalDataflow,
+    SharedIterative,
     Merge256 = Hybrid2D,
 };
 
@@ -305,6 +310,10 @@ struct PlanConfig {
     std::size_t   batch   = 1;
     std::uint64_t modulus = kDefaultModulus;
     bool          inverse = false;
+    // Batch streaming across physical shared groups; independent of the
+    // within-CTA role and token unfolding parameters below.
+    bool          stage_overlap = false;
+    std::uint32_t batch_tile_count = 1;
     Backend       backend = Backend::Tile256;
     // Explicit stage-space unfolding for StagePipeline. Zero selects the default.
     std::uint32_t stage_space   = 0;
@@ -340,6 +349,8 @@ struct PlanConfig {
     // pair; ResidentFused boundaries lower adjacent logical subgraphs into one
     // physical execution group without materializing a global handoff.
     std::vector<std::uint32_t>       stage_partition;
+    std::vector<std::vector<std::uint32_t>> local_stage_partitions;
+    std::vector<std::uint32_t> exchange_chunks;
     std::vector<NttSubgraphMapping>  subgraph_mappings;
     std::vector<NttBoundaryMapping>  boundary_mappings;
     // Optional physical mappings after ResidentFused boundary lowering. The
@@ -429,6 +440,7 @@ class Plan {
 
     const PlanConfig& config() const noexcept;
     const SelectionInfo& selection() const noexcept;
+    const MixedDataflowPlan& dataflow_plan() const noexcept;
     std::size_t       points_per_transform() const noexcept;
     std::size_t       data_size() const noexcept;
     std::size_t       workspace_size() const noexcept;
@@ -454,6 +466,7 @@ class Plan {
     RunStats execute(const std::vector<std::uint64_t>& input, std::vector<std::uint64_t>& output, std::uint32_t warmup = 1, std::uint32_t repeat = 1);
 
   private:
+    friend class detail::StageProbeAdapter;
     class Impl;
     std::unique_ptr<Impl> impl_;
 };

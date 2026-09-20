@@ -2,6 +2,10 @@
 import argparse
 import json
 import pathlib
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from generated_files import write_if_changed
 
 
 OPERATORS = {"fft": 0, "ntt": 1, "fwht": 2}
@@ -46,7 +50,7 @@ def generate(spec_path: pathlib.Path, header_path: pathlib.Path) -> None:
         )
     lines.extend(["}};", "}  // namespace cuntt::detail", ""])
     header_path.parent.mkdir(parents=True, exist_ok=True)
-    header_path.write_text("\n".join(lines))
+    write_if_changed(header_path, "\n".join(lines))
 
 
 def main() -> None:

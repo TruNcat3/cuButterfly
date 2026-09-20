@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "cuntt/ntt.hpp"
+#include "cuntt/mixed_dataflow.hpp"
 
 namespace cuntt {
 
@@ -95,6 +96,8 @@ enum class ButterflyBackend {
     WarpHybrid,
     StagePipeline,
     CuFft,
+    SharedIterative,
+    FactorStreamed,
 };
 
 const char*      butterfly_backend_name(ButterflyBackend backend) noexcept;
@@ -166,6 +169,7 @@ LocalExchange parse_local_exchange(const std::string& name);
 enum class SharedLayout {
     Linear,
     XorSwizzle,
+    WriterAligned,
 };
 
 const char*  shared_layout_name(SharedLayout layout) noexcept;
@@ -180,6 +184,7 @@ enum class FftCore {
     CufftDxDirect,
     CufftDxResident,
     TurboFftGenerated,
+    RegisterTile,
 };
 
 const char* fft_core_name(FftCore core) noexcept;
@@ -190,6 +195,15 @@ struct FftSegmentMapping {
     LocalExchange   exchange = LocalExchange::SharedMemory;
     std::uint32_t   threads  = 0;
     std::uint32_t   ept      = 8;
+    // Optional code-generation identity for the physical group.  The
+    // register-tile prefix uses "native" or "cufftdx-thread"; other groups
+    // retain the native default.  Keeping this in the group descriptor makes
+    // a replayed mapping distinguish codelets without changing old records.
+    std::string     codelet  = "native";
+    // Factor-streamed groups use "dynamic" or "static-unrolled".  The field
+    // is intentionally present on the common descriptor so the serialized
+    // physical execution identity cannot be silently flattened.
+    std::string     io_policy = "dynamic";
 };
 
 struct FftBoundaryMapping {
@@ -199,6 +213,15 @@ struct FftBoundaryMapping {
 };
 
 std::vector<ButterflyCapability> butterfly_capabilities();
+
+// Compiled local units, not a claim of whole-plan legality or performance.
+struct FftOnlineProcessingUnit {
+    ButterflyPrecision precision;
+    std::uint32_t log_n;
+    std::uint32_t threads;
+    std::uint32_t ept;
+};
+std::vector<FftOnlineProcessingUnit> fft_online_processing_units();
 
 struct ButterflyConfig {
     ButterflyOperator  op                = ButterflyOperator::Fwht;
@@ -211,11 +234,29 @@ struct ButterflyConfig {
     std::vector<ButterflyMatrix2x2> stage_matrices;
     // Ordered stage counts for each algorithmic decomposition segment.
     std::vector<std::uint32_t> stage_partition;
+    // Per physical group, partition its resident stages into local processing
+    // units without introducing a global boundary. Empty entries retain the
+    // existing lowering. Output ownership exchange chunks count register slots;
+    // zero retains whole-tile exchange. Supported values depend on the lowering.
+    std::vector<std::vector<std::uint32_t>> local_stage_partitions;
+    std::vector<std::uint32_t> exchange_chunks;
+    // Logical macro stages and physical factor launches are independent.
+    // Factor boundaries materialize global state, including inside a macro stage.
+    std::vector<std::uint32_t> factor_partition;
+    std::uint32_t factor_ept = 16, factor_columns = 8;
+    std::uint32_t data_tiles_per_cta = 1, prefetch_depth = 0;
+    // Divide an unprocessed FFT digit into dependency-closed data slices.
+    // Serial slices are a control for the same layout with factor_overlap off.
+    std::uint32_t factor_slices = 1;
+    bool factor_overlap = false;
     std::vector<FftSegmentMapping> segment_mappings;
     std::vector<FftBoundaryMapping> boundaries;
     // Physical processing groups after fused logical boundaries are lowered.
     std::vector<FftSegmentMapping> execution_group_mappings;
     std::size_t        batch             = 1;
+    // Execution scheduling, independent of logical stage partition and FFT codelet.
+    bool               stage_overlap     = false;
+    std::uint32_t      batch_tile_count  = 1;
     std::size_t        batch_stride      = 0;
     std::size_t        element_stride    = 1;
     bool               inverse           = false;
@@ -233,6 +274,19 @@ struct ButterflyConfig {
     std::uint32_t      suffix_ept        = 8;
     std::uint32_t      prefix_units_per_cta = 0;
     std::uint32_t      suffix_units_per_cta = 0;
+    // Number of cooperative register threads assigned to each prefix local
+    // FFT.  A value of one retains the historical one-thread-per-register
+    // lane geometry; larger powers of two use EPT=R/G and retain the same
+    // prefix shared-memory footprint for a fixed number of columns.
+    std::uint32_t      prefix_codelet_lanes = 1;
+    // Register-tile prefix code generation axes.  These are deliberately
+    // strings because they are codegen identities, not mathematical enums.
+    // Defaults preserve the historical native/linear implementation.
+    std::string         prefix_codelet = "native";
+    std::string         prefix_shared_layout = "linear";
+    // One policy per physical factor group.  An empty vector means dynamic
+    // I/O for every factor and is normalized after factor_partition is known.
+    std::vector<std::string> factor_io_policies;
     std::uint32_t      local_stages      = 10;
     std::uint32_t      reorder_columns   = 1;
     std::uint32_t      warp_stages       = 5;
@@ -280,6 +334,7 @@ class ButterflyPlan {
 
     const ButterflyConfig& config() const noexcept;
     const SelectionInfo&   selection() const noexcept;
+    const MixedDataflowPlan& dataflow_plan() const noexcept;
 
     std::size_t data_size() const noexcept;
     std::size_t workspace_size() const noexcept;
@@ -327,6 +382,7 @@ class ButterflyPlan {
                            std::uint32_t repeat = 1);
 
   private:
+    friend class detail::StageProbeAdapter;
     class Impl;
     std::unique_ptr<Impl> impl_;
 };

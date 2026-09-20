@@ -1,0 +1,4607 @@
+{
+  "schema": "cubutterfly-mapping-seeds-v1",
+  "scope": "mapping-only candidates; remeasure on the target hardware",
+  "seeds": [
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "cufftdx-direct",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 32,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 8,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 16,
+        "prefix_threads": 256,
+        "prefix_units_per_cta": 16,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 16,
+        "suffix_threads": 256,
+        "suffix_units_per_cta": 4,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 16,
+        "logN": 18,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "warp-register",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 32,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "cufftdx-block",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 8,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "cufftdx-block",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 8,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "cufftdx-block",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 16384,
+        "logN": 8,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "cufftdx-direct",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "cufftdx-direct",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "cufftdx-direct",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1024,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 128
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 64
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 8,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 16,
+        "prefix_threads": 128,
+        "prefix_units_per_cta": 8,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 128
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 64
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8,
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 64,
+        "suffix_units_per_cta": 2,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 16,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 32
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 512
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 6,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 32,
+        "prefix_units_per_cta": 4,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 32
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 512
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          6,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 512,
+        "suffix_units_per_cta": 4,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 16,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 32
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 512
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 6,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 32,
+        "prefix_units_per_cta": 4,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 32
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 512
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          6,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 512,
+        "suffix_units_per_cta": 4,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 64,
+        "logN": 16,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 8,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 16,
+        "prefix_threads": 256,
+        "prefix_units_per_cta": 16,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 16,
+        "suffix_threads": 256,
+        "suffix_units_per_cta": 4,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 18,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 128
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 8,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 16,
+        "prefix_threads": 128,
+        "prefix_units_per_cta": 8,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 128
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 16,
+        "suffix_threads": 256,
+        "suffix_units_per_cta": 4,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 18,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 32,
+            "exchange": "shared",
+            "threads": 512
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 10,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 32,
+        "prefix_threads": 512,
+        "prefix_units_per_cta": 16,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 32,
+            "exchange": "shared",
+            "threads": 512
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          10,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 16,
+        "suffix_threads": 256,
+        "suffix_units_per_cta": 4,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 20,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 32,
+            "exchange": "shared",
+            "threads": 256
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 10,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 32,
+        "prefix_threads": 256,
+        "prefix_units_per_cta": 8,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 32,
+            "exchange": "shared",
+            "threads": 256
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 256
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          10,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 16,
+        "suffix_threads": 256,
+        "suffix_units_per_cta": 4,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 20,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 32,
+            "exchange": "shared",
+            "threads": 512
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 1024
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 10,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 32,
+        "prefix_threads": 512,
+        "prefix_units_per_cta": 16,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 32,
+            "exchange": "shared",
+            "threads": 512
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 1024
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          10,
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 16,
+        "suffix_threads": 1024,
+        "suffix_units_per_cta": 4,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 22,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 32,
+            "exchange": "shared",
+            "threads": 512
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 1024
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 10,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 32,
+        "prefix_threads": 512,
+        "prefix_units_per_cta": 16,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 32,
+            "exchange": "shared",
+            "threads": 512
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 1024
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          10,
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 16,
+        "suffix_threads": 1024,
+        "suffix_units_per_cta": 4,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 22,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "factor-streamed",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 64
+          },
+          {
+            "core": "register-tile",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 64
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 8,
+        "factor_overlap": false,
+        "factor_partition": [
+          6,
+          6
+        ],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 6,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 64,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "factor-streamed",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 64
+          },
+          {
+            "core": "register-tile",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 64
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 8,
+        "factor_overlap": false,
+        "factor_partition": [
+          6,
+          6
+        ],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 6,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 64,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 16,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "cufftdx-block",
+            "ept": 4,
+            "exchange": "shared",
+            "threads": 128
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 4,
+            "exchange": "shared",
+            "threads": 128
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "cufftdx-block",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 7,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 4,
+        "prefix_threads": 128,
+        "prefix_units_per_cta": 4,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "cufftdx-block",
+            "ept": 4,
+            "exchange": "shared",
+            "threads": 128
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 4,
+            "exchange": "shared",
+            "threads": 128
+          }
+        ],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          7,
+          9
+        ],
+        "stage_space": 0,
+        "suffix_ept": 4,
+        "suffix_threads": 128,
+        "suffix_units_per_cta": 1,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 16,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 128
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 4,
+            "exchange": "shared",
+            "threads": 512
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 6,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 128,
+        "prefix_units_per_cta": 16,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 128
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 4,
+            "exchange": "shared",
+            "threads": 512
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          6,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 4,
+        "suffix_threads": 512,
+        "suffix_units_per_cta": 2,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 16,
+        "logN": 16,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "factor-streamed",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 128
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 128
+          }
+        ],
+        "factor_columns": 2,
+        "factor_ept": 8,
+        "factor_overlap": false,
+        "factor_partition": [
+          9,
+          9
+        ],
+        "factor_slices": 1,
+        "fft_core": "cufftdx-block",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 9,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          18
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 18,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 128
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 4,
+            "exchange": "shared",
+            "threads": 512
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 8,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 16,
+        "prefix_threads": 128,
+        "prefix_units_per_cta": 8,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 16,
+            "exchange": "shared",
+            "threads": 128
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 4,
+            "exchange": "shared",
+            "threads": 512
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 4,
+        "suffix_threads": 512,
+        "suffix_units_per_cta": 2,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 16,
+        "logN": 18,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 32,
+            "exchange": "shared",
+            "threads": 64
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 512
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 10,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 32,
+        "prefix_threads": 64,
+        "prefix_units_per_cta": 2,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 32,
+            "exchange": "shared",
+            "threads": 64
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 512
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          10,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 512,
+        "suffix_units_per_cta": 4,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 20,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "recurrence"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 32,
+            "exchange": "shared",
+            "threads": 64
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 512
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 10,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 32,
+        "prefix_threads": 64,
+        "prefix_units_per_cta": 2,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "register-tile",
+            "ept": 32,
+            "exchange": "shared",
+            "threads": 64
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 512
+          }
+        ],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          10,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 512,
+        "suffix_units_per_cta": 4,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 16,
+        "logN": 20,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "cufftdx-direct",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 32,
+        "direction": "inverse",
+        "logN": 12,
+        "normalization": "inverse",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "factor-streamed",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "recurrence",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 32
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 128
+          }
+        ],
+        "factor_columns": 2,
+        "factor_ept": 8,
+        "factor_overlap": false,
+        "factor_partition": [
+          7,
+          9
+        ],
+        "factor_slices": 1,
+        "fft_core": "cufftdx-block",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 7,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          16
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 32,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 8,
+        "direction": "inverse",
+        "logN": 16,
+        "normalization": "inverse",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "cufftdx-block",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 32,
+        "batch_stride": 519,
+        "element_stride": 2,
+        "logN": 8,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "auto",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "cufftdx-block",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 64,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 256,
+        "logN": 8,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "in-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "warp-register",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 32,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 8,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "warp-register",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 32,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 16384,
+        "logN": 8,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "warp-register",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "warp-register",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1024,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "shared-iterative",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "table"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 8,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "writer-aligned",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8,
+          7
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 15,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "warp-register",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          15
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 128,
+        "logN": 15,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "shared-iterative",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "table"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 10,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          10,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 64,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 20,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "hierarchical",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix4",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 10,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          20
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 20,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "table"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix8",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 0
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 0
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 6,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 0
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 0
+          }
+        ],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          6,
+          6
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 64,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "shared-iterative",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "table"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          6,
+          6
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 64,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 32,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "warp-register",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 32,
+        "direction": "inverse",
+        "logN": 12,
+        "normalization": "inverse",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "appt_role_mapping": {
+          "data_time_role_mask": 7,
+          "fragment_width": 0,
+          "producer_weight": 0,
+          "tail_weight": 0,
+          "writer_tiles_per_cta": 0,
+          "writer_weight": 0
+        },
+        "backend": "hybrid2d",
+        "batch_tile_count": 1,
+        "boundary_mappings": [],
+        "compute_unit": "radix4",
+        "cross_twiddle_placement": "fused",
+        "data_space": 0,
+        "data_time": 0,
+        "dataflow_layout": "hermes-xor",
+        "dataflow_state_mode": "inplace",
+        "execution_group_mappings": [],
+        "flow_tile_log_n": 0,
+        "hierarchical_core": "dataflow-radix4",
+        "kind": "ntt",
+        "modular_multiply": "shoup",
+        "n1_log": 6,
+        "packet_compute_layout": "interleaved-rows",
+        "packet_fold_wave_barriers": false,
+        "packet_readiness_mode": "per-packet",
+        "pipeline_buffers": 0,
+        "profile_appt_roles": false,
+        "ready_window": 0,
+        "role_stages": 0,
+        "rows_per_block": 4,
+        "schema_version": 1,
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [],
+        "stage_space": 0,
+        "subgraph_mappings": [],
+        "target_ctas_per_sm": 0,
+        "threads_per_block": 256,
+        "token_interleave": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "input_order": "natural",
+        "logN": 12,
+        "modulus": "2013265921",
+        "operator": "ntt",
+        "output_order": "natural",
+        "precision": "word32"
+      }
+    },
+    {
+      "mapping": {
+        "appt_role_mapping": {
+          "data_time_role_mask": 7,
+          "fragment_width": 0,
+          "producer_weight": 0,
+          "tail_weight": 0,
+          "writer_tiles_per_cta": 0,
+          "writer_weight": 0
+        },
+        "backend": "hybrid2d",
+        "batch_tile_count": 1,
+        "boundary_mappings": [],
+        "compute_unit": "radix4",
+        "cross_twiddle_placement": "fused",
+        "data_space": 0,
+        "data_time": 0,
+        "dataflow_layout": "hermes-xor",
+        "dataflow_state_mode": "inplace",
+        "execution_group_mappings": [],
+        "flow_tile_log_n": 0,
+        "hierarchical_core": "dataflow-radix4",
+        "kind": "ntt",
+        "modular_multiply": "shoup",
+        "n1_log": 6,
+        "packet_compute_layout": "interleaved-rows",
+        "packet_fold_wave_barriers": false,
+        "packet_readiness_mode": "per-packet",
+        "pipeline_buffers": 0,
+        "profile_appt_roles": false,
+        "ready_window": 0,
+        "role_stages": 0,
+        "rows_per_block": 4,
+        "schema_version": 1,
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [],
+        "stage_space": 0,
+        "subgraph_mappings": [],
+        "target_ctas_per_sm": 0,
+        "threads_per_block": 64,
+        "token_interleave": 0
+      },
+      "semantics": {
+        "batch": 1024,
+        "input_order": "natural",
+        "logN": 12,
+        "modulus": "2013265921",
+        "operator": "ntt",
+        "output_order": "natural",
+        "precision": "word32"
+      }
+    },
+    {
+      "mapping": {
+        "appt_role_mapping": {
+          "data_time_role_mask": 7,
+          "fragment_width": 0,
+          "producer_weight": 0,
+          "tail_weight": 0,
+          "writer_tiles_per_cta": 0,
+          "writer_weight": 0
+        },
+        "backend": "hybrid2d",
+        "batch_tile_count": 1,
+        "boundary_mappings": [],
+        "compute_unit": "radix8",
+        "cross_twiddle_placement": "fused",
+        "data_space": 2,
+        "data_time": 0,
+        "dataflow_layout": "hermes-xor",
+        "dataflow_state_mode": "inplace",
+        "execution_group_mappings": [],
+        "flow_tile_log_n": 0,
+        "hierarchical_core": "dataflow-radix4",
+        "kind": "ntt",
+        "modular_multiply": "shoup",
+        "n1_log": 8,
+        "packet_compute_layout": "interleaved-rows",
+        "packet_fold_wave_barriers": false,
+        "packet_readiness_mode": "per-packet",
+        "pipeline_buffers": 0,
+        "profile_appt_roles": false,
+        "ready_window": 0,
+        "role_stages": 0,
+        "rows_per_block": 4,
+        "schema_version": 1,
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [],
+        "stage_space": 0,
+        "subgraph_mappings": [],
+        "target_ctas_per_sm": 0,
+        "threads_per_block": 256,
+        "token_interleave": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "input_order": "natural",
+        "logN": 16,
+        "modulus": "2013265921",
+        "operator": "ntt",
+        "output_order": "natural",
+        "precision": "word32"
+      }
+    },
+    {
+      "mapping": {
+        "appt_role_mapping": {
+          "data_time_role_mask": 7,
+          "fragment_width": 0,
+          "producer_weight": 0,
+          "tail_weight": 0,
+          "writer_tiles_per_cta": 0,
+          "writer_weight": 0
+        },
+        "backend": "hybrid2d",
+        "batch_tile_count": 1,
+        "boundary_mappings": [],
+        "compute_unit": "radix4",
+        "cross_twiddle_placement": "fused",
+        "data_space": 0,
+        "data_time": 0,
+        "dataflow_layout": "hermes-xor",
+        "dataflow_state_mode": "inplace",
+        "execution_group_mappings": [],
+        "flow_tile_log_n": 0,
+        "hierarchical_core": "dataflow-radix4",
+        "kind": "ntt",
+        "modular_multiply": "shoup",
+        "n1_log": 8,
+        "packet_compute_layout": "interleaved-rows",
+        "packet_fold_wave_barriers": false,
+        "packet_readiness_mode": "per-packet",
+        "pipeline_buffers": 0,
+        "profile_appt_roles": false,
+        "ready_window": 0,
+        "role_stages": 0,
+        "rows_per_block": 4,
+        "schema_version": 1,
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [],
+        "stage_space": 0,
+        "subgraph_mappings": [],
+        "target_ctas_per_sm": 0,
+        "threads_per_block": 128,
+        "token_interleave": 0
+      },
+      "semantics": {
+        "batch": 64,
+        "input_order": "natural",
+        "logN": 16,
+        "modulus": "2013265921",
+        "operator": "ntt",
+        "output_order": "natural",
+        "precision": "word32"
+      }
+    },
+    {
+      "mapping": {
+        "appt_role_mapping": {
+          "data_time_role_mask": 7,
+          "fragment_width": 0,
+          "producer_weight": 0,
+          "tail_weight": 0,
+          "writer_tiles_per_cta": 0,
+          "writer_weight": 0
+        },
+        "backend": "hybrid2d",
+        "batch_tile_count": 1,
+        "boundary_mappings": [],
+        "compute_unit": "radix4",
+        "cross_twiddle_placement": "fused",
+        "data_space": 0,
+        "data_time": 0,
+        "dataflow_layout": "hermes-xor",
+        "dataflow_state_mode": "inplace",
+        "execution_group_mappings": [],
+        "flow_tile_log_n": 0,
+        "hierarchical_core": "dataflow-radix4",
+        "kind": "ntt",
+        "modular_multiply": "shoup",
+        "n1_log": 10,
+        "packet_compute_layout": "interleaved-rows",
+        "packet_fold_wave_barriers": false,
+        "packet_readiness_mode": "per-packet",
+        "pipeline_buffers": 0,
+        "profile_appt_roles": false,
+        "ready_window": 0,
+        "role_stages": 0,
+        "rows_per_block": 4,
+        "schema_version": 1,
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [],
+        "stage_space": 0,
+        "subgraph_mappings": [],
+        "target_ctas_per_sm": 0,
+        "threads_per_block": 256,
+        "token_interleave": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "input_order": "natural",
+        "logN": 20,
+        "modulus": "2013265921",
+        "operator": "ntt",
+        "output_order": "natural",
+        "precision": "word32"
+      }
+    },
+    {
+      "mapping": {
+        "appt_role_mapping": {
+          "data_time_role_mask": 7,
+          "fragment_width": 0,
+          "producer_weight": 0,
+          "tail_weight": 0,
+          "writer_tiles_per_cta": 0,
+          "writer_weight": 0
+        },
+        "backend": "hybrid2d",
+        "batch_tile_count": 1,
+        "boundary_mappings": [],
+        "compute_unit": "radix4",
+        "cross_twiddle_placement": "fused",
+        "data_space": 0,
+        "data_time": 0,
+        "dataflow_layout": "hermes-xor",
+        "dataflow_state_mode": "inplace",
+        "execution_group_mappings": [],
+        "flow_tile_log_n": 0,
+        "hierarchical_core": "dataflow-radix4",
+        "kind": "ntt",
+        "modular_multiply": "shoup",
+        "n1_log": 10,
+        "packet_compute_layout": "interleaved-rows",
+        "packet_fold_wave_barriers": false,
+        "packet_readiness_mode": "per-packet",
+        "pipeline_buffers": 0,
+        "profile_appt_roles": false,
+        "ready_window": 0,
+        "role_stages": 0,
+        "rows_per_block": 4,
+        "schema_version": 1,
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [],
+        "stage_space": 0,
+        "subgraph_mappings": [],
+        "target_ctas_per_sm": 0,
+        "threads_per_block": 256,
+        "token_interleave": 0
+      },
+      "semantics": {
+        "batch": 4,
+        "input_order": "natural",
+        "logN": 20,
+        "modulus": "2013265921",
+        "operator": "ntt",
+        "output_order": "natural",
+        "precision": "word32"
+      }
+    },
+    {
+      "mapping": {
+        "appt_role_mapping": {
+          "data_time_role_mask": 7,
+          "fragment_width": 0,
+          "producer_weight": 0,
+          "tail_weight": 0,
+          "writer_tiles_per_cta": 0,
+          "writer_weight": 0
+        },
+        "backend": "hybrid2d",
+        "batch_tile_count": 1,
+        "boundary_mappings": [],
+        "compute_unit": "radix4",
+        "cross_twiddle_placement": "fused",
+        "data_space": 0,
+        "data_time": 0,
+        "dataflow_layout": "hermes-xor",
+        "dataflow_state_mode": "inplace",
+        "execution_group_mappings": [],
+        "flow_tile_log_n": 0,
+        "hierarchical_core": "dataflow-radix4",
+        "kind": "ntt",
+        "modular_multiply": "shoup",
+        "n1_log": 6,
+        "packet_compute_layout": "interleaved-rows",
+        "packet_fold_wave_barriers": false,
+        "packet_readiness_mode": "per-packet",
+        "pipeline_buffers": 0,
+        "profile_appt_roles": false,
+        "ready_window": 0,
+        "role_stages": 0,
+        "rows_per_block": 1,
+        "schema_version": 1,
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [],
+        "stage_space": 0,
+        "subgraph_mappings": [],
+        "target_ctas_per_sm": 0,
+        "threads_per_block": 128,
+        "token_interleave": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "input_order": "natural",
+        "logN": 12,
+        "modulus": "576460756061519873",
+        "operator": "ntt",
+        "output_order": "natural",
+        "precision": "word64"
+      }
+    },
+    {
+      "mapping": {
+        "appt_role_mapping": {
+          "data_time_role_mask": 7,
+          "fragment_width": 0,
+          "producer_weight": 0,
+          "tail_weight": 0,
+          "writer_tiles_per_cta": 0,
+          "writer_weight": 0
+        },
+        "backend": "hybrid2d",
+        "batch_tile_count": 1,
+        "boundary_mappings": [],
+        "compute_unit": "radix4",
+        "cross_twiddle_placement": "fused",
+        "data_space": 0,
+        "data_time": 0,
+        "dataflow_layout": "hermes-xor",
+        "dataflow_state_mode": "inplace",
+        "execution_group_mappings": [],
+        "flow_tile_log_n": 0,
+        "hierarchical_core": "dataflow-radix4",
+        "kind": "ntt",
+        "modular_multiply": "shoup",
+        "n1_log": 6,
+        "packet_compute_layout": "interleaved-rows",
+        "packet_fold_wave_barriers": false,
+        "packet_readiness_mode": "per-packet",
+        "pipeline_buffers": 0,
+        "profile_appt_roles": false,
+        "ready_window": 0,
+        "role_stages": 0,
+        "rows_per_block": 4,
+        "schema_version": 1,
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [],
+        "stage_space": 0,
+        "subgraph_mappings": [],
+        "target_ctas_per_sm": 0,
+        "threads_per_block": 256,
+        "token_interleave": 0
+      },
+      "semantics": {
+        "batch": 16,
+        "input_order": "natural",
+        "logN": 12,
+        "modulus": "576460756061519873",
+        "operator": "ntt",
+        "output_order": "natural",
+        "precision": "word64"
+      }
+    },
+    {
+      "mapping": {
+        "appt_role_mapping": {
+          "data_time_role_mask": 7,
+          "fragment_width": 0,
+          "producer_weight": 0,
+          "tail_weight": 0,
+          "writer_tiles_per_cta": 0,
+          "writer_weight": 0
+        },
+        "backend": "hybrid2d",
+        "batch_tile_count": 1,
+        "boundary_mappings": [],
+        "compute_unit": "radix4",
+        "cross_twiddle_placement": "fused",
+        "data_space": 0,
+        "data_time": 0,
+        "dataflow_layout": "hermes-xor",
+        "dataflow_state_mode": "inplace",
+        "execution_group_mappings": [],
+        "flow_tile_log_n": 0,
+        "hierarchical_core": "dataflow-radix4",
+        "kind": "ntt",
+        "modular_multiply": "shoup",
+        "n1_log": 8,
+        "packet_compute_layout": "interleaved-rows",
+        "packet_fold_wave_barriers": false,
+        "packet_readiness_mode": "per-packet",
+        "pipeline_buffers": 0,
+        "profile_appt_roles": false,
+        "ready_window": 0,
+        "role_stages": 0,
+        "rows_per_block": 4,
+        "schema_version": 1,
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [],
+        "stage_space": 0,
+        "subgraph_mappings": [],
+        "target_ctas_per_sm": 0,
+        "threads_per_block": 256,
+        "token_interleave": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "input_order": "natural",
+        "logN": 16,
+        "modulus": "576460756061519873",
+        "operator": "ntt",
+        "output_order": "natural",
+        "precision": "word64"
+      }
+    },
+    {
+      "mapping": {
+        "appt_role_mapping": {
+          "data_time_role_mask": 7,
+          "fragment_width": 0,
+          "producer_weight": 0,
+          "tail_weight": 0,
+          "writer_tiles_per_cta": 0,
+          "writer_weight": 0
+        },
+        "backend": "hybrid2d",
+        "batch_tile_count": 1,
+        "boundary_mappings": [],
+        "compute_unit": "radix4",
+        "cross_twiddle_placement": "fused",
+        "data_space": 0,
+        "data_time": 0,
+        "dataflow_layout": "hermes-xor",
+        "dataflow_state_mode": "inplace",
+        "execution_group_mappings": [],
+        "flow_tile_log_n": 0,
+        "hierarchical_core": "dataflow-radix4",
+        "kind": "ntt",
+        "modular_multiply": "shoup",
+        "n1_log": 8,
+        "packet_compute_layout": "interleaved-rows",
+        "packet_fold_wave_barriers": false,
+        "packet_readiness_mode": "per-packet",
+        "pipeline_buffers": 0,
+        "profile_appt_roles": false,
+        "ready_window": 0,
+        "role_stages": 0,
+        "rows_per_block": 4,
+        "schema_version": 1,
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [],
+        "stage_space": 0,
+        "subgraph_mappings": [],
+        "target_ctas_per_sm": 0,
+        "threads_per_block": 256,
+        "token_interleave": 0
+      },
+      "semantics": {
+        "batch": 16,
+        "input_order": "natural",
+        "logN": 16,
+        "modulus": "576460756061519873",
+        "operator": "ntt",
+        "output_order": "natural",
+        "precision": "word64"
+      }
+    },
+    {
+      "mapping": {
+        "appt_role_mapping": {
+          "data_time_role_mask": 7,
+          "fragment_width": 0,
+          "producer_weight": 0,
+          "tail_weight": 0,
+          "writer_tiles_per_cta": 0,
+          "writer_weight": 0
+        },
+        "backend": "hybrid2d",
+        "batch_tile_count": 1,
+        "boundary_mappings": [],
+        "compute_unit": "radix4",
+        "cross_twiddle_placement": "fused",
+        "data_space": 0,
+        "data_time": 0,
+        "dataflow_layout": "hermes-xor",
+        "dataflow_state_mode": "inplace",
+        "execution_group_mappings": [],
+        "flow_tile_log_n": 0,
+        "hierarchical_core": "dataflow-radix4",
+        "kind": "ntt",
+        "modular_multiply": "shoup",
+        "n1_log": 10,
+        "packet_compute_layout": "interleaved-rows",
+        "packet_fold_wave_barriers": false,
+        "packet_readiness_mode": "per-packet",
+        "pipeline_buffers": 0,
+        "profile_appt_roles": false,
+        "ready_window": 0,
+        "role_stages": 0,
+        "rows_per_block": 2,
+        "schema_version": 1,
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [],
+        "stage_space": 0,
+        "subgraph_mappings": [],
+        "target_ctas_per_sm": 0,
+        "threads_per_block": 256,
+        "token_interleave": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "input_order": "natural",
+        "logN": 20,
+        "modulus": "576460756061519873",
+        "operator": "ntt",
+        "output_order": "natural",
+        "precision": "word64"
+      }
+    },
+    {
+      "mapping": {
+        "appt_role_mapping": {
+          "data_time_role_mask": 7,
+          "fragment_width": 0,
+          "producer_weight": 0,
+          "tail_weight": 0,
+          "writer_tiles_per_cta": 0,
+          "writer_weight": 0
+        },
+        "backend": "hybrid2d",
+        "batch_tile_count": 1,
+        "boundary_mappings": [],
+        "compute_unit": "radix8",
+        "cross_twiddle_placement": "fused",
+        "data_space": 0,
+        "data_time": 0,
+        "dataflow_layout": "hermes-xor",
+        "dataflow_state_mode": "inplace",
+        "execution_group_mappings": [],
+        "flow_tile_log_n": 0,
+        "hierarchical_core": "dataflow-radix4",
+        "kind": "ntt",
+        "modular_multiply": "shoup",
+        "n1_log": 10,
+        "packet_compute_layout": "interleaved-rows",
+        "packet_fold_wave_barriers": false,
+        "packet_readiness_mode": "per-packet",
+        "pipeline_buffers": 0,
+        "profile_appt_roles": false,
+        "ready_window": 0,
+        "role_stages": 0,
+        "rows_per_block": 2,
+        "schema_version": 1,
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [],
+        "stage_space": 0,
+        "subgraph_mappings": [],
+        "target_ctas_per_sm": 0,
+        "threads_per_block": 256,
+        "token_interleave": 0
+      },
+      "semantics": {
+        "batch": 16,
+        "input_order": "natural",
+        "logN": 20,
+        "modulus": "576460756061519873",
+        "operator": "ntt",
+        "output_order": "natural",
+        "precision": "word64"
+      }
+    },
+    {
+      "mapping": {
+        "appt_role_mapping": {
+          "data_time_role_mask": 7,
+          "fragment_width": 0,
+          "producer_weight": 0,
+          "tail_weight": 0,
+          "writer_tiles_per_cta": 0,
+          "writer_weight": 0
+        },
+        "backend": "hybrid2d",
+        "batch_tile_count": 1,
+        "boundary_mappings": [],
+        "compute_unit": "radix4",
+        "cross_twiddle_placement": "fused",
+        "data_space": 0,
+        "data_time": 0,
+        "dataflow_layout": "hermes-xor",
+        "dataflow_state_mode": "inplace",
+        "execution_group_mappings": [],
+        "flow_tile_log_n": 0,
+        "hierarchical_core": "dataflow-radix4",
+        "kind": "ntt",
+        "modular_multiply": "shoup",
+        "n1_log": 8,
+        "packet_compute_layout": "interleaved-rows",
+        "packet_fold_wave_barriers": false,
+        "packet_readiness_mode": "per-packet",
+        "pipeline_buffers": 0,
+        "profile_appt_roles": false,
+        "ready_window": 0,
+        "role_stages": 0,
+        "rows_per_block": 4,
+        "schema_version": 1,
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [],
+        "stage_space": 0,
+        "subgraph_mappings": [],
+        "target_ctas_per_sm": 0,
+        "threads_per_block": 256,
+        "token_interleave": 0
+      },
+      "semantics": {
+        "batch": 4,
+        "direction": "inverse",
+        "input_order": "natural",
+        "logN": 16,
+        "modulus": "576460756061519873",
+        "operator": "ntt",
+        "output_order": "natural",
+        "precision": "word64"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix4",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 8,
+        "normalization": "none",
+        "operator": "subset-zeta",
+        "placement": "out-of-place",
+        "precision": "uint32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix4",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 4096,
+        "logN": 8,
+        "normalization": "none",
+        "operator": "subset-zeta",
+        "placement": "out-of-place",
+        "precision": "uint32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "table"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix8",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 0
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 0
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 6,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 0
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 0
+          }
+        ],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          6,
+          6
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 64,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "subset-zeta",
+        "placement": "out-of-place",
+        "precision": "uint32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "shared-iterative",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 256,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "subset-zeta",
+        "placement": "out-of-place",
+        "precision": "uint32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "shared-iterative",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "table"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          10,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 64,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 20,
+        "normalization": "none",
+        "operator": "subset-zeta",
+        "placement": "out-of-place",
+        "precision": "uint32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix4",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 8,
+        "normalization": "none",
+        "operator": "superset-zeta",
+        "placement": "out-of-place",
+        "precision": "uint32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix4",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 4096,
+        "logN": 8,
+        "normalization": "none",
+        "operator": "superset-zeta",
+        "placement": "out-of-place",
+        "precision": "uint32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "table"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix8",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 0
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 0
+          }
+        ],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 6,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 1,
+        "schema_version": 1,
+        "segment_mappings": [
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 0
+          },
+          {
+            "core": "cufftdx-block",
+            "ept": 8,
+            "exchange": "shared",
+            "threads": 0
+          }
+        ],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          6,
+          6
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 64,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "superset-zeta",
+        "placement": "out-of-place",
+        "precision": "uint32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "shared-iterative",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 12,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 32,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 256,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "superset-zeta",
+        "placement": "out-of-place",
+        "precision": "uint32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "shared-iterative",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "table"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 10,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          10,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 64,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 20,
+        "normalization": "none",
+        "operator": "superset-zeta",
+        "placement": "out-of-place",
+        "precision": "uint32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "warp-register",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 32,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 8,
+        "normalization": "none",
+        "operator": "structured-2x2",
+        "placement": "out-of-place",
+        "precision": "fp32",
+        "stage_matrix": "1,0.25,-0.5,1"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "warp-register",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          8
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 32,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 8,
+        "normalization": "none",
+        "operator": "structured-2x2",
+        "placement": "out-of-place",
+        "precision": "fp32",
+        "stage_matrix": "1,0.25,-0.5,1"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "warp-register",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "structured-2x2",
+        "placement": "out-of-place",
+        "precision": "fp32",
+        "stage_matrix": "1,0.25,-0.5,1"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "temporal-tile",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "warp-register",
+        "local_stages": 0,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 256,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "structured-2x2",
+        "placement": "out-of-place",
+        "precision": "fp32",
+        "stage_matrix": "1,0.25,-0.5,1"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "shared-iterative",
+        "batch_tile_count": 1,
+        "boundaries": [
+          {
+            "layout": "direct-strided",
+            "residency": "global-scratch",
+            "twiddle": "table"
+          }
+        ],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix2",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 10,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          10,
+          10
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 64,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 20,
+        "normalization": "none",
+        "operator": "structured-2x2",
+        "placement": "out-of-place",
+        "precision": "fp32",
+        "stage_matrix": "1,0.25,-0.5,1"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "hierarchical",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix4",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 10,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          20
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 20,
+        "normalization": "none",
+        "operator": "structured-2x2",
+        "placement": "out-of-place",
+        "precision": "fp32",
+        "stage_matrix": "1,0.25,-0.5,1"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "hierarchical",
+        "batch_tile_count": 1,
+        "boundaries": [],
+        "complex_multiply": "four-mul",
+        "compute_unit": "radix4",
+        "cross_twiddle": "table",
+        "data_tiles_per_cta": 1,
+        "direct_boundary": "direct-strided",
+        "execution_group_mappings": [],
+        "factor_columns": 8,
+        "factor_ept": 16,
+        "factor_overlap": false,
+        "factor_partition": [],
+        "factor_slices": 1,
+        "fft_core": "scalar",
+        "kind": "butterfly",
+        "local_exchange": "shared",
+        "local_stages": 10,
+        "pipeline_warps": 0,
+        "prefetch_depth": 0,
+        "prefix_ept": 8,
+        "prefix_threads": 0,
+        "prefix_units_per_cta": 0,
+        "reorder_columns": 0,
+        "schema_version": 1,
+        "segment_mappings": [],
+        "shared_layout": "linear",
+        "stage_handoff": "named-barrier",
+        "stage_overlap": false,
+        "stage_partition": [
+          12
+        ],
+        "stage_space": 0,
+        "suffix_ept": 8,
+        "suffix_threads": 0,
+        "suffix_units_per_cta": 0,
+        "tile_threads": 128,
+        "warp_stages": 0
+      },
+      "semantics": {
+        "batch": 32,
+        "logN": 12,
+        "normalization": "none",
+        "operator": "xor-zeta",
+        "placement": "out-of-place",
+        "precision": "uint32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "cross_twiddle": "recurrence",
+        "exchange_chunks": [],
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_stage_partitions": [
+          [
+            6,
+            5
+          ],
+          []
+        ],
+        "local_stages": 11,
+        "prefix_codelet": "cufftdx-thread",
+        "prefix_codelet_lanes": 2,
+        "prefix_ept": 32,
+        "prefix_shared_layout": "xor",
+        "prefix_threads": 256,
+        "reorder_columns": 4,
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          11,
+          11
+        ],
+        "suffix_ept": 16,
+        "suffix_threads": 512
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 22,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "cross_twiddle": "recurrence",
+        "exchange_chunks": [],
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_stage_partitions": [
+          [
+            6,
+            5
+          ],
+          []
+        ],
+        "local_stages": 11,
+        "prefix_codelet": "cufftdx-thread",
+        "prefix_codelet_lanes": 2,
+        "prefix_ept": 32,
+        "prefix_shared_layout": "xor",
+        "prefix_threads": 256,
+        "reorder_columns": 4,
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          11,
+          11
+        ],
+        "suffix_ept": 16,
+        "suffix_threads": 512
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 22,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "cross_twiddle": "recurrence",
+        "exchange_chunks": [
+          0,
+          8
+        ],
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_stage_partitions": [
+          [
+            6,
+            5
+          ],
+          []
+        ],
+        "local_stages": 11,
+        "prefix_codelet": "cufftdx-thread",
+        "prefix_codelet_lanes": 2,
+        "prefix_ept": 32,
+        "prefix_shared_layout": "xor",
+        "prefix_threads": 256,
+        "reorder_columns": 4,
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          11,
+          11
+        ],
+        "suffix_ept": 16,
+        "suffix_threads": 512
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 22,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "cross_twiddle": "recurrence",
+        "exchange_chunks": [
+          0,
+          8
+        ],
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_stage_partitions": [
+          [
+            6,
+            5
+          ],
+          []
+        ],
+        "local_stages": 11,
+        "prefix_codelet": "cufftdx-thread",
+        "prefix_codelet_lanes": 2,
+        "prefix_ept": 32,
+        "prefix_shared_layout": "xor",
+        "prefix_threads": 256,
+        "reorder_columns": 4,
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          11,
+          11
+        ],
+        "suffix_ept": 16,
+        "suffix_threads": 512
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 22,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "cross_twiddle": "recurrence",
+        "exchange_chunks": [],
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_stage_partitions": [],
+        "local_stages": 12,
+        "prefix_codelet": "cufftdx-thread",
+        "prefix_codelet_lanes": 1,
+        "prefix_ept": 64,
+        "prefix_shared_layout": "xor",
+        "prefix_threads": 256,
+        "reorder_columns": 4,
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          12,
+          11
+        ],
+        "suffix_ept": 16,
+        "suffix_threads": 512
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 23,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "cross_twiddle": "recurrence",
+        "exchange_chunks": [],
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_stage_partitions": [],
+        "local_stages": 12,
+        "prefix_codelet": "cufftdx-thread",
+        "prefix_codelet_lanes": 1,
+        "prefix_ept": 64,
+        "prefix_shared_layout": "xor",
+        "prefix_threads": 256,
+        "reorder_columns": 4,
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          12,
+          11
+        ],
+        "suffix_ept": 16,
+        "suffix_threads": 512
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 23,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "cross_twiddle": "recurrence",
+        "exchange_chunks": [
+          0,
+          8
+        ],
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_stage_partitions": [],
+        "local_stages": 12,
+        "prefix_codelet": "cufftdx-thread",
+        "prefix_codelet_lanes": 1,
+        "prefix_ept": 64,
+        "prefix_shared_layout": "xor",
+        "prefix_threads": 256,
+        "reorder_columns": 4,
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          12,
+          11
+        ],
+        "suffix_ept": 16,
+        "suffix_threads": 512
+      },
+      "semantics": {
+        "batch": 1,
+        "logN": 23,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "mapping": {
+        "backend": "online-reorder",
+        "cross_twiddle": "recurrence",
+        "exchange_chunks": [
+          0,
+          8
+        ],
+        "fft_core": "register-tile",
+        "kind": "butterfly",
+        "local_stage_partitions": [],
+        "local_stages": 12,
+        "prefix_codelet": "cufftdx-thread",
+        "prefix_codelet_lanes": 1,
+        "prefix_ept": 64,
+        "prefix_shared_layout": "xor",
+        "prefix_threads": 256,
+        "reorder_columns": 4,
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          12,
+          11
+        ],
+        "suffix_ept": 16,
+        "suffix_threads": 512
+      },
+      "semantics": {
+        "batch": 4,
+        "logN": 23,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    }
+  ]
+}

@@ -9,7 +9,7 @@ authors:
     affiliation: "High Efficient Intelligent Computing Lab, Suzhou Institute for Advanced Research of USTC, Suzhou, China"
 repository-code: "https://github.com/TruNcat3/cuButterfly"
 url: "https://github.com/TruNcat3/cuButterfly"
-version: 0.8.0
+version: 0.9.0
 date-released: 2026-09-06
 abstract: "A CUDA research library and artifact for hardware-mapped space-time parallelism across regular layered butterfly computations."
 keywords:

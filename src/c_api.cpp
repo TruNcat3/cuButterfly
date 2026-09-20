@@ -6,9 +6,11 @@
 #include "bluestein_ntt.hpp"
 #include "direct_fft.hpp"
 #include "general_kernels.hpp"
-#include "generated_application_profiles.hpp"
+#include "plan_registry.hpp"
+#include <nlohmann/json.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
@@ -20,6 +22,9 @@
 #include <sstream>
 #include <utility>
 #include <vector>
+#include <fcntl.h>
+#include <sys/file.h>
+#include <unistd.h>
 
 #ifndef CUBUTTERFLY_HAS_CUFFTDX
 #define CUBUTTERFLY_HAS_CUFFTDX 0
@@ -283,112 +288,21 @@ void validate_storage(const cubutterflyDescriptor& descriptor) {
         require(real, "real butterfly operator requires a real floating-point storage type");
 }
 
-bool v100_profile_device() {
-    const auto device = cuntt::current_device_info();
-    return device.compute_major == cuntt::detail::kApplicationProfileComputeMajor &&
-           device.compute_minor == cuntt::detail::kApplicationProfileComputeMinor &&
-           device.multiprocessors == cuntt::detail::kApplicationProfileMultiprocessors;
-}
-
-bool measured_v100_shape(const cubutterflyDescriptor& descriptor, std::uint32_t log_n) {
-    if (!v100_profile_device() || descriptor.rank != 1 ||
-        descriptor.length_mode != CUBUTTERFLY_LENGTH_STANDARD ||
-        descriptor.direction != CUBUTTERFLY_DIRECTION_FORWARD)
-        return false;
-    if (descriptor.input_strides.size() != 1 || descriptor.output_strides.size() != 1 ||
-        descriptor.input_strides[0] != 1 || descriptor.output_strides[0] != 1 ||
-        descriptor.input_batch_stride != descriptor.extents[0] ||
-        descriptor.output_batch_stride != descriptor.extents[0])
-        return false;
-    if (descriptor.op == CUBUTTERFLY_OPERATOR_FFT && !CUBUTTERFLY_HAS_CUFFTDX)
-        return false;
-    for (const auto& profile : cuntt::detail::kApplicationProfiles) {
-        if (profile.op != static_cast<int>(descriptor.op) ||
-            profile.storage != static_cast<int>(descriptor.storage) ||
-            profile.direction != static_cast<int>(descriptor.direction) ||
-            profile.placement != static_cast<int>(descriptor.placement) || profile.log_n != log_n)
-            continue;
-        if (profile.modulus != 0 && profile.modulus != descriptor.modulus)
-            continue;
-        if (std::find(profile.batches, profile.batches + profile.batch_count, descriptor.batch) !=
-            profile.batches + profile.batch_count)
-            return true;
-    }
-    return false;
-}
-
-bool measured_v100_axis(const cubutterflyDescriptor& descriptor, std::uint32_t log_n,
-                        std::size_t batch) {
-    if (!v100_profile_device() || descriptor.direction != CUBUTTERFLY_DIRECTION_FORWARD)
-        return false;
-    if (descriptor.op == CUBUTTERFLY_OPERATOR_FFT && !CUBUTTERFLY_HAS_CUFFTDX)
-        return false;
-    for (const auto& profile : cuntt::detail::kApplicationProfiles) {
-        if (profile.op != static_cast<int>(descriptor.op) ||
-            profile.storage != static_cast<int>(descriptor.storage) ||
-            profile.direction != static_cast<int>(descriptor.direction) || profile.log_n != log_n)
-            continue;
-        if (profile.modulus != 0 && profile.modulus != descriptor.modulus)
-            continue;
-        if (std::find(profile.batches, profile.batches + profile.batch_count, batch) !=
-            profile.batches + profile.batch_count)
-            return true;
-    }
-    return false;
-}
-
 void log_profile_miss(cubutterflyHandle_t handle, const cubutterflyDescriptor& descriptor,
                       const std::string& reason, const std::string& algorithm) {
     const auto device = cuntt::current_device_info();
     std::ostringstream message;
-    if (!v100_profile_device()) {
-        message << "no static performance profile for device='" << device.name << "' sm_"
-                << device.compute_major << device.compute_minor << " multiprocessors="
-                << device.multiprocessors;
-        log_event(handle, CUBUTTERFLY_LOG_WARNING, "hardware-profile-miss",
-                  message.str() + "; using " + algorithm + "; set MEASURE with a cache path to calibrate this workload");
-        return;
-    }
-    message << "V100 profile has no exact entry for " << workload_key(descriptor)
-            << "; " << reason << "; using " << algorithm
-            << "; set MEASURE with a cache path to record a reusable choice";
+    message << "no verified mapping for device='" << device.name << "' sm_"
+            << device.compute_major << device.compute_minor << " memory_bytes=" << device.global_memory_bytes
+            << "; " << workload_key(descriptor) << "; " << reason << "; using " << algorithm
+            << "; set MEASURE with a cache path to calibrate this workload";
     log_event(handle, CUBUTTERFLY_LOG_WARNING, "workload-profile-miss", message.str());
 }
 
-void choose_butterfly_mapping(cuntt::ButterflyConfig& config, bool measured) {
-    config.compute_unit = cuntt::ComputeUnit::Radix4;
-    config.tile_threads = 128;
-    if (measured && config.op == cuntt::ButterflyOperator::Fwht &&
-        config.precision == cuntt::ButterflyPrecision::Fp32) {
-        if (config.log_n == 8 || (config.log_n == 15 && config.batch >= 16)) {
-            config.backend = cuntt::ButterflyBackend::TemporalTile;
-            config.compute_unit = cuntt::ComputeUnit::Radix2;
-            config.local_exchange = cuntt::LocalExchange::WarpRegister;
-            config.tile_threads = 256;
-            return;
-        }
-        if (config.log_n == 15) {
-            config.backend = cuntt::ButterflyBackend::OnlineReorder;
-            config.local_stages = 8;
-            config.reorder_columns = 1;
-            config.tile_threads = 256;
-            return;
-        }
-    }
-    if (config.log_n <= 10) {
-        config.backend = cuntt::ButterflyBackend::TemporalTile;
-        return;
-    }
-    if (measured && config.log_n >= 18) {
-        config.backend = cuntt::ButterflyBackend::OnlineReorder;
-        config.local_stages = config.log_n / 2;
-        config.reorder_columns = 1;
-        config.tile_threads = 256;
-        return;
-    }
-    config.backend = cuntt::ButterflyBackend::Hierarchical;
-    config.local_stages = std::min<std::uint32_t>(10, config.log_n - 1);
-    config.tile_threads = 256;
+cuntt::SelectionInfo choose_butterfly_mapping(cuntt::ButterflyConfig& config) {
+    auto selected = cuntt::detail::select_butterfly_mapping(config);
+    config = std::move(selected.config);
+    return selected.info;
 }
 
 void copy_text(const std::string& value, char* destination, std::size_t* bytes) {
@@ -454,7 +368,6 @@ cuntt::ButterflyConfig make_axis_butterfly_config(const cubutterflyDescriptor& d
         for (const auto& matrix : descriptor.stage_matrices[axis])
             config.stage_matrices.push_back({matrix.m00, matrix.m01, matrix.m10, matrix.m11});
     }
-    choose_butterfly_mapping(config, false);
     return config;
 }
 
@@ -473,6 +386,8 @@ cuntt::PlanConfig make_axis_ntt_config(const cubutterflyDescriptor& descriptor,
     config.output_order = descriptor.output_ntt_layout ==
                                   CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC
                               ? cuntt::OutputOrder::ApptStatic
+                              : descriptor.output_ntt_layout == CUBUTTERFLY_NTT_LAYOUT_BIT_REVERSED
+                              ? cuntt::OutputOrder::BitReversed
                               : cuntt::OutputOrder::Natural;
     config.auto_allocate_workspace = false;
     if (config.log_n >= 12 && config.log_n <= 20) {
@@ -505,9 +420,11 @@ const char* operator_name(cubutterflyOperator_t op) {
 std::string workload_key(const cubutterflyDescriptor& descriptor) {
     const auto device = cuntt::current_device_info();
     std::ostringstream key;
-    key << "v1|sm" << device.compute_major << device.compute_minor << "-mp" << device.multiprocessors
+    key << "v2|" << cuntt::detail::runtime_fingerprint() << '|' << device.name << "|memory" << device.global_memory_bytes
+        << "|sm" << device.compute_major << device.compute_minor << "-mp" << device.multiprocessors
         << '|' << operator_name(descriptor.op) << "|storage" << static_cast<int>(descriptor.storage)
         << "|compute" << static_cast<int>(descriptor.compute) << "|direction" << static_cast<int>(descriptor.direction)
+        << "|normalized" << (descriptor.direction == CUBUTTERFLY_DIRECTION_INVERSE && descriptor.normalize_inverse)
         << "|placement" << static_cast<int>(descriptor.placement) << "|length-mode" << static_cast<int>(descriptor.length_mode)
         << "|rank" << descriptor.rank << "|shape";
     for (std::uint32_t axis = 0; axis < descriptor.rank; ++axis) {
@@ -523,7 +440,8 @@ std::string workload_key(const cubutterflyDescriptor& descriptor) {
         key << stride << ',';
     key << descriptor.output_batch_stride;
     if (descriptor.op == CUBUTTERFLY_OPERATOR_NTT)
-        key << "|modulus" << descriptor.modulus << "|word" << descriptor.word_bits;
+        key << "|modulus" << descriptor.modulus << "|word" << descriptor.word_bits
+            << "|input-order" << descriptor.input_ntt_layout << "|output-order" << descriptor.output_ntt_layout;
     if (descriptor.op == CUBUTTERFLY_OPERATOR_STRUCTURED_2X2) {
         key << "|matrices" << std::setprecision(std::numeric_limits<double>::max_digits10);
         for (std::uint32_t axis = 0; axis < descriptor.rank; ++axis) {
@@ -557,13 +475,31 @@ cubutterflyDescriptor make_axis_descriptor(const cubutterflyDescriptor& descript
     return axis;
 }
 
+class CacheLock {
+    int descriptor_;
+  public:
+    CacheLock(const std::string& path, bool write)
+        : descriptor_(open(path.c_str(),write ? O_RDWR|O_CREAT : O_RDONLY,0600)) {
+        if(descriptor_<0) {
+            if(write) throw std::runtime_error("cannot open selection cache");
+            return;
+        }
+        if(flock(descriptor_,write ? LOCK_EX : LOCK_SH)) {
+            close(descriptor_); descriptor_=-1; throw std::runtime_error("cannot lock selection cache");
+        }
+    }
+    ~CacheLock() { if(descriptor_>=0) { flock(descriptor_,LOCK_UN); close(descriptor_); } }
+};
+
 std::string lookup_cache(const std::string& path, const std::string& key) {
     if (path.empty())
         return {};
+    CacheLock lock(path,false);
     std::ifstream input(path);
     std::string line;
     std::string match;
     while (std::getline(input, line)) {
+        if(input.eof()) break; // A terminated writer's incomplete last record is not replayable.
         const auto separator = line.find('\t');
         if (separator != std::string::npos && line.compare(0, separator, key) == 0 && separator == key.size())
             match = line.substr(separator + 1);
@@ -574,13 +510,28 @@ std::string lookup_cache(const std::string& path, const std::string& key) {
 void store_cache(const std::string& path, const std::string& key, const std::string& algorithm) {
     if (path.empty())
         return;
+    CacheLock lock(path,true);
     std::ofstream output(path, std::ios::app);
     if (!output)
         throw std::runtime_error("could not open the cuButterfly selection cache for writing");
     output << key << '\t' << algorithm << '\n';
+    output.flush();
+    if(!output) throw std::runtime_error("could not persist the selection cache record");
 }
 
 void apply_butterfly_algorithm(cuntt::ButterflyConfig& config, const std::string& algorithm) {
+    if (!algorithm.empty() && algorithm.front() == '{') {
+        cuntt::detail::apply_serialized_mapping(algorithm, config);
+        return;
+    }
+    config.auto_select = false;
+    config.fft_core = cuntt::FftCore::Scalar;
+    config.local_exchange = cuntt::LocalExchange::SharedMemory;
+    config.stage_partition.clear(); config.segment_mappings.clear();
+    config.execution_group_mappings.clear(); config.boundaries.clear();
+    config.stage_overlap = false;
+    config.shared_layout = cuntt::SharedLayout::Linear;
+    config.cross_twiddle = cuntt::CrossTwiddleMode::Table;
     if (algorithm == "temporal-radix2") {
         config.backend = cuntt::ButterflyBackend::TemporalTile;
         config.compute_unit = cuntt::ComputeUnit::Radix2;
@@ -625,7 +576,8 @@ std::string butterfly_algorithm_id(const cuntt::ButterflyConfig& config) {
         return "online-radix4";
     if (config.backend == cuntt::ButterflyBackend::CuFft)
         return "cufft";
-    throw std::invalid_argument("butterfly configuration has no public algorithm ID");
+    return std::string(cuntt::butterfly_backend_name(config.backend)) + "/" +
+           cuntt::fft_core_name(config.fft_core);
 }
 
 std::string ntt_algorithm_id(const cuntt::PlanConfig& config) {
@@ -684,6 +636,8 @@ std::string ntt_algorithm_id(const cuntt::PlanConfig& config) {
     }
     if (config.backend == cuntt::Backend::Baseline)
         return "ntt-baseline-radix2";
+    if (config.backend == cuntt::Backend::SharedIterative)
+        return "ntt-shared-iterative";
     if (config.backend == cuntt::Backend::Tile256)
         return "ntt-tile256-radix2";
     if (config.backend == cuntt::Backend::Hybrid2D)
@@ -709,8 +663,16 @@ std::string ntt_algorithm_id(const cuntt::PlanConfig& config) {
 }
 
 void apply_ntt_algorithm(cuntt::PlanConfig& config, const std::string& algorithm) {
+    if (!algorithm.empty() && algorithm.front() == '{') {
+        cuntt::detail::apply_serialized_mapping(algorithm, config);
+        return;
+    }
+    config.auto_select = false;
     if (algorithm == "ntt-baseline-radix2") {
         config.backend = cuntt::Backend::Baseline;
+        config.compute_unit = cuntt::ComputeUnit::Radix2;
+    } else if (algorithm == "ntt-shared-iterative") {
+        config.backend = cuntt::Backend::SharedIterative;
         config.compute_unit = cuntt::ComputeUnit::Radix2;
     } else if (algorithm == "ntt-tile256-radix2") {
         config.backend = cuntt::Backend::Tile256;
@@ -902,53 +864,103 @@ double measure_bluestein_fft_candidate(const cubutterflyDescriptor& descriptor,
     });
 }
 
+template<class T> struct TuningValue {
+    using Reference = std::conditional_t<std::is_same_v<T, double>, double, float>;
+    static T make(double a, double) { return T(a); }
+    static Reference reference(T v) { return static_cast<Reference>(v); }
+    static long double square(Reference a, Reference b) { const long double x = a - b; return x*x; }
+};
+template<class T, class R> struct ComplexTuningValue {
+    using Reference = R;
+    static T make(double a, double b) { return {decltype(T::real)(a), decltype(T::imag)(b)}; }
+    static R reference(T v) { return {decltype(R::real)(v.real), decltype(R::imag)(v.imag)}; }
+    static long double square(R a, R b) { const long double x = a.real - b.real, y = a.imag - b.imag; return x*x + y*y; }
+};
+template<> struct TuningValue<cuntt::Complex32> : ComplexTuningValue<cuntt::Complex32, cuntt::Complex32> {};
+template<> struct TuningValue<cuntt::Complex64> : ComplexTuningValue<cuntt::Complex64, cuntt::Complex64> {};
+template<> struct TuningValue<cuntt::Complex16> : ComplexTuningValue<cuntt::Complex16, cuntt::Complex32> {};
+template<> struct TuningValue<cuntt::ComplexBf16> : ComplexTuningValue<cuntt::ComplexBf16, cuntt::Complex32> {};
+
+template<class T>
+double checked_butterfly_measure(cuntt::ButterflyPlan& plan) {
+    using Values = TuningValue<T>;
+    using R = typename Values::Reference;
+    const auto& config = plan.config();
+    const std::size_t n = std::size_t{1} << config.log_n;
+    std::vector<T> input(plan.data_size() / sizeof(T)), output;
+    for (std::size_t i = 0; i < input.size(); ++i)
+        input[i] = Values::make((int((i*17+3)%127)-63) / (64.0*std::sqrt(double(n))),
+                               (int((i*11+7)%113)-56) / (64.0*std::sqrt(double(n))));
+    const auto stats = plan.execute(input, output, 3, 20);
+    long double error = 0, norm = 0;
+    for (std::size_t batch = 0; batch < config.batch; ++batch) {
+        std::vector<R> expected(n);
+        for (std::size_t i = 0; i < n; ++i) expected[i] = Values::reference(input[batch*config.batch_stride+i*config.element_stride]);
+        if constexpr (std::is_same_v<R, cuntt::Complex32> || std::is_same_v<R, cuntt::Complex64>)
+            cuntt::reference_fft(expected, config.inverse, config.normalize_inverse);
+        else if (config.op == cuntt::ButterflyOperator::Structured2x2)
+            cuntt::reference_structured_2x2(expected, config.stage_matrices, config.inverse);
+        else cuntt::reference_fwht(expected, config.inverse, config.normalize_inverse);
+        for (std::size_t i = 0; i < n; ++i) {
+            const auto actual = Values::reference(output[batch*config.batch_stride+i*config.element_stride]);
+            const auto delta = Values::square(actual, expected[i]);
+            if (!std::isfinite(delta)) throw std::invalid_argument("candidate produced non-finite output");
+            error += delta; norm += Values::square(expected[i], R{});
+        }
+    }
+    const bool low = config.precision == cuntt::ButterflyPrecision::Fp16 || config.precision == cuntt::ButterflyPrecision::Bf16;
+    const auto tolerance = low ? 0.25L : config.precision == cuntt::ButterflyPrecision::Fp64 ? 1.0e-10L : 1.0e-4L;
+    require(std::sqrt(error / std::max(norm, 1.0e-30L)) <= tolerance, "candidate failed reference validation");
+    return stats.kernel_ms;
+}
+
 double measure_butterfly(cuntt::ButterflyConfig config, cubutterflyDataType_t storage,
                          cudaStream_t stream) {
-    config.auto_allocate_workspace = false;
+    config.auto_allocate_workspace = true;
     cuntt::ButterflyPlan plan(config);
     plan.set_stream(stream);
-    DeviceAllocation input(plan.data_size());
-    DeviceAllocation output(config.placement == cuntt::ButterflyPlacement::InPlace ? 0 : plan.data_size());
-    DeviceAllocation workspace(plan.workspace_size());
-    if (plan.workspace_size() != 0)
-        plan.set_workspace(workspace.pointer, plan.workspace_size());
-    cudaMemsetAsync(input.pointer, 0, plan.data_size(), stream);
-    void* destination = output.pointer == nullptr ? input.pointer : output.pointer;
-    for (int warmup = 0; warmup < 2; ++warmup)
-        execute_butterfly(plan, input.pointer, destination, storage);
-    cudaEvent_t start = nullptr;
-    cudaEvent_t stop = nullptr;
-    if (cudaEventCreate(&start) != cudaSuccess || cudaEventCreate(&stop) != cudaSuccess)
-        throw std::runtime_error("could not create tuning events");
-    cudaEventRecord(start, stream);
-    for (int repeat = 0; repeat < 5; ++repeat)
-        execute_butterfly(plan, input.pointer, destination, storage);
-    cudaEventRecord(stop, stream);
-    cudaEventSynchronize(stop);
-    float milliseconds = 0.0F;
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    cudaEventDestroy(stop);
-    cudaEventDestroy(start);
-    return milliseconds / 5.0;
+    switch (storage) {
+        case CUBUTTERFLY_DATA_FP16: return checked_butterfly_measure<cuntt::Fp16>(plan);
+        case CUBUTTERFLY_DATA_BF16: return checked_butterfly_measure<cuntt::Bf16>(plan);
+        case CUBUTTERFLY_DATA_FP32: return checked_butterfly_measure<float>(plan);
+        case CUBUTTERFLY_DATA_FP64: return checked_butterfly_measure<double>(plan);
+        case CUBUTTERFLY_DATA_COMPLEX_FP16: return checked_butterfly_measure<cuntt::Complex16>(plan);
+        case CUBUTTERFLY_DATA_COMPLEX_BF16: return checked_butterfly_measure<cuntt::ComplexBf16>(plan);
+        case CUBUTTERFLY_DATA_COMPLEX_FP32: return checked_butterfly_measure<cuntt::Complex32>(plan);
+        case CUBUTTERFLY_DATA_COMPLEX_FP64: return checked_butterfly_measure<cuntt::Complex64>(plan);
+        case CUBUTTERFLY_DATA_UINT32: {
+            config = plan.config();
+            std::vector<std::uint32_t> input(plan.data_size()/4), output;
+            for (std::size_t i=0; i<input.size(); ++i) input[i] = (i*17+3)%65521;
+            const auto stats = plan.execute(input, output, 3, 20);
+            const auto n = std::size_t{1} << config.log_n;
+            for (std::size_t b=0; b<config.batch; ++b) {
+                std::vector<std::uint32_t> expected(n);
+                for (std::size_t i=0; i<n; ++i) expected[i] = input[b*config.batch_stride+i*config.element_stride];
+                if (config.op == cuntt::ButterflyOperator::SupersetZeta) cuntt::reference_superset_zeta(expected, config.inverse);
+                else cuntt::reference_subset_zeta(expected, config.inverse);
+                for (std::size_t i=0; i<n; ++i)
+                    require(expected[i] == output[b*config.batch_stride+i*config.element_stride], "zeta candidate failed exact verification");
+            }
+            return stats.kernel_ms;
+        }
+        default: throw std::invalid_argument("unsupported tuning storage");
+    }
 }
 
 std::pair<std::string, double> tune_butterfly(const cuntt::ButterflyConfig& base,
                                                cubutterflyDataType_t storage,
                                                cudaStream_t stream) {
-    std::vector<std::string> candidates{"temporal-radix2", "temporal-radix4",
-                                        "temporal-warp-register-radix2",
-                                        "hierarchical-radix4", "online-radix4"};
-    if (base.op == cuntt::ButterflyOperator::Fft)
-        candidates.push_back("cufft");
+    auto candidates = cuntt::detail::portable_butterfly_candidates(base);
+    const auto selected = cuntt::detail::select_butterfly_mapping(base);
+    candidates.insert(candidates.begin(), selected.config);
     std::pair<std::string, double> best{"", std::numeric_limits<double>::infinity()};
-    for (const auto& name : candidates) {
+    for (const auto& candidate : candidates) {
         try {
-            auto candidate = base;
-            apply_butterfly_algorithm(candidate, name);
             const double milliseconds = measure_butterfly(candidate, storage, stream);
             if (milliseconds < best.second)
-                best = {name, milliseconds};
-        } catch (const std::exception&) {
+                best = {cuntt::detail::serialize_mapping(candidate), milliseconds};
+        } catch (const std::invalid_argument&) {
         }
     }
     require(!best.first.empty(), "no legal butterfly candidate survived measurement");
@@ -956,54 +968,45 @@ std::pair<std::string, double> tune_butterfly(const cuntt::ButterflyConfig& base
 }
 
 double measure_ntt(cuntt::PlanConfig config, cudaStream_t stream) {
-    config.auto_allocate_workspace = false;
+    config.auto_allocate_workspace = true;
     cuntt::Plan plan(config);
     plan.set_stream(stream);
-    DeviceAllocation input(plan.data_size());
-    DeviceAllocation output(plan.data_size());
-    DeviceAllocation workspace(plan.workspace_size());
-    if (plan.workspace_size() != 0)
-        plan.set_workspace(workspace.pointer, plan.workspace_size());
-    cudaMemsetAsync(input.pointer, 0, plan.data_size(), stream);
-    auto execute = [&] {
-        if (config.word_bits == 32)
-            plan.execute_async(static_cast<const std::uint32_t*>(input.pointer), static_cast<std::uint32_t*>(output.pointer));
-        else
-            plan.execute_async(static_cast<const std::uint64_t*>(input.pointer), static_cast<std::uint64_t*>(output.pointer));
-    };
-    execute();
-    execute();
-    cudaEvent_t start = nullptr;
-    cudaEvent_t stop = nullptr;
-    if (cudaEventCreate(&start) != cudaSuccess || cudaEventCreate(&stop) != cudaSuccess)
-        throw std::runtime_error("could not create tuning events");
-    cudaEventRecord(start, stream);
-    for (int repeat = 0; repeat < 5; ++repeat)
-        execute();
-    cudaEventRecord(stop, stream);
-    cudaEventSynchronize(stop);
-    float milliseconds = 0.0F;
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    cudaEventDestroy(stop);
-    cudaEventDestroy(start);
-    return milliseconds / 5.0;
+    config = plan.config();
+    require(config.input_order == cuntt::InputOrder::Natural &&
+                (config.output_order == cuntt::OutputOrder::Natural ||
+                 config.output_order == cuntt::OutputOrder::BitReversed),
+            "runtime NTT measurement requires natural input and natural or bit-reversed output");
+    const auto n = std::size_t{1} << config.log_n;
+    std::vector<std::uint64_t> input(n*config.batch), output;
+    for (std::size_t i=0; i<input.size(); ++i) input[i] = (i*17+3)%config.modulus;
+    const auto stats = plan.execute(input, output, 3, 20);
+    for (std::size_t b=0; b<config.batch; ++b) {
+        std::vector<std::uint64_t> expected(input.begin()+b*n, input.begin()+(b+1)*n);
+        cuntt::reference_ntt(expected, config.modulus, config.inverse);
+        for (std::size_t i = 0; i < n; ++i) {
+            auto index = i;
+            if (config.output_order == cuntt::OutputOrder::BitReversed) {
+                index = 0;
+                for (unsigned bit = 0; bit < config.log_n; ++bit)
+                    index = (index << 1) | ((i >> bit) & 1U);
+            }
+            require(expected[i] == output[b*n+index], "NTT candidate failed exact reference verification");
+        }
+    }
+    return stats.kernel_ms;
 }
 
 std::pair<std::string, double> tune_ntt(const cuntt::PlanConfig& base, cudaStream_t stream) {
-    const std::vector<std::string> candidates{"ntt-baseline-radix2", "ntt-tile256-radix2",
-                                               "ntt-hybrid-radix2", "ntt-hybrid-radix4",
-                                               "ntt-hierarchical-dataflow",
-                                               "ntt-hierarchical-barrier",
-                                               "ntt-hierarchical-barrier-hybrid2d-radix4"};
+    auto candidates = cuntt::detail::portable_ntt_candidates(base);
+    const auto selected = cuntt::detail::select_ntt_mapping(base);
+    candidates.insert(candidates.begin(), selected.config);
     std::pair<std::string, double> best{"", std::numeric_limits<double>::infinity()};
-    for (const auto& name : candidates) {
+    for (const auto& candidate : candidates) {
         try {
-            auto candidate = base;
-            apply_ntt_algorithm(candidate, name);
             const double milliseconds = measure_ntt(candidate, stream);
             if (milliseconds < best.second)
-                best = {name, milliseconds};
-        } catch (const std::exception&) {
+                best = {cuntt::detail::serialize_mapping(candidate), milliseconds};
+        } catch (const std::invalid_argument&) {
         }
     }
     require(!best.first.empty(), "no legal NTT candidate survived measurement");
@@ -1017,6 +1020,23 @@ struct ButterflyAxisSelection {
     std::string reason;
 };
 
+std::string composition_axis(const cubutterflyDescriptor& descriptor, unsigned source_axis) {
+    if(descriptor.algorithm_policy!=CUBUTTERFLY_ALGORITHM_EXPLICIT || descriptor.explicit_algorithm.empty() ||
+        descriptor.explicit_algorithm.front()!='{') return {};
+    const auto mapping=nlohmann::json::parse(descriptor.explicit_algorithm);
+    if(mapping.value("kind","")!="composition") return {};
+    require(mapping.value("schema_version",0)==1 && mapping.at("axes").size()==descriptor.rank,
+            "composition replay requires one complete mapping per axis");
+    return mapping.at("axes").at(descriptor.rank-1-source_axis).dump();
+}
+
+std::string axis_algorithm(const cubutterflyDescriptor& descriptor,unsigned source_axis) {
+    const auto axis=composition_axis(descriptor,source_axis);
+    if(axis.empty()) return descriptor.explicit_algorithm;
+    const auto mapping=nlohmann::json::parse(axis);
+    return mapping.contains("forward") ? mapping.at("forward").dump() : axis;
+}
+
 ButterflyAxisSelection select_butterfly_axis(cubutterflyHandle_t handle,
                                              const cubutterflyDescriptor& descriptor,
                                              std::uint32_t source_axis, std::size_t length,
@@ -1029,7 +1049,7 @@ ButterflyAxisSelection select_butterfly_axis(cubutterflyHandle_t handle,
                             : std::string{};
     ButterflyAxisSelection selected;
     if (descriptor.algorithm_policy == CUBUTTERFLY_ALGORITHM_EXPLICIT) {
-        apply_butterfly_algorithm(config, descriptor.explicit_algorithm);
+        apply_butterfly_algorithm(config, axis_algorithm(descriptor,source_axis));
         selected.source = CUBUTTERFLY_SELECTION_EXPLICIT;
         selected.reason = "applied the explicit algorithm to the physical axis";
     } else if (!cached.empty()) {
@@ -1043,12 +1063,10 @@ ButterflyAxisSelection select_butterfly_axis(cubutterflyHandle_t handle,
         selected.source = CUBUTTERFLY_SELECTION_RUNTIME_MEASURED;
         selected.reason = "measured physical-axis candidates; kernel_ms=" + std::to_string(tuned.second);
     } else {
-        const bool profiled = measured_v100_axis(descriptor, integer_log2(length), batch);
-        choose_butterfly_mapping(config, profiled);
-        selected.source = profiled ? CUBUTTERFLY_SELECTION_MEASURED_TABLE
+        const auto info = choose_butterfly_mapping(config);
+        selected.source = info.calibrated ? CUBUTTERFLY_SELECTION_MEASURED_TABLE
                                    : CUBUTTERFLY_SELECTION_STATIC_MODEL;
-        selected.reason = profiled ? "matched the built-in V100 physical-axis profile"
-                                   : "selected the physical axis with the static resource model";
+        selected.reason = info.reason;
     }
     selected.algorithm = butterfly_algorithm_id(config);
     selected.config = std::move(config);
@@ -1074,7 +1092,7 @@ NttAxisSelection select_ntt_axis(cubutterflyHandle_t handle,
                             : std::string{};
     NttAxisSelection selected;
     if (descriptor.algorithm_policy == CUBUTTERFLY_ALGORITHM_EXPLICIT) {
-        apply_ntt_algorithm(config, descriptor.explicit_algorithm);
+        apply_ntt_algorithm(config, axis_algorithm(descriptor,source_axis));
         selected.source = CUBUTTERFLY_SELECTION_EXPLICIT;
         selected.reason = "applied the explicit algorithm to the physical NTT axis";
     } else if (!cached.empty()) {
@@ -1088,11 +1106,11 @@ NttAxisSelection select_ntt_axis(cubutterflyHandle_t handle,
         selected.source = CUBUTTERFLY_SELECTION_RUNTIME_MEASURED;
         selected.reason = "measured physical NTT-axis candidates; kernel_ms=" + std::to_string(tuned.second);
     } else {
-        const bool profiled = measured_v100_axis(descriptor, integer_log2(length), batch);
-        selected.source = profiled ? CUBUTTERFLY_SELECTION_MEASURED_TABLE
+        const auto choice = cuntt::detail::select_ntt_mapping(config);
+        config = choice.config;
+        selected.source = choice.info.calibrated ? CUBUTTERFLY_SELECTION_MEASURED_TABLE
                                    : CUBUTTERFLY_SELECTION_STATIC_MODEL;
-        selected.reason = profiled ? "matched the built-in V100 physical NTT-axis profile"
-                                   : "selected the physical NTT axis with the static resource model";
+        selected.reason = choice.info.reason;
     }
     selected.algorithm = ntt_algorithm_id(config);
     selected.config = std::move(config);
@@ -1235,7 +1253,8 @@ cubutterflyStatus_t cubutterflySetNttLayouts(
         require((input_layout == CUBUTTERFLY_NTT_LAYOUT_NATURAL ||
                  input_layout == CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC) &&
                     (output_layout == CUBUTTERFLY_NTT_LAYOUT_NATURAL ||
-                     output_layout == CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC),
+                     output_layout == CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC ||
+                     output_layout == CUBUTTERFLY_NTT_LAYOUT_BIT_REVERSED),
                 "unknown NTT layout");
         descriptor->input_ntt_layout = input_layout;
         descriptor->output_ntt_layout = output_layout;
@@ -1256,6 +1275,13 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
         require(handle != nullptr && descriptor != nullptr && plan != nullptr, "handle, descriptor, and plan pointer must be non-null");
         auto resolved = *descriptor;
         validate_storage(resolved);
+        if (resolved.output_ntt_layout == CUBUTTERFLY_NTT_LAYOUT_BIT_REVERSED &&
+            !(resolved.op == CUBUTTERFLY_OPERATOR_NTT && resolved.rank == 1 &&
+              is_power_of_two(resolved.extents[0]) &&
+              resolved.length_mode == CUBUTTERFLY_LENGTH_STANDARD &&
+              resolved.input_ntt_layout == CUBUTTERFLY_NTT_LAYOUT_NATURAL)) {
+            throw unsupported_error("bit-reversed output requires a rank-1 power-of-two NTT with natural input");
+        }
         const bool appt_layout_requested =
             resolved.input_ntt_layout == CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC ||
             resolved.output_ntt_layout == CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC;
@@ -1307,11 +1333,9 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
         created->element_bytes = element_bytes(resolved.storage);
         created->input_bytes = strided_elements(resolved, true, input_extents) * created->element_bytes;
         created->output_bytes = strided_elements(resolved, false, output_extents) * created->element_bytes;
-        const bool measured = !standard_arbitrary && resolved.rank == 1 && resolved.length_mode == CUBUTTERFLY_LENGTH_STANDARD &&
-                              resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_DEFAULT && measured_v100_shape(resolved, log_n);
         created->selection_source = resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_EXPLICIT
                                         ? CUBUTTERFLY_SELECTION_EXPLICIT
-                                        : (measured ? CUBUTTERFLY_SELECTION_MEASURED_TABLE : CUBUTTERFLY_SELECTION_STATIC_MODEL);
+                                        : CUBUTTERFLY_SELECTION_STATIC_MODEL;
         created->composite = resolved.rank == 2 || resolved.length_mode == CUBUTTERFLY_LENGTH_ZERO_EXTENDED_EMBEDDING;
         created->direct_output_boundary = created->composite && output_extents == physical_extents &&
                                           packed_side(resolved, false, output_extents);
@@ -1323,7 +1347,10 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
             require(resolved.placement == CUBUTTERFLY_PLACEMENT_OUT_OF_PLACE,
                     "Bluestein FFT currently requires out-of-place execution");
             const bool ntt_bluestein = resolved.op == CUBUTTERFLY_OPERATOR_NTT;
-            const char* base_algorithm = ntt_bluestein ? "bluestein-ntt-power2-core" : "bluestein-cufft-power2-core";
+            const bool external_bluestein = resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_EXPLICIT &&
+                resolved.explicit_algorithm == "bluestein-cufft-power2-core";
+            const char* base_algorithm = ntt_bluestein ? "bluestein-ntt-power2-core" :
+                (external_bluestein ? "bluestein-cufft-power2-core" : "bluestein-cubutterfly-power2-core");
             bool direct_fft = false;
             std::string arbitrary_selection_reason;
             cubutterflySelectionSource_t arbitrary_selection_source = CUBUTTERFLY_SELECTION_STATIC_MODEL;
@@ -1344,21 +1371,14 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
                 } else if (resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_MEASURE) {
                     const double bluestein_ms = measure_bluestein_fft_candidate(
                         resolved, physical_extents, created->element_bytes, handle->stream);
-                    const double direct_ms = packed_layout(resolved)
-                                                 ? measure_direct_fft_candidate(
-                                                       resolved, created->input_bytes, handle->stream)
-                                                 : std::numeric_limits<double>::infinity();
-                    direct_fft = direct_ms <= bluestein_ms;
-                    const std::string selected_id = direct_fft ? "cufft-direct" : base_algorithm;
+                    const std::string selected_id = base_algorithm;
                     store_cache(handle->cache_path, cache_key, selected_id);
                     arbitrary_selection_source = CUBUTTERFLY_SELECTION_RUNTIME_MEASURED;
-                    arbitrary_selection_reason = "measured exact-length candidates; direct_ms=" +
-                        std::to_string(direct_ms) + "; bluestein_ms=" + std::to_string(bluestein_ms);
+                    arbitrary_selection_reason = "measured internal Bluestein composition; kernel_ms=" + std::to_string(bluestein_ms);
                     log_event(handle, CUBUTTERFLY_LOG_INFO, "measure-complete",
                               arbitrary_selection_reason + "; algorithm=" + selected_id);
                 } else {
-                    direct_fft = packed_layout(resolved);
-                    arbitrary_selection_reason = "static policy prefers the vendor native exact-length candidate";
+                    arbitrary_selection_reason = "Bluestein composition uses the common internal power-of-two planner";
                 }
                 if (direct_fft) {
                     created->kind = cubutterflyPlan::Kind::DirectFft;
@@ -1382,7 +1402,9 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
             }
             auto core_descriptor = resolved;
             if (resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_EXPLICIT) {
-                if (resolved.explicit_algorithm == base_algorithm) {
+                if (!composition_axis(resolved,0).empty()) {
+                    // Inner forward/inverse mappings are replayed independently.
+                } else if (resolved.explicit_algorithm == base_algorithm) {
                     core_descriptor.algorithm_policy = CUBUTTERFLY_ALGORITHM_DEFAULT;
                     core_descriptor.explicit_algorithm.clear();
                 } else if (ntt_bluestein && resolved.explicit_algorithm.rfind("bluestein-", 0) == 0) {
@@ -1433,12 +1455,12 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
                     created->bluestein_ntt_axes.push_back(std::make_unique<cuntt::detail::BluesteinNttPlan>(
                         resolved.extents[0], physical_extents[0], resolved.batch, resolved.modulus, inverse,
                         ntt_core_selections[0].config.backend,
-                        ntt_core_selections[0].config.compute_unit));
+                        ntt_core_selections[0].config.compute_unit, &ntt_core_selections[0].config, composition_axis(resolved,0)));
                     created->workspace_bytes = created->bluestein_ntt_axes[0]->workspace_size();
                 } else {
                     created->bluestein_axes.push_back(std::make_unique<cuntt::detail::BluesteinFftPlan>(
                         resolved.extents[0], physical_extents[0], resolved.batch,
-                        inverse, resolved.normalize_inverse, fp64));
+                        inverse, resolved.normalize_inverse, fp64, external_bluestein, composition_axis(resolved,0)));
                     created->workspace_bytes = created->bluestein_axes[0]->workspace_size();
                 }
             } else {
@@ -1455,18 +1477,18 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
                     created->bluestein_ntt_axes.push_back(std::make_unique<cuntt::detail::BluesteinNttPlan>(
                         resolved.extents[1], physical_extents[1], resolved.batch * resolved.extents[0],
                         resolved.modulus, inverse, ntt_core_selections[0].config.backend,
-                        ntt_core_selections[0].config.compute_unit));
+                        ntt_core_selections[0].config.compute_unit, &ntt_core_selections[0].config, composition_axis(resolved,1)));
                     created->bluestein_ntt_axes.push_back(std::make_unique<cuntt::detail::BluesteinNttPlan>(
                         resolved.extents[0], physical_extents[0], resolved.batch * resolved.extents[1],
                         resolved.modulus, inverse, ntt_core_selections[1].config.backend,
-                        ntt_core_selections[1].config.compute_unit));
+                        ntt_core_selections[1].config.compute_unit, &ntt_core_selections[1].config, composition_axis(resolved,0)));
                 } else {
                     created->bluestein_axes.push_back(std::make_unique<cuntt::detail::BluesteinFftPlan>(
                         resolved.extents[1], physical_extents[1], resolved.batch * resolved.extents[0],
-                        inverse, resolved.normalize_inverse, fp64));
+                        inverse, resolved.normalize_inverse, fp64, external_bluestein, composition_axis(resolved,1)));
                     created->bluestein_axes.push_back(std::make_unique<cuntt::detail::BluesteinFftPlan>(
                         resolved.extents[0], physical_extents[0], resolved.batch * resolved.extents[1],
-                        inverse, resolved.normalize_inverse, fp64));
+                        inverse, resolved.normalize_inverse, fp64, external_bluestein, composition_axis(resolved,0)));
                 }
                 const auto first_work = ntt_bluestein ? created->bluestein_ntt_axes[0]->workspace_size()
                                                        : created->bluestein_axes[0]->workspace_size();
@@ -1477,7 +1499,7 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
                 if (ntt_bluestein)
                     created->algorithm = "rank2-transpose-" + created->algorithm;
                 else
-                    created->algorithm = "rank2-transpose-bluestein-cufft-power2-core";
+                    created->algorithm = std::string("rank2-transpose-") + base_algorithm;
             }
             log_event(handle, CUBUTTERFLY_LOG_INFO, "algorithm-selection",
                       created->reason + "; algorithm=" + created->algorithm);
@@ -1591,9 +1613,11 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
             config.output_order = resolved.output_ntt_layout ==
                                           CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC
                                       ? cuntt::OutputOrder::ApptStatic
+                                      : resolved.output_ntt_layout == CUBUTTERFLY_NTT_LAYOUT_BIT_REVERSED
+                                      ? cuntt::OutputOrder::BitReversed
                                       : cuntt::OutputOrder::Natural;
             config.auto_allocate_workspace = false;
-            config.auto_select = measured;
+            config.auto_select = false;
             if (appt_layout_requested) {
                 config.auto_select = false;
                 if (resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_EXPLICIT &&
@@ -1636,19 +1660,17 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
                 store_cache(handle->cache_path, cache_key, tuned.first);
                 log_event(handle, CUBUTTERFLY_LOG_INFO, "measure-complete",
                           created->reason + "; algorithm=" + tuned.first);
-            } else if (log_n >= 12 && log_n <= 20) {
-                config.backend = cuntt::Backend::Hybrid2D;
-                config.compute_unit = cuntt::ComputeUnit::Radix4;
             } else {
-                config.backend = cuntt::Backend::Baseline;
-                config.compute_unit = cuntt::ComputeUnit::Radix2;
+                const auto choice = cuntt::detail::select_ntt_mapping(config);
+                config = choice.config;
+                created->selection_source = choice.info.calibrated ? CUBUTTERFLY_SELECTION_MEASURED_TABLE : CUBUTTERFLY_SELECTION_STATIC_MODEL;
+                created->reason = choice.info.reason;
             }
             created->kind = cubutterflyPlan::Kind::Ntt;
             if (created->reason.empty())
                 created->reason = created->selection_source == CUBUTTERFLY_SELECTION_USER_CACHE
                                       ? "matched an exact workload key in the user selection cache"
-                                      : (measured ? "matched the built-in V100 measured profile"
-                                                  : "no measured profile entry; selected by the static resource model");
+                                      : "explicit execution mapping";
             created->ntt = std::make_unique<cuntt::Plan>(config);
             created->ntt->set_stream(handle->stream);
             created->algorithm = ntt_algorithm_id(created->ntt->config());
@@ -1672,7 +1694,7 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
             config.inverse = resolved.direction == CUBUTTERFLY_DIRECTION_INVERSE;
             config.normalize_inverse = resolved.normalize_inverse;
             config.auto_allocate_workspace = false;
-            config.auto_select = measured;
+            config.auto_select = false;
             if (config.op == cuntt::ButterflyOperator::Structured2x2) {
                 require(!resolved.stage_matrices[0].empty(), "structured-2x2 requires stage matrices");
                 for (const auto& matrix : resolved.stage_matrices[0])
@@ -1693,27 +1715,51 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
                 log_event(handle, CUBUTTERFLY_LOG_INFO, "measure-complete",
                           created->reason + "; algorithm=" + tuned.first);
             } else {
-                choose_butterfly_mapping(config, measured);
+                const auto info = choose_butterfly_mapping(config);
+                created->selection_source = info.calibrated ? CUBUTTERFLY_SELECTION_MEASURED_TABLE : CUBUTTERFLY_SELECTION_STATIC_MODEL;
+                created->reason = info.reason;
             }
             created->kind = cubutterflyPlan::Kind::Butterfly;
             if (created->reason.empty())
                 created->reason = created->selection_source == CUBUTTERFLY_SELECTION_USER_CACHE
                                       ? "matched an exact workload key in the user selection cache"
-                                      : (measured ? "matched the built-in V100 measured profile"
-                                                  : "no measured profile entry; selected by the static resource model");
+                                      : "explicit execution mapping";
             created->butterfly = std::make_unique<cuntt::ButterflyPlan>(config);
             created->butterfly->set_stream(handle->stream);
             created->algorithm = std::string(cuntt::butterfly_backend_name(created->butterfly->config().backend)) +
                                  "-" + cuntt::compute_unit_name(created->butterfly->config().compute_unit);
+            if (created->butterfly->config().fft_core != cuntt::FftCore::Scalar)
+                created->algorithm += std::string("/") + cuntt::fft_core_name(created->butterfly->config().fft_core);
             created->workspace_bytes = created->butterfly->workspace_size();
         }
-        if (!measured && resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_DEFAULT && cached_algorithm.empty())
+        if (created->selection_source == CUBUTTERFLY_SELECTION_STATIC_MODEL &&
+            resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_DEFAULT && cached_algorithm.empty())
             log_profile_miss(handle, resolved, created->reason, created->algorithm);
         *plan = created.release();
     });
 }
 
 cubutterflyStatus_t cubutterflyDestroyPlan(cubutterflyPlan_t plan) { delete plan; return CUBUTTERFLY_STATUS_SUCCESS; }
+
+cubutterflyStatus_t cubutterflyPlanGetMappingJson(cubutterflyPlan_t plan, char* json, size_t* bytes) {
+    return protect([&] {
+        require(plan != nullptr, "plan must be non-null");
+        if (plan->butterfly) return copy_text(cuntt::detail::serialize_mapping(plan->butterfly->config()), json, bytes);
+        if (plan->ntt) return copy_text(cuntt::detail::serialize_mapping(plan->ntt->config()), json, bytes);
+        nlohmann::json mapping{{"schema_version", 1}, {"kind", "composition"},
+                              {"algorithm", plan->algorithm}, {"physical_extents", plan->physical_extents},
+                              {"workspace_bytes", plan->workspace_bytes}, {"axes", nlohmann::json::array()}};
+        for (const auto& axis : plan->butterfly_axes)
+            mapping["axes"].push_back(nlohmann::json::parse(cuntt::detail::serialize_mapping(axis->config())));
+        for (const auto& axis : plan->ntt_axes)
+            mapping["axes"].push_back(nlohmann::json::parse(cuntt::detail::serialize_mapping(axis->config())));
+        for (const auto& axis : plan->bluestein_axes)
+            mapping["axes"].push_back(nlohmann::json::parse(axis->mapping_json()));
+        for (const auto& axis : plan->bluestein_ntt_axes)
+            mapping["axes"].push_back(nlohmann::json::parse(axis->mapping_json()));
+        copy_text(mapping.dump(), json, bytes);
+    });
+}
 
 cubutterflyStatus_t cubutterflyPlanGetWorkspaceSize(cubutterflyPlan_t plan, size_t* bytes) {
     return protect([&] { require(plan != nullptr && bytes != nullptr, "plan and output must be non-null"); *bytes = plan->workspace_bytes; });

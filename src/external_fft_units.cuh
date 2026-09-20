@@ -24,7 +24,7 @@ void launch_cufftdx_fp64_online_reorder(std::uint32_t log_n, std::uint32_t local
                                         bool inverse, bool normalize, CrossTwiddleMode cross_twiddle,
                                         SharedLayout shared_layout, std::uint32_t prefix_threads,
                                         std::uint32_t suffix_threads, std::uint32_t prefix_ept,
-                                        std::uint32_t suffix_ept, cudaStream_t stream);
+                                        std::uint32_t suffix_ept, cudaStream_t stream, unsigned stage = 0);
 bool cufftdx_direct_available(std::uint32_t log_n) noexcept;
 void launch_cufftdx_direct(std::uint32_t log_n, const Complex32* input, Complex32* output,
                            std::uint64_t transforms, std::uint64_t batch_distance, std::uint64_t element_stride,
@@ -34,9 +34,9 @@ void launch_cufftdx_online_reorder(std::uint32_t log_n, std::uint32_t local_log_
                                    const Complex32* twiddles,
                                    std::uint64_t transforms, std::uint64_t batch_distance,
                                    std::uint64_t element_stride, bool inverse, bool normalize,
-                                   CrossTwiddleMode cross_twiddle, std::uint32_t prefix_threads,
+                                   CrossTwiddleMode cross_twiddle, SharedLayout shared_layout, std::uint32_t prefix_threads,
                                    std::uint32_t suffix_threads, std::uint32_t prefix_ept,
-                                   std::uint32_t suffix_ept, DirectBoundary direct_boundary, cudaStream_t stream);
+                                   std::uint32_t suffix_ept, DirectBoundary direct_boundary, cudaStream_t stream, unsigned stage = 0);
 void launch_cufftdx_multisegment(std::uint32_t log_n, const std::vector<std::uint32_t>& stage_partition,
                                  const std::vector<FftSegmentMapping>& segment_mappings,
                                  const std::vector<FftBoundaryMapping>& boundaries,

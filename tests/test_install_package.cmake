@@ -10,6 +10,16 @@ if(NOT result EQUAL 0)
     message(FATAL_ERROR "cuButterfly package installation failed")
 endif()
 
+foreach(script calibrate_hardware.py calibrate_local_hardware.py initialize_hardware_profile.py fit_local_cost_model.py
+               stage_cost_model.py stage_service_model.py stage_service_calibration.py validate_stage_service_profile.py
+               hardware_registry.py run_fft_acceptance.py)
+    execute_process(COMMAND "${PYTHON_EXECUTABLE}" "${install_prefix}/bin/${script}" --help
+        RESULT_VARIABLE result OUTPUT_QUIET)
+    if(NOT result EQUAL 0)
+        message(FATAL_ERROR "installed tool ${script} could not import its dependencies")
+    endif()
+endforeach()
+
 execute_process(
     COMMAND "${CMAKE_COMMAND}"
             -S "${SOURCE_DIR}/tests/package_consumer"

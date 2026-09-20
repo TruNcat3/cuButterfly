@@ -70,12 +70,16 @@ std::vector<ButterflyCapability> butterfly_capabilities() {
          "generated and optional cuFFTDx/TurboFFT FFT cores have design-point-specific ranges"},
         {ButterflyBackend::Hierarchical, 6, 20, true, true, true, false, false, false, false, true, true, true, true, false, true, true, true,
          "local_stages=5..10 and local_stages<logN"},
-        {ButterflyBackend::OnlineReorder, 6, 20, true, true, true, false, false, false, false, true, true, true, true, false, true, true, true,
-         "scalar dimensions are <=10; cuFFTDx mixed block/direct dimensions are <=12"},
+        {ButterflyBackend::OnlineReorder, 5, 26, true, true, true, false, false, false, false, true, true, true, true, false, true, true, true,
+         "scalar dimensions <=10; imported dimensions <=12; register FFT has even prefix 2..12 and suffix 3..14 subject to resources"},
         {ButterflyBackend::WarpHybrid, 8, 8, true, false, false, false, false, false, false, true, true, true, true, false, true, true, true, "N=256"},
         {ButterflyBackend::StagePipeline, 8, 8, true, false, false, false, false, false, false, true, true, true, true, false, true, true, true,
-         "FP64 complex exceeds V100 CTA shared memory"},
-        {ButterflyBackend::CuFft, 1, 20, false, false, false, false, false, false, false, false, false, true, true, false, false, true, true,
+         "N=256; FP64 complex stage-role kernel is not instantiated"},
+        {ButterflyBackend::SharedIterative, 1, 30, true, false, false, false, false, false, false, true, true, true, true, false, true, true, true,
+         "positive partitions must fit CTA shared memory; bulk or batch streaming; FP16/BF16 traits also supported"},
+        {ButterflyBackend::FactorStreamed, 1, 30, true, false, false, false, false, false, false, true, false, true, true, false, false, true, true,
+         "FFT cuFFTDx JIT; independent macro/factor partitions, CTA data tiles and prefetch; factor shapes must fit hardware; async prefetch needs SM80+"},
+        {ButterflyBackend::CuFft, 1, 30, false, false, false, false, false, false, false, false, false, true, true, false, false, true, true,
          "FFT only; internal unit is opaque"},
     };
 }
@@ -176,6 +180,7 @@ LocalExchange parse_local_exchange(const std::string& name) {
 
 const char* shared_layout_name(SharedLayout layout) noexcept {
     switch (layout) {
+        case SharedLayout::WriterAligned: return "writer-aligned";
         case SharedLayout::Linear:
             return "linear";
         case SharedLayout::XorSwizzle:
@@ -185,6 +190,7 @@ const char* shared_layout_name(SharedLayout layout) noexcept {
 }
 
 SharedLayout parse_shared_layout(const std::string& name) {
+    if (name == "writer-aligned") return SharedLayout::WriterAligned;
     if (name == "linear")
         return SharedLayout::Linear;
     if (name == "xor-swizzle")
@@ -210,6 +216,8 @@ const char* fft_core_name(FftCore core) noexcept {
             return "cufftdx-resident";
         case FftCore::TurboFftGenerated:
             return "turbofft-generated";
+        case FftCore::RegisterTile:
+            return "register-tile";
     }
     return "unknown";
 }
@@ -231,6 +239,8 @@ FftCore parse_fft_core(const std::string& name) {
         return FftCore::CufftDxResident;
     if (name == "turbofft-generated")
         return FftCore::TurboFftGenerated;
+    if (name == "register-tile")
+        return FftCore::RegisterTile;
     throw std::invalid_argument("unknown FFT core: " + name);
 }
 
@@ -276,6 +286,8 @@ ButterflyOperator parse_butterfly_operator(const std::string& name) {
 
 const char* butterfly_backend_name(ButterflyBackend backend) noexcept {
     switch (backend) {
+        case ButterflyBackend::SharedIterative: return "shared-iterative";
+        case ButterflyBackend::FactorStreamed: return "factor-streamed";
         case ButterflyBackend::TemporalTile:
             return "temporal-tile";
         case ButterflyBackend::Hierarchical:
@@ -293,6 +305,8 @@ const char* butterfly_backend_name(ButterflyBackend backend) noexcept {
 }
 
 ButterflyBackend parse_butterfly_backend(const std::string& name) {
+    if (name == "shared-iterative") return ButterflyBackend::SharedIterative;
+    if (name == "factor-streamed") return ButterflyBackend::FactorStreamed;
     if (name == "temporal-tile") {
         return ButterflyBackend::TemporalTile;
     }
