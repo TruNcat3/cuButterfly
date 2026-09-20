@@ -784,10 +784,11 @@ void test_runtime_selector() {
     config.op        = cuntt::ButterflyOperator::Fwht;
     config.placement = cuntt::ButterflyPlacement::OutOfPlace;
     config.log_n     = 9;
-    try {
-        cuntt::ButterflyPlan unsupported(config);
-        throw std::runtime_error("runtime selector accepted an uncalibrated FWHT length");
-    } catch (const std::invalid_argument&) {
+    cuntt::ButterflyPlan unmeasured(config);
+    if (!unmeasured.selection().automatic || unmeasured.selection().calibrated ||
+        unmeasured.selection().confidence != "unmeasured-feasible" ||
+        unmeasured.selection().predicted_kernel_ms != 0.0) {
+        throw std::runtime_error("uncalibrated FWHT fallback was reported as a measured selector point");
     }
     std::cout << "PASS calibrated butterfly runtime selector\n";
 }

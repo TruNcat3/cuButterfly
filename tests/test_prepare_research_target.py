@@ -65,6 +65,22 @@ def test_dry_run_is_portable_and_does_not_create_target_or_install(tmp_path):
     assert "A100" not in result.stdout
 
 
+def test_dry_run_uses_ctest_matching_cmake_when_path_has_older_ctest(tmp_path):
+    old = tmp_path / "old tools"
+    new = tmp_path / "new tools"
+    old.mkdir()
+    new.mkdir()
+    _executable(old / "ctest", "#!/bin/sh\nexit 0\n")
+    _executable(new / "cmake", "#!/bin/sh\nexit 0\n")
+    _executable(new / "ctest", "#!/bin/sh\nexit 0\n")
+    env = os.environ.copy()
+    env["PATH"] = f"{old}:{new}:{env['PATH']}"
+    result = _run(["--build-dir", str(tmp_path / "target"), "--dry-run"], env=env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert str(new / "ctest").replace(" ", "\\ ") in result.stdout
+    assert str(old / "ctest").replace(" ", "\\ ") not in result.stdout
+
+
 def test_dry_run_with_vkfft_and_explicit_create_env_is_non_mutating(tmp_path):
     env_prefix = tmp_path / "env with spaces"
     result = _run([

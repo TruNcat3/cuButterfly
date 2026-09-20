@@ -232,6 +232,11 @@ elif [[ ! -f "$MATHDX_ROOT/include/cufftdx.hpp" ]]; then
     printf 'warning: MathDx headers are absent at %q; install separately with %q or pass --mathdx-root\n' \
         "$MATHDX_ROOT/include/cufftdx.hpp" "$REPO_DIR/scripts/install_cufftdx.sh" >&2
 fi
+CMAKE_BIN=$(command -v cmake || true)
+CTEST_BIN="$(dirname "$CMAKE_BIN")/ctest"
+if (( ! DRY_RUN )) && [[ ! -x "$CTEST_BIN" ]]; then
+    die "matching ctest not found beside cmake: $CTEST_BIN"
+fi
 if [[ -n "$JSON_ROOT" ]]; then
     if (( ! DRY_RUN )); then
         [[ -f "$JSON_ROOT/include/nlohmann/json.hpp" ]] || die "nlohmann_json header not found at $JSON_ROOT/include/nlohmann/json.hpp"
@@ -335,7 +340,7 @@ run_with_empty_cuda_visibility cmake --build "$CRYPTO_BUILD_DIR" --target crypto
 
 # Listing tests is intentionally the only CTest action in this preparation
 # step.  GPU correctness and calibration belong to the target-host runner.
-run_with_empty_cuda_visibility ctest --test-dir "$BUILD_DIR" -N
+run_with_empty_cuda_visibility "$CTEST_BIN" --test-dir "$BUILD_DIR" -N
 
 MANIFEST="$BUILD_DIR/research_target_manifest.json"
 if (( DRY_RUN )); then

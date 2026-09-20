@@ -227,10 +227,11 @@ void test_runtime_selector() {
     config.log_n    = 14;
     config.word_bits = 64;
     config.modulus   = cuntt::kDefaultModulus;
-    try {
-        cuntt::Plan unsupported(config);
-        throw std::runtime_error("runtime selector accepted an uncalibrated NTT length");
-    } catch (const std::invalid_argument&) {
+    cuntt::Plan unmeasured(config);
+    if (!unmeasured.selection().automatic || unmeasured.selection().calibrated ||
+        unmeasured.selection().confidence != "unmeasured-feasible" ||
+        unmeasured.selection().predicted_kernel_ms != 0.0) {
+        throw std::runtime_error("uncalibrated NTT fallback was reported as a measured selector point");
     }
     std::cout << "PASS calibrated NTT runtime selector\n";
 }

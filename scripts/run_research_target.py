@@ -191,7 +191,11 @@ def partition_memory(workloads, memory_bytes, factor=16, fraction=0.9):
 
 
 def capture(command):
-    return subprocess.run(list(map(str, command)), text=True, capture_output=True, check=True).stdout
+    result = subprocess.run(list(map(str, command)), text=True, capture_output=True)
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()
+        raise RuntimeError(f"{command[0]} exited {result.returncode}: {detail}")
+    return result.stdout
 
 
 def target_device(selector):

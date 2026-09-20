@@ -14,6 +14,16 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import run_research_target as target
 
 
+def test_gpu_identity_failure_reports_nvidia_smi_stderr(monkeypatch):
+    def failed_probe(command, **kwargs):
+        assert command[0] == "nvidia-smi"
+        return subprocess.CompletedProcess(command, 18, "", "Failed to initialize NVML: Driver/library version mismatch\n")
+
+    monkeypatch.setattr(subprocess, "run", failed_probe)
+    with pytest.raises(RuntimeError, match="nvidia-smi exited 18: Failed to initialize NVML"):
+        target.target_device("GPU-test")
+
+
 def test_prepare_uses_only_semantics_and_cpu_projection(tmp_path, monkeypatch):
     def forbidden(*args, **kwargs):
         raise AssertionError("CPU preparation must not probe GPU or spawn benchmarks")
