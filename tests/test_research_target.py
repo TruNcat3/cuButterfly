@@ -151,6 +151,13 @@ def test_calibration_normalizes_real_probe_schema(tmp_path, monkeypatch):
     assert profile["global_memory_bytes"] == 16 * 1024**3
     assert profile["gpu_uuid"] == "GPU-test" and len(paths) == 5
     assert "--max-points" in calls[-1] and "1024" in calls[-1]
+    stage_input = Path(calls[-1][calls[-1].index("--points") + 1])
+    assert stage_input == directory / "calibration/stage_points.json"
+    projected = target.read(stage_input)["points"]
+    original = target.read(args.campaign / "stage_points.json")["points"]
+    assert len(projected) == len(original)
+    assert all("mapping" not in point and point["mapping_json"] == source["mapping"]
+               for point, source in zip(projected, original))
     target.calibrate(args, directory, device)
     assert len([row for row in calls if "initialize_hardware_profile.py" in row[1]]) == 1
 

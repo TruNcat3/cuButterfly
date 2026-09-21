@@ -359,9 +359,18 @@ def calibrate(args, directory, device):
         calibration / "pipeline_schedule_calibration.json", profile, run, require)
     # Immutable basis input; each acceptance group extends its own compatible checkpoint.
     freeze(calibration / "service_input.json", profile)
+    stage_points = read(args.campaign / "stage_points.json")
+    projected_points = []
+    for point in stage_points["points"]:
+        if not isinstance(point.get("mapping"), dict):
+            raise ValueError("stage calibration basis requires a mapping object")
+        projected_points.append(dict((name, value) for name, value in point.items() if name != "mapping") |
+                                {"mapping_json": point["mapping"]})
+    stage_input = calibration / "stage_points.json"
+    freeze(stage_input, dict(stage_points, points=projected_points))
     guarded([sys.executable, ROOT / "scripts/stage_service_calibration.py", "--binary",
         args.build_dir / "cubutterfly_stage_microbench", "--checkpoint", calibration / "stage_calibration.json",
-        "--profile", calibration / "service_input.json", "--points", args.campaign / "stage_points.json",
+        "--profile", calibration / "service_input.json", "--points", stage_input,
         "--mode", "full", "--warmup", "10", "--repeat", "20", "--trials", "3",
         "--max-points", str(args.stage_max_points)], device["uuid"], log / "stage-basis.log", calibration)
     stage = read(calibration / "stage_calibration.json")
