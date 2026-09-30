@@ -24,8 +24,8 @@ deferrals, baseline coverage and the distinction from historical v0.8 results.
 
 ## Read This Repository In Order
 
-1. **Orient yourself:** read this page through the two figures below and the
-   [v0.9 framework release](docs/release_v09.md) defines the layer boundaries;
+1. **Orient yourself:** read this page through the two figures below, then read the
+   [v0.9 framework release](docs/release_v09.md) for the layer boundaries;
    the [v0.8 release overview](docs/release_v08.md) preserves the V100 evidence.
 2. **Use the library:** follow [Getting Started](docs/getting_started.md),
    then the [Programming Guide](docs/programming_guide.md) and [C Plan API](docs/c_api.md).
