@@ -71,6 +71,7 @@ The following is an optional first-time orientation, not a prerequisite for edit
 
 | Need | Document |
 |:--|:--|
+| Short overview and a verified workload | [Summary And Example](summary_example.md) |
 | Build and first run | [Getting Started](getting_started.md) |
 | C plan and device API | [C Plan API](c_api.md), [Device API](device_api.md) |
 | C++ types and fields | [API Reference](api_reference.md) |

@@ -41,6 +41,9 @@ deferrals, baseline coverage and the distinction from historical v0.8 results.
 The complete map, including older experiment notes and generated artifacts, is
 maintained in the [documentation index](docs/README.md).
 
+The [summary and example](docs/summary_example.md) provides a compact introduction
+and a first verified FWHT workload.
+
 ## Core Idea
 
 The mapping layer and the arithmetic core are deliberately separate:
