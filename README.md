@@ -31,7 +31,9 @@ deferrals, baseline coverage and the distinction from historical v0.8 results.
    then the [Programming Guide](docs/programming_guide.md) and [C Plan API](docs/c_api.md).
 3. **Understand the method:** read [Design Overview](docs/design_overview.md),
    [Hardware Mapping Methodology](docs/hardware_mapping_methodology.md), and
-   [v0.8 Nested Physical Space](docs/v0.8_nested_physical_space.md).
+   [v0.8 Nested Physical Space](docs/v0.8_nested_physical_space.md). The
+   [cross-platform ports](docs/platform_ports.md) page shows how the method is
+   independently lowered to non-CUDA hardware.
 4. **Understand the design space:** read [Architecture Guardrails](docs/architecture_guardrails.md),
    [Processing-Unit Design Space](docs/processing_unit_design_space.md), and
    [Runtime Selector](docs/runtime_selector.md).
@@ -204,6 +206,9 @@ The most important architecture documents are [Design Overview](docs/design_over
 [Hardware Mapping Methodology](docs/hardware_mapping_methodology.md),
 [v0.8 Nested Physical Space](docs/v0.8_nested_physical_space.md), and
 [Processing-Unit Design Space](docs/processing_unit_design_space.md).
+The [cross-platform migration list](docs/platform_ports.md) currently includes
+[Ascend-FFT](https://github.com/TruNcat3/ascend-fft), an independent lowering of
+the method to Huawei Ascend AIV/UB/MTE rather than a reuse of CUDA kernels.
 
 ## Evidence And Scope
 
