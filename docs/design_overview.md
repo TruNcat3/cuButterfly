@@ -34,6 +34,11 @@ operators at the same length may use different cores as well. Cross-GPU
 deployment requires a new capability/calibration table; a point validated on
 V100 is not silently reused as an optimum on another GPU.
 
+The [cross-platform ports](platform_ports.md) page records concrete migrations
+under this contract. In particular, Ascend-FFT preserves the mapping method but
+rebuilds the realization around AIV, UB, MTE, and GM; it is not a CUDA-kernel
+translation and does not inherit CUDA performance results.
+
 The separation is represented by seven objects:
 
 ```text

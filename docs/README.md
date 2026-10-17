@@ -98,6 +98,7 @@ The following is an optional first-time orientation, not a prerequisite for edit
 | What must an implementation preserve? | [Architecture Guardrails](architecture_guardrails.md) |
 | How does APPT-style online layout fit the architecture? | [APPT Static Layout](appt_static_layout.md) |
 | How does cuButterfly relate to prior work and libraries? | [Research Positioning](cubutterfly_positioning.md), [FFT Library Comparison](fft_library_comparison.md) |
+| Where has the method been migrated to another platform? | [Cross-Platform Ports](platform_ports.md) |
 
 ## Reproduce The Evidence
 
