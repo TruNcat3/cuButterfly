@@ -3,7 +3,7 @@
 **Hardware-mapped space-time parallelism for regular butterfly computations on GPUs.**
 
 [![Repository checks](https://github.com/TruNcat3/cuButterfly/actions/workflows/repository-checks.yml/badge.svg)](https://github.com/TruNcat3/cuButterfly/actions/workflows/repository-checks.yml)
-[![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-research--only%20non--commercial-orange.svg)](LICENSE)
 
 cuButterfly is a CUDA research library and reproducible artifact for FFT, NTT,
 FWHT, structured 2x2, and subset/superset zeta transforms. The project studies
@@ -249,8 +249,9 @@ Institute for Advanced Research of USTC, Suzhou, China.
 
 ## License
 
-The repository is released under the [BSD 3-Clause License](LICENSE). You may
-use, modify, and redistribute the source or binary forms, provided that the
-copyright notice, license conditions, and disclaimer are retained. Adapted
-third-party code remains subject to its own notice in
+The repository is released under the [Research-Only Non-Commercial License
+(RONC-1.0)](LICENSE). Non-commercial research, teaching, evaluation, and
+personal modification and redistribution are permitted; Commercial Use is
+prohibited without a separate written license. Adapted third-party code
+remains subject to its own notice and license in
 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

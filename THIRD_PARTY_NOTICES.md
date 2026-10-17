@@ -1,5 +1,9 @@
 # Third-Party Notices
 
+The repository's own code is covered by RONC-1.0 in `LICENSE`. The notices
+below retain the original terms for adapted third-party material; changing the
+repository license does not relicense that material.
+
 ## Fast Hadamard Transform
 
 `src/register_fwht.cuh` adapts the register hierarchy and XOR-swizzled

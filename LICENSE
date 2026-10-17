@@ -1,30 +1,54 @@
-BSD 3-Clause License
+Research-Only Non-Commercial License (RONC-1.0)
 
-Copyright (c) 2026 Teng Wang, High Efficient Intelligent Computing Lab,
-Suzhou Institute for Advanced Research of USTC
-All rights reserved.
+Copyright (c) 2026 Teng Wang / TruNcat3
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+1. Definitions
 
-1. Redistributions of source code must retain the above copyright notice,
-   this list of conditions and the following disclaimer.
+"Software" means the source code, documentation, data, and other material in
+the repository that is identified as being covered by this license.
 
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+"Commercial Use" means any use that is primarily intended for or directed
+toward commercial advantage or monetary compensation, including use in a
+product or service offered for sale, use by a for-profit organization in its
+ordinary business operations, or use to provide a paid service. Use by an
+academic or non-profit organization for non-commercial research or teaching is
+not Commercial Use.
 
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
+2. Non-Commercial Permission
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Permission is granted, free of charge, to any person obtaining a copy of the
+Software to use, reproduce, modify, and redistribute the Software solely for
+non-commercial research, teaching, evaluation, and personal purposes, subject
+to the conditions below.
+
+3. Conditions
+
+  a. Redistributions of the Software or modified versions must retain this
+     license, the copyright notice, and the applicable attribution notices.
+  b. Modified versions must be clearly marked as modified and must not be
+     represented as the original Software.
+  c. You must not use the name, marks, or institutional affiliations of the
+     copyright holder or contributors to endorse or promote a product without
+     prior written permission.
+  d. Commercial Use, sublicensing for Commercial Use, and granting a third
+     party permission to make Commercial Use are prohibited without a separate
+     written license from the copyright holder.
+  e. Material copied from third-party components remains subject to the
+     corresponding third-party license; this license does not relicense those
+     components.
+
+4. Commercial Permission
+
+Commercial Use requires a separate written license. Contact the copyright
+holder at wangt635@ustc.edu.cn to discuss permission. No implied commercial,
+patent, trademark, or other license is granted by this license.
+
+5. Disclaimer
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
+OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
