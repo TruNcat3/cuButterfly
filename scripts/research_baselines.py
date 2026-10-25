@@ -21,6 +21,10 @@ from run_external_baseline_suite import read_one_csv
 
 ROOT = Path(__file__).resolve().parents[1]
 GPU_NTT_MODULUS = "576460756061519873"
+GPU_NTT_MAX_BATCH = 65535
+GPU_NTT_BATCH_LIMIT_REASON = (
+    "legacy GPU-NTT harness maps batch to CUDA grid Z; supported batch is 1..65535"
+)
 
 
 def sha256(path):
@@ -98,12 +102,17 @@ def available_baselines(workload, paths):
                  "Dao adapter requires native fp16/bf16/fp32, logN=3..15, contiguous out-of-place FWHT")
     elif operator == "ntt":
         natural = semantic["output_order"] == "natural"
+        gpuntt_contract = (precision == "word64" and forward and contiguous
+                           and semantic["modulus"] == GPU_NTT_MODULUS
+                           and semantic["input_order"] == "natural"
+                           and semantic["output_order"] in ("natural", "bit-reversed")
+                           and 12 <= int(semantic["logN"]) <= 24)
+        gpuntt_batch_supported = int(semantic["batch"]) <= GPU_NTT_MAX_BATCH
+        gpuntt_reason = (GPU_NTT_BATCH_LIMIT_REASON if gpuntt_contract and not gpuntt_batch_supported else
+                         "GPU-NTT harness requires forward word64 cyclic NTT, its fixed prime, natural input and logN=12..24")
         external("GPU-NTT-natural" if natural else "GPU-NTT-bit-reversed", "gpuntt",
-                 paths.get("gpuntt_binary"), precision == "word64" and forward and contiguous
-                 and semantic["modulus"] == GPU_NTT_MODULUS and semantic["input_order"] == "natural"
-                 and semantic["output_order"] in ("natural", "bit-reversed")
-                 and 12 <= int(semantic["logN"]) <= 24,
-                 "GPU-NTT harness requires forward word64 cyclic NTT, its fixed prime, natural input and logN=12..24",
+                 paths.get("gpuntt_binary"), gpuntt_contract and gpuntt_batch_supported,
+                 gpuntt_reason,
                  naturalize=natural)
     else:
         unavailable.append(dict(name="external-library", reason="no matching external adapter for this operator"))

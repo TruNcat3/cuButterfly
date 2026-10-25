@@ -11,6 +11,19 @@ an architecture mapping problem rather than one fixed kernel: the same layered
 butterfly graph is unfolded across data and stage dimensions, then lowered to a
 hardware-appropriate processing unit.
 
+<p align="center">
+  <strong>Teng Wang</strong><br>
+  High Efficient Intelligent Computing Lab<br>
+  <a href="https://sz.ustc.edu.cn/en/index.html">Suzhou Institute for Advanced Research,
+  University of Science and Technology of China</a> · Suzhou, China<br>
+  <a href="mailto:wangt635@ustc.edu.cn">wangt635@ustc.edu.cn</a>
+</p>
+
+cuButterfly is independently maintained by the author. The institution name
+describes research affiliation and does not imply an official release,
+certification, sponsorship, or endorsement. The complete attribution and
+license boundary are in [Project and authorship](docs/about.md).
+
 > **Release status:** v0.9 is the cross-hardware framework release. v0.8 remains a frozen V100 research baseline for the
 > documented experiments. The install workflow also supports target-local
 > GPU detection and calibration (including A100); those profiles are local
@@ -21,6 +34,14 @@ It covers SM70 CPU builds and precompilation, target-local calibration, searched
 comparisons, and resumable execution of the portable 738-contract matrix.
 New-version V100 GPU measurements remain pending; see the runbook for memory
 deferrals, baseline coverage and the distinction from historical v0.8 results.
+
+The [October 25 fixed-core FFT study](docs/factor_core_organization_experiment_20261025.md)
+reports measured organization gains and the remaining cuFFT gap. The
+[full refresh plan](docs/full_benchmark_refresh_20261025.md) freezes the next
+operator, mechanism and application comparisons. CPU preparation is complete for
+66 operator requests; this is not a completed new full-library performance claim.
+The [paper](paper/main.pdf) keeps current diagnostics separate from historical
+headline cohorts, with editable figures and frozen plotting inputs in `paper/`.
 
 ## Read This Repository In Order
 
@@ -36,7 +57,8 @@ deferrals, baseline coverage and the distinction from historical v0.8 results.
    [Processing-Unit Design Space](docs/processing_unit_design_space.md), and
    [Runtime Selector](docs/runtime_selector.md).
 5. **Reproduce and audit:** use [Hardware Profile Initialization](docs/hardware_profile_install.md),
-   [Reproducibility](docs/reproducibility.md), and the [comparison evidence](docs/v100_three_way_comparison.md).
+   [Reproducibility](docs/reproducibility.md), the [reporting and evidence contract](docs/reporting_contract.md),
+   and the [comparison evidence](docs/v100_three_way_comparison.md).
 
 The complete map, including older experiment notes and generated artifacts, is
 maintained in the [documentation index](docs/README.md).
@@ -236,13 +258,15 @@ Please cite the software and its experimental data using
   author  = {Teng Wang},
   title   = {cuButterfly: Hardware-Mapped Space-Time Parallelism for Butterfly Computations on GPUs},
   year    = {2026},
-  version = {0.8.0},
+  version = {0.9.0},
   url     = {https://github.com/TruNcat3/cuButterfly}
 }
 ```
 
-Author: **Teng Wang**, High Efficient Intelligent Computing Lab, Suzhou
-Institute for Advanced Research of USTC, Suzhou, China.
+Author and affiliation details are maintained in [docs/about.md](docs/about.md)
+and [`CITATION.cff`](CITATION.cff). Performance evidence follows the
+[reporting and evidence contract](docs/reporting_contract.md); missing or
+unsupported combinations remain visible instead of being silently substituted.
 
 ## License
 

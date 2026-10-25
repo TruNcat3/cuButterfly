@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from calibration_space import candidate_id, mapping_point, predicted_sample, stratified_candidates
 from evolutionary_search import evolutionary_candidates, neighbors
+from evolutionary_search import _enum_values
 
 
 def _point(mapping, **semantics):
@@ -189,15 +190,52 @@ def test_register_strategy_neighbours_are_explicit_and_fp64_safe():
     }
     proposals = [json.loads(candidate["mapping_json"]) for candidate in neighbors(_point(mapping, precision="fp32"))]
     assert any(item.get("prefix_codelet") == "cufftdx-thread" for item in proposals)
+    assert any(item.get("prefix_codelet") == "radix4" for item in proposals)
     assert any(item.get("prefix_shared_layout") == "xor" for item in proposals)
     fp64 = [json.loads(candidate["mapping_json"]) for candidate in neighbors(_point(mapping, precision="fp64"))]
     assert all(item.get("prefix_codelet") != "cufftdx-thread" for item in fp64)
+    assert any(item.get("prefix_codelet") == "radix4" for item in fp64)
+
+
+@pytest.mark.parametrize("precision", ["fp32", "fp64"])
+@pytest.mark.parametrize("source,target", [("native", "radix4"), ("radix4", "native")])
+def test_radix4_prefix_neighbours_are_bidirectional_and_reset_derived(precision, source, target):
+    mapping = dict(schema_version=1, kind="butterfly", backend="online-reorder",
+                   fft_core="register-tile", stage_partition=[6, 6], local_stages=6,
+                   prefix_threads=32, prefix_ept=8, suffix_threads=32, suffix_ept=8,
+                   prefix_codelet=source,
+                   execution_group_mappings=[{"core": "register-tile", "codelet": source},
+                                             {"core": "cufftdx-block"}],
+                   segment_mappings=[{"core": "register-tile", "codelet": source},
+                                     {"core": "cufftdx-block"}])
+    point = _point(mapping, precision=precision)
+    original = json.loads(point["mapping_json"])
+    proposals = [json.loads(candidate["mapping_json"]) for candidate in neighbors(point)]
+    changed = [proposal for proposal in proposals if proposal.get("prefix_codelet") == target]
+    assert changed
+    for proposal in changed:
+        assert "execution_group_mappings" not in proposal and "segment_mappings" not in proposal
+        assert {**proposal, "prefix_codelet": source} == {
+            key: value for key, value in original.items()
+            if key not in {"execution_group_mappings", "segment_mappings"}}
+    assert json.loads(point["mapping_json"]) == original
+    assert target in _enum_values("prefix_codelet", source, "online-reorder", "fft")
+    if precision == "fp64":
+        assert all(proposal.get("prefix_codelet") != "cufftdx-thread" for proposal in proposals)
+
+
+@pytest.mark.parametrize("operator,backend,current", [
+    ("ntt", "online-reorder", "native"), ("fwht", "online-reorder", "native"),
+    ("fft", "factor-streamed", "native"), ("fft", "online-reorder", "unknown"),
+])
+def test_radix4_prefix_enum_does_not_expand_invalid_domains(operator, backend, current):
+    assert _enum_values("prefix_codelet", current, backend, operator) == []
 
 
 def test_register_lane_neighbours_keep_columns_and_update_threads_and_ept():
     mapping = {
         "schema_version": 1, "kind": "butterfly", "backend": "online-reorder",
-        "fft_core": "register-tile", "stage_partition": [6, 6],
+        "fft_core": "register-tile", "stage_partition": [6, 6], "local_stages": 6,
         "prefix_threads": 128, "prefix_ept": 8,
         "suffix_threads": 128, "suffix_ept": 8,
     }

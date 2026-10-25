@@ -13,6 +13,90 @@ def point(mapping, **semantics):
                 mapping_json=json.dumps(mapping), **semantics)
 
 
+def radix4_point(**changes):
+    mapping = dict(backend="online-reorder", fft_core="register-tile", local_stages=8,
+                   stage_partition=[8, 10], prefix_codelet="radix4", prefix_threads=64,
+                   prefix_ept=16, suffix_threads=512, suffix_ept=8)
+    mapping.update(changes)
+    return dict(operator="fft", precision="fp32", logN=sum(mapping["stage_partition"]),
+                batch=32, mapping_json=mapping)
+
+
+@pytest.mark.parametrize("policy", ["research", "auto", "on-demand", "precompiled"])
+@pytest.mark.parametrize("suffix,ept,columns", [(10, 8, 4), (10, 16, 4), (10, 16, 8),
+                                               (12, 16, 2), (12, 16, 4), (12, 32, 2), (12, 32, 4)])
+def test_radix4_preparation_uses_linked_inventory(policy, suffix, ept, columns):
+    value = radix4_point(stage_partition=[8, suffix], suffix_ept=ept,
+                         suffix_threads=(1 << suffix) // ept * columns)
+    assert compile_request(value, policy) is None
+
+
+@pytest.mark.parametrize("changes", [
+    {"prefix_shared_layout": "xor"}, {"suffix_core": "native"},
+    {"prefix_codelet_lanes": 2, "prefix_ept": 8, "prefix_threads": 128},
+    {"stage_partition": [6, 10], "prefix_ept": 8, "prefix_threads": 32},
+    {"stage_partition": [8, 8], "suffix_threads": 128},
+    {"prefix_threads": 32},
+    {"suffix_ept": 32, "suffix_threads": 128},
+    {"suffix_ept": 8, "suffix_threads": 256},
+    {"exchange_chunks": [0, 2]}, {"local_stage_partitions": [[4, 4], []]},
+    {"stage_partition": [5, 10], "prefix_ept": 4, "prefix_threads": 32,
+     "local_stage_partitions": [[2, 3], []], "prefix_shared_layout": "xor"},
+    {"stage_partition": [7, 10], "prefix_ept": 4, "prefix_threads": 128,
+     "prefix_codelet_lanes": 2, "local_stage_partitions": [[3, 4], []]},
+])
+@pytest.mark.parametrize("policy", ["research", "auto", "on-demand"])
+@pytest.mark.parametrize("precision", ["fp32", "fp64"])
+def test_radix4_preparation_projects_new_geometry_to_runtime_jit(changes, policy, precision):
+    value = dict(radix4_point(**changes), precision=precision)
+    request = compile_request(value, policy)
+    native = dict(value, mapping_json=dict(value["mapping_json"], prefix_codelet="native"))
+    assert request == dict(compile_request(native, policy), prefix_codelet="radix4")
+    with pytest.raises(ValueError, match="prebuilt inventory"):
+        compile_request(value, "precompiled")
+
+
+@pytest.mark.parametrize("changes", [
+    {"prefix_threads": 65}, {"prefix_ept": 8},
+    {"shared_layout": "linear"}, {"cross_twiddle": "table"},
+    {"compute_unit": "radix4"}, {"backend": "factor-streamed"},
+    {"factor_io_policies": ["dynamic", "dynamic"]},
+    {"stage_overlap": True, "batch_tile_count": 0},
+    {"execution_group_mappings": [{"codelet": "native"}, {}]},
+    {"stage_partition": [8, 5, 5]},
+    {"stage_partition": [5, 10], "prefix_ept": 4, "prefix_threads": 32},
+    {"exchange_chunks": [2, 0]},
+    {"exchange_chunks": [0, 3]},
+    {"local_stage_partitions": [[4, 4], [5, 5]]},
+    {"boundaries": [{"residency": "fused"}]},
+    {"prefix_codelet_lanes": 3},
+    {"prefix_codelet_lanes": 2, "prefix_threads": 128},
+    {"prefix_shared_layout": "xor", "stage_partition": [7, 10],
+     "prefix_ept": 4, "prefix_threads": 256, "prefix_codelet_lanes": 2,
+     "local_stage_partitions": [[3, 4], []]},
+])
+@pytest.mark.parametrize("policy", ["research", "auto", "on-demand", "precompiled"])
+def test_radix4_preparation_rejects_invalid_mappings_before_inventory_fallback(changes, policy):
+    with pytest.raises(ValueError):
+        compile_request(radix4_point(**changes), policy)
+
+
+@pytest.mark.parametrize("change", [{"precision": "fp16"}, {"operator": "fwht"},
+                                    {"operator": "ntt"}])
+def test_radix4_preparation_keeps_operator_precision_contract(change):
+    with pytest.raises(ValueError, match="FP32/FP64 FFT"):
+        compile_request(dict(radix4_point(), **change))
+
+
+@pytest.mark.parametrize("policy", ["research", "auto", "on-demand"])
+def test_fp64_radix4_default_geometry_requires_jit(policy):
+    value = dict(radix4_point(), precision="fp64")
+    request = compile_request(value, policy)
+    assert request["precision"] == "fp64" and request["prefix_codelet"] == "radix4"
+    with pytest.raises(ValueError, match="prebuilt inventory"):
+        compile_request(value, "precompiled")
+
+
 def test_factor_request_matches_runtime_omitted_defaults_and_reuses_batch_schedule():
     mapping = dict(backend="factor-streamed", fft_core="cufftdx-block",
                    stage_partition=[12], factor_partition=[6, 6], factor_ept=8,
@@ -40,7 +124,7 @@ def test_shared_butterfly_and_ntt_have_distinct_runtime_request_fields():
     ntt.update(operator="ntt", precision="word64", modulus=576460756061519873)
     assert compile_request(ntt) == dict(backend="shared-iterative", operator="ntt", precision="word64",
                                        logN=12, stage_partition=[6, 6], threads=256, writer_aligned=False,
-                                       output_order="natural")
+                                       output_order="natural", batch_tile=1)
     assert compile_request(point(mapping), "auto") is None
 
 

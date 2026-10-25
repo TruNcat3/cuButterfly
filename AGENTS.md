@@ -1,5 +1,11 @@
 # cuButterfly research
 
+- For method/design, search/calibration, experiment design or paper claims, use
+  [project research principles](docs/research_principles.md). They apply to all
+  butterfly operators: one method with optional workload-dependent mechanisms;
+  distinguish automatic-library comparisons, component/re-search ablations,
+  fixed-core organization transfer, and matched-batch end-to-end evidence.
+  Read the relevant section for the task, not the full historical experiment tree.
 - Continue the user's requested work and authorized plan through implementation,
   execution and affected verification. Use the current milestone's deliverables
   and acceptance criteria; a request to continue resumes its unfinished work.
@@ -31,6 +37,9 @@
   timing protocol. Reuse completed trials; record interrupted or unconfirmed work
   separately. Compilation, plan initialization and CPU checking stay outside kernel
   timing. Calibrate the target before its comprehensive baseline comparison.
+  When the user authorizes development across builds, use explicit build-prior
+  continuation with original provenance and current finalist confirmation; do not
+  require release-style version isolation or restart every unchanged measurement.
 - Preserve operator semantics and separate the theoretical design space, executable
   lowerings and measured candidates. Record missing lowerings and budget omissions.
   Performance claims identify precision, sizes, batches, hardware and build;

@@ -87,12 +87,23 @@ enum class CandidateState : std::uint8_t {
     NeedsCompilation, Compiled, CorrectnessVerified, Measured,
 };
 
+// The same data_time field is used by the public mapping schema for two
+// different physical axes.  Keep that distinction in the projected plan so
+// consumers cannot silently treat an NTT token cadence as a generic CTA work
+// count.  Both axes are valid search dimensions; they have different
+// resource/lowering contracts.
+enum class DataTimeSemantics : std::uint8_t {
+    WorkItems,
+    TemporalTokens,
+};
+
 // One physical execution group owns a contiguous interval of logical stages.
 // Logical radix stays two; a radix4/radix8 codelet is an execution choice.
 struct ExecutionGroup {
     std::uint32_t first_stage = 0, stage_count = 0;
     std::uint32_t stage_space = 1, stage_time = 1;
     std::uint32_t data_space = 1, data_time = 1;
+    DataTimeSemantics data_time_semantics = DataTimeSemantics::WorkItems;
     std::uint32_t batch_space = 1, batch_time = 1;
     std::uint32_t threads = 0, elements_per_thread = 0, units_per_cta = 1;
     std::string core, shared_layout;
@@ -115,6 +126,11 @@ struct ExecutionGroup {
     std::string io_policy = "dynamic";
     std::vector<std::uint32_t> local_stage_partition;
     std::uint32_t exchange_chunk = 0;
+    // Keep the compiler/launch shared-memory components separate when the
+    // physical provider reports them.  Logical projections only know the
+    // conservative live total, so components remain unknown there.
+    std::uint64_t static_shared_bytes = 0, dynamic_shared_bytes = 0;
+    bool shared_components_known = false;
 };
 
 struct ExecutionBoundary {
@@ -203,6 +219,10 @@ OperatorGraph make_operator_graph(const PlanConfig& config);
 MixedDataflowPlan make_dataflow_plan(const ButterflyConfig& config);
 MixedDataflowPlan make_dataflow_plan(const PlanConfig& config);
 PlanResourceEstimate estimate_resources(const MixedDataflowPlan& plan, const HardwareResourceModel& hardware);
+// Feasibility checks known necessary bounds; complete requires compiler resource
+// feedback and all static occupancy limits, and does not certify a launch.
+PlanResourceEstimate estimate_execution_group_resources(const ExecutionGroup& group,
+    const HardwareResourceModel& hardware, std::uint32_t target_resident_ctas = 1, bool cooperative = false);
 LoweringStatus check_lowering(const MixedDataflowPlan& plan);
 const char* lowering_status_name(LoweringStatus status) noexcept;
 bool validate_plan(MixedDataflowPlan& plan, const HardwareResourceModel& hardware);

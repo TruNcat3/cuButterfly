@@ -1,0 +1,2510 @@
+{
+  "populations": [
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-00-fft-fp32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 0,
+            "storage": 6
+          }
+        }
+      ],
+      "shapes": [
+        [
+          256
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-01-fft-fp32",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 0,
+            "storage": 6
+          }
+        }
+      ],
+      "shapes": [
+        [
+          256
+        ]
+      ]
+    },
+    {
+      "batches": [
+        32
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-02-fft-fp32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 0,
+            "storage": 6
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        32
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-03-fft-fp32",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 0,
+            "storage": 6
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-04-fft-fp32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 0,
+            "storage": 6
+          }
+        }
+      ],
+      "shapes": [
+        [
+          65536
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-05-fft-fp32",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 0,
+            "storage": 6
+          }
+        }
+      ],
+      "shapes": [
+        [
+          65536
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-06-fft-fp64",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp64",
+          "transform": {
+            "compute": 2,
+            "op": 0,
+            "storage": 7
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-07-fft-fp64",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp64",
+          "transform": {
+            "compute": 2,
+            "op": 0,
+            "storage": 7
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-08-fft-fp64",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp64",
+          "transform": {
+            "compute": 2,
+            "op": 0,
+            "storage": 7
+          }
+        }
+      ],
+      "shapes": [
+        [
+          65536
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-09-fft-fp64",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp64",
+          "transform": {
+            "compute": 2,
+            "op": 0,
+            "storage": 7
+          }
+        }
+      ],
+      "shapes": [
+        [
+          65536
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-10-fft-fp64",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp64",
+          "transform": {
+            "compute": 2,
+            "op": 0,
+            "storage": 7
+          }
+        }
+      ],
+      "shapes": [
+        [
+          262144
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-11-fft-fp64",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp64",
+          "transform": {
+            "compute": 2,
+            "op": 0,
+            "storage": 7
+          }
+        }
+      ],
+      "shapes": [
+        [
+          262144
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-12-fwht-fp32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 2,
+            "storage": 2
+          }
+        }
+      ],
+      "shapes": [
+        [
+          256
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-13-fwht-fp32",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 2,
+            "storage": 2
+          }
+        }
+      ],
+      "shapes": [
+        [
+          256
+        ]
+      ]
+    },
+    {
+      "batches": [
+        32
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-14-fwht-fp32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 2,
+            "storage": 2
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        32
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-15-fwht-fp32",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 2,
+            "storage": 2
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-16-fwht-fp32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 2,
+            "storage": 2
+          }
+        }
+      ],
+      "shapes": [
+        [
+          32768
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-17-fwht-fp32",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 2,
+            "storage": 2
+          }
+        }
+      ],
+      "shapes": [
+        [
+          32768
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-18-fwht-fp64",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp64",
+          "transform": {
+            "compute": 2,
+            "op": 2,
+            "storage": 3
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-19-fwht-fp64",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp64",
+          "transform": {
+            "compute": 2,
+            "op": 2,
+            "storage": 3
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-20-ntt-word32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "word32",
+          "transform": {
+            "compute": 3,
+            "modulus": 2013265921,
+            "op": 1,
+            "storage": 8,
+            "word_bits": 32
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-21-ntt-word32",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "word32",
+          "transform": {
+            "compute": 3,
+            "modulus": 2013265921,
+            "op": 1,
+            "storage": 8,
+            "word_bits": 32
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-22-ntt-word32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "word32",
+          "transform": {
+            "compute": 3,
+            "modulus": 2013265921,
+            "op": 1,
+            "storage": 8,
+            "word_bits": 32
+          }
+        }
+      ],
+      "shapes": [
+        [
+          65536
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-23-ntt-word32",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "word32",
+          "transform": {
+            "compute": 3,
+            "modulus": 2013265921,
+            "op": 1,
+            "storage": 8,
+            "word_bits": 32
+          }
+        }
+      ],
+      "shapes": [
+        [
+          65536
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-24-ntt-word64",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "word64",
+          "transform": {
+            "compute": 4,
+            "modulus": 576460756061519873,
+            "op": 1,
+            "storage": 9,
+            "word_bits": 64
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-25-ntt-word64",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "word64",
+          "transform": {
+            "compute": 4,
+            "modulus": 576460756061519873,
+            "op": 1,
+            "storage": 9,
+            "word_bits": 64
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-26-ntt-word64",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "word64",
+          "transform": {
+            "compute": 4,
+            "modulus": 576460756061519873,
+            "op": 1,
+            "storage": 9,
+            "word_bits": 64
+          }
+        }
+      ],
+      "shapes": [
+        [
+          65536
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-27-ntt-word64",
+      "normalizations": [
+        "inverse"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "word64",
+          "transform": {
+            "compute": 4,
+            "modulus": 576460756061519873,
+            "op": 1,
+            "storage": 9,
+            "word_bits": 64
+          }
+        }
+      ],
+      "shapes": [
+        [
+          65536
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-28-subset-zeta-uint32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "uint32",
+          "transform": {
+            "compute": 3,
+            "op": 3,
+            "storage": 8
+          }
+        }
+      ],
+      "shapes": [
+        [
+          256
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-29-subset-zeta-uint32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "uint32",
+          "transform": {
+            "compute": 3,
+            "op": 3,
+            "storage": 8
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        256
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-30-subset-zeta-uint32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "uint32",
+          "transform": {
+            "compute": 3,
+            "op": 3,
+            "storage": 8
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-31-superset-zeta-uint32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "uint32",
+          "transform": {
+            "compute": 3,
+            "op": 4,
+            "storage": 8
+          }
+        }
+      ],
+      "shapes": [
+        [
+          256
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-32-superset-zeta-uint32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "uint32",
+          "transform": {
+            "compute": 3,
+            "op": 4,
+            "storage": 8
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        256
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-33-superset-zeta-uint32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "uint32",
+          "transform": {
+            "compute": 3,
+            "op": 4,
+            "storage": 8
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-34-structured-2x2-fp32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 5,
+            "stage_matrices": [
+              [
+                [
+                  1.0,
+                  0.25,
+                  -0.5,
+                  1.0
+                ]
+              ]
+            ],
+            "storage": 2
+          }
+        }
+      ],
+      "shapes": [
+        [
+          256
+        ]
+      ]
+    },
+    {
+      "batches": [
+        1
+      ],
+      "directions": [
+        "forward"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "name": "e1-35-structured-2x2-fp32",
+      "normalizations": [
+        "none"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "regimes": [
+        {
+          "name": "fp32",
+          "transform": {
+            "compute": 1,
+            "op": 5,
+            "stage_matrices": [
+              [
+                [
+                  1.0,
+                  0.25,
+                  -0.5,
+                  1.0
+                ]
+              ]
+            ],
+            "storage": 2
+          }
+        }
+      ],
+      "shapes": [
+        [
+          4096
+        ]
+      ]
+    },
+    {
+      "name": "extension-fft-rank1",
+      "shapes": [
+        [
+          65536
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "fft",
+          "transform": {
+            "op": 0,
+            "storage": 6,
+            "compute": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-fft-rank2",
+      "shapes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "fft",
+          "transform": {
+            "op": 0,
+            "storage": 6,
+            "compute": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-fft-rank3",
+      "shapes": [
+        [
+          32,
+          32,
+          32
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "normalizations": [
+        "inverse"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "fft",
+          "transform": {
+            "op": 0,
+            "storage": 6,
+            "compute": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-fft-rank4",
+      "shapes": [
+        [
+          8,
+          8,
+          8,
+          8
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "fft",
+          "transform": {
+            "op": 0,
+            "storage": 6,
+            "compute": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-fft-rank8",
+      "shapes": [
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "batches": [
+        16
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "normalizations": [
+        "inverse"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "fft",
+          "transform": {
+            "op": 0,
+            "storage": 6,
+            "compute": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-fwht-rank1",
+      "shapes": [
+        [
+          65536
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "fwht",
+          "transform": {
+            "op": 2,
+            "storage": 2,
+            "compute": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-fwht-rank2",
+      "shapes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "fwht",
+          "transform": {
+            "op": 2,
+            "storage": 2,
+            "compute": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-fwht-rank3",
+      "shapes": [
+        [
+          32,
+          32,
+          32
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "normalizations": [
+        "inverse"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "fwht",
+          "transform": {
+            "op": 2,
+            "storage": 2,
+            "compute": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-fwht-rank4",
+      "shapes": [
+        [
+          8,
+          8,
+          8,
+          8
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "fwht",
+          "transform": {
+            "op": 2,
+            "storage": 2,
+            "compute": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-fwht-rank8",
+      "shapes": [
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "batches": [
+        16
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "normalizations": [
+        "inverse"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "fwht",
+          "transform": {
+            "op": 2,
+            "storage": 2,
+            "compute": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-ntt-rank1",
+      "shapes": [
+        [
+          65536
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "ntt",
+          "transform": {
+            "op": 1,
+            "storage": 9,
+            "compute": 4,
+            "word_bits": 64,
+            "modulus": 576460756061519873
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-ntt-rank2",
+      "shapes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "ntt",
+          "transform": {
+            "op": 1,
+            "storage": 9,
+            "compute": 4,
+            "word_bits": 64,
+            "modulus": 576460756061519873
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-ntt-rank3",
+      "shapes": [
+        [
+          32,
+          32,
+          32
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "normalizations": [
+        "inverse"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "ntt",
+          "transform": {
+            "op": 1,
+            "storage": 9,
+            "compute": 4,
+            "word_bits": 64,
+            "modulus": 576460756061519873
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-ntt-rank4",
+      "shapes": [
+        [
+          8,
+          8,
+          8,
+          8
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "ntt",
+          "transform": {
+            "op": 1,
+            "storage": 9,
+            "compute": 4,
+            "word_bits": 64,
+            "modulus": 576460756061519873
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-ntt-rank8",
+      "shapes": [
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "batches": [
+        16
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "normalizations": [
+        "inverse"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "ntt",
+          "transform": {
+            "op": 1,
+            "storage": 9,
+            "compute": 4,
+            "word_bits": 64,
+            "modulus": 576460756061519873
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-subset-zeta-rank1",
+      "shapes": [
+        [
+          65536
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "subset-zeta",
+          "transform": {
+            "op": 3,
+            "storage": 9,
+            "compute": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-subset-zeta-rank2",
+      "shapes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "subset-zeta",
+          "transform": {
+            "op": 3,
+            "storage": 9,
+            "compute": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-subset-zeta-rank3",
+      "shapes": [
+        [
+          32,
+          32,
+          32
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "normalizations": [
+        "inverse"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "subset-zeta",
+          "transform": {
+            "op": 3,
+            "storage": 9,
+            "compute": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-subset-zeta-rank4",
+      "shapes": [
+        [
+          8,
+          8,
+          8,
+          8
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "subset-zeta",
+          "transform": {
+            "op": 3,
+            "storage": 9,
+            "compute": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-subset-zeta-rank8",
+      "shapes": [
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "batches": [
+        16
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "normalizations": [
+        "inverse"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "subset-zeta",
+          "transform": {
+            "op": 3,
+            "storage": 9,
+            "compute": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-superset-zeta-rank1",
+      "shapes": [
+        [
+          65536
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "superset-zeta",
+          "transform": {
+            "op": 4,
+            "storage": 9,
+            "compute": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-superset-zeta-rank2",
+      "shapes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "superset-zeta",
+          "transform": {
+            "op": 4,
+            "storage": 9,
+            "compute": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-superset-zeta-rank3",
+      "shapes": [
+        [
+          32,
+          32,
+          32
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "normalizations": [
+        "inverse"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "superset-zeta",
+          "transform": {
+            "op": 4,
+            "storage": 9,
+            "compute": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-superset-zeta-rank4",
+      "shapes": [
+        [
+          8,
+          8,
+          8,
+          8
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "superset-zeta",
+          "transform": {
+            "op": 4,
+            "storage": 9,
+            "compute": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-superset-zeta-rank8",
+      "shapes": [
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "batches": [
+        16
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "normalizations": [
+        "inverse"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "superset-zeta",
+          "transform": {
+            "op": 4,
+            "storage": 9,
+            "compute": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-structured-2x2-rank1",
+      "shapes": [
+        [
+          65536
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "structured-2x2",
+          "transform": {
+            "op": 5,
+            "storage": 3,
+            "compute": 2,
+            "stage_matrices": "repeat-default"
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-structured-2x2-rank2",
+      "shapes": [
+        [
+          128,
+          128
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "structured-2x2",
+          "transform": {
+            "op": 5,
+            "storage": 3,
+            "compute": 2,
+            "stage_matrices": "repeat-default"
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-structured-2x2-rank3",
+      "shapes": [
+        [
+          32,
+          32,
+          32
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "normalizations": [
+        "inverse"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "structured-2x2",
+          "transform": {
+            "op": 5,
+            "storage": 3,
+            "compute": 2,
+            "stage_matrices": "repeat-default"
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-structured-2x2-rank4",
+      "shapes": [
+        [
+          8,
+          8,
+          8,
+          8
+        ]
+      ],
+      "batches": [
+        4
+      ],
+      "directions": [
+        "forward"
+      ],
+      "normalizations": [
+        "none"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "structured-2x2",
+          "transform": {
+            "op": 5,
+            "storage": 3,
+            "compute": 2,
+            "stage_matrices": "repeat-default"
+          }
+        }
+      ]
+    },
+    {
+      "name": "extension-structured-2x2-rank8",
+      "shapes": [
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "batches": [
+        16
+      ],
+      "directions": [
+        "inverse"
+      ],
+      "normalizations": [
+        "inverse"
+      ],
+      "placements": [
+        "out-of-place"
+      ],
+      "order_patterns": [
+        "natural"
+      ],
+      "layouts": [
+        "packed"
+      ],
+      "regimes": [
+        {
+          "name": "structured-2x2",
+          "transform": {
+            "op": 5,
+            "storage": 3,
+            "compute": 2,
+            "stage_matrices": "repeat-default"
+          }
+        }
+      ]
+    }
+  ],
+  "schema": "cubutterfly-semantic-campaign-config-v1"
+}

@@ -17,6 +17,57 @@ H: hardware hierarchy, capacities, and rates
 B: complete external library baseline (comparison role)
 ```
 
+The project-wide requirements live in [research principles](research_principles.md).
+Importing a callable provider and absorbing its implementation strategy into a
+parameterized template are separate milestones. The latter exposes such choices
+as arithmetic/codelet, lanes per transform, transforms per CTA, coefficient
+supply and local exchange through the common legalizer and selector. A provider
+that chooses these internally must not be reported as exposing those parameters.
+Prefer extending existing templates over application-specific dispatch rules.
+
+Prefer importing a mature callable core, then adapting its exposed implementation
+strategy, before developing new arithmetic. A missing provider-specific EPT or
+block shape is not a missing transform. AUTO searches legal core configurations
+for the unchanged semantic request; explicit mapping replay preserves the chosen
+core and parameters or reports that precise implementation as unavailable.
+An unimplemented Cartesian product of core parameters is not a requirement to
+invent a new core. This priority applies to every butterfly operator.
+
+cuFFTDx block cores already instantiate the grouped FFT suffix template. Their
+arithmetic stays inside `FFT::execute`, while cuButterfly owns the surrounding
+grouping, shared writeback, layout and normalization. Revision
+`0.9.3.11-provider.3` expands that path's EPT enumeration using the installed
+provider table and retains the new experimental native suffix only for explicit
+mapping replay. See [provider reuse correction](provider_reuse_20261014.md).
+
+### Prebuilt local codelets
+
+The same provider boundary is now exposed for the register-tile prefix.  The
+prebuilt `radix4` codelet is a local arithmetic choice, not a new dataflow: it
+keeps the existing register/shared-memory handoff, writer-aligned global layout,
+twiddle contract and suffix core.  It is currently compiled for FP32, linear
+layout, one codelet lane, and the `local_stages` values already present in the
+prebuilt inventory.  The inventory exposes radix4 only for the 16-point local
+leaf; odd-log local factors remain represented by the native provider, so an
+unsupported radix shape cannot silently change semantics.
+
+On the A100 80GB validation device, the controlled mapping `N=2^18`, `batch=16`,
+FP32, `local_stages=8`, grouped cuFFTDx suffix, and 100 timed launches per
+sample produced median prefix-provider comparisons of 0.119572 ms (native) and
+0.119091 ms (radix4) in the forward direction, and 0.119491 ms versus
+0.119060 ms in the inverse direction.  This is about 1.004x in both directions,
+within a small margin, so the provider is selectable and correctly integrated
+but is not yet claimed as a material speedup.  The same mapping at `N=2^16`
+uses an 8-point local factor and therefore exercises the residual radix-2 path;
+its timings are intentionally reported separately from the radix-4 result.
+The raw repeated samples are recorded in
+[`results/fft_local_provider_20261023.json`](../results/fft_local_provider_20261023.json).
+
+The implementation is verified through the shared-mechanism and CUDA Graph
+tests, including forward and inverse register-tile cases.  AUTO may consider
+the prebuilt provider only when its compile-time legality predicate is true;
+JIT compilation does not synthesize or alias the provider.
+
 An imported radix codelet, modular reduction, or matrix fragment belongs to
 `P`. A complete cuFFT, GPU-NTT, or HadaCore execution path belongs to `B` unless
 its processing unit can be isolated behind the common `P` contract while
@@ -54,6 +105,18 @@ An external core enters the design space only when all of these are recorded:
 If rule 5 cannot be met, the implementation remains an external baseline. Its
 performance is still important, but it cannot demonstrate that cuButterfly's
 mapping successfully absorbed the core.
+
+The isolated single-axis VkFFT adapter is an intermediate composable provider:
+cuButterfly owns the surrounding xD schedule and boundaries, while VkFFT owns
+the axis-internal arithmetic and thread organization. The adapter does not yet
+constitute an in-tree transplant of that organization. See the
+[implementation and measured scope](e2e_external_axis_20261013.md).
+
+Eliminating intermediate copies, layout passes or standalone normalization via
+the selected dataflow is a legitimate method benefit. Attribute it with equal
+semantics and buffer-ownership contracts and a matched-core organization control.
+An arithmetic-only comparison complements, rather than replaces, complete-call
+measurements of those savings.
 
 ## Fair Comparison Matrix
 
@@ -96,7 +159,13 @@ The primary comparison is measured on the same machine. Numbers quoted from a
 paper are contextual evidence, not entries in the normalized performance
 ranking.
 
-## Current Evidence Boundary
+## Historical V100 Evidence Boundary
+
+The numbers below describe the earlier V100 implementations. They are not a
+status report for the current A100 build or proof that subsequent lowerings are
+absent. Current executable coverage is tracked in the
+[template audit](template_parameter_audit_20261013.md) and the current per-build
+experiment reports.
 
 - NTT has a same-V100 comparison against a fixed GPU-NTT revision and wins on
   several length/layout combinations.

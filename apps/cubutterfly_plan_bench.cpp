@@ -32,6 +32,19 @@ void check_cufft(cufftResult status, const char* operation) {
         throw std::runtime_error(std::string(operation) + ": cuFFT status " + std::to_string(status));
 }
 
+using plan_text_query_t = cubutterflyStatus_t (*)(cubutterflyPlan_t, char*, std::size_t*);
+
+std::string query_plan_text(cubutterflyPlan_t plan, plan_text_query_t query,
+                            const char* operation) {
+    std::size_t bytes = 0;
+    check(query(plan, nullptr, &bytes), operation);
+    std::string value(bytes, '\0');
+    check(query(plan, value.data(), &bytes), operation);
+    if (!value.empty() && value.back() == '\0')
+        value.pop_back();
+    return value;
+}
+
 std::size_t checked_product(const std::vector<std::size_t>& values, std::size_t multiplier = 1) {
     std::size_t result = multiplier;
     for (const auto value : values) {
@@ -143,8 +156,8 @@ std::vector<std::size_t> parse_shape(const std::string& text) {
             break;
         begin = end + 1;
     }
-    if (extents.empty() || extents.size() > 2)
-        throw std::invalid_argument("shape must be N or RowsxColumns");
+    if (extents.empty() || extents.size() > 3)
+        throw std::invalid_argument("shape must be N, RowsxColumns, or AxBxC");
     return extents;
 }
 
@@ -171,8 +184,9 @@ void logger(cubutterflyLogLevel_t level, const char* event, const char* message,
 
 void usage() {
     std::cout << "cubutterfly_plan_bench --operator fft|ntt|fwht|subset-zeta|superset-zeta|structured-2x2 "
-                 "--shape N|RowsxColumns [--batch N] [--precision fp32|fp64|uint32|uint64] "
+                 "--shape N|RowsxColumns|AxBxC [--batch N] [--precision fp32|fp64|uint32|uint64] "
                  "[--length-mode standard|embedding] [--policy default|measure] [--algorithm ID] "
+                 "[--execution-mode auto|xd|composite] "
                  "[--matrix m00,m01,m10,m11] [--cache PATH] "
                  "[--inverse] [--in-place] [--compare-cufft] [--verify] [--trials N] [--warmup N] [--repeat N]\n";
 }
@@ -185,6 +199,7 @@ int main(int argc, char** argv) {
     cubutterflyComputeType_t compute = CUBUTTERFLY_COMPUTE_FP32;
     cubutterflyLengthMode_t length_mode = CUBUTTERFLY_LENGTH_STANDARD;
     cubutterflyAlgorithmPolicy_t policy = CUBUTTERFLY_ALGORITHM_DEFAULT;
+    cubutterflyExecutionMode_t execution_mode = CUBUTTERFLY_EXECUTION_AUTO;
     cubutterflyPlacement_t placement = CUBUTTERFLY_PLACEMENT_OUT_OF_PLACE;
     std::vector<std::size_t> shape{256};
     std::size_t batch = 1;
@@ -257,6 +272,12 @@ int main(int argc, char** argv) {
                 if (value == "default") policy = CUBUTTERFLY_ALGORITHM_DEFAULT;
                 else if (value == "measure") policy = CUBUTTERFLY_ALGORITHM_MEASURE;
                 else throw std::invalid_argument("unknown policy");
+            } else if (arg == "--execution-mode") {
+                const auto value = take(index, argc, argv);
+                if (value == "auto") execution_mode = CUBUTTERFLY_EXECUTION_AUTO;
+                else if (value == "xd") execution_mode = CUBUTTERFLY_EXECUTION_XD;
+                else if (value == "composite") execution_mode = CUBUTTERFLY_EXECUTION_COMPOSITE;
+                else throw std::invalid_argument("unknown execution mode");
             } else {
                 throw std::invalid_argument("unknown option: " + arg);
             }
@@ -302,7 +323,11 @@ int main(int argc, char** argv) {
         check(cubutterflySetOperator(descriptor, op), "set operator");
         check(cubutterflySetDataType(descriptor, storage, compute), "set data type");
         check(cubutterflySetShape(descriptor, static_cast<std::uint32_t>(shape.size()), shape.data(), batch), "set shape");
+        check(cubutterflySetExecutionMode(descriptor, execution_mode), "set execution mode");
         check(cubutterflySetDirection(descriptor, inverse ? CUBUTTERFLY_DIRECTION_INVERSE : CUBUTTERFLY_DIRECTION_FORWARD, 1), "set direction");
+        if (op == CUBUTTERFLY_OPERATOR_NTT)
+            check(cubutterflySetNttLayouts(descriptor, CUBUTTERFLY_NTT_LAYOUT_NATURAL,
+                                           CUBUTTERFLY_NTT_LAYOUT_NATURAL), "set NTT layouts");
         check(cubutterflySetPlacement(descriptor, placement), "set placement");
         check(cubutterflySetLengthMode(descriptor, length_mode), "set length mode");
         check(cubutterflySetAlgorithmPolicy(descriptor, policy,
@@ -475,6 +500,8 @@ int main(int argc, char** argv) {
         check(cubutterflyPlanGetAlgorithmName(plan, nullptr, &name_bytes), "query algorithm name size");
         std::vector<char> algorithm(name_bytes);
         check(cubutterflyPlanGetAlgorithmName(plan, algorithm.data(), &name_bytes), "query algorithm name");
+        const auto mapping_json = query_plan_text(
+            plan, cubutterflyPlanGetMappingJson, "query mapping json");
         std::vector<std::size_t> physical(shape.size());
         check(cubutterflyPlanGetPhysicalExtents(plan, physical.data(), static_cast<std::uint32_t>(physical.size())), "query physical shape");
         std::cout << "algorithm=" << algorithm.data() << ",logical_shape=";
@@ -505,6 +532,10 @@ int main(int argc, char** argv) {
                       << ",relative_l2_error=" << relative_l2_error
                       << ",max_absolute_error=" << max_absolute_error
                       << ",tolerance=" << tolerance;
+        // Keep the complete resolved mapping on the same machine-readable
+        // record as the timing.  It is emitted last because the JSON itself
+        // contains commas and nested fields.
+        std::cout << ",mapping_json=" << mapping_json;
         std::cout << '\n';
 
         cudaEventDestroy(stop);

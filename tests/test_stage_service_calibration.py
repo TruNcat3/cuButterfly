@@ -111,6 +111,81 @@ def _calibrate(binary, checkpoint, profile, points, runner, **kwargs):
     )
 
 
+def test_explicit_build_priors_preserve_raw_records_and_redescribe(tmpdir):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=8)
+    old_probe = FakeProbe()
+    _calibrate(binary, checkpoint, profile, [point], old_probe)
+    old = json.loads(checkpoint.read_text())
+    # Fingerprints are provenance, independent of the physical curve key.
+    for record in old["records"]:
+        record["sample"]["runtime_fingerprint"] = "old-runtime"
+        record["raw"]["runtime_fingerprint"] = "old-runtime"
+    old["raw_records"] = old["records"]
+    checkpoint.write_text(json.dumps(old))
+    binary.write_bytes(b"new-stage-probe")
+    with pytest.raises(ValueError, match="identity/protocol mismatch"):
+        _calibrate(binary, checkpoint, profile, [point], FakeProbe())
+    new_probe = FakeProbe()
+    result = _calibrate(binary, checkpoint, profile, [point], new_probe, resume_build_priors=True)
+    saved = json.loads(checkpoint.read_text())
+    assert new_probe.calls == [(8, True)]
+    assert saved["build_prior_origins"][0]["records"] == old["raw_records"]
+    assert saved["build_prior_origins"][0]["identity"] == old["identity"]
+    assert all(record["sample"]["runtime_fingerprint"] == "old-runtime" for record in saved["records"])
+    assert result["build_priors"]["current_identity"] == saved["identity"]
+    assert result["curves"]
+    with pytest.raises(ValueError, match="explicit resume_build_priors"):
+        _calibrate(binary, checkpoint, profile, [point], FakeProbe())
+
+
+@pytest.mark.parametrize("change", ["hardware", "protocol"])
+def test_build_priors_keep_hardware_and_protocol_checks(tmpdir, change):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=8)
+    _calibrate(binary, checkpoint, profile, [point], FakeProbe())
+    binary.write_bytes(b"new-stage-probe")
+    kwargs = {"resume_build_priors": True}
+    if change == "hardware":
+        profile["device"] = "another-gpu"
+    else:
+        kwargs["protocol_label"] = "different-protocol"
+    with pytest.raises(ValueError, match="matching hardware and measurement protocol"):
+        _calibrate(binary, checkpoint, profile, [point], FakeProbe(), **kwargs)
+
+
+def test_build_priors_new_resource_key_measures_again(tmpdir):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=2)
+    _calibrate(binary, checkpoint, profile, [point], FakeProbe())
+    binary.write_bytes(b"new-stage-probe")
+    class NewResourceProbe(FakeProbe):
+        def __call__(self, command):
+            result = super().__call__(command)
+            result["groups"][0]["compiler_registers_per_thread"] = 32
+            result["runtime_fingerprint"] = "new-runtime"
+            return result
+    runner = NewResourceProbe()
+    result = _calibrate(binary, checkpoint, profile, [point], runner, resume_build_priors=True)
+    assert any(not describe for _, describe in runner.calls)
+    assert len(result["curves"]) == 2
+
+
+def test_build_priors_archive_failed_and_contaminated_rows_without_reuse(tmpdir):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=2)
+    _calibrate(binary, checkpoint, profile, [point], FakeProbe())
+    old = json.loads(checkpoint.read_text())
+    for index, record in enumerate(old["records"]):
+        record["status"] = "contaminated" if index == 0 else "unavailable"
+        record["correct"] = False
+    old["raw_records"] = old["records"]
+    checkpoint.write_text(json.dumps(old))
+    binary.write_bytes(b"new-stage-probe")
+    runner = FakeProbe()
+    _calibrate(binary, checkpoint, profile, [point], runner, resume_build_priors=True)
+    saved = json.loads(checkpoint.read_text())
+    assert saved["build_prior_origins"][0]["records"] == old["raw_records"]
+    assert all(record["status"] == "measured" and record["correct"] for record in saved["records"])
+    assert any(not describe for _, describe in runner.calls)
+
+
 def test_acquisition_measures_before_resolving_next_plan(tmpdir):
     binary, checkpoint, profile, point = _inputs(tmpdir, batch=8)
     runner = FakeProbe()
@@ -301,6 +376,70 @@ def test_non_executable_plan_is_a_reported_omission_without_timed_probe(tmpdir):
     assert result["coverage"]["measured_records"] == 0
     assert result["calibration_status"] == "incomplete-unsupported"
     assert runner.calls == [(8, True)]
+
+
+class NumericAdapterGapProbe(FakeProbe):
+    def __call__(self, command):
+        value = super().__call__(command)
+        if value["sample"]["precision"] == "fp16":
+            assert "--describe-only" in command, "known adapter gap reached timed probe"
+            value["correct"] = False
+            value["reason"] = "stage probe reference for this numeric regime is not available"
+            for group in value["groups"]:
+                group.update(independent=False, reason=value["reason"])
+        return value
+
+
+def test_numeric_adapter_gap_preserves_valid_curve_scope_without_global_validation(tmpdir):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=32)
+    unsupported = dict(point, operator="fwht", precision="fp16", accumulation="fp32")
+    runner = NumericAdapterGapProbe()
+    result = _calibrate(binary, checkpoint, profile, [point, unsupported], runner)
+
+    assert result["calibration_status"] == "incomplete-unsupported"
+    assert not result["validated"]
+    coverage = result["coverage"]
+    assert coverage["adapter_gap_count"] == 1
+    assert coverage["one_point_curves"] == []
+    gap = coverage["adapter_gaps"][0]
+    assert gap["point"]["precision"] == "fp16"
+    assert gap["point"]["accumulation"] == "fp32"
+    assert gap["group_reasons"] == ["stage probe reference for this numeric regime is not available"]
+    scope = result["ranking_scope"]
+    assert scope["validated_curve_count"] == result["curve_count"] == 1
+    assert scope["validated_curve_keys"] == sorted(result["curves"])
+    saved = json.loads(checkpoint.read_text())
+    assert all(row["sample"]["precision"] == "fp32" for row in saved["records"])
+    before = len(runner.calls)
+    resumed = _calibrate(binary, checkpoint, profile, [point, unsupported], runner)
+    assert len(runner.calls) == before
+    assert resumed["ranking_scope"] == scope
+    assert not resumed["validated"]
+
+
+def test_exact_and_single_point_evidence_is_not_certified_for_ranking(tmpdir):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=2)
+    result = _calibrate(binary, checkpoint, profile, [point], FakeProbe())
+    assert result["ranking_scope"]["validated_curve_keys"] == []
+    limited = _calibrate(binary, checkpoint.with_name("single.json"), profile,
+                         [dict(point, batch=32)], FakeProbe(), budget=1)
+    assert limited["coverage"]["one_point_curves"]
+    assert limited["ranking_scope"]["validated_curve_count"] == 0
+
+
+def test_curve_scope_does_not_certify_a_failed_holdout_alongside_valid_curves(tmpdir):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=32)
+    result = _calibrate(binary, checkpoint, profile,
+                        [point, dict(point, logN=9, batch_stride=512)], FakeProbe())
+    assert result["ranking_scope"]["validated_curve_count"] == 2
+    failed_key = next(iter(result["curves"]))
+    for holdout in result["curves"][failed_key]["validation_points"]:
+        holdout["kernel_ms"] *= 10
+    result["validation"] = calibration._model_module()._validation_report(result)
+    scoped = calibration._result(result, result["coverage"], "incomplete-validation")
+    assert not scoped["validated"]
+    assert scoped["ranking_scope"]["validated_curve_keys"] == [
+        key for key in sorted(result["curves"]) if key != failed_key]
 
 
 def test_overlap_and_factor_slice_requests_are_pending_composition_metadata(tmpdir):
@@ -505,6 +644,65 @@ def test_full_default_reserves_holdouts_after_dense_boundary_seeds(tmpdir, monke
                           [point], FakeProbe())
     assert not explicit["validated"]
     assert explicit["coverage"]["measured_points"] == 33
+
+
+@pytest.mark.parametrize("resume", [False, True])
+def test_full_default_refines_beyond_old_cap_and_reuses_checkpoint(tmpdir, monkeypatch, resume):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=4096)
+    seeds = [1, 64, 256, 1024, 4096]
+    monkeypatch.setattr(calibration, "_residency_batches", lambda *args: (list(seeds), []))
+    runner = FakeProbe(nonlinear={batch: float(batch * batch) for batch in range(1, 4097)})
+    old_cap = max(calibration.DEFAULT_MAX_POINTS, len(seeds) + 3 * (len(seeds) - 1))
+    prior_records = []
+    if resume:
+        initial = calibration.calibrate(binary, checkpoint, profile, [point], runner,
+                                        lambda: True, warmup=1, repeat=2, trials=3,
+                                        max_points=old_cap)
+        assert not initial["validated"]
+        assert initial["coverage"]["measured_points"] == old_cap
+        prior_records = json.loads(checkpoint.read_text())["records"]
+    before_resume = len(runner.calls)
+    result = calibration.calibrate(binary, checkpoint, profile, [point], runner,
+                                   lambda: True, warmup=1, repeat=2, trials=3)
+    curve = next(iter(result["coverage"]["curves"].values()))
+    assert result["validated"]
+    assert curve["measured_load_count"] > old_cap
+    assert not curve["unvalidated_intervals"]
+    assert curve["default_refinement_rounds"] == 4
+    assert curve["max_points"] == len(seeds) + 31 * (len(seeds) - 1)
+    saved = json.loads(checkpoint.read_text())
+    assert saved["records"][:len(prior_records)] == prior_records
+    prior_batches = {row["batch"] for row in prior_records}
+    assert not any(batch in prior_batches and not describe
+                   for batch, describe in runner.calls[before_resume:])
+
+
+def test_full_default_finite_budget_keeps_unresolved_intervals(tmpdir, monkeypatch):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=4096)
+    monkeypatch.setattr(calibration, "_residency_batches", lambda *args: ([1, 4096], []))
+    runner = FakeProbe(nonlinear={batch: float(batch * batch) for batch in range(1, 4097)})
+    result = calibration.calibrate(binary, checkpoint, profile, [point], runner,
+                                   lambda: True, warmup=1, repeat=2, trials=3)
+    curve = next(iter(result["coverage"]["curves"].values()))
+    assert curve["max_points"] == 33
+    assert curve["measured_load_count"] == 33
+    assert curve["unvalidated_intervals"]
+    assert result["calibration_status"].startswith("incomplete")
+    assert not result["validated"]
+
+
+def test_full_default_records_each_curve_budget_independently(tmpdir, monkeypatch):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=4096)
+    other = dict(point, logN=9, batch_stride=512)
+    monkeypatch.setattr(
+        calibration, "_residency_batches",
+        lambda point, *args: ([1, 64, 256, 1024, 4096] if point["logN"] == 8
+                             else [1, 128, 256, 512, 1024, 2100, 4096], []))
+    result = calibration.calibrate(binary, checkpoint, profile, [point, other], FakeProbe(),
+                                   lambda: True, warmup=1, repeat=2, trials=3)
+    curves = list(result["coverage"]["curves"].values())
+    assert sorted(curve["max_points"] for curve in curves) == [129, 193]
+    assert result["coverage"]["max_points_per_curve"] == 193
 
 
 def test_post_exclusivity_failure_is_contaminated_and_retryable(tmpdir):

@@ -1,6 +1,751 @@
 # Unified framework implementation
 
+> Radix-4 precision, compact-real and long-1D completion, 2026-10-24
+
+The [completion report](radix4_completion_20261024.md) records 24 public xD
+requests and 16 fixed-mapping long-1D requests on an A100 80GB. The pair core
+now supports native FP64, compact-real plans can pack two complex axes, and
+mixed-radix register leaves reach JIT, candidate enumeration, calibration seed
+import and post-install tuning. Public automatic 32×32 C2C selection reaches
+1.588x FP32 and 1.415x FP64 geometric mean against complete cuFFT; FP64 chooses
+existing cores rather than the new pair. Compact-real means are 1.136x/1.102x.
+The separate fixed-mapping long-1D study reaches about 1.064x in each precision,
+with 4/8 FP32 and 5/8 FP64 wins. All 40 requests completed numerical error
+reporting and exact replay checks. Targeted GPU regressions and memory/sync
+checks passed. Broader pair sizes, long-1D automatic tuning, full weak-region
+acceptance and general installation-model calibration remain open.
+
+> Public xD radix-4 pair integration, 2026-10-24
+
+The [public integration report](public_radix4_integration_20261024.md) connects
+the validated register radix-4 pair core to the common xD lowering, candidate
+search, cache replay, and Python API. On an A100 80GB, the public selector chose
+the new pair candidate for all six `32×32` FP32 cases and measured `1.252–2.191x`
+against an explicit whole-transform cuFFT provider. A `[8,32,32]` sample chose
+the existing mixed-axis plan instead, preserving context-sensitive selection.
+The report retains a direct cuFFT baseline for rank two, PyTorch for rank three,
+full error distributions, and explicit rejections for FP64, unsupported sizes,
+and unknown pair cores. Long 1D, compact-real pair packing, and broader shape
+coverage remain separate implementation work.
+
+> Runtime RNS tuning budget and cache replay, 2026-10-21
+
+The [runtime tuning report](../results/rns_tile_io_20261021/README.md) adds the
+public `CUBUTTERFLY_RNS_TUNE_REPETITIONS` budget control while retaining the
+lightweight default of five. A fresh 12-repetition cache prepared the actual
+runtime semantic requests, which differ from the older exported manifest in
+placement and domain descriptors. A subsequent `require` run replayed all 118
+runtime plans without tuning. Complete CKKS Graph bootstrap measured 1.034x at
+B=1 and 1.033x at B=8 with exact ciphertext agreement. This closes the cache
+integration gap for the measured application, but it does not establish global
+optimality or finish the general RNS cost-model integration.
+
+> RNS stage specialization and CKKS improvement, 2026-10-21
+
+The [stage-role report](../results/rns_stage_role_20261021/README.md) records
+compile-time first/last and prefix/suffix roles in the existing fused lowering.
+All 118 actual requests were retuned and replayed from required cache entries.
+The six selected N4096 requests reach 1.131x geometric mean against contiguous
+GPU-NTT, with five wins and the small forward loss retained. Complete CKKS
+Graph bootstrap reaches 1.033x at B1 and 1.032x at B8, with exact ciphertext
+agreement. Trace-weighted NTT improves to 1.073x; non-NTT names, order and
+launch geometry match the native path. Small requests and medium forward
+requests remain weak. Artificial cache-access controls are reported separately.
+This measures lowering plus retuning, not a fixed-mapping mechanism ablation.
+General RNS model integration and broader application acceptance remain open.
+
+> RNS single-warp coverage and complete CKKS attribution, 2026-10-21
+
+The [new report](../results/rns_single_warp_20261021/README.md) adds 32-thread
+fused candidates and transactional mapping changes, with 241 exact cases and
+focused sanitizer checks. All 118 actual requests were retuned; none selected
+32 threads, so this closes a coverage gap without establishing a speedup.
+Complete Graph bootstrap remains about 1.01x. A full trace attributes most of
+the limitation to small/medium NTT requests: 434 of 516 calls have at most 64
+rows and lose in aggregate, while larger requests win. Non-NTT kernel names,
+geometry and order match; no gather/scatter kernels appear in this path.
+An explicit contiguous GPU-NTT control also exposes the difference between
+standalone ModulusOrdered measurements and the application's mixed dispatches.
+Actual-workload core efficiency, context-sensitive selection and general RNS
+model integration remain open; historical headline speedups retain their scope.
+
+> RNS dependency-scoped exchange, 2026-10-21
+
+The [follow-up report](../results/rns_exchange_20261021/README.md) adds an optional,
+geometry-derived warp/CTA barrier policy to RNS selection and persistent replay.
+All 217 exact RNS cases pass, with focused racecheck/synccheck acceptance.
+Offline preparation covers 118 actual requests; both full-bootstrap processes
+replay all 118 without tuning. Six operator points range from 0.901x to 1.262x
+against native GPU-NTT. Full B1/B8 Graph bootstrap is about 1.011x, a small gain.
+Controlled exchange changes alone produce only small effects; NCU still shows
+high CTA barrier waiting in the small forward case. Register/warp core ownership,
+32-thread candidate coverage, general RNS model integration and exception-safe
+mapping transitions remain open; this is not a full-library completion claim.
+
+> Prepared RNS replay and actual CKKS requests, 2026-10-21
+
+The [implementation and measurement report](../results/rns_prepared_20261021/README.md)
+records persistent request-specific mappings, the additive Python/C ABI, and
+shared scalar/stage preparation. All 118 actual bootstrap requests replay in
+a new process without tuning. Full Graph bootstrap at B=1/8 is essentially tied
+with native HEonGPU; six real-request NTT diagnostics retain both the 0.876x
+small forward case and gains up to 1.259x. NCU points to excess CTA barrier
+waiting in the small case. General descriptor/model integration, dependency-aware
+warp exchange candidates and complete weighted attribution remain open.
+See the [integration guide](rns_prepared_integration.md) for reproducible use.
+
+> Explicit CKKS stage batching and matched controls, 2026-10-19
+
+The [integration report](../results/ckks_stage_batch_20261019/README.md) connects
+bound RNS batches to complete independent-ciphertext DAGs. Each scalar capture
+owns its scratch; explicit NTT markers become private gather/NTT/scatter stage
+graphs while all other nodes and dependencies are preserved. Native GPU-NTT
+uses the same batching control. All 36 configurations and four execution paths
+pass exact ciphertext checks. The 24 B=8/32 configurations beat both native
+loop and native batched controls; forced B=1 batching loses, and two large-N
+rotation cases prefer cuButterfly's own loop. The report retains thermal
+diagnostics and uses completed thermally guarded repeats for final statistics.
+Application schedule selection, global RNS descriptor/model integration and
+full CKKS/TFHE bootstrap remain separate work.
+
+> Finite comparison and NTT search repair, 0.9.3.11-search.1, 2026-10-17
+
+The [66-request comparison](install_comparison_results_20261017.md) has completed
+measurement and same-precision review. The [follow-up](ntt_search_repair_20261017.md)
+identifies an NTT family omitted by global budget subsampling, replaces that
+sampler with family quotas, and adds exact grouped external FFT adapters.
+Historical headline populations remain separate. Public finalist confirmation
+and remaining GPU baseline gaps are tracked in the follow-up report.
+
+> JIT runtime scaling diagnosis, 0.9.3.4-jit-runtime.1, 2026-10-10
+
+The [runtime investigation](jit_shared_runtime_20261010.md) isolates another
+batch-dependent search bottleneck: thousands of JIT modules each link a private
+static CUDA runtime, inflating stream/event/launch costs. Shared-runtime modules
+pass real FFT/FWHT/NTT GPU checks. The complete same-GPU N256/B16 FP32 search
+fell from 2,394.044 to 386.144 seconds (6.200x), with identical candidate order
+and verification outcomes. Both 80GB GPUs are recalibrating under the new
+runtime; prepared full-matrix launchers follow their completion automatically.
+Original results keep their identities. Search wall-time improvement does not
+establish operator-throughput improvement or close full-matrix goals.
+
+> Persistent queries and module reuse, 0.9.3.4-async-experiments.3, 2026-10-10
+
+The [experiment update](async_fast_dispatch_20261010.md) removes repeated Python
+startup from ready-module queries and groups complete test cases by module
+family. The independent compiler finished all 72,654 known requests; remaining
+host overhead came from query dispatch, loading and partial-search recycling.
+The optional service preserves broker validation and resource guards. The
+handoff retains completed evidence with original identities; full comparison
+and floating accuracy acceptance remain separate obligations.
+
+> CPU preparation, 0.9.3.4-cpu-preparation.1, 2026-10-10
+
+The [CPU preparation follow-up](async_recovery_20261010.md#cpu-preparation-follow-up)
+replaces repeated whole-queue scans with an independent incremental compiler
+producer and 24 CPU slots. It prioritizes completing known case dependencies
+while retaining background fairness, exact cache validation and every candidate.
+All input/oracle preparation is already complete, with 232 explicit gaps.
+Full CPU-only export of future adaptive xD candidates remains unfinished;
+compilation readiness is reported separately from GPU measurement completion.
+
+> Bounded experiment workers, 0.9.3.4-async-experiments.2, 2026-10-10
+
+The [resource recovery](async_recovery_20261010.md) preserves 29,170 checked
+performance records and schedules the remaining 9,246. Process-global JIT
+modules accumulate across searches, so workers now recycle with recorded
+resource limits; resource failures invalidate full searches instead of silently
+dropping candidates. Both original-device control populations (96 FFT/FWHT plus
+24 real FFT) are complete with finite outputs and pending accuracy review.
+Two A100 80GB queues continue the remaining timing population, using the same
+v0.9.3.4 library and per-device calibration.
+
+> Real FFT range controls, 0.9.3.4-real-range-controls.2, 2026-10-09
+
+The [numeric evidence audit and controls](numeric_range_controls_20261009_v2.md)
+identify 108 raw output-range failures and 12 C2R inputs that overflow during
+FP16 spectrum quantization. Separate R2C/C2R controls close the 24-request gap
+left by the existing 96 C2C/FWHT controls. All 24 new controls completed on
+A100 40GB with finite outputs and complete errors retained; floating acceptance
+remains pending. Original 80GB mapping replay is CPU-prepared and queued after
+the owned GPU1 experiments. Frozen library, calibration and campaign identities
+are unchanged, and raw failures are retained rather than reclassified as passes.
+
+> Asynchronous experiments, 0.9.3.4-async-experiments.1, 2026-10-09
+
+The [queue record](async_experiments_20261009.md) moves deterministic input and
+oracle preparation, compilation, error analysis and evidence processing into
+independent CPU producers. GPU consumers retain complete research selection,
+reject incomplete compile attempts, and verify every output before accepting
+measurements. Seven timing samples remain a contiguous GPU group. The v0.9.3.4
+library and each GPU's calibration are unchanged. The checked handoff retains
+6,532 completed recovery cases, 19 isolated correctness failures and 35 timing
+cases; remaining recovery is 5,251 cases, followed by the original timing
+shards and separate scaled controls. The full comparison and floating accuracy
+acceptance remain unfinished.
+
+> Numeric and public-plan repair, 0.9.3.4, 2026-10-09
+
+The [repair record](numeric_plan_repair_20261009_v0934.md) supersedes the active
+October 8 queue. Its stopped 33,076 records remain historical evidence. Public
+NTT algorithm serialization now covers valid selected backends, and normalized
+FP16/BF16 FFT/FWHT distribute scaling with explicit range bounds. An intermediate
+always-pre-scale implementation fixed the original Inf failures but lost minimum
+subnormal constants; its queues were stopped and its evidence preserved. The
+final range-aware implementation is verified on both failure classes before
+restarting two independent A100 80GB queues for affected/unfinished conformance
+and disjoint halves of the original full performance population.
+Complete results and floating accuracy acceptance remain pending.
+
+> Bounded support milestone, 0.9.3, 2026-10-08
+
+The [bounded support record](bounded_support_20261008.md) supersedes the old
+extreme size/batch population. The old queue stopped between shards with
+35,343 records preserved. Five functional gap classes now have executable
+lowerings, including explicit same-precision real and mixed-compute adapters.
+The prepared population contains 38,416 unique valid requests, at most 2^20
+elements each; its 232 static gaps are rank-nine boundary negatives. New-path
+GPU checks and actual-runner integration completed; full bounded-matrix
+conformance, fresh calibration binding and comprehensive comparison remain
+separate unfinished stages. Floating accuracy acceptance is still pending.
+
+> Continuation controller repair, 0.9.2.2, 2026-10-08 evening
+
+The [continuation repair](continuation_repair_20261008.md) removes repeated
+large-set construction and historical-shard revalidation within a running
+process. Restart still validates every saved artifact. Controller-only upgrades
+preserve old state/source evidence and cannot alter measurement identities.
+Baseline execution errors now block every continuation path, and comparison
+requires the same execution configuration as conformance. The queue adds
+separate FFT/FWHT scaled-input controls before timing; historical controls are
+reused with their original provenance. The new FWHT range control has no
+nonfinite outputs, with full errors still awaiting review. Full large-request
+reference coverage and missing lowerings remain unresolved.
+
+> Numeric reporting repair and isolated continuation, 2026-10-08 afternoon
+
+The first large FP16 FFT failure has two distinct causes. Complex output decoding
+introduced extra component NaNs; harness revision `0.9.2.1-numeric-reporting`
+fixes that defect. An unchanged-input GPU reproduction still has 44 nonfinite
+complex outputs. The reference itself has 21 values beyond FP16's finite range,
+and a CPU reproduction of the implemented half arithmetic matches all 44
+nonfinite positions, first overflowing at the eighteenth butterfly level.
+This evidence explains the recorded overflow without establishing a general
+kernel correctness or accuracy verdict. No arithmetic kernel has changed.
+
+The user authorized continuing other experiments while investigating failures.
+The new queue is `results/semantic_campaign_20261008_v0921/run_unaffected.sh`.
+It validates the 34,961 historical records, preserves their identities and
+failure artifacts, then executes the remaining 13,823 conformance requests in
+fresh shards. Further correctness failures are retained and isolated; other
+execution failures stop. A separate measured comparison follows conformance,
+with quarantined requests explicitly excluded, not counted as successes.
+The active queue index and supervisor heartbeat establish current progress.
+The user approved separately labelled scaled-input controls; no scaled input
+replaces an original pressure-test case. Preparation and results are separate
+from the unscaled continuation. The first unchanged-mapping GPU control used
+an input-derived factor of 1/128 and produced zero nonfinite outputs. Relative
+L2 error is 0.133%, while pointwise median/p99 relative errors are 29.4%/381.6%;
+full error review and FP16 external bindings remain outstanding. This is range
+diagnosis evidence, not an accepted accuracy or performance result.
+See the [repair record](numeric_reporting_repair_20261008.md).
+
+> Semantic campaign resumed, 2026-10-08 morning
+
+The queue resumed from 14,971 verified saved records, including 13,899 semantic
+crossing requests. All referenced error artifacts and frozen identities match;
+new checkpoints confirm forward progress. The previous process disappeared
+after 00:51 without an exit reason. An independent outer supervisor now records
+heartbeat, process identity and exit status without changing the runner or
+measurement protocol. The active queue index points to its current status file.
+Full conformance and searched performance comparison remain in progress/pending;
+floating accuracy is still awaiting threshold selection.
+
+> Descriptor-based retest started, 2026-10-07 evening
+
+The user authorized fresh calibration and comparisons and explicitly selected
+complete-call comparison including layout/order conversions, with native and
+adapted paths reported separately. The [new campaign](semantic_campaign_20261007.md)
+uses public canonical descriptors rather than the cancelled benchmark schemas.
+Fresh hardware probes, 59 mapping reconfirmations and the 40-class stage
+calibration completed on A100 80GB UUID ending fff02. Selector replay passed.
+The model retains a local warning: four serial records lack stage-curve coverage,
+the resident FFT independent-stage adapter is missing, and concurrent composition
+is unvalidated. This is not complete calibration of unseen public descriptors.
+The finite manifest has 48,784 unique semantic requests, including 7,680 static
+lowering gaps. These are planned requests, not execution passes. The user chose
+to inspect floating error distributions and baseline errors before selecting
+thresholds; diagnostic floating rows cannot count as passes.
+The previous reviewed campaign remains cancelled.
+
+> Unified public semantics, 0.9.2, 2026-10-07
+
+The previous reviewed comparison is cancelled, with a persistent cancellation
+record and execution/resume guards; its manifest and historical data are
+preserved. The [semantic repair](unified_semantics.md) adds one CPU normalizer
+and JSON contract for C/C++/Python, independent strides and per-axis logical
+orders, capability reasons, canonical workload/replay identity and a common
+boundary lowering. Generic composite execution now admits ranks through eight.
+Runtime correctness checks are recorded under `results/semantic_repair_20261007`.
+The final build passes 177 public GPU regressions, 33 actual-library CPU API
+tests, two CPU CTest targets and the full legacy C API regression. The unchanged
+ordered-boundary kernels also pass 256 raw cases. These results establish the
+tested semantic paths, not exhaustive coverage or high-performance acceptance.
+This repair does not start calibration or define a replacement performance plan.
+
+> Public frontend and dimension audit, 2026-10-07 (pre-repair record)
+
+The [dimension audit](public_frontend_dimension_audit_20261007.md) follows the
+user's requirement to organize coverage by semantic dimensions. At that point,
+C/C++ had a shared public plan, but order was NTT-specific, public rank was
+limited to three, and research Python entry points reused test bindings. Batch
+strides alone and non-NTT non-default order fields were silently ignored.
+The audit itself changed documentation only. The 0.9.2 repair above addresses
+these findings; the old reviewed campaign is cancelled, not pending execution.
+
+> Engineering review before the next campaign, 2026-10-07
+
+The current entry is the [engineering review](engineering_review_20261007.md).
+The previous comparison waiter and its partial calibration are paused; no new
+GPU comparison was started. Confirmed mappings and stage checkpoints remain
+available. The reviewed `0.9.1-review.1` campaign uses strict calibration/build
+binding, stops on failed correctness/profile gates, and quarantines partial
+outputs before retry. CPU preparation is exposed through
+`scripts/reviewed_comparison.py`; GPU validation and comparison remain pending.
+The reviewed build, 299 CPU tests, 22 subtests and the C++ platform matching
+test passed. The frozen campaign is
+`results/reviewed_campaign_20261007_r1/manifest.json`; all 49 commands passed
+CPU preparation checks. No GPU worker or automatic waiter was started.
+
+> Platform-boundary and retest repair, 2026-10-07
+
+The [repair record](platform_boundary_repair_20261007.md) describes the preceding
+repair. Native bit-reversed NTT is now reachable through
+the common inventory; platform preferences are isolated behind a shared rule
+interface. Focused CTest passed 21/21, and three weak NTT diagnostics improved
+by roughly 50–149x over the defective first-feasible fallback. These are
+before/after diagnostics, not a completed external performance population.
+The oversized FFT checker now verifies every output with bounded temporaries.
+The xD NTT harness failure was reproduced as a forced-preload loading issue.
+
+The preceding, now-paused confirmation is under
+`results/local_hardware_profile_a100_gpu1_repaired_20261007/`; its dependent
+full comparison is under `results/recalibrated_campaign_20261007_repair/`.
+Its partial files remain available; the reviewed build requires fresh confirmation.
+The 20261006 campaign is historical evidence and retains its recorded failures.
+
+> Length-64 local-core follow-up, 2026-10-06
+
+The residual 64^3/B4 FP32 case was traced to an executable-space gap: the
+selector had no ThreadShared implementation for 64-point axes and therefore
+could only compare Block cores on the two strided passes. A bounded N64
+8x8 local factorization was added with constant-root and recurrence-root
+variants. The recurrence variant uses the same SoA XOR shared handoff as the
+existing local cores and keeps the natural layout across each axis.
+
+The public selector now admits N64 alongside N128/N256 and can combine local
+strided axes with a Block contiguous axis and batch tiling. On A100 80GB,
+64^3 selected plans improved over cuFFT at B=1/4/16 in FP32 and at B=4/16
+in FP64. The B4 FP32 plan is 22.886 microseconds versus cuFFT 25.958 and
+VkFFT 20.787; B16 selects an 8-sample batch tile and reaches 97.894
+microseconds versus cuFFT 109.517. Correctness, mapping, and resource
+checks pass, with no register spills in the N64 kernels. This is a bounded
+coverage repair and does not claim global optimality.
+
+The post-change 64-case regression is complete. All 192 selected/cuFFT/VkFFT
+rows pass. Across the population, cuButterfly reaches 1.2714x geometric
+speedup over cuFFT and 1.0112x over VkFFT, with 58/64 points at least 3%
+ahead of cuFFT. Forward and normalized-inverse geometric speedups are
+1.1285x/1.0033x and 1.4819x/1.0213x, respectively. The focused weak-case
+profile attributes the remaining tails to register pressure in paired and
+cooperative FP64 cores and launch underfill in a small 2-D FP32 case. This
+narrows the next engineering targets without changing the method boundary.
+
+The follow-up lowered the configurable promotion margin from the historical
+3% to the measured 1% installation default. A second complete 64-case run
+passed all 192 rows and improved the geometric population result to 1.2850x
+cuFFT and 1.0222x VkFFT, with 33/64 cases fastest overall. The gain comes
+from promoting measured mixed-axis candidates that were previously just below
+the guard, including 128^3/B4 FP64. The conservative 3% policy remains
+available through `CUBUTTERFLY_XD_PROMOTION_MARGIN=0.03` for noisy shared
+GPUs.
+
+The next bounded core repair extends the cooperative pair inventory to 32-point
+axes. Four lanes use local Thread FFT8 codelets, and the FP64 32x32
+specialization uses 128 threads. The selected 32^3/B16 FP64 plan reaches
+26.52 microseconds versus 27.65 microseconds for cuFFT; the forced cooperative
+pair is 26.88 microseconds versus 28.88 microseconds for the original pair.
+The pair resource record falls from 148 to 50 registers per thread with no
+local-memory traffic. A guarded 26-case cooperative regression and a narrow
+B=1/4/16 FP32/FP64 matrix pass. The selector retains axis or original-pair
+families when the new core does not win, so this is a targeted executable-space
+repair rather than a blanket preference.
+
+The subsequent 64-case rerun remains complete with 192 passing rows. Its
+measured population speedups are 1.2839x over cuFFT and 1.0142x over VkFFT;
+the variation from the previous 1% run is concentrated in sub-10-microsecond
+rows, while the 32^3 FP64 B16 rows improve through the new core.
+
 > Note: Paths marked `local artifact` are local experiment records and are not included in this source release.
+
+## xD FP64 local-core probe, v17, 2026-10-05
+
+The bounded seven-variant probe completes with 420 axis checks and 132
+full-plan timing rows passing. At 256²/B16 FP64, eight-line recurrence reduces
+complete-plan latency from a fixed Block control's 42.291 μs to 35.584 μs;
+matched cuFFT is 35.712 μs. The fixed control is not the best v16 plan at
+every adjacent batch. NCU isolates a large reduction in phase-table loads
+and short-scoreboard waiting, with no new HBM boundary or local spills.
+See the [v17 protocol and profile](../results/paper_profile_rc2/end_to_end/xd_local_v17/README.md).
+
+Production v17 adds `local_twiddle_policy=1` as an optional per-axis recurrence
+choice for the existing 128/256-point inventory in both precisions and
+directions. The original constant-root choice and line-cap behavior remain
+available. Mapping replay, compact-real complex axes, batch tails and the
+bounded measured search carry the policy explicitly. Fourteen GPU CTests
+and 204 API cases pass; memcheck/racecheck report zero errors/hazards. All
+48 matched weak rows pass. Public selection improves 256²/B16 FP64 from
+42.035 to 35.174 μs, reaching approximate cuFFT parity, and improves FP32
+at that workload from 19.507 to 16.589 μs.
+
+The unchanged full64 matrix completed at 20:44:06 +08 with all 192 rows
+passing. Geometric speedup is 1.2089x cuFFT and 0.9653x VkFFT, versus the
+preceding same-population v16 run's 1.1833x/0.9424x. Forward is
+1.0789x/0.9602x; normalized inverse is 1.3994x/0.9718x and includes fused
+normalization relative to cuFFT's separate scale kernel. FP64 reaches
+1.2379x cuFFT and 1.0020x VkFFT. Fifty-four of 64 points beat cuFFT; 22 are
+strictly faster than both baselines. All winners are freshly measured and
+14 use recurrence. The residual tail is now 64³/B4 FP32, about 0.881x
+cuFFT and 0.709x VkFFT forward. Universal superiority remains open.
+
+One small 8³/B16 FP32 historical timing outlier has the same physical map
+before and after this change. Three alternating-binary recheck rounds complete
+with all twelve rows passing and paired differences within ±0.7%; the apparent
+regression does not reproduce. This follow-up is kept separate from the
+immutable full64 population. Implementation, affected verification, controlled
+profiling and the full comparison are complete for this v17 milestone.
+
+## xD local FFT realization, v16, 2026-10-05
+
+The 128/256-point `ThreadShared` core composes Thread FFT8/16 codelets with
+SoA XOR shared exchange. It adds no HBM boundary between its local factors.
+The existing independent-axis search admits it alongside Block/register
+cores, including compact-real complex axes, exact replay and batch tails.
+Actual per-axis metadata reports the chosen realization; unsupported axes
+retain existing fallbacks. This remains a finite executable inventory and
+bounded measured search, not a global-optimality claim or new calibration.
+
+The frozen v16 library (`f9fd176a...264517cb`) passes fourteen affected CTests,
+191 distinct public API cases, memcheck and racecheck. The test record explains
+two repaired test-oracle/mapping issues; the library did not change during
+validation. The unchanged weak population has 56 passing rows. Mixed local
+and Block axes improve matched old-map throughput by 23.63% at 128³/B1 FP32,
+7.97% at 128³/B1 FP64, and 9.39% at 256²/B64 FP32. 256²/B16 FP64 remains
+weak at about 0.837x cuFFT.
+
+The full fixed64 population completed uninterrupted on A100 80GB PCIe at
+19:24:36 +08, with all 192 rows passing. Geometric speedup is 1.1833x versus
+cuFFT and 0.9424x versus VkFFT; the corresponding forward values are
+1.0577x/0.9425x and normalized-inverse values 1.3670x/0.9421x. Inverse results
+include fused normalization versus the cuFFT baseline's separate scale kernel.
+cuButterfly is faster than cuFFT on 52/64 points and fastest of all three on
+16/64. The latest full result therefore improves over the previous v13.1
+population, while universal parity and the remaining VkFFT/FP64 tails are
+still open. See the [v16 evidence and reproduction scripts](../results/paper_profile_rc2/end_to_end/xd_local_v16/README.md).
+
+Exact-map NCU follow-up completes with seven reports and 28 profiled kernels,
+all with zero local-memory sectors. On the representative 128³ FP32 strided
+axis, registers fall 64→40, executed instructions fall 22.7%, and shared store
+conflicts fall 98.4%. For 256²/B16 FP64, eliminating almost all shared store
+conflicts does not improve the local axis: register use remains 80, active
+warps fall and short-scoreboard waits rise. The measured sweep includes that
+candidate and correctly retains the old plan. See the
+[profile analysis](../results/paper_profile_rc2/end_to_end/xd_local_v16/PROFILE.md)
+for counters, replay limitations and the bounded remaining core target.
+
+## xD independent axis resources, v15, 2026-10-05
+
+The implementation separates core, EPT, Block cap, lane count and exchange
+policy by logical complex axis. It reuses existing kernels, propagates resources
+to compact-real and batch-tile children, and preserves empty-vector legacy
+mapping replay. A single coordinate sweep refines the fastest measured unpaired
+axis plan, using complete-call timing and the existing promotion margin. This
+removes a plan-level resource coupling; it does not add a new factorization or
+claim exhaustive optimization. All 13 affected CTests, 177 API checks and both
+sanitizers pass. Two further compact-real mixed API cases also pass, with exact
+mapping replay and input preservation in both precisions and directions.
+Forty rows in the unchanged ten-point weak probe pass, but no
+mixed candidate wins promotion. Selected throughput stays within -0.78% to
++1.44% of revalidated old physical controls. The full64 promotion condition is
+not met; v13.1 remains the latest complete population result. Implementation,
+affected validation and this bounded comparison are complete.
+See the [v15 protocol and measurements](../results/paper_profile_rc2/end_to_end/xd_axes_v15/README.md).
+
+## xD cooperative register axis at length 256, v14, 2026-10-05
+
+The initial v14 extension and validation are complete. It covers
+256-point non-contiguous axes using eight or sixteen cooperative lanes and
+the existing Thread FFT32/16 codelets. The v13.1 control remains frozen. This
+addresses a local-core coverage gap exposed by the 256²/FP64 profile; it does
+not change butterfly semantics or claim that register-only execution always
+wins. Six GPU CTests, 172 API checks and both sanitizers pass. All 80 rows of
+the ten predeclared probes pass, but no new register candidate wins selection.
+NCU shows that shared conflicts disappear while dynamic constant loads and
+short-scoreboard waits increase. The completed v14.1 follow-up replaces trivial
+small-radix phase lookups with equivalent analytic rotations. Six CTests, 172
+API checks, all 80 probe rows and both sanitizers pass again. At 256²/B16 the
+forced register plans improve by 8.2–26.5%; NCU shows 67.4–76.2% fewer constant
+loads, but FP64 instructions increase and active warps remain low. No new core
+wins automatic selection, so this is not an overall speedup. The conditional
+fixed64 rerun is not triggered; v13.1 remains the latest full comparison.
+See the [v14/v14.1 measurements and controls](../results/paper_profile_rc2/end_to_end/xd_register256_v14/README.md).
+
+## xD local resource candidates, v13, 2026-10-05
+
+Implementation, affected validation, fixed64 comparison and NCU are complete
+for this bounded milestone. Following v12's matched NCU, the inventory adds
+EPT4 and a range-checked 32-bit element-index
+version of unrolled shared exchange. Existing EPT8/16 and all old exchange
+paths remain available. The changes propagate through the xD selector,
+compact-real complex axes, batch-tile children and mapping replay. This is
+an executable-lowering extension, not a change to butterfly mathematics.
+See the [v13.1 results and protocol](../results/paper_profile_rc2/end_to_end/xd_resources_v13/README.md).
+Five affected GPU CTests, all 159 public API checks and 180 exchange cases pass;
+memcheck/racecheck report no errors or hazards. The initial v13 preflight
+caught two diagnostic-format incompatibilities before any performance run.
+They are fixed in the separately identified final v13.1 binary.
+
+All 192 rows of the unchanged 64-case population are correct. Geometric
+throughput reaches 1.1616× cuFFT and 0.9255× VkFFT, versus v12's
+1.1417×/0.9097×. Forward and normalized-inverse results versus cuFFT are
+1.0382× and 1.3420×; normalization fusion contributes to the inverse advantage.
+Twenty-three measured winners use EPT4 or narrow indices. Seventeen points
+improve by more than 3% over v12 and none regress by more than 3%, in this
+single campaign. The six diagnostic controls retain negative candidate data:
+EPT4 helps 64²/FP64 but can hurt 256²/FP64 and 128³/FP32.
+
+Twenty frozen-mapping NCU replays explain the tradeoff. Narrow indices reduce
+address instructions but preserve most shared conflicts and global sectors.
+EPT4 lowers registers while increasing CTAs and, on large cases, global-load
+sectors and shared conflicts. The profiled kernels show zero local-memory
+sectors. Higher occupancy alone therefore does not resolve the remaining
+core/exchange inefficiency. Independent per-axis resources and more efficient
+local-core exchange remain next targets; this milestone does not establish
+theoretical optimality or complete other hardware/paper work.
+
+## xD strided-axis exchange, v12, 2026-10-05
+
+Implementation, affected validation, fixed comparison and NCU are complete for
+this bounded milestone. Two new optional exchange policies
+reuse the existing cuFFTDx arithmetic core: direct global/register transfers and
+compile-time-unrolled shared staging. Existing staged paths remain candidates.
+The policies share the length/precision/direction/EPT/cap dispatch and propagate
+through C2C, compact-real complex axes, batch tiles, metadata and exact replay.
+See the [bounded v12 protocol](../results/paper_profile_rc2/end_to_end/xd_exchange_v12/README.md).
+Five affected CTests, 151 public API/replay checks and both sanitizers pass.
+The new regression covers 72 cases. All 102 weak-region rows pass; 64²/B16
+FP32 falls from v11's 8.806 us to 7.066 us, versus same-run cuFFT 7.424 us.
+At 128³/FP32, matched EPT8/cap0/order controls isolate an exchange improvement
+from 65.075 to 60.058 us, while direct exchange takes 105.728 us. The sign
+changes for other EPTs, so all three policies remain measured alternatives.
+The unchanged 64-case comparison has 192 correct rows. Geometric throughput
+versus cuFFT increases from v11's 1.0546× to 1.1417×, including 1.0267× on the
+36 forward cases and 1.3087× on the 28 normalized inverse cases. Against VkFFT
+it reaches 0.9097×, so independent-library gaps remain. The original 16 forward
+controls reach 1.0560× cuFFT / 0.9474× VkFFT. Thirty-nine selected plans use new
+exchange candidates; all 64 plans use measured selection. Normalization fusion
+contributes to the inverse comparison; a single campaign is not significance.
+
+The first run was interrupted near its end by foreign CUDA tasks. An explicit
+pre-conflict cutoff retains 61 verified cases; the final three are remeasured
+under the same guard. The new benchmark resume options validate binary, GPU,
+population and timing identities and record provenance. CPU tests also cover
+UUID spelling normalization across CUDA and nvidia-smi. No conflicting trial
+enters the final release.
+
+Matched 128³/EPT8 NCU isolates a 29.625% instruction reduction from unrolling,
+but registers increase 46→64 and active warps fall. Direct exchange nearly
+doubles global sectors there. Shared-store conflicts persist after removing
+external staging, localizing a substantial remaining cost inside the imported
+core. Next targets are register live ranges, coalesced transfer/core layouts
+and independent per-axis resources. This does not establish a theoretical
+optimum or finish other hardware/paper milestones.
+
+## xD independent block granularity and FFT baselines, v11, 2026-10-04
+
+Implementation and matched measurement are complete for this bounded milestone.
+The axis Block processing unit now
+supports FFTs-per-CTA caps 8/16 independently of EPT; the default policy and old
+mapping replay remain intact. C2C and compact-real complex axes share the parameter.
+The new cache namespaces are `xd-v11-axis-block-caps` and
+`xd-real-v11-axis-block-caps`. This addresses a finite executable-inventory gap,
+not a change to butterfly semantics or the hybrid-dataflow method.
+
+The pre-change NCU control confirms that 64²/B16 launches only 32 CTAs per axis;
+cuFFT's strided axis instead launches 128 CTAs. 128³/FP32 also has higher
+instruction/shared-exchange cost, so increasing parallelism alone need not win.
+The [v11 protocol](../results/paper_profile_rc2/end_to_end/xd_block_v11/README.md)
+fixes the original 16-point control and a 64-point union population before new
+measurement. Precision, direction, rank and per-library results remain separate.
+
+An optional `vkfft_xd_bridge` target and `scripts/vkfft_xd.py` add an independent
+rank-1/2/3 C2C VkFFT baseline using caller-owned buffers and streams. Both floating
+precisions and normalized inverse are supported. `diagnose_xd_fft.py` accepts
+`--vkfft-library`, checks input preservation and actual captured-graph output,
+then uses the same warmed 20-call/7-replay protocol for each library. JIT and plan
+construction remain outside timing.
+
+Four affected CTests pass, including 96 new executions; 16 C-ABI forced/replay
+checks and both memcheck/racecheck pass. Twelve independent-baseline smoke cases
+and all 192 rows of the 64-case comparison are correct. All selected plans were
+empirically timed; 13 chose a cap variant. 64²/B16 FP32/FP64 improves to
+8.806/10.291 µs in the weak-region probe, versus v10.1's 10.240/12.442 µs.
+The larger 256² and 128³/FP32 gaps remain.
+
+Paired geometric means versus cuFFT are 1.0073× on the original 16 forward cases
+and 1.0546× on all 64 cases; the extended forward/inverse strata are
+0.9599×/1.1901×. The same populations versus VkFFT are 0.9054×/0.8396×.
+cuButterfly is fastest of three in 6/64 cases. Normalization fusion contributes
+to the inverse advantage over native cuFFT's separate scaling launch. These
+numbers support a limited gain against cuFFT, not broad superiority over FFT
+libraries. Do not pool different baselines, old 1D results, or only winning cases
+into one claimed gain. Full coverage, identities and results are retained in the
+linked v11 report; significance and cross-hardware acceptance remain separate.
+
+The final three-library NCU traces replay the matrix's exact winning mappings.
+At 64² the new cap raises the grid to 64 CTAs, matching VkFFT's block/grid shape,
+but the strided axis still executes substantially more instructions. At 128³,
+each strided stage executes 6.554M warp instructions versus VkFFT's 3.277M, with
+about 527K versus 135K shared-store bank conflicts. All libraries use three axis
+launches there. The next bounded target is a more efficient strided processing
+unit and per-axis resource choices. The initial NCU-attached search selected
+different families and is excluded from matched mechanism claims.
+
+## xD scheduling and twiddle lowering, v10.1, 2026-10-04
+
+Measurement note: the four large-cube forward cases and all correctness checks
+completed before an external job started on the target GPU at 21:45:58. The
+remaining cases were rerun under a one-second CUDA-process guard, completing
+at 22:07:32 without a foreign process observed. The
+[guard status](../results/paper_profile_rc2/end_to_end/xd_schedule_v10/recheck_status.json)
+records completion. The uncertain trials are archived separately and excluded.
+
+Packed C2C now supports complete-transform batch tiles and exact tail replay.
+The bounded rank-three selector proposes tiles from the executing GPU's L2
+capacity, retaining whole-batch plans. Non-contiguous 64/128-point cores admit
+4/8/16 cooperative lanes; pairs gain an optional XOR shared-row layout.
+All cooperative cores share a 128-root constant table. Cache namespaces are
+`xd-v10.1-schedule-cores` / `xd-real-v10.1-schedule-cores`.
+
+The constant-table change repairs a measured lowering cost: the first wider
+lane implementation lowered `sincospi` into large inlined polynomials. Lower
+register use improved occupancy but increased total issued instructions.
+Table evaluation removes that redundant work; lane width and layout still
+require complete-plan measurement. Independent fixed-v9-core controls also
+show about 18% lower time with batch tiling, accompanied by roughly half the
+DRAM traffic. These are separate effects, not a generic stage-overlap claim.
+
+On A100 80GB UUID ending `e49309e6`, final 64³/B16 forward takes
+112.538 / 220.006 us in FP32/FP64, versus cuFFT 109.926 / 222.925 us.
+128³/B1 FP64 improves from v9's 148.275 to 123.648 us, versus cuFFT
+125.440 us. FP32 128³ remains at 0.807x cuFFT. The sixteen matched forward
+cases reach 0.988x cuFFT geometrically (v9: 0.951x) and 1.039x over v9
+selected times. Near-one ratios are not statistical-significance claims.
+Normalized inverse 64³/B16 reaches 1.360x / 1.464x, including both sides'
+normalization. Compact-real transforms and 64²/256² remain below native.
+The eight 3D cases average 1.000x geometrically. Additional guarded 64³/B32
+probes reach 1.034x FP32 and 1.099x FP64, superseding the larger uncertain
+estimates. These extra batches are not pooled into the fixed sixteen-case mean.
+
+Eleven CTests cover 504 FFT cases plus rank-three permutation, and all 127
+public C-ABI checks pass. Six sanitizer modes are clean, covering all three
+lane widths, both shared layouts, and batch tiles. Input preservation,
+normalization, workspace reuse and B=5 replay as 2+2+1 are checked.
+The [v10.1 report](../results/paper_profile_rc2/end_to_end/xd_schedule_v10/README.md)
+records versioned controls, the final binary, all matched timings, negative
+trials, profiles and reproduction scripts. Cross-hardware acceptance and a
+general within-transform cross-axis subblock pipeline remain separate work.
+
+## xD cooperative FFT cores, 2026-10-04
+
+The v9 inventory adds four-lane register FFTs for non-contiguous length-64/128
+axes and cooperative two-axis planes. The three new families compete with
+prior candidates using full-plan graph timing. FP64 pairs use 256 threads
+and fold independent lines into two rounds where needed; availability uses
+the device's opt-in shared budget and compiled occupancy. FP64 128² remains
+outside this whole-plane lowering. Cache namespaces are
+`xd-v9-cooperative-cores` / `xd-real-v9-cooperative-cores`.
+
+On A100 80GB UUID ending `e49309e6`, 64³/B16 forward improves from 161.126 to
+131.379 us in FP32 (1.226x) and from 299.827 to 288.717 us in FP64 (1.038x).
+The sixteen matched forward cases reach 0.951x native cuFFT geometrically,
+up from 0.935x; 128³ retains the prior core family. Normalized inverse 64³/B16
+reaches 1.187x/1.136x native in FP32/FP64, including both sides' normalization.
+This does not establish forward or compact-real parity.
+
+NCU verifies one-third fewer global store sectors for the new 64³ FP32 path.
+Its remaining register axis has no shared exchange or CTA barrier. A negative
+128³ FP64 candidate uses 206 registers/thread and only about 11% active warps,
+explaining why removing shared exchange is insufficient. This is a measured
+lowering limitation, not a proof against the method or completion of general
+cross-axis subblock streaming.
+
+Seven CTests cover 430 FFT cases plus rank-three permutation. New register and
+pair memcheck/racecheck are clean after adding explicit warp memory ordering.
+All 108 final public checks pass, including truthful real-axis candidate
+metadata for `(64,1)`. The [v9 report](../results/paper_profile_rc2/end_to_end/xd_register_v9/README.md)
+records versioned binaries, the complete matched matrix, profiles, fixes,
+negative trials and reproduction scripts. Broader acceptance queues were not
+silently rerun or marked complete.
+
+## xD paired-axis FFT fusion, 2026-10-04
+
+`pair-tiled-cufftdx` now keeps two short, physically trailing FFT axes in one
+CTA, using static Thread codelets and padded shared-memory exchange. It
+removes an intermediate global read/write and one launch while preserving
+natural layout and input ownership. FP32 pair axes cover 8–64 and FP64 8–32.
+EPT16 axis variants compete with the prior EPT8 core; pair EPT16 affects the
+remaining unpaired axis. The xD cache namespaces advance to
+`xd-v8-core-fusion` / `xd-real-v8-core-fusion`, and raw normalization flags
+now match the strict replay contract in the cache key.
+
+On A100 80GB UUID ending `e49309e6`, the sixteen matched forward xD FFT cases
+improve 1.202x geometrically over v7 and reach 0.935x native cuFFT (previously
+0.775x). 16²/B16 reaches 1.475x/1.478x in FP32/FP64. FP64 normalized inverse
+16×32×32/B16 reaches 1.395x. The final NCU replay verifies two kernels instead
+of three and one-third fewer global store sectors for the fused 16×32×32 case.
+Larger sizes and compact real FFT remain below cuFFT. Wider EPT and fewer
+pair threads were not universally beneficial; the negative trials are saved.
+
+Five GPU CTests cover 388 FFT layout/core cases plus rank-three permutation;
+91 public API checks pass. Pair memcheck/racecheck and wide-axis racecheck
+report zero errors/hazards. The FP32 cancellation-sensitive pair tests now
+use an FP64 reference with observed maximum relative L2 error 1.74e-7.
+The [scoped report](../results/paper_profile_rc2/end_to_end/xd_fusion_v8/README.md)
+records the final binary, complete matrix, inverse/real checks, NCU evidence,
+and rejected alternatives. This does not complete the broader acceptance
+matrix, generic layout fusion, or the complete xD search space.
+
+## xD axis-aware FFT cores and graph selection, 2026-10-04
+
+The optional `axis-tiled-cufftdx` processing unit now performs axis access,
+shared exchange and FFT in one kernel for FP32/FP64 power-of-two axes 8–1024.
+Unsupported axes retain the packed-axis fallback. Complex and compact-real
+selectors use a uniform complete-plan graph protocol, including callers on
+the default stream; cache keys are `xd-v7-graph-steady` and
+`xd-real-v7-graph-steady`. This is a finite executable inventory, not exhaustive
+core/tile search or cross-axis overlap.
+
+On A100 80GB UUID ending `e49309e6`, sixteen matched forward cases improve
+1.231x geometrically over v5 and reach 0.775x native-cuFFT performance.
+128³/B1 reaches 0.798x/0.850x in FP32/FP64; 16×32×32/B16 FP64 normalized
+inverse reaches 0.984x. The three compact-real samples remain below the public
+cuFFT-backed reference. Three CTests (including 220 FFT layout cases), 75
+public checks, memcheck and racecheck pass. NCU confirms three axis kernels
+without standalone permutations or spills, while shared exchange/core mapping
+remains a measurable gap. See the [full scoped report](../results/paper_profile_rc2/end_to_end/xd_axis_v6/README.md)
+for the final build, matrix, profiles and open work. Earlier queued experiments
+were not silently rerun or reclassified by this milestone.
 
 ## Cryptographic application contracts, 2026-09-20
 

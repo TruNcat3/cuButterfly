@@ -6,9 +6,12 @@
 
 namespace cuntt::detail {
 const char* runtime_fingerprint() noexcept;
+const char* local_selector_fingerprint() noexcept;
 std::optional<ButterflySelectionResult> registry_butterfly_mapping(const ButterflyConfig& config);
 std::optional<NttSelectionResult> registry_ntt_mapping(const PlanConfig& config);
 std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig& config);
+std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig& config,
+                                                         std::string* provider_audit_json);
 std::vector<PlanConfig> portable_ntt_candidates(const PlanConfig& config);
 ButterflySelectionResult select_portable_butterfly(const ButterflyConfig& config);
 NttSelectionResult select_portable_ntt(const PlanConfig& config);

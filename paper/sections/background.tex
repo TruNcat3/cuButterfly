@@ -1,0 +1,56 @@
+\section{Background, Related Work, and Motivation}
+\label{sec:background}
+The applications introduced above differ in what each pair of values computes,
+but they share a repeated pattern of local combination and wider exchange.
+To understand which optimizations can transfer between them, we first separate
+this dependency pattern from its arithmetic. We then examine how existing
+systems organize such work and use the resulting trade-off to motivate our
+execution construction.
+
+\subsection{Butterfly computation and its variants}
+A butterfly computation combines small groups of values through a sequence
+of stages. In a radix-two stage, disjoint pairs can execute independently,
+but the next stage pairs their outputs differently. These changing partners
+are what make local computation easy to parallelize and the complete
+computation difficult to organize.
+For $N=2^L$, the graph has $L$ stages and $N/2$ pair
+updates per stage. A stage associated with bit $q$ pairs indices $i$ and
+$i\mathbin{\oplus}2^q$. The stage sequence defines the dependency envelope,
+while the pair function supplies arithmetic and coefficients. Batch instances
+add independent copies of the graph. \textbf{Shared structure does not imply
+interchangeable semantics.}
+
+The family includes complex FFT, finite-field NTT, sum-and-difference FWHT,
+subset and superset zeta transforms, and products of structured $2\times2$
+stages. One-sided zeta updates use a subset of the full pairing dependencies.
+For example, an FFT pair multiplies by a complex twiddle, an NTT pair performs
+modular arithmetic, and an FWHT pair uses only sums and differences. A common
+organization must retain these distinctions rather than replace every pair
+with one arithmetic implementation. Multidimensional separable transforms
+compose axis transforms with a shared tensor layout, making inter-axis
+placement part of the same execution problem.
+
+Cooley--Tukey (CT) and Gentleman--Sande (GS) illustrate another distinction
+~\cite{cooley1965,gentleman1966}. Their local forms place twiddle
+multiplication on opposite sides of addition and subtraction. Forward and
+inverse computation also change coefficients, stage order, permutations, and
+normalization. Stockham algorithms distribute permutations across passes
+~\cite{stockham1966}. Section~\ref{sec:equivalence} explains which structural
+relations survive these changes.
+
+These variants matter at the interface of an operator library. A user requests
+a transform, precision, direction, and input/output representation. The
+implementation may choose a compatible factorization or reorder internal
+values, but any adaptation must preserve that request and contribute to its
+execution cost. A convenient internal order is therefore a design choice,
+not a restriction that can silently be imposed on the caller.
+
+On a GPU, storage determines how a pairing can execute~\cite{volta,ampere}.
+Registers hold thread-local values, warp exchanges connect lanes, shared memory
+connects warps within a block, and global storage supports larger handoffs.
+Arithmetic cores range from generated codelets to components such as
+cuFFTDx~\cite{cufftdx}. More local work can amortize indexing and movement,
+but also increases live state. Two implementations of the same arithmetic
+can therefore differ in memory traffic, available workers, and synchronization.
+This distinction between the local core and its surrounding organization is
+central to both prior optimization approaches and our research question.

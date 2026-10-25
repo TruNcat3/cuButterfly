@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "purpose": "Fixed scalar core, independent tile grouping and boundary layout; explicit mechanism experiment, not AUTO selection",
+  "operators": ["fft", "fwht"],
+  "precisions": ["fp32", "fp64"],
+  "correctness": {
+    "logN": 8, "batch": 3, "split": 5, "tiles": [1, 2, 4, 8],
+    "threads": 128, "inverse": [0, 1], "repeat": 2, "trials": 1
+  },
+  "performance": {
+    "logN": 20, "batch": 16, "split": 10, "tiles": [1, 2, 4],
+    "threads": 256, "inverse": [0], "repeat": 20, "trials": 5
+  },
+  "resource_rejections": [
+    ["fft", "fp64", 20, 16, 10, 8, 256, 0, 1, 1, "all"]
+  ]
+}

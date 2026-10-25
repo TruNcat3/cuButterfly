@@ -1,0 +1,196 @@
+{
+  "schema": "cubutterfly-synthetic-draft-layouts-v1",
+  "source": "synthetic_example_not_measured",
+  "seed": 20261009,
+  "warning": "SYNTHETIC EXAMPLE \u2014 NOT MEASURED",
+  "purpose": "Layout only; values are invented and cannot support performance claims.",
+  "renderer": "paper/tools/render_draft_evaluation.py",
+  "matplotlib_version": "3.10.9",
+  "figure_size_inches": [
+    7,
+    2.2
+  ],
+  "minimum_font_pt": 7,
+  "uncertainty": "none; no measured replicates",
+  "replacement_entry": "--input-dir DIR accepts same synthetic CSV schemas; source must remain synthetic_example_not_measured. Measured promotion requires a separately reviewed evidence renderer, actual provenance and caption; never relabel these examples.",
+  "input_files": [
+    {
+      "path": "paper/generated/draft/mechanism.csv",
+      "sha256": "539119b7ea4f5ba88cb308126ee200d733175853acb9241d2dc500e05fda6fb9",
+      "source": "synthetic_example_not_measured"
+    },
+    {
+      "path": "paper/generated/draft/scaling.csv",
+      "sha256": "5c928a03fb2cf93d588aefcb476a92fe5ce52f0139d6344edaa1a93f34a05e14",
+      "source": "synthetic_example_not_measured"
+    },
+    {
+      "path": "paper/generated/draft/selection.csv",
+      "sha256": "1b5ae81b09ca38a3dfba3315f5e552dfb4acad3bdcb8a196ec8557ddca57b397",
+      "source": "synthetic_example_not_measured"
+    },
+    {
+      "path": "paper/generated/draft/application.csv",
+      "sha256": "1455502bc84b30f183a99aa5485e5faae324963b15c5bf1c487924f50f4fa994",
+      "source": "synthetic_example_not_measured"
+    }
+  ],
+  "columns": {
+    "mechanism": [
+      "source",
+      "organization",
+      "hbm_bytes",
+      "resident_bytes",
+      "latency_us"
+    ],
+    "scaling": [
+      "source",
+      "precision",
+      "log2_n",
+      "batch",
+      "status",
+      "baseline",
+      "contract",
+      "baseline_us",
+      "ours_us"
+    ],
+    "selection": [
+      "source",
+      "selector",
+      "budget_candidates",
+      "selected_us",
+      "pool_best_us",
+      "prepared_ms"
+    ],
+    "application": [
+      "source",
+      "workload",
+      "scale",
+      "implementation",
+      "butterfly_us",
+      "adapter_us",
+      "other_us",
+      "prepared_ms"
+    ]
+  },
+  "units": {
+    "*_us": "microseconds",
+    "*_ms": "milliseconds",
+    "*_bytes": "bytes",
+    "resident_display": "KiB = bytes / 1024",
+    "budget_candidates": "count",
+    "log2_n": "log2 transform length"
+  },
+  "real_data_required": {
+    "common": [
+      "source artifact and hash",
+      "build fingerprint",
+      "GPU UUID/model/memory",
+      "compile policy",
+      "timing protocol",
+      "trial_id",
+      "correctness status",
+      "semantic contract",
+      "availability reason"
+    ],
+    "mechanism": [
+      "organization",
+      "same workload/precision/N/batch",
+      "hbm_bytes (separate profiler run)",
+      "resident_bytes (specified allocation scope)",
+      "latency_us (unprofiled warm run)"
+    ],
+    "scaling": [
+      "precision",
+      "log2_n",
+      "batch",
+      "baseline",
+      "full matched semantic contract",
+      "status",
+      "baseline_us",
+      "ours_us"
+    ],
+    "selection": [
+      "selector",
+      "budget_candidates",
+      "selected_us",
+      "pool_best_us",
+      "pool_id/hash",
+      "candidate availability",
+      "prepared_ms",
+      "heldout/training split"
+    ],
+    "application": [
+      "workload/version",
+      "concrete scale/shape",
+      "implementation",
+      "butterfly_us",
+      "adapter_us",
+      "other_us",
+      "prepared_ms",
+      "independently timed total_us"
+    ]
+  },
+  "statistics": {
+    "draft": "one synthetic value per cell, not an estimator; no confidence intervals",
+    "real_replacement": "retain paired trials; predeclare independent replication unit, median estimator and timing boundaries; normalize medians only for matched cases",
+    "mechanism": "HBM / same stagewise bytes; resident bytes separate; normal latency excludes profiling, preparation and compilation; schematic is dependency order, never a timing trace",
+    "scaling": "baseline median latency / ours median latency; >1 favors ours; fixed range 0.7..1.4 centered at 1, no aggregation across cells",
+    "selection": "selected measured latency / best measured latency in the declared fixed pool; >=1; never global optimality; preparation shown on separate ms axis",
+    "application": "each component / matched baseline total; baseline sum=1; diamond=baseline total / ours total; additive components must use same execution scope and reconcile with independent total; preparation excluded and reported separately"
+  },
+  "missing_policy": "Scaling status=missing retains empty numeric fields and visible hatch. Do not replace with zero, impute, silently bridge missing budgets, or include missing cells in any statistic. Other missing rows require explicit pending-layout adaptation before measured replacement.",
+  "layout_descriptions": {
+    "draft_mechanism": "Three panels: separate resource axes, abstract dependency schematic, unprofiled warm latency; four fixed organizations.",
+    "draft_scaling_selection": "FP32/FP64 N-by-batch ratios with missing hatches; bounded measured-pool selection regret; separate preparation cost.",
+    "draft_application_results": "Three application panels, two scales each, matched baseline/ours component stacks and total-ratio diamonds; preparation values below."
+  },
+  "outputs": [
+    {
+      "path": "paper/figures/draft/draft_mechanism.pdf",
+      "source": "synthetic_example_not_measured",
+      "sha256": "f39da0adcd2c88bade5c4c6e8661dd50f7a739897a58dd9e7b683d33013c92d4"
+    },
+    {
+      "path": "paper/figures/draft/draft_mechanism.svg",
+      "source": "synthetic_example_not_measured",
+      "sha256": "e3c79dca48918270f02996870b68d8e907c02a3daee6800a7351f5df8120c3b6"
+    },
+    {
+      "path": "paper/figures/draft/draft_mechanism.png",
+      "source": "synthetic_example_not_measured",
+      "sha256": "d737025188e3e8ad26e9a47e8d4187f79ba0f5943ee7672eb1087b9f0ebbdea6"
+    },
+    {
+      "path": "paper/figures/draft/draft_scaling_selection.pdf",
+      "source": "synthetic_example_not_measured",
+      "sha256": "92e9be0a1f4bdf79752a12138609a73f7e27918f14a6bd853d2fb30cfa4fcc21"
+    },
+    {
+      "path": "paper/figures/draft/draft_scaling_selection.svg",
+      "source": "synthetic_example_not_measured",
+      "sha256": "15de829406d17cde95152cadfe1fb1e5cc218757fe2fd641befe68acbf545c24"
+    },
+    {
+      "path": "paper/figures/draft/draft_scaling_selection.png",
+      "source": "synthetic_example_not_measured",
+      "sha256": "6aac450e0385b377279039c70b8319654a2bb30baba329e0eeb7ec46a8a4aef4"
+    },
+    {
+      "path": "paper/figures/draft/draft_application_results.pdf",
+      "source": "synthetic_example_not_measured",
+      "sha256": "f4abaf220e0a9906f8002fe2199a7d800743e432a04d2ab255294b7c5e3f45ed"
+    },
+    {
+      "path": "paper/figures/draft/draft_application_results.svg",
+      "source": "synthetic_example_not_measured",
+      "sha256": "31433ac713bd5b8d78a2a4980f6676845af575d070c650cdcd246b33f9439e6f"
+    },
+    {
+      "path": "paper/figures/draft/draft_application_results.png",
+      "source": "synthetic_example_not_measured",
+      "sha256": "fc2be798daf10d07446fb4ec066f9868ffea32d23fce00dbd2775f662c126fb5"
+    }
+  ],
+  "publisher_status": "provisional working-draft layout, no venue compliance claim"
+}

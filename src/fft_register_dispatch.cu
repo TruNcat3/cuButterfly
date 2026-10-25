@@ -3,23 +3,27 @@
 #include "fft_grouped_suffix.cuh"
 #include "jit_module.hpp"
 #include "resident_mapping.hpp"
+#include "cufftdx_provider.hpp"
 #include <algorithm>
 #include <stdexcept>
 
 namespace cuntt::detail {
 namespace {
 bool compiled_mapping(const ButterflyConfig& c) {
-    // The precompiled inventory contains the historical native prefix and
-    // linear shared layout only.  Any new codelet/layout identity must go
-    // through the JIT path and must never silently execute this fallback.
-    if (c.prefix_codelet != "native" || c.prefix_shared_layout != "linear") return false;
-    // Cooperative prefix codelets are deliberately JIT-only.  Keep the
-    // legacy inventory exact so an old native module cannot be reused with a
-    // different physical thread geometry.
+    if (c.suffix_core != "cufftdx-block") return false;
+    // The precompiled inventory contains the native radix-2 prefix and the
+    // radix-4 local provider. Layouts and cooperative providers remain JIT
+    // identities and must never silently alias either prebuilt module.
+    if ((c.prefix_codelet != "native" && c.prefix_codelet != "radix4") ||
+        c.prefix_shared_layout != "linear") return false;
     if (c.prefix_codelet_lanes != 1) return false;
     if (resident_axes_requested(c.local_stage_partitions,c.exchange_chunks)) return false;
     if(c.precision!=ButterflyPrecision::Fp32) return false;
     const auto local=c.local_stages, suffix=c.log_n-local;
+    // The prebuilt inventory exposes radix-4 only for the 16-point
+    // cooperative leaf (local_stages=8). Other shapes, FP64, and cooperative
+    // leaves use the mixed-radix JIT template with their own identity.
+    if (c.prefix_codelet == "radix4" && local != 8) return false;
     if ((local!=6 && local!=8 && local!=10) || (suffix!=10 && suffix!=12)) return false;
     const auto r=1U<<(local/2), pc=c.prefix_threads/r;
     const auto product=std::uint64_t(c.suffix_threads)*c.suffix_ept;
@@ -29,10 +33,11 @@ bool compiled_mapping(const ButterflyConfig& c) {
         (suffix==10 ? ((c.suffix_ept==8 && sc==4) || (c.suffix_ept==16 && (sc==4 || sc==8))) :
          ((c.suffix_ept==16 || c.suffix_ept==32) && (sc==2 || sc==4)));
 }
-template <unsigned Local, bool Inverse>
+template <unsigned Local, bool Inverse,
+          template <unsigned, bool> class Codelet = register_tile::NativeCodelet>
 void prefix_dispatch(const ButterflyConfig& c, const Complex32* input, Complex32* scratch, std::uint64_t batch, cudaStream_t stream) {
     const auto columns = c.prefix_threads / (1U << (Local/2));
-#define PREFIX(C) register_tile::launch_prefix<Local,C,Inverse>(input,scratch,c.log_n,batch,c.batch_stride,c.element_stride,stream)
+#define PREFIX(C) register_tile::launch_prefix<Local,C,Inverse,Codelet>(input,scratch,c.log_n,batch,c.batch_stride,c.element_stride,stream)
     switch(columns) {
         case 4: PREFIX(4); return;
         case 8: PREFIX(8); return;
@@ -59,13 +64,14 @@ void suffix_dispatch(const ButterflyConfig& c, const Complex32* scratch, Complex
 #undef SUFFIX
     throw std::invalid_argument("register-tile suffix mapping is not compiled");
 }
-template <bool Inverse>
+template <bool Inverse,
+          template <unsigned, bool> class Codelet = register_tile::NativeCodelet>
 void dispatch_group(const ButterflyConfig& c,unsigned group,const Complex32* input,Complex32* output,std::uint64_t batch,cudaStream_t stream) {
     if (group==0) {
         switch(c.local_stages) {
-            case 6: prefix_dispatch<6,Inverse>(c,input,output,batch,stream); return;
-            case 8: prefix_dispatch<8,Inverse>(c,input,output,batch,stream); return;
-            case 10: prefix_dispatch<10,Inverse>(c,input,output,batch,stream); return;
+            case 6: prefix_dispatch<6,Inverse,Codelet>(c,input,output,batch,stream); return;
+            case 8: prefix_dispatch<8,Inverse,Codelet>(c,input,output,batch,stream); return;
+            case 10: prefix_dispatch<10,Inverse,Codelet>(c,input,output,batch,stream); return;
             default: throw std::invalid_argument("uncompiled register-tile prefix dimension");
         }
     }
@@ -79,13 +85,18 @@ void dispatch_group(const ButterflyConfig& c,unsigned group,const Complex32* inp
 }
 
 void validate_register_tile(const ButterflyConfig& c) {
-    if (c.prefix_codelet != "native" && c.prefix_codelet != "cufftdx-thread")
-        throw std::invalid_argument("register-tile prefix_codelet must be native or cufftdx-thread");
+    if (c.suffix_core != "cufftdx-block" && c.suffix_core != "native")
+        throw std::invalid_argument("register-tile suffix_core must be cufftdx-block or native");
+    if (c.suffix_core != "cufftdx-block" && !on_demand_compilation_enabled())
+        throw std::invalid_argument("native register suffix requires research or auto compilation");
+    if (c.prefix_codelet != "native" && c.prefix_codelet != "radix4" && c.prefix_codelet != "cufftdx-thread")
+        throw std::invalid_argument("register-tile prefix_codelet must be native, radix4 or cufftdx-thread");
     if (c.prefix_shared_layout != "linear" && c.prefix_shared_layout != "xor")
         throw std::invalid_argument("register-tile prefix_shared_layout must be linear or xor");
     if (c.precision == ButterflyPrecision::Fp64 && c.prefix_codelet == "cufftdx-thread")
         throw std::invalid_argument("cufftdx-thread prefix codelet is unavailable for FP64");
-    if ((c.prefix_codelet != "native" || c.prefix_shared_layout != "linear") && !on_demand_compilation_enabled())
+    if ((c.prefix_codelet != "native" || c.prefix_shared_layout != "linear") &&
+        !compiled_mapping(c) && !on_demand_compilation_enabled())
         throw std::invalid_argument("non-default register prefix strategy requires CUBUTTERFLY_COMPILE_MODE=research or auto");
     const auto is_power_of_two = [](std::uint32_t value) {
         return value != 0 && (value & (value - 1)) == 0;
@@ -146,6 +157,9 @@ void validate_register_tile(const ButterflyConfig& c) {
     int device; cudaDeviceProp props{};
     if(cudaGetDevice(&device)!=cudaSuccess || cudaGetDeviceProperties(&props,device)!=cudaSuccess)
         throw std::runtime_error("cannot inspect register-tile device resources");
+    if (c.suffix_core == "cufftdx-block")
+        require_cufftdx_provider((props.major*10+props.minor)*10,
+            c.precision==ButterflyPrecision::Fp64 ? 64U : 32U, sn, c.suffix_ept);
     const auto width=c.precision==ButterflyPrecision::Fp64 ? sizeof(Complex64) : sizeof(Complex32);
     if(log_a!=log_b && c.prefix_shared_layout=="xor") {
         const auto bank_rows=std::min<std::size_t>(b,128/(width*pc));
@@ -155,6 +169,7 @@ void validate_register_tile(const ButterflyConfig& c) {
     if(c.prefix_threads>static_cast<unsigned>(props.maxThreadsPerBlock) ||
        c.suffix_threads>static_cast<unsigned>(props.maxThreadsPerBlock) ||
        std::uint64_t(pn)*pc*width>props.sharedMemPerBlockOptin ||
+       (c.suffix_core=="native" && std::uint64_t(sn)*sc*width>props.sharedMemPerBlockOptin) ||
        (sc>1 && std::uint64_t(sn)*sc*width*(chunk?chunk:c.suffix_ept)/c.suffix_ept>props.sharedMemPerBlockOptin))
         throw std::invalid_argument("register-tile shared state or thread count exceeds active GPU capacity");
     const auto launch_batch=c.stage_overlap ? std::min<std::uint64_t>(c.batch,c.batch_tile_count) : c.batch;
@@ -177,12 +192,19 @@ void launch_register_tile_group(const ButterflyConfig& c,unsigned group,const vo
     // JIT plans retain their group entry pointer; this adapter is precompiled
     // only and performs no cache lookup or configuration allocation at launch.
     if(!compiled_mapping(c)) throw std::logic_error("register group requires its prepared module entry");
-    if(c.inverse) dispatch_group<true>(c,group,static_cast<const Complex32*>(input),static_cast<Complex32*>(output),batch,stream);
-    else dispatch_group<false>(c,group,static_cast<const Complex32*>(input),static_cast<Complex32*>(output),batch,stream);
+    if (c.prefix_codelet == "radix4") {
+        if(c.inverse) dispatch_group<true,register_tile::Radix4Codelet>(c,group,static_cast<const Complex32*>(input),static_cast<Complex32*>(output),batch,stream);
+        else dispatch_group<false,register_tile::Radix4Codelet>(c,group,static_cast<const Complex32*>(input),static_cast<Complex32*>(output),batch,stream);
+    } else if(c.inverse) {
+        dispatch_group<true>(c,group,static_cast<const Complex32*>(input),static_cast<Complex32*>(output),batch,stream);
+    } else {
+        dispatch_group<false>(c,group,static_cast<const Complex32*>(input),static_cast<Complex32*>(output),batch,stream);
+    }
 }
 std::vector<ButterflyConfig> register_tile_mappings() {
     std::vector<ButterflyConfig> result;
     for (unsigned local : {6U,8U,10U}) for (unsigned suffix : {10U,12U}) {
+        for (const auto& codelet : {std::string("native"), std::string("radix4")})
         for(unsigned pc : {4U,8U,16U,32U}) for(unsigned ept : {8U,16U,32U}) for(unsigned sc : {2U,4U,8U}) {
             ButterflyConfig c;
             c.op=ButterflyOperator::Fft; c.precision=ButterflyPrecision::Fp32;
@@ -190,6 +212,7 @@ std::vector<ButterflyConfig> register_tile_mappings() {
             c.log_n=local+suffix; c.local_stages=local; c.batch=1;
             c.stage_partition={local,suffix}; c.shared_layout=SharedLayout::WriterAligned;
             c.cross_twiddle=CrossTwiddleMode::Recurrence; c.reorder_columns=1;
+            c.prefix_codelet=codelet;
             c.prefix_ept=1U<<(local/2); c.prefix_threads=pc*c.prefix_ept;
             c.suffix_ept=ept; c.suffix_threads=(1U<<suffix)/ept*sc;
             c.boundaries={{CrossTwiddleMode::Recurrence,DirectBoundary::Strided,FftBoundaryResidency::GlobalScratch}};

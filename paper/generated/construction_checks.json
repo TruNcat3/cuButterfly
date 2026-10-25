@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "scope": "Exact CPU construction at N=16 and boundary relations at N=2..32; no GPU support/performance claim",
+  "stage_orders": 24,
+  "ordered_compositions_per_order": 8,
+  "mapping_cases": 192,
+  "band_closure_and_layout_checks": 480,
+  "dense_reference_comparisons": 3264,
+  "example_logical_value_bytes": {
+    "1+1+1+1": 512,
+    "2+2": 256,
+    "4": 128
+  },
+  "negative_control": "one completed producer row cannot release a complete consumer column",
+  "boundary_relations": {
+    "mask_pairs": 1364,
+    "explicit_intersections": 66429,
+    "connected_packets": 3905,
+    "log_n_range": [
+      1,
+      5
+    ]
+  },
+  "not_verified": [
+    "arbitrary FFT coefficient adaptation",
+    "CUDA lowering coverage",
+    "bank/global transaction efficiency",
+    "GPU performance or optimality"
+  ]
+}

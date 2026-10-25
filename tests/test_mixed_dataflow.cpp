@@ -57,6 +57,90 @@ int main() try {
     hardware.registers_per_block = 65536;
     hardware.cooperative_launch = true;
 
+    for (const auto log_n : {12U, 16U}) {
+        for (const auto op : {ButterflyOperator::Fft, ButterflyOperator::Fwht}) {
+            ButterflyConfig defaults;
+            defaults.op = op;
+            defaults.backend = ButterflyBackend::SharedIterative;
+            defaults.log_n = log_n;
+            defaults.local_stages = 5;
+            auto projected = make_dataflow_plan(defaults);
+            const auto expected = log_n == 12 ? std::vector<std::uint32_t>{5, 5, 2}
+                                             : std::vector<std::uint32_t>{5, 5, 5, 1};
+            require(projected.stage_partition == expected, "default shared Butterfly partition differs from constructor");
+            require(validate_plan(projected, hardware), "default shared Butterfly projection rejected before normalization");
+            require(!estimate_resources(projected, hardware).complete, "default shared projection invented compiler feedback");
+        }
+        for (const auto backend : {Backend::Baseline, Backend::Tile256, Backend::Hybrid2D,
+                Backend::CompactStage, Backend::StagePipeline, Backend::HybridDataflow,
+                Backend::HierarchicalBarrier, Backend::HierarchicalDataflow, Backend::SharedIterative}) {
+            PlanConfig defaults;
+            defaults.log_n = log_n;
+            defaults.backend = backend;
+            auto projected = make_dataflow_plan(defaults);
+            require(validate_plan(projected, hardware), "default NTT projection falsely rejected a backend resource bound");
+            const auto estimate = estimate_resources(projected, hardware);
+            require(!estimate.complete && !projected.executable, "uncompiled NTT default projection certified execution");
+            if (backend == Backend::SharedIterative) {
+                require(projected.stage_partition == std::vector<std::uint32_t>{10, log_n - 10} &&
+                        projected.execution_groups.front().threads == 128,
+                        "default shared NTT projection differs from constructor");
+                defaults.flow_tile_log_n = 5;
+                const auto tiled = make_dataflow_plan(defaults);
+                require(tiled.stage_partition.front() == 5 && tiled.execution_groups.size() == (log_n + 4) / 5,
+                        "NTT flow stage tile was not normalized");
+            } else {
+                require(estimate.local_bytes == 0 && projected.execution_groups.front().live_shared_bytes == 0,
+                        "unresolved NTT physical launches inherited full-transform shared memory");
+            }
+        }
+    }
+    rejects([] {
+        ButterflyConfig invalid;
+        invalid.backend = ButterflyBackend::SharedIterative;
+        invalid.local_stages = 0;
+        make_dataflow_plan(invalid);
+    });
+
+    ButterflyConfig shared_boundary;
+    shared_boundary.op = ButterflyOperator::Fft;
+    shared_boundary.backend = ButterflyBackend::SharedIterative;
+    shared_boundary.precision = ButterflyPrecision::Fp64;
+    shared_boundary.log_n = 12;
+    shared_boundary.batch = 3;
+    shared_boundary.stage_partition = {6, 6};
+    const auto boundary_payload = (1ULL << shared_boundary.log_n) * shared_boundary.batch * 16;
+    auto boundary_plan = make_dataflow_plan(shared_boundary);
+    require(boundary_plan.execution_boundaries.size() == 1 &&
+            boundary_plan.execution_boundaries[0].producer_layout == direct_boundary_name(DirectBoundary::Strided) &&
+            boundary_plan.execution_boundaries[0].consumer_layout == direct_boundary_name(DirectBoundary::Strided) &&
+            estimate_resources(boundary_plan, hardware).boundary_bytes == 2 * boundary_payload,
+            "shared strided shorthand must count one producer write and consumer read");
+    shared_boundary.direct_boundary = DirectBoundary::TiledTranspose;
+    boundary_plan = make_dataflow_plan(shared_boundary);
+    require(boundary_plan.execution_boundaries[0].producer_layout !=
+                boundary_plan.execution_boundaries[0].consumer_layout &&
+            estimate_resources(boundary_plan, hardware).boundary_bytes == 4 * boundary_payload,
+            "shared tiled shorthand omitted the materialized transpose traffic");
+    shared_boundary.boundaries = {{CrossTwiddleMode::Table, DirectBoundary::Strided}};
+    require(estimate_resources(make_dataflow_plan(shared_boundary), hardware).boundary_bytes == 2 * boundary_payload,
+            "explicit shared strided boundary must override tiled shorthand");
+    shared_boundary.direct_boundary = DirectBoundary::Strided;
+    shared_boundary.boundaries = {{CrossTwiddleMode::Table, DirectBoundary::TiledTranspose}};
+    require(estimate_resources(make_dataflow_plan(shared_boundary), hardware).boundary_bytes == 4 * boundary_payload,
+            "explicit shared tiled boundary must override strided shorthand");
+    shared_boundary.boundaries[0].residency = FftBoundaryResidency::Fused;
+    boundary_plan = make_dataflow_plan(shared_boundary);
+    require(boundary_plan.execution_groups.size() == 1 && boundary_plan.execution_boundaries.empty() &&
+            estimate_resources(boundary_plan, hardware).boundary_bytes == 0,
+            "fused shared boundary must not materialize or charge transpose traffic");
+    shared_boundary.stage_partition = {4, 4, 4};
+    shared_boundary.boundaries.push_back({CrossTwiddleMode::Table, DirectBoundary::TiledTranspose});
+    boundary_plan = make_dataflow_plan(shared_boundary);
+    require(boundary_plan.execution_groups.size() == 2 && boundary_plan.execution_boundaries.size() == 1 &&
+            estimate_resources(boundary_plan, hardware).boundary_bytes == 4 * boundary_payload,
+            "fused shared edge shifted the following materialized boundary projection");
+
     ButterflyConfig factor;
     factor.op=ButterflyOperator::Fft; factor.precision=ButterflyPrecision::Fp64;
     factor.backend=ButterflyBackend::FactorStreamed; factor.fft_core=FftCore::CufftDxBlock;
@@ -65,13 +149,46 @@ int main() try {
     factor.data_tiles_per_cta=5; factor.prefetch_depth=2;
     auto factor_plan=make_dataflow_plan(factor);
     require(validate_plan(factor_plan,hardware),factor_plan.rejection_reason.c_str());
+    require(factor_plan.pipeline_buffers == 3 && factor_plan.execution_groups.front().prefetch_depth == 2,
+            "prefetch depth two must expose three factor ring slots");
     const auto factor_estimate=estimate_resources(factor_plan,hardware);
-    require(factor_estimate.local_bytes==98304 && factor_estimate.resident_ctas==1 &&
+    require(factor_estimate.local_bytes==131072 && factor_estimate.resident_ctas==1 &&
             factor_estimate.boundary_bytes==(1ULL<<24)*16*4 && !factor_estimate.complete,
             "factor resource estimate flattened prefetch memory or physical HBM edges");
+    auto single_tile=factor;
+    single_tile.data_tiles_per_cta=1;
+    single_tile.prefetch_depth=1;
+    const auto single_tile_plan=make_dataflow_plan(single_tile);
+    require(single_tile_plan.pipeline_buffers==1 && !single_tile_plan.persistent &&
+            single_tile.prefetch_depth==1 && single_tile_plan.execution_groups.front().prefetch_depth==0 &&
+            single_tile_plan.execution_groups.front().live_shared_bytes==32768,
+            "a one-tile CTA must lower an explicit prefetch depth to the synchronous single-slot path");
     factor_plan.execution_groups.back().compiler_registers_per_thread=255;
+    factor_plan.execution_groups.back().compiler_resources_known=true;
     factor_plan.execution_groups.back().threads=1024;
     require(!estimate_resources(factor_plan,hardware).feasible,"compiler allocation on a later factor was ignored");
+
+    // Capacity filters combinations, not buffering as a mechanism. These are
+    // lower-bound checks; the selected core still needs compiled resources.
+    auto buffered=factor;
+    buffered.log_n=20; buffered.stage_partition={20}; buffered.factor_partition={10,10};
+    buffered.factor_ept=8; buffered.factor_columns=4; buffered.data_tiles_per_cta=4;
+    auto oversize=make_dataflow_plan(buffered);
+    require(!validate_plan(oversize,hardware), "four 1024-point FP64 tiles plus two input slots exceed shared capacity");
+    buffered.factor_columns=2;
+    auto narrower=make_dataflow_plan(buffered);
+    require(validate_plan(narrower,hardware),narrower.rejection_reason.c_str());
+    require(estimate_resources(narrower,hardware).local_bytes==131072,"two 1024-point tiles must keep ring and work slots");
+    buffered.factor_columns=4; buffered.prefetch_depth=0;
+    auto unbuffered=make_dataflow_plan(buffered);
+    require(validate_plan(unbuffered,hardware),unbuffered.rejection_reason.c_str());
+    require(unbuffered.pipeline_buffers == 1 &&
+            estimate_resources(unbuffered,hardware).local_bytes==65536,
+            "prefetch depth zero must preserve the single-slot path");
+    buffered.log_n=18; buffered.stage_partition={18}; buffered.factor_partition={9,9}; buffered.prefetch_depth=2;
+    auto smaller=make_dataflow_plan(buffered);
+    require(validate_plan(smaller,hardware),smaller.rejection_reason.c_str());
+    require(estimate_resources(smaller,hardware).local_bytes==131072,"four 512-point tiles must keep ring and work slots");
 
     ButterflyConfig iterative;
     iterative.op = ButterflyOperator::Fft;
@@ -99,8 +216,69 @@ int main() try {
     require(ntt_projection.graph.stage_arities == std::vector<std::uint32_t>(12, 2),
             "NTT codelet radix changed the binary logical graph");
     const auto ntt_estimate = estimate_resources(ntt_projection, hardware);
-    require(ntt_estimate.local_bytes == ntt_projection.shared_bytes_per_subgraph * 2ULL,
-            "NTT parallel instances were multiplied twice");
+    require(ntt_estimate.local_bytes == 0 && !ntt_estimate.complete,
+            "unknown NTT group shared allocation was replaced by a top-level estimate");
+
+    for (const auto backend : {std::string("shared-iterative"), std::string("factor-streamed"),
+                               std::string("compact-stage"), std::string("stage-pipeline")}) {
+        auto compiled = groups;
+        compiled.backend = backend;
+        // Top-level values are deliberately stale; physical groups own resources.
+        compiled.threads_per_block = 4096;
+        compiled.shared_bytes_per_subgraph = std::numeric_limits<std::uint32_t>::max();
+        for (auto& group : compiled.execution_groups) {
+            group.compiler_resources_known = true;
+            group.compiler_registers_per_thread = 32;
+            group.live_shared_bytes = 1024;
+        }
+        require(estimate_resources(compiled, hardware).feasible && estimate_resources(compiled, hardware).complete,
+                "compiled group resources were replaced by stale top-level estimates");
+        const auto valid = validate_plan(compiled, hardware);
+        require(valid, compiled.rejection_reason.c_str());
+        require(!compiled.executable, "compiled resource validation changed execution certification");
+        compiled.execution_groups.back().live_shared_bytes = std::uint64_t(hardware.shared_bytes_per_block) + 1;
+        require(!estimate_resources(compiled, hardware).feasible, "later group shared overflow accepted");
+        require(!validate_plan(compiled, hardware), "validation ignored later group resource rejection");
+        compiled.execution_groups.back().live_shared_bytes = 1024;
+        compiled.execution_groups.back().compiler_registers_per_thread = 255;
+        compiled.execution_groups.back().threads = 1024;
+        require(!estimate_resources(compiled, hardware).feasible, "later group compiler registers ignored");
+        compiled.execution_groups.back().compiler_resources_known = false;
+        require(estimate_resources(compiled, hardware).feasible && !estimate_resources(compiled, hardware).complete,
+                "unknown compiler resources were treated as known");
+    }
+    auto unknown_hardware = HardwareResourceModel{};
+    auto physical = groups;
+    require(validate_plan(physical, hardware), "physical exchanges were overridden by legacy boundary=None");
+    physical.execution_boundaries.pop_back();
+    require(!validate_plan(physical, hardware), "missing physical exchange accepted");
+    physical = groups;
+    physical.execution_boundaries.back().consumer_group = 0;
+    require(!validate_plan(physical, hardware), "incorrect physical consumer accepted");
+    physical = groups;
+    physical.execution_boundaries.front().storage = BoundaryPolicy::None;
+    require(!validate_plan(physical, hardware), "missing physical exchange storage accepted");
+    physical = groups;
+    physical.execution_groups.back().first_stage = 0;
+    require(!validate_plan(physical, hardware), "overlapping physical stage coverage accepted");
+    physical = groups;
+    --physical.execution_groups.back().stage_count;
+    require(!validate_plan(physical, hardware), "incomplete physical stage coverage accepted");
+    require(estimate_execution_group_resources(groups.execution_groups.front(), unknown_hardware).feasible &&
+            !estimate_execution_group_resources(groups.execution_groups.front(), unknown_hardware).complete,
+            "missing hardware capacities fabricated a rejection or complete resource proof");
+    auto unknown_group = groups.execution_groups.front();
+    unknown_group.threads = 0;
+    require(estimate_execution_group_resources(unknown_group, hardware).feasible &&
+            !estimate_execution_group_resources(unknown_group, hardware).complete,
+            "external provider's unknown launch shape was rejected or certified");
+    auto oversized = groups.execution_groups.front();
+    oversized.live_shared_bytes = std::numeric_limits<std::uint64_t>::max();
+    require(!estimate_execution_group_resources(oversized, hardware).feasible, "64-bit shared allocation truncated");
+    auto per_sm = hardware;
+    per_sm.shared_bytes_per_sm = 512;
+    require(!estimate_execution_group_resources(groups.execution_groups.back(), per_sm, 2).feasible,
+            "per-SM resident CTA target ignored");
 
     for (const auto op : {ButterflyOperator::Fft, ButterflyOperator::Fwht, ButterflyOperator::SubsetZeta,
                           ButterflyOperator::SupersetZeta, ButterflyOperator::XorZeta, ButterflyOperator::Structured2x2}) {
@@ -158,6 +336,9 @@ int main() try {
     require(register_plan.execution_groups[0].data_space==128 && register_plan.execution_groups[0].data_time==8 &&
             register_plan.execution_groups[1].data_space==512 && register_plan.execution_groups[1].data_time==8,
             "grouped FFT data-time must count butterflies in all columns of a CTA");
+    require(register_plan.execution_groups[0].data_time_semantics == DataTimeSemantics::WorkItems &&
+            register_plan.execution_groups[1].data_time_semantics == DataTimeSemantics::WorkItems,
+            "FFT group data-time must retain the common work-item semantics");
     require(register_plan.execution_groups[1].core=="cufftdx-block" && register_plan.execution_boundaries[0].storage==BoundaryPolicy::RingBuffer,
             "register FFT suffix core or ring schedule lost");
     iterative.stage_overlap=true; iterative.batch_tile_count=2; iterative.batch=7;
@@ -357,6 +538,9 @@ int main() try {
     ntt_config.pipeline_buffers = 2;
     ntt_config.boundary_mappings = {{BoundaryStorage::ResidentFused, 0}};
     ntt_config.boundary_mappings.push_back({BoundaryStorage::FullScratch, 2});
+    ntt_config.execution_group_mappings = {
+        {NttSubgraphCore::ApptOnlineRegisterTail, 256, 8, 16, 8, 1, 1, 0, 0},
+    };
     auto ntt_plan = make_dataflow_plan(ntt_config);
     require(ntt_plan.graph.op == DataflowOperator::Ntt && ntt_plan.graph.word_bits == 64, "NTT graph projection lost");
     require(ntt_plan.backend == "hierarchical-dataflow" && ntt_plan.persistent, "NTT backend projection lost");
@@ -364,6 +548,8 @@ int main() try {
             "NTT boundary projection lost");
     require(ntt_plan.data_space == 4 && ntt_plan.data_time == 2 && ntt_plan.pipeline_buffers == 2,
             "NTT unfolding projection lost");
+    require(ntt_plan.execution_groups[0].data_time_semantics == DataTimeSemantics::TemporalTokens,
+            "NTT physical mapping must retain token-cadence semantics");
     require(validate_plan(ntt_plan, hardware), ntt_plan.rejection_reason.c_str());
     require(!ntt_plan.executable, "NTT plan validation certified a backend launch");
     rejects([] { make_operator_graph(DataflowOperator::Fft, 31); });

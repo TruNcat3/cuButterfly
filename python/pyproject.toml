@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cubutterfly"
+version = "0.9.3.11"
+description = "Thin ctypes frontend for the cuButterfly public C API"
+requires-python = ">=3.9"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cubutterfly*"]

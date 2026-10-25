@@ -12,6 +12,7 @@ and implementation/resource choices are.
 from __future__ import annotations
 
 import argparse
+import collections
 from functools import lru_cache
 import hashlib
 import json
@@ -67,12 +68,9 @@ def _text(value: Any) -> str:
     return str(value).strip().lower()
 
 
-def _canonical(value: Any) -> Any:
-    """Create JSON-stable key material while normalizing numeric strings."""
-    if value is UNKNOWN or value is None or value == "":
-        return UNKNOWN
-    if isinstance(value, bool):
-        return value
+@lru_cache(maxsize=4096)
+def _canonical_scalar(value: Any) -> Any:
+    """Canonicalize a repeated scalar identity once per process."""
     if isinstance(value, (int, float)):
         if isinstance(value, float) and not math.isfinite(value):
             return UNKNOWN
@@ -86,6 +84,17 @@ def _canonical(value: Any) -> Any:
         if numeric is not None:
             return int(numeric) if numeric.is_integer() else numeric
         return _text(value)
+    return value
+
+
+def _canonical(value: Any) -> Any:
+    """Create JSON-stable key material while normalizing numeric strings."""
+    if value is UNKNOWN or value is None or value == "":
+        return UNKNOWN
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float, str)):
+        return _canonical_scalar(value)
     if isinstance(value, (list, tuple)):
         return [_canonical(item) for item in value]
     if isinstance(value, dict):
@@ -105,6 +114,23 @@ def _mapping(sample: dict[str, Any]) -> dict[str, Any]:
         return value
     if value in (None, ""):
         return {}
+    if isinstance(value, str):
+        return _decode_mapping(value)
+    try:
+        decoded = json.loads(value)
+    except (TypeError, ValueError):
+        return {}
+    return decoded if isinstance(decoded, dict) else {}
+
+
+@lru_cache(maxsize=4096)
+def _decode_mapping(value: str) -> dict[str, Any]:
+    """Decode repeated immutable mapping payloads once per process.
+
+    Mapping JSON is produced canonically for the search inventory, so sharing
+    the decoded read-only dictionary is safe for the model key path. Callers
+    that need to modify a mapping already make their own copy.
+    """
     try:
         decoded = json.loads(value)
     except (TypeError, ValueError):
@@ -177,11 +203,20 @@ def _selected_mapping_state(mapping: dict[str, Any], sample: dict[str, Any] | No
         "reorder_columns", "data_tiles_per_cta", "prefetch_depth", "factor_ept", "factor_columns",
     )
     merged = dict(mapping)
+    # A resolved mapping is normally complete, but older installed artifacts
+    # may carry the schema/kind envelope while omitting newly added factor
+    # shape axes.  Preserve those axes from the flat probe sample so static
+    # ranking cannot pool distinct EPT/column/prefetch services into one
+    # hardware-rate-prior curve.  Restrict this fallback to factor axes;
+    # legacy CSV labels must not be imported wholesale into mapping identity.
+    for name in ("factor_ept", "factor_columns", "data_tiles_per_cta", "prefetch_depth"):
+        if (name not in merged or merged[name] in (None, "")) and sample and name in sample:
+            merged[name] = sample[name]
     if sample and not (mapping.get("schema_version") and mapping.get("kind")):
         merged.update({name: sample[name] for name in names if name in sample})
         # Strategy axes are intentionally handled below per physical group,
         # but legacy probe samples may carry them only at top level.
-        for name in ("prefix_codelet", "prefix_shared_layout", "factor_io_policies"):
+        for name in ("prefix_codelet", "prefix_shared_layout", "suffix_core", "factor_io_policies"):
             if name in sample and name not in merged:
                 merged[name] = sample[name]
     # A serialized, resolved mapping owns its implementation axes. NTT CSV
@@ -216,6 +251,10 @@ def _selected_mapping_state(mapping: dict[str, Any], sample: dict[str, Any] | No
             policies = []
         policy = policies[index] if index is not None and index < len(policies) else "dynamic"
         state["factor_io_policy"] = _canonical(policy)
+    if backend == "online-reorder" and merged.get("fft_core") == "register-tile" and index == 1:
+        suffix_core = merged.get("suffix_core", "cufftdx-block")
+        if suffix_core != "cufftdx-block":
+            state["suffix_core"] = _canonical(suffix_core)
     return state
 
 
@@ -263,7 +302,7 @@ def _actual_kernel_state(group: dict[str, Any]) -> Any:
         "compiler_registers_known", "compiler_local_known", "core", "codelet", "io_policy", "exchange",
         "shared_layout", "elements_per_thread", "EPT", "ept", "units_per_cta",
         "exchange_chunk", "local_stage_partition",
-        "data_space", "data_time", "stage_space", "stage_time", "kernel_launch_count",
+        "data_space", "data_time", "stage_space", "stage_time", "batch_space", "kernel_launch_count",
     )
     normalized = []
     for kernel in kernels:
@@ -297,7 +336,8 @@ def _actual_kernel_state(group: dict[str, Any]) -> Any:
     return normalized
 
 
-def _group_shape(group: dict[str, Any], sample: dict[str, Any] | None = None) -> dict[str, Any]:
+def _group_shape(group: dict[str, Any], sample: dict[str, Any] | None = None,
+                 mapping: dict[str, Any] | None = None) -> dict[str, Any]:
     """Discrete group template/resource shape, excluding the load axis."""
     fields = (
         "first_stage", "stage_count", "stage_space", "stage_time", "data_space", "data_time",
@@ -308,15 +348,21 @@ def _group_shape(group: dict[str, Any], sample: dict[str, Any] | None = None) ->
         "remaining_bits", "local_logN", "local_points", "codelet", "io_policy",
     )
     shape = {}
+    if mapping is None and sample is not None:
+        mapping = _mapping(sample)
     for field in fields:
         value = group.get(field)
         if value in (None, "") and sample is not None:
-            mapping = _mapping(sample)
             index = _stage_index(group) or 0
             if field == "exchange_chunk":
                 value = resident_mapping.group_axis(mapping, "exchange_chunk", index, 0)
             elif field == "local_stage_partition":
                 value = resident_mapping.group_axis(mapping, "local_stage_partition", index, [])
+            elif field == "batch_space":
+                axes = {**sample, **(mapping or {})}
+                if (_text(axes.get("backend", "")) == "shared-iterative" and
+                        not _truthy(axes.get("stage_overlap", False))):
+                    value = axes.get("batch_tile_count", 1)
         if value not in (None, ""):
             shape[field] = _normalized_exchange(value) if field == "exchange" else _canonical(value)
         else:
@@ -334,16 +380,8 @@ def _group_shape(group: dict[str, Any], sample: dict[str, Any] | None = None) ->
     return shape
 
 
-def curve_key(sample: dict[str, Any], group: dict[str, Any]) -> str:
-    """Return a stable key for one mechanism and resource regime.
-
-    ``mapping_json`` is parsed only for selected implementation state.  This
-    intentionally preserves address geometry while avoiding accidental lookup
-    keys based on a whole mapping or on batch/grid load.
-    """
-    sample = sample or {}
-    group = group or {}
-    mapping = _mapping(sample)
+def _semantic_geometry(sample: dict[str, Any], mapping: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build the sample-only portions shared by every physical group."""
     raw_operator = _sample_value(sample, mapping, ("operator",))
     operator = _text(raw_operator) if raw_operator is not UNKNOWN else (
         "ntt" if _sample_value(sample, mapping, ("word_bits",)) is not UNKNOWN else "fft")
@@ -411,6 +449,23 @@ def curve_key(sample: dict[str, Any], group: dict[str, Any]) -> str:
         "remaining_bits": _canonical(_sample_value(sample, mapping, ("remaining_bits",))),
         "local_logN": _canonical(_sample_value(sample, mapping, ("local_logN", "local_log_n"))),
     }
+    return semantics, geometry
+
+
+def _curve_key_uncached(sample: dict[str, Any], group: dict[str, Any],
+                        *, mapping: dict[str, Any] | None = None,
+                        base: tuple[dict[str, Any], dict[str, Any]] | None = None) -> str:
+    """Return a stable key for one mechanism and resource regime.
+
+    ``mapping_json`` is parsed only for selected implementation state.  This
+    intentionally preserves address geometry while avoiding accidental lookup
+    keys based on a whole mapping or on batch/grid load.
+    """
+    sample = sample or {}
+    group = group or {}
+    if mapping is None:
+        mapping = _mapping(sample)
+    semantics, geometry = base or _semantic_geometry(sample, mapping)
 
     # Prefer the physical group fields when present, then the resolved mapping
     # fields, and finally the ordinary benchmark sample fields.
@@ -433,7 +488,7 @@ def curve_key(sample: dict[str, Any], group: dict[str, Any]) -> str:
                                              _sample_value(sample, mapping, ("shared_layout",)))),
         "mapping_state": _selected_mapping_state(mapping, sample, group),
     }
-    shape = _group_shape(group, sample)
+    shape = _group_shape(group, sample, mapping)
     if shape.get("local_exchange") == UNKNOWN:
         shape["local_exchange"] = _canonical(_sample_value(sample, mapping, ("local_exchange",)))
     stage_index = _stage_index(group)
@@ -463,7 +518,90 @@ def curve_key(sample: dict[str, Any], group: dict[str, Any]) -> str:
     return json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
 
-def shape_key(sample: dict[str, Any], group: dict[str, Any]) -> str:
+_KEY_SAMPLE_FIELDS = (
+    "operator", "precision", "accumulation", "direction", "inverse", "normalization",
+    "placement", "modulus", "word_bits", "value_type", "complex_values", "stage_matrix",
+    "stage_matrices", "logN", "log_n", "N", "element_stride", "batch_stride", "input_order",
+    "output_order", "address_layout", "layout", "dimension_order", "remaining_bits",
+    "local_logN", "local_log_n", "backend", "core", "fft_core", "compute_unit",
+    "exchange", "local_exchange", "shared_layout", "prefix_codelet", "prefix_codelet_lanes",
+    "suffix_core",
+    "factor_io_policies", "dispatch", "cross_twiddle", "twiddle", "twiddle_mode",
+    "fused_twiddle", "needed_twiddle", "neededtwiddle", "twiddle_count", "twiddle_stride",
+    "direct_boundary", "boundary_layout", "boundary_storage", "reorder_columns",
+    "data_tiles_per_cta", "prefetch_depth", "factor_ept", "factor_columns",
+    "batch_tile_count", "stage_overlap",
+)
+_KEY_GROUP_FIELDS = (
+    "index", "first_stage", "stage_count", "stage_space", "stage_time", "data_space", "data_time",
+    "batch_space", "threads", "units_per_cta", "core", "backend", "exchange", "exchange_chunk",
+    "local_stage_partition", "shared_layout", "data_tiles_per_cta", "prefetch_depth", "local_exchange",
+    "remaining_bits", "local_logN", "local_points", "codelet", "io_policy", "elements_per_thread",
+    "EPT", "ept", "kernel_launch_count", "launch_count", "actual_kernels", "live_shared_bytes",
+    "dynamic_shared_bytes", "compiler_registers_per_thread", "compiler_local_bytes_per_thread",
+    "compiler_resources_known", "compiler_local_resources_known", "compiler_registers_known",
+    "compiler_local_known",
+)
+
+
+def _freeze_key_value(value: Any) -> Any:
+    """Make only key-relevant JSON-like values hashable without normalization."""
+    if value is _MISSING:
+        return ("missing",)
+    if value is None:
+        return ("none",)
+    if isinstance(value, bool):
+        return ("bool", value)
+    if isinstance(value, (int, float, str)):
+        return (type(value).__name__, value)
+    if isinstance(value, (list, tuple)):
+        return ("sequence", tuple(_freeze_key_value(item) for item in value))
+    if isinstance(value, dict):
+        return ("object", tuple((str(key), _freeze_key_value(value[key]))
+                                 for key in sorted(value, key=str)))
+    return (type(value).__name__, repr(value))
+
+
+def _curve_key_cache_token(sample: dict[str, Any], group: dict[str, Any],
+                           mapping: dict[str, Any]) -> tuple[Any, ...]:
+    raw_mapping = sample.get("mapping_json", _MISSING)
+    # A canonical mapping string is already an immutable complete mapping
+    # identity. A dict path is retained for direct unit/API callers.
+    mapping_token = ("mapping-json", raw_mapping) if isinstance(raw_mapping, str) else (
+        "mapping", _freeze_key_value(mapping))
+    sample_token = tuple((field, _freeze_key_value(sample.get(field, _MISSING)))
+                         for field in _KEY_SAMPLE_FIELDS)
+    group_token = tuple((field, _freeze_key_value(group.get(field, _MISSING)))
+                        for field in _KEY_GROUP_FIELDS)
+    return mapping_token, sample_token, group_token
+
+
+_CURVE_KEY_CACHE: collections.OrderedDict[Any, str] = collections.OrderedDict()
+_CURVE_KEY_CACHE_MAXSIZE = 16384
+
+
+def curve_key(sample: dict[str, Any], group: dict[str, Any],
+              *, mapping: dict[str, Any] | None = None) -> str:
+    """Return a stable key, reusing bounded pure-key results across loads."""
+    sample = sample or {}
+    group = group or {}
+    if mapping is None:
+        mapping = _mapping(sample)
+    token = _curve_key_cache_token(sample, group, mapping)
+    cached = _CURVE_KEY_CACHE.get(token)
+    if cached is not None:
+        _CURVE_KEY_CACHE.move_to_end(token)
+        return cached
+    key = _curve_key_uncached(sample, group, mapping=mapping)
+    _CURVE_KEY_CACHE[token] = key
+    _CURVE_KEY_CACHE.move_to_end(token)
+    while len(_CURVE_KEY_CACHE) > _CURVE_KEY_CACHE_MAXSIZE:
+        _CURVE_KEY_CACHE.popitem(last=False)
+    return key
+
+
+def shape_key(sample: dict[str, Any], group: dict[str, Any],
+              *, mapping: dict[str, Any] | None = None) -> str:
     """Return the non-resource identity for safe resource metadata lookup.
 
     This helper is intentionally not used by :func:`predict_group`: an
@@ -471,12 +609,13 @@ def shape_key(sample: dict[str, Any], group: dict[str, Any]) -> str:
     known resource regime for this shape may use this key to attach measured
     compiler metadata before doing the final strict prediction.
     """
-    payload = json.loads(curve_key(sample, group))
+    payload = json.loads(curve_key(sample, group, mapping=mapping))
     payload.pop("resources", None)
     return json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
 
-def resource_regime_key(sample: dict[str, Any], group: dict[str, Any]) -> str:
+def resource_regime_key(sample: dict[str, Any], group: dict[str, Any],
+                        *, mapping: dict[str, Any] | None = None) -> str:
     """Return only normalized compiler/live-resource state for diagnostics."""
     # This projection depends only on the group. Rebuilding the complete
     # semantic/address/mechanism key twice per prediction is unnecessary.
@@ -508,7 +647,9 @@ def _resource_candidates_index(curve_keys: tuple[Any, ...]) -> dict[str, tuple[s
     return {shape: tuple(regimes) for shape, regimes in indexed.items()}
 
 
-def resolve_resources(sample: dict[str, Any], group: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
+def resolve_resources(sample: dict[str, Any], group: dict[str, Any], profile: dict[str, Any],
+                      *, index: _ServiceProfileIndex | None = None,
+                      mapping: dict[str, Any] | None = None) -> dict[str, Any]:
     """Copy resources only from a unique measured regime of the same shape.
 
     A projected descriptor may know the mechanism and local dimensions before
@@ -521,9 +662,11 @@ def resolve_resources(sample: dict[str, Any], group: dict[str, Any], profile: di
     body = _profile_body(profile)
     if not isinstance(body, dict) or not body.get("curves"):
         return dict(group or {})
-    target_shape = shape_key(sample or {}, group or {})
-    curves = body.get("curves", {})
-    candidate_regimes = _resource_candidates_index(tuple(curves.keys())).get(target_shape, ())
+    index = index or _profile_index(body)
+    if index is None:
+        return dict(group or {})
+    target_shape = shape_key(sample or {}, group or {}, mapping=mapping)
+    candidate_regimes = index.by_shape.get(target_shape, ())
     if not candidate_regimes:
         return dict(group or {})
     if len(set(candidate_regimes)) != 1:
@@ -662,8 +805,8 @@ def _percentile(values: list[float], fraction: float) -> float | None:
     return ordered[lower] + (ordered[upper] - ordered[lower]) * (position - lower)
 
 
-def _train_prediction(curve: dict[str, Any], k: float) -> tuple[float | None, bool, bool, str]:
-    points = _representative_points(curve.get("train_points", []))
+def _train_prediction_points(points: Iterable[dict[str, Any]], k: float) -> tuple[float | None, bool, bool, str]:
+    points = tuple(points)
     if not points:
         return None, False, False, "no-independent-training-measurements"
     exact = [point for point in points if math.isclose(point["k"], k, rel_tol=1e-12, abs_tol=1e-12)]
@@ -681,14 +824,22 @@ def _train_prediction(curve: dict[str, Any], k: float) -> tuple[float | None, bo
     return None, False, True, "outside-measured-K-hull"
 
 
-def _validation_exact(curve: dict[str, Any], k: float) -> tuple[float | None, bool]:
-    exact = [point for point in _representative_points(curve.get("validation_points", []))
+def _train_prediction(curve: dict[str, Any], k: float) -> tuple[float | None, bool, bool, str]:
+    return _train_prediction_points(_representative_points(curve.get("train_points", [])), k)
+
+
+def _validation_exact_points(points: Iterable[dict[str, Any]], k: float) -> tuple[float | None, bool]:
+    exact = [point for point in points
              if math.isclose(point["k"], k, rel_tol=1e-12, abs_tol=1e-12)]
     if not exact:
         return None, False
+    return exact[0]["kernel_ms"], True
+
+
+def _validation_exact(curve: dict[str, Any], k: float) -> tuple[float | None, bool]:
     # A validation exact value is allowed as evidence, but it never enters the
     # train hull or the interpolation endpoints.
-    return exact[0]["kernel_ms"], True
+    return _validation_exact_points(_representative_points(curve.get("validation_points", [])), k)
 
 
 def _validation_report(profile: dict[str, Any]) -> dict[str, Any]:
@@ -747,6 +898,81 @@ def _representative_points(points: list[dict[str, Any]]) -> list[dict[str, Any]]
         if new_score > old_score:
             chosen[chosen.index(match)] = point
     return chosen
+
+
+def _shape_and_regime(key: str) -> tuple[str | None, str | None]:
+    """Split one serialized curve key into its shape and resource regime."""
+    try:
+        payload = json.loads(key)
+    except (TypeError, ValueError):
+        return None, None
+    resources = payload.pop("resources", None)
+    shape = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    if not isinstance(resources, dict):
+        return shape, None
+    return shape, json.dumps(resources, sort_keys=True, separators=(",", ":"))
+
+
+class _ServiceProfileIndex:
+    """Immutable lookup views for one measured service-profile object.
+
+    The serialized profile remains the source of truth.  This index only
+    retains references to its curves and precomputed lookup/point views, so a
+    caller can keep writing the normal JSON artifact without exposing an
+    implementation object in it.
+    """
+
+    __slots__ = ("body", "curves", "by_shape", "train_points", "validation_points")
+
+    def __init__(self, body: dict[str, Any]):
+        self.body = body
+        self.curves = body.get("curves", {})
+        scope = body.get("ranking_scope")
+        if body.get("enforce_ranking_scope") and isinstance(scope, dict):
+            certified = frozenset(scope.get("validated_curve_keys", ()))
+            self.curves = {key: curve for key, curve in self.curves.items() if key in certified}
+        by_shape: dict[str, list[str]] = {}
+        self.train_points: dict[str, tuple[dict[str, Any], ...]] = {}
+        self.validation_points: dict[str, tuple[dict[str, Any], ...]] = {}
+        for key, curve in self.curves.items():
+            shape, regime = _shape_and_regime(key)
+            if shape is not None and regime is not None:
+                by_shape.setdefault(shape, []).append(regime)
+            if not isinstance(curve, dict):
+                continue
+            self.train_points[key] = tuple(_representative_points(curve.get("train_points", [])))
+            self.validation_points[key] = tuple(
+                _representative_points(curve.get("validation_points", [])))
+        self.by_shape = {shape: tuple(regimes) for shape, regimes in by_shape.items()}
+
+
+_PROFILE_INDEX_CACHE: collections.OrderedDict[Any, _ServiceProfileIndex] = collections.OrderedDict()
+_PROFILE_INDEX_CACHE_MAXSIZE = 8
+
+
+def _profile_index(profile: dict[str, Any]) -> _ServiceProfileIndex | None:
+    """Return a bounded index whose key changes with profile curve identity."""
+    body = _profile_body(profile)
+    curves = body.get("curves") if isinstance(body, dict) else None
+    if not isinstance(curves, dict) or not curves:
+        return None
+    # Curve object identities detect a rebuilt model with the same serialized
+    # keys, while retaining the bounded cache prevents long calibration runs
+    # from retaining every historical profile.
+    scope = body.get("ranking_scope")
+    certified = (tuple(scope.get("validated_curve_keys", ()))
+                 if body.get("enforce_ranking_scope") and isinstance(scope, dict) else None)
+    identity = (id(body), id(curves), tuple((key, id(curve)) for key, curve in curves.items()), certified)
+    cached = _PROFILE_INDEX_CACHE.get(identity)
+    if cached is not None:
+        _PROFILE_INDEX_CACHE.move_to_end(identity)
+        return cached
+    indexed = _ServiceProfileIndex(body)
+    _PROFILE_INDEX_CACHE[identity] = indexed
+    _PROFILE_INDEX_CACHE.move_to_end(identity)
+    while len(_PROFILE_INDEX_CACHE) > _PROFILE_INDEX_CACHE_MAXSIZE:
+        _PROFILE_INDEX_CACHE.popitem(last=False)
+    return indexed
 
 
 def build_profile(records: Any, identity: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -904,10 +1130,18 @@ def _identity_matches(sample: dict[str, Any], profile: dict[str, Any]) -> tuple[
     return True, None
 
 
-def predict_group(sample: dict[str, Any], group: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
+def predict_group(sample: dict[str, Any], group: dict[str, Any], profile: dict[str, Any],
+                  *, index: _ServiceProfileIndex | None = None,
+                  mapping: dict[str, Any] | None = None,
+                  identity: tuple[bool, str | None] | None = None,
+                  key: str | None = None) -> dict[str, Any]:
     """Predict one group with exact/interpolated measured evidence only."""
+    sample = sample or {}
+    group = group or {}
     body = _profile_body(profile)
-    key = curve_key(sample or {}, group or {})
+    if mapping is None:
+        mapping = _mapping(sample)
+    key = key if key is not None else curve_key(sample, group, mapping=mapping)
     result = {
         "kernel_ms": None, "covered": False, "extrapolated": False,
         "source": "measured-stage-service", "reason": "unknown-curve-key", "curve_key": key,
@@ -916,24 +1150,30 @@ def predict_group(sample: dict[str, Any], group: dict[str, Any], profile: dict[s
         result["source"] = "unavailable"
         result["reason"] = "empty-stage-service-profile"
         return result
-    identity_ok, identity_reason = _identity_matches(sample or {}, body)
+    identity_ok, identity_reason = identity if identity is not None else _identity_matches(sample, body)
     if not identity_ok:
         result["source"] = "unavailable"
         result["reason"] = identity_reason
         return result
-    k, _, _ = _waveform(group or {})
+    k, _, _ = _waveform(group)
     if k is None:
         result["source"] = "unavailable"
         result["reason"] = "invalid-workwave"
         return result
-    curve = body.get("curves", {}).get(key)
+    index = index or _profile_index(body)
+    curve = index.curves.get(key) if index is not None else body.get("curves", {}).get(key)
     if not curve:
         result["reason"] = "unknown-primitive-or-resource-regime"
         return result
-    value, covered, extrapolated, reason = _train_prediction(curve, k)
+    points = index.train_points.get(key) if index is not None else None
+    value, covered, extrapolated, reason = (
+        _train_prediction_points(points, k) if points is not None else _train_prediction(curve, k))
     result.update(kernel_ms=value, covered=covered, extrapolated=extrapolated, reason=reason)
-    role = str((group or {}).get("role", "")).lower()
-    validation_value, validation_exact = _validation_exact(curve, k)
+    role = str(group.get("role", "")).lower()
+    validation_points = index.validation_points.get(key) if index is not None else None
+    validation_value, validation_exact = (
+        _validation_exact_points(validation_points, k) if validation_points is not None
+        else _validation_exact(curve, k))
     if role in {"validation", "holdout"} and validation_exact:
         # An exact validation query may return its independently observed
         # value.  It is explicitly tagged and never changes train points.
@@ -946,6 +1186,54 @@ def predict_group(sample: dict[str, Any], group: dict[str, Any], profile: dict[s
     elif extrapolated:
         result["source"] = "measured-stage-service"
     return result
+
+
+def predict_group_resolved(sample: dict[str, Any], group: dict[str, Any],
+                            profile: dict[str, Any], *,
+                            index: _ServiceProfileIndex | None = None,
+                            mapping: dict[str, Any] | None = None,
+                            identity: tuple[bool, str | None] | None = None,
+                            base: tuple[dict[str, Any], dict[str, Any]] | None = None
+                            ) -> tuple[dict[str, Any], dict[str, Any], bool]:
+    """Resolve a unique measured resource regime and predict in one key pass.
+
+    The regular public helpers remain available for diagnostics.  Ranking has
+    many projected groups with missing compiler fields, so combining the
+    resolution and prediction avoids constructing the same semantic key three
+    times for one group.
+    """
+    sample = sample or {}
+    group = group or {}
+    body = _profile_body(profile)
+    index = index or _profile_index(body)
+    if index is None:
+        return predict_group(sample, group, profile, mapping=mapping, identity=identity), dict(group), False
+    if mapping is None:
+        mapping = _mapping(sample)
+    if base is None:
+        base = _semantic_geometry(sample, mapping)
+    # The combined ranking path sees each physical group once. Building the
+    # key directly avoids hashing/freeze overhead that only helps repeated
+    # public diagnostic calls; ``curve_key`` retains that bounded cache.
+    key = _curve_key_uncached(sample, group, mapping=mapping, base=base)
+    resolved = dict(group)
+    resources_resolved = False
+    if key not in index.curves:
+        shape, _ = _shape_and_regime(key)
+        candidate_regimes = index.by_shape.get(shape, ()) if shape is not None else ()
+        if candidate_regimes and len(set(candidate_regimes)) == 1:
+            resources = json.loads(candidate_regimes[0])
+            known_fields = {field: value for field, value in resources.items() if value != UNKNOWN}
+            if known_fields:
+                for field, value in known_fields.items():
+                    resolved[field] = value
+                resources_resolved = (
+                    {**_resource_state(group), "actual_kernels": _actual_kernel_state(group)} !=
+                    {**_resource_state(resolved), "actual_kernels": _actual_kernel_state(resolved)})
+                key = _curve_key_uncached(sample, resolved, mapping=mapping, base=base)
+    prediction = predict_group(sample, resolved, profile, index=index, mapping=mapping,
+                               identity=identity, key=key)
+    return prediction, resolved, resources_resolved
 
 
 def validation_report(profile: dict[str, Any]) -> dict[str, Any]:

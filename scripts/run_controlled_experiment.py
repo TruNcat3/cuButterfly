@@ -509,7 +509,20 @@ def _query_hardware(binary: Path, requested_uuid: str) -> dict[str, Any]:
     name, compute_capability, memory_mib, actual_uuid, driver = [value.strip() for value in rows[0][:5]]
     if actual_uuid.lower() != requested_uuid.strip().lower():
         raise RuntimeError(f"requested GPU UUID {requested_uuid} does not match target {actual_uuid}")
-    identity = subprocess.run([str(binary), "--device-identity"], check=True, capture_output=True, text=True)
+    # NTT's historical benchmark binary predates the common identity flag.
+    # Keep hardware validation mandatory, but use the sibling public benchmark
+    # as the explicit identity probe when the workload binary cannot provide it.
+    identity_command = [str(binary), "--device-identity"]
+    identity = subprocess.run(identity_command, capture_output=True, text=True)
+    identity_source = str(binary)
+    if identity.returncode:
+        sibling = binary.parent / "cubutterfly_bench"
+        if not sibling.is_file():
+            raise subprocess.CalledProcessError(identity.returncode, identity_command,
+                                                output=identity.stdout, stderr=identity.stderr)
+        identity_command = [str(sibling), "--device-identity"]
+        identity = subprocess.run(identity_command, check=True, capture_output=True, text=True)
+        identity_source = str(sibling)
     device_row = _parse_csv_row(identity.stdout)
     if device_row.get("device") and device_row["device"].strip('"') != name:
         raise RuntimeError("benchmark and nvidia-smi disagree about the GPU name")
@@ -527,6 +540,7 @@ def _query_hardware(binary: Path, requested_uuid: str) -> dict[str, Any]:
         nvml_memory_total_mib = memory_mib
     return {
         "name": name, "compute_capability": compute_capability,
+        "identity_probe": identity_source,
         # CUDA and NVML report related but not contractually identical
         # capacities. Preserve both observations without inventing an
         # equivalence threshold for the target identity.

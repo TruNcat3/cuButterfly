@@ -9,12 +9,15 @@ from __future__ import annotations
 
 import argparse
 import collections
+import copy
+from functools import partial
 import json
 import math
 import pathlib
 import statistics
 from functools import lru_cache
 from schedule_cost_model import costs as scheduling_costs
+from hardware_registry import canonical_semantics
 
 try:
     import resident_mapping
@@ -22,8 +25,13 @@ except ImportError:  # pragma: no cover - package import fallback
     from . import resident_mapping
 
 LEGACY_VERSION = "physical-stage-composition-v3"
-VERSION = "physical-stage-composition-v6"
+# Primitive identity now includes semantic and policy axes.  Do not allow a
+# serialized v6 coefficient table to be reused against the expanded key.
+VERSION = "physical-stage-composition-v7"
 PARAMETERS = ("startup_and_tail", "service")
+
+_MODEL_SERVICE_INDEX_CACHE = collections.OrderedDict()
+_MODEL_SERVICE_INDEX_CACHE_MAXSIZE = 8
 
 
 def number(row, key, default=0):
@@ -33,6 +41,54 @@ def number(row, key, default=0):
 
 def decoded(value, default):
     return json.loads(value) if isinstance(value, str) else (value if value is not None else default)
+
+
+class ResourceInfeasibleError(ValueError):
+    """A known group demand exceeds a known hardware resource limit."""
+
+    def __init__(self, group_index, resource, demand, limit):
+        self.details = dict(group_index=group_index, resource=resource, demand=demand, limit=limit)
+        super().__init__(f"group {group_index}: {resource} demand {demand:g} exceeds limit {limit:g}")
+
+
+def _resource_residency(group, profile, group_index):
+    hw = profile.get("hardware") or {}
+    threads = max(1, number(group, "threads", 128))
+    live = number(group, "live_shared_bytes")
+    registers_known = any(str(group.get(key, False)).lower() in ("true", "1")
+                          for key in ("compiler_resources_known", "compiler_registers_known"))
+    registers_known = registers_known and group.get("compiler_registers_per_thread") not in (None, "")
+    registers = number(group, "compiler_registers_per_thread") if registers_known else 0
+    limits, unknown = [], []
+    for key, demand in (("max_blocks_per_sm", 1), ("max_threads_per_sm", threads),
+                        ("shared_bytes_per_sm", live), ("registers_per_sm", threads * registers),
+                        ("max_threads_per_block", threads), ("shared_bytes_per_block", live),
+                        ("registers_per_block", threads * registers)):
+        try:
+            capacity = number(hw, key, hw.get("max_shared_per_block_optin_bytes", 0)
+                              if key == "shared_bytes_per_block" else 0)
+        except (ValueError, TypeError):
+            capacity = 0
+        known = math.isfinite(capacity) and capacity > 0 and (
+            not key.startswith("registers_per_") or registers_known)
+        if key.startswith("shared_bytes_per_") and group.get("live_shared_bytes") in (None, ""):
+            known = False
+        if not known:
+            unknown.append(key)
+            continue
+        if demand > capacity:
+            raise ResourceInfeasibleError(group_index, key, demand, capacity)
+        if demand > 0 and not key.endswith("_per_block"):
+            limits.append(int(capacity // demand))
+    # Partial hardware/resource descriptions provide upper bounds only.
+    return (min(limits) if limits else 1), dict(
+        resource_feasibility="unknown" if unknown else "feasible", unknown_resources=unknown)
+
+
+def _infeasible_prediction(error, explain):
+    if explain:
+        return dict(status="infeasible", kernel_ms=None, reason=str(error), **error.details)
+    return float("inf")
 
 
 def _prefix_codelet_lanes(sample, mapping, group, group_index):
@@ -51,17 +107,19 @@ def _prefix_codelet_lanes(sample, mapping, group, group_index):
     return value if value != 1 else None
 
 
-def primitive_key(sample, group):
+def primitive_key(sample, group, mapping=None, *, group_index=None):
     # Workload size and number of stages are independent variables of a cost
     # function, not a lookup key for complete kernels. Semantic contracts and
     # implementation choices must not be pooled across incompatible cores.
-    mapping = decoded(sample.get("mapping_json"), {})
+    if mapping is None:
+        mapping = decoded(sample.get("mapping_json"), {})
     if not isinstance(mapping, dict):
         mapping = {}
-    try:
-        group_index = int(group.get("index", 0))
-    except (TypeError, ValueError):
-        group_index = 0
+    if group_index is None:
+        try:
+            group_index = int(group.get("index", 0))
+        except (TypeError, ValueError):
+            group_index = 0
     codelet = group.get("codelet")
     if codelet in (None, ""):
         codelet = (mapping.get("prefix_codelet", sample.get("prefix_codelet", "native"))
@@ -92,13 +150,45 @@ def primitive_key(sample, group):
         group.get("exchange", sample.get("exchange", "unknown")),
         ["exchange_chunk", exchange_chunk],
         ["local_stage_partition", local_partition]]
+    # The legacy whole-plan fallback is also a ranking model.  Keep distinct
+    # semantic contracts and physical policy axes from sharing one fitted
+    # primitive merely because they have the same stage count.  The measured
+    # stage-service path has a richer curve key; this mirrors its essential
+    # identity when only capability-rate priors are available.
+    semantic = canonical_semantics(sample)
+    semantic.setdefault("placement", "out-of-place")
+    for name in ("direction", "normalization", "placement", "modulus", "stage_matrices",
+                 "input_order", "output_order", "element_stride", "batch_stride"):
+        key.append([name, semantic.get(name, "")])
+    for name in (
+            "word_bits", "value_type", "complex_values", "stage_matrix",
+            "address_layout", "layout", "dimension_order", "remaining_bits", "local_logN", "local_log_n",
+            "cross_twiddle", "twiddle", "twiddle_mode", "fused_twiddle", "needed_twiddle",
+            "neededtwiddle", "twiddle_count", "twiddle_stride", "direct_boundary",
+            "boundary_layout", "boundary_storage", "reorder_columns",
+            "factor_ept", "factor_columns", "data_tiles_per_cta", "prefetch_depth",
+            "factor_partition"):
+        if name in sample or name in mapping:
+            # Mapping JSON is the canonical physical representation. CLI CSV
+            # strings and projected integer fields must share one identity.
+            value = mapping.get(name, sample.get(name))
+            key.append([name, str(value) if not isinstance(value, (list, dict)) else value])
+    # Prefix codelet/layout are group-local just like the resolved codelet;
+    # retain them only for the register prefix.  The suffix must remain
+    # reusable when the prefix switches to a cooperative implementation.
+    if (group_index == 0 and
+            mapping.get("backend", sample.get("backend")) == "online-reorder" and
+            group.get("core", sample.get("fft_core", mapping.get("fft_core"))) == "register-tile"):
+        for name in ("prefix_codelet", "prefix_shared_layout"):
+            if name in sample or name in mapping:
+                key.append([name, sample.get(name, mapping.get(name))])
     lanes = _prefix_codelet_lanes(sample, mapping, group, group_index)
     if lanes is not None:
         key.append(["prefix_codelet_lanes", lanes])
     return json.dumps(key, separators=(",", ":"))
 
 
-def stage_terms(sample, profile):
+def stage_terms(sample, profile, *, mapping=None):
     """Return hardware-rate priors in ms per physical launch, plus provenance."""
     groups = decoded(sample.get("execution_groups_json"), [])
     if not groups:
@@ -116,7 +206,8 @@ def stage_terms(sample, profile):
     batch = number(sample, "batch", 1)
     tile = min(batch, max(1, number(sample, "batch_tile_count", 1))) if number(sample, "stage_overlap") else batch
     terms = []
-    mapping = decoded(sample.get("mapping_json"), {})
+    if mapping is None:
+        mapping = decoded(sample.get("mapping_json"), {})
     if not isinstance(mapping, dict):
         mapping = {}
     for group_index, group in enumerate(groups):
@@ -128,19 +219,7 @@ def stage_terms(sample, profile):
                              number(group, "work_blocks", number(group, "work", 1))))
         threads = max(1, number(group, "threads", number(sample, "tile_threads", 128)))
         live = number(group, "live_shared_bytes")
-        regs = number(group, "compiler_registers_per_thread")
-        # Active CTA limits are conservative when compiler resources are not
-        # available. Such predictions retain resource provenance below.
-        resident = 1
-        # Hardware-specific resource limits override the portable projection.
-        hw = profile.get("hardware", {})
-        if hw:
-            limits = [int(hw["max_blocks_per_sm"]), int(hw["max_threads_per_sm"] // threads)]
-            if live:
-                limits.append(int(hw["shared_bytes_per_sm"] // live))
-            if regs:
-                limits.append(int(hw["registers_per_sm"] // (threads * regs)))
-            resident = max(1, min(limits))
+        resident, resource_state = _resource_residency(dict(group, threads=threads), profile, group_index)
         memory = 1000 * 2 * points * width / number(caps, required[0])
         compute = 1000 * points * stages / 2 / number(caps, required[1])
         interstage_boundaries = max(0, stages - 1)
@@ -175,13 +254,14 @@ def stage_terms(sample, profile):
         schedule = scheduling_costs(profile, threads, grid, sm_count)
         dispatch = schedule["dispatch_ms"]
         body = max(memory, compute, shared, barriers, dispatch, 1e-9)
-        terms.append(dict(key=primitive_key(sample, group), startup_and_tail=schedule["startup_ms"], scheduling=schedule,
+        terms.append(dict(key=primitive_key(sample, group, mapping, group_index=group_index), startup_and_tail=schedule["startup_ms"], scheduling=schedule,
             service=body, memory_ms=memory, compute_ms=max(compute, shared, barriers),
             occupancy=min(1.0, grid / (sm_count * resident)), launch_count=launches,
             stage_count=stages, grid_ctas=grid, points=points,
             interstage_boundaries=interstage_boundaries,
             exchange_barriers=extra_exchange_barriers,
             resource_source="compiler" if group.get("compiler_resources_known") else "projected",
+            **resource_state,
             descriptor_source=sample.get("descriptor_source", "measured-plan")))
     return terms
 
@@ -261,6 +341,34 @@ def _schedule_signature(stages):
 
 @lru_cache(maxsize=512)
 def _compose_stages_cached(stages, tiles, factor, overlap, last_fraction, tail_stages):
+    if ((not overlap or tiles == 1) and tiles >= 1 and stages and last_fraction > 0 and
+            all(stage[0] >= 0 and stage[1] > 0 for stage in (*stages, *(tail_stages or ())))):
+        # These dependencies admit one active node at a time. Preserve the
+        # simulator's tile-major addition order, including factor fan-in and
+        # tail replacement, without allocating a serial graph.
+        elapsed = 0.0
+        for tile in range(tiles):
+            for group in range(len(stages) - (1 if factor else 0)):
+                stage = stages[group]
+                fraction = last_fraction if not factor and tile == tiles - 1 else 1.0
+                if tail_stages is not None and not factor and tile == tiles - 1:
+                    stage = tail_stages[group]
+                    fraction = 1.0
+                duration = stage[0] + stage[1] * fraction
+                elapsed += duration
+        if factor:
+            elapsed += stages[-1][0] + stages[-1][1] * 1.0
+        return elapsed
+    if (stages and isinstance(tiles, int) and tiles >= 1 and last_fraction > 0 and
+            (tail_stages is None or len(tail_stages) == len(stages)) and
+            all(stage[0] >= 0 and stage[1] > 0 and all(math.isfinite(x) for x in stage)
+                for stage in (*stages, *(tail_stages or ())))):
+        from stage_schedule_native import compose as native_compose
+        result = native_compose(stages, tiles, factor, overlap, last_fraction, tail_stages)
+        if result is not None:
+            if math.isnan(result):
+                raise ValueError("cyclic stage schedule")
+            return result
     full = [dict(zip(_SCHEDULE_FIELDS, stage)) for stage in stages]
     tail = None if tail_stages is None else [dict(zip(_SCHEDULE_FIELDS, stage)) for stage in tail_stages]
     return compose(schedule_nodes(full, tiles, factor, overlap, last_fraction, tail))
@@ -302,6 +410,8 @@ def fit(rows, profile, ridge=0.01, *, legacy=False, compatibility=None):
             continue
         try:
             terms = stage_terms(sample, profile)
+        except ResourceInfeasibleError:
+            raise
         except (ValueError, KeyError, TypeError, ZeroDivisionError):
             if not measured_service:
                 raise
@@ -371,7 +481,7 @@ def fit(rows, profile, ridge=0.01, *, legacy=False, compatibility=None):
     return result
 
 
-def _minimal_terms(sample, profile):
+def _minimal_terms(sample, profile, *, mapping=None):
     """Build only scheduling/resource provenance when measured curves are present.
 
     Independent service probes are authoritative for duration, so a capability
@@ -379,22 +489,42 @@ def _minimal_terms(sample, profile):
     result is used only for resource-demand hints and explicit fallback rows.
     """
     groups = decoded(sample.get("execution_groups_json"), [])
+    if mapping is None:
+        mapping = decoded(sample.get("mapping_json"), {})
     sm_count = max(1, number(profile, "sm_count", number(profile.get("hardware", {}), "sm_count", 1)))
     terms = []
-    for group in groups:
+    for group_index, group in enumerate(groups):
         threads = max(1, number(group, "threads", number(sample, "tile_threads", 128)))
+        _, resource_state = _resource_residency(dict(group, threads=threads), profile, group_index)
         grid = max(1, number(group, "grid_ctas",
                              number(group, "work_blocks", number(group, "work", 1))))
         launches = max(1, int(number(group, "launch_count",
                                       number(group, "kernel_launch_count", 1))))
         schedule = scheduling_costs(profile, threads, grid, sm_count)
-        terms.append(dict(key=primitive_key(sample, group), startup_and_tail=schedule["startup_ms"],
+        terms.append(dict(key=primitive_key(sample, group, mapping, group_index=group_index), startup_and_tail=schedule["startup_ms"],
             scheduling=schedule, service=1e-9, memory_ms=0.0, compute_ms=0.0,
             occupancy=min(1.0, grid / sm_count), launch_count=launches,
             stage_count=max(1, number(group, "stage_count", 1)), grid_ctas=grid, points=0.0,
             resource_source="unknown" if not group.get("compiler_resources_known") else "compiler",
+            **resource_state,
             descriptor_source=sample.get("descriptor_source", "measured-plan")))
     return terms
+
+
+def _model_service_index(model, service_profile):
+    """Reuse a profile index across all shortlist scores for one model."""
+    identity = id(model)
+    cached = _MODEL_SERVICE_INDEX_CACHE.get(identity)
+    if cached is not None and cached[0] is model and cached[1] is service_profile:
+        _MODEL_SERVICE_INDEX_CACHE.move_to_end(identity)
+        return cached[2]
+    from stage_service_model import _profile_index
+    index = _profile_index(service_profile)
+    _MODEL_SERVICE_INDEX_CACHE[identity] = (model, service_profile, index)
+    _MODEL_SERVICE_INDEX_CACHE.move_to_end(identity)
+    while len(_MODEL_SERVICE_INDEX_CACHE) > _MODEL_SERVICE_INDEX_CACHE_MAXSIZE:
+        _MODEL_SERVICE_INDEX_CACHE.popitem(last=False)
+    return index
 
 
 def _predict_batch_composition(sample, model, projection, explain):
@@ -450,7 +580,7 @@ def _predict_batch_composition(sample, model, projection, explain):
 
 
 def _predict_measured(sample, model, explain=False):
-    from stage_service_model import predict_group, resolve_resources, resource_regime_key
+    from stage_service_model import _mapping, _semantic_geometry, predict_group_resolved
 
     service_profile = model.get("stage_service") or model.get("profile", {}).get("stage_service")
     projection = decoded(sample.get("stage_service_projection"), {})
@@ -460,17 +590,24 @@ def _predict_measured(sample, model, explain=False):
     groups = decoded(sample.get("execution_groups_json"), [])
     if not groups:
         raise ValueError("physical execution groups are required for staged costs")
+    mapping = _mapping(sample)
+    semantic_geometry = _semantic_geometry(sample, mapping)
+    service_index = _model_service_index(model, service_profile)
     try:
-        terms = stage_terms(sample, model["profile"])
+        terms = stage_terms(sample, model["profile"], mapping=mapping)
+    except ResourceInfeasibleError:
+        raise
     except (ValueError, KeyError, TypeError, ZeroDivisionError):
-        terms = _minimal_terms(sample, model["profile"])
+        terms = _minimal_terms(sample, model["profile"], mapping=mapping)
     stages, missing, outside, unmeasured = [], [], [], []
     for index, group in enumerate(groups):
         term = terms[index] if index < len(terms) else _minimal_terms(
-            dict(sample, execution_groups_json=[group]), model["profile"])[0]
-        resolved_group = resolve_resources(sample, group, service_profile)
-        resources_resolved = resource_regime_key(sample, resolved_group) != resource_regime_key(sample, group)
-        measured = predict_group(sample, resolved_group, service_profile)
+            dict(sample, execution_groups_json=[group]), model["profile"], mapping=mapping)[0]
+        measured, resolved_group, resources_resolved = predict_group_resolved(
+            sample, group, service_profile, index=service_index, mapping=mapping,
+            base=semantic_geometry)
+        threads = max(1, number(resolved_group, "threads", number(sample, "tile_threads", 128)))
+        _, resource_state = _resource_residency(dict(resolved_group, threads=threads), model["profile"], index)
         if measured["covered"] and measured["kernel_ms"] is not None:
             # The probe duration already includes the physical launch.  Keep
             # overhead zero and launch_count one so schedule composition does
@@ -481,6 +618,7 @@ def _predict_measured(sample, model, explain=False):
                 hbm_demand=min(1.0, term["memory_ms"] / body) if body else 0.0,
                 launch_count=1, service_source=measured["source"],
                 curve_key=measured["curve_key"], measured_kernel_ms=body,
+                **resource_state,
                 resources_resolved=resources_resolved))
             continue
         key = measured["curve_key"]
@@ -497,7 +635,7 @@ def _predict_measured(sample, model, explain=False):
             scheduling=term["scheduling"],
             sm_demand=max(term["occupancy"], min(1.0, term["compute_ms"] / body)),
             hbm_demand=min(1.0, term["memory_ms"] / body), launch_count=term["launch_count"],
-            service_source="legacy-whole-plan-fallback", curve_key=key))
+            service_source="legacy-whole-plan-fallback", curve_key=key, **resource_state))
     factor = sample.get("backend") == "factor-streamed"
     overlap = bool(number(sample, "factor_overlap" if factor else "stage_overlap"))
     if overlap and not factor:
@@ -529,12 +667,26 @@ def _predict_measured(sample, model, explain=False):
 
 
 def predict(sample, model, explain=False, *, legacy=False):
+    model_version = model.get("version")
+    if model_version not in (VERSION, LEGACY_VERSION):
+        raise ValueError(
+            f"stage cost model version {model_version!r} is stale or missing; re-fit required")
     service_profile = model.get("stage_service") or model.get("profile", {}).get("stage_service")
     legacy = (legacy or model.get("version") == LEGACY_VERSION or
               model.get("service_model") == "legacy-whole-plan-fallback")
-    if isinstance(service_profile, dict) and service_profile.get("curves") and not legacy:
-        return _predict_measured(sample, model, explain)
-    terms = stage_terms(sample, model["profile"])
+    try:
+        for index, group in enumerate(decoded(sample.get("execution_groups_json"), [])):
+            threads = max(1, number(group, "threads", number(sample, "tile_threads", 128)))
+            _resource_residency(dict(group, threads=threads), model["profile"], index)
+        if isinstance(service_profile, dict) and service_profile.get("curves") and not legacy:
+            return _predict_measured(sample, model, explain)
+        terms = stage_terms(sample, model["profile"])
+    except ResourceInfeasibleError as error:
+        return _infeasible_prediction(error, explain)
+    return _predict_terms(sample, terms, model, explain)
+
+
+def _predict_terms(sample, terms, model, explain=False, *, composer=compose_stages):
     stages, missing, outside = [], [], []
     for term in terms:
         factors = model["parameters"].get(term["key"], {})
@@ -549,6 +701,7 @@ def predict(sample, model, explain=False, *, legacy=False):
         body = max(1e-9, term["service"] * factors.get("service", 1.0))
         stages.append(dict(overhead_ms=overhead, body_ms=body,
             scheduling=term["scheduling"],
+            resource_feasibility=term["resource_feasibility"], unknown_resources=term["unknown_resources"],
             sm_demand=max(term["occupancy"], min(1.0, term["compute_ms"] / body)),
             hbm_demand=min(1.0, term["memory_ms"] / body)))
     factor = sample.get("backend") == "factor-streamed"
@@ -564,7 +717,7 @@ def predict(sample, model, explain=False, *, legacy=False):
     if approximate:
         estimate = sum(s["overhead_ms"] * tiles + s["body_ms"] * (tiles - 1 + fraction) for s in stages)
     else:
-        estimate = compose_stages(stages, tiles, factor, overlap, fraction)
+        estimate = composer(stages, tiles, factor, overlap, fraction)
     details = dict(kernel_ms=estimate, stages=stages, schedule_tiles=tiles,
         missing_primitives=sorted(set(missing)), extrapolated_primitives=sorted(set(outside)),
         schedule_model="serial-upper-estimate" if approximate else "dependency-and-shared-resource-simulation",
@@ -573,6 +726,71 @@ def predict(sample, model, explain=False, *, legacy=False):
         service_model="legacy-whole-plan-fallback", whole_plan_fallback_used=True,
         unmeasured_groups=[])
     return details if explain else estimate
+
+
+class PreparedPredictor:
+    """Prepare fixed candidate features once, then bind each fitted model.
+
+    Prepared samples are private snapshots: prepare again after changing a
+    point or resolving its descriptor. A changed hardware/service profile or
+    prediction mode requires a new predictor; bind checks this once per model,
+    rather than hashing large profiles for every candidate. Coefficients and
+    primitive coverage are deliberately read from each newly bound model.
+    Bound models must not be mutated while scoring their candidates.
+    """
+
+    def __init__(self, model):
+        self._profile = copy.deepcopy(model["profile"])
+        self._service = copy.deepcopy(model.get("stage_service"))
+        self._mode = (model.get("version"), model.get("service_model"))
+        self._schedules = collections.OrderedDict()
+        self._measured = bool((model.get("stage_service") or
+                               model["profile"].get("stage_service") or {}).get("curves")) and (
+            model.get("version") != LEGACY_VERSION and
+            model.get("service_model") != "legacy-whole-plan-fallback")
+        self.bind(model)
+
+    def prepare(self, sample):
+        snapshot = copy.deepcopy(sample)
+        try:
+            terms = None if self._measured else stage_terms(snapshot, self._profile)
+        except ResourceInfeasibleError as error:
+            terms = error
+        return (self, snapshot, terms)
+
+    def bind(self, model):
+        """Return an exact scorer for prepared samples under this model."""
+        if model.get("version") not in (VERSION, LEGACY_VERSION):
+            raise ValueError("stage cost model is stale or missing; re-fit required")
+        if ((model.get("version"), model.get("service_model")) != self._mode or
+                model["profile"] != self._profile or model.get("stage_service") != self._service):
+            raise ValueError("prepared predictor profile or mode changed; prepare again")
+        # A search pass can contain far more than the process-wide LRU's
+        # capacity. Complete numeric signatures permit reuse across refits;
+        # the predictor and its cache are released at the workload boundary.
+        schedules = self._schedules
+
+        def composer(stages, tiles=1, factor=False, overlap=False, last_fraction=1.0):
+            signature = (_schedule_signature(stages), tiles, factor, overlap, last_fraction)
+            if signature not in schedules:
+                schedules[signature] = _compose_stages_cached(*signature, None)
+                if len(schedules) > 65536:
+                    schedules.popitem(last=False)
+            else:
+                schedules.move_to_end(signature)
+            return schedules[signature]
+
+        return partial(self._predict, model=model, composer=composer)
+
+    def _predict(self, prepared, explain=False, *, model, composer):
+        owner, sample, terms = prepared
+        if owner is not self:
+            raise ValueError("prepared sample belongs to another predictor")
+        if isinstance(terms, ResourceInfeasibleError):
+            return _infeasible_prediction(terms, explain)
+        if terms is None:
+            return predict(sample, model, explain)
+        return _predict_terms(sample, terms, model, explain, composer=composer)
 
 
 def _holdout_error_summary(checks, *, minimum_count=3, median_limit=.10, p90_limit=.20,

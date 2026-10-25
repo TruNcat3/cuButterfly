@@ -122,9 +122,36 @@ def validate_resident_axes(mapping: Mapping[str, Any], stages: Sequence[int], *,
     return parts, chunks
 
 
-def register_geometry(mapping: Mapping[str, Any], stages: Sequence[int] | None = None) -> dict[str, int | list[list[int]] | list[int]]:
+def validate_suffix_core(mapping: Mapping[str, Any], *, register: bool | None = None) -> str:
+    core = mapping.get("suffix_core", "cufftdx-block")
+    if core not in ("cufftdx-block", "native"):
+        raise ValueError("suffix_core must be cufftdx-block or native")
+    if register is None:
+        register = (mapping.get("operator", "fft") == "fft" and
+                    mapping.get("backend") == "online-reorder" and
+                    mapping.get("fft_core") == "register-tile")
+    if core != "cufftdx-block" and not register:
+        raise ValueError("suffix_core applies only to online-reorder register-tile FFT")
+    return core
+
+
+def register_geometry(mapping: Mapping[str, Any], stages: Sequence[int] | None = None) -> dict[str, str | int | list[list[int]] | list[int]]:
     """Resolve rectangular register-prefix and grouped-suffix geometry."""
     total = _int(mapping.get("logN"), "logN", minimum=1)
+    suffix_core = validate_suffix_core(mapping, register=(
+        mapping.get("operator", "fft") == "fft" and
+        mapping.get("backend", "online-reorder") == "online-reorder" and
+        mapping.get("fft_core", "register-tile") == "register-tile"))
+    for name in ("segment_mappings", "execution_group_mappings"):
+        entries = mapping.get(name, [])
+        if entries:
+            if not isinstance(entries, list) or len(entries) != 2:
+                raise ValueError("register FFT physical mappings require two groups")
+            for index, entry in enumerate(entries):
+                expected = "register-tile" if index == 0 or suffix_core == "native" else "cufftdx-block"
+                codelet = mapping.get("prefix_codelet", "native") if index == 0 else "native"
+                if entry.get("core", expected) != expected or entry.get("codelet", codelet) != codelet:
+                    raise ValueError("register FFT physical mapping disagrees with prefix_codelet or suffix_core")
     local = _int(mapping.get("local_stages"), "local_stages", minimum=2)
     suffix = total - local
     if local > 12 or suffix < 3 or suffix > 14 or total > 26:
@@ -175,6 +202,7 @@ def register_geometry(mapping: Mapping[str, Any], stages: Sequence[int] | None =
         "prefix_lanes": lanes, "second_lanes": second_lanes, "prefix_columns": columns,
         "suffix_ept": suffix_ept, "suffix_threads": suffix_threads,
         "suffix_columns": suffix_columns, "suffix_chunk": chunk,
+        "suffix_core": suffix_core,
         "local_stage_partitions": parts, "exchange_chunks": chunks,
     }
 

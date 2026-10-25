@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <vector>
 
 namespace cuntt::detail {
 const char* runtime_fingerprint() noexcept;
@@ -13,7 +14,20 @@ std::string serialize_mapping(const PlanConfig& config);
 void apply_serialized_mapping(const std::string& json, ButterflyConfig& config);
 void apply_serialized_mapping(const std::string& json, PlanConfig& config);
 std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig& config);
+// Optional compact provider audit. Missing core implementations are distinct
+// from invalid transform semantics; unknown capabilities remain candidates.
+std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig& config,
+                                                         std::string* provider_audit_json);
 std::vector<PlanConfig> portable_ntt_candidates(const PlanConfig& config);
+
+// Research-only selector restrictions.  The environment variable
+// CUBUTTERFLY_SEARCH_DISABLE accepts a comma-separated list of mechanism
+// names.  These helpers keep constrained re-search explicit and auditable;
+// they never alter semantic workload fields or turn an unsupported mapping
+// into a fallback.
+std::vector<std::string> search_disabled_mechanisms();
+bool mapping_uses_disabled_mechanism(const std::string& mapping_json,
+                                     const std::vector<std::string>& disabled);
 }
 
 namespace cubutterfly {
@@ -42,11 +56,13 @@ inline std::string execution_groups_json(const cuntt::MixedDataflowPlan& plan) {
              << ",\"threads\":" << g.threads << ",\"elements_per_thread\":" << g.elements_per_thread
              << ",\"core\":" << std::quoted(g.core) << ",\"shared_layout\":" << std::quoted(g.shared_layout)
              << ",\"codelet\":" << std::quoted(g.codelet) << ",\"io_policy\":" << std::quoted(g.io_policy)
+             << ",\"exchange\":" << static_cast<unsigned>(g.exchange)
              << ",\"exchange_chunk\":" << g.exchange_chunk << ",\"local_stage_partition\":[";
         for(std::size_t j=0;j<g.local_stage_partition.size();++j)
             json << (j ? "," : "") << g.local_stage_partition[j];
         json << ']'
              << ",\"live_shared_bytes\":" << g.live_shared_bytes << ",\"grid_ctas\":" << g.grid_ctas
+             << ",\"work_blocks\":" << g.grid_ctas
              << ",\"compiler_registers_per_thread\":" << g.compiler_registers_per_thread
              << ",\"compiler_local_bytes_per_thread\":" << g.compiler_local_bytes_per_thread
              << ",\"compiler_local_resources_known\":" << (g.compiler_local_resources_known ? "true" : "false")
@@ -54,7 +70,12 @@ inline std::string execution_groups_json(const cuntt::MixedDataflowPlan& plan) {
              << ",\"logical_macro_group\":" << g.logical_macro_group
              << ",\"launch_count\":" << g.launch_count
              << ",\"partial_dependency_ready\":" << (g.partial_dependency_ready ? "true" : "false")
-             << ",\"compiler_resources_known\":" << (g.compiler_resources_known ? "true" : "false") << '}';
+             << ",\"compiler_resources_known\":" << (g.compiler_resources_known ? "true" : "false")
+             << ",\"shared_components_known\":" << (g.shared_components_known ? "true" : "false");
+        if (g.shared_components_known)
+            json << ",\"static_shared_bytes\":" << g.static_shared_bytes
+                 << ",\"dynamic_shared_bytes\":" << g.dynamic_shared_bytes;
+        json << '}';
     }
     return json.str()+']';
 }

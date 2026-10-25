@@ -1,0 +1,79 @@
+{
+  "schema": "cubutterfly-profile-cohort-v1",
+  "experiment_id": "E14",
+  "status": "prepared_not_run",
+  "target": "a100-80gb-gpu1",
+  "device_policy": "A100 80GB UUID-locked exclusive run; V100 and A100 40GB remain separate cohorts.",
+  "source_snapshot": "0.9.1-rc.2/replay-fix.1",
+  "purpose": "Explain positive and negative organization cases with matched hardware counters without replacing normal CUDA-event timing.",
+  "protocol": {
+    "normal_timing": "100 warmups, 100 repeats, 3 process trials",
+    "profile_timing": "1 warmup, 2 diagnostic repeats; profiler time is not merged into performance tables",
+    "correctness": "full-batch reference before profiling",
+    "profile_tools": ["ncu", "nsys"],
+    "metrics": [
+      "kernel_time_us", "kernel_count", "launch_interval_us", "registers_per_thread",
+      "shared_memory_bytes", "active_warps_pct", "dram_read_mib", "dram_write_mib",
+      "dram_peak_pct", "l2_hit_pct", "barrier_stall_pct", "long_scoreboard_stall_pct"
+    ]
+  },
+  "cases": [
+    {
+      "id": "fft-resident-positive",
+      "operator": "fft",
+      "workload": {"precision": "fp32", "logN": 12, "batch": 64, "direction": "forward", "placement": "out-of-place"},
+      "axis": "organization",
+      "baseline": "stagewise-HBM",
+      "treatment": "resident-prefix-2",
+      "question": "Does retaining a dependency-closed prefix reduce materialized traffic at a fixed arithmetic core?"
+    },
+    {
+      "id": "fft-pipeline-negative",
+      "operator": "fft",
+      "workload": {"precision": "fp32", "logN": 12, "batch": 64, "direction": "forward", "placement": "out-of-place"},
+      "axis": "overlap",
+      "baseline": "bulk",
+      "treatment": "pipeline-tile16",
+      "question": "When does launch fragmentation exceed the available inter-stage overlap?"
+    },
+    {
+      "id": "fft-core-positive-or-neutral",
+      "operator": "fft",
+      "workload": {"precision": "fp32", "logN": 18, "batch": 16, "direction": "forward", "placement": "out-of-place"},
+      "axis": "core",
+      "baseline": "native-register-tile",
+      "treatment": "cuFFTDx-thread",
+      "question": "Which resource changes when the arithmetic core changes under the same organization?"
+    },
+    {
+      "id": "fwht-register-positive",
+      "operator": "fwht",
+      "workload": {"precision": "fp16", "logN": 12, "batch": 64, "direction": "forward", "placement": "out-of-place"},
+      "axis": "organization",
+      "baseline": "shared-iterative",
+      "treatment": "warp-register",
+      "question": "Does register residency reduce traffic and synchronization for a small butterfly tile?"
+    },
+    {
+      "id": "ntt-word64-boundary",
+      "operator": "ntt",
+      "workload": {"precision": "word64", "logN": 20, "batch": 1, "direction": "forward", "mode": "cyclic"},
+      "axis": "organization",
+      "baseline": "GPU-NTT Merge",
+      "treatment": "cuButterfly-selected",
+      "question": "Does the selected hierarchical mapping improve the word64 large-N resource balance?"
+    }
+  ],
+  "outputs": {
+    "normalized_csv": "results/paper_profile_rc2/a100-80gb/profile_metrics.csv",
+    "figure_pdf": "paper/figures/rc2_hardware_profile.pdf",
+    "figure_svg": "paper/figures/rc2_hardware_profile.svg",
+    "case_records": "results/paper_profile_rc2/a100-80gb/cases/"
+  },
+  "claim_rules": [
+    "A profile case is accepted only when its normal timing journal and profiler record have matching source, GPU UUID, mapping, and correctness identity.",
+    "A positive or negative profile explains one mechanism case; it does not establish a universal hardware cause.",
+    "Profiler timing and replay counters are diagnostic and never replace accepted CUDA-event medians.",
+    "Unavailable or failed cases remain explicit and do not enter the aggregate figure."
+  ]
+}

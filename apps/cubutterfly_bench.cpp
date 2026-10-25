@@ -132,13 +132,15 @@ void print_usage() {
         << "                    [--group-threads 512,512] [--group-ept 8,8]\n"
         << "                    [--normalization none|inverse]\n"
         << "                    [--auto-select]\n"
-        << "                    [--stage-overlap --batch-tile-count N]\n"
+        << "                    [--stage-overlap] [--batch-tile-count N; shared bulk 1..4, overlap chunk size]\n"
         << "                    [--placement in-place|out-of-place]\n"
         << "                    [--batch-stride N]\n"
         << "                    [--element-stride N]\n"
         << "                    [--stage-space 1|2|4|8]\n"
         << "                    [--stage-handoff atomic|named-barrier]\n"
-        << "                    [--tile-threads 32|64|128|256; resident also 512|1024] [--local-stages 5..10; cuFFTDx online 5..12] [--reorder-columns power-of-two]\n"
+        << "                    [--tile-threads N; shared accepts device-supported warp multiples, other cores have their own limits]\n"
+        << "                    [--local-stages 5..10; cuFFTDx online 5..12] [--reorder-columns power-of-two]\n"
+        << "                    [--register-threads 0|shape-specific warp-register template threads]\n"
         << "                    [--prefix-threads 128|256|512|1024] [--suffix-threads 128|256|512|1024]\n"
         << "                    [--prefix-ept N] [--suffix-ept N]\n"
         << "                    [--warp-stages 0..5]\n"
@@ -148,12 +150,12 @@ void print_usage() {
         << "                    [--cross-twiddle table|recurrence]\n"
         << "                    [--direct-boundary direct-strided|tiled-transpose|prefix-tiled-transpose]\n"
         << "                    [--local-exchange shared|warp-register]\n"
-        << "                    [--shared-layout linear|xor-swizzle]\n"
+        << "                    [--shared-layout linear|writer-aligned|xor-swizzle]\n"
         << "                    [--fft-core scalar|thread-dft8|cta-dft8|wmma-dft8|cufftdx-block|cufftdx-direct|cufftdx-resident|turbofft-generated|register-tile]\n"
-        << "                    [--precision fp16|bf16|fp32|fp64|fp16-fp32|uint32]\n"
+        << "                    [--precision fp16|bf16|fp32|fp64|fp16-fp32|uint32|uint64]\n"
         << "                    [--accumulation native|fp32]\n"
         << "                    [--warmup 20] [--repeat 100] [--verify] [--verify-batches 0] [--csv]\n"
-        << "                    [--mapping-json JSON] [--list-design-points]\n"
+        << "                    [--mapping-json JSON] [--list-design-points] [--candidate-capability-audit]\n"
         << "                    [--list-capabilities] [--list-processing-units] [--list-register-tile-mappings] [--device-identity]\n";
 }
 
@@ -196,6 +198,7 @@ int main(int argc, char** argv) {
     std::size_t verify_batch_limit = 0;
     bool                   csv    = false;
     bool list_design_points = false;
+    bool candidate_capability_audit = false;
     std::string mapping_json;
 
     try {
@@ -217,10 +220,13 @@ int main(int argc, char** argv) {
                 return 0;
             }
             if (arg == "--list-register-tile-mappings") {
-                std::cout << "logN,local_stages,prefix_threads,prefix_ept,suffix_threads,suffix_ept\n";
+                std::cout << "logN,local_stages,prefix_threads,prefix_ept,suffix_threads,suffix_ept,"
+                             "prefix_codelet,prefix_shared_layout,prefix_codelet_lanes\n";
                 for(const auto& mapping : cuntt::detail::register_tile_mappings())
                     std::cout << mapping.log_n << ',' << mapping.local_stages << ',' << mapping.prefix_threads << ','
-                              << mapping.prefix_ept << ',' << mapping.suffix_threads << ',' << mapping.suffix_ept << '\n';
+                              << mapping.prefix_ept << ',' << mapping.suffix_threads << ',' << mapping.suffix_ept << ','
+                              << mapping.prefix_codelet << ',' << mapping.prefix_shared_layout << ','
+                              << mapping.prefix_codelet_lanes << '\n';
                 return 0;
             }
             if (arg == "--device-identity") {
@@ -232,6 +238,8 @@ int main(int argc, char** argv) {
             }
             if (arg == "--list-design-points") {
                 list_design_points = true;
+            } else if (arg == "--candidate-capability-audit") {
+                candidate_capability_audit = true;
             } else if (arg == "--mapping-json") {
                 mapping_json = take_arg(index, argc, argv);
             } else if (arg == "--operator") {
@@ -305,6 +313,8 @@ int main(int argc, char** argv) {
                 config.stage_handoff = cuntt::parse_stage_handoff(take_arg(index, argc, argv));
             } else if (arg == "--tile-threads") {
                 config.tile_threads = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--register-threads") {
+                config.register_threads = std::stoul(take_arg(index, argc, argv));
             } else if (arg == "--prefix-threads") {
                 config.prefix_threads = std::stoul(take_arg(index, argc, argv));
             } else if (arg == "--suffix-threads") {
@@ -372,6 +382,12 @@ int main(int argc, char** argv) {
             }
         }
 
+        if (candidate_capability_audit) {
+            std::string audit;
+            cubutterfly::portable_butterfly_candidates(config, &audit);
+            std::cout << audit << '\n';
+            return 0;
+        }
         if (list_design_points) {
             for (const auto& candidate : cubutterfly::portable_butterfly_candidates(config))
                 std::cout << cubutterfly::serialize_mapping(candidate) << '\n';
@@ -589,6 +605,38 @@ int main(int argc, char** argv) {
                     correct               = max_error <= tolerance;
                 }
             }
+        } else if (config.precision == cuntt::ButterflyPrecision::Uint64) {
+            std::vector<std::uint64_t> input(extent);
+            for (std::size_t index = 0; index < extent; ++index) {
+                const auto offset = static_cast<std::uint64_t>(index);
+                switch (index % 4) {
+                case 0: input[index] = UINT64_MAX - offset; break;
+                case 1: input[index] = (std::uint64_t{1} << 53) + offset + 1; break;
+                case 2: input[index] = (std::uint64_t{1} << 32) + offset + 1; break;
+                default: input[index] = offset; break;
+                }
+            }
+            std::vector<std::uint64_t> output;
+            stats = plan.execute(input, output, warmup, repeat);
+            if (verify) {
+                for (const auto transform : checked_batches) {
+                    const auto base = transform * config.batch_stride;
+                    std::vector<std::uint64_t> expected(n);
+                    for (std::size_t index = 0; index < n; ++index)
+                        expected[index] = input[base + index * config.element_stride];
+                    if (config.op == cuntt::ButterflyOperator::SupersetZeta)
+                        cuntt::reference_superset_zeta(expected, config.inverse);
+                    else
+                        cuntt::reference_subset_zeta(expected, config.inverse);
+                    for (std::size_t index = 0; index < n; ++index) {
+                        if (expected[index] != output[base + index * config.element_stride]) {
+                            correct = false;
+                            // Exact mismatch indicator avoids narrowing a UINT64 difference.
+                            max_error = 1.0F;
+                        }
+                    }
+                }
+            }
         } else {
             std::uniform_int_distribution<std::uint32_t> integer_distribution(0, 1023);
             std::vector<std::uint32_t>                   input(extent);
@@ -634,8 +682,10 @@ int main(int argc, char** argv) {
                                           config.accumulation == cuntt::ButterflyAccumulation::Native && device.compute_major < 8) << ','
                       << (config.inverse ? "inverse" : "forward") << ',' << (config.normalize_inverse ? "inverse" : "none") << ','
                       << cuntt::butterfly_placement_name(config.placement) << ',' << static_cast<int>(config.auto_select) << ','
-                      << '"' << selection.target << "\",\"" << selection.implementation << "\",\"" << selection.confidence << "\","
-                      << selection.predicted_kernel_ms << ",\"" << selection.reason << "\","
+                      << cubutterfly::csv_field(selection.target) << ','
+                      << cubutterfly::csv_field(selection.implementation) << ','
+                      << cubutterfly::csv_field(selection.confidence) << ','
+                      << selection.predicted_kernel_ms << ',' << cubutterfly::csv_field(selection.reason) << ','
                       << cuntt::butterfly_backend_name(config.backend) << ','
                       << cuntt::compute_unit_name(config.compute_unit) << ',' << cuntt::complex_multiply_name(config.complex_multiply) << ','
                       << cuntt::cross_twiddle_mode_name(config.cross_twiddle) << ','

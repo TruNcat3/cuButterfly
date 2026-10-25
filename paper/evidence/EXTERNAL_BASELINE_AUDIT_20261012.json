@@ -1,0 +1,913 @@
+{
+  "schema": "external-baseline-audit-20261012-v1",
+  "human_verification": "not recorded",
+  "scope": "CPU-only supplemental baselines; never pooled into GPU speedup or operator GM",
+  "sources": [
+    {
+      "name": "FXT",
+      "url": "https://www.jjj.de/fxt/",
+      "release": "fxt-2026.05.19",
+      "local": {
+        "path": "results/external_cpu_baselines_20261012/sources/fxt-2026.05.19.tar.gz",
+        "sha256": "0cb1b97d6783a1f12fdb6d312c3d273dd08b61149be396fc1e0233d63d1c4a20",
+        "bytes": 1572955
+      },
+      "claims": [
+        "Walsh transforms",
+        "arithmetic subset/superset transforms",
+        "templated Type supports double and integer"
+      ]
+    },
+    {
+      "name": "Intel HEXL",
+      "url": "https://github.com/intel/hexl",
+      "local": {
+        "path": "results/external_cpu_baselines_20261012/sources/hexl_README.md",
+        "sha256": "928ff1da385c0da33f1c85fa57f46969240322412b52eae488e50ccfc64bb004",
+        "bytes": 16868
+      },
+      "claims": [
+        "uint64 API",
+        "negacyclic ring Z_q[X]/(X^N+1)",
+        "q up to approximately 62 bits",
+        "single-threaded and thread-safe"
+      ]
+    },
+    {
+      "name": "HazyResearch butterfly",
+      "url": "https://github.com/HazyResearch/butterfly",
+      "release": "master snapshot",
+      "local": {
+        "path": "results/external_cpu_baselines_20261012/sources/butterfly_README.md",
+        "sha256": "8846ed294d22161f889dc0fb99c5810aad77c66eb302a5d28e54f330145302ca",
+        "bytes": 2275
+      },
+      "claims": [
+        "official C++ CPU extension",
+        "floating/complex scalar dispatch",
+        "2x2 butterfly factors; CUDA optional"
+      ]
+    },
+    {
+      "name": "SPIRAL",
+      "url": "https://www.spiral.net/",
+      "local": {
+        "path": "results/external_cpu_baselines_20261012/sources/spiral_home.html",
+        "sha256": "1c69f5a98b7b9cf7f7b2d32e203e8ac935a96208c5f6644dc3ac71699f31169a",
+        "bytes": 16679
+      },
+      "claims": [
+        "transform code generation and platform-tuned implementations; generator context, no directly runnable contract here"
+      ]
+    },
+    {
+      "name": "NTL",
+      "url": "https://libntl.org/",
+      "local": {
+        "path": "results/external_cpu_baselines_20261012/sources/ntl_fft.h",
+        "sha256": "44955edbf90bc9e746bc45f9e09e68b48f1151fade2fe1d98337fc89f22ef4ba",
+        "bytes": 6058
+      },
+      "claims": [
+        "FFT-backed polynomial arithmetic; UserFFTInit and FFT prime APIs; not a direct cyclic NTT wrapper"
+      ]
+    }
+  ],
+  "contract_matrix": [
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "external": "FXT walsh_wak (Walsh-Kronecker)",
+      "status": "measured",
+      "semantic_notes": "in-place FXT call adapted to out-of-place; self-inverse unnormalized; natural input/output for this call; exact basis must be checked against requested FWHT order"
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "external": "FXT arith_transform_plus",
+      "status": "measured",
+      "semantic_notes": "arithmetic subset transform; integer addition is unbounded in this wrapper, so it is only exact for non-overflow test values and not a modular uint32 baseline"
+    },
+    {
+      "operator": "superset-zeta",
+      "precision": "uint32",
+      "external": "FXT rev_arith_transform_plus",
+      "status": "measured",
+      "semantic_notes": "reverse arithmetic transform; same non-modular uint32 caveat"
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp32",
+      "external": "HazyResearch butterfly CPU",
+      "status": "path identified; not built this round",
+      "semantic_notes": "supports arbitrary 2x2 butterfly factors, but API packaging and exact stage order/stride adapter remain to be implemented"
+    },
+    {
+      "operator": "ntt",
+      "precision": "word32",
+      "external": "Intel HEXL / NTL",
+      "status": "no valid direct match",
+      "semantic_notes": "HEXL is negacyclic and uint64 API; NTL FFT is polynomial multiplication machinery, not a matching cyclic natural-order word32 transform"
+    }
+  ],
+  "fxt_protocol": {
+    "compiler": "g++",
+    "flags": "-O3 -march=native -std=c++17 -fopenmp",
+    "host": "AMD EPYC 7542 32-Core Processor",
+    "threads": "OpenMP outer batch parallelism; FXT transform itself serial",
+    "warmup_calls": 3,
+    "timing": "7 samples; each sample 5 calls; median; includes required out-of-place copy",
+    "correctness": "FWHT long-double reference full output; zeta direct subset/superset enumeration at N=256 plus full uint32 transform equality; no GPU"
+  },
+  "seed_contract": {
+    "seed": "20773043 + log2(N) + batch",
+    "distribution": "FWHT input = (mt19937_64 % 2000001 - 1000000)/1000000 as double; zeta input = mt19937_64 uint32 cast",
+    "order": "logical index 0..N-1; batch contiguous; FXT output retained as returned",
+    "source": "paper/evidence/benchmark_fxt_cpu_20261012.cpp"
+  },
+  "rows": [
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "N": 4096,
+      "B": 1,
+      "threads": 1,
+      "latency_us": 15.9904,
+      "transforms_per_s": 62537.522513508105,
+      "per_transform_us": 15.9904,
+      "mismatches": 0,
+      "checked_elements": 4096,
+      "samples_us": [
+        16.0924,
+        16.0462,
+        16.0084,
+        15.9904,
+        15.9744,
+        15.968399999999999,
+        15.9904
+      ],
+      "relative_l2": 1.7734055041447052e-16,
+      "absolute_quantiles": [
+        4.307318390850412e-15,
+        1.065987575987748e-14,
+        1.7277845820729e-14,
+        2.961519918187605e-14
+      ],
+      "relative_quantiles": [
+        1.7512510946445137e-16,
+        1.0596787308050102e-15,
+        1.1553717935975878e-14,
+        3.4470061849651856e-13
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "N": 4096,
+      "B": 1,
+      "threads": 4,
+      "latency_us": 18.156399999999998,
+      "transforms_per_s": 55076.997642704504,
+      "per_transform_us": 18.156399999999998,
+      "mismatches": 0,
+      "checked_elements": 4096,
+      "samples_us": [
+        18.2244,
+        18.1704,
+        18.1306,
+        18.138399999999997,
+        18.1644,
+        18.156399999999998,
+        18.1144
+      ],
+      "relative_l2": 1.7734055041447052e-16,
+      "absolute_quantiles": [
+        4.307318390850412e-15,
+        1.065987575987748e-14,
+        1.7277845820729e-14,
+        2.961519918187605e-14
+      ],
+      "relative_quantiles": [
+        1.7512510946445137e-16,
+        1.0596787308050102e-15,
+        1.1553717935975878e-14,
+        3.4470061849651856e-13
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "N": 4096,
+      "B": 16,
+      "threads": 1,
+      "latency_us": 127.98499999999999,
+      "transforms_per_s": 125014.65015431498,
+      "per_transform_us": 7.999062499999999,
+      "mismatches": 0,
+      "checked_elements": 65536,
+      "samples_us": [
+        127.763,
+        128.56900000000002,
+        130.071,
+        127.43699999999998,
+        127.36500000000001,
+        128.733,
+        127.98499999999999
+      ],
+      "relative_l2": 1.7626144669934746e-16,
+      "absolute_quantiles": [
+        4.309053114326389e-15,
+        1.0623446566881967e-14,
+        1.729866250244072e-14,
+        3.287647931671245e-14
+      ],
+      "relative_quantiles": [
+        1.7546783090334904e-16,
+        1.0030402916605583e-15,
+        1.0268004406785079e-14,
+        2.155393919229262e-10
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "N": 4096,
+      "B": 16,
+      "threads": 4,
+      "latency_us": 62.9434,
+      "transforms_per_s": 254196.62744624537,
+      "per_transform_us": 3.9339625,
+      "mismatches": 0,
+      "checked_elements": 65536,
+      "samples_us": [
+        62.8796,
+        62.9434,
+        62.883399999999995,
+        62.967600000000004,
+        62.9474,
+        62.919399999999996,
+        63.03959999999999
+      ],
+      "relative_l2": 1.7626144669934746e-16,
+      "absolute_quantiles": [
+        4.309053114326389e-15,
+        1.0623446566881967e-14,
+        1.729866250244072e-14,
+        3.287647931671245e-14
+      ],
+      "relative_quantiles": [
+        1.7546783090334904e-16,
+        1.0030402916605583e-15,
+        1.0268004406785079e-14,
+        2.155393919229262e-10
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "N": 65536,
+      "B": 1,
+      "threads": 1,
+      "latency_us": 162.81980000000001,
+      "transforms_per_s": 6141.759171796059,
+      "per_transform_us": 162.81980000000001,
+      "mismatches": 0,
+      "checked_elements": 65536,
+      "samples_us": [
+        162.81980000000001,
+        164.1278,
+        162.51780000000002,
+        162.7076,
+        162.9538,
+        161.6338,
+        164.8558
+      ],
+      "relative_l2": 2.0361603461540323e-16,
+      "absolute_quantiles": [
+        1.9997892231060632e-14,
+        4.937023012629993e-14,
+        7.904787935331115e-14,
+        1.421640583032513e-13
+      ],
+      "relative_quantiles": [
+        2.0340969487218754e-16,
+        1.1941540911139025e-15,
+        1.2812466639790356e-14,
+        1.0152564109706928e-11
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "N": 65536,
+      "B": 1,
+      "threads": 4,
+      "latency_us": 162.0638,
+      "transforms_per_s": 6170.409431347408,
+      "per_transform_us": 162.0638,
+      "mismatches": 0,
+      "checked_elements": 65536,
+      "samples_us": [
+        165.3058,
+        162.0638,
+        160.7918,
+        162.24380000000002,
+        161.7738,
+        163.7578,
+        161.9478
+      ],
+      "relative_l2": 2.0361603461540323e-16,
+      "absolute_quantiles": [
+        1.9997892231060632e-14,
+        4.937023012629993e-14,
+        7.904787935331115e-14,
+        1.421640583032513e-13
+      ],
+      "relative_quantiles": [
+        2.0340969487218754e-16,
+        1.1941540911139025e-15,
+        1.2812466639790356e-14,
+        1.0152564109706928e-11
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "N": 65536,
+      "B": 16,
+      "threads": 1,
+      "latency_us": 3353.6102,
+      "transforms_per_s": 4770.977855446647,
+      "per_transform_us": 209.6006375,
+      "mismatches": 0,
+      "checked_elements": 1048576,
+      "samples_us": [
+        3354.9402,
+        3361.3862,
+        3353.6102,
+        3347.406,
+        3337.4218,
+        3361.1824,
+        3352.488
+      ],
+      "relative_l2": 2.033454059910942e-16,
+      "absolute_quantiles": [
+        1.9984014443252818e-14,
+        4.934941344458821e-14,
+        7.893685705084863e-14,
+        1.7569279364693102e-13
+      ],
+      "relative_quantiles": [
+        2.0218046549723496e-16,
+        1.1947574004027149e-15,
+        1.2019416583026671e-14,
+        6.265821196052389e-10
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "N": 65536,
+      "B": 16,
+      "threads": 4,
+      "latency_us": 960.9284,
+      "transforms_per_s": 16650.564183554154,
+      "per_transform_us": 60.058025,
+      "mismatches": 0,
+      "checked_elements": 1048576,
+      "samples_us": [
+        1491.0326,
+        1064.3727999999999,
+        960.4384,
+        961.9824000000001,
+        950.0462,
+        960.9284,
+        958.9002
+      ],
+      "relative_l2": 2.033454059910942e-16,
+      "absolute_quantiles": [
+        1.9984014443252818e-14,
+        4.934941344458821e-14,
+        7.893685705084863e-14,
+        1.7569279364693102e-13
+      ],
+      "relative_quantiles": [
+        2.0218046549723496e-16,
+        1.1947574004027149e-15,
+        1.2019416583026671e-14,
+        6.265821196052389e-10
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "N": 1048576,
+      "B": 4,
+      "threads": 1,
+      "latency_us": 17694.4864,
+      "transforms_per_s": 226.05911861900663,
+      "per_transform_us": 4423.6216,
+      "mismatches": 0,
+      "checked_elements": 4194304,
+      "samples_us": [
+        17653.2954,
+        17730.309,
+        17694.4864,
+        17682.282,
+        17687.7582,
+        17806.592800000002,
+        17745.0856
+      ],
+      "relative_l2": 2.274127121454781e-16,
+      "absolute_quantiles": [
+        8.992806499463768e-14,
+        2.2082335959794364e-13,
+        3.503863865716994e-13,
+        8.217870828275409e-13
+      ],
+      "relative_quantiles": [
+        2.266861592216773e-16,
+        1.3611768307595566e-15,
+        1.3663850606021555e-14,
+        5.034684252968026e-09
+      ]
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "N": 1048576,
+      "B": 4,
+      "threads": 4,
+      "latency_us": 8048.9756,
+      "transforms_per_s": 496.95765011388534,
+      "per_transform_us": 2012.2439,
+      "mismatches": 0,
+      "checked_elements": 4194304,
+      "samples_us": [
+        8033.097199999999,
+        8048.9756,
+        8060.2858,
+        8023.831,
+        8031.5452000000005,
+        8079.9522,
+        8069.7
+      ],
+      "relative_l2": 2.274127121454781e-16,
+      "absolute_quantiles": [
+        8.992806499463768e-14,
+        2.2082335959794364e-13,
+        3.503863865716994e-13,
+        8.217870828275409e-13
+      ],
+      "relative_quantiles": [
+        2.266861592216773e-16,
+        1.3611768307595566e-15,
+        1.3663850606021555e-14,
+        5.034684252968026e-09
+      ]
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "N": 4096,
+      "B": 1,
+      "threads": 1,
+      "latency_us": 10.5002,
+      "transforms_per_s": 95236.28121369117,
+      "per_transform_us": 10.5002,
+      "mismatches": 0,
+      "checked_elements": 4096,
+      "samples_us": [
+        11.1282,
+        10.8702,
+        10.5124,
+        10.4942,
+        10.4962,
+        10.5002,
+        10.4984
+      ]
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "N": 4096,
+      "B": 1,
+      "threads": 4,
+      "latency_us": 10.8902,
+      "transforms_per_s": 91825.67813263301,
+      "per_transform_us": 10.8902,
+      "mismatches": 0,
+      "checked_elements": 4096,
+      "samples_us": [
+        10.9024,
+        10.8982,
+        10.8902,
+        10.8802,
+        10.8864,
+        10.892199999999999,
+        10.886199999999999
+      ]
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "N": 4096,
+      "B": 16,
+      "threads": 1,
+      "latency_us": 162.1058,
+      "transforms_per_s": 98700.97183444393,
+      "per_transform_us": 10.1316125,
+      "mismatches": 0,
+      "checked_elements": 65536,
+      "samples_us": [
+        162.0878,
+        162.1058,
+        162.05180000000001,
+        163.16379999999998,
+        164.5598,
+        162.1558,
+        162.0218
+      ]
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "N": 4096,
+      "B": 16,
+      "threads": 4,
+      "latency_us": 88.9122,
+      "transforms_per_s": 179952.80737626558,
+      "per_transform_us": 5.5570125,
+      "mismatches": 0,
+      "checked_elements": 65536,
+      "samples_us": [
+        89.4422,
+        88.854,
+        101.5904,
+        91.006,
+        88.9122,
+        46.325,
+        40.973
+      ]
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "N": 65536,
+      "B": 1,
+      "threads": 1,
+      "latency_us": 174.448,
+      "transforms_per_s": 5732.367238374759,
+      "per_transform_us": 174.448,
+      "mismatches": 0,
+      "checked_elements": 65536,
+      "samples_us": [
+        180.7182,
+        174.51,
+        173.5402,
+        173.43800000000002,
+        174.448,
+        179.1662,
+        173.5102
+      ]
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "N": 65536,
+      "B": 1,
+      "threads": 4,
+      "latency_us": 175.924,
+      "transforms_per_s": 5684.272754143834,
+      "per_transform_us": 175.924,
+      "mismatches": 0,
+      "checked_elements": 65536,
+      "samples_us": [
+        175.924,
+        179.21020000000001,
+        174.56400000000002,
+        173.58800000000002,
+        177.8862,
+        179.0522,
+        174.666
+      ]
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "N": 65536,
+      "B": 16,
+      "threads": 1,
+      "latency_us": 3019.0624,
+      "transforms_per_s": 5299.658595993246,
+      "per_transform_us": 188.6914,
+      "mismatches": 0,
+      "checked_elements": 1048576,
+      "samples_us": [
+        2859.8806,
+        2980.3314,
+        3019.0624,
+        3020.0263999999997,
+        3026.2403999999997,
+        3003.822,
+        3021.0124
+      ]
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "N": 65536,
+      "B": 16,
+      "threads": 4,
+      "latency_us": 788.4044,
+      "transforms_per_s": 20294.153609492794,
+      "per_transform_us": 49.275275,
+      "mismatches": 0,
+      "checked_elements": 1048576,
+      "samples_us": [
+        1084.8672000000001,
+        916.2474,
+        788.4044,
+        782.6302,
+        788.3644,
+        785.8462000000001,
+        788.7884
+      ]
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "N": 1048576,
+      "B": 4,
+      "threads": 1,
+      "latency_us": 14529.6586,
+      "transforms_per_s": 275.29896676305935,
+      "per_transform_us": 3632.41465,
+      "mismatches": 0,
+      "checked_elements": 4194304,
+      "samples_us": [
+        14076.926000000001,
+        14266.4426,
+        14522.8304,
+        14741.4474,
+        14529.6586,
+        14593.5462,
+        14639.939000000002
+      ]
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "N": 1048576,
+      "B": 4,
+      "threads": 4,
+      "latency_us": 7607.779399999999,
+      "transforms_per_s": 525.7776007543016,
+      "per_transform_us": 1901.9448499999999,
+      "mismatches": 0,
+      "checked_elements": 4194304,
+      "samples_us": [
+        6009.052,
+        5998.1578,
+        6430.819799999999,
+        7607.779399999999,
+        7844.8428,
+        7864.1392000000005,
+        7883.6438
+      ]
+    },
+    {
+      "operator": "superset-zeta",
+      "precision": "uint32",
+      "N": 4096,
+      "B": 1,
+      "threads": 1,
+      "latency_us": 12.8602,
+      "transforms_per_s": 77759.28834699304,
+      "per_transform_us": 12.8602,
+      "mismatches": 0,
+      "checked_elements": 4096,
+      "samples_us": [
+        12.8744,
+        12.8582,
+        12.8624,
+        12.8602,
+        12.854400000000002,
+        12.8602,
+        12.854400000000002
+      ]
+    },
+    {
+      "operator": "superset-zeta",
+      "precision": "uint32",
+      "N": 4096,
+      "B": 1,
+      "threads": 4,
+      "latency_us": 13.260200000000001,
+      "transforms_per_s": 75413.64383644288,
+      "per_transform_us": 13.260200000000001,
+      "mismatches": 0,
+      "checked_elements": 4096,
+      "samples_us": [
+        14.632200000000001,
+        13.2524,
+        13.260200000000001,
+        13.464400000000001,
+        14.072399999999998,
+        13.2482,
+        13.2404
+      ]
+    },
+    {
+      "operator": "superset-zeta",
+      "precision": "uint32",
+      "N": 4096,
+      "B": 16,
+      "threads": 1,
+      "latency_us": 173.0002,
+      "transforms_per_s": 92485.4422133616,
+      "per_transform_us": 10.8125125,
+      "mismatches": 0,
+      "checked_elements": 65536,
+      "samples_us": [
+        203.4406,
+        193.27460000000002,
+        172.26,
+        168.496,
+        168.42180000000002,
+        173.0002,
+        173.344
+      ]
+    },
+    {
+      "operator": "superset-zeta",
+      "precision": "uint32",
+      "N": 4096,
+      "B": 16,
+      "threads": 4,
+      "latency_us": 71.9278,
+      "transforms_per_s": 222445.285411204,
+      "per_transform_us": 4.4954875,
+      "mismatches": 0,
+      "checked_elements": 65536,
+      "samples_us": [
+        69.8856,
+        72.0298,
+        69.4336,
+        71.7736,
+        71.9278,
+        75.7816,
+        77.1538
+      ]
+    },
+    {
+      "operator": "superset-zeta",
+      "precision": "uint32",
+      "N": 65536,
+      "B": 1,
+      "threads": 1,
+      "latency_us": 185.6264,
+      "transforms_per_s": 5387.164756737188,
+      "per_transform_us": 185.6264,
+      "mismatches": 0,
+      "checked_elements": 65536,
+      "samples_us": [
+        185.7722,
+        185.6264,
+        193.9684,
+        185.5924,
+        185.30440000000002,
+        185.42419999999998,
+        191.7586
+      ]
+    },
+    {
+      "operator": "superset-zeta",
+      "precision": "uint32",
+      "N": 65536,
+      "B": 1,
+      "threads": 4,
+      "latency_us": 180.4664,
+      "transforms_per_s": 5541.197696634942,
+      "per_transform_us": 180.4664,
+      "mismatches": 0,
+      "checked_elements": 65536,
+      "samples_us": [
+        180.5242,
+        180.4444,
+        187.3962,
+        180.4664,
+        180.3642,
+        184.6882,
+        180.21620000000001
+      ]
+    },
+    {
+      "operator": "superset-zeta",
+      "precision": "uint32",
+      "N": 65536,
+      "B": 16,
+      "threads": 1,
+      "latency_us": 2976.3554,
+      "transforms_per_s": 5375.702108693068,
+      "per_transform_us": 186.0222125,
+      "mismatches": 0,
+      "checked_elements": 1048576,
+      "samples_us": [
+        2985.7814,
+        2974.5894,
+        2973.2331999999997,
+        2973.4633999999996,
+        2992.1656,
+        2976.3554,
+        2998.2498
+      ]
+    },
+    {
+      "operator": "superset-zeta",
+      "precision": "uint32",
+      "N": 65536,
+      "B": 16,
+      "threads": 4,
+      "latency_us": 942.3978,
+      "transforms_per_s": 16977.968327175637,
+      "per_transform_us": 58.8998625,
+      "mismatches": 0,
+      "checked_elements": 1048576,
+      "samples_us": [
+        1123.9202,
+        1035.426,
+        938.6899999999999,
+        942.3978,
+        947.7742000000001,
+        937.0378000000001,
+        940.952
+      ]
+    },
+    {
+      "operator": "superset-zeta",
+      "precision": "uint32",
+      "N": 1048576,
+      "B": 4,
+      "threads": 1,
+      "latency_us": 14908.113200000002,
+      "transforms_per_s": 268.3102781913408,
+      "per_transform_us": 3727.0283000000004,
+      "mismatches": 0,
+      "checked_elements": 4194304,
+      "samples_us": [
+        14908.113200000002,
+        14688.6544,
+        16387.9018,
+        16810.7578,
+        16135.744,
+        14892.435200000002,
+        14812.4232
+      ]
+    },
+    {
+      "operator": "superset-zeta",
+      "precision": "uint32",
+      "N": 1048576,
+      "B": 4,
+      "threads": 4,
+      "latency_us": 6839.6412,
+      "transforms_per_s": 584.8259993521298,
+      "per_transform_us": 1709.9103,
+      "mismatches": 0,
+      "checked_elements": 4194304,
+      "samples_us": [
+        6907.8068,
+        6883.640600000001,
+        6839.6412,
+        7044.224400000001,
+        6530.37,
+        6558.1808,
+        6548.2968
+      ]
+    }
+  ],
+  "source_hashes": {
+    "results/external_cpu_baselines_20261012/sources/fxt-2026.05.19.tar.gz": "0cb1b97d6783a1f12fdb6d312c3d273dd08b61149be396fc1e0233d63d1c4a20",
+    "results/external_cpu_baselines_20261012/sources/fxt_home.html": "0944b3826dcbbc0de0a8336b1be5d1bebae5adb116ce3a2b21d2efcbb9c1bab2",
+    "results/external_cpu_baselines_20261012/sources/fxt_walsh_doc.txt": "3f7ec2f05bde163d55a601aa0546da99fd382a7000998792c725fd7edc256ffd",
+    "results/external_cpu_baselines_20261012/sources/hexl_README.md": "928ff1da385c0da33f1c85fa57f46969240322412b52eae488e50ccfc64bb004",
+    "results/external_cpu_baselines_20261012/sources/hexl_ntt.hpp": "e4370ab4c233d68a73e207febf3144c7f6d542c9dcbabe512deb5efa05ab22ed",
+    "results/external_cpu_baselines_20261012/sources/butterfly_README.md": "8846ed294d22161f889dc0fb99c5810aad77c66eb302a5d28e54f330145302ca",
+    "results/external_cpu_baselines_20261012/sources/butterfly_cpu.cpp": "6c69fe53b02ea1f2d2402a33b4adcbff2953703ab606321e7b2bc2bb10c7d524",
+    "results/external_cpu_baselines_20261012/sources/butterfly_cpu_tree.json": "0aa1fa184439819468e30a70fbcfe9140d94731047fe272c91ea7c189d357767",
+    "results/external_cpu_baselines_20261012/sources/spiral_home.html": "1c69f5a98b7b9cf7f7b2d32e203e8ac935a96208c5f6644dc3ac71699f31169a",
+    "results/external_cpu_baselines_20261012/sources/spiral_generator.html": "5c9a8709e1dcbe19db2290541860455568c500f4ec701d7d48b0f819cf96cffa",
+    "results/external_cpu_baselines_20261012/sources/ntl_fft.h": "44955edbf90bc9e746bc45f9e09e68b48f1151fade2fe1d98337fc89f22ef4ba",
+    "results/external_cpu_baselines_20261012/sources/ntl_zzp_doc.html": "9b55a7967791ed986b22821f588ad37c1d6e1901742cf38bff5b2e96639c93e7",
+    "results/external_cpu_baselines_20261012/cpu_identity.json": "1e3f32f06e72f6e2e2ff1e1c9ed50590aa9267954d02c6b1e592109e205bd72c",
+    "results/external_cpu_baselines_20261012/fxt_cpu_rows.jsonl": "b2f1656640fdfaa40e5554fc29f2d20cab35be72a23dd274b7383daa09baa706",
+    "paper/evidence/benchmark_fxt_cpu_20261012.cpp": "3c2d56baa212511f6c94c68b671aa4575f351a45236e26e44557ba6251f1e763"
+  },
+  "limitations": [
+    "CPU timings are not GPU comparisons",
+    "FXT subset/superset values are uint32 additions without modulus and can overflow for large random values; direct check observed zero mismatch under this run but this does not establish modular semantics",
+    "FXT Walsh basis/order needs explicit matched-contract adapter before claiming FWHT equivalence",
+    "No current-build external library binary was substituted for a missing GPU baseline"
+  ]
+}

@@ -1,0 +1,81 @@
+\section{Kernel Generation and Selection}
+\label{sec:search}
+The previous sections define what a valid realization is, but several valid
+choices can have different performance. More residency may reduce transfers
+yet increase register pressure. A consumer-friendly layout may require
+expensive stores, and a pipeline may expose overlap while adding launches.
+These interactions make a fixed choice of decomposition or core unsuitable
+across workloads and GPUs.
+
+Figure~\ref{fig:framework} connects the construction to automatic generation
+and selection. The three input descriptions instantiate legal subgraphs and
+handoffs. Compatible cores and target measurements then guide lowering and
+search, producing a reusable execution plan. Preparation is amortized over
+repeated calls, while the complete selected device path remains the unit of
+warm execution.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/drawio/exports/system_architecture.pdf}
+\caption{Automatic realization. Semantic, workload, and hardware contracts
+guide candidate construction. Compilation and validation precede measurement,
+whose feedback guides selection of a reusable plan. Failed lowerings remain explicit
+coverage gaps. Adaptation, resident subgraphs, streaming handoffs, and
+synchronization are part of the timed device path; compilation, calibration,
+search, and cache fill are preparation costs.}
+\label{fig:framework}
+\end{figure*}
+
+\subsection{Generate compatible realizations}
+Generation follows the structure of the method rather than a catalog of
+operator-size exceptions. A candidate first identifies stage bands and their
+components, then binds cores and storage, and finally specifies boundary
+representations and scheduling. Each choice narrows what can legally follow.
+Candidates vary stage partitions, local cores, storage scopes, boundary layouts,
+and bulk or pipelined schedules. The generator preserves the requested
+arithmetic, precision, direction, normalization, ordering, shape, and placement.
+An adapted path must include its conversions in the plan and its execution
+cost. A legal organization without a compatible lowering remains a coverage
+gap rather than a substitute computation.
+
+Static checks enforce dependencies and capacity. Compilation exposes register,
+shared-memory, spill, and launch requirements. Numerical checks precede timing.
+Compilation, reusable planning, and service measurement are preparation costs.
+A cached plan remains valid only while its semantic, workload, hardware, and
+compilation assumptions match.
+
+\subsection{Estimate local services and their composition}
+Measuring every complete realization would repeatedly pay for similar local
+work. The service model instead reuses measurements where the physical
+contract matches, then accounts for the dependencies and resource sharing
+introduced by composition. This reuse requires more than proximity in $N$.
+A physical service is keyed by arithmetic, core, tile shape, layout, and
+resource regime. Full and remainder tiles are distinct shapes when their work
+differs. Piecewise linear interpolation estimates nearby loads within a
+compatible measured regime. Missing coverage requires a local measurement or
+an explicit gap.
+
+The model composes these services using the actual graph. A group becomes
+eligible after its predecessors and buffer slot are ready. Concurrent groups
+share execution and memory capacity, potentially lengthening their effective
+interval. Submission costs are added only when absent from measured services.
+This separates reusable local measurements from contention and orchestration,
+while held-out plans test both relative ranking and absolute error.
+
+\subsection{Bounded search and confirmation}
+The model is a way to prioritize measurements, not an oracle for the best
+kernel. Search must account for both model error and incomplete lowerings,
+and retain direct evidence for the candidate it ultimately selects.
+Search starts from supported compositions and explores neighborhoods by
+splitting or merging bands, moving stages across boundaries, replacing cores,
+or changing layouts and buffering. Broad candidates and local refinements
+share a finite budget. Unsupported lowerings and failed checks are recorded
+separately from measured candidates.
+
+A shortlist receives the more expensive composition checks and repeated
+complete-plan measurements. Selection returns the fastest confirmed candidate
+under the requested contract. The evidence must therefore distinguish the
+legal design space, executable lowerings, and measured pool. Pool-best
+selection is not a global-optimality claim. The evaluation next tests library
+performance, the organization effect at fixed core, and the limits of the
+resulting plans.

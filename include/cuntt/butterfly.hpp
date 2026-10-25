@@ -54,6 +54,7 @@ enum class ButterflyPrecision {
     // Legacy FP32 storage with FP16 WMMA operands and FP32 accumulation.
     Fp16Fp32,
     Uint32,
+    Uint64,
 };
 
 const char*        butterfly_precision_name(ButterflyPrecision precision) noexcept;
@@ -196,7 +197,8 @@ struct FftSegmentMapping {
     std::uint32_t   threads  = 0;
     std::uint32_t   ept      = 8;
     // Optional code-generation identity for the physical group.  The
-    // register-tile prefix uses "native" or "cufftdx-thread"; other groups
+    // register-tile prefix uses "native", "radix4", or "cufftdx-thread";
+    // other groups
     // retain the native default.  Keeping this in the group descriptor makes
     // a replayed mapping distinguish codelets without changing old records.
     std::string     codelet  = "native";
@@ -256,11 +258,15 @@ struct ButterflyConfig {
     std::size_t        batch             = 1;
     // Execution scheduling, independent of logical stage partition and FFT codelet.
     bool               stage_overlap     = false;
+    // Overlap chunk size, or 1..4 serial batches per shared-iterative CTA
+    // when stage_overlap is disabled.
     std::uint32_t      batch_tile_count  = 1;
     std::size_t        batch_stride      = 0;
     std::size_t        element_stride    = 1;
     bool               inverse           = false;
     bool               normalize_inverse = true;
+    double             output_scale = 1.0;
+    bool               final_storage_rounding = false;
     bool               auto_select       = false;
     // Allocate plan-owned scratch by default. Disable this when an application
     // supplies workspace with set_workspace().
@@ -268,6 +274,8 @@ struct ButterflyConfig {
     std::uint32_t      stage_space       = 0;
     StageHandoff       stage_handoff     = StageHandoff::NamedBarrier;
     std::uint32_t      tile_threads      = 128;
+    // Warp-register resource request: zero selects the legacy shape-specific count.
+    std::uint32_t      register_threads  = 0;
     std::uint32_t      prefix_threads    = 0;
     std::uint32_t      suffix_threads    = 0;
     std::uint32_t      prefix_ept        = 8;
@@ -284,6 +292,8 @@ struct ButterflyConfig {
     // Defaults preserve the historical native/linear implementation.
     std::string         prefix_codelet = "native";
     std::string         prefix_shared_layout = "linear";
+    // Online register FFT suffix provider; never an implicit fallback.
+    std::string         suffix_core = "cufftdx-block";
     // One policy per physical factor group.  An empty vector means dynamic
     // I/O for every factor and is normalized after factor_partition is known.
     std::vector<std::string> factor_io_policies;
@@ -309,12 +319,43 @@ struct ButterflyStats {
     double points_per_second      = 0.0;
 };
 
+// A captured execution DAG for one ButterflyPlan. The graph binds the
+// input/output/workspace pointer values supplied to capture_graph; callers
+// must keep the plan and those allocations alive and serialize replays with
+// other uses of the same plan. Capture and instantiation are setup operations.
+class ButterflyGraph {
+  public:
+    ButterflyGraph() = default;
+    ~ButterflyGraph();
+
+    ButterflyGraph(const ButterflyGraph&) = delete;
+    ButterflyGraph& operator=(const ButterflyGraph&) = delete;
+    ButterflyGraph(ButterflyGraph&& other) noexcept;
+    ButterflyGraph& operator=(ButterflyGraph&& other) noexcept;
+
+    void launch(cudaStream_t stream) const;
+    std::size_t node_count() const noexcept { return node_count_; }
+    std::size_t kernel_node_count() const noexcept { return kernel_node_count_; }
+    std::size_t non_kernel_node_count() const noexcept { return non_kernel_node_count_; }
+    bool valid() const noexcept { return executable_ != nullptr; }
+
+  private:
+    friend class ButterflyPlan;
+    cudaGraph_t graph_ = nullptr;
+    cudaGraphExec_t executable_ = nullptr;
+    std::size_t node_count_ = 0;
+    std::size_t kernel_node_count_ = 0;
+    std::size_t non_kernel_node_count_ = 0;
+};
+
 void reference_fwht(std::vector<float>& values, bool inverse = false, bool normalize_inverse = true);
 void reference_fwht(std::vector<double>& values, bool inverse = false, bool normalize_inverse = true);
 void reference_fft(std::vector<Complex32>& values, bool inverse = false, bool normalize_inverse = true);
 void reference_fft(std::vector<Complex64>& values, bool inverse = false, bool normalize_inverse = true);
 void reference_subset_zeta(std::vector<std::uint32_t>& values, bool inverse = false);
 void reference_superset_zeta(std::vector<std::uint32_t>& values, bool inverse = false);
+void reference_subset_zeta(std::vector<std::uint64_t>& values, bool inverse = false);
+void reference_superset_zeta(std::vector<std::uint64_t>& values, bool inverse = false);
 void reference_structured_2x2(std::vector<float>& values, const std::vector<ButterflyMatrix2x2>& stage_matrices,
                               bool inverse = false);
 void reference_structured_2x2(std::vector<double>& values, const std::vector<ButterflyMatrix2x2>& stage_matrices,
@@ -349,6 +390,15 @@ class ButterflyPlan {
     void  set_workspace(void* workspace, std::size_t bytes);
     void* workspace() const noexcept;
 
+    // Capture the lowered tile/stage execution, including plan-owned
+    // inter-stage event dependencies, into a replayable CUDA Graph. The
+    // supplied device pointers are bound into the graph and must remain valid
+    // for every replay. Capture and instantiation are outside launch timing.
+    // Use an explicit non-blocking stream via set_stream() before capture;
+    // this avoids legacy-default-stream capture restrictions when the process
+    // has other CUDA work in flight.
+    ButterflyGraph capture_graph(const void* input, void* output);
+
     // Device-pointer execution is allocation-free, asynchronous, and does not
     // perform host/device copies or stream synchronization.
     void execute_async(const float* input, float* output);
@@ -360,6 +410,7 @@ class ButterflyPlan {
     void execute_async(const Complex16* input, Complex16* output);
     void execute_async(const ComplexBf16* input, ComplexBf16* output);
     void execute_async(const std::uint32_t* input, std::uint32_t* output);
+    void execute_async(const std::uint64_t* input, std::uint64_t* output);
 
     // Specialized boundary lowering for a packed power-of-two FP32
     // warp-register plan. Values beyond logical_points are read as zero while
@@ -379,6 +430,8 @@ class ButterflyPlan {
     ButterflyStats execute(const std::vector<ComplexBf16>& input, std::vector<ComplexBf16>& output, std::uint32_t warmup = 1,
                            std::uint32_t repeat = 1);
     ButterflyStats execute(const std::vector<std::uint32_t>& input, std::vector<std::uint32_t>& output, std::uint32_t warmup = 1,
+                           std::uint32_t repeat = 1);
+    ButterflyStats execute(const std::vector<std::uint64_t>& input, std::vector<std::uint64_t>& output, std::uint32_t warmup = 1,
                            std::uint32_t repeat = 1);
 
   private:

@@ -1,0 +1,188 @@
+{
+  "schema": "cubutterfly-controlled-experiment-v1",
+  "protocol": {
+    "trials": 3,
+    "warmup": 100,
+    "repeat": 100,
+    "verify_batches": 0
+  },
+  "scope": "Parameter-only generation witness for N=16384 batch=3 outside the E1 72-cell matrix. Shared operator templates remain identical; no new operator semantics or claim of globally unseen shape.",
+  "cases": [
+    {
+      "id": "fft-heldout-n14-b3",
+      "experiment": "E10",
+      "workload": {
+        "operator": "fft",
+        "precision": "fp32",
+        "logN": 14,
+        "batch": 3,
+        "placement": "out-of-place",
+        "direction": "forward",
+        "normalization": "none"
+      },
+      "variants": [
+        {
+          "id": "two-groups",
+          "mapping": {
+            "schema_version": 1,
+            "kind": "butterfly",
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "stage_partition": [
+              7,
+              7
+            ],
+            "tile_threads": 128,
+            "fft_core": "scalar",
+            "local_exchange": "shared",
+            "shared_layout": "writer-aligned"
+          }
+        },
+        {
+          "id": "three-groups",
+          "mapping": {
+            "schema_version": 1,
+            "kind": "butterfly",
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "stage_partition": [
+              4,
+              5,
+              5
+            ],
+            "tile_threads": 128,
+            "fft_core": "scalar",
+            "local_exchange": "shared",
+            "shared_layout": "writer-aligned"
+          }
+        }
+      ],
+      "comparisons": [
+        {
+          "baseline": "three-groups",
+          "treatment": "two-groups",
+          "changed_axes": [
+            "stage_partition"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fwht-heldout-n14-b3",
+      "experiment": "E10",
+      "workload": {
+        "operator": "fwht",
+        "precision": "fp32",
+        "logN": 14,
+        "batch": 3,
+        "placement": "out-of-place",
+        "direction": "forward",
+        "normalization": "none"
+      },
+      "variants": [
+        {
+          "id": "two-groups",
+          "mapping": {
+            "schema_version": 1,
+            "kind": "butterfly",
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "stage_partition": [
+              7,
+              7
+            ],
+            "tile_threads": 128,
+            "fft_core": "scalar",
+            "local_exchange": "shared",
+            "shared_layout": "writer-aligned"
+          }
+        },
+        {
+          "id": "three-groups",
+          "mapping": {
+            "schema_version": 1,
+            "kind": "butterfly",
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "stage_partition": [
+              4,
+              5,
+              5
+            ],
+            "tile_threads": 128,
+            "fft_core": "scalar",
+            "local_exchange": "shared",
+            "shared_layout": "writer-aligned"
+          }
+        }
+      ],
+      "comparisons": [
+        {
+          "baseline": "three-groups",
+          "treatment": "two-groups",
+          "changed_axes": [
+            "stage_partition"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ntt-heldout-n14-b3",
+      "experiment": "E10",
+      "workload": {
+        "operator": "ntt",
+        "precision": "word64",
+        "logN": 14,
+        "batch": 3,
+        "placement": "out-of-place",
+        "direction": "forward",
+        "normalization": "none",
+        "modulus": "576460756061519873",
+        "input_order": "natural",
+        "output_order": "natural"
+      },
+      "variants": [
+        {
+          "id": "two-groups",
+          "mapping": {
+            "schema_version": 1,
+            "kind": "ntt",
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "stage_partition": [
+              7,
+              7
+            ],
+            "threads_per_block": 128,
+            "dataflow_layout": "hermes-xor"
+          }
+        },
+        {
+          "id": "three-groups",
+          "mapping": {
+            "schema_version": 1,
+            "kind": "ntt",
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "stage_partition": [
+              4,
+              5,
+              5
+            ],
+            "threads_per_block": 128,
+            "dataflow_layout": "hermes-xor"
+          }
+        }
+      ],
+      "comparisons": [
+        {
+          "baseline": "three-groups",
+          "treatment": "two-groups",
+          "changed_axes": [
+            "stage_partition"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -19,10 +19,10 @@ __host__ __device__ constexpr std::uint32_t static_log2(std::uint32_t value) {
     return value <= 1 ? 0 : 1 + static_log2(value >> 1);
 }
 
-template <std::uint32_t LogN>
+template <std::uint32_t LogN, std::uint32_t Threads = register_fwht_threads(LogN)>
 struct RegisterFwhtTraits {
     static constexpr std::uint32_t kN             = 1U << LogN;
-    static constexpr std::uint32_t kThreads       = register_fwht_threads(LogN);
+    static constexpr std::uint32_t kThreads       = Threads;
     static constexpr std::uint32_t kItems         = 4;
     static constexpr std::uint32_t kChunks        = kN / (kThreads * kItems);
     static constexpr std::uint32_t kWarpSize      = kThreads < 32 ? kThreads : 32;
@@ -30,6 +30,8 @@ struct RegisterFwhtTraits {
     static constexpr std::uint32_t kSharedBytes   = kN * sizeof(float) < 32 * 1024 ? kN * sizeof(float) : 32 * 1024;
     static constexpr std::uint32_t kChunksPerPass = kSharedBytes / (sizeof(float4) * kThreads);
     static_assert(LogN >= 3 && LogN <= 15);
+    static_assert(Threads > 0 && Threads <= 256 && (Threads & (Threads - 1)) == 0);
+    static_assert(Threads * kItems <= kN);
     static_assert(kN == kThreads * kItems * kChunks);
     static_assert((kChunks & (kChunks - 1)) == 0);
 };
@@ -159,15 +161,15 @@ __device__ __forceinline__ void exchange_warps(float (&values)[Traits::kChunks][
     }
 }
 
-template <std::uint32_t LogN, bool ExactShape = false>
-__global__ __launch_bounds__(RegisterFwhtTraits<LogN>::kThreads) void register_fwht_kernel(const float* input, float* output,
+template <std::uint32_t LogN, bool ExactShape = false, std::uint32_t Threads = register_fwht_threads(LogN)>
+__global__ __launch_bounds__(RegisterFwhtTraits<LogN, Threads>::kThreads) void register_fwht_kernel(const float* input, float* output,
                                                                                            std::uint64_t transforms,
                                                                                            std::uint64_t input_batch_distance,
                                                                                            std::uint64_t output_batch_distance,
                                                                                            std::uint64_t input_element_stride,
                                                                                            std::uint64_t output_element_stride,
                                                                                            std::uint32_t logical_points, float scale) {
-    using Traits = RegisterFwhtTraits<LogN>;
+    using Traits = RegisterFwhtTraits<LogN, Threads>;
     extern __shared__ __align__(16) unsigned char storage[];
     float4*                                       shared    = reinterpret_cast<float4*>(storage);
     const std::uint64_t                           transform = blockIdx.x;
@@ -253,17 +255,17 @@ __global__ __launch_bounds__(RegisterFwhtTraits<LogN>::kThreads) void register_f
     }
 }
 
-template <std::uint32_t LogN>
+template <std::uint32_t LogN, std::uint32_t Threads = register_fwht_threads(LogN)>
 void launch_register_fwht(const float* input, float* output, std::uint64_t transforms, std::uint64_t batch_distance, std::uint64_t element_stride,
                           bool normalize, cudaStream_t stream) {
-    using Traits      = RegisterFwhtTraits<LogN>;
+    using Traits      = RegisterFwhtTraits<LogN, Threads>;
     const float scale = normalize ? 1.0F / static_cast<float>(Traits::kN) : 1.0F;
-    register_fwht_kernel<LogN, true><<<static_cast<unsigned int>(transforms), Traits::kThreads, Traits::kSharedBytes, stream>>>(
+    register_fwht_kernel<LogN, true, Threads><<<static_cast<unsigned int>(transforms), Traits::kThreads, Traits::kSharedBytes, stream>>>(
         input, output, transforms, batch_distance, batch_distance, element_stride,
         element_stride, Traits::kN, scale);
 }
 
-template <std::uint32_t LogN>
+template <std::uint32_t LogN, std::uint32_t Threads = register_fwht_threads(LogN)>
 void launch_register_fwht_zero_extended(const float* input, float* output,
                                         std::uint64_t transforms,
                                         std::uint64_t input_batch_distance,
@@ -272,20 +274,20 @@ void launch_register_fwht_zero_extended(const float* input, float* output,
                                         std::uint64_t output_element_stride,
                                         std::uint32_t logical_points,
                                         cudaStream_t stream) {
-    using Traits = RegisterFwhtTraits<LogN>;
-    register_fwht_kernel<LogN><<<static_cast<unsigned int>(transforms), Traits::kThreads,
+    using Traits = RegisterFwhtTraits<LogN, Threads>;
+    register_fwht_kernel<LogN, false, Threads><<<static_cast<unsigned int>(transforms), Traits::kThreads,
                                  Traits::kSharedBytes, stream>>>(
         input, output, transforms, input_batch_distance, output_batch_distance,
         input_element_stride, output_element_stride, logical_points, 1.0F);
 }
 
-template <std::uint32_t LogN, bool Broadcast>
-__global__ __launch_bounds__(RegisterFwhtTraits<LogN>::kThreads) void register_structured_kernel(
+template <std::uint32_t LogN, bool Broadcast, std::uint32_t Threads = register_fwht_threads(LogN)>
+__global__ __launch_bounds__(RegisterFwhtTraits<LogN, Threads>::kThreads) void register_structured_kernel(
     const float* input, float* output, const float* matrix_entries, std::uint64_t transforms,
     std::uint64_t input_batch_distance, std::uint64_t output_batch_distance,
     std::uint64_t input_element_stride, std::uint64_t output_element_stride,
     std::uint32_t logical_points) {
-    using Traits = RegisterFwhtTraits<LogN>;
+    using Traits = RegisterFwhtTraits<LogN, Threads>;
     extern __shared__ __align__(16) unsigned char storage[];
     float4*                                       shared    = reinterpret_cast<float4*>(storage);
     const float4*                                 matrices  = reinterpret_cast<const float4*>(matrix_entries);
@@ -363,41 +365,41 @@ __global__ __launch_bounds__(RegisterFwhtTraits<LogN>::kThreads) void register_s
     }
 }
 
-template <std::uint32_t LogN>
+template <std::uint32_t LogN, std::uint32_t Threads = register_fwht_threads(LogN)>
 void launch_register_structured(const float* input, float* output, const float* matrices,
                                 std::uint64_t transforms, std::uint64_t batch_distance,
                                 std::uint64_t element_stride, bool broadcast, cudaStream_t stream) {
-    using Traits = RegisterFwhtTraits<LogN>;
+    using Traits = RegisterFwhtTraits<LogN, Threads>;
     if (broadcast) {
-        register_structured_kernel<LogN, true><<<static_cast<unsigned int>(transforms), Traits::kThreads,
+        register_structured_kernel<LogN, true, Threads><<<static_cast<unsigned int>(transforms), Traits::kThreads,
                                                 Traits::kSharedBytes, stream>>>(
             input, output, matrices, transforms, batch_distance, batch_distance,
             element_stride, element_stride, Traits::kN);
     } else {
-        register_structured_kernel<LogN, false><<<static_cast<unsigned int>(transforms), Traits::kThreads,
+        register_structured_kernel<LogN, false, Threads><<<static_cast<unsigned int>(transforms), Traits::kThreads,
                                                  Traits::kSharedBytes, stream>>>(
             input, output, matrices, transforms, batch_distance, batch_distance,
             element_stride, element_stride, Traits::kN);
     }
 }
 
-template <std::uint32_t LogN>
+template <std::uint32_t LogN, std::uint32_t Threads = register_fwht_threads(LogN)>
 void launch_register_structured_zero_extended(
     const float* input, float* output, const float* matrices,
     std::uint64_t transforms, std::uint64_t input_batch_distance,
     std::uint64_t output_batch_distance, std::uint64_t input_element_stride,
     std::uint64_t output_element_stride, std::uint32_t logical_points,
     bool broadcast, cudaStream_t stream) {
-    using Traits = RegisterFwhtTraits<LogN>;
+    using Traits = RegisterFwhtTraits<LogN, Threads>;
     if (broadcast) {
-        register_structured_kernel<LogN, true>
+        register_structured_kernel<LogN, true, Threads>
             <<<static_cast<unsigned int>(transforms), Traits::kThreads,
                Traits::kSharedBytes, stream>>>(
                 input, output, matrices, transforms, input_batch_distance,
                 output_batch_distance, input_element_stride,
                 output_element_stride, logical_points);
     } else {
-        register_structured_kernel<LogN, false>
+        register_structured_kernel<LogN, false, Threads>
             <<<static_cast<unsigned int>(transforms), Traits::kThreads,
                Traits::kSharedBytes, stream>>>(
                 input, output, matrices, transforms, input_batch_distance,

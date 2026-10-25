@@ -20,6 +20,8 @@ const char* butterfly_precision_name(ButterflyPrecision precision) noexcept {
             return "fp16-fp32";
         case ButterflyPrecision::Uint32:
             return "uint32";
+        case ButterflyPrecision::Uint64:
+            return "uint64";
     }
     return "unknown";
 }
@@ -37,6 +39,8 @@ ButterflyPrecision parse_butterfly_precision(const std::string& name) {
         return ButterflyPrecision::Fp16Fp32;
     if (name == "uint32")
         return ButterflyPrecision::Uint32;
+    if (name == "uint64")
+        return ButterflyPrecision::Uint64;
     throw std::invalid_argument("unknown butterfly precision: " + name);
 }
 
@@ -490,6 +494,31 @@ void reference_superset_zeta(std::vector<std::uint32_t>& values, bool inverse) {
 
 void reference_xor_zeta(std::vector<std::uint32_t>& values, bool inverse) {
     reference_subset_zeta(values, inverse);
+}
+
+namespace {
+template <bool UpdateLeft>
+void reference_zeta_uint64(std::vector<std::uint64_t>& values, bool inverse) {
+    if (values.empty() || (values.size() & (values.size() - 1)) != 0)
+        throw std::invalid_argument("zeta input size must be a nonzero power of two");
+    for (std::size_t half = 1; half < values.size(); half <<= 1) {
+        for (std::size_t base = 0; base < values.size(); base += 2 * half) {
+            for (std::size_t offset = 0; offset < half; ++offset) {
+                auto& target = values[base + offset + (UpdateLeft ? 0 : half)];
+                const auto source = values[base + offset + (UpdateLeft ? half : 0)];
+                target = inverse ? target - source : target + source;
+            }
+        }
+    }
+}
+}  // namespace
+
+void reference_subset_zeta(std::vector<std::uint64_t>& values, bool inverse) {
+    reference_zeta_uint64<false>(values, inverse);
+}
+
+void reference_superset_zeta(std::vector<std::uint64_t>& values, bool inverse) {
+    reference_zeta_uint64<true>(values, inverse);
 }
 
 namespace {

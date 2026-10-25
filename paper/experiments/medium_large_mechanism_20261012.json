@@ -1,0 +1,23 @@
+{
+  "schema": "cubutterfly-medium-large-mechanism-v1",
+  "identity_source": "results/paper_targeted_20261012/principle_gap_attempt_safe/launch.json",
+  "output": "results/paper_targeted_20261012/medium_large_mechanism",
+  "deadline": "2026-10-12T16:30:00+08:00",
+  "primary_mechanism": "shared-layout",
+  "operators": ["fft", "fwht", "ntt"],
+  "first_round": {"logN": 20, "batch": 4, "stage_partition": [10, 10], "threads": 256, "batch_tile_count": 1, "stage_overlap": false},
+  "protocol": {"trials": 3, "warmup": 100, "repeat": 100, "verify_batches": 0},
+  "semantics": {"direction": "forward", "normalization": "none", "placement": "out-of-place", "ntt_modulus": 576460756061519873, "ntt_input_order": "natural", "ntt_output_order": "natural"},
+  "core_identities": {"fft": "FftOperator<Complex32,float>/scalar-radix2/four-mul/table/native", "fwht": "FwhtOperator<float>/scalar-radix2/native", "ntt": "NttStageOperatorT<uint64_t>/scalar-radix2/Shoup/table"},
+  "numeric_policy": {"floating": "Existing benchmark --verify is internal sanity only. User numerical acceptance unassessed; full error distribution missing. Preserve failures; do not add or relax thresholds.", "ntt": "Exact elementwise full-batch modular reference required."},
+  "resource_limits": {"device_estimate_ceiling_bytes": 4294967296, "dynamic_shared_ceiling_bytes": 49152, "compile_jobs": 1, "compile_timeout_seconds": 120, "memory_estimate": "8 * batch * N * value_bytes + 4 * N * value_bytes; conservative planning envelope, not measured allocation"},
+  "candidate_matrix": {"status": "planned_not_queued", "sizes_log2": [16, 18, 20, 22], "batches": [1, 4, 32], "points": [[16, 1], [16, 32], [18, 4], [20, 1], [20, 4], [20, 32], [22, 4]], "optional_endpoint": {"logN": 24, "batch": 4, "status": "not_queued", "depends_on": ["separate memory envelope and CPU-reference budget", "compatible module readiness", "exclusive GPU window"]}, "note": "Candidate points only, not the full Cartesian product or permission to auto-expand this round."},
+  "separate_tasks": [
+    {"id": "group-local-residency", "status": "supported_not_queued", "changed_axes": ["local_stage_partitions"], "fixed_controls": "Same physical partition/threads/layout/core; scalar leaf executes register-resident local units of 1..5 stages. Must audit resource and actual mapping changes separately.", "candidate": [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2]]},
+    {"id": "core-times-organization-2x2", "status": "blocked_public_interface", "historical_evidence": "results/paper_completion_20260917/core_dataflow_ablation/runtime_manifest.json", "required": "Public verifiable interchangeable arithmetic-leaf identity in conventional parallel and mixed organizations. Shared-iterative FFT/FWHT/NTT here each use one scalar radix2 leaf. Do not count full external black-box libraries as leaf cores."},
+    {"id": "disabled-component-research", "status": "blocked_implementation", "required": "Public immutable component exclusions plus fixed-core search constraint, equal candidate/timing budgets, candidate provenance and independent selected replay."},
+    {"id": "small-single-segment-core", "status": "blocked_public_interface", "required": "Add a public single-segment local-core adapter identity and legal dispatcher for warp/register FWHT radix2 or radix4 codelet, word64 Shoup NTT local codelet, and FFT native/imported codelet at a shared semantic intersection; same core reusable under conventional/mixed organizations. Existing shared-iterative one-group scalar radix2 is legal but does not provide a second portable leaf."},
+    {"id": "fixed-mapping-full-floating-error-report", "status": "blocked_implementation", "required": "Expose full-batch error distribution on the same fixed resolved mapping/input/reference; neither CPU tests nor bench internal sanity establishes user numerical acceptance."},
+    {"id": "same-point-hardware-counters", "status": "planned_not_queued", "required": "Collect kernel-bound NCU bank replay, achieved occupancy, L2 hit/traffic and instruction/launch attribution after ordinary timing; do not infer counters from registers/shared metadata or profiler time."}
+  ]
+}

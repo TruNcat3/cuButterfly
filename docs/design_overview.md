@@ -1,5 +1,10 @@
 # Design Overview
 
+The [project research principles](research_principles.md) specify the all-operator
+goal and the experiments that separate organization gains from arithmetic-core
+gains. The architectural derivation below does not imply every optional mechanism
+benefits every workload.
+
 ## 1. Why A Mapping Paradigm Is Needed
 
 FFT, NTT, FWHT, and XOR-zeta use different arithmetic, but their regular

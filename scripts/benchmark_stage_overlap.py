@@ -58,12 +58,13 @@ def summarize_paired(rows):
         # "percent of cuFFT".  The mean is over workload cells, each of which
         # has the same paired-round treatment above.
         fractions = [1.0 / item["best_over_cufft_latency"] for item in summary]
+        mean_fraction = statistics.mean(fractions)
         summary.append({"aggregate": "mean_best_throughput_fraction",
                         "workload_cells": len(fractions),
-                        "value": statistics.fmean(fractions),
-                        "percent_of_cufft": 100.0 * statistics.fmean(fractions),
+                        "value": mean_fraction,
+                        "percent_of_cufft": 100.0 * mean_fraction,
                         "target_fraction": 0.80,
-                        "target_met": statistics.fmean(fractions) >= 0.80})
+                        "target_met": mean_fraction >= 0.80})
     return summary
 
 

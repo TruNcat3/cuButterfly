@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "purpose": "Follow up on FP64 tile grouping slowdown: vary threads at fixed group width; profiles are diagnostic only",
+  "operators": ["fft"],
+  "precisions": ["fp64"],
+  "performance": {
+    "logN": 20, "batch": 16, "split": 10, "tiles": [2, 4],
+    "threads": [512, 1024], "inverse": [0], "repeat": 20, "trials": 5
+  },
+  "profile_cases": [
+    ["fft", "fp64", 20, 16, 10, 1, 256, 0, 2, 1, "strided"],
+    ["fft", "fp64", 20, 16, 10, 4, 256, 0, 2, 1, "producer"]
+  ],
+  "ncu_metrics": [
+    "gpu__time_duration.sum",
+    "sm__throughput.avg.pct_of_peak_sustained_elapsed",
+    "dram__throughput.avg.pct_of_peak_sustained_elapsed",
+    "sm__warps_active.avg.pct_of_peak_sustained_active",
+    "smsp__sass_average_data_bytes_per_sector_mem_global_op_ld.pct",
+    "smsp__sass_average_data_bytes_per_sector_mem_global_op_st.pct",
+    "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct",
+    "smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct",
+    "smsp__warp_issue_stalled_barrier_per_warp_active.pct",
+    "smsp__warp_issue_stalled_mio_throttle_per_warp_active.pct",
+    "launch__registers_per_thread",
+    "launch__shared_mem_per_block_dynamic",
+    "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum",
+    "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum"
+  ]
+}

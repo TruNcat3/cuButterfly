@@ -1,0 +1,106 @@
+cuButterfly hardware resources: live-cuda-properties:no-compatible-static-artifact
+prepared native-t1-d0
+prepared native-t4-d0
+prepared native-t4-d1
+prepared native-t4-d2
+prepared cufftdx-t1-d0
+prepared cufftdx-t4-d0
+prepared cufftdx-t4-d1
+prepared cufftdx-t4-d2
+prepared cufft
+
+{
+  "purpose": "40GB integration smoke only; no performance claim",
+  "cases": 9,
+  "controls": [
+    {
+      "id": "native-factor-fixed-core",
+      "baseline": "native-t1-d0",
+      "fft_core": "register-tile",
+      "semantics": {
+        "operator": "fft",
+        "precision": "fp64",
+        "logN": 16,
+        "batch": 16,
+        "inverse": false
+      },
+      "allowed_differences": [
+        "data_tiles_per_cta",
+        "prefetch_depth"
+      ],
+      "differences": {
+        "native-t4-d0": {
+          "data_tiles_per_cta": [
+            1,
+            4
+          ]
+        },
+        "native-t4-d1": {
+          "data_tiles_per_cta": [
+            1,
+            4
+          ],
+          "prefetch_depth": [
+            0,
+            1
+          ]
+        },
+        "native-t4-d2": {
+          "data_tiles_per_cta": [
+            1,
+            4
+          ],
+          "prefetch_depth": [
+            0,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "id": "cufftdx-block-fixed-core",
+      "baseline": "cufftdx-t1-d0",
+      "fft_core": "cufftdx-block",
+      "semantics": {
+        "operator": "fft",
+        "precision": "fp64",
+        "logN": 16,
+        "batch": 16,
+        "inverse": false
+      },
+      "allowed_differences": [
+        "data_tiles_per_cta",
+        "prefetch_depth"
+      ],
+      "differences": {
+        "cufftdx-t4-d0": {
+          "data_tiles_per_cta": [
+            1,
+            4
+          ]
+        },
+        "cufftdx-t4-d1": {
+          "data_tiles_per_cta": [
+            1,
+            4
+          ],
+          "prefetch_depth": [
+            0,
+            1
+          ]
+        },
+        "cufftdx-t4-d2": {
+          "data_tiles_per_cta": [
+            1,
+            4
+          ],
+          "prefetch_depth": [
+            0,
+            2
+          ]
+        }
+      }
+    }
+  ],
+  "all_outputs_finite": true
+}

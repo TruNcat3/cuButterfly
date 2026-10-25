@@ -23,7 +23,7 @@ class DesignPointGeneratorTest(unittest.TestCase):
             path = pathlib.Path(directory) / "generated_register_structured.cu"
             write_structured(path, selected)
             source = path.read_text()
-            self.assertIn("launch_register_structured<12>", source)
+            self.assertIn("launch_register_structured<12, 256>", source)
             self.assertIn("generated_register_structured_available", source)
             self.assertIn("bool broadcast", source)
 

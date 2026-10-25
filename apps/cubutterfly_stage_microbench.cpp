@@ -152,12 +152,42 @@ template<class Value> double distance(Value a,Value b) {
 }
 template<> double distance(Complex32 a,Complex32 b) { return std::hypot(double(a.real)-b.real,double(a.imag)-b.imag); }
 template<> double distance(Complex64 a,Complex64 b) { return std::hypot(a.real-b.real,a.imag-b.imag); }
+template<> double distance(Fp16 a,Fp16 b) { return std::abs(double(__half2float(a))-__half2float(b)); }
+template<> double distance(Bf16 a,Bf16 b) { return std::abs(double(__bfloat162float(a))-__bfloat162float(b)); }
+template<class Value> constexpr bool low_real = std::is_same_v<Value,Fp16> || std::is_same_v<Value,Bf16>;
+template<class Value> Value narrow(float value) {
+    if constexpr(std::is_same_v<Value,Fp16>) return __float2half_rn(value);
+    else return __float2bfloat16_rn(value);
+}
+template<class Value> float widen(Value value) {
+    if constexpr(std::is_same_v<Value,Fp16>) return __half2float(value);
+    else return __bfloat162float(value);
+}
+
+template<class Value> void reference_low_fwht(std::vector<Value>& values,bool inverse,bool normalize) {
+    // LowFwhtOperator stores after every add/subtract/multiply, including
+    // explicit FP32 accumulation. Mirror those rounding boundaries on CPU.
+    const float limit=std::is_same_v<Value,Fp16> ? 16376.0F : __bfloat162float(Bf16(__nv_bfloat16_raw{0x7e7f}));
+    for(std::size_t half=1;half<values.size();half*=2) {
+        for(std::size_t base=0;base<values.size();base+=2*half) for(std::size_t j=0;j<half;++j) {
+            auto a=values[base+j],b=values[base+j+half];
+            const bool scale=inverse && normalize;
+            const bool after=scale && std::abs(widen(a))<=limit && std::abs(widen(b))<=limit;
+            if(scale && !after) { a=narrow<Value>(widen(a)*0.5F); b=narrow<Value>(widen(b)*0.5F); }
+            auto left=narrow<Value>(widen(a)+widen(b)),right=narrow<Value>(widen(a)-widen(b));
+            if(after) { left=narrow<Value>(widen(left)*0.5F); right=narrow<Value>(widen(right)*0.5F); }
+            values[base+j]=left; values[base+j+half]=right;
+        }
+    }
+}
 template<class Value> Value initial(std::size_t i) {
     if constexpr(std::is_integral_v<Value>) return static_cast<Value>((i*17+3)%101);
     else return static_cast<Value>((int((i*17+3)%101)-50)/101.0);
 }
 template<> Complex32 initial(std::size_t i) { return {initial<float>(i),initial<float>(i+7)}; }
 template<> Complex64 initial(std::size_t i) { return {initial<double>(i),initial<double>(i+7)}; }
+template<> Fp16 initial(std::size_t i) { return narrow<Fp16>(initial<float>(i)); }
+template<> Bf16 initial(std::size_t i) { return narrow<Bf16>(initial<float>(i)); }
 
 template<class PlanType,class Value,class Reference>
 Json execute_probe(PlanType& plan,Json point,const Protocol& p,Reference reference,
@@ -221,10 +251,24 @@ Json execute_probe(PlanType& plan,Json point,const Protocol& p,Reference referen
         {"free_memory_bytes",free_bytes},
         {"protocol",{{"timing","direct-launch-batched-events-reset-between-trials-v2"},
          {"warmup",p.warmup},{"warmup_min_ms",p.warmup_ms},{"repeat",p.repeat},{"trials",p.trials}}}};
+    if constexpr(low_real<Value>) result["verification"]={
+        {"reference","same-storage-per-butterfly-rounded-fwht"},
+        {"input","deterministic-rational-101-quantized-to-storage"},
+        {"comparison","exact-finite-values"}};
     if(p.describe) return result;
     if(!all_independent) { result["status"]="unavailable"; result["correct"]=false; return result; }
     std::vector<Value> host(elements),expected(elements),actual(elements);
-    for(std::size_t i=0;i<elements;++i) host[i]=initial<Value>(i);
+    for(std::size_t i=0;i<elements;++i) {
+        if constexpr(std::is_same_v<PlanType,ButterflyPlan> && std::is_same_v<Value,std::uint64_t>) {
+            const auto offset=static_cast<std::uint64_t>(i);
+            switch(i%4) {
+            case 0: host[i]=UINT64_MAX-offset; break;
+            case 1: host[i]=(std::uint64_t{1}<<53)+offset+1; break;
+            case 2: host[i]=(std::uint64_t{1}<<32)+offset+1; break;
+            default: host[i]=offset; break;
+            }
+        } else host[i]=initial<Value>(i);
+    }
     expected=host;
     for(std::size_t b=0;b<batch;++b) {
         std::vector<Value> values(n);
@@ -249,7 +293,7 @@ Json execute_probe(PlanType& plan,Json point,const Protocol& p,Reference referen
             if(!std::isfinite(error)) return false;
             max_error=std::max(max_error,error); max_value=std::max(max_value,distance(expected[k],Value{}));
         }
-        if constexpr(std::is_integral_v<Value>) return max_error==0;
+        if constexpr(std::is_integral_v<Value> || low_real<Value>) return max_error==0;
         else return max_error<= (sizeof(Value)==sizeof(float) || std::is_same_v<Value,Complex32> ? 5e-4 : 1e-9)*std::max(1.0,max_value);
     };
     reset_full(); full();
@@ -357,9 +401,20 @@ Json probe(Json point,const Protocol& p) {
             if(c.op==ButterflyOperator::SupersetZeta) reference_superset_zeta(v,c.inverse);
             else reference_subset_zeta(v,c.inverse);
         },n,c.batch,c.batch_stride,c.element_stride,inplace);
+    } else if(c.precision==ButterflyPrecision::Uint64) {
+        return execute_probe<ButterflyPlan,std::uint64_t>(plan,point,p,[&](auto& v) {
+            if(c.op==ButterflyOperator::SupersetZeta) reference_superset_zeta(v,c.inverse);
+            else reference_subset_zeta(v,c.inverse);
+        },n,c.batch,c.batch_stride,c.element_stride,inplace);
     } else {
         if(c.precision==ButterflyPrecision::Fp32) return execute_probe<ButterflyPlan,float>(plan,point,p,real_reference,n,c.batch,c.batch_stride,c.element_stride,inplace);
         if(c.precision==ButterflyPrecision::Fp64) return execute_probe<ButterflyPlan,double>(plan,point,p,real_reference,n,c.batch,c.batch_stride,c.element_stride,inplace);
+        if(c.op==ButterflyOperator::Fwht) {
+            if(c.precision==ButterflyPrecision::Fp16) return execute_probe<ButterflyPlan,Fp16>(plan,point,p,
+                [&](auto& values) { reference_low_fwht(values,c.inverse,c.normalize_inverse); },n,c.batch,c.batch_stride,c.element_stride,inplace);
+            if(c.precision==ButterflyPrecision::Bf16) return execute_probe<ButterflyPlan,Bf16>(plan,point,p,
+                [&](auto& values) { reference_low_fwht(values,c.inverse,c.normalize_inverse); },n,c.batch,c.batch_stride,c.element_stride,inplace);
+        }
     }
     // The plan was constructed successfully. A missing numeric reference is
     // an adapter coverage gap, not evidence that the design is unexecutable.

@@ -113,6 +113,17 @@ The current protocol fixes `N * batch = 2^22` for length comparisons. Do not
 use it to infer independent batch scaling; that requires holding `N` fixed and
 sweeping batch separately.
 
+For campaigns that need correctness attached to the measured mapping, add the
+optional per-mode manifest field `verify_timed_batches` (for example, `2`). For
+`butterfly` and `ntt` cases, each timed command then carries
+`--verify --verify-batches N`, where `N` is bounded by the actual timed batch;
+verification is performed outside the kernel timing loop. The raw row records
+that actual `verified_batches` count and is rejected unless its `correct` field
+is `1`, so the check applies to the same mapping and batch that were timed.
+This is only sampled transform verification, not a second timing protocol. The
+field is optional and absent (or zero) preserves the historical behavior, and
+`fft-library` runners retain their existing command and correctness protocol.
+
 Generate and run the orthogonal length/batch suite with:
 
 ```bash

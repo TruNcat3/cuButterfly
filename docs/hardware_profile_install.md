@@ -1,14 +1,105 @@
 # Hardware Profile Initialization
 
+Platform-specific candidate preferences use the
+[platform tuning interface](platform_tuning.md). They are separate from
+measured profiles and executable capabilities. The
+[October 7 repair record](platform_boundary_repair_20261007.md) documents
+the corrected candidate coverage, runtime loading and fresh retest identities.
+
 > Note: Paths marked `local artifact` are local experiment records and are not included in this source release.
 
 cuButterfly does not treat a mapping measured on one GPU as a portable
-constant. Installation can therefore initialize a local hardware profile and
-build a first model table from the current device before an application begins
-using tuning data.
+constant. Installation first reuses compatible local or repository profiles.
+A missing target can initialize a local profile; refreshing an existing profile
+requires an explicit request. Reuse does not certify missing performance layers.
 
 The [unified planner guide](unified_planner.md) defines the current mapping,
 compile-policy and registry contracts. This page covers their operational use.
+
+## Static profile policy
+
+The [architecture decision](adr/0001-static-profile-driven-planning.md) applies to
+all butterfly operators. Hardware constraints and performance observations are
+separate files, not one undifferentiated calibration flag.
+
+| Input | Meaning | Reuse condition |
+| --- | --- | --- |
+| `hardware_model.json` | Complete capacity limits, including per-CTA and per-SM resources | Exact model, compute capability and memory capacity |
+| `hardware_profile.json` | Sampled hardware rates and sampling conditions | Preserve platform and observation provenance; not a complete cost model |
+| `stage_service_profile.json`, `cost_model.json` | Service samples, coverage, model version and validation | Matching semantics, core/build and measurement protocol |
+| Compiled module manifests | Actual registers, shared scratch and specialization support | Matching compiler, templates and target |
+
+The installer selects an explicit `CUBUTTERFLY_HARDWARE_MODEL`, then complete
+local artifacts, then compatible `config/hardware/<tag>` seeds. A compatible
+legacy `calibration_device.json` remains reusable as partial data when no complete
+capacity artifact exists. An invalid existing capacity file fails explicitly;
+it is not silently replaced with another GPU's limits. A missing performance
+layer or a warning model is reported and does not automatically start new tuning.
+
+The repository's A100 80GB PCIe seed currently contains capacity facts and
+historical hardware rates. It does not claim current whole-plan model validation.
+Existing local performance files are preserved when missing capacity files are
+supplied from that seed. Reinstalling also preserves refreshed local files.
+
+Default reuse invokes no calibration or search. Build and requested correctness
+tests remain separate installation steps. To explicitly update a profile, add
+`--refresh-profile` to the install command. To continue an interrupted search,
+use `--resume-search`; these options are mutually exclusive. The manual
+`calibrate_hardware.py --mode execute --force ...` entry remains available for
+explicit acquisition. `--stage-calibration bounded --search-seconds 300` requests
+a bounded scope; it must not be described as exhaustive calibration.
+
+Capacity acquisition uses `cubutterfly_plan_probe --hardware-live` and exports
+`hardware_model.json` even when operator calibration is skipped. Ordinary
+`--hardware` reports the capacities actually consumed by the common resource
+query and a `resource_source`. Missing static capacity data currently permits a
+labelled live-properties fallback; this is not calibrated performance. The
+CPU-only inspector needs no GPU:
+
+```bash
+python scripts/static_hardware_profile.py inspect \
+  config/hardware/NVIDIA-A100-80GB-PCIe-sm80-84974239744B/hardware_model.json
+```
+
+Runtime lookup uses the explicit file, then `CUBUTTERFLY_PROFILE_ROOT/<tag>`, or
+the configured installation data directory when no root is set, then the bundled
+seed. For a custom profile directory, source its generated `profile_environment.sh`.
+The installer binds the CMake install prefix; moving a separately configured
+installation with `cmake --install --prefix` requires setting the profile root.
+No application call automatically reruns a performance benchmark.
+
+The rank-one constructors now apply the common legality gate before execution,
+including after JIT resource feedback. The selector first looks for a compatible
+measured registry entry. On a miss it ranks the projected inventory from static
+performance artifacts, constructs a bounded set of finalists and reranks their
+resolved resources. It does not benchmark during this fallback. The default
+finalist budget is four; `CUBUTTERFLY_MODEL_FINALISTS` sets a positive alternative.
+This budget is an exploration limit, not a claim of an exhaustive optimum.
+
+Selection reports distinguish `validated-static-model`, `hardware-rate-prior`
+and `unmeasured-feasible`. Only a compatible, validated model with covered
+primitives supplies the first category. Hardware rates alone supply a prior;
+missing performance data or an incomplete physical launch descriptor stays
+unranked. A feasible fallback is reported by the public C API as
+`CUBUTTERFLY_SELECTION_UNMEASURED_FALLBACK`, not as a static model prediction.
+The [audit](constraint_pipeline_audit_20261024.md) records remaining coverage.
+
+For model reuse, set `CUBUTTERFLY_MODEL_TIMING_PROTOCOL` to the JSON string
+`"direct-launch"` only when the caller actually uses that timing protocol.
+An unspecified or incompatible protocol does not admit a fitted model.
+`CUBUTTERFLY_PLAN_TRACE=/path/to/trace.jsonl` records projection rejections,
+ranking partitions, finalist construction and the final mapping. Ranking uses
+the installed `rank_static_candidates.py` CPU helper; `CUBUTTERFLY_STATIC_RANKER`
+can explicitly select its path. No GPU measurement or compiler is launched by
+that helper. It reuses an existing compatible native CPU schedule library in
+load-only mode, or evaluates the same schedule in Python. Explicit
+`CUBUTTERFLY_DISABLE_NATIVE_STAGE_SCHEDULE=1` remains authoritative. CPU preparation
+can populate the existing cache before GPU work with
+`PYTHONPATH=scripts python -c 'import stage_schedule_native as n; print(n.backend())'`.
+The ranking trace reports `schedule_backend`. Finalist construction may compile
+GPU modules under the caller's compile policy, outside execution timing.
+Resource-rejected finalist batches are replaced from the remaining ordered
+inventory; they are never selected merely because the initial budget was reached.
 
 ## Recommended Installation
 
@@ -68,7 +159,52 @@ correctness, sample the affected stage services, and then compare whole plans
 before promoting selector entries. A finite research sample is not a claim
 that all configurations have been recalibrated.
 
-The wrapper runs the following install-time loop. The examples above disable
+JIT modules use a shared CUDA runtime. This avoids a separate static runtime in
+every specialization, whose stream/event overhead grows when many modules are
+loaded. The module cache key and manifest record this linkage; existing static
+modules remain historical artifacts. See the
+[runtime investigation](jit_shared_runtime_20261010.md) for the measured scope.
+
+When a research campaign uses an immutable compilation broker, bind fresh
+calibration to that same broker by setting `CUBUTTERFLY_CALIBRATION_BROKER`.
+Also set `CUBUTTERFLY_TEMPLATE_ROOT`, `CUBUTTERFLY_MATHDX_ROOT`,
+`CUBUTTERFLY_NVCC` and `CUBUTTERFLY_JIT_CACHE` to its exact configuration.
+Calibration then records the generator, templates, compiler, runtime link
+inputs and loader search environment in its manifest and stage/composition
+checkpoints. The async timing runner rejects shared-runtime calibration reuse
+if this binding is absent or different. Use a fresh calibration directory;
+adding identity fields to old measurements does not recalibrate them.
+This binding covers the broker's compilation inputs; it does not claim complete
+ELF loader tracing or exhaustive hardware-profile coverage.
+
+During explicitly authorized development, `--resume-search --resume-build-priors`
+allows earlier measurements from the same hardware and timing protocol to inform
+continued calibration and search. It preserves their source identities, refreshes
+current descriptors, and measures missing candidates and current finalists.
+This opt-in workflow does not turn earlier timings into current-build observations.
+The local continuing campaign exposes adoption through
+`results/install_compare_repair_20261014/run.py --resume --adopt-current-build`.
+Its CPU inputs and already measured data remain reusable; a build change alone
+does not require restarting every experiment.
+
+If every search cell has already completed and this repair only needs current-build
+confirmation, add `--reuse-completed-search` to that adoption command. The driver
+requires the same workload scope and a complete prior stage/search checkpoint,
+archives the prior attempt, and records its file hashes. The retained search is
+labelled `retained-as-mapping-seeds`, not current calibration. Finalization reruns
+whole-plan confirmation, independent stage measurements, composition checks and
+selector replay on the rebuilt library before comparison can begin. An interrupted
+adopted run uses `--resume --resume-after-gpu-interruption`; it must not adopt again
+or attach a CPU ranking package from another build.
+
+The October 16 stage-adapter repair exposes compact-stage NTT's three original
+physical launches and queries FP64 cuFFTDx online-reorder resources from the same
+kernel dispatch used for execution. Unknown resource values must not be reported
+as measured zero. Serial/overlap resource identity checks remain strict. These
+fixes close adapter gaps; they do not establish full concurrency-model accuracy.
+
+When initialization or explicit refresh is requested, the wrapper runs the
+following loop. The examples above disable
 the total screening cutoff so each configured workload receives its candidate
 budget; they can take longer than a bounded installation. Fresh installs use
 independent stage calibration by default (`--stage-calibration full`) and set
@@ -77,7 +213,7 @@ the default 300-second budget, while `skip` records that stage calibration was
 not requested.
 
 1. build the configured tree;
-2. probe the device and run the correctness-checked operator calibration plus the selected independent stage policy;
+2. probe the device, run operator and independent-stage calibration, then measure the declared serial/overlap pairs for staged calibration;
 3. fit the local cost model, update the cumulative hardware registry and verify selector replay;
 4. run architecture-appropriate tests and install the library and profile helpers.
 
@@ -192,11 +328,16 @@ warmup/repeat/trial protocol must agree; mismatches fail before changing the
 target checkpoint. Identical records are deduplicated, distinct timing trials
 are retained, and imported subsets cannot certify the target inventory.
 
-Full mode also reserves sampling slots for boundary seeds, each nontrivial
-interval's independent midpoint, and one level of midpoint refinement (at
-least 33 slots). Explicit `stage_service_calibration.py --max-points N` caps
-remain binding; bounded mode retains the 33-slot default. Further nonlinear
-refinement can still produce an explicit incomplete status. The count limits
+Full mode reserves a separate finite sampling budget for each curve. It includes
+boundary seeds and 31 additional slots per nontrivial seed interval, enough for
+four rounds of midpoint promotion followed by child-interval holdouts. The floor
+is 33 slots, capped by the number of legal integer loads. Coverage records the
+actual cap per curve; a later curve's larger budget cannot relabel an earlier
+curve's cap. Explicit `stage_service_calibration.py --max-points N` caps remain
+binding; bounded mode retains the 33-slot default. Further nonlinear refinement
+can still produce an explicit incomplete status, never automatic validation.
+Compatible recovery retains measured loads and fills the remaining intervals.
+The count limits
 distinct loads for one probe configuration, whose physical groups are timed
 together; it is not a claim of minimal sampling across all plans.
 
@@ -474,10 +615,13 @@ semantic cells.
 The calibration manifest reports `ready-with-measured-mappings` when records
 are promoted, otherwise `ready-with-unmeasured-fallback`. C/C++ plans read the
 cumulative registry directly and match the hardware, complete operator semantics
-and runtime fingerprint. A registry miss uses a feasible portable candidate
-labelled `unmeasured-feasible`; it is not evidence of calibrated performance.
-Unsupported semantics still fail explicitly. Archived V100 mappings remain
-historical target-specific evidence and are not migration defaults.
+and runtime fingerprint. On a registry miss, the rank-one selector uses compatible
+static model estimates or hardware-rate priors as described above. If neither
+can rank the executable candidates, it reports `unmeasured-feasible`. These
+sources remain distinct from a confirmed measured mapping.
+Unsupported semantics still fail explicitly. Archived V100 timings remain
+historical target-specific evidence. Compatibility mappings may be offered
+as unmeasured platform priors; they do not qualify as current calibration.
 
 The installed `calibrate_local_hardware.py` command runs the same workflow
 without reinstalling the library. It detects whether the build contains the
@@ -547,6 +691,42 @@ When the GPU is occupied, preserve progress and continue available CPU work.
 Absent a continuing-monitoring request, report the checkpoint and remaining GPU
 work. Do not stop other users' jobs or accept contended timings. The existing
 checks can detect contention but do not reserve the device against arriving jobs.
+
+[Independent CPU preparation](calibration_cpu_preparation.md) can export pending
+candidate inventories once, score them without a visible GPU, precompile priority
+modules, and persist exact score epochs. The GPU watcher accepts
+`--cpu-preparation-status OUTPUT/status.json` to wait for the initial scoring
+publication before checking GPU idleness. New adaptive feedback still requires
+new scoring; these preparations do not replace GPU calibration or verification.
+
+For an explicitly requested automatic continuation of a finite campaign,
+`scripts/watch_idle_campaign.py` observes one GPU UUID every 10 seconds. It
+requires 30 continuous seconds with no compute or graphics processes, zero GPU
+and memory utilization, and at most 64 MiB of idle driver memory. Query failures
+reset this window. These limits are configurable; the watcher does not reserve
+the device or stop other users' jobs.
+
+A headless display server can retain a few MiB even when computation is idle.
+Only when that baseline has been checked, pass its exact NVIDIA-reported name
+through `--idle-graphics-name /usr/lib/xorg/Xorg`. This explicit exception admits
+only a graphics-only process; zero utilization and the total memory limit still
+apply. Compute and mixed compute/graphics processes always prevent launch.
+
+```bash
+python scripts/watch_idle_campaign.py --campaign-dir RESULTS --gpu-uuid GPU-UUID \
+  -- python RESULTS/run.py --resume --resume-after-gpu-interruption
+```
+
+The child must use `driver.lock`, guard exclusivity during measurement, clean up
+its children on SIGTERM, and write `status.json`. Only a fresh explicit
+`retryable: true` GPU interruption is retried. Build mismatches, compilation
+failures and numerical failures stop for inspection. A finished campaign must
+report a `complete*` status and `remaining: 0`. The watcher uses `monitor.lock`
+to prevent duplicate monitors and exposes `monitor_status.json`,
+`monitor_events.jsonl` and `monitor_driver.log`. It continues until completion,
+a real failure or an explicit stop; SIGTERM to its recorded `monitor_pid`
+stops the owned driver cleanly. Same-build interruption recovery retains phase
+checkpoints and compile caches; it does not readopt the build or erase progress.
 
 Sweeps checkpoint completed candidates to `OUTPUT.partial` and use `--resume`.
 Calibration uses `--resume-search`, preserving individual confirmation trials
@@ -667,23 +847,90 @@ only when `stage_service_profile.json` has both `validated: true` and
 `calibration_status: "complete"`. A `complete-bounded` stage result is useful
 checkpoint evidence but is not the full completion gate.
 
+The exported mapping inventory contains many policy combinations that share the
+same physical execution group. The default `--stage-point-budget 0` preserves
+the complete inventory behavior. A positive budget enables a deterministic,
+stratified sample anchored at every `(operator, precision, logN)` stratum; it
+is a sampling shortcut, not physically equivalent coverage of omitted policy
+combinations. The selected and omitted counts, `scope`, and
+`inventory_complete` state are recorded in `stage_point_sampling.json` and in
+the stage profile/manifest. A sampled profile may retain
+`selected_scope_validated`, but is reported as `complete-sampled` and cannot
+satisfy the full migration completion gate.
+
+`search_coverage.json` records the stage-point budget and sampling summary. With
+`--search-stage-projection plan`, search descriptors explicitly carry an
+omitted stage-service projection and the model keeps the conservative
+unresolved-batch fallback; this mode must not be read as full sub-stage
+composition coverage. Measurement identities include `libcuntt.so` when the
+build is shared, so a relink invalidates reusable timing checkpoints.
+
 The stage probe checks target-GPU exclusivity before and after each invocation;
 it refuses to launch when another compute process is active and does not wait or
 mix timing rows. This is a reservation check rather than a race-free system
 lock, so the target must remain reserved for the entire calibration.
 
+### Serial and overlap composition validation
+
+Starting with calibration-tool revision 0.9.3.2, staged migration also emits
+`composition_calibration/composition_calibration.json`. Independent stage
+measurement, observed composition timing, model validation and complete
+inventory coverage are separate states. Legacy manifests without composition
+evidence report unknown coverage rather than a successful full migration.
+
+The calibrator combines verified operator samples with independently measured
+stage descriptors from the same device and runtime. It constructs bounded
+serial/overlap pairs using their actual physical groups. Core, stage partition,
+precision, direction and layout stay fixed within each pair. Default tile or
+slice counts are 2, 4 and 8; at most two feasible seeds per semantic family are
+selected deterministically without consulting latency. The default whole-request
+bound is `N * batch <= 2^20`. Original batches are retained; an additional,
+separately labelled `batch - 1` request tests a partial final tile when applicable.
+Omitted families and requests remain visible in the inventory.
+
+Predictions use the frozen independent-stage model before observing the paired
+whole-plan timing. All batches are checked, and three trials use the configured
+operator warmup/repeat settings. The report retains raw calls, negative speedups,
+top-one ranking, latency regret and prediction errors. Compilation, planning,
+input transfer and CPU references are outside kernel timing. Existing floating
+benchmark checks are diagnostic, not substitutes for the campaign's pending
+error-distribution acceptance decision.
+
+`complete-observed` means the declared requests were measured. It does not mean
+the model passed, all supported families were covered, or concurrent resource
+parameters were identified. This finite sampler records `inventory_complete:
+false` and `concurrency_parameters_identified: false`. Full migration therefore
+remains incomplete even if its finite holdout succeeds. Factor-sliced service
+projection is not yet independently calibrated; those predictions stay uncovered
+instead of scaling a whole-group time into a purported slice measurement.
+
+Normal staged installation and `finalize_recalibration.py` invoke this check.
+Legacy/skip modes record it as skipped. The standalone diagnostic can also
+prepare or resume an explicitly supplied, compatible seed set:
+
+```bash
+python scripts/calibrate_composition.py \
+  --build-dir build-local --profile TARGET/calibration_device.json \
+  --operator-calibration TARGET/composition_seeds.json \
+  --output-dir TARGET/composition_check --prepare-only
+```
+
+Remove `--prepare-only` to measure on an exclusively reserved GPU. Reuse the same
+arguments with `--resume` only for compatible interrupted measurements. Source,
+library, device, compile policy, protocol and saved-evidence mismatches reject
+resume. The [October 8 record](composition_calibration_20261008.md) documents
+the current finite population and remaining coverage gaps.
+
 The current `StageProbeAdapter` exposes the original launches for the supported
 NTT `baseline`, `tile256`, `hybrid2d`, `stage-pipeline`, and
-`shared-iterative` paths where a physical group split is available. It does not
-substitute an alternate kernel. Low-precision paths and selected multi-subgraph
-composite/overlap lowerings remain unsupported until their real group contracts
-are exposed and validated.
-
-This update adds the mode/manifest plumbing and CPU-only contract tests. The
-current A100 target is occupied, so no GPU stage calibration or performance
-acceptance was run for this documentation update. Do not call a target
-calibrated or performance-passed until an exclusive target run produces a
-validated complete stage profile and the migration manifest reports `complete`.
+`shared-iterative` paths where a physical group split is available, plus the
+three launches of `compact-stage`. It does not substitute an alternate kernel.
+Native low-precision FWHT stage recomposition is also checked by
+`tests/check_stage_probe.py`. Other lowerings require their own physical group
+contracts; probe gaps and omitted scope remain explicit in the calibration
+artifacts. A passing adapter test is not a completed hardware migration. Inspect
+the target's measured coverage, independent validation, composition report and
+migration manifest before declaring it calibrated.
 
 Per-stage startup plus tail and service coefficients are positive fits to serial
 whole-plan observations, shared across workload sizes. The artifact records
@@ -756,3 +1003,34 @@ This does not establish full coverage of the theoretical mixed-dataflow space.
 See the current [refactor progress](framework_refactor_progress.md) for remaining
 work. The [theory alignment audit](theory_alignment_audit.md) records earlier gaps
 and should be interpreted with its historical scope.
+
+### CPU ranking and validated scope
+
+Candidate ranking prepares fixed features once per workload and reuses only
+identical event schedules across model refits. Fitted coefficients and coverage
+checks still use the current model. An optional C++ CPU event simulator preserves
+the Python event order and double arithmetic; it compiles before scoring, outside
+GPU timing. Its source ships beside the installed Python helper. If compilation
+is unavailable, the Python implementation remains available; set
+`CUBUTTERFLY_DISABLE_NATIVE_STAGE_SCHEDULE=1` to select it explicitly. The search
+audit records the active backend and per-workload CPU scoring counters.
+
+An incomplete stage profile may contribute only curves independently certified
+in its `ranking_scope`; missing or unvalidated keys remain uncovered. This is
+not permission to publish an incomplete calibration. Campaign confirmation and
+registry publication require the declared stage scope, independent validation
+and composition checks to complete. A finite sampled scope is still distinct
+from the full inventory. Changes to the stage probe require new stage samples;
+compatible whole-plan measurements can remain reusable after reranking.
+See the [October 14 repair record](calibration_repair_20261014.md) for evidence.
+
+When relocating a local-calibrator recovery directory, retain the original seed
+source with `calibrate_local_hardware.py --resume-search --seed-registry PATH`
+alongside the usual build, profile and output arguments. `PATH` must equal the
+source recorded by `mapping_seed_snapshot.json`; the output registry remains
+controlled separately by `CUBUTTERFLY_REGISTRY`. The seed snapshot and explicit
+seed-file hashes are checked before GPU work and are not silently rebound.
+If stage sampling is interrupted, the calibrator saves its profiles and exits
+with code 130 before operator search or registry publication. On compatible
+resume, clean measurements are reused and contaminated loads are retried while
+their original records remain in the checkpoint.

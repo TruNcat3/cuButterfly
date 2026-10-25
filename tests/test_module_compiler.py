@@ -47,6 +47,12 @@ def test_register_prefix_strategy_defaults_and_rejections():
     assert "Complex,true>" in fp64_xor
     with pytest.raises(ValueError, match="only supported for FP32"):
         render_register_fft(dict(fp64, prefix_codelet="cufftdx-thread"), 80, "bad")
+    for precision in ("fp32", "fp64"):
+        radix4 = render_register_fft(dict(point, precision=precision,
+                                         prefix_codelet="radix4", prefix_shared_layout="xor"), 80, "radix4")
+        assert "register_tile::Radix4Codelet,Complex,true>" in radix4
+        assert ("using Complex = Complex64;" if precision == "fp64" else
+                "using Complex = Complex32;") in radix4
     with pytest.raises(ValueError, match="prefix_codelet"):
         render_register_fft(dict(point, prefix_codelet="unknown"), 80, "bad")
     with pytest.raises(ValueError, match="prefix_shared_layout"):
@@ -200,7 +206,8 @@ def test_cooperative_prefix_keeps_io_columns_and_shared_capacity():
         assert f"launch_prefix<{specialization}>" in source
         assert f"out->threads={256*lanes}; out->dynamic_shared_bytes=(1U<<12)*4*8" in source
     fp64 = render_register_fft(dict(point, precision="fp64", prefix_codelet="native",
-        prefix_threads=256, prefix_ept=16, prefix_codelet_lanes=4), 80, "test")
+        prefix_threads=256, prefix_ept=16, prefix_codelet_lanes=4,
+        suffix_ept=16, suffix_threads=256), 80, "test")
     assert "prefix<12,1,Inverse,register_tile::NativeCodelet,Complex,true,4>" in fp64
 
 
@@ -266,6 +273,9 @@ def test_factor_io_policy_is_per_factor_and_keeps_dynamic_default():
     explicit_dynamic = render_factor_fft(
         dict(point, factor_io_policies=["dynamic", "dynamic", "dynamic"]), 80, "default")
     assert default == explicit_dynamic
+    # The shared-memory helper receives Tiles before Depth so a one-tile
+    # explicit prefetch request can lower to the synchronous single-slot path.
+    assert "shared_bytes<F0<Inverse>,4,1,1,Complex>()" in default
 
     mixed = render_factor_fft(
         dict(point, factor_io_policies=["static-unrolled", "dynamic", "static-unrolled"]),

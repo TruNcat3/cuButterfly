@@ -310,8 +310,9 @@ struct PlanConfig {
     std::size_t   batch   = 1;
     std::uint64_t modulus = kDefaultModulus;
     bool          inverse = false;
-    // Batch streaming across physical shared groups; independent of the
-    // within-CTA role and token unfolding parameters below.
+    // With overlap, batch_tile_count is the streamed chunk size between
+    // physical shared groups. Without overlap, shared-iterative uses 1..4
+    // serial batches per CTA. Independent of role/token unfolding below.
     bool          stage_overlap = false;
     std::uint32_t batch_tile_count = 1;
     Backend       backend = Backend::Tile256;

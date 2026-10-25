@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "snapshot_date": "2026-10-09",
+  "scope": "Read-only audit of four retained application records; no GPU execution or modification of historical results",
+  "measurement_date_evidence": {
+    "readme_date": "2026-10-03",
+    "embedded_execution_timestamp": null,
+    "limitation": "The result README and filesystem modification dates indicate October 3; the four JSON records do not contain an execution timestamp. Snapshot date is not measurement date."
+  },
+  "aggregation": {
+    "fno": "Median of three process-trial wall-time medians, separately for each variant; speedup is baseline median divided by treatment median",
+    "quarot": "Median of the three wall_ms.end_to_end samples, separately for each variant; speedup is baseline median divided by treatment median",
+    "ratio_direction": "baseline / cuButterfly; values below 1 mean cuButterfly is slower",
+    "paper_rounding_decimal_places": 3
+  },
+  "records": [
+    {
+      "id": "fno_64_v9",
+      "source_path": "results/paper_profile_rc2/end_to_end/fno_darcy_64_v9.json",
+      "source_sha256": "447e417e301083c0c64d7a6124736d799ec8dc78b54a41846d8b0d40d11d8bd0",
+      "embedded_identity": {
+        "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+        "runner_sha256": "bfaa11702133604287bfaf367e68f0a103d55131be3b1495e9adbe9cb0dc25cb",
+        "adapter_sha256": "a6581447219d46e8a4eb53b14351743443524c57b7e6441a1685e39bfe679645",
+        "checkpoint_sha256": "062e2d5493d9dd26cf57044c294c12e29186d1b2ca07853d2bd6c84583a48507",
+        "test_tensor_sha256": "8091b1660ba1ec7858af1d19a836a603b9dae899a0fdf6e03af130a77a1e8c38"
+      },
+      "extracted_fields": ["protocol_version", "process_trials", "variant_orders", "resolution", "n_test", "batch_size", "batch_shapes", "timed_calls_per_variant", "gpu_name", "gpu_uuid", "torch", "cuda", "tf32", "adapter_coverage", "setup", "model_contract", "native_ms.samples", "native_ms.trial_medians", "native_ms.median_of_trial_medians", "cubutterfly_ms.samples", "cubutterfly_ms.trial_medians", "cubutterfly_ms.median_of_trial_medians", "speedup_native_over_cubutterfly", "quality", "pass", "protocol"],
+      "payload": {"resolution": 64, "batch_size": 8, "last_batch_size": 4, "n_test": 100},
+      "native_trial_medians_ms": [2.978492993861437, 3.012713510543108, 3.0065239407122135],
+      "cubutterfly_trial_medians_ms": [3.1601623632013798, 3.1342622824013233, 3.1516216695308685],
+      "baseline_median_ms": 3.0065239407122135,
+      "cubutterfly_median_ms": 3.1516216695308685,
+      "speedup": 0.9539609305833167,
+      "paper_speedup": "0.954",
+      "quality": {
+        "pass": true, "gate_before_timing": true,
+        "max_abs_output_error": 8.344650268554688e-7,
+        "max_relative_l2_error": 1.0560813563405931e-7,
+        "native_heldout_relative_l2": 0.04076434299349784,
+        "native_heldout_relative_h1": 0.10647307634353638,
+        "cubutterfly_heldout_relative_l2": 0.04076434269547462,
+        "cubutterfly_heldout_relative_h1": 0.10647307693958283
+      }
+    },
+    {
+      "id": "fno_128_v9",
+      "source_path": "results/paper_profile_rc2/end_to_end/fno_darcy_128_v9.json",
+      "source_sha256": "6e227576bd97041026c3d86fc26b67d4af802588585064f100efb1447671699a",
+      "embedded_identity": {
+        "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+        "runner_sha256": "bfaa11702133604287bfaf367e68f0a103d55131be3b1495e9adbe9cb0dc25cb",
+        "adapter_sha256": "a6581447219d46e8a4eb53b14351743443524c57b7e6441a1685e39bfe679645",
+        "checkpoint_sha256": "4faf4a7bc90d3c6a4567f1a33d5f0f440056833763bfb209608cde1f68e6794e",
+        "test_tensor_sha256": "549ac096e1a772ac355297deed98955f7ca6d03c97295705f66e3c194cf20382"
+      },
+      "extracted_fields": ["protocol_version", "process_trials", "variant_orders", "resolution", "n_test", "batch_size", "batch_shapes", "timed_calls_per_variant", "gpu_name", "gpu_uuid", "torch", "cuda", "tf32", "adapter_coverage", "setup", "model_contract", "native_ms.samples", "native_ms.trial_medians", "native_ms.median_of_trial_medians", "cubutterfly_ms.samples", "cubutterfly_ms.trial_medians", "cubutterfly_ms.median_of_trial_medians", "speedup_native_over_cubutterfly", "quality", "pass", "protocol"],
+      "payload": {"resolution": 128, "batch_size": 4, "last_batch_size": 4, "n_test": 100},
+      "native_trial_medians_ms": [2.9855789616703987, 2.989774104207754, 3.0158651061356068],
+      "cubutterfly_trial_medians_ms": [3.116321749985218, 3.1403121538460255, 3.1560827046632767],
+      "baseline_median_ms": 2.989774104207754,
+      "cubutterfly_median_ms": 3.1403121538460255,
+      "speedup": 0.9520627115193299,
+      "paper_speedup": "0.952",
+      "quality": {
+        "pass": true, "gate_before_timing": true,
+        "max_abs_output_error": 8.344650268554688e-7,
+        "max_relative_l2_error": 1.3240302417885498e-7,
+        "native_heldout_relative_l2": 0.040518032014369966,
+        "native_heldout_relative_h1": 0.1107428652048111,
+        "cubutterfly_heldout_relative_l2": 0.04051803022623062,
+        "cubutterfly_heldout_relative_h1": 0.11074287354946136
+      }
+    },
+    {
+      "id": "quarot_random_512_32_sdpa",
+      "source_path": "results/paper_profile_rc2/end_to_end/quarot_random_prefill512_decode32_sdpa.json",
+      "source_sha256": "b739603dd20b2e10a56ea6db163362edbb7142f718b9896142b494d042392f45",
+      "embedded_identity": {
+        "library": "/home/wt/git/cuButterfly/build-e13-shared/libcuntt.so",
+        "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+        "runner_sha256": null, "adapter_sha256": null,
+        "missing_identity_reason": "Neither runner_sha256 nor adapter_sha256 is embedded in the raw QuaRot JSON; do not substitute FNO identities."
+      },
+      "extracted_fields": ["seed", "full_model_run", "application_claim", "payload", "attention_backend", "status", "gpu_name", "torch", "transformers", "baseline.warmup_calls", "baseline.wall_ms.end_to_end", "baseline.peak_memory_bytes", "cubutterfly.warmup_calls", "cubutterfly.wall_ms.end_to_end", "cubutterfly.peak_memory_bytes", "cubutterfly.adapter_setup", "timing_contract"],
+      "payload": {"batch_size": 1, "prefill": 512, "decode": 32},
+      "baseline_wall_samples_ms": [2652.7554569765925, 2676.7456885427237, 2668.5998952016234],
+      "cubutterfly_wall_samples_ms": [2647.4002031609416, 2648.0640759691596, 2644.0763222053647],
+      "baseline_median_ms": 2668.5998952016234,
+      "cubutterfly_median_ms": 2647.4002031609416,
+      "speedup": 1.008007739825422,
+      "paper_speedup": "1.008",
+      "quality_claim": false,
+      "plan_create_ms_excluded": 450.57902950793505,
+      "peak_memory_bytes_both_variants": 4223201792
+    },
+    {
+      "id": "quarot_random_2048_128_sdpa",
+      "source_path": "results/paper_profile_rc2/end_to_end/quarot_random_prefill2048_decode128_sdpa.json",
+      "source_sha256": "21c561ccca1247b6b4063ee3dd9c20db0bc8e15e95ed68c050b2e79487581827",
+      "embedded_identity": {
+        "library": "/home/wt/git/cuButterfly/build-e13-shared/libcuntt.so",
+        "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+        "runner_sha256": null, "adapter_sha256": null,
+        "missing_identity_reason": "Neither runner_sha256 nor adapter_sha256 is embedded in the raw QuaRot JSON; do not substitute FNO identities."
+      },
+      "extracted_fields": ["seed", "full_model_run", "application_claim", "payload", "attention_backend", "status", "gpu_name", "torch", "transformers", "baseline.warmup_calls", "baseline.wall_ms.end_to_end", "baseline.peak_memory_bytes", "cubutterfly.warmup_calls", "cubutterfly.wall_ms.end_to_end", "cubutterfly.peak_memory_bytes", "cubutterfly.adapter_setup", "timing_contract"],
+      "payload": {"batch_size": 1, "prefill": 2048, "decode": 128},
+      "baseline_wall_samples_ms": [10573.719390667975, 10572.337687946856, 10601.169927045703],
+      "cubutterfly_wall_samples_ms": [10563.771393150091, 10542.952426709235, 10544.185072183609],
+      "baseline_median_ms": 10573.719390667975,
+      "cubutterfly_median_ms": 10544.185072183609,
+      "speedup": 1.0028010053202006,
+      "paper_speedup": "1.003",
+      "quality_claim": false,
+      "plan_create_ms_excluded": 446.8305502086878,
+      "peak_memory_bytes_both_variants": 5011743232
+    }
+  ],
+  "protocol_and_quality_boundaries": {
+    "fno": {
+      "scope": "Complete device-resident forward, including adapter operations and application dispatch gaps; inputs preloaded on GPU",
+      "protocol_version": 5, "process_trials": 3,
+      "variant_orders": [["treatment", "native"], ["native", "treatment"], ["native", "treatment"]],
+      "warmups_per_input_batch_per_variant": 5, "measured_forwards_per_input_batch_per_process_per_variant": 10,
+      "timed_calls_per_variant_64_128": [390, 750],
+      "excluded": ["compilation", "training", "data I/O", "plan creation", "online candidate measurement", "first lazy CUDA/module preparation"],
+      "new_plans_during_timing_allowed": false,
+      "replacement_calls_per_forward": {"rfftn": 4, "irfftn": 4, "fallback": 0},
+      "tf32": {"matmul": false, "cudnn": false},
+      "gpu": "NVIDIA A100 80GB PCIe", "gpu_uuid": "2971e500-d3f6-d7e6-e5f2-cb67a06fff02",
+      "torch": "2.5.1+cu124", "cuda": "12.4",
+      "neuraloperator_commit": "00b7d86f8d74ff0af55da53eb585fe26df9c71f0",
+      "model": {"layers": 4, "hidden_channels": 24, "modes": [16, 16], "positional_embedding": "grid", "projection_ratio": 2},
+      "quality_tolerance": "max_abs <= 1e-4 and relative_l2 <= 1e-4; checked before timing",
+      "baseline": "Upstream default explicit Hermitian symmetry; treatment reconstructs full 2D Hermitian spectrum",
+      "checkpoint_caveat": "Frozen H1-trained checkpoints used an earlier non-default inverse setting; both timed variants reuse the same checkpoint with default inference semantics. Not a byte-for-byte tutorial reproduction.",
+      "retained_negative_result": "Both complete-forward comparisons remain approximately 5% slower. Full-complex R2C/C2R adaptation is included.",
+      "superseded_failure": "128-square non-default inverse differed by 0.037679314613342285 from the default reference; no timing accepted for that failed case."
+    },
+    "quarot": {
+      "scope": "Full-model random-weight latency and memory only",
+      "seed": 20261003, "same_random_state_both_variants": true,
+      "attention_backend": "torch_sdpa", "attention_caveat": "Explicit SDPA fallback; not the upstream FlashAttention comparison",
+      "warmup_calls_each_region": 2, "measured_samples_each_region": 3,
+      "excluded": ["plan creation", "first use"],
+      "torch": "2.5.1+cu124", "transformers": "4.38.0", "gpu": "NVIDIA A100 80GB PCIe",
+      "quality_claim": false,
+      "quality_pending": ["authorized trained weights", "perplexity", "logits agreement", "token agreement"],
+      "adapter_gate": "Separate FP16/FP32 adapter equivalence reports pass mathematical and pinned Dao CUDA references; not a full-model quality gate"
+    },
+    "heongpu": {
+      "application_timing_available": false,
+      "scope": "N=4096 single 60-bit-prime GPU-core compatibility probe; host-assisted twist and frequency rearrangement",
+      "direct_twist_mismatches": 4094, "reindexed_forward_mismatches": 0, "exact_inverse": true,
+      "pending": ["device-resident adaptation", "full RNS coverage", "safe main CKKS parameters", "CKKS bootstrap application comparison"]
+    }
+  },
+  "summary_discrepancy": {
+    "sources": ["results/paper_profile_rc2/end_to_end/README.md", "results/paper_profile_rc2/end_to_end/e13_progress.json"],
+    "case": "QuaRot 512/32",
+    "summary_cubutterfly_ms": 2648.064075969159,
+    "summary_speedup": 1.0077553208312374,
+    "raw_sample_median_ms": 2647.4002031609416,
+    "recomputed_speedup": 1.008007739825422,
+    "explanation": "The summary uses the second raw treatment sample instead of the median of three samples. Historical source records were preserved unchanged."
+  },
+  "historical_build_boundary": {
+    "current_artifact_observed_sha256": "83deef0976326ab3a517c6fd9ac071f73a3ad5b7c44159b9a32943d0b47910e5",
+    "current_runner_observed_sha256": "cff046524e2c3282a2bd5d0dc0308bd7c592cd8be92b48db40e41d75c8903695",
+    "limitation": "Observed at audit time; both differ from the FNO embedded hashes. Retained measurements are historical and do not establish current-build performance."
+  },
+  "supporting_sources": [
+    "results/paper_profile_rc2/end_to_end/README.md",
+    "results/paper_profile_rc2/end_to_end/e13_progress.json",
+    "paper/experiments/e13/README_fno.md",
+    "results/e13_assets/run_fno_end_to_end.py",
+    "results/paper_profile_rc2/end_to_end/quarot_adapter_correctness.json",
+    "results/paper_profile_rc2/end_to_end/quarot_adapter_dao_correctness.json",
+    "results/paper_profile_rc2/end_to_end/heongpu_ntt_adapter_probe.json"
+  ]
+}

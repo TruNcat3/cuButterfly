@@ -26,6 +26,7 @@ def run(mapping, *, precision="fp32", inverse=False, mode="research", expect_err
         args.append("--inverse")
     env = dict(os.environ, CUBUTTERFLY_COMPILE_MODE=mode)
     completed = subprocess.run(args, capture_output=True, text=True, env=env)
+    assert "unknown option" not in completed.stderr, "CUBUTTERFLY_TEST_BINARY must point to cubutterfly_bench"
     if expect_error:
         assert completed.returncode != 0, "unsupported strategy silently executed"
         return completed.stderr
@@ -40,6 +41,75 @@ def prefix(core="native", layout="linear"):
         stage_partition=[6,6], prefix_threads=32, prefix_ept=8, suffix_threads=32,
         suffix_ept=8, shared_layout="writer-aligned", cross_twiddle="recurrence",
         reorder_columns=1, prefix_codelet=core, prefix_shared_layout=layout)
+
+
+def radix4_prefix(*, inverse=False):
+    """Return the compiled FP32 radix-4 provider shape.
+
+    The linked provider remains local_stages=8. Other shapes and precisions
+    use the same selectable mixed-radix template through JIT.
+    """
+    mapping = prefix("radix4", "linear")
+    mapping.update(local_stages=8, stage_partition=[8, 10], prefix_threads=64,
+                   prefix_ept=16, suffix_threads=512, suffix_ept=8)
+    mapping["execution_group_mappings"] = [
+        dict(core="register-tile", exchange="shared", threads=64, ept=16,
+             codelet="radix4"),
+        dict(core="cufftdx-block", exchange="shared", threads=512, ept=8,
+             codelet="native"),
+    ]
+    if inverse:
+        mapping.update(stage_overlap=True, batch_tile_count=2)
+    return mapping
+
+
+@pytest.mark.parametrize("inverse", [False, True])
+@pytest.mark.parametrize("mode", ["precompiled", "research"])
+def test_prebuilt_radix4_provider_preserves_semantics(inverse, mode):
+    resolved, groups = run(radix4_prefix(inverse=inverse), inverse=inverse, mode=mode)
+    assert resolved["prefix_codelet"] == "radix4"
+    assert groups[0]["codelet"] == "radix4"
+    assert groups[1]["codelet"] == "native"
+
+
+@pytest.mark.parametrize("changes,precision", [
+    ({"prefix_shared_layout": "xor"}, "fp32"),
+    ({"prefix_codelet_lanes": 2, "prefix_threads": 128, "prefix_ept": 8}, "fp32"),
+    ({"local_stages": 6, "stage_partition": [6, 10], "prefix_threads": 32,
+      "prefix_ept": 8}, "fp32"),
+    ({}, "fp64"),
+])
+def test_radix4_provider_rejects_uncompiled_shapes(changes, precision):
+    mapping = radix4_prefix()
+    mapping.pop("execution_group_mappings")
+    run(dict(mapping, **changes), precision=precision, mode="precompiled", expect_error=True)
+
+
+@pytest.mark.parametrize("precision,local,layout,lanes,inverse", [
+    ("fp32", 6, "linear", 1, False),
+    ("fp32", 10, "xor", 1, True),
+    ("fp64", 6, "xor", 1, True),
+    ("fp64", 10, "linear", 1, False),
+    ("fp64", 6, "xor", 2, False),
+    ("fp32", 6, "linear", 4, True),
+    ("fp32", 9, "linear", 1, False),
+    ("fp64", 9, "xor", 2, True),
+])
+def test_radix4_jit_preserves_precision_order_and_cooperation(precision, local, layout, lanes, inverse):
+    radius = 1 << (local // 2)
+    ept = radius // lanes
+    mapping = dict(prefix("radix4", layout), local_stages=local,
+                   stage_partition=[local, 6], prefix_threads=(1 << local)*4//ept,
+                   prefix_ept=ept, prefix_codelet_lanes=lanes)
+    if local % 2:
+        mapping["local_stage_partitions"] = [[local//2, local-local//2], []]
+        if precision == "fp64" and layout == "xor":
+            # Two independent columns leave four shared transaction rows,
+            # enough for the larger factor's four cooperative lanes.
+            mapping["prefix_threads"] //= 2
+    resolved, groups = run(mapping, precision=precision, inverse=inverse)
+    assert resolved["prefix_codelet"] == groups[0]["codelet"] == "radix4"
+    assert resolved["prefix_codelet_lanes"] == lanes
 
 
 @pytest.mark.parametrize("core,layout", [("native","linear"), ("native","xor"),
@@ -108,7 +178,7 @@ def test_explicit_segment_codelet_conflict_is_rejected():
         dict(core="cufftdx-block", exchange="shared", threads=32, ept=8, codelet="native"),
     ]
     error = run(mapping, expect_error=True)
-    assert "codelets disagree" in error
+    assert "disagree" in error
 
 
 @pytest.mark.parametrize("precision,core,depth,policies", [

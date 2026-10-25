@@ -32,6 +32,35 @@ synchronize the host. One plan must not be submitted concurrently from
 multiple host threads. Independent plans and workspaces may use independent
 streams.
 
+For a serialized application that repeatedly submits the same plan on the
+same stream, `cubutterflyExecuteSteady(handle, plan, input, output)` uses the
+already-bound steady-state submission path. Its first call, and the first call
+after `cubutterflySetStream`, transparently use the complete dispatcher to
+propagate the stream. It preserves the same workspace, layout, boundary, and
+asynchronous contracts; it only avoids repeating host-side dispatcher work on
+subsequent submissions.
+
+## FWHT output arithmetic
+
+`cubutterflySetOutputRounding(descriptor, CUBUTTERFLY_ROUNDING_FINAL_STORAGE)`
+requests FP32 arithmetic with a single final FP16 storage conversion.
+`cubutterflySetOutputScale(descriptor, scale)` applies the finite FP32 scalar
+before that conversion. Inverse normalization, when requested, also precedes
+the final conversion. The current lowering supports standard rank-one FWHT
+with FP16 storage and FP32 compute; unsupported combinations report a lowering
+gap. Layout and order adapters preserve this arithmetic contract.
+
+Both fields belong to the descriptor and search/cache identity. The short
+fused provider and the full-FP32 composition use the same public selection
+path; the composition includes input widening and final narrowing in its
+workspace and execution cost. No provider is silently substituted for the
+default `CUBUTTERFLY_ROUNDING_STAGE_STORAGE`, whose intermediate FP16 rounding
+remains unchanged. Even scale one does not make the two contracts equivalent.
+
+Python exposes `Transform(output_scale=..., output_rounding=OutputRounding.FINAL_STORAGE)`.
+See [application coverage and measurements](e2e_unified_coverage_20261013.md)
+for the QuaRot integration and error-reporting protocol.
+
 ## Length Semantics
 
 `CUBUTTERFLY_LENGTH_STANDARD` preserves the requested mathematical length.
@@ -111,6 +140,20 @@ logN=20 NTT. A consumer must compare `compatibility_id` before reusing a static
 buffer. Natural-to-static, static-to-natural, and static-to-static plans retain
 the same mathematical NTT; only the external index representation changes.
 
+## CUDA Graph and shared workspace
+
+Warm up a plan and complete outstanding use before capturing it. Batch stage
+pipelines preserve their producer/consumer graph during capture, including
+double-buffer reuse and the final join to the caller stream. They do not
+replace a multi-stream mapping with serial execution.
+
+Graph replay shares the plan's workspace. Serialize graph launches and ordinary
+calls that use the same plan/workspace, using the launch stream or explicit CUDA
+events, and keep the plan and its buffers alive until the graph finishes. The
+ordinary API's internal cross-call fence cannot observe an external graph
+launch. This is a graph lifetime and ownership contract, not a restriction on
+the number of transform batches in one call.
+
 ## Selection And Cache
 
 The default policy uses this order:
@@ -119,7 +162,12 @@ The default policy uses this order:
 2. exact device/semantics/length/batch entry in the generated application table;
 3. legal static resource-model fallback.
 
-`CUBUTTERFLY_ALGORITHM_MEASURE` times a bounded legal candidate set. Direct
+`CUBUTTERFLY_ALGORITHM_MEASURE` times a legal candidate set. The complete
+inventory remains available for auditing, while `CUBUTTERFLY_SEARCH_BUDGET=N`
+optionally limits the deterministic measurement subset to `N` candidates
+(`0`, the default, preserves exhaustive search). The runtime reports both
+inventory and scheduled counts through `CUBUTTERFLY_PLAN_TRACE`; progress is
+also emitted every 64 candidates. Direct
 power-of-two plans tune one plan, embedded/rank-two plans tune every physical
 axis, modular Bluestein tunes its power-of-two NTT core, and exact arbitrary
 FFT compares the complete direct and Bluestein paths. When a cache path is
@@ -128,6 +176,19 @@ Cache keys include compute
 capability, SM count, operator, numeric contract, direction, placement, length
 mode, rank, extents, batch, strides, and NTT modulus. Moving the file to a
 different GPU therefore cannot cause an accidental match.
+
+For controlled research ablations, `CUBUTTERFLY_SEARCH_DISABLE` accepts a
+comma-separated list of `stage-overlap`, `resident-fusion`, and
+`successor-layout`. The public measured selector removes only candidates that
+use the named mechanism, records unrestricted and restricted inventory counts
+in the plan trace, and fails closed if a restriction removes every legal
+candidate. This is a selector control rather than a fixed mapping or runtime
+fallback; workload semantics and correctness remain unchanged.
+Pair two same-workload traces with
+`scripts/summarize_selector_ablation.py unrestricted.jsonl restricted.jsonl`
+to report candidate counts, accepted measurements, selected mappings, and
+restricted regret. The script refuses empty or unpaired searches and never
+fills missing timing data.
 
 Register a log callback with `cubutterflySetLogCallback`. A missing device
 profile emits `hardware-profile-miss`; a known device with an unseen workload

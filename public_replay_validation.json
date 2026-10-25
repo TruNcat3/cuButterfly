@@ -1,0 +1,14 @@
+{
+  "schema": "grouped-public-realfft-replay-20261013-v1",
+  "status": "failed",
+  "library": "/home/wt/git/cuButterfly/build-e2e-scale-20261013/libcuntt.so",
+  "library_sha256": "89a038905a45e2d2ab072c142f9bde17ed97b42ed86106bdac656e5ec0f0f33b",
+  "runner_sha256": "f6e7ada2789f1e1dcfd55b3ea6695f14f8adf5f1596719fd0206c6db9a117bad",
+  "source_cache_sha256": "bd0d7b56d82066bc3c13c5ee84ca347f782c2e5aa46a204d8548099f4957e0b1",
+  "source_report_sha256": "74ae6956bb739590fcf461aff955582d46fd72d1de45d6515d2e79a262cd9104",
+  "gpu_uuid": "0eae5f07-33de-321b-70a9-ffeae49309e6",
+  "gpu_name": "NVIDIA A100 80GB PCIe",
+  "cases": [],
+  "error_type": "AssertionError",
+  "error": "selection did not replay user cache"
+}

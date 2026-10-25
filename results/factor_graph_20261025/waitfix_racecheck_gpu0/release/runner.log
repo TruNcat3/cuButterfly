@@ -1,0 +1,5 @@
+========= COMPUTE-SANITIZER
+cuButterfly hardware resources: live-cuda-properties:no-compatible-static-artifact
+PASS factor pipeline native-fp32-four-factor-tail core=register-tile slices=2 groups=4
+PASS factor pipeline scheduler coverage
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

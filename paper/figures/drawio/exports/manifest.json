@@ -1,0 +1,233 @@
+{
+  "schema": "cubutterfly-drawio-exports-v1",
+  "kind": "analytical-schematics",
+  "renderer": {
+    "path": "/home/wt/.cache/cuButterfly/tools/drawio-32.4.1/root/opt/drawio/drawio",
+    "sha256": "7148eedc52bfae9c1a0535b4d381b6999fea4d7de54852702de0102d59c35e16",
+    "bytes": 228605256
+  },
+  "figures": {
+    "overview": {
+      "source": {
+        "path": "figures/drawio/overview.drawio",
+        "sha256": "1c8a2f45913ac60151a7d8e4549452056e89900d7907da084f2ddb6ccde553bf",
+        "bytes": 103472
+      },
+      "native_cells": 256,
+      "page_width": "1000",
+      "page_height": "370",
+      "exports": {
+        "pdf": {
+          "path": "figures/drawio/exports/overview.pdf",
+          "sha256": "e3c684c8588efa86f23531597bb571446b7dc9676de69fc2a39c43eca5e6d0c4",
+          "bytes": 44198
+        },
+        "svg": {
+          "path": "figures/drawio/exports/overview.svg",
+          "sha256": "a988b3d61a5897d05c6a413d7a1c6815a24f2235ccd681ec8665a27a00cbba32",
+          "bytes": 236999
+        },
+        "png": {
+          "path": "figures/drawio/exports/overview.png",
+          "sha256": "ca0565e7f4da95f8a8929b6854bef4c3b99759d22fad3e7b41b71f8705be4ff9",
+          "bytes": 440439
+        }
+      }
+    },
+    "organization_tradeoffs": {
+      "source": {
+        "path": "figures/drawio/organization_tradeoffs.drawio",
+        "sha256": "b432406679a8bdd5573c35aba8b33b6b067402b6b98f43ad5199fe27394b10b4",
+        "bytes": 321479
+      },
+      "native_cells": 776,
+      "page_width": "1000",
+      "page_height": "340",
+      "exports": {
+        "pdf": {
+          "path": "figures/drawio/exports/organization_tradeoffs.pdf",
+          "sha256": "108ac2102e683ed5473fd19bb2c6a6d3d7d9cf6cf666f767ca3588a5c81527f9",
+          "bytes": 80384
+        },
+        "svg": {
+          "path": "figures/drawio/exports/organization_tradeoffs.svg",
+          "sha256": "748c3b760095cf7e4e73e39a1712a71a4e6ec5fe4710ba4c6e89b3ca8b8250d5",
+          "bytes": 647051
+        },
+        "png": {
+          "path": "figures/drawio/exports/organization_tradeoffs.png",
+          "sha256": "7bc753b92deb3a47ffd97fc9b21c47dc264cb17cf80e0d8e89b21063f1e3b192",
+          "bytes": 511552
+        }
+      }
+    },
+    "roofline": {
+      "source": {
+        "path": "figures/drawio/roofline.drawio",
+        "sha256": "31c858750d46d63233289b620c492a05d7bb83c5f0a9fff26d9728390997a927",
+        "bytes": 8400
+      },
+      "native_cells": 21,
+      "page_width": "480",
+      "page_height": "350",
+      "exports": {
+        "pdf": {
+          "path": "figures/drawio/exports/roofline.pdf",
+          "sha256": "d52ca77468bd8a7a8a695f64c96840333f16d2369028291bc9c426d20c5108f4",
+          "bytes": 21028
+        },
+        "svg": {
+          "path": "figures/drawio/exports/roofline.svg",
+          "sha256": "3d32eacdf2bafac0e77dc0eb3255669fbdde24f89acad828e2f5b8dfcad330fc",
+          "bytes": 27630
+        },
+        "png": {
+          "path": "figures/drawio/exports/roofline.png",
+          "sha256": "69ec3c6cb150bb87e4b70d76e89e44a67e9eb525033ad9cb6df894e14cead663",
+          "bytes": 161413
+        }
+      }
+    },
+    "hierarchy": {
+      "source": {
+        "path": "figures/drawio/hierarchy.drawio",
+        "sha256": "4641fda3f4069b9e8c4c4921f27060858a8603cda227b564eec3d7e7eff4e89a",
+        "bytes": 20097
+      },
+      "native_cells": 52,
+      "page_width": "480",
+      "page_height": "360",
+      "exports": {
+        "pdf": {
+          "path": "figures/drawio/exports/hierarchy.pdf",
+          "sha256": "7b5c7e348b48e7a57996759c46b1f32ed5ebdedbf90f9f4b108e776beb2839a2",
+          "bytes": 23228
+        },
+        "svg": {
+          "path": "figures/drawio/exports/hierarchy.svg",
+          "sha256": "3a0cd0b7d0c32e30095188464d04897bc3237e2b66f28d69eaf612c48b8dacc4",
+          "bytes": 77933
+        },
+        "png": {
+          "path": "figures/drawio/exports/hierarchy.png",
+          "sha256": "d6c1fb17fd8350131980538918d4b5b7e9f59f03138b7319dc9c3db3cbe0ae24",
+          "bytes": 189183
+        }
+      }
+    },
+    "semantic_transport": {
+      "source": {
+        "path": "figures/drawio/semantic_transport.drawio",
+        "sha256": "07148be843997f653abef43694e40b38d6912ba78e3349d6f10fef2af1666575",
+        "bytes": 18379
+      },
+      "native_cells": 49,
+      "page_width": "480",
+      "page_height": "380",
+      "exports": {
+        "pdf": {
+          "path": "figures/drawio/exports/semantic_transport.pdf",
+          "sha256": "bef4044d89e62fc66c29a9b00fc683a189cfe1c7f50997e6bafc10f40ad70953",
+          "bytes": 20606
+        },
+        "svg": {
+          "path": "figures/drawio/exports/semantic_transport.svg",
+          "sha256": "1039e532f1b76393ab32a4b7ca5e85811a2438b075f5e04031a541284a11017b",
+          "bytes": 61054
+        },
+        "png": {
+          "path": "figures/drawio/exports/semantic_transport.png",
+          "sha256": "769529597ad80596064c86c389325ac36d97e128f7f6ca0c0fb667547ea5018c",
+          "bytes": 194797
+        }
+      }
+    },
+    "bank_layout": {
+      "source": {
+        "path": "figures/drawio/bank_layout.drawio",
+        "sha256": "d600d18acca73f11184166d510ebc4994fa50f1de571a9bc53f1b815ec3bc417",
+        "bytes": 23044
+      },
+      "native_cells": 62,
+      "page_width": "480",
+      "page_height": "342",
+      "exports": {
+        "pdf": {
+          "path": "figures/drawio/exports/bank_layout.pdf",
+          "sha256": "1a68f9641b8b10fe26885826587807911456ea9e25715d10a8608427b424b2eb",
+          "bytes": 20850
+        },
+        "svg": {
+          "path": "figures/drawio/exports/bank_layout.svg",
+          "sha256": "0e0287fab9370a6966cc3b014a384d0fa5a835a1849ce88326f3071975d4c9eb",
+          "bytes": 93055
+        },
+        "png": {
+          "path": "figures/drawio/exports/bank_layout.png",
+          "sha256": "ebb3203047c36a4fb29ecb723c80738f9211887fe828bcb5a7cd9ff2a7a93fbd",
+          "bytes": 141182
+        }
+      }
+    },
+    "pipeline": {
+      "source": {
+        "path": "figures/drawio/pipeline.drawio",
+        "sha256": "b235e1c53089e473003c07968849fed90d127b83522cdfc33b32d406d15345fc",
+        "bytes": 20514
+      },
+      "native_cells": 54,
+      "page_width": "480",
+      "page_height": "366",
+      "exports": {
+        "pdf": {
+          "path": "figures/drawio/exports/pipeline.pdf",
+          "sha256": "0b8517ae5516c0ad5f206c08e28b299991ef7d23526393304d7156673ffa637e",
+          "bytes": 19640
+        },
+        "svg": {
+          "path": "figures/drawio/exports/pipeline.svg",
+          "sha256": "9f212b1adae141f6cb3efec2d55abc80e817ab203619dc503965023418ab6626",
+          "bytes": 76880
+        },
+        "png": {
+          "path": "figures/drawio/exports/pipeline.png",
+          "sha256": "b802cfba2727bb179d1f6b3c3778f06b06259724526f6f95acb8b9c9a9b1ffcf",
+          "bytes": 141269
+        }
+      }
+    },
+    "system_architecture": {
+      "source": {
+        "path": "figures/drawio/system_architecture.drawio",
+        "sha256": "953a52596e721847ba0d25cfcf9f48a48bae158951e50ef7c6466098f756c2a3",
+        "bytes": 23499
+      },
+      "native_cells": 58,
+      "page_width": "1000",
+      "page_height": "390",
+      "exports": {
+        "pdf": {
+          "path": "figures/drawio/exports/system_architecture.pdf",
+          "sha256": "216af71a097a67cfe767974d6894af9f3f66bd3af88be01c584252e81e8b6982",
+          "bytes": 27883
+        },
+        "svg": {
+          "path": "figures/drawio/exports/system_architecture.svg",
+          "sha256": "ce245f42f7d006195441f69a69a87e40cd5f4ad826a33a4b3f166c8ea362b47a",
+          "bytes": 72559
+        },
+        "png": {
+          "path": "figures/drawio/exports/system_architecture.png",
+          "sha256": "4142ad0fd6e1272c7441bc0924a2712df0f09ab62d585f9f84b058c39a868f8a",
+          "bytes": 402500
+        }
+      }
+    }
+  },
+  "renderer_version": "32.4.1",
+  "bundle": {
+    "path": "figures/drawio/cubutterfly-methods.drawio",
+    "sha256": "2e64ea6a41183c7c40e43a3809c2a511ef6c23aa484131ee33c28ed8b4078831",
+    "bytes": 537820
+  }
+}

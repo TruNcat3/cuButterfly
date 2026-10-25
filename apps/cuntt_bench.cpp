@@ -98,7 +98,7 @@ std::vector<std::uint32_t> execution_stage_partition(
 }
 
 void print_usage() {
-    std::cout << "cuntt_bench [--logN 16] [--batch 1] [--backend baseline|tile256|hybrid2d|compact-stage|stage-pipeline|hybrid-dataflow|hierarchical-barrier|hierarchical-dataflow]\n"
+    std::cout << "cuntt_bench [--logN 16] [--batch 1] [--backend baseline|tile256|hybrid2d|compact-stage|shared-iterative|stage-pipeline|hybrid-dataflow|hierarchical-barrier|hierarchical-dataflow]\n"
               << "            [--stage-space K]\n"
               << "            [--stage-handoff atomic|named-barrier]\n"
               << "            [--flow-tile-log 5|6|7|8] [--data-space 8|16|32] [--role-stages K]\n"
@@ -132,7 +132,8 @@ void print_usage() {
               << "            [--input-order natural|appt-static]\n"
               << "            [--output-order natural|bit-reversed|appt-static]\n"
               << "            [--auto-select] [--trace-pipeline] [--profile-appt-roles] [--warmup 5] [--repeat 20] [--modulus Q] [--inverse] [--verify] [--verify-batches 0] [--csv]\n"
-              << "            [--stage-overlap] [--batch-tile-count 1] [--mapping-json JSON] [--list-design-points]\n";
+              << "            [--stage-overlap] [--batch-tile-count N; shared bulk 1..4, overlap chunk size]\n"
+              << "            [--mapping-json JSON] [--list-design-points]\n";
 }
 
 std::uint32_t reverse_bits(std::uint32_t value, std::uint32_t bits) {
@@ -527,8 +528,10 @@ int main(int argc, char** argv) {
                          "per_block,hierarchical_core,stage_partition,logical_subgraphs,execution_stage_partition,execution_groups,materialized_boundaries,segment_cores,segment_threads,segment_units,segment_data_space,segment_data_time,segment_role_stages,segment_token_interleave,segment_coefficient_reuse_stages,segment_cta_weights,execution_group_cores,boundary_storage,boundary_buffers,ready_window,packet_readiness,packet_compute_layout,packet_fold_wave_barriers,inverse,warmup,repeat,h2d_ms,kernel_ms,timed_region_wall_ms,host_timing_overhead_ms,"
                          "appt_producer_weight,appt_tail_weight,appt_writer_weight,appt_fragment_width,appt_writer_tiles,appt_data_time_roles,input_order,output_order,appt_layout_id,d2h_ms,kernel_ntt_s,end_to_end_ntt_s,kernel_points_s,cross_twiddle,mod_multiply,correct,mapping_json,runtime_fingerprint,execution_groups_json,stage_overlap,batch_tile_count,verified_batches\n";
             std::cout << '"' << device.name << "\"," << device.compute_major << '.' << device.compute_minor << ','
-                      << static_cast<int>(selection.automatic) << ",\"" << selection.target << "\",\"" << selection.implementation
-                      << "\",\"" << selection.confidence << "\"," << selection.predicted_kernel_ms << ",\"" << selection.reason << "\","
+                      << static_cast<int>(selection.automatic) << ',' << cubutterfly::csv_field(selection.target)
+                      << ',' << cubutterfly::csv_field(selection.implementation)
+                      << ',' << cubutterfly::csv_field(selection.confidence) << ',' << selection.predicted_kernel_ms
+                      << ',' << cubutterfly::csv_field(selection.reason) << ','
                       << cuntt::backend_name(config.backend) << ',' << config.stage_space << ',' << cuntt::stage_handoff_name(config.stage_handoff)
                       << ',' << config.flow_tile_log_n << ',' << config.data_space << ',' << config.role_stages << ','
                       << config.target_ctas_per_sm << ',' << config.data_time << ',' << config.token_interleave << ','

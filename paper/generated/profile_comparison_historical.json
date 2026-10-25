@@ -1,0 +1,19 @@
+{
+  "schema": "cubutterfly-profile-comparison-v1",
+  "status": "historical-profiler-evidence",
+  "sources": [
+    {
+      "path": "/home/wt/git/cuButterfly/results/ncu_appt_pipeline/summary.csv",
+      "sha256": "ee85d3cb74f0e9fec92101c3f976e906c6bb2965ad30167bfd712c1a6b6854c0"
+    },
+    {
+      "path": "/home/wt/git/cuButterfly/results/ncu_structured_2x2_register/summary.csv",
+      "sha256": "aadc8787f46d55f4e6b3fd88a2e05b7cd64bb6ff663c1bd8896a30fabef8311f"
+    }
+  ],
+  "cohorts": {
+    "v100_appt": "results/ncu_appt_pipeline/summary.csv batch-1",
+    "v100_structured": "results/ncu_structured_2x2_register/summary.csv"
+  },
+  "warning": "Not the pending E14 RC2 counter campaign; profiler replay time is not warm CUDA-event latency."
+}

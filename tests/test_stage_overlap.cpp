@@ -161,6 +161,10 @@ int main() {
             for (bool inplace : {false, true})
                 for (bool inverse : {false, true})
                     for (auto batch : {1U, 5U, 17U}) run(imported, inplace, inverse, batch, 2);
+            for (bool inplace : {false, true}) for (bool inverse : {false, true}) {
+                run(imported, inplace, inverse, 16, 16);
+                run(imported, inplace, inverse, 5, 8);
+            }
         }
         run(false, false, false, 5, 3, true);
         run(false, true, true, 5, 3, true);
@@ -168,6 +172,8 @@ int main() {
                                      std::vector<std::uint32_t>{2,3,3,4}, std::vector<std::uint32_t>(12,1)})
             for (bool inplace : {false,true}) for (bool inverse : {false,true})
                 run(false,inplace,inverse,17,3,false,false,false,partition);
+        for (bool inplace : {false,true}) for (bool inverse : {false,true})
+            run(false,inplace,inverse,16,16,false,false,false,{3,4,5});
 #ifdef CUBUTTERFLY_TEST_CUFFTDX
         const char* policy=std::getenv("CUBUTTERFLY_COMPILE_MODE");
         for (bool inplace : {false,true}) for (bool inverse : {false,true}) for (auto batch : {1U,5U,17U}) {

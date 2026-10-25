@@ -109,6 +109,13 @@ def _write_execution_artifacts(output, workload, mode, stage_status, stage_valid
     (output / "selector_replay_status.json").write_text(json.dumps({
         "status": "passed", "result_count": 1,
     }))
+    composition_path = output / "composition_calibration.json"
+    composition_path.write_text(json.dumps({"inventory": {"coverage": {"gaps": []}, "omissions": []}, "summary": {
+        "status": "complete-observed", "measured_requests": 2,
+        "overlap_requests": 1, "measured_overlap_requests": 1,
+        "failed_requests": 0, "validation": {"status": "passed"},
+        "inventory_complete": True, "concurrency_parameters_identified": False,
+    }}))
     (output / "calibration_manifest.json").write_text(json.dumps({
         "schema": "cubutterfly-local-calibration-v1",
         "status": "ready-with-measured-mappings",
@@ -117,6 +124,7 @@ def _write_execution_artifacts(output, workload, mode, stage_status, stage_valid
         "registry_path": str(output / "registry.json"),
         "registry_promoted_records": 1,
         "stage_calibration_mode": mode,
+        "composition_calibration": {"status": "complete-observed", "path": str(composition_path)},
     }))
 
 
@@ -153,6 +161,7 @@ def test_full_default_is_unbounded_and_modes_forward_exactly(tmp_path):
     args = entry.parse_args(["--build-dir", str(build)])
     entry._fill_protocol_defaults(args)
     assert args.stage_calibration == "full"
+    assert args.stage_point_budget == 0
     assert args.search_seconds == 0
     assert args.compile_seconds == 0
 
@@ -272,6 +281,33 @@ def test_stage_profile_gate_requires_validated_and_complete(tmp_path):
                                        expected_compile_mode="auto")
     assert summary["stage_service_validated"] is True
     assert summary["complete"] is True
+
+
+def test_sampled_stage_profile_keeps_selected_validation_but_fails_full_gate(tmpdir):
+    tmp_path = pathlib.Path(str(tmpdir))
+    workload = _workload()
+    output = tmp_path / "output"
+    _write_execution_artifacts(output, workload, "full", "complete-sampled", False, 0)
+    (output / "stage_service_profile.json").write_text(json.dumps({
+        "validated": False,
+        "calibration_status": "complete-sampled",
+        "selected_scope_validated": True,
+        "inventory_complete": False,
+        "coverage": {
+            "coverage_complete": True,
+            "inventory_complete": False,
+            "selected_scope_validated": True,
+        },
+    }))
+
+    summary = entry._execution_summary(output, [workload],
+                                       expected_protocol=_protocol("full", 0),
+                                       expected_compile_mode="auto")
+
+    assert summary["stage_service_selected_scope_validated"] is True
+    assert summary["stage_service_inventory_complete"] is False
+    assert summary["stage_service_validated"] is False
+    assert summary["complete"] is False
 
 
 @pytest.mark.parametrize(

@@ -14,6 +14,7 @@ void launch_cufftdx_block(std::uint32_t log_n, const Complex32* input, Complex32
                           cudaStream_t stream);
 bool cufftdx_fp64_block_available(std::uint32_t log_n) noexcept;
 bool cufftdx_fp64_online_available(std::uint32_t log_n, std::uint32_t threads, std::uint32_t ept) noexcept;
+void attach_cufftdx_fp64_online_resources(MixedDataflowPlan& plan, const ButterflyConfig& config);
 void launch_cufftdx_fp64_block(std::uint32_t log_n, const Complex64* input, Complex64* output,
                                std::uint64_t transforms, std::uint64_t batch_distance,
                                std::uint64_t element_stride, bool inverse, bool normalize, cudaStream_t stream);

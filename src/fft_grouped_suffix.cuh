@@ -1,11 +1,17 @@
 #pragma once
 #include "cuntt/butterfly.hpp"
 #include <cufftdx.hpp>
+#include <type_traits>
 #ifndef CUBUTTERFLY_CUFFTDX_SM
 #error "Define CUBUTTERFLY_CUFFTDX_SM from the selected CUDA architecture"
 #endif
 
 namespace cuntt::detail {
+template<class Complex, class Value>
+__device__ __forceinline__ Complex suffix_complex(Value value) {
+    if constexpr (std::is_same_v<Complex, Value>) return value;
+    else return {value.x, value.y};
+}
 // Several suffix subgraphs share one CTA. Their result exchange stays in
 // shared memory; the final store covers adjacent k1 values and directly
 // produces natural order without a whole-array transpose kernel.
@@ -44,7 +50,8 @@ __global__ void grouped_suffix(const Complex* scratch, Complex* output,
         #pragma unroll
         for (unsigned i=0;i<FFT::storage_size;++i) {
             const auto row=threadIdx.x+i*Rows;
-            output[base+(std::uint64_t(row)*local_n+k1)*element_stride]={v[i].x*scale,v[i].y*scale};
+            const auto value=suffix_complex<Complex>(v[i]);
+            output[base+(std::uint64_t(row)*local_n+k1)*element_stride]={value.real*scale,value.imag*scale};
         }
         return;
     }
@@ -69,8 +76,8 @@ __global__ void grouped_suffix(const Complex* scratch, Complex* output,
 #pragma unroll
             for(unsigned j=0;j<Chunk;++j) {
                 const unsigned i=tid+j*Rows*Columns,row=i/Columns,col=i%Columns;
-                const auto x=tile[row*Columns+(col^((row/(16/Columns))&(Columns-1)))];
-                output[out_base+std::uint64_t(first+j)*out_step]={x.x*scale,x.y*scale};
+                const auto x=suffix_complex<Complex>(tile[row*Columns+(col^((row/(16/Columns))&(Columns-1)))]);
+                output[out_base+std::uint64_t(first+j)*out_step]={x.real*scale,x.imag*scale};
             }
             if(first+Chunk<FFT::elements_per_thread) __syncthreads();
         }
@@ -85,10 +92,27 @@ __global__ void grouped_suffix(const Complex* scratch, Complex* output,
     const unsigned tid = threadIdx.y * blockDim.x + threadIdx.x;
     for (unsigned i=tid; i<Size*Columns; i+=blockDim.x*blockDim.y) {
         const unsigned row = i/Columns, col = i%Columns;
-        const auto x = tile[row*Columns + (col ^ ((row / (16 / Columns)) & (Columns-1)))];
+        const auto x = suffix_complex<Complex>(tile[row*Columns + (col ^ ((row / (16 / Columns)) & (Columns-1)))]);
         const auto t = std::uint64_t(blockIdx.x)*Columns + col;
-        output[(t >> local_log)*distance + (std::uint64_t(row)*local_n + (t & (local_n-1)))*element_stride] = {x.x*scale,x.y*scale};
+        output[(t >> local_log)*distance + (std::uint64_t(row)*local_n + (t & (local_n-1)))*element_stride] = {x.real*scale,x.imag*scale};
     }
+}
+
+template <unsigned Log, class FFT, unsigned Columns, bool Inverse=false, class Complex=Complex32, unsigned Chunk=0, unsigned StaticLocalLog=0>
+void launch_grouped_suffix_core(const Complex* scratch, Complex* output,
+                           unsigned log_n, std::uint64_t batch, cudaStream_t stream=nullptr,
+                           std::uint64_t distance=0, std::uint64_t element_stride=1, bool normalize=false) {
+    using Real = decltype(Complex{}.real);
+    constexpr unsigned Ept = FFT::elements_per_thread;
+    constexpr unsigned tile_bytes = (1U<<Log)*Columns*sizeof(Complex)*(Chunk?Chunk:Ept)/Ept;
+    constexpr unsigned bytes = Columns==1 ? FFT::shared_memory_size :
+        (tile_bytes > FFT::shared_memory_size ? tile_bytes : FFT::shared_memory_size);
+    if constexpr (bytes > 48U*1024U)
+        cudaFuncSetAttribute(grouped_suffix<FFT, Columns, Complex, Chunk, StaticLocalLog>,cudaFuncAttributeMaxDynamicSharedMemorySize,bytes);
+    const unsigned local = log_n-Log;
+    grouped_suffix<FFT, Columns, Complex, Chunk, StaticLocalLog><<<static_cast<unsigned>((batch << local)/Columns), FFT::block_dim, bytes, stream>>>(
+        scratch,output,log_n,local,distance ? distance : (std::uint64_t{1}<<log_n),element_stride,
+        Inverse && normalize ? Real{1} / Real(std::uint64_t{1}<<log_n) : Real{1});
 }
 
 template <unsigned Log, unsigned Ept, unsigned Columns, bool Inverse=false, class Complex=Complex32, unsigned Chunk=0, unsigned StaticLocalLog=0>
@@ -101,14 +125,7 @@ void launch_grouped_suffix(const Complex* scratch, Complex* output,
         cufftdx::Direction<Inverse ? cufftdx::fft_direction::inverse : cufftdx::fft_direction::forward>() +
         cufftdx::Precision<Real>() + cufftdx::ElementsPerThread<Ept>() +
         cufftdx::FFTsPerBlock<Columns>() + cufftdx::SM<CUBUTTERFLY_CUFFTDX_SM>());
-    constexpr unsigned tile_bytes = (1U<<Log)*Columns*sizeof(Complex)*(Chunk?Chunk:Ept)/Ept;
-    constexpr unsigned bytes = Columns==1 ? FFT::shared_memory_size :
-        (tile_bytes > FFT::shared_memory_size ? tile_bytes : FFT::shared_memory_size);
-    if constexpr (bytes > 48U*1024U)
-        cudaFuncSetAttribute(grouped_suffix<FFT, Columns, Complex, Chunk, StaticLocalLog>,cudaFuncAttributeMaxDynamicSharedMemorySize,bytes);
-    const unsigned local = log_n-Log;
-    grouped_suffix<FFT, Columns, Complex, Chunk, StaticLocalLog><<<static_cast<unsigned>((batch << local)/Columns), FFT::block_dim, bytes, stream>>>(
-        scratch,output,log_n,local,distance ? distance : (std::uint64_t{1}<<log_n),element_stride,
-        Inverse && normalize ? Real{1} / Real(std::uint64_t{1}<<log_n) : Real{1});
+    launch_grouped_suffix_core<Log,FFT,Columns,Inverse,Complex,Chunk,StaticLocalLog>(
+        scratch,output,log_n,batch,stream,distance,element_stride,normalize);
 }
 } // namespace cuntt::detail

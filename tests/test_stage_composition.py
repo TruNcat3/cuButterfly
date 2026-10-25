@@ -212,3 +212,18 @@ def test_integer_scalar_keeps_large_ntt_modulus_exact():
     assert stage_composition._scalar(str(modulus)) == modulus
     assert stage_composition._scalar(modulus) != stage_composition._scalar(str(modulus - 1))
     assert stage_composition._scalar(str(modulus)) != stage_composition._scalar(modulus - 1)
+
+
+def test_known_fp64_source_shared_memory_mismatch_is_still_rejected():
+    source = _source(backend="online-reorder", core="cufftdx-block", batch=9, tile=4)
+    source["sample"]["precision"] = "fp64"
+
+    def describe(point):
+        groups = [dict(group) for group in source["groups"]]
+        groups[0]["live_shared_bytes"] += 256
+        return {"status": "resolved", "runtime_fingerprint": "build-a",
+                "sample": point, "groups": groups}
+
+    result = resolve_batch_services(source["sample"], source, describe)
+    assert result["status"] == "unavailable"
+    assert result["reason"] == "resource-identity-mismatch:0:live_shared_bytes"

@@ -37,17 +37,25 @@ def _shared_partition(mapping, operator, log_n):
         mapping = dict(mapping, stage_partition=[min(local, log_n - first)
                                                  for first in range(0, log_n, local)])
     stages = _partition(mapping, "stage_partition", log_n)
-    # Butterfly shared specialization compiles physical groups after explicit
-    # resident edges have been folded, rather than the logical partition.
-    boundaries = mapping.get("boundaries") or []
-    if operator == "ntt" or not boundaries:
+    # Shared specialization compiles physical groups after explicit resident
+    # edges have been folded, rather than the logical partition.
+    boundaries = mapping.get("boundary_mappings" if operator == "ntt" else "boundaries") or []
+    if not boundaries:
         return stages
     if len(boundaries) != len(stages) - 1:
         raise ValueError("shared boundary count differs from stage partition")
     physical, count = [], 0
+    if operator == "ntt":
+        for boundary in boundaries:
+            if (boundary.get("storage", "full-scratch") not in {"full-scratch", "resident-fused"}
+                    or boundary.get("buffers", 1) != 1):
+                raise ValueError("shared NTT boundaries require full-scratch/resident-fused storage with one buffer")
     for index, stage in enumerate(stages):
         count += stage
-        if index == len(stages) - 1 or boundaries[index].get("residency") != "fused":
+        fused = (index < len(boundaries) and
+                 (boundaries[index].get("storage") == "resident-fused" if operator == "ntt"
+                  else boundaries[index].get("residency") == "fused"))
+        if not fused:
             physical.append(count)
             count = 0
     return physical
@@ -82,8 +90,8 @@ def _register_prefix_axes(mapping, precision):
     codelet = mapping.get("prefix_codelet", "native")
     layout = mapping.get("prefix_shared_layout", "linear")
     lanes = mapping.get("prefix_codelet_lanes", 1)
-    if codelet not in {"native", "cufftdx-thread"}:
-        raise ValueError("prefix_codelet must be native or cufftdx-thread")
+    if codelet not in {"native", "radix4", "cufftdx-thread"}:
+        raise ValueError("prefix_codelet must be native, radix4 or cufftdx-thread")
     if layout not in {"linear", "xor"}:
         raise ValueError("prefix_shared_layout must be linear or xor")
     if isinstance(lanes, bool) or not isinstance(lanes, int):
@@ -99,6 +107,47 @@ def _register_prefix_axes(mapping, precision):
     if codelet == "cufftdx-thread" and precision == "fp64":
         raise ValueError("cufftdx-thread prefix is unavailable for FP64")
     return codelet, layout, lanes
+
+
+def _radix4_uses_linked_inventory(mapping, operator, precision, log_n):
+    """Validate the runtime mapping, then match the finite linked inventory."""
+    if operator != "fft" or precision not in {"fp32", "fp64"}:
+        raise ValueError("radix4 register prefix requires FP32/FP64 FFT")
+    stages = (_partition(mapping, "stage_partition", log_n) if mapping.get("stage_partition")
+              else [int(mapping.get("local_stages", 0)), log_n - int(mapping.get("local_stages", 0))])
+    if len(stages) != 2:
+        raise ValueError("register prefix/suffix requires two stage groups")
+    mapping = dict(mapping, local_stages=stages[0], logN=log_n)
+    geometry = resident_mapping.register_geometry(mapping, stages)
+    if mapping.get("factor_io_policies"):
+        raise ValueError("factor_io_policies are valid only for factor-streamed")
+    if mapping.get("stage_overlap") and int(mapping.get("batch_tile_count", 1)) <= 0:
+        raise ValueError("register-tile overlap requires a positive batch tile")
+    expected = {"shared_layout": "writer-aligned",
+                "cross_twiddle": "recurrence", "local_exchange": "shared",
+                "direct_boundary": "direct-strided", "complex_multiply": "four-mul"}
+    if any(mapping.get(key, value) != value for key, value in expected.items()):
+        raise ValueError("radix4 register prefix requires writer-aligned placement, recurrence and shared exchange")
+    if mapping.get("compute_unit", "auto") not in ("auto", "radix2"):
+        raise ValueError("radix4 register prefix requires auto or radix2 compute unit")
+    boundaries = mapping.get("boundaries")
+    if boundaries and (len(boundaries) != 1 or boundaries[0].get("residency", "global-scratch") != "global-scratch"):
+        raise ValueError("radix4 register prefix requires one global-scratch boundary")
+    if geometry["log_a"] != geometry["log_b"] and mapping.get("prefix_shared_layout", "linear") == "xor":
+        width = 16 if precision == "fp64" else 8
+        bank_rows = min(geometry["b_size"], 128 // (width * geometry["prefix_columns"]))
+        if geometry["prefix_lanes"] > bank_rows or geometry["second_lanes"] > bank_rows:
+            raise ValueError("rectangular XOR lane digits exceed the shared transaction rows")
+    if (precision != "fp32" or stages[0] != 8 or stages[1] not in (10, 12) or
+            mapping.get("prefix_shared_layout", "linear") != "linear" or
+            mapping.get("prefix_codelet_lanes", 1) != 1 or
+            mapping.get("suffix_core", "cufftdx-block") != "cufftdx-block" or
+            resident_mapping.resident_requested(mapping)):
+        return False
+    pc, sc, ept = geometry["prefix_columns"], geometry["suffix_columns"], geometry["suffix_ept"]
+    suffix_ok = ((ept == 8 and sc == 4) or (ept == 16 and sc in (4, 8)) if stages[1] == 10
+                 else ept in (16, 32) and sc in (2, 4))
+    return pc in (4, 8, 16, 32) and suffix_ok
 
 
 def _validate_prefix_geometry(mapping, lanes, local_stages, log_n=None):
@@ -161,7 +210,16 @@ raise explicitly; guessing them would populate cache entries runtime never uses.
     operator = point.get("operator", "fft")
     precision = point.get("precision", "fp32")
     log_n = int(point["logN"])
+    suffix_core = resident_mapping.validate_suffix_core(mapping)
+    if mapping.get("prefix_codelet") == "radix4":
+        _register_prefix_axes(mapping, precision)
+        if _radix4_uses_linked_inventory(mapping, operator, precision, log_n):
+            return None
+        if policy == "precompiled":
+            raise ValueError("radix4 mapping is outside the prebuilt inventory and requires on-demand compilation")
     if policy == "precompiled":
+        if suffix_core != "cufftdx-block":
+            raise ValueError("native suffix_core requires on-demand compilation")
         if resident_mapping.resident_requested(mapping):
             raise ValueError("resident axes require on-demand compilation")
         return None
@@ -176,8 +234,11 @@ raise explicitly; guessing them would populate cache entries runtime never uses.
         axes = _resident_request(mapping, stages, backend=backend, operator=operator)
         if policy != "research" and not resident_mapping.resident_requested(mapping):
             return None
+        batch_tile = 1 if mapping.get("stage_overlap", False) else int(mapping.get("batch_tile_count", 1))
+        if not 1 <= batch_tile <= 4:
+            raise ValueError("shared bulk batch tile count must be in [1,4]")
         request = dict(backend=backend, operator=operator, precision=precision,
-                       logN=log_n, stage_partition=stages)
+                       logN=log_n, stage_partition=stages, batch_tile=batch_tile)
         request.update(axes)
         if operator == "ntt":
             # Output layout belongs to the workload, never a donor mapping.
@@ -193,7 +254,7 @@ raise explicitly; guessing them would populate cache entries runtime never uses.
             request.update(threads=_positive(mapping, "tile_threads"),
                            writer_aligned=mapping.get("shared_layout", "linear") == "writer-aligned",
                            accumulation=point.get("accumulation", "native"),
-                           complex_multiply=mapping.get("complex_multiply", "four-mul"), batch_tile=1)
+                           complex_multiply=mapping.get("complex_multiply", "four-mul"))
         return request
     if operator != "fft":
         return None
@@ -237,6 +298,8 @@ raise explicitly; guessing them would populate cache entries runtime never uses.
                        **{field: _positive(mapping, field) for field in
                           ("local_stages", "prefix_threads", "prefix_ept", "suffix_threads", "suffix_ept")})
         request.update(_resident_request(mapping, stages, backend=backend, operator=operator))
+        if suffix_core != "cufftdx-block":
+            request["suffix_core"] = suffix_core
         if codelet != "native":
             request["prefix_codelet"] = codelet
         if layout != "linear":

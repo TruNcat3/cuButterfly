@@ -1,0 +1,443 @@
+{
+  "cases": [
+    {
+      "comparisons": [
+        {
+          "baseline": "stagewise",
+          "changed_axes": [
+            "stage_partition"
+          ],
+          "treatment": "resident8"
+        }
+      ],
+      "experiment": "E2-current-stage-organization",
+      "id": "fft-fp32-n12-b4",
+      "variants": [
+        {
+          "id": "stagewise",
+          "mapping": {
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "fft_core": "scalar",
+            "kind": "butterfly",
+            "local_exchange": "shared",
+            "schema_version": 1,
+            "shared_layout": "linear",
+            "stage_partition": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "tile_threads": 128
+          }
+        },
+        {
+          "id": "resident8",
+          "mapping": {
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "fft_core": "scalar",
+            "kind": "butterfly",
+            "local_exchange": "shared",
+            "schema_version": 1,
+            "shared_layout": "linear",
+            "stage_partition": [
+              8,
+              4
+            ],
+            "tile_threads": 128
+          }
+        }
+      ],
+      "workload": {
+        "batch": 4,
+        "direction": "forward",
+        "logN": 12,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "comparisons": [
+        {
+          "baseline": "stagewise",
+          "changed_axes": [
+            "stage_partition"
+          ],
+          "treatment": "resident8"
+        }
+      ],
+      "experiment": "E2-current-stage-organization",
+      "id": "fft-fp32-n18-b1",
+      "variants": [
+        {
+          "id": "stagewise",
+          "mapping": {
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "fft_core": "scalar",
+            "kind": "butterfly",
+            "local_exchange": "shared",
+            "schema_version": 1,
+            "shared_layout": "linear",
+            "stage_partition": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "tile_threads": 128
+          }
+        },
+        {
+          "id": "resident8",
+          "mapping": {
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "fft_core": "scalar",
+            "kind": "butterfly",
+            "local_exchange": "shared",
+            "schema_version": 1,
+            "shared_layout": "linear",
+            "stage_partition": [
+              8,
+              8,
+              2
+            ],
+            "tile_threads": 128
+          }
+        }
+      ],
+      "workload": {
+        "batch": 1,
+        "direction": "forward",
+        "logN": 18,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "comparisons": [
+        {
+          "baseline": "stagewise",
+          "changed_axes": [
+            "stage_partition"
+          ],
+          "treatment": "resident8"
+        }
+      ],
+      "experiment": "E2-current-stage-organization",
+      "id": "fwht-fp32-n12-b4",
+      "variants": [
+        {
+          "id": "stagewise",
+          "mapping": {
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "fft_core": "scalar",
+            "kind": "butterfly",
+            "local_exchange": "shared",
+            "schema_version": 1,
+            "shared_layout": "linear",
+            "stage_partition": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "tile_threads": 128
+          }
+        },
+        {
+          "id": "resident8",
+          "mapping": {
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "fft_core": "scalar",
+            "kind": "butterfly",
+            "local_exchange": "shared",
+            "schema_version": 1,
+            "shared_layout": "linear",
+            "stage_partition": [
+              8,
+              4
+            ],
+            "tile_threads": 128
+          }
+        }
+      ],
+      "workload": {
+        "batch": 4,
+        "direction": "forward",
+        "logN": 12,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "comparisons": [
+        {
+          "baseline": "stagewise",
+          "changed_axes": [
+            "stage_partition"
+          ],
+          "treatment": "resident8"
+        }
+      ],
+      "experiment": "E2-current-stage-organization",
+      "id": "fwht-fp32-n18-b1",
+      "variants": [
+        {
+          "id": "stagewise",
+          "mapping": {
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "fft_core": "scalar",
+            "kind": "butterfly",
+            "local_exchange": "shared",
+            "schema_version": 1,
+            "shared_layout": "linear",
+            "stage_partition": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "tile_threads": 128
+          }
+        },
+        {
+          "id": "resident8",
+          "mapping": {
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "fft_core": "scalar",
+            "kind": "butterfly",
+            "local_exchange": "shared",
+            "schema_version": 1,
+            "shared_layout": "linear",
+            "stage_partition": [
+              8,
+              8,
+              2
+            ],
+            "tile_threads": 128
+          }
+        }
+      ],
+      "workload": {
+        "batch": 1,
+        "direction": "forward",
+        "logN": 18,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp32"
+      }
+    },
+    {
+      "comparisons": [
+        {
+          "baseline": "stagewise",
+          "changed_axes": [
+            "stage_partition"
+          ],
+          "treatment": "resident8"
+        }
+      ],
+      "experiment": "E2-current-stage-organization",
+      "id": "ntt-word64-n12-b4",
+      "variants": [
+        {
+          "id": "stagewise",
+          "mapping": {
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "dataflow_layout": "linear",
+            "kind": "ntt",
+            "modular_multiply": "shoup",
+            "schema_version": 1,
+            "stage_partition": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "tile_threads": 128
+          }
+        },
+        {
+          "id": "resident8",
+          "mapping": {
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "dataflow_layout": "linear",
+            "kind": "ntt",
+            "modular_multiply": "shoup",
+            "schema_version": 1,
+            "stage_partition": [
+              8,
+              4
+            ],
+            "tile_threads": 128
+          }
+        }
+      ],
+      "workload": {
+        "batch": 4,
+        "direction": "forward",
+        "input_order": "natural",
+        "logN": 12,
+        "modulus": 576460756061519873,
+        "normalization": "none",
+        "operator": "ntt",
+        "output_order": "natural",
+        "placement": "out-of-place",
+        "precision": "word64"
+      }
+    },
+    {
+      "comparisons": [
+        {
+          "baseline": "stagewise",
+          "changed_axes": [
+            "stage_partition"
+          ],
+          "treatment": "resident8"
+        }
+      ],
+      "experiment": "E2-current-stage-organization",
+      "id": "ntt-word64-n18-b1",
+      "variants": [
+        {
+          "id": "stagewise",
+          "mapping": {
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "dataflow_layout": "linear",
+            "kind": "ntt",
+            "modular_multiply": "shoup",
+            "schema_version": 1,
+            "stage_partition": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "tile_threads": 128
+          }
+        },
+        {
+          "id": "resident8",
+          "mapping": {
+            "backend": "shared-iterative",
+            "compute_unit": "radix2",
+            "dataflow_layout": "linear",
+            "kind": "ntt",
+            "modular_multiply": "shoup",
+            "schema_version": 1,
+            "stage_partition": [
+              8,
+              8,
+              2
+            ],
+            "tile_threads": 128
+          }
+        }
+      ],
+      "workload": {
+        "batch": 1,
+        "direction": "forward",
+        "input_order": "natural",
+        "logN": 18,
+        "modulus": 576460756061519873,
+        "normalization": "none",
+        "operator": "ntt",
+        "output_order": "natural",
+        "placement": "out-of-place",
+        "precision": "word64"
+      }
+    }
+  ],
+  "protocol": {
+    "repeat": 20,
+    "trials": 3,
+    "verify_batches": 0,
+    "warmup": 10
+  },
+  "schema": "cubutterfly-controlled-experiment-v1",
+  "scope": "Current build, same scalar radix2 arithmetic core and explicit semantic request; only stage_partition changes. Complete-call CUDA-event timing excludes compile, allocation and warmup. This cohort is a controlled mechanism witness, not a claim that resident8 wins for every operator or size."
+}

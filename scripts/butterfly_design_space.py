@@ -225,6 +225,7 @@ def derive_multidimensional_point(log_n, partition, mappings):
 
 
 def expand_design_choices(space, operator, selections):
+    """Cover every bound core by default; choices remain abstract until verified."""
     projection = space["operator_projections"][operator]
     graph = space["objects"]["G_graph_semantics"]
     architecture = space["objects"]["A_architecture"]
@@ -284,7 +285,7 @@ def expand_design_choices(space, operator, selections):
         if any(not isinstance(value, int) or value < 1 for value in values):
             raise ValueError(f"{name} choices must be positive integers")
         selected[name] = values
-    cores = selections.get("operator_core") or [projection["cores"][0]]
+    cores = selections.get("operator_core") or projection["cores"]
     unknown_cores = set(cores) - set(projection["cores"])
     if unknown_cores:
         raise ValueError(f"unknown operator_core choices for {operator}: {sorted(unknown_cores)}")

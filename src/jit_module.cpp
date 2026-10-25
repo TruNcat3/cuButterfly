@@ -1,5 +1,6 @@
 #include "jit_module.hpp"
 #include "jit_config.hpp"
+#include "cufftdx_provider.hpp"
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <cstdlib>
@@ -9,6 +10,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <dlfcn.h>
 #include <spawn.h>
@@ -44,7 +46,7 @@ std::string mapping(const ButterflyConfig& c) {
     return nlohmann::json{{"fft_core", "register-tile"}, {"precision", butterfly_precision_name(c.precision)},
         {"logN", c.log_n}, {"local_stages", c.local_stages}, {"prefix_threads", c.prefix_threads},
         {"prefix_ept", c.prefix_ept}, {"suffix_threads", c.suffix_threads}, {"suffix_ept", c.suffix_ept},
-        {"prefix_codelet_lanes", c.prefix_codelet_lanes},
+        {"prefix_codelet_lanes", c.prefix_codelet_lanes}, {"suffix_core", c.suffix_core},
         {"prefix_codelet", c.prefix_codelet}, {"prefix_shared_layout", c.prefix_shared_layout},
         {"local_stage_partitions",c.local_stage_partitions},{"exchange_chunks",c.exchange_chunks}}.dump();
 }
@@ -139,7 +141,7 @@ const cubutterflyModuleV2* prepare_shared(nlohmann::json point) {
     for(unsigned g=0;g<api->group_count;++g) {
         cubutterflyModuleResourcesV1 resource{};
         if(api->resources(0,g,&resource)!=cudaSuccess) throw std::invalid_argument("generic specialization cannot satisfy device resource limits");
-        if(resource.threads>hardware.max_threads_per_block || resource.static_shared_bytes+resource.dynamic_shared_bytes>hardware.shared_bytes_per_block ||
+        if(resource.threads>hardware.max_threads_per_block || std::uint64_t(resource.static_shared_bytes)+resource.dynamic_shared_bytes>hardware.shared_bytes_per_block ||
             std::uint64_t(resource.threads)*resource.registers_per_thread>hardware.registers_per_block)
             throw std::invalid_argument("generic specialization exceeds device resources");
     }
@@ -148,15 +150,28 @@ const cubutterflyModuleV2* prepare_shared(nlohmann::json point) {
 }
 }
 
+CompilePolicy compile_policy() noexcept {
+    const auto* value = std::getenv("CUBUTTERFLY_COMPILE_MODE");
+    const std::string_view policy(value ? value : CUBUTTERFLY_DEFAULT_CODEGEN_MODE);
+    if (policy == "precompiled") return CompilePolicy::Precompiled;
+    if (policy == "auto") return CompilePolicy::Auto;
+    if (policy == "on-demand") return CompilePolicy::OnDemand;
+    if (policy == "research") return CompilePolicy::Research;
+    return CompilePolicy::Invalid;
+}
+
 bool on_demand_compilation_enabled() {
-    const auto policy = setting("CUBUTTERFLY_COMPILE_MODE", CUBUTTERFLY_DEFAULT_CODEGEN_MODE);
-    if (policy=="research" || policy=="on-demand" || policy=="auto") return true;
-    if (policy=="precompiled") return false;
-    throw std::invalid_argument("CUBUTTERFLY_COMPILE_MODE must be precompiled, auto, or research");
+    const auto policy = compile_policy();
+    if (policy == CompilePolicy::Invalid)
+        throw std::invalid_argument("CUBUTTERFLY_COMPILE_MODE must be precompiled, auto, on-demand, or research");
+    return policy != CompilePolicy::Precompiled;
 }
 
 bool specialize_shared_templates() {
-    return setting("CUBUTTERFLY_COMPILE_MODE", CUBUTTERFLY_DEFAULT_CODEGEN_MODE)=="research";
+    const auto policy = compile_policy();
+    if (policy == CompilePolicy::Invalid)
+        throw std::invalid_argument("CUBUTTERFLY_COMPILE_MODE must be precompiled, auto, on-demand, or research");
+    return policy == CompilePolicy::Research;
 }
 
 const cubutterflyModuleV2* prepare_shared_module(const ButterflyConfig& c) {
@@ -165,14 +180,16 @@ const cubutterflyModuleV2* prepare_shared_module(const ButterflyConfig& c) {
         {"complex_multiply",complex_multiply_name(c.complex_multiply)},{"logN",c.log_n},
         {"stage_partition",c.stage_partition},{"threads",c.tile_threads},
         {"local_stage_partitions",c.local_stage_partitions},{"exchange_chunks",c.exchange_chunks},
-        {"writer_aligned",c.shared_layout==SharedLayout::WriterAligned},{"batch_tile",1}});
+        {"writer_aligned",c.shared_layout==SharedLayout::WriterAligned},
+        {"batch_tile",c.stage_overlap ? 1U : c.batch_tile_count}});
 }
 const cubutterflyModuleV2* prepare_shared_module(const PlanConfig& c) {
     return prepare_shared({{"backend","shared-iterative"},{"operator","ntt"},
         {"precision","word"+std::to_string(c.word_bits)},{"logN",c.log_n},{"stage_partition",c.stage_partition},
         {"threads",c.threads_per_block},{"writer_aligned",c.dataflow_layout==DataflowLayout::HermesXor},
         {"local_stage_partitions",c.local_stage_partitions},{"exchange_chunks",c.exchange_chunks},
-        {"output_order",output_order_name(c.output_order)}});
+        {"output_order",output_order_name(c.output_order)},
+        {"batch_tile",c.stage_overlap ? 1U : c.batch_tile_count}});
 }
 template <typename ModuleApi>
 void attach_resources(MixedDataflowPlan& plan, const ModuleApi* module, bool inverse) {
@@ -187,8 +204,13 @@ void attach_resources(MixedDataflowPlan& plan, const ModuleApi* module, bool inv
         if(module->resources(inverse,g,&resource)!=cudaSuccess) throw std::runtime_error("cannot read module resources");
         auto& group=plan.execution_groups[g];
         group.compiler_resources_known=true; group.compiler_registers_per_thread=resource.registers_per_thread;
-        group.live_shared_bytes=resource.dynamic_shared_bytes+resource.static_shared_bytes;
+        group.static_shared_bytes=resource.static_shared_bytes;
+        group.dynamic_shared_bytes=resource.dynamic_shared_bytes;
+        group.shared_components_known=true;
+        group.live_shared_bytes=std::uint64_t(resource.dynamic_shared_bytes)+resource.static_shared_bytes;
         group.threads=resource.threads;
+        group.compiler_local_bytes_per_thread=0;
+        group.compiler_local_resources_known=false;
         if(local_bytes) {
             if(local_bytes(inverse,g,&group.compiler_local_bytes_per_thread)!=cudaSuccess)
                 throw std::runtime_error("cannot read compiler local-memory allocation");
@@ -227,6 +249,14 @@ void prepare_register_module(const ButterflyConfig& c) {
     if (modules.count(id)) return;
     const auto device = current_device_info();
     const auto sm = device.compute_major*10 + device.compute_minor;
+    const auto precision_bits = c.precision==ButterflyPrecision::Fp64 ? 64U : 32U;
+    if (c.backend==ButterflyBackend::FactorStreamed) {
+        if (c.fft_core==FftCore::CufftDxBlock)
+            for (auto stage : c.factor_partition)
+                require_cufftdx_provider(sm*10, precision_bits, 1U<<stage, c.factor_ept);
+    } else if (c.suffix_core == "cufftdx-block") {
+        require_cufftdx_provider(sm*10, precision_bits, 1U<<(c.log_n-c.local_stages), c.suffix_ept);
+    }
     const auto path = compile(mapping(c),sm);
     auto module = std::make_unique<Module>();
     module->handle = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
@@ -250,7 +280,7 @@ void prepare_register_module(const ButterflyConfig& c) {
         if (module->api->resources(direction, group, &resource)!=cudaSuccess)
             throw std::runtime_error("cannot query compiled specialization resources");
         if (resource.threads>hardware.max_threads_per_block ||
-            resource.dynamic_shared_bytes+resource.static_shared_bytes>hardware.shared_bytes_per_block ||
+            std::uint64_t(resource.dynamic_shared_bytes)+resource.static_shared_bytes>hardware.shared_bytes_per_block ||
             std::uint64_t(resource.threads)*resource.registers_per_thread>hardware.registers_per_block)
             throw std::invalid_argument("compiled specialization exceeds active-device resources");
     }

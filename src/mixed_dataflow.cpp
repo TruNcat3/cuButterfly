@@ -2,16 +2,30 @@
 #include "cuntt/butterfly.hpp"
 #include "fft_factor_plan.hpp"
 #include "resident_mapping.hpp"
+#include "hardware_model.hpp"
 
 #include <cuda_runtime_api.h>
 
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
+#include <cstdlib>
+#include <iostream>
 
 namespace cuntt {
 
 namespace {
+
+std::vector<std::uint32_t> shared_stage_partition(std::uint32_t log_n, std::uint32_t tile_stages) {
+    if (!tile_stages) throw std::invalid_argument("shared iteration needs a positive stage tile");
+    std::vector<std::uint32_t> partition;
+    for (auto remaining = log_n; remaining;) {
+        const auto stages = std::min(remaining, tile_stages);
+        partition.push_back(stages);
+        remaining -= stages;
+    }
+    return partition;
+}
 
 DataflowOperator to_dataflow_operator(ButterflyOperator op) {
     switch (op) {
@@ -143,8 +157,11 @@ void project_execution_groups(MixedDataflowPlan& plan) {
         group.stage_time = count;
         group.threads = plan.threads_per_block;
         group.core = plan.processing_unit; group.exchange = plan.exchange;
-        group.batch_space = plan.batch_tile_count;
-        group.batch_time = static_cast<std::uint32_t>((plan.graph.batch + group.batch_space - 1) / group.batch_space);
+        group.batch_space = plan.dispatch == DataflowDispatch::BatchPipeline ? 1U : plan.batch_tile_count;
+        // Bulk tiles serialize batch items inside a CTA; pipeline tiles count
+        // stream submissions. Both consume batch_tile_count items per step,
+        // even though the pipeline group itself launches with batch_space=1.
+        group.batch_time = static_cast<std::uint32_t>((plan.graph.batch - 1) / plan.batch_tile_count + 1);
         group.grid_ctas = static_cast<std::uint64_t>(group.batch_time) << (plan.graph.log_n - count);
         if (plan.dispatch == DataflowDispatch::BatchPipeline)
             group.grid_ctas = std::min<std::uint64_t>(plan.graph.batch, plan.batch_tile_count) << (plan.graph.log_n - count);
@@ -168,7 +185,12 @@ void project_execution_groups(MixedDataflowPlan& plan) {
 
 }  // namespace
 
-HardwareResourceModel query_hardware_resource_model() {
+namespace detail {
+namespace { thread_local std::string hardware_source = "not-queried"; }
+std::string hardware_resource_model_source() { return hardware_source; }
+}
+
+HardwareResourceModel detail::query_live_hardware_resource_model() {
     int device = 0;
     if (cudaGetDevice(&device) != cudaSuccess) throw std::runtime_error("unable to query the active CUDA device");
     cudaDeviceProp properties{};
@@ -188,9 +210,32 @@ HardwareResourceModel query_hardware_resource_model() {
     model.shared_bytes_per_block = static_cast<std::uint32_t>(properties.sharedMemPerBlockOptin);
     model.registers_per_block = static_cast<std::uint32_t>(properties.regsPerBlock);
     int cooperative = 0;
-    if (cudaDeviceGetAttribute(&cooperative, cudaDevAttrCooperativeLaunch, device) == cudaSuccess)
-        model.cooperative_launch = cooperative != 0;
+    if (cudaDeviceGetAttribute(&cooperative, cudaDevAttrCooperativeLaunch, device) != cudaSuccess)
+        throw std::runtime_error("unable to query CUDA cooperative launch capability");
+    model.cooperative_launch = cooperative != 0;
     return model;
+}
+
+HardwareResourceModel query_hardware_resource_model() {
+    const auto model = detail::query_live_hardware_resource_model();
+    const auto* explicit_file = std::getenv("CUBUTTERFLY_HARDWARE_MODEL");
+    const auto* profile_root = std::getenv("CUBUTTERFLY_PROFILE_ROOT");
+    std::filesystem::path local_root = profile_root ? profile_root : "";
+#ifdef CUBUTTERFLY_INSTALLED_HARDWARE_ROOT
+    if (!profile_root) local_root = CUBUTTERFLY_INSTALLED_HARDWARE_ROOT;
+#endif
+    std::filesystem::path bundled_root;
+#ifdef CUBUTTERFLY_BUNDLED_HARDWARE_ROOT
+    bundled_root = CUBUTTERFLY_BUNDLED_HARDWARE_ROOT;
+#endif
+    const auto loaded = detail::resolve_hardware_model(model,
+        explicit_file ? std::optional<std::string>(explicit_file) : std::nullopt,
+        local_root, bundled_root);
+    if (detail::hardware_source != loaded.source) {
+        detail::hardware_source = loaded.source;
+        std::cerr << "cuButterfly hardware resources: " << loaded.source << '\n';
+    }
+    return loaded.model;
 }
 
 const char* dataflow_operator_name(DataflowOperator op) noexcept {
@@ -285,7 +330,7 @@ OperatorGraph make_operator_graph(DataflowOperator op, std::uint32_t log_n, std:
 
 OperatorGraph make_operator_graph(const ButterflyConfig& config) {
     auto graph = make_operator_graph(to_dataflow_operator(config.op), config.log_n, config.batch);
-    graph.word_bits = config.precision == ButterflyPrecision::Fp64 ? 64U :
+    graph.word_bits = config.precision == ButterflyPrecision::Fp64 || config.precision == ButterflyPrecision::Uint64 ? 64U :
                       config.precision == ButterflyPrecision::Fp16 || config.precision == ButterflyPrecision::Bf16 ? 16U : 32U;
     graph.precision = butterfly_precision_name(config.precision);
     graph.element_stride = config.element_stride;
@@ -315,6 +360,8 @@ MixedDataflowPlan make_dataflow_plan(const ButterflyConfig& config) {
     MixedDataflowPlan plan;
     plan.graph = make_operator_graph(config);
     plan.stage_partition = config.stage_partition;
+    if (plan.stage_partition.empty() && config.backend == ButterflyBackend::SharedIterative)
+        plan.stage_partition = shared_stage_partition(config.log_n, config.local_stages);
     if (plan.stage_partition.empty()) plan.stage_partition = {config.log_n};
     if (config.backend == ButterflyBackend::OnlineReorder && config.stage_partition.empty()) {
         if (config.local_stages == 0 || config.local_stages >= config.log_n)
@@ -395,9 +442,13 @@ MixedDataflowPlan make_dataflow_plan(const ButterflyConfig& config) {
         plan.subgraph_log_n = largest;
         plan.pipeline_buffers = 2;
         plan.shared_bytes_per_subgraph = (2ULL << largest) * (plan.graph.word_bits / 8) * (plan.graph.complex_values ? 2 : 1);
-        plan.grid_ctas = static_cast<std::uint64_t>(config.batch) << (config.log_n - largest);
+        if (!config.stage_overlap && (config.batch_tile_count < 1 || config.batch_tile_count > 4))
+            throw std::invalid_argument("shared bulk batch tile count must be in [1,4]");
+        const auto batch_space = config.stage_overlap ? 1U : config.batch_tile_count;
+        plan.grid_ctas = ((static_cast<std::uint64_t>(config.batch) - 1) / batch_space + 1)
+            << (config.log_n - largest);
         plan.data_time = std::max(1U, (1U << largest) / (2 * std::max(1U, config.tile_threads)));
-        plan.batch_tile_count = 1;
+        plan.batch_tile_count = batch_space;
         plan.steady_state_buffers = 1;
     }
     // Default to bulk boundaries; the optional batch pipeline below changes
@@ -459,7 +510,7 @@ MixedDataflowPlan make_dataflow_plan(const ButterflyConfig& config) {
             group.live_shared_bytes=(1ULL << group.stage_count)*columns*(plan.graph.word_bits/8)*2;
             group.data_space=group.threads;
             group.data_time=((1ULL << (group.stage_count-1))*columns+group.threads-1)/group.threads;
-            group.core=i==0 ? "register-tile" : "cufftdx-block";
+            group.core=i==0 || config.suffix_core=="native" ? "register-tile" : "cufftdx-block";
             if (i == 0) {
                 group.codelet = config.prefix_codelet;
                 group.shared_layout = config.prefix_shared_layout;
@@ -471,6 +522,26 @@ MixedDataflowPlan make_dataflow_plan(const ButterflyConfig& config) {
         project_resident_axes(plan.execution_groups[i],config.local_stage_partitions,config.exchange_chunks,i,
                               config.backend==ButterflyBackend::SharedIterative);
     project_generic_butterfly_groups(plan, config);
+    if (config.backend == ButterflyBackend::SharedIterative) {
+        // A tiled materialized boundary is a producer/consumer layout change,
+        // not merely a different name for the same global address order. Keep
+        // that distinction in the common descriptor for resource estimation.
+        if (config.boundaries.empty()) {
+            for (auto& edge : plan.execution_boundaries) {
+                edge.producer_layout = direct_boundary_name(DirectBoundary::Strided);
+                edge.consumer_layout = direct_boundary_name(config.direct_boundary);
+            }
+        } else {
+            std::size_t physical_boundary = 0;
+            for (const auto& boundary : config.boundaries) {
+                if (boundary.residency == FftBoundaryResidency::Fused)
+                    continue;
+                auto& edge = plan.execution_boundaries.at(physical_boundary++);
+                edge.producer_layout = direct_boundary_name(DirectBoundary::Strided);
+                edge.consumer_layout = direct_boundary_name(boundary.layout);
+            }
+        }
+    }
     if (config.op == ButterflyOperator::Fft && config.fft_core==FftCore::RegisterTile) {
         plan.grid_ctas=0;
         for (const auto& group : plan.execution_groups) plan.grid_ctas=std::max(plan.grid_ctas,group.grid_ctas);
@@ -478,7 +549,8 @@ MixedDataflowPlan make_dataflow_plan(const ButterflyConfig& config) {
     std::size_t physical = 0;
     for (const auto& boundary : config.boundaries) if (boundary.residency != FftBoundaryResidency::Fused) {
         auto& edge = plan.execution_boundaries.at(physical++);
-        edge.producer_layout = edge.consumer_layout = direct_boundary_name(boundary.layout);
+        if (edge.producer_layout.empty() && edge.consumer_layout.empty())
+            edge.producer_layout = edge.consumer_layout = direct_boundary_name(boundary.layout);
     }
     return plan;
 }
@@ -487,6 +559,9 @@ MixedDataflowPlan make_dataflow_plan(const PlanConfig& config) {
     MixedDataflowPlan plan;
     plan.graph = make_operator_graph(config);
     plan.stage_partition = config.stage_partition;
+    if (plan.stage_partition.empty() && config.backend == Backend::SharedIterative)
+        plan.stage_partition = shared_stage_partition(config.log_n,
+            config.flow_tile_log_n ? config.flow_tile_log_n : std::min(10U, config.log_n));
     if (plan.stage_partition.empty()) plan.stage_partition = {config.log_n};
     std::uint32_t stage_sum = 0;
     for (const auto stages : plan.stage_partition) stage_sum += stages;
@@ -500,7 +575,8 @@ MixedDataflowPlan make_dataflow_plan(const PlanConfig& config) {
     plan.threads_per_block = config.threads_per_block;
     if (plan.threads_per_block == 0 && !config.subgraph_mappings.empty())
         plan.threads_per_block = config.subgraph_mappings.front().threads_per_block;
-    if (plan.threads_per_block == 0) plan.threads_per_block = 256;
+    if (plan.threads_per_block == 0)
+        plan.threads_per_block = config.backend == Backend::SharedIterative ? 128 : 256;
     plan.elements_per_thread = 1;
     plan.processing_radix = config.compute_unit == ComputeUnit::Radix4 ? 4U :
                             config.compute_unit == ComputeUnit::Radix8 ? 8U : 2U;
@@ -535,6 +611,11 @@ MixedDataflowPlan make_dataflow_plan(const PlanConfig& config) {
     plan.shared_bytes_per_subgraph = static_cast<std::uint32_t>(std::min<std::uint64_t>(
         std::numeric_limits<std::uint32_t>::max(), tile_points * word_bytes));
     plan.grid_ctas = static_cast<std::uint64_t>(config.batch) << (config.log_n - plan.subgraph_log_n);
+    if (config.backend == Backend::SharedIterative && !config.stage_overlap) {
+        if (config.batch_tile_count < 1 || config.batch_tile_count > 4)
+            throw std::invalid_argument("shared bulk batch tile count must be in [1,4]");
+        plan.batch_tile_count = config.batch_tile_count;
+    }
     if (config.stage_overlap) {
         if (config.backend != Backend::SharedIterative || plan.stage_partition.size()<2 || !config.batch_tile_count)
             throw std::invalid_argument("NTT batch pipeline requires multiple shared groups and a positive batch tile");
@@ -542,8 +623,10 @@ MixedDataflowPlan make_dataflow_plan(const PlanConfig& config) {
         plan.batch_tile_count=config.batch_tile_count; plan.steady_state_buffers=2;
         plan.grid_ctas=std::min<std::uint64_t>(config.batch,config.batch_tile_count) << (config.log_n-plan.subgraph_log_n);
         plan.boundary=BoundaryPolicy::RingBuffer;
-        plan.boundary_policies.assign(plan.stage_partition.size()-1,BoundaryPolicy::RingBuffer);
-        plan.inter_stage_global_bytes=config.batch*(1ULL<<config.log_n)*word_bytes*(plan.stage_partition.size()-1);
+        for (auto& boundary : plan.boundary_policies)
+            if (boundary == BoundaryPolicy::GlobalScratch) boundary = BoundaryPolicy::RingBuffer;
+        plan.inter_stage_global_bytes=config.batch*(1ULL<<config.log_n)*word_bytes*
+            std::count(plan.boundary_policies.begin(),plan.boundary_policies.end(),BoundaryPolicy::RingBuffer);
     }
     project_execution_groups(plan);
     for (std::size_t i = 0; i < plan.execution_groups.size(); ++i) {
@@ -555,6 +638,13 @@ MixedDataflowPlan make_dataflow_plan(const PlanConfig& config) {
             group.threads = m.threads_per_block;
             group.units_per_cta = m.units_per_cta;
             group.data_space = m.data_space; group.data_time = m.data_time;
+            // NTT physical subgraph mappings use data_time as a token cadence
+            // consumed by the role scheduler.  SharedIterative lowers the
+            // same plan through the common CTA work-item loop, so it retains
+            // the generic work-item interpretation below.
+            group.data_time_semantics = config.backend == Backend::SharedIterative
+                ? DataTimeSemantics::WorkItems
+                : DataTimeSemantics::TemporalTokens;
         }
         if (config.backend == Backend::SharedIterative) {
             const auto stages=group.stage_count;
@@ -565,7 +655,8 @@ MixedDataflowPlan make_dataflow_plan(const PlanConfig& config) {
             group.data_space=std::min<std::uint64_t>(group.threads,size/2);
             group.data_time=(size/2+group.data_space-1)/group.data_space;
             group.live_shared_bytes=2*size*word_bytes;
-            group.grid_ctas=(config.stage_overlap ? std::min<std::size_t>(config.batch,config.batch_tile_count) : config.batch)*
+            group.grid_ctas=(config.stage_overlap ? std::min<std::size_t>(config.batch,config.batch_tile_count) :
+                (config.batch - 1) / config.batch_tile_count + 1)*
                 (1ULL<<(config.log_n-stages));
         }
     }
@@ -577,38 +668,132 @@ MixedDataflowPlan make_dataflow_plan(const PlanConfig& config) {
         plan.exchange=ExchangePolicy::SharedMemory;
         plan.data_space=1; plan.processing_unit="radix2-shoup";
         plan.shared_bytes_per_subgraph=0;
-        for (const auto& group : plan.execution_groups)
+        plan.grid_ctas=0;
+        for (const auto& group : plan.execution_groups) {
             plan.shared_bytes_per_subgraph=std::max<std::uint32_t>(plan.shared_bytes_per_subgraph,group.live_shared_bytes);
+            plan.grid_ctas=std::max(plan.grid_ctas,group.grid_ctas);
+        }
+        if (config.stage_overlap && plan.execution_groups.size() < 2)
+            throw std::invalid_argument("NTT batch pipeline requires multiple physical shared groups");
     }
     return plan;
 }
 
+PlanResourceEstimate estimate_execution_group_resources(const ExecutionGroup& group,
+    const HardwareResourceModel& hardware, std::uint32_t target_resident_ctas, bool cooperative) {
+    PlanResourceEstimate result;
+    const auto reject = [&](const char* reason) {
+        result.reason = reason;
+        return result;
+    };
+    if (group.threads && hardware.max_threads_per_block && group.threads > hardware.max_threads_per_block)
+        return reject("threads exceed per-CTA limit");
+    if (group.threads && group.threads % 32)
+        return reject("threads must be a warp multiple");
+    const auto shared = group.live_shared_bytes;
+    const auto registers = group.compiler_resources_known
+        ? std::uint64_t(group.compiler_registers_per_thread) * group.threads : 0;
+    if ((hardware.shared_bytes_per_block && shared > hardware.shared_bytes_per_block) ||
+        (hardware.shared_bytes_per_sm && shared > hardware.shared_bytes_per_sm))
+        return reject("shared state exceeds per-CTA or per-SM limit");
+    if ((hardware.registers_per_block && registers > hardware.registers_per_block) ||
+        (hardware.registers_per_sm && registers > hardware.registers_per_sm))
+        return reject("register state exceeds per-CTA or per-SM limit");
+
+    // Missing limits remain unknown, rather than acting as zero capacity.
+    std::uint64_t resident = std::numeric_limits<std::uint32_t>::max();
+    const auto constrain = [&](std::uint64_t capacity, std::uint64_t allocation) {
+        if (capacity && allocation) resident = std::min(resident, capacity / allocation);
+    };
+    constrain(hardware.max_threads_per_sm, group.threads);
+    constrain(hardware.shared_bytes_per_sm, shared);
+    constrain(hardware.registers_per_sm, registers);
+    if (hardware.max_blocks_per_sm) resident = std::min<std::uint64_t>(resident, hardware.max_blocks_per_sm);
+    const bool residency_known = resident != std::numeric_limits<std::uint32_t>::max();
+    if (residency_known && (resident == 0 || resident < target_resident_ctas))
+        return reject("resident CTA target exceeds known resource capacity");
+    if (residency_known) {
+        result.resident_ctas = static_cast<std::uint32_t>(resident);
+        result.resident_warps = static_cast<std::uint32_t>(std::min<std::uint64_t>(
+            resident * (group.threads / 32), std::numeric_limits<std::uint32_t>::max()));
+    }
+    const auto capacity = resident * hardware.sm_count;
+    if (residency_known && hardware.sm_count && group.grid_ctas && capacity) {
+        const auto waves = group.grid_ctas / capacity + (group.grid_ctas % capacity != 0);
+        result.grid_waves = static_cast<std::uint32_t>(std::min<std::uint64_t>(waves,
+            std::numeric_limits<std::uint32_t>::max()));
+    }
+    if (cooperative && (!hardware.cooperative_launch || !group.grid_ctas ||
+        (residency_known && hardware.sm_count && group.grid_ctas > capacity)))
+        return reject("cooperative grid exceeds known launch capacity");
+    result.local_bytes = shared;
+    result.feasible = true;
+    result.complete = group.compiler_resources_known && group.threads && hardware.sm_count &&
+        hardware.max_threads_per_block && hardware.max_threads_per_sm && hardware.max_blocks_per_sm &&
+        hardware.shared_bytes_per_block && hardware.shared_bytes_per_sm &&
+        hardware.registers_per_block && hardware.registers_per_sm;
+    result.reason = result.complete ? "compiled group satisfies static resource bounds; launch remains unverified"
+        : "known group resource bounds satisfied; compiler allocation or hardware limits unknown";
+    return result;
+}
+
 PlanResourceEstimate estimate_resources(const MixedDataflowPlan& plan, const HardwareResourceModel& hardware) {
     PlanResourceEstimate result;
-    if(plan.backend=="factor-streamed" && !plan.execution_groups.empty()) {
+    if (plan.graph.log_n == 0 || plan.graph.log_n > 30 || plan.graph.batch == 0) {
+        result.reason = "invalid graph";
+        return result;
+    }
+    if(!plan.execution_groups.empty()) {
         result.resident_ctas=std::numeric_limits<std::uint32_t>::max();
         result.resident_warps=std::numeric_limits<std::uint32_t>::max();
-        for(const auto& group:plan.execution_groups) {
-            auto local=plan; local.backend="factor-resource-projection";
-            local.threads_per_block=group.threads; local.registers_per_thread=group.compiler_registers_per_thread;
-            local.shared_bytes_per_subgraph=group.live_shared_bytes; local.data_space=1;
-            local.grid_ctas=group.grid_ctas; local.boundary_policies.clear();
-            const auto r=estimate_resources(local,hardware);
-            if(!r.feasible) return r;
+        result.complete=true;
+        for(std::size_t index=0;index<plan.execution_groups.size();++index) {
+            const auto& group=plan.execution_groups[index];
+            const auto r=estimate_execution_group_resources(group,hardware,plan.target_resident_ctas,
+                plan.boundary==BoundaryPolicy::CooperativeGrid || group.exchange==ExchangePolicy::CooperativeGrid);
+            if(!r.feasible) {
+                result.reason="execution group "+std::to_string(index)+": "+r.reason;
+                result.complete=false;
+                return result;
+            }
+            result.complete=result.complete && r.complete;
             result.resident_ctas=std::min(result.resident_ctas,r.resident_ctas);
             result.resident_warps=std::min(result.resident_warps,r.resident_warps);
             result.grid_waves=std::max(result.grid_waves,r.grid_waves);
             result.local_bytes=std::max(result.local_bytes,r.local_bytes);
         }
-        // Physical HBM edges also exist inside a logical macro group.
+        // Each physical materialized edge is written and read once. Ring
+        // buffer capacity and repeated launches do not multiply logical traffic.
         for(const auto& edge:plan.execution_boundaries) {
-            if(edge.bytes>(std::numeric_limits<std::uint64_t>::max()-result.boundary_bytes)/2) {
+            if(edge.storage!=BoundaryPolicy::GlobalScratch && edge.storage!=BoundaryPolicy::RingBuffer) continue;
+            // Ring edge.bytes is storage capacity for a window, not full-batch traffic.
+            auto bytes=edge.bytes;
+            if(edge.storage==BoundaryPolicy::RingBuffer) {
+                const auto per_batch=(1ULL<<plan.graph.log_n)*(plan.graph.word_bits/8)*
+                    (plan.graph.complex_values ? 2ULL : 1ULL);
+                if(per_batch && plan.graph.batch>std::numeric_limits<std::uint64_t>::max()/per_batch) {
+                    result.reason="boundary traffic overflows uint64"; result.complete=false; return result;
+                }
+                bytes=per_batch*plan.graph.batch;
+            }
+            if(bytes>(std::numeric_limits<std::uint64_t>::max()-result.boundary_bytes)/2) {
                 result.reason="boundary traffic overflows uint64"; return result;
             }
-            result.boundary_bytes+=2*edge.bytes;
+            result.boundary_bytes+=2*bytes;
+            if (!edge.producer_layout.empty() && edge.producer_layout != edge.consumer_layout) {
+                if (bytes > (std::numeric_limits<std::uint64_t>::max() - result.boundary_bytes) / 2) {
+                    result.reason = "layout conversion traffic overflows uint64";
+                    result.complete = false;
+                    return result;
+                }
+                // A materialized layout conversion reads and writes the full
+                // boundary once in addition to producer/consumer traffic.
+                result.boundary_bytes += 2 * bytes;
+            }
         }
         result.feasible=true;
-        result.reason="per-factor resource upper bounds satisfied; specialization occupancy remains unverified";
+        result.reason=result.complete ? "compiled groups satisfy static resource bounds; launch remains unverified"
+            : "known group resource bounds satisfied; compiler allocation or hardware limits unknown";
         return result;
     }
     if (plan.graph.log_n == 0 || plan.graph.log_n > 30 || plan.graph.batch == 0 ||
@@ -730,7 +915,31 @@ bool validate_plan(MixedDataflowPlan& plan, const HardwareResourceModel& hardwar
         plan.rejection_reason = "one boundary policy is required per logical edge";
         return false;
     }
-    if (plan.boundary == BoundaryPolicy::None && plan.cross_subgraph_dependencies) {
+    if (!plan.execution_groups.empty()) {
+        std::uint32_t covered = 0;
+        for (const auto& group : plan.execution_groups) {
+            if (group.first_stage != covered || group.stage_count == 0 ||
+                group.stage_count > plan.graph.stage_count - covered) {
+                plan.rejection_reason = "execution groups must cover the operator stages in order";
+                return false;
+            }
+            covered += group.stage_count;
+        }
+        if (covered != plan.graph.stage_count ||
+            plan.execution_boundaries.size() + 1 != plan.execution_groups.size()) {
+            plan.rejection_reason = "execution groups or physical exchange boundaries are incomplete";
+            return false;
+        }
+        for (std::size_t index = 0; index < plan.execution_boundaries.size(); ++index) {
+            const auto& edge = plan.execution_boundaries[index];
+            if (edge.producer_group != index || edge.consumer_group != index + 1 ||
+                (edge.storage != BoundaryPolicy::GlobalScratch && edge.storage != BoundaryPolicy::RingBuffer &&
+                 edge.storage != BoundaryPolicy::CooperativeGrid)) {
+                plan.rejection_reason = "physical execution groups require an explicit ordered exchange boundary";
+                return false;
+            }
+        }
+    } else if (plan.boundary == BoundaryPolicy::None && plan.cross_subgraph_dependencies) {
         plan.rejection_reason = "cross-subgraph dependencies require an explicit exchange boundary";
         return false;
     }

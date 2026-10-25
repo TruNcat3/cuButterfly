@@ -163,6 +163,71 @@ void test_physical_launches(cuntt::Backend backend, bool inverse) {
     if (backend==cuntt::Backend::Hybrid2D) require(probe.groups().size()==2,"Hybrid2D must expose two physical launches");
 }
 
+void test_compact_stage_probe(cuntt::OutputOrder order) {
+    cuntt::PlanConfig config;
+    config.log_n = 20;
+    config.batch = 4;
+    config.modulus = 576460756061519873ULL;
+    config.backend = cuntt::Backend::CompactStage;
+    config.output_order = order;
+    cuntt::Plan plan(config);
+    cuntt::detail::StageProbeAdapter probe(plan);
+    require(probe.groups().size() == 3, "compact-stage must expose three physical launches");
+    const unsigned partition[] = {5, 6, 9};
+    unsigned first_stage = 0;
+    for (unsigned i = 0; i < 3; ++i) {
+        const auto& group = probe.groups()[i];
+        require(group.independent, "compact-stage launch is not independent");
+        require(group.execution.first_stage == first_stage &&
+                    group.execution.stage_count == partition[i], "compact-stage interval mismatch");
+        require(group.execution.threads == 256 && group.execution.grid_ctas == 2048 * config.batch &&
+                    group.execution.launch_count == 1, "compact-stage physical shape mismatch");
+        require(group.execution.compiler_resources_known && group.execution.compiler_local_resources_known &&
+                    group.execution.live_shared_bytes == 512 * sizeof(std::uint64_t),
+                "compact-stage compiler resources missing");
+        require(group.in_place == (i == 1 || (i == 2 && order == cuntt::OutputOrder::BitReversed)),
+                "compact-stage alias contract mismatch");
+        first_stage += partition[i];
+    }
+    const auto n = plan.points_per_transform();
+    const auto bytes = plan.data_size();
+    std::vector<std::uint64_t> input(n * config.batch), expected(input.size()), actual;
+    for (std::size_t i = 0; i < input.size(); ++i) input[i] = (i * 31 + 7) % 101;
+    for (std::size_t b = 0; b < config.batch; ++b) {
+        std::vector<std::uint64_t> reference(input.begin() + b * n, input.begin() + (b + 1) * n);
+        cuntt::reference_ntt(reference, config.modulus, false);
+        for (unsigned i = 0; i < n; ++i) {
+            unsigned reversed = 0;
+            for (unsigned bit = 0; bit < config.log_n; ++bit) reversed = (reversed << 1) | ((i >> bit) & 1U);
+            expected[b * n + i] = reference[order == cuntt::OutputOrder::BitReversed ? reversed : i];
+        }
+    }
+    plan.execute(input, actual, 0, 1);
+    require(actual == expected, "compact-stage full plan differs from reference");
+    DeviceBuffer first(bytes), second(bytes);
+    void* source = first.data();
+    void* destination = second.data();
+    cudaStream_t stream = nullptr;
+    check_cuda(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking), "create compact-stage stream");
+    try {
+        check_cuda(cudaMemcpyAsync(source, input.data(), bytes, cudaMemcpyHostToDevice, stream), "copy compact-stage input");
+        for (unsigned i = 0; i < 3; ++i) {
+            if (probe.groups()[i].in_place) probe.launch_group(i, source, source, nullptr, stream);
+            else {
+                probe.launch_group(i, source, destination, nullptr, stream);
+                std::swap(source, destination);
+            }
+        }
+        check_cuda(cudaMemcpyAsync(actual.data(), source, bytes, cudaMemcpyDeviceToHost, stream), "read compact-stage output");
+        check_cuda(cudaStreamSynchronize(stream), "synchronize compact-stage stream");
+        require(actual == expected, "compact-stage physical launch chain differs from reference");
+    } catch (...) {
+        cudaStreamDestroy(stream);
+        throw;
+    }
+    check_cuda(cudaStreamDestroy(stream), "destroy compact-stage stream");
+}
+
 template <typename Word>
 void test_shared_output_order(unsigned log_n, const std::vector<std::uint32_t>& partition,
                               bool inverse, cuntt::OutputOrder order, bool overlap) {
@@ -237,6 +302,8 @@ int main() {
     try {
         test_output_order_inventory();
         test_shared_iterative_probe();
+        for (const auto order : {cuntt::OutputOrder::Natural, cuntt::OutputOrder::BitReversed})
+            test_compact_stage_probe(order);
         for (bool inverse : {false, true})
             for (const auto order : {cuntt::OutputOrder::Natural, cuntt::OutputOrder::BitReversed})
                 for (const auto& partition : std::vector<std::vector<std::uint32_t>>{{6}, {3,3}, {2,2,2}, {5,7}}) {

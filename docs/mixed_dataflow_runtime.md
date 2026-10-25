@@ -76,7 +76,24 @@ to scratch. A final event joins both stages back to the caller's stream.
 Plan resources are created once, and execute performs no stream creation or
 host synchronization. Submissions through one plan must be host-serialized;
 sequential submissions may change caller streams. Buffers must remain alive
-until the caller stream completes. CUDA graph capture is not validated here.
+until the caller stream completes.
+
+For a single tile, all groups launch directly on the caller stream. With no
+inter-tile parallelism to expose, stream order provides the group dependencies.
+Multiple tiles retain separate group streams; later groups inherit the input
+dependency through their first producer event, and a consumed-slot event is
+recorded only when a later tile will reuse that slot.
+
+CUDA Graph capture retains this same group/slot dependency graph. Producer
+events fork capture into the private streams and a capture-local completion
+event rejoins the caller. The ordinary-call completion event is kept separate:
+an event recorded outside a graph cannot supply an internal captured edge.
+Captured event edges are not completion notifications for future ordinary
+calls. Complete prior plan use before capture, serialize replays that share a
+plan/workspace, and order any ordinary call after a replay on its launch stream
+or through an explicit event. Keep the plan, buffers, workspace and graph alive
+until replay completes. The library cannot observe a caller's external
+`cudaGraphLaunch` to establish these cross-launch dependencies automatically.
 
 Workspace per intermediate buffer is
 `2 * batch_tile_count * batch_stride * sizeof(value)`, independent of total
@@ -86,10 +103,12 @@ storage are separate. This schedule still communicates through global memory:
 the ring allocation or total read-plus-write traffic. It does not assert
 cross-CTA shared-memory residency or persistent CTAs.
 
-Installation search enumerates bulk and power-of-two batch tile schedules for
-each compiled two-group cuFFTDx mapping. Runtime accepts any positive tile
-count; enumeration is a screening policy, not a restriction of the theoretical
-space. A tile at least as large as batch has no inter-tile overlap opportunity.
+Installation search enumerates bulk, power-of-two interior, and full-batch tile
+schedules for each compiled two-group cuFFTDx mapping. Runtime accepts any
+positive tile count; enumeration is a screening policy, not a restriction of
+the theoretical space. A tile at least as large as batch has no inter-tile
+overlap opportunity, but the full-batch point remains useful as an explicit
+one-tile pipeline control.
 The selector serializes the measured schedule. Cost-model features include
 schedule/tile count; older fitted models require refitting. No speedup or
 optimality follows from enabling this flag alone.
@@ -127,6 +146,14 @@ family uses `writer-aligned` layout, recurrence roots and two physical groups.
 Bulk and `--stage-overlap --batch-tile-count T` execution use the same cores;
 the latter allocates two global tile slots. FP32/64 on-demand specializations
 support the same scheduling contract. This does not add CTA warp-role schedules.
+
+The prebuilt FP32 inventory also contains a `prefix_codelet=radix4` option for
+the linear, single-lane register prefix. It changes only the local arithmetic
+provider and leaves the shared handoff, writer-aligned layout, and grouped
+suffix unchanged. The inventory exposes it only for the 16-point local leaf;
+odd-log factors remain represented by the native provider. This provider is a
+compiled inventory entry; the research JIT path must not alias it to the native
+codelet.
 
 For example, this is one measured explicit mapping, not a universal default:
 

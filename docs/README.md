@@ -1,5 +1,64 @@
 # Documentation Index
 
+The [October 25 full benchmark refresh](full_benchmark_refresh_20261025.md)
+defines the frozen seven-track rerun, prepared operator inputs, guarded execution
+and outstanding application bindings. Its pending state must not be confused
+with completed historical measurements.
+
+The [static-profile architecture decision](adr/0001-static-profile-driven-planning.md)
+defines shared hardware inputs, default local/bundled reuse and explicit refresh.
+The [constraint pipeline audit](constraint_pipeline_audit_20261024.md) separates
+the implemented common checks from remaining descriptor and model coverage gaps.
+The [common planner validation](common_planner_validation_20261024.md) records
+the GPU matrix, controlled tile-prefetch measurements and matched cuFFT results.
+The [A100 recalibration record](recalibration_20261024.md) records the completed
+finite stage-service calibration, its exact B=12–16 scope, and the remaining
+physical launch descriptor gap.
+The [physical launch audit](physical_launch_descriptor_audit_20261024.md) identifies
+which legacy NTT descriptors still need to distinguish logical roles from launches.
+
+The canonical benchmark scope is declared in
+[`benchmark/scopes/`](../benchmark/scopes/). Start with the active
+[A100 80GB research scope](../benchmark/scopes/a100_80gb_research_v1.json) and
+run `python scripts/validate_benchmark_scope.py benchmark/scopes/a100_80gb_research_v1.json`
+before starting or summarizing a comparison.
+
+The [project research principles](research_principles.md) define the shared
+design goal and evidence contract for **all butterfly operators**: adaptive
+mechanisms, replaceable cores, connected calibration/tuning/selection, two
+distinct ablations and matched-batch application comparisons. These principles
+are separate from the completion status of any particular experiment.
+
+The [reporting and evidence contract](reporting_contract.md) is the canonical
+format for new reports. It separates scope, protocol, results, attribution,
+limitations and reproduction, and keeps measured, derived, external,
+unsupported and placeholder records distinguishable. The [project and authors](about.md)
+page is the source for software attribution and citation metadata.
+
+The [persistent-query and grouped-worker update](async_fast_dispatch_20261010.md)
+addresses Plan initialization after the known compilation queue drained. It
+records transport parity, CPU overhead and the checked experiment transition.
+
+The [bounded-worker recovery](async_recovery_20261010.md) records the October 10
+resource failure, audited continuation, bounded process lifetimes and completed
+120 original-device scaled controls. Its CPU preparation follow-up documents
+the independent parallel compiler and the remaining adaptive-export boundary.
+The full comparison remains in progress.
+
+The [real FFT range-control repair](numeric_range_controls_20261009_v2.md)
+audits 120 raw numeric failures, adds the 24 missing R2C/C2R controls and records
+their completed A100 40GB diagnostic separately from pending 80GB replay.
+
+The [asynchronous experiment queue](async_experiments_20261009.md) separates CPU
+input/oracle preparation, compilation and verification from serialized GPU
+measurement. It preserves v0.9.3.4 calibration and checked historical results.
+
+The [0.9.3 bounded support milestone](bounded_support_20261008.md) records the
+current workload limits, new arithmetic lowerings, targeted validation and
+remaining full-campaign obligations. The earlier
+[descriptor-based 0.9.2 retest](semantic_campaign_20261007.md) retains its
+original matrix, measurements, calibration scope and comparison decisions.
+
 > Note: Paths marked `local artifact` are local experiment records and are not included in this source release.
 
 cuButterfly has two contracts: a usable CUDA library and a research artifact
@@ -17,7 +76,108 @@ API, compile policy, incremental registry and installation search. The
 [refactor progress](framework_refactor_progress.md) separates verified changes
 from remaining performance acceptance work.
 
+The [prepared RNS integration guide](rns_prepared_integration.md) explains how
+to export actual CKKS NTT requests, prepare measured mappings offline, require
+compatible cache replay, and replace a Python NTT callback while preserving the
+native application baseline.
+
+The [RNS exchange follow-up](../results/rns_exchange_20261021/README.md) records
+the dependency-scoped synchronization option, exact and sanitizer checks,
+controlled comparisons, and the remaining small-request/CKKS performance gap.
+
+The [RNS single-warp and CKKS attribution report](../results/rns_single_warp_20261021/README.md)
+records 32-thread coverage, allocation-failure recovery, retuned request replay,
+complete-Graph profiling and explicit native-dispatch controls. It separates
+historical NTT gains from the small/medium requests limiting the current application.
+
+The [RNS stage-role report](../results/rns_stage_role_20261021/README.md)
+records compile-time role specialization, retuned real requests, cache
+sensitivity controls and complete-Graph attribution. Its six operator points
+reach 1.131x geometric mean; complete CKKS bootstrap improves to about 1.033x,
+with the remaining small/medium request losses retained.
+
+The [runtime RNS tuning report](../results/rns_tile_io_20261021/README.md)
+records the public tuning-budget control and an all-request cache-only replay.
+Using 12 bounded tuning repetitions, complete CKKS Graph bootstrap reaches
+1.034x at B=1 and 1.033x at B=8 with 118/118 runtime cache hits.
+
+The [NTT mechanism audit](ntt_common_mechanisms_20261023.md) records which
+organization mechanisms are genuinely shared with other butterfly operators and
+which APPT role, readiness and coefficient-supply protocols remain NTT-specific.
+The [NTT APPT variant audit](ntt_appt_variant_audit_20261023.md) maps every
+APPT core to its launcher, validation, and portable-search status, with explicit
+omission reasons for variants that lack an independent descriptor.
+
+The [weak-region quick replay](weak_regions_quick_20261023.md) records the
+post-audit A100 diagnostic matrix and separates automatic vendor whole-FFT
+selection from forced local hybrid paths.
+
+The [open-source template exploration](open_source_template_exploration_20261023.md)
+records the matched A100 experiments for the shared axis-pair route, the
+generated stage-local route, and an actual VkFFT provider plus mixed-provider
+Graph. It separates reusable VkFFT/rocFFT/cuFFTDx mechanisms from
+complete-library baseline claims.
+
+The [radix-4 core and resident-subgraph experiment](fft_radix4_subgraph_20261024.md)
+records corrected mixed-radix mapping, matched-core resident/split controls,
+CPU FP32 error distributions, and the shared-memory alignment repair. Its
+32×32 FP32 diagnostic results remain separate from public-selector performance.
+
+The [public radix-4 integration report](public_radix4_integration_20261024.md)
+records the public xD candidate, strict mapping replay, cache reuse, complete
+cuFFT provider baseline, and bounded two-dimensional/three-dimensional results.
+It keeps long 1D, FP64, and compact-real pair packing outside the verified range.
+
+The [radix-4 completion report](radix4_completion_20261024.md) extends the public
+path to FP64 and compact-real pair packing, and connects mixed-radix register
+leaves to long-1D JIT and candidate enumeration. It reports automatic xD
+selection separately from fixed-mapping long-1D core replacement, including
+negative results and complete conversion costs.
+
+The [FP64 factor-graph exploration](factor_graph_exploration_20261025.md) reports
+the follow-up CTA tile-group scan on the existing cuFFTDx block core, including
+forward/inverse, B=4/16/64, neighboring factor points, and the remaining gap to
+cuFFT. It is an explicit mapping experiment and does not certify AUTO selection.
+
+The [fixed-core organization controls](factor_core_organization_experiment_20261025.md)
+separate native/cuFFTDx core identity from tile scheduling and prefetch depth.
+They record the async wait correction, GPU correctness and race checks, and the
+completed nine-case A100 80GB experiment, including its cuFFT gap. This is a matched
+organization diagnostic, not a claim of complete open-source core transfer.
+
+The [template and parameter audit](template_parameter_audit_20261013.md)
+records which core and organization dimensions are actually connected across
+FFT, NTT, FWHT, subset/superset and structured operators. It distinguishes an
+imported provider from an absorbed, parameterized template strategy and lists
+the remaining concrete lowering gaps.
+The accompanying [core contract implementation record](core_template_contract_20261013.md)
+contains the v21 parameter fixes, build identity, focused correctness coverage
+and matched application regression results.
+
+The [October 7 engineering review](engineering_review_20261007.md) records
+search/statistics checks and the reviewed comparison entry. Preparation is
+CPU-only; measurements require matching calibration and an available GPU.
+
+The [public frontend dimension audit](public_frontend_dimension_audit_20261007.md)
+checks which semantic dimensions reach public APIs and lowering, identifies
+silent C++ field losses, and separates finite regression coverage from the
+unfinished general-library contract.
+
+The [0.9.2 unified semantics](unified_semantics.md) documents the repair,
+installed Python frontend, common logical-order/layout boundary and explicit
+lowering gaps. The preceding performance campaign is cancelled; correctness
+regressions do not constitute a replacement performance matrix.
+
+The [xD lowering guide](xd_lowering.md) covers rank-two/rank-three planning,
+resident and per-axis candidates, compact real FFT, and the measured selection
+and replay contracts introduced in 0.9.1.
+
 ## Reading by Task
+
+The [integrated rc.2 repair acceptance plan](integrated_acceptance_rc2.md)
+tracks the FFT pipeline/exchange, NTT boundary and FWHT retained-state fixes
+under one future build. It distinguishes planned integration, prepared inputs
+and measured results; older queues do not establish acceptance of these fixes.
 
 Use [unified planner](unified_planner.md) for current API/lowering/search behavior,
 [hardware calibration](hardware_profile_install.md) for migration and experiment
@@ -79,6 +239,10 @@ The following is an optional first-time orientation, not a prerequisite for edit
 | Supported operators and numeric forms | [Capability Matrix](support_matrix.md), [Operator Catalog](operator_catalog.md) |
 | Examples | [Examples](examples.md) |
 | Current runtime selection | [Unified Planner](unified_planner.md) |
+| Platform tuning priors and identity | [Platform Tuning Rules](platform_tuning.md) |
+| Multidimensional transforms and compact real FFT | [xD Lowering](xd_lowering.md) |
+| xD lowering prior art and adopted mechanisms | [xD Related Work](xd_lowering_related_work.md) |
+| Unified external comparison targets | [Comparison Catalog](../config/external_comparison_catalog.json) |
 | Historical generated selector | [Runtime Mapping Selector](runtime_selector.md) |
 | Unified runtime migration and remaining gaps | [Mixed-Dataflow Runtime](mixed_dataflow_runtime.md) |
 | Install-time GPU calibration | [Hardware Profile Initialization](hardware_profile_install.md) |
@@ -112,6 +276,8 @@ The following is an optional first-time orientation, not a prerequisite for edit
 | Length and batch scaling | [V100 Scaling](v100_scaling_results.md) |
 | NCU methodology | [NCU Profiling](ncu_profiling.md) |
 | Reproduction commands and evidence labels | [Reproducibility](reproducibility.md) |
+| Report structure and provenance | [Reporting and Evidence Contract](reporting_contract.md) |
+| Project attribution and citation | [Project and Authors](about.md) |
 | Hardware capability and model generation | [Hardware Profile Initialization](hardware_profile_install.md) |
 | Raw and reduced artifacts | [`../results/README.md`](../results/README.md) |
 

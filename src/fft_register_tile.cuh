@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cuntt/butterfly.hpp"
+#include "fft_radix4_codelet.cuh"
 #include <cuda_runtime.h>
 #include <type_traits>
 
@@ -47,10 +48,114 @@ __device__ __forceinline__ void fft(Complex (&v)[1U << Log]) {
     }
 }
 
+// A prebuilt radix-4 local codelet.  NTT's local cores use the same
+// compile-time decomposition principle: keep a small transform entirely in
+// registers, expose the radix as a provider choice, and leave the global
+// producer/consumer boundary to the scheduler.  The input and output contract
+// is natural order, matching the existing radix-2 codelet.
+template <unsigned Log, bool Inverse, class Complex>
+__device__ __forceinline__ void fft_radix4(Complex (&v)[1U << Log]) {
+    // A cooperative leaf can shrink to two points. That is the residual
+    // binary digit of the same mixed-radix algorithm, not a different core.
+    if constexpr (Log < 2) {
+        fft<Log, Inverse>(v);
+        return;
+    }
+    using Real = decltype(Complex{}.real);
+    constexpr unsigned N = 1U << Log;
+    if constexpr ((Log % 2) != 0) {
+        // Binary reversal permits fusing pairs of DIT stages without a
+        // non-involutive mixed-radix digit permutation. Logical radix-4
+        // inputs occupy physical slots 0,2,1,3; phases follow logical slots.
+        #pragma unroll
+        for (unsigned i = 0; i < N; ++i) {
+            const unsigned j = __brev(i) >> (32 - Log);
+            if (i < j) { const auto t = v[i]; v[i] = v[j]; v[j] = t; }
+        }
+        #pragma unroll
+        for (unsigned stage = 0; stage + 1 < Log; stage += 2) {
+            const unsigned quarter = 1U << stage, size = quarter * 4;
+            #pragma unroll
+            for (unsigned base = 0; base < N; base += size) {
+                #pragma unroll
+                for (unsigned j = 0; j < quarter; ++j) {
+                    const auto a = v[base+j];
+                    const auto b = multiply(v[base+2*quarter+j], root<Inverse,Complex>(Real(j)/Real(size)));
+                    const auto c = multiply(v[base+quarter+j], root<Inverse,Complex>(Real(2*j)/Real(size)));
+                    const auto d = multiply(v[base+3*quarter+j], root<Inverse,Complex>(Real(3*j)/Real(size)));
+                    struct XY { Real x,y; };
+                    XY x0{a.real,a.imag}, x1{b.real,b.imag}, x2{c.real,c.imag}, x3{d.real,d.imag};
+                    cuntt::detail::fft_radix4<Inverse>(x0,x1,x2,x3);
+                    v[base+j]={x0.x,x0.y}; v[base+quarter+j]={x1.x,x1.y};
+                    v[base+2*quarter+j]={x2.x,x2.y}; v[base+3*quarter+j]={x3.x,x3.y};
+                }
+            }
+        }
+        #pragma unroll
+        for (unsigned j = 0; j < N/2; ++j) {
+            const auto a=v[j];
+            const auto b=multiply(v[j+N/2],root<Inverse,Complex>(Real(j)/Real(N)));
+            v[j]={a.real+b.real,a.imag+b.imag};
+            v[j+N/2]={a.real-b.real,a.imag-b.imag};
+        }
+        return;
+    }
+    constexpr unsigned DigitCount = Log / 2;
+    // Base-4 digit reversal is the radix-4 analogue of the bit reversal in
+    // fft().  It is compile-time sized and therefore becomes a short sequence
+    // of integer operations in each prebuilt local module.
+#pragma unroll
+    for (unsigned i = 0; i < N; ++i) {
+        unsigned j = 0;
+#pragma unroll
+        for (unsigned digit = 0; digit < DigitCount; ++digit)
+            j |= ((i >> (2 * digit)) & 3U) << (Log - 2 - 2 * digit);
+        if (i < j) { const auto t = v[i]; v[i] = v[j]; v[j] = t; }
+    }
+#pragma unroll
+    for (unsigned stage = 0; stage < DigitCount; ++stage) {
+        const unsigned quarter = 1U << (2 * stage);
+        const unsigned size = quarter * 4U;
+#pragma unroll
+        for (unsigned base = 0; base < N; base += size) {
+#pragma unroll
+            for (unsigned j = 0; j < quarter; ++j) {
+                const auto a = v[base + j];
+                const auto b = multiply(v[base + quarter + j],
+                                        root<Inverse, Complex>(Real(j) / Real(size)));
+                const auto c = multiply(v[base + 2 * quarter + j],
+                                        root<Inverse, Complex>(Real(2 * j) / Real(size)));
+                const auto d = multiply(v[base + 3 * quarter + j],
+                                        root<Inverse, Complex>(Real(3 * j) / Real(size)));
+                const Complex t0{a.real + c.real, a.imag + c.imag};
+                const Complex t1{a.real - c.real, a.imag - c.imag};
+                const Complex t2{b.real + d.real, b.imag + d.imag};
+                const Complex difference{b.real - d.real, b.imag - d.imag};
+                const auto rotated = multiply(difference, root<Inverse, Complex>(Real(1) / Real(4)));
+                v[base + j] = {t0.real + t2.real, t0.imag + t2.imag};
+                v[base + quarter + j] = {t1.real + rotated.real, t1.imag + rotated.imag};
+                v[base + 2 * quarter + j] = {t0.real - t2.real, t0.imag - t2.imag};
+                v[base + 3 * quarter + j] = {t1.real - rotated.real, t1.imag - rotated.imag};
+            }
+        }
+    }
+}
+
 template <unsigned Log, bool Inverse>
 struct NativeCodelet {
-    __device__ __forceinline__ void operator()(Complex32 (&v)[1U << Log]) const {
+    template<class Complex>
+    __device__ __forceinline__ void operator()(Complex (&v)[1U << Log]) const {
         fft<Log, Inverse>(v);
+    }
+};
+
+template <unsigned Log, bool Inverse>
+struct Radix4Codelet {
+    __device__ __forceinline__ void operator()(Complex32 (&v)[1U << Log]) const {
+        fft_radix4<Log, Inverse>(v);
+    }
+    __device__ __forceinline__ void operator()(Complex64 (&v)[1U << Log]) const {
+        fft_radix4<Log, Inverse>(v);
     }
 };
 
@@ -83,8 +188,7 @@ __device__ __forceinline__ void cooperative_fft(Complex (&v)[(1U << Log) / Lanes
     constexpr unsigned K = (1U << Log) / Lanes;
     using Real = decltype(Complex{}.real);
     if constexpr (Log > LaneLog) {
-        if constexpr (std::is_same_v<Complex, Complex32>) Codelet<Log-LaneLog, Inverse>{}(v);
-        else fft<Log-LaneLog, Inverse>(v);
+        Codelet<Log-LaneLog, Inverse>{}(v);
     }
     if constexpr (Lanes == 2 || Lanes == 4) {
         const unsigned mask = __activemask();
