@@ -1,0 +1,26 @@
+{
+  "schema": "cubutterfly-core-dataflow-ablation-runtime-v1",
+  "status": "complete",
+  "target": {
+    "id": "a100-80gb-gpu1",
+    "gpu_uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02",
+    "compute_capability": "8.0"
+  },
+  "source": {
+    "path": "apps/cubutterfly_core_dataflow_ablation.cu",
+    "binary_sha256": "33c92e2a97021db99666a0511b6014cdeed466e6a4cc7b05940bcc4205f06c88",
+    "measurements": "results/paper_completion_20260917/core_dataflow_ablation/measurements.csv",
+    "analysis": "results/paper_completion_20260917/core_dataflow_ablation/summary.json"
+  },
+  "protocol": {
+    "workloads": 6,
+    "cells": 24,
+    "rows": 72,
+    "trials_per_cell": 3,
+    "warmup": 10000,
+    "repeat": 100,
+    "timing": "CUDA events around repeated enqueue/launch sequence",
+    "correctness": "all cells passed full-batch cuFFT reference"
+  },
+  "note": "Supersedes the earlier prepared-not-executed manifest; migration and V100 work are outside this cohort."
+}

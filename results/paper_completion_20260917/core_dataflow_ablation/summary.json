@@ -1,0 +1,531 @@
+{
+  "schema": "cubutterfly-core-dataflow-ablation-analysis-v1",
+  "status": "complete",
+  "input_rows": 72,
+  "expected_groups": 6,
+  "accepted_groups": 6,
+  "groups": [
+    {
+      "case": "fft-fp32-n8",
+      "cohort": "latency",
+      "logN": 8,
+      "batch": 1,
+      "cells": {
+        "native/stagewise-hbm": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.0107212806,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 1.28821965e-07,
+          "relative_l2_error_max": 1.11817857e-07
+        },
+        "native/resident-prefix-2": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.00783360004,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 1.28821965e-07,
+          "relative_l2_error_max": 1.11817857e-07
+        },
+        "cufftdx-thread/stagewise-hbm": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.0100556803,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 1.28821965e-07,
+          "relative_l2_error_max": 1.11817857e-07
+        },
+        "cufftdx-thread/resident-prefix-2": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.00708607972,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 1.28821965e-07,
+          "relative_l2_error_max": 1.11817857e-07
+        }
+      },
+      "resident_speedup_vs_stagewise": {
+        "native": 1.3686275205850313,
+        "cufftdx-thread": 1.4190752429186613
+      },
+      "core_speedup_cufftdx_vs_native": {
+        "stagewise-hbm": 1.0661914738876495,
+        "resident-prefix-2": 1.1054913788071241
+      },
+      "core_dataflow_interaction": {
+        "resident_over_stagewise_core_speedup": 1.0368600817789093,
+        "log_ratio": 0.036196994183513714
+      },
+      "negative_cells": [],
+      "complete_and_accepted": true
+    },
+    {
+      "case": "fft-fp32-n8",
+      "cohort": "throughput",
+      "logN": 8,
+      "batch": 65536,
+      "cells": {
+        "native/stagewise-hbm": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.918804474,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 1.68420915e-07,
+          "relative_l2_error_max": 1.22576544e-07
+        },
+        "native/resident-prefix-2": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.686264343,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 1.68420915e-07,
+          "relative_l2_error_max": 1.22576544e-07
+        },
+        "cufftdx-thread/stagewise-hbm": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.900495377,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 1.68420915e-07,
+          "relative_l2_error_max": 1.22576544e-07
+        },
+        "cufftdx-thread/resident-prefix-2": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.675983353,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 1.68420915e-07,
+          "relative_l2_error_max": 1.22576544e-07
+        }
+      },
+      "resident_speedup_vs_stagewise": {
+        "native": 1.3388492107625063,
+        "cufftdx-thread": 1.3321265575603605
+      },
+      "core_speedup_cufftdx_vs_native": {
+        "stagewise-hbm": 1.0203322498567362,
+        "resident-prefix-2": 1.015208939620145
+      },
+      "core_dataflow_interaction": {
+        "resident_over_stagewise_core_speedup": 0.9949787824139532,
+        "log_ratio": -0.005033866257990582
+      },
+      "negative_cells": [],
+      "complete_and_accepted": true
+    },
+    {
+      "case": "fft-fp32-n12",
+      "cohort": "latency",
+      "logN": 12,
+      "batch": 1,
+      "cells": {
+        "native/stagewise-hbm": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.0265113592,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 2.51279993e-07,
+          "relative_l2_error_max": 1.90120771e-07
+        },
+        "native/resident-prefix-2": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.0237465596,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 2.51279993e-07,
+          "relative_l2_error_max": 1.90120771e-07
+        },
+        "cufftdx-thread/stagewise-hbm": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.0249855995,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 2.51279993e-07,
+          "relative_l2_error_max": 1.90120771e-07
+        },
+        "cufftdx-thread/resident-prefix-2": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.0221183991,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 2.51279993e-07,
+          "relative_l2_error_max": 1.90120771e-07
+        }
+      },
+      "resident_speedup_vs_stagewise": {
+        "native": 1.1164294805888428,
+        "cufftdx-thread": 1.1296296529887644
+      },
+      "core_speedup_cufftdx_vs_native": {
+        "stagewise-hbm": 1.061065562985591,
+        "resident-prefix-2": 1.0736111367119694
+      },
+      "core_dataflow_interaction": {
+        "resident_over_stagewise_core_speedup": 1.011823561299151,
+        "log_ratio": 0.011754209122807842
+      },
+      "negative_cells": [],
+      "complete_and_accepted": true
+    },
+    {
+      "case": "fft-fp32-n12",
+      "cohort": "throughput",
+      "logN": 12,
+      "batch": 4096,
+      "cells": {
+        "native/stagewise-hbm": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 1.30574341,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 2.61139572e-07,
+          "relative_l2_error_max": 1.8819847e-07
+        },
+        "native/resident-prefix-2": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 1.06786819,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 2.61139572e-07,
+          "relative_l2_error_max": 1.8819847e-07
+        },
+        "cufftdx-thread/stagewise-hbm": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 1.2842189,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 2.61139572e-07,
+          "relative_l2_error_max": 1.8819847e-07
+        },
+        "cufftdx-thread/resident-prefix-2": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 1.06475517,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 2.61139572e-07,
+          "relative_l2_error_max": 1.8819847e-07
+        }
+      },
+      "resident_speedup_vs_stagewise": {
+        "native": 1.2227570988887684,
+        "cufftdx-thread": 1.2061166136436792
+      },
+      "core_speedup_cufftdx_vs_native": {
+        "stagewise-hbm": 1.0167607796459,
+        "resident-prefix-2": 1.0029236955947347
+      },
+      "core_dataflow_interaction": {
+        "resident_over_stagewise_core_speedup": 0.9863910131781596,
+        "log_ratio": -0.013702437901243088
+      },
+      "negative_cells": [],
+      "complete_and_accepted": true
+    },
+    {
+      "case": "fft-fp32-n16",
+      "cohort": "latency",
+      "logN": 16,
+      "batch": 1,
+      "cells": {
+        "native/stagewise-hbm": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.0348672009,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 3.1260943e-07,
+          "relative_l2_error_max": 2.49005607e-07
+        },
+        "native/resident-prefix-2": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.0318361592,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 3.1260943e-07,
+          "relative_l2_error_max": 2.49005607e-07
+        },
+        "cufftdx-thread/stagewise-hbm": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.0326246405,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 3.1260943e-07,
+          "relative_l2_error_max": 2.49005607e-07
+        },
+        "cufftdx-thread/resident-prefix-2": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 0.0297779202,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 3.1260943e-07,
+          "relative_l2_error_max": 2.49005607e-07
+        }
+      },
+      "resident_speedup_vs_stagewise": {
+        "native": 1.0952075179973344,
+        "cufftdx-thread": 1.0955983588135214
+      },
+      "core_speedup_cufftdx_vs_native": {
+        "stagewise-hbm": 1.0687382409623791,
+        "resident-prefix-2": 1.0691196358300403
+      },
+      "core_dataflow_interaction": {
+        "resident_over_stagewise_core_speedup": 1.0003568646213292,
+        "log_ratio": 0.0003568009602954586
+      },
+      "negative_cells": [],
+      "complete_and_accepted": true
+    },
+    {
+      "case": "fft-fp32-n16",
+      "cohort": "throughput",
+      "logN": 16,
+      "batch": 256,
+      "cells": {
+        "native/stagewise-hbm": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 1.48992004,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 3.12571354e-07,
+          "relative_l2_error_max": 2.49060841e-07
+        },
+        "native/resident-prefix-2": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 1.25623299,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 3.12571354e-07,
+          "relative_l2_error_max": 2.49060841e-07
+        },
+        "cufftdx-thread/stagewise-hbm": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 1.45729538,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 3.12571354e-07,
+          "relative_l2_error_max": 2.49060841e-07
+        },
+        "cufftdx-thread/resident-prefix-2": {
+          "rows": 3,
+          "trials": [
+            0,
+            1,
+            2
+          ],
+          "median_kernel_ms": 1.24271614,
+          "all_correct": true,
+          "accepted_for_ratio": true,
+          "relative_max_error_max": 3.12571354e-07,
+          "relative_l2_error_max": 2.49060841e-07
+        }
+      },
+      "resident_speedup_vs_stagewise": {
+        "native": 1.1860220610827932,
+        "cufftdx-thread": 1.1726695526783775
+      },
+      "core_speedup_cufftdx_vs_native": {
+        "stagewise-hbm": 1.0223871292311377,
+        "resident-prefix-2": 1.0108768604228477
+      },
+      "core_dataflow_interaction": {
+        "resident_over_stagewise_core_speedup": 0.9887417706275841,
+        "log_ratio": -0.011322082941145901
+      },
+      "negative_cells": [],
+      "complete_and_accepted": true
+    }
+  ],
+  "geomean": {
+    "same_core_dataflow": {
+      "native": 1.2170159442838342,
+      "cufftdx-thread": 1.2207232586928176
+    },
+    "same_dataflow_core": {
+      "stagewise-hbm": 1.042327248331031,
+      "resident-prefix-2": 1.0455024202297754
+    },
+    "core_dataflow_interaction": 1.0030462332284111
+  },
+  "comparisons": {
+    "same_core_dataflow": {
+      "native": {
+        "count": 6,
+        "geomean": 1.2170159442838342,
+        "faster": 6,
+        "parity": 0,
+        "slower": 0,
+        "min": 1.0952075179973344,
+        "max": 1.3686275205850313
+      },
+      "cufftdx-thread": {
+        "count": 6,
+        "geomean": 1.2207232586928176,
+        "faster": 6,
+        "parity": 0,
+        "slower": 0,
+        "min": 1.0955983588135214,
+        "max": 1.4190752429186613
+      }
+    },
+    "same_dataflow_core": {
+      "stagewise-hbm": {
+        "count": 6,
+        "geomean": 1.042327248331031,
+        "faster": 6,
+        "parity": 0,
+        "slower": 0,
+        "min": 1.0167607796459,
+        "max": 1.0687382409623791
+      },
+      "resident-prefix-2": {
+        "count": 6,
+        "geomean": 1.0455024202297754,
+        "faster": 6,
+        "parity": 0,
+        "slower": 0,
+        "min": 1.0029236955947347,
+        "max": 1.1054913788071241
+      }
+    },
+    "core_dataflow_interaction": {
+      "count": 6,
+      "geomean": 1.0030462332284111,
+      "faster": 3,
+      "parity": 0,
+      "slower": 3,
+      "min": 0.9863910131781596,
+      "max": 1.0368600817789093
+    }
+  },
+  "interpretation": {
+    "resident_speedup": "stagewise median kernel_ms / resident median kernel_ms; >1 is faster",
+    "core_speedup": "native median kernel_ms / cuFFTDx Thread median kernel_ms; >1 is faster",
+    "interaction": "ratio of resident to stagewise core speedup; no ratio is emitted for incomplete/incorrect groups",
+    "geomean": "geometric mean across accepted latency and throughput groups; incomplete/incorrect groups are excluded"
+  },
+  "excluded_attempts": [
+    {
+      "metadata": "fft-fp32-n16-throughput.telemetry.json",
+      "status": "running",
+      "pid": 146169,
+      "pid_active": false,
+      "stdout_rows": 12,
+      "reason": "non-completed telemetry is excluded from accepted measurements"
+    }
+  ]
+}
