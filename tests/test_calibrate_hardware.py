@@ -137,6 +137,7 @@ def test_dry_run_writes_reproducible_migration_manifest(tmpdir):
     assert manifest["status"] == "planned"
     assert manifest["workloads"]["workload_count"] == 2
     assert manifest["workloads"]["operators"] == ["fft", "ntt"]
+    assert manifest["protocol"]["stage_point_budget"] == 0
     assert "calibrate_local_hardware.py" in " ".join(manifest["calibration_command"])
 
 

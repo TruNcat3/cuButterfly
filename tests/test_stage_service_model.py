@@ -1,3 +1,4 @@
+import copy
 import json
 import pathlib
 import sys
@@ -87,6 +88,26 @@ def test_curve_key_separates_fwht_exchange_and_ignores_batch_grid_mapping_noise(
     assert service.curve_key(s, first) == service.curve_key(altered, first)
 
 
+def test_partial_ranking_scope_filters_curves_only_when_explicitly_enforced():
+    s = sample()
+    first, second = group(1, duration=2), group(1, duration=3, exchange=0)
+    profile = service.build_profile([record(s, [first, second])])
+    key = service.curve_key(s, first)
+    profile["ranking_scope"] = {"validated_curve_keys": [key]}
+    assert service.predict_group(s, second, profile)["covered"]
+    profile["enforce_ranking_scope"] = True
+    assert service.predict_group(s, first, profile)["covered"]
+    assert not service.predict_group(s, second, profile)["covered"]
+    assert service._profile_index(profile).curves.keys() == {key}
+    unknown = dict(second)
+    unknown.pop("compiler_resources_known")
+    assert not service.predict_group_resolved(s, unknown, profile)[0]["covered"]
+    profile["ranking_scope"]["validated_curve_keys"] = []
+    assert not service.predict_group(s, first, profile)["covered"]
+    profile["enforce_ranking_scope"] = False
+    assert service.predict_group(s, first, profile)["covered"]
+
+
 def test_curve_identity_tracks_group_codelet_but_reuses_unrelated_stage_policy():
     mapping = {
         "schema_version": 1, "kind": "butterfly", "backend": "online-reorder",
@@ -159,6 +180,36 @@ def test_curve_identity_tracks_each_factor_io_policy_independently():
     assert service.curve_key(first, first_group) != service.curve_key(changed, first_group)
     second_group = group(1, index=1, core="cufftdx-block", io_policy="dynamic")
     assert service.curve_key(first, second_group) == service.curve_key(changed, second_group)
+
+
+def test_canonical_mapping_preserves_flat_factor_shape_axes():
+    """Incomplete canonical mappings must not collapse factor service curves."""
+    mapping = {
+        "schema_version": 1, "kind": "butterfly",
+        "backend": "factor-streamed", "fft_core": "cufftdx-block",
+        "factor_partition": [10, 10],
+    }
+    base = sample(operator="fft", precision="fp64", backend="factor-streamed",
+                  fft_core="cufftdx-block", mapping_json=json.dumps(mapping),
+                  factor_ept=8, factor_columns=4,
+                  data_tiles_per_cta=1, prefetch_depth=0)
+    group = {
+        "index": 0, "stage_count": 10, "core": "cufftdx-block",
+        "threads": 512, "io_policy": "dynamic", "grid_ctas": 128,
+        "work_blocks": 128, "data_tiles_per_cta": 1, "prefetch_depth": 0,
+        "compiler_resources_known": True,
+    }
+    changed = dict(base, factor_ept=16)
+    assert service.curve_key(base, group) != service.curve_key(changed, group)
+    changed = dict(base, factor_columns=8)
+    assert service.curve_key(base, group) != service.curve_key(changed, group)
+    changed = dict(base, prefetch_depth=1)
+    changed_group = dict(group, prefetch_depth=1)
+    assert service.curve_key(base, group) != service.curve_key(changed, changed_group)
+
+    incomplete = dict(mapping, factor_ept=None, factor_columns="")
+    incomplete_sample = dict(base, mapping_json=json.dumps(incomplete))
+    assert service.curve_key(incomplete_sample, group) == service.curve_key(base, group)
 
 
 def test_actual_batch_time_is_load_and_midpoint_reuses_curve():
@@ -353,6 +404,41 @@ def test_resource_resolution_index_preserves_unknown_resource_semantics():
 
     resolved = service.resolve_resources(s, known, profile)
     assert resolved == known
+
+
+def test_service_profile_index_reuses_identity_and_invalidates_rebuilt_curves():
+    s = sample()
+    profile = service.build_profile([record(s, [group(1, duration=2), group(5, duration=10)])])
+    first = service._profile_index(profile)
+    assert first is service._profile_index(profile)
+
+    rebuilt = copy.deepcopy(profile)
+    rebuilt_curve = next(iter(rebuilt["curves"].values()))
+    rebuilt_curve["train_points"][0]["kernel_ms"] = 7.0
+    assert service._profile_index(rebuilt) is not first
+    assert service.predict_group(s, group(1), rebuilt)["kernel_ms"] == pytest.approx(7.0)
+
+    replacement = copy.deepcopy(profile)
+    key = next(iter(replacement["curves"]))
+    replacement["curves"][key] = copy.deepcopy(replacement["curves"][key])
+    assert service._profile_index(replacement) is not first
+
+
+def test_combined_resource_resolution_matches_public_two_step_path():
+    s = sample()
+    known = group(1, live=1024)
+    unknown = dict(known)
+    unknown.pop("live_shared_bytes")
+    unknown["compiler_resources_known"] = False
+    profile = service.build_profile([record(s, [known])])
+    index = service._profile_index(profile)
+    expected_group = service.resolve_resources(s, unknown, profile, index=index)
+    expected = service.predict_group(s, expected_group, profile, index=index)
+    actual, actual_group, resources_resolved = service.predict_group_resolved(
+        s, unknown, profile, index=index)
+    assert actual == expected
+    assert actual_group == expected_group
+    assert resources_resolved
 
 
 def test_validation_is_independent_and_empty_holdout_is_not_success():

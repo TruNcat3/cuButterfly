@@ -1,0 +1,21 @@
+{
+  "schema": "cubutterfly-semantic-campaign-config-v1",
+  "populations": [
+    {
+      "name": "fft-l-c2c-quick-raw",
+      "shapes": [[4096], [64, 64]],
+      "batches": [1, 4],
+      "directions": ["forward", "inverse"],
+      "normalizations": ["inverse"],
+      "placements": ["out-of-place"],
+      "order_patterns": ["natural"],
+      "layouts": ["packed"],
+      "regimes": [
+        {"name": "fp16-native", "transform": {"op": 0, "storage": 4, "compute": 0}},
+        {"name": "fp16-fp32-arithmetic", "transform": {"op": 0, "storage": 4, "compute": 1}},
+        {"name": "bf16-native", "transform": {"op": 0, "storage": 5, "compute": 0}},
+        {"name": "bf16-fp32-arithmetic", "transform": {"op": 0, "storage": 5, "compute": 1}}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+cuButterfly hardware resources: live-cuda-properties:no-compatible-static-artifact
+PASS factor pipeline native-fp64-two-factor-inverse-stride2 core=register-tile slices=2 groups=2
+PASS factor pipeline cufftdx-fp64-four-factor-unequal core=cufftdx-block slices=2 groups=4
+PASS factor pipeline cufftdx-fp32-three-factor-unequal-tail core=cufftdx-block slices=4 groups=3
+PASS factor pipeline native-fp32-four-factor-tail core=register-tile slices=2 groups=4
+PASS factor pipeline scheduler coverage

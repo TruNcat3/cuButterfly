@@ -1,0 +1,76 @@
+{
+  "schema": "cubutterfly-core-dataflow-ablation-config-v1",
+  "protocol": {
+    "trials": 3,
+    "warmup": 10000,
+    "repeat": 100,
+    "correctness": "full-batch-cuFFT-reference"
+  },
+  "scope": "FFT same-leaf-core x dataflow ablation. Every cell uses the same radix-16 digit-reversed algorithm, FP32 arithmetic, input, batch, and output contract. The core axis selects native register-tile or cuFFTDx Thread for the same 16-point arithmetic leaf. The dataflow axis selects a fully stagewise HBM organization or a resident two-stage prefix in CTA shared memory. Launch geometry, occupancy, shared-memory use, and wrapper code are not fixed across organizations.",
+  "control_limits": [
+    "The fixed identity is the arithmetic Core::run leaf, not the entire GPU kernel or launch geometry.",
+    "At N256/B1, stagewise launches 16 threads while resident launches 256; changes in parallelism are part of the organization treatment.",
+    "The global stage-zero unity-twiddle wrapper is absent from the resident stage-zero source; do not assert identical generated instructions without inspecting the compiled code.",
+    "Historical records establish their standalone-binary cohort only; they do not certify the current public-selector build or all butterfly operators."
+  ],
+  "organization_contract": {
+    "stagewise-hbm": {
+      "definition": "After digit reversal, every radix-16 stage launches one thread per leaf and reads/writes its complete stage result in HBM. No stage is retained in CTA shared memory.",
+      "label": "baseline-traditional-stagewise"
+    },
+    "resident-prefix-2": {
+      "definition": "After the same digit reversal, stages 0 and 1 for each 256-value tile execute as 16 leaves in one CTA and remain in shared memory across the inter-stage barrier. Stages 2 and later use the same global stage kernels and HBM boundaries as the baseline.",
+      "label": "hybrid-resident-prefix-2"
+    }
+  },
+  "cases": [
+    {
+      "id": "fft-fp32-n8",
+      "workload": {
+        "operator": "fft",
+        "precision": "fp32",
+        "logN": 8,
+        "latency_batch": 1,
+        "throughput_batch": 65536,
+        "placement": "out-of-place",
+        "direction": "forward",
+        "normalization": "none"
+      },
+      "stage_count": 2,
+      "resident_prefix_stages": 2,
+      "resident_tile_points": 256
+    },
+    {
+      "id": "fft-fp32-n12",
+      "workload": {
+        "operator": "fft",
+        "precision": "fp32",
+        "logN": 12,
+        "latency_batch": 1,
+        "throughput_batch": 4096,
+        "placement": "out-of-place",
+        "direction": "forward",
+        "normalization": "none"
+      },
+      "stage_count": 3,
+      "resident_prefix_stages": 2,
+      "resident_tile_points": 256
+    },
+    {
+      "id": "fft-fp32-n16",
+      "workload": {
+        "operator": "fft",
+        "precision": "fp32",
+        "logN": 16,
+        "latency_batch": 1,
+        "throughput_batch": 256,
+        "placement": "out-of-place",
+        "direction": "forward",
+        "normalization": "none"
+      },
+      "stage_count": 4,
+      "resident_prefix_stages": 2,
+      "resident_tile_points": 256
+    }
+  ]
+}

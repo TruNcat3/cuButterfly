@@ -1,0 +1,59 @@
+{
+  "schema": "cubutterfly-benchmark-manifest-v1",
+  "id": "quick-default",
+  "description": "Small deterministic smoke matrix for every benchmark scope.",
+  "axes": {
+    "sizes": [4096, 16384],
+    "batches": [1, 4],
+    "precisions": ["fp32", "word64"],
+    "directions": ["forward", "inverse"],
+    "layouts": ["natural", "bit-reversed"],
+    "operators": ["fft", "ntt", "fwht"]
+  },
+  "modes": {
+    "quick": {"case_ids": ["operator-smoke-gpu", "operator-smoke-cpu", "fft-l-smoke", "e2e-smoke", "profile-smoke"]}
+  },
+  "execution": {"gpu": true, "cpu": true},
+  "output": {"root": "results/benchmark/quick", "format": "json"},
+  "cases": [
+    {
+      "id": "fft-l-smoke", "scope": "operator", "modes": ["quick"],
+      "operators": ["fft-l"], "sizes": [4096], "batches": [1],
+      "precisions": ["fp16", "bf16"], "accumulation": "native",
+      "directions": ["forward"], "layouts": ["natural"],
+      "targets": [{"backend": "cubutterfly", "provider": "cuda", "execution": {"gpu": true, "cpu": false}}],
+      "runner": "operator"
+    },
+    {
+      "id": "operator-smoke-gpu", "scope": "operator", "modes": ["quick"],
+      "operators": ["fft", "ntt", "fwht"], "sizes": [4096], "batches": [1],
+      "precisions": ["fp32"], "directions": ["forward"], "layouts": ["natural"],
+      "targets": [
+        {"backend": "cubutterfly", "provider": "cuda", "execution": {"gpu": true, "cpu": false}},
+        {"backend": "reference", "provider": "cuda", "execution": {"gpu": true, "cpu": false}}
+      ], "runner": "operator"
+    },
+    {
+      "id": "operator-smoke-cpu", "scope": "operator", "modes": ["quick"],
+      "operators": ["fft", "ntt", "fwht"], "sizes": [4096], "batches": [1],
+      "precisions": ["fp32"], "directions": ["forward"], "layouts": ["natural"],
+      "targets": [
+        {"backend": "cpu", "provider": "cpu", "execution": {"gpu": false, "cpu": true}}
+      ], "runner": "operator"
+    },
+    {
+      "id": "e2e-smoke", "scope": "e2e", "modes": ["quick"],
+      "operators": ["ntt"], "sizes": [16384], "batches": [1],
+      "precisions": ["word64"], "directions": ["forward"], "layouts": ["natural"],
+      "scenes": ["regular_bootstrapping"], "backends": ["heongpu", "cubutterfly"],
+      "providers": ["cuda"], "execution": {"gpu": true, "cpu": false}, "runner": "e2e"
+    },
+    {
+      "id": "profile-smoke", "scope": "profile", "modes": ["quick"],
+      "operators": ["fft-h"], "sizes": [16384], "batches": [1],
+      "precisions": ["fp32"], "directions": ["forward"], "layouts": ["natural"],
+      "scenes": ["image_filter"], "backends": ["cubutterfly"], "providers": ["cuda"],
+      "execution": {"gpu": true, "cpu": false}, "runner": "ncu"
+    }
+  ]
+}

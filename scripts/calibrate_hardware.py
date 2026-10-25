@@ -49,6 +49,8 @@ DEFAULT_PROTOCOL = {
     "cost_model": "staged",
     "search_strategy": "model",
     "stage_calibration": "full",
+    "stage_point_budget": 0,
+    "search_stage_projection": "full",
 }
 
 
@@ -88,9 +90,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--cost-model", choices=("staged", "legacy"))
     parser.add_argument("--stage-calibration", choices=("full", "bounded", "skip"),
                         help="independent stage calibration policy (default: full)")
+    parser.add_argument("--stage-point-budget", type=int,
+                        help="maximum distinct executable stage templates to describe (0 keeps the full inventory)")
     parser.add_argument("--stage-import-checkpoint", type=pathlib.Path, action="append",
                         help="reuse strictly compatible stage checkpoints; may be repeated")
     parser.add_argument("--search-strategy", choices=("model", "evolutionary"))
+    parser.add_argument("--search-stage-projection", choices=("full", "plan"),
+                        help="use stage-service composition during search, or only resolved plan groups")
     parser.add_argument("--search-seconds", type=float,
                         help="total search wall-time budget; 0 is unrestricted")
     parser.add_argument("--compile-seconds", type=float,
@@ -652,7 +658,9 @@ def calibration_command(args: argparse.Namespace, profile_dir: pathlib.Path,
                "--seed-budget", str(args.seed_budget),
                "--cost-model", str(getattr(args, "cost_model", "legacy")),
                "--stage-calibration", str(getattr(args, "stage_calibration", "skip")),
-               "--search-strategy", str(getattr(args, "search_strategy", "model"))]
+               "--stage-point-budget", str(getattr(args, "stage_point_budget", 0)),
+               "--search-strategy", str(getattr(args, "search_strategy", "model")),
+               "--search-stage-projection", str(getattr(args, "search_stage_projection", "full"))]
     for seed_path in args.mapping_seeds or []:
         command.extend(("--mapping-seeds", str(seed_path.resolve())))
     for checkpoint_path in getattr(args, "stage_import_checkpoint", None) or []:
@@ -730,6 +738,8 @@ def _apply_resume_manifest(args: argparse.Namespace) -> str | None:
         "cost_model": "cost_model",
         "search_strategy": "search_strategy",
         "stage_calibration": "stage_calibration",
+        "stage_point_budget": "stage_point_budget",
+        "search_stage_projection": "search_stage_projection",
     }
     for argument, manifest_key in protocol_keys.items():
         if getattr(args, argument) is None and manifest_key in protocol:
@@ -889,7 +899,7 @@ def _execution_summary(output_dir: pathlib.Path,
     selector = _selector_replay_summary(output_dir)
     observed_protocol = coverage.get("observed_search_protocol", {})
     protocol_fields = ("search_budget", "search_finalists", "search_seconds", "compile_seconds",
-                       "operator_trials", "operator_warmup", "operator_repeat", "seed_budget", "cost_model", "search_strategy", "stage_calibration")
+                       "operator_trials", "operator_warmup", "operator_repeat", "seed_budget", "cost_model", "search_strategy", "stage_calibration", "stage_point_budget", "search_stage_projection")
     protocol_mismatches: list[str] = []
     if expected_protocol:
         for field in protocol_fields:
@@ -970,10 +980,61 @@ def _execution_summary(output_dir: pathlib.Path,
     validation = cost_model.get("validation") if isinstance(cost_model.get("validation"), dict) else {}
     stage_service = _read_json(output_dir / "stage_service_profile.json") or {}
     stage_required = manifest.get("stage_calibration_mode", "skip") != "skip"
-    stage_validated = bool(stage_service.get("validated", False)) and stage_service.get("calibration_status") == "complete"
+    stage_inventory_complete = stage_service.get("inventory_complete")
+    if stage_inventory_complete is None:
+        stage_inventory_complete = stage_service.get("coverage", {}).get("inventory_complete")
+    stage_sampling = manifest.get("stage_point_sampling_summary")
+    if not isinstance(stage_sampling, dict):
+        stage_sampling = _read_json(output_dir / "stage_point_sampling.json")
+    if stage_inventory_complete is None and isinstance(stage_sampling, dict):
+        stage_inventory_complete = stage_sampling.get("inventory_complete")
+        if stage_inventory_complete is None and "omitted" in stage_sampling:
+            stage_inventory_complete = int(stage_sampling.get("omitted", 0) or 0) == 0
+    if stage_inventory_complete is None:
+        # Legacy profiles predate sampling metadata and represented the full
+        # supplied inventory; retain that compatibility default.
+        stage_inventory_complete = True
+    stage_selected_scope_validated = stage_service.get("selected_scope_validated")
+    if stage_selected_scope_validated is None:
+        stage_selected_scope_validated = bool(stage_service.get("validated", False))
+    stage_validated = (bool(stage_service.get("validated", False)) and
+                       bool(stage_inventory_complete) and
+                       stage_service.get("calibration_status") == "complete")
     composition_required = bool(stage_service.get("coverage", {}).get("composition_request_count"))
     composition_validation = cost_model.get("composition_validation", validation.get("composition_validation", {}))
     composition_validated = composition_validation.get("status") == "passed"
+    composition_entry = manifest.get("composition_calibration")
+    composition_entry = composition_entry if isinstance(composition_entry, dict) else {}
+    composition_path = _artifact_path(composition_entry.get("path"), output_dir)
+    composition_report = _read_json(composition_path) if composition_path else None
+    composition_summary = (composition_report.get("summary", {})
+                           if isinstance(composition_report, dict) else {})
+    if not isinstance(composition_summary, dict):
+        composition_summary = {}
+    composition_observed = bool(
+        composition_summary.get("status") == "complete-observed"
+        and _int_field(composition_summary.get("overlap_requests")) > 0
+        and _int_field(composition_summary.get("measured_overlap_requests"))
+            == _int_field(composition_summary.get("overlap_requests"))
+        and _int_field(composition_summary.get("measured_requests")) > 0
+        and "failed_requests" in composition_summary
+        and _int_field(composition_summary.get("failed_requests")) == 0
+        and isinstance(composition_summary.get("validation"), dict)
+        and composition_summary["validation"].get("status") == "passed")
+    composition_status = composition_summary.get("status", composition_entry.get("status", "unknown"))
+    composition_inventory = (composition_report.get("inventory", {})
+                             if isinstance(composition_report, dict) else {})
+    if not isinstance(composition_inventory, dict):
+        composition_inventory = {}
+    composition_coverage = composition_inventory.get("coverage", {})
+    if not isinstance(composition_coverage, dict):
+        composition_coverage = {}
+    composition_inventory_complete = composition_summary.get("inventory_complete") is True
+    composition_coverage_complete = bool(
+        composition_inventory_complete
+        and isinstance(composition_coverage.get("gaps"), list) and not composition_coverage["gaps"]
+        and isinstance(composition_inventory.get("omissions"), list) and not composition_inventory["omissions"])
+    composition_full_qualified = composition_observed and composition_coverage_complete
     global_ranking_validated = bool(validation.get("global_validation", {}).get("passed"))
     cost_validated = (cost_status == "calibrated-local" or
                       (cost_status == "calibrated-local-serial" and stage_validated and global_ranking_validated)) and \
@@ -989,7 +1050,8 @@ def _execution_summary(output_dir: pathlib.Path,
     mapping_coverage_complete = bool(coverage.get("complete"))
     search_protocol_complete = bool(coverage.get("search_protocol_complete"))
     complete = mapping_coverage_complete and search_protocol_complete and protocol_identity["match"] and \
-        cost_validated and selector.get("status") == "passed" and (not stage_required or stage_validated)
+        cost_validated and selector.get("status") == "passed" and \
+        (not stage_required or (stage_validated and composition_full_qualified))
     return {
         "status": str(manifest.get("status", "unknown")),
         "calibration_status": str(manifest.get("status", "unknown")),
@@ -1015,10 +1077,26 @@ def _execution_summary(output_dir: pathlib.Path,
         "cost_model_status": cost_status,
         "cost_model_validated": cost_validated,
         "stage_service_validated": stage_validated,
+        "stage_service_selected_scope_validated": bool(stage_selected_scope_validated),
+        "stage_service_inventory_complete": bool(stage_inventory_complete),
+        "stage_service_calibration_status": stage_service.get("calibration_status"),
+        "stage_point_sampling": stage_sampling or {},
         "stage_service_coverage": stage_service.get("coverage", {}),
         "composition_required": composition_required,
         "composition_validated": composition_validated,
         "composition_validation": composition_validation,
+        "composition_calibration_status": composition_status,
+        "composition_calibration_observed": composition_observed,
+        "composition_inventory_complete": composition_inventory_complete,
+        "composition_coverage_complete": composition_coverage_complete,
+        "composition_coverage": composition_coverage,
+        "composition_omissions": composition_inventory.get("omissions"),
+        "composition_full_qualified": composition_full_qualified,
+        "composition_calibration_required": stage_required,
+        "composition_calibration": composition_summary,
+        "composition_calibration_path": str(composition_path) if composition_path else None,
+        "composition_calibration_gap": (None if composition_full_qualified or not stage_required else
+                                        "cross-group overlap inventory coverage has not closed"),
         "cost_model_training_rows": cost_model.get("training_rows", 0),
         "cost_model_holdout_top1_accuracy": validation.get("holdout_top1_accuracy"),
         "selector_replay": selector,
@@ -1035,7 +1113,7 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("--build-dir is required unless --resume-from supplies it")
     if args.trials <= 0 or args.operator_trials <= 0 or args.operator_warmup < 0 or args.operator_repeat <= 0 or args.verify_batches < 0:
         raise SystemExit("trials and repeat values must be positive")
-    if args.search_budget < 0 or args.search_finalists < 1 or args.search_seconds < 0 or args.compile_seconds < 0 or args.seed_budget < 0:
+    if args.search_budget < 0 or args.search_finalists < 1 or args.search_seconds < 0 or args.compile_seconds < 0 or args.seed_budget < 0 or args.stage_point_budget < 0:
         raise SystemExit("search budget must be nonnegative and finalists positive")
     args.build_dir = args.build_dir.expanduser().resolve()
     workloads = resolve_workloads(args.search_workloads)
@@ -1075,6 +1153,8 @@ def main(argv: list[str] | None = None) -> int:
             "cost_model": args.cost_model,
             "search_strategy": args.search_strategy,
             "stage_calibration": args.stage_calibration,
+            "stage_point_budget": args.stage_point_budget,
+            "search_stage_projection": args.search_stage_projection,
             "resume_search": args.resume_search,
             "compile_mode": compile_mode,
         },
@@ -1113,6 +1193,8 @@ def main(argv: list[str] | None = None) -> int:
         "cost_model": args.cost_model,
         "search_strategy": args.search_strategy,
         "stage_calibration": args.stage_calibration,
+        "stage_point_budget": args.stage_point_budget,
+        "search_stage_projection": args.search_stage_projection,
     }
     try:
         completed = subprocess.run(command, cwd=ROOT, text=True, env={**os.environ, **environment})

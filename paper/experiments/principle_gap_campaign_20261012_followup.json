@@ -1,0 +1,71 @@
+{
+  "schema": "cubutterfly-principle-gap-followup-v1",
+  "id": "principle-gap-20261012-followup",
+  "extends": "paper/experiments/principle_gap_campaign_20261012.json",
+  "extends_sha256": "393989ee7acf15ad483c569e3b96a0e8a2efbd7bf277e26fc2c627d20ef3a43f",
+  "execution_policy": "Planning only. No additional GPU work, application restart or matrix expansion is authorized by this file. The current executable queue remains exactly four layout cases.",
+  "tasks": [
+    {
+      "id": "e1-36-independent-replays",
+      "priority": 1,
+      "status": "planned_not_queued",
+      "existing_paths": ["results/paper_targeted_20261011/operator_prepare/e1_fixed_36_v4/manifest.json", "paper/tools/summarize_unified_evaluation_20261012.py"],
+      "depends_on": ["accepted-original36-mapping-freeze", "complete-semantic-and-baseline-contract", "exclusive-gpu-window", "per-attempt-identity-and-artifact-isolation"],
+      "budget": {"existing_cases": 36, "additional_independent_process_trials": 2, "new_cases": 0},
+      "completion": "Two additional independent process measurements per original semantic row/backend, replaying compatible first-trial selected mappings with full correctness checks. Report three-process latency distributions and preserve any failed/unsupported cells. This checks timing stability, not repeated search variability; the separate NTT extension does not complete all36 E1 rows.",
+      "launch_argv": null
+    },
+    {
+      "id": "matched-external-baseline-gaps",
+      "priority": 2,
+      "status": "blocked_baseline_integration",
+      "operators": ["subset-zeta", "superset-zeta", "structured-2x2", "ntt-word32", "fwht-fp64"],
+      "existing_paths": ["paper/experiments/unified_evaluation_contract_20261012.md", "scripts/research_baselines.py", "scripts/semantic_dao_baseline.py", "scripts/semantic_gpuntt_baseline.py", "config/external_comparison_catalog.json"],
+      "depends_on": ["matching-gpu-baseline-implementation", "semantic-adapter-and-complete-call-boundary", "exact-or-numerical-oracle", "public-selector-current-build-identity"],
+      "budget": {"new_gpu_cells": 0, "new_cases": 0},
+      "completion": "For each missing column, integrate a real matched implementation or retain a documented absence. Preserve precision, direction, integer width/modulus, matrix coefficients and ordering; include adapter costs. Dao FP32 or GPU-NTT word64 is not a substitute. CPU references may be reported separately but cannot fill GPU speedup cells.",
+      "launch_argv": null
+    },
+    {
+      "id": "quarot-existing-batch-queue",
+      "priority": 1,
+      "status": "existing_queue_running",
+      "existing_paths": ["results/paper_targeted_20261012/application_batch/quarot_state.json", "results/paper_targeted_20261012/application_batch/quarot_plan.json", "paper/tools/run_application_batch_20261012.py", "paper/experiments/e13/README_quarot.md"],
+      "depends_on": ["existing-gpu1-queue-completion", "cache-replay-gate", "common-model-and-input-identity", "two-process-exchanged-order-pairs"],
+      "gpu_uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02",
+      "budget": {"batches": [1, 4, 8], "new_launches_from_this_plan": 0},
+      "completion": "Collect accepted existing queue releases for prefill512/decode32 at B1/B4/B8, two independent processes with swapped backend order. Report whole-batch latency, throughput and per-sample amortization, bitwise validation and cache provenance. Preserve random-weight limitation and any negative application results. Do not restart tuning or another model on GPU1.",
+      "launch_argv": null
+    },
+    {
+      "id": "ckks-complete-rns-application",
+      "priority": 3,
+      "status": "blocked_application_integration",
+      "existing_paths": ["paper/experiments/e13/heongpu_ntt_adapter_probe.cu", "paper/experiments/e13/README_heongpu_ntt_adapter_probe.md", "scripts/run_crypto_external.py", "paper/experiments/unified_evaluation_contract_20261012.md"],
+      "depends_on": ["complete-ckks-workload-contract", "all-rns-limb-moduli-and-layout-adapters", "library-application-dataflow-integration", "native-heongpu-complete-call-baseline", "end-to-end-decrypt-or-application-oracle"],
+      "budget": {"new_gpu_cells": 0},
+      "completion": "Execute a defined CKKS application with all RNS limbs and actual ciphertext dependencies connected through both backends. Verify application output and report complete-call latency/throughput including conversion, allocation and required transfers. A single-limb NTT adapter probe or operator latency cannot establish CKKS application speedup.",
+      "launch_argv": null
+    },
+    {
+      "id": "ncu-occupancy-and-l2-hit",
+      "priority": 2,
+      "status": "planned_not_queued",
+      "existing_paths": ["paper/tools/profile_mechanism_cohort_20261012.py", "paper/tools/profile_mechanism_call_20261012.py", "results/paper_targeted_20261012/mechanism/profiles"],
+      "depends_on": ["accepted-normal-timing-pairs", "target-supported-metric-query", "gpu2-bound-profile-driver", "exclusive-diagnostic-window", "complete-logical-call-capture"],
+      "budget": {"new_gpu_cells": 0, "implicit_profiler_matrix": false},
+      "completion": "Capture target-supported achieved active-warps/occupancy and L2 hit-rate counters for explicitly selected accepted pairs; attach kernel identities, denominators and aggregation weights. Existing registers/shared and L2 sector bytes do not determine achieved occupancy or hit rate. Keep profiler latency separate from normal timing and record unavailable metrics as missing. The existing profile environment/driver needs explicit GPU2 rebinding before use.",
+      "launch_argv": null
+    },
+    {
+      "id": "online-selection-and-setup-cost",
+      "priority": 2,
+      "status": "planned_not_queued",
+      "existing_paths": ["paper/experiments/preparation_cost.json", "paper/tools/search_pool_protocol.py", "results/search_budget_20261011/gpu2_refresh/provenance.json", "src/plan_search_trace.hpp", "scripts/semantic_compile_broker.py"],
+      "depends_on": ["public-measure-search-entry-with-trace", "isolated-cold-and-warm-cache-policy", "compiler-and-broker-event-provenance", "finite-equal-search-budget", "independent-selected-plan-replay"],
+      "budget": {"new_gpu_cells": 0, "implicit_search_expansion": false},
+      "completion": "Measure actual public online candidate enumeration, calibration/model ranking, search, compilation, plan setup and first-use wall costs separately from steady-state execution. Record attempted/omitted candidates, budget, cache state, cold versus hit behavior, selected mapping and independent replay. The offline16-candidate pool is ranking/search-protocol evidence, not online setup cost or a completed public first-use measurement. Report break-even only when matched steady-state savings are positive.",
+      "launch_argv": null
+    }
+  ]
+}

@@ -5,10 +5,10 @@
     "quick": {"target_points": 4194304, "warmup": 5, "repeat": 20, "trials": 3, "verify_batch": 1},
     "full": {"target_points": 4194304, "warmup": 1000, "repeat": 100, "trials": 5, "verify_batch": 1}
   },
-  "binaries": {
-    "butterfly": "build-a100-cufftdx/cubutterfly_bench",
-    "ntt": "build-a100-cufftdx/cuntt_bench",
-    "fft-library": "build-a100-vkfft/vkfft_bench"
+  "runners": {
+    "butterfly": {"kind": "comprehensive-cuda", "executable": "build-a100-cufftdx/cubutterfly_bench"},
+    "ntt": {"kind": "comprehensive-cuda", "executable": "build-a100-cufftdx/cuntt_bench"},
+    "fft-library": {"kind": "library-cuda", "executable": "build-a100-vkfft/vkfft_bench"}
   },
   "cases": [
     {"id": "fft8_cub", "tier": "quick", "group": "fft-fp32-fwd-log8", "runner": "butterfly", "implementation": "cuButterfly-cuFFTDx", "operator": "fft", "precision": "fp32", "logN": 8, "args": ["--backend", "temporal-tile", "--fft-core", "cufftdx-block", "--tile-threads", "32", "--precision", "fp32", "--operator", "fft", "--placement", "in-place", "--normalization", "none"]},

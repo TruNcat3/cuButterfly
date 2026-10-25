@@ -7,6 +7,11 @@ machine-readable form is
 validates it and derives architecture demand. The FFT-specific specification is
 a checked projection of this general space, not a second architecture model.
 
+[Project research principles](research_principles.md) define the implementation
+and evidence obligations for this space across all operators, including adaptive
+mechanism selection and fixed-core organization ablations. They do not replace
+the architecture definition in this document.
+
 ## 1. Scope And Separation
 
 A design point is the tuple

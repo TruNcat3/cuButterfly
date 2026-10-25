@@ -1,4 +1,5 @@
 #include <cubutterfly/plan.hpp>
+#include <nlohmann/json.hpp>
 #include <iostream>
 #include <cstdlib>
 #include <stdexcept>
@@ -25,6 +26,23 @@ int main() try {
         if(native_replay.mapping_json()!=options.mapping)
             throw std::runtime_error("native factor core lost during public replay");
     }
+    {
+        cubutterfly::Transform short_fwht;
+        short_fwht.op = CUBUTTERFLY_OPERATOR_FWHT;
+        short_fwht.storage = CUBUTTERFLY_DATA_FP16;
+        short_fwht.compute = CUBUTTERFLY_COMPUTE_FP32;
+        short_fwht.extents = {32};
+        short_fwht.batch = 4;
+        // The compiled short provider narrows only at the final store. Make
+        // that numeric semantic explicit instead of silently comparing it to
+        // the stage-storage generic FP16 path.
+        short_fwht.output_rounding = CUBUTTERFLY_ROUNDING_FINAL_STORAGE;
+        cubutterfly::Plan short_plan(context, short_fwht);
+        const auto short_mapping = nlohmann::json::parse(short_plan.mapping_json());
+        if (short_mapping.value("local_exchange", "") != "warp-register" ||
+            short_mapping.value("backend", "") != "temporal-tile")
+            throw std::runtime_error("public AUTO did not reach the compiled short FP16 FWHT candidate");
+    }
     for (int op=0; op<6; ++op) {
         cubutterfly::Transform transform;
         transform.op = static_cast<cubutterflyOperator_t>(op);
@@ -45,7 +63,10 @@ int main() try {
             cuntt::PlanConfig config;
             config.log_n=8; config.batch=2; config.auto_select=true;
             cuntt::Plan legacy(config);
-            if (mapping!=cubutterfly::serialize_mapping(legacy.config()))
+            auto public_semantics = nlohmann::json::parse(mapping);
+            auto legacy_semantics = nlohmann::json::parse(cubutterfly::serialize_mapping(legacy.config()));
+            public_semantics.erase("contract");
+            if (public_semantics!=legacy_semantics)
                 throw std::runtime_error("C/C++ NTT planners disagree");
         } else {
             cuntt::ButterflyConfig config;
@@ -57,8 +78,13 @@ int main() try {
             if(op==3 || op==4) config.precision=cuntt::ButterflyPrecision::Uint32;
             if(op==5) config.stage_matrices={{1,0.25,-0.5,1}};
             cuntt::ButterflyPlan legacy(config);
-            if(mapping!=cubutterfly::serialize_mapping(legacy.config()))
+            auto public_semantics = nlohmann::json::parse(mapping);
+            auto legacy_semantics = nlohmann::json::parse(cubutterfly::serialize_mapping(legacy.config()));
+            public_semantics.erase("contract");
+            if(public_semantics!=legacy_semantics) {
+                std::cerr << "op=" << op << "\npublic=" << public_semantics << "\nlegacy=" << legacy_semantics << "\n";
                 throw std::runtime_error("C/C++ butterfly planners disagree");
+            }
         }
         std::cout << "operator " << op << ": public/C/C++ mapping and replay agree\n";
         transform.batch=7;
@@ -80,7 +106,8 @@ int main() try {
         cubutterfly::Plan matrix_replay(context,transform,replay_options);
         if(matrix.mapping_json()!=matrix_replay.mapping_json()) throw std::runtime_error("rank2 replay changed an axis mapping");
         if(op==CUBUTTERFLY_OPERATOR_FFT || op==CUBUTTERFLY_OPERATOR_NTT) {
-            transform.extents={3,5}; transform.modulus=241;
+            transform.extents={3,5};
+            if (op==CUBUTTERFLY_OPERATOR_NTT) transform.modulus=241;
             cubutterfly::Plan arbitrary(context,transform);
             replay_options.mapping=arbitrary.mapping_json();
             cubutterfly::Plan arbitrary_replay(context,transform,replay_options);

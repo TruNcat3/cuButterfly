@@ -1,0 +1,32 @@
+{
+  "schema": "cubutterfly-preparation-cost-v1",
+  "purpose": "Separate engineering preparation and library setup from steady-state kernel performance.",
+  "cohort": {
+    "device": "a100-80gb",
+    "operator_cases": [
+      {"operator": "fft", "precision": "fp32", "logN": 12, "batch": 32, "direction": "forward"},
+      {"operator": "fft", "precision": "fp64", "logN": 16, "batch": 8, "direction": "inverse"},
+      {"operator": "fwht", "precision": "fp32", "logN": 12, "batch": 32, "direction": "forward"},
+      {"operator": "ntt", "precision": "word64", "modulus": 1152921504606584833, "logN": 16, "batch": 8, "direction": "inverse"}
+    ],
+    "trials": 3,
+    "warmup": 100,
+    "repeat": 100
+  },
+  "systems": {
+    "cuButterfly": ["compile", "calibration", "search", "first_use", "steady_state"],
+    "cuFFT": ["plan_setup", "first_use", "steady_state"],
+    "VkFFT": ["plan_setup", "first_use", "steady_state"],
+    "Dao-FWHT": ["setup", "first_use", "steady_state"],
+    "GPU-NTT": ["plan_setup", "first_use", "steady_state"]
+  },
+  "rules": {
+    "compile_seconds": "wall time for the exact selected module set, with cache state recorded",
+    "calibration_seconds": "hardware probes and candidate timing before selection",
+    "search_seconds": "candidate enumeration and selection timing, including seeds",
+    "first_use_seconds": "setup plus first correct execution, reported separately from steady state",
+    "break_even_calls": "preparation_seconds / (baseline_kernel_ms - cuButterfly_kernel_ms), only when denominator is positive",
+    "external_setup_not_equated_to_compile": true,
+    "correctness_required": true
+  }
+}

@@ -21,7 +21,10 @@ template<unsigned Depth> __device__ __forceinline__ void commit() {
 }
 template<unsigned Depth> __device__ __forceinline__ void wait() {
 #if __CUDA_ARCH__ >= 800
-    if constexpr(Depth) asm volatile("cp.async.wait_group %0;" :: "n"(Depth-1) : "memory");
+    // The input ring contains current + Depth future groups.  Leave the
+    // newest Depth groups pending, waiting only for the current tile.  Empty
+    // tail commits preserve that FIFO distance when fewer tiles remain.
+    if constexpr(Depth) asm volatile("cp.async.wait_group %0;" :: "n"(Depth) : "memory");
 #endif
 }
 template<unsigned Depth,class Complex>
@@ -82,7 +85,16 @@ __global__ void kernel(const Complex* input,Complex* output,std::uint64_t batch,
     using Real=decltype(Complex{}.real);
     constexpr unsigned F=1U<<Log,P=1U<<Done,S=1U<<(Total-Done-Log),Rows=F/FFT::elements_per_thread;
     constexpr unsigned Threads=FFT::max_threads_per_block;
-    constexpr unsigned TileValues=F*Columns, Slots=Depth ? Depth : 1;
+    // prefetch_depth is the number of tiles ahead of the current tile.  The
+    // current tile therefore needs one additional ring slot: depth=1 is
+    // explicitly a current+next double buffer, while depth=0 keeps a single
+    // synchronous tile slot.
+    // A CTA with one tile has no successor tile to overlap.  Keep the public
+    // mapping expressible (so an explicit t1-d1 request remains valid), but
+    // lower this degenerate schedule to the synchronous single-slot path
+    // instead of paying for an unused async ring and reducing occupancy.
+    constexpr unsigned EffectiveDepth=(Tiles>1 ? Depth : 0);
+    constexpr unsigned TileValues=F*Columns, Slots=EffectiveDepth+1;
     if constexpr(StaticIO) {
         constexpr unsigned StoreIterations=TileValues/Threads;
         static_assert(FFT::input_length == F, "static factor I/O FFT input length must match tile");
@@ -99,17 +111,19 @@ __global__ void kernel(const Complex* input,Complex* output,std::uint64_t batch,
     const unsigned count=static_cast<unsigned>(min(std::uint64_t(Tiles),total_tiles-first));
     extern __shared__ __align__(16) unsigned char memory[];
     auto* ring=reinterpret_cast<Complex*>(memory);
-    auto* work=memory+Depth*TileValues*sizeof(Complex);
+    // Depth=0 retains the original in-place tile/work storage. Buffered
+    // variants need a separate work tile after the depth+1 input ring.
+    auto* work=memory+(EffectiveDepth ? Slots*TileValues*sizeof(Complex) : 0);
     auto* tile=reinterpret_cast<Complex*>(work);
-    if constexpr(Depth) {
+    if constexpr(EffectiveDepth) {
         #pragma unroll
-        for(unsigned d=0;d<Depth;++d) load_tile<Total,Log,Done,Columns,Threads,Depth,Complex,Partial,StaticIO>(
+        for(unsigned d=0;d<Slots;++d) load_tile<Total,Log,Done,Columns,Threads,EffectiveDepth,Complex,Partial,StaticIO>(
             input,ring+d*TileValues,first+d,first+count,distance,stride,range_first,period,span);
     }
     for(unsigned iteration=0;iteration<count;++iteration) {
         auto* current=ring+(iteration%Slots)*TileValues;
-        if constexpr(!Depth) load_tile<Total,Log,Done,Columns,Threads,0,Complex,Partial,StaticIO>(input,current,first+iteration,first+count,distance,stride,range_first,period,span);
-        wait<Depth>(); __syncthreads();
+        if constexpr(!EffectiveDepth) load_tile<Total,Log,Done,Columns,Threads,0,Complex,Partial,StaticIO>(input,current,first+iteration,first+count,distance,stride,range_first,period,span);
+        wait<EffectiveDepth>(); __syncthreads();
         typename FFT::value_type values[FFT::storage_size];
         #pragma unroll
         for(unsigned i=0;i<FFT::storage_size;++i) {
@@ -117,8 +131,8 @@ __global__ void kernel(const Complex* input,Complex* output,std::uint64_t batch,
             values[i]=typename FFT::value_type{v.real,v.imag};
         }
         __syncthreads(); // Every reader releases the ring slot before reuse.
-        if constexpr(Depth) load_tile<Total,Log,Done,Columns,Threads,Depth,Complex,Partial,StaticIO>(
-            input,current,first+iteration+Depth,first+count,distance,stride,range_first,period,span);
+        if constexpr(EffectiveDepth) load_tile<Total,Log,Done,Columns,Threads,EffectiveDepth,Complex,Partial,StaticIO>(
+            input,current,first+iteration+Slots,first+count,distance,stride,range_first,period,span);
         FFT().execute(values,work);
         __syncthreads(); // cuFFTDx work area is now available for output layout.
         const auto physical=physical_tile<Partial>(first+iteration,range_first,period,span);
@@ -162,9 +176,10 @@ __global__ void kernel(const Complex* input,Complex* output,std::uint64_t batch,
     }
     // Tail commits contain no writes; all real copies were waited on above.
 }
-template<class FFT,unsigned Columns,unsigned Depth,class Complex>
+template<class FFT,unsigned Columns,unsigned Tiles,unsigned Depth,class Complex>
 constexpr unsigned shared_bytes() {
     constexpr unsigned tile=FFT::input_length*Columns*sizeof(Complex);
-    return Depth*tile+std::max(tile,FFT::shared_memory_size);
+    constexpr unsigned effective_depth=Tiles>1 ? Depth : 0;
+    return (effective_depth ? (effective_depth+1)*tile : 0)+std::max(tile,FFT::shared_memory_size);
 }
 }

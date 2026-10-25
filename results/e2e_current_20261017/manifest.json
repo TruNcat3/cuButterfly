@@ -1,0 +1,45 @@
+{
+  "schema": "cubutterfly-end-to-end-current-v1",
+  "scope_id": "a100-80gb-research-0.9.3.11",
+  "track_id": "end_to_end_fft_poisson_current",
+  "status": "complete",
+  "application": "2D periodic spectral Poisson solve",
+  "operator": "fft",
+  "source": "JAX-CFD spectral Poisson formulation",
+  "gpu_uuid": "GPU-0eae5f07-33de-321b-70a9-ffeae49309e6",
+  "gpu_name": "NVIDIA A100 80GB PCIe",
+  "library_sha256": "2ba90a76d65770eb70629279c27f7495d72b883537e08ea49e37944210988aff",
+  "timing_protocol": {
+    "id": "comparison-graph-v1",
+    "warmup_calls": 3,
+    "graph_replays": 7,
+    "calls_per_graph": 20,
+    "complete_call": "device input copy, forward FFT, spectral multiply, inverse FFT, output copy and synchronization",
+    "setup_search_capture_excluded": true
+  },
+  "cases": [
+    {
+      "id": "poisson-1024-b4",
+      "shape": [1024, 1024],
+      "batch": 4,
+      "report": "results/e2e_current_20261017/poisson_1024_b4/report.json",
+      "report_sha256": "6469f8862e5f2011d52f7119be3a614dac7e9e5853fdaa43ff48bf4aa555aebb"
+    },
+    {
+      "id": "poisson-2048-b4",
+      "shape": [2048, 2048],
+      "batch": 4,
+      "report": "results/e2e_current_20261017/poisson_2048_b4/report.json",
+      "report_sha256": "b2ce7f058d4afcdc67dc99b632d13f88d4f220fad7d682bb582903cd90e7b943"
+    },
+    {
+      "id": "poisson-2048-b16",
+      "shape": [2048, 2048],
+      "batch": 16,
+      "report": "results/e2e_current_20261017/poisson_2048_b16/report.json",
+      "report_sha256": "de7688732668e5304f7d34eb5b54175933c40f9309b29d37ebfd4a40bf6106bb"
+    }
+  ],
+  "accuracy_policy": "all outputs finite; full absolute and relative error distributions retained; no threshold assigned",
+  "comparison_policy": "Graph and eager are separate rows; Torch and CuPy use the same inputs and complete Poisson boundary"
+}

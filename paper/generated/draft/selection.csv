@@ -1,0 +1,9 @@
+source,selector,budget_candidates,selected_us,pool_best_us,prepared_ms
+synthetic_example_not_measured,model,4,12.3,10,3
+synthetic_example_not_measured,model,8,10.9,10,6
+synthetic_example_not_measured,model,16,10.4,10,13
+synthetic_example_not_measured,model,32,10.2,10,28
+synthetic_example_not_measured,heuristic,4,11.6,10,2
+synthetic_example_not_measured,heuristic,8,11.299999999999999,10,5
+synthetic_example_not_measured,heuristic,16,10.2,10,10
+synthetic_example_not_measured,heuristic,32,10.4,10,21

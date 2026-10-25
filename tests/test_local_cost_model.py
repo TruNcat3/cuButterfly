@@ -234,7 +234,7 @@ def test_factor_model_counts_physical_passes_and_independent_prefetch_capacity()
     sample=predicted_sample(dict(operator="fft",precision="fp64",logN=24,batch=1,mapping_json=json.dumps(mapping)))
     assert sample["decomposition_count"]==1 and sample["execution_group_count"]==3
     assert sample["execution_groups_json"][0]["grid_ctas"]==1639
-    assert sample["execution_groups_json"][0]["live_shared_bytes"]==98304
+    assert sample["execution_groups_json"][0]["live_shared_bytes"]==131072
     f=dict(zip(cost_model.FEATURE_NAMES,cost_model.feature_vector(sample)))
     assert f["launch_count"]==3 and f["prefetch_depth"]==2 and f["cta_data_tiles"]==5
     assert f["compiler_local_known_fraction"]==0

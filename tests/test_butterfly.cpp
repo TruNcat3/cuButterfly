@@ -344,6 +344,53 @@ void test_extended_zeta_operators() {
     }
 }
 
+void test_uint64_zeta_operators() {
+    constexpr std::size_t n = 256;
+    constexpr std::size_t batch = 3;
+    std::vector<std::uint64_t> input(batch * n);
+    for (std::size_t i = 0; i < input.size(); ++i)
+        input[i] = UINT64_MAX - i * (std::uint64_t{1} << 40) + i;
+    for (const auto op : {cuntt::ButterflyOperator::SubsetZeta, cuntt::ButterflyOperator::SupersetZeta}) {
+        for (const bool inverse : {false, true}) {
+            std::vector<std::uint64_t> expected(input.size());
+            for (std::size_t b = 0; b < batch; ++b) {
+                for (std::size_t target = 0; target < n; ++target) {
+                    for (std::size_t source = 0; source < n; ++source) {
+                        const bool superset = op == cuntt::ButterflyOperator::SupersetZeta;
+                        if (superset ? ((target & source) != target) : ((target & source) != source)) continue;
+                        const auto distance = __builtin_popcount(static_cast<unsigned>(target ^ source));
+                        if (inverse && (distance & 1)) expected[b * n + target] -= input[b * n + source];
+                        else expected[b * n + target] += input[b * n + source];
+                    }
+                }
+            }
+            for (const auto backend : {cuntt::ButterflyBackend::TemporalTile,
+                                       cuntt::ButterflyBackend::WarpHybrid,
+                                       cuntt::ButterflyBackend::StagePipeline,
+                                       cuntt::ButterflyBackend::Hierarchical,
+                                       cuntt::ButterflyBackend::OnlineReorder}) {
+                cuntt::ButterflyConfig config;
+                config.op = op;
+                config.precision = cuntt::ButterflyPrecision::Uint64;
+                config.backend = backend;
+                config.log_n = 8;
+                config.batch = batch;
+                config.inverse = inverse;
+                config.local_stages = 5;
+                config.warp_stages = 4;
+                config.stage_space = 2;
+                cuntt::ButterflyPlan plan(config);
+                if (plan.data_size() != input.size() * sizeof(std::uint64_t))
+                    throw std::runtime_error("UINT64 zeta byte extent mismatch");
+                std::vector<std::uint64_t> output;
+                plan.execute(input, output, 0, 1);
+                if (output != expected) throw std::runtime_error("UINT64 zeta backend mismatch");
+            }
+        }
+    }
+    std::cout << "PASS UINT64 zeta operators with wraparound\n";
+}
+
 std::vector<cuntt::ButterflyMatrix2x2> structured_matrices(std::uint32_t log_n) {
     std::vector<cuntt::ButterflyMatrix2x2> matrices;
     matrices.reserve(log_n);
@@ -743,9 +790,8 @@ void test_runtime_selector() {
     config.auto_select = true;
     cuntt::ButterflyPlan plan(config);
     if (!plan.config().auto_select || plan.config().backend != cuntt::ButterflyBackend::TemporalTile ||
-        plan.config().local_exchange != cuntt::LocalExchange::WarpRegister || !plan.selection().calibrated ||
-        plan.selection().implementation != "cuButterfly-warp-register" || plan.selection().predicted_kernel_ms <= 0.0) {
-        throw std::runtime_error("FWHT runtime selector did not resolve the calibrated mapping");
+        plan.config().local_exchange != cuntt::LocalExchange::WarpRegister) {
+        throw std::runtime_error("FWHT runtime selector did not retain the platform prior");
     }
     std::vector<float> input(config.batch * (1ULL << config.log_n), 1.0F);
     std::vector<float> output;
@@ -775,8 +821,7 @@ void test_runtime_selector() {
     config.log_n     = 14;
     config.batch     = 4;
     cuntt::ButterflyPlan fft_plan(config);
-    if (fft_plan.config().fft_core != cuntt::FftCore::CufftDxDirect ||
-        fft_plan.selection().implementation != "cuButterfly-cuFFTDx-direct") {
+    if (fft_plan.config().fft_core != cuntt::FftCore::CufftDxDirect) {
         throw std::runtime_error("FFT runtime selector did not resolve the direct processing unit");
     }
 #endif
@@ -784,12 +829,10 @@ void test_runtime_selector() {
     config.op        = cuntt::ButterflyOperator::Fwht;
     config.placement = cuntt::ButterflyPlacement::OutOfPlace;
     config.log_n     = 9;
-    try {
-        cuntt::ButterflyPlan unsupported(config);
-        throw std::runtime_error("runtime selector accepted an uncalibrated FWHT length");
-    } catch (const std::invalid_argument&) {
-    }
-    std::cout << "PASS calibrated butterfly runtime selector\n";
+    cuntt::ButterflyPlan fallback(config);
+    if(!fallback.config().auto_select || fallback.selection().calibrated)
+        throw std::runtime_error("unmeasured fallback incorrectly reported calibration");
+    std::cout << "PASS butterfly platform prior and generic fallback\n";
 }
 
 }  // namespace
@@ -813,6 +856,7 @@ int main() {
                                                                          accumulation);
         }
         test_extended_zeta_operators();
+        test_uint64_zeta_operators();
         test_structured_operators();
         test_zero_extended_register_units();
         for (const std::uint32_t tile_threads : {32U, 64U, 128U, 256U}) {

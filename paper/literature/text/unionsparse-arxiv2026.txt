@@ -1,0 +1,3656 @@
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+1
+
+UnionSparse: An Index-Efficient Sparsity Framework for Low-Bit
+Sparse LLM Inference on Edge
+
+arXiv:2608.09291v1 [cs.DC] 10 Aug 2026
+
+Tianhao Jiang* , Hang Gu* , Teng Wang, Qianyu Cheng, ZhenDong Zheng, Cheng Tang, Qiyue Su, Wenqi Lou,
+Lei Gong, Chao Wang, Xi Li, and Xuehai Zhou
+
+Abstract—Edge LLM inference combines sparsity and low-bit
+quantization to meet device memory, latency, and power limits.
+Yet quantization shrinks weight payloads without proportionally
+reducing sparse metadata, so index traffic and nonzero extraction
+become critical SpMM bottlenecks. We introduce the Payloadto-Metadata Ratio (PMR) and show that improving PMR raises
+effective compute intensity in decoding.
+We present UnionSparse, an index-efficient framework that
+combines Index-Efficient Bitmap Encoding (IE-BME) with a
+SpMM kernel using Low-Bit Shared-Memory Parallel Decoding
+(LSPD). IE-BME amortizes metadata and aligns sparse traversal with fragment assembly, while LSPD improves small-batch
+execution. Under W4A4 quantization and 30%–70% sparsity,
+UnionSparse outperforms FlashLLM and SpInfer by 2.30× and
+1.43×, and CUTLASS and cuBLAS Tensor Core by 1.56× and
+3.46×, respectively. These results establish payload-extraction
+efficiency as a first-order concern for low-bit sparse inference
+on edge GPUs. Source code is available at: https://github.com/
+Victor-Alen/UnionSparse.
+Index Terms—Edge LLM Inference, Unstructured pruning,
+Quantization, SpMM, Tensor Core.
+
+I. I NTRODUCTION
+
+L
+
+ARGE language models (LLMs) are moving into embodied agents, industrial systems, and vehicles [1]–[3], as
+illustrated in Fig. 1. Their tight memory, power, and thermal
+budgets [4]–[6] make small-batch autoregressive decoding,
+with repeated projection and feed-forward layers, a central
+edge-inference challenge.
+Sparsification [6]–[9] removes redundant weights, while
+quantization [10], [11] compresses weights and activations
+into formats such as INT8, FP8, and INT4 [12]–[19]. Their
+combination reduces both computation and memory traffic for
+edge deployment.
+Efficient low-bit sparse inference nevertheless remains difficult. SpMM dominates QKV, attention-output, and feedforward projections; during small-N decoding, their tall-andskinny shapes have low arithmetic intensity and are constrained by data movement and sparse decoding rather than
+arithmetic throughput.
+*
+
+Tianhao Jiang and Hang Gu contributed equally to this work.
+Tianhao Jiang, Hang Gu, Teng Wang, Qianyu Cheng, ZhenDong
+Zheng, Cheng Tang, Qiyue Su, Wenqi Lou, Lei Gong, Chao
+Wang, Xi Li, and Xuehai Zhou are with the University
+of Science and Technology of China, Hefei, China (e-mail:
+thjiang@mail.ustc.edu.cn; hanggu@mail.ustc.edu.cn; wangt635@ustc.edu.cn;
+qycheng@mail.ustc.edu.cn;
+zzd1411@mail.ustc.edu.cn;
+sisyphustc@mail.ustc.edu.cn; qiyuesu@mail.ustc.edu.cn; louwenqi@ustc.edu.cn;
+leigong0203@ustc.edu.cn;
+cswang@ustc.edu.cn;
+llxx@ustc.edu.cn;
+xhzhou@ustc.edu.cn).
+
+Application
+
+Communication
+
+Inference Model
+
+Device
+token
+
+Chatbot
+
+req.
+/text
+
+Internet
+
+req.
+/text
+
+LLaMA Series
+token
+
+AIGC
+
+Embodied AI
+
+req.
+/text
+
+req.
+/text
+
+5G
+
+Cloud
+5G Wifi
+
+req.
+/text
+
+token
+
+Edge
+Auto Driver
+
+token
+
+Qwen Series
+
+GPT Series
+
+Optical Fiber
+
+Fig. 1. Representative LLM deployment scenarios and service workflow.
+
+Quantization shrinks weight payloads but leaves conventional sparse metadata largely unchanged. At lower precision,
+metadata occupies more traffic and, with little decode-time
+reuse, its movement and decoding may dominate despite
+reduced arithmetic. Efficiency therefore depends not only on
+the number of nonzeros, but also on how they are represented,
+indexed, traversed, and assembled.
+Existing GPU SpMM designs improve scheduling, Tensor
+Core utilization, and runtime integration, but edge GPUs
+expose less bandwidth and parallelism than server GPUs.
+Metadata overhead and irregular traversal thus motivate treating index efficiency as a first-order design objective.
+We formalize this bottleneck with the Payload-to-Metadata
+Ratio (PMR) and relate it to sparse-kernel compute intensity (CI), explaining why pruning may leave low-bit kernels
+bandwidth-bound and why index efficiency matters increasingly at lower bit widths.
+We present UnionSparse1 , which co-designs sparse representation and execution. Index-Efficient Bitmap Encoding (IEBME) improves PMR and regularizes traversal; an optimized
+SpMM pipeline combines Low-Bit Shared-Memory Parallel
+Decoding (LSPD), asynchronous movement, and hardwarealigned fragment assembly for Tensor Core execution.
+Our contributions are summarized as follows:
+•
+
+•
+
+•
+
+We provide a theoretical analysis showing that indexing
+overhead and irregular memory access are two principal
+factors limiting the performance of low-bit SpMM under
+small-batch inference on edge.
+We propose UnionSparse and its IE-BME format, which
+improves CI while aligning sparse traversal, fragment
+assembly, and Tensor Core execution.
+We design and implement Low-Bit Shared-Memory Parallel Decoding (LSPD), which unifies the proposed representation, asynchronous data movement, and shape-aware
+kernel selection into a cohesive execution framework.
+
+© 2026 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current1or future media, including reprinting/republishing this material for advertising or promotional purposes, creating new
+collective works, for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works.
+
+https://github.com/Victor-Alen/UnionSparse
+
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+MHA
+5.40%
+
+Output to next layer
+
+FFN
+
+Decode Layer
+MLP2
+
+B
+Quant
+
+X (FP16)
+
+H
+
+QKV Projection
+LayerNorm
+
+B
+Dequant
+
+Y (INT32)
+
+(INT4)
+
+H
+
+Quant
+
+B
+H
+
+B
+
+4H
+
+H
+
+(INT4)
+
+H
+
+Quant
+
+X (FP16)
+
+B
+H
+
+Input hidden state
+
+B
+H
+
+Others
+15.32%
+
+Others
+4.80%
+
+H
+
+H
+(INT4)
+
+H
+H
+
+(INT4)
+
+SPMM
+84.00%
+
+Attention
+Weights
+26.60%
+
+Activation
+1.7%
+
+KV Cache 5.50%
+
+4H
+
+Dequant
+
+FFN Weights
+53.30%
+
+(a) Execution Time
+
+(b) Storage
+
+Y (INT32)
+
+(INT4)
+
+B
+Quant
+
+H
+
+Y (FP16)
+
+B
+
+(INT4)
+
+X (FP16)
+
+3H
+
+Y (FP16)
+
+H
+
+B
+
+H
+
+Dequant
+
+Y (INT32)
+
+B
+3H
+
+(INT4)
+
+B
+Y (FP16)
+
+B
+3H
+
+Dequant
+
+Y (INT32)
+
+Y (FP16)
+
+Fig. 2. The four major matrix multiplications in the Transformer architecture.
+Here, H denotes the hidden size and B denotes the batch size. In the weight
+matrix Ŵ , the darker elements indicate the weights retained after pruning.
+•
+
+Quant&Dequant
+1.60%
+
+B
+
+H
+B
+
+Output Projection
+Multi-Head Attention
+
+B
+
+H
+(INT4)
+
+X (FP16)
+
+Attention
+
+4H
+
+MLP1 + Activation
+LayerNorm
+
+GEMM
+4.20%
+
+B
+4H
+
+4H
+
+2
+
+We demonstrate that UnionSparse substantially outperforms state-of-the-art dense and sparse baselines at both
+kernel and framework levels through evaluation under
+W4A4 quantization on edge GPUs.
+II. BACKGROUND AND R ELATED W ORK
+
+A. LLM Inference on Edge
+Foundation models are moving from datacenters to
+robots, autonomous systems, personal assistants, and private
+servers [20]–[23]. Local execution can reduce latency and
+cloud cost while improving privacy and connectivity tolerance.
+Autoregressive inference has prefill and decode stages [1].
+Prefill processes prompt tokens in parallel to build hidden
+states and the key-value cache; decode generates one or a few
+tokens while reusing that cache [24] and directly determines
+token latency.
+Edge memory, bandwidth, power, and thermal limits often
+make dense FP16/BF16 execution impractical [12], [17]. Pruning and quantization reduce model size, traffic, and arithmetic
+cost, enabling larger models on constrained devices [13], [18],
+[25]–[29].
+B. SpMM Workloads
+Figure 2 identifies four dominant linear operators: QKV and
+attention-output projections and the two FFN projections. They
+appear in both inference stages, but prefill exposes token-level
+parallelism whereas decode processes few new tokens and is
+therefore more latency- and bandwidth-sensitive.
+Profiling OPT-13B on Jetson AGX Orin 64GB in Fig. 3 confirms that SpMM dominates runtime, while FFN and attention
+weights dominate storage. These matrix-heavy operators are
+therefore the primary compression and execution targets.
+With pruning and quantization, these layers map to lowbit sparse-dense kernels. Their efficiency depends on retained computation and on how compressed data are indexed,
+moved, and assembled, especially in bandwidth-sensitive decode where metadata is difficult to amortize.
+C. Related Work
+Sparse GPU work comprises general-purpose kernels and
+LLM-oriented inference frameworks.
+
+Fig. 3. Breakdown of OPT-13B inference on Jetson AGX Orin 64GB.
+
+General-Purpose SpMM. General-purpose SpMM studies
+sparse-dense multiplication as a reusable sparse linear algebra
+primitive rather than a workload tied to a specific model
+family. Early sparse GPU kernels for deep learning, such
+as Sputnik [30], already demonstrated that CSR-based sparse
+matrix multiplication can substantially accelerate pruned DNN
+models on GPUs, making sparse SpMM a practical building
+block beyond traditional scientific computing. Representative
+kernel-level works, including DTC-SpMM [31], SMaT [32],
+Acc-SpMM [33], and Voltrix-SpMM [34], further improve
+performance on modern GPUs through Tensor-Core-aware
+formats, data reordering, asynchronous pipelines, and loadbalancing strategies. Beyond individual kernels, SparTA [35]
+extends this line toward an end-to-end sparse deep learning
+framework, where sparsity attributes are propagated across
+the computation graph, and specialized sparse operators are
+generated accordingly. On the library side, NVIDIA cuSPARSE [36] provides industrial-grade generic SpMM support
+via cusparseSpMM(), while cuSPARSELt [37] mainly targets structured sparse matrix multiplication on Sparse Tensor
+Cores. Overall, this line of work focuses on improving SpMM
+as a general sparse GPU primitive across scientific computing,
+graph analytics, and deep learning workloads.
+LLM-oriented SpMM. More recent works have begun to
+specialize sparse GPU execution for large language model
+inference. Flash-LLM [38] adopts a load-as-sparse, computeas-dense design to reduce data movement while preserving
+dense Tensor Core execution. SpInfer [39] further co-designs
+sparse representation and GPU execution through TensorCore-Aware Bitmap Encoding, shared-memory bitmap decoding, and asynchronous pipelining, improving both kernellevel SpMM efficiency and end-to-end sparse LLM inference.
+Compared with general-purpose sparse kernels, these methods
+are much better aligned with the execution characteristics
+of autoregressive Transformers, especially under unstructured
+pruning and skinny matrix shapes.
+Edge GPUs have less bandwidth, cache capacity, and parallelism than server GPUs, making performance more sensitive
+to representation and metadata handling. Lower precision
+further increases relative index traffic, leaving index-efficient
+representation and execution as an open problem.
+III. G AP A NALYSIS AND M OTIVATION
+A. Bottlenecks in Edge LLM Inference
+We profile OPT-13B on Jetson AGX Orin 64GB with
+FasterTransformer, 50% weight pruning, W4A4 quantization,
+batch size 2, and output length 512. In Fig. 3, FFN and
+attention weights occupy 53.3% and 26.6% of storage, while
+SpMM consumes 84% of execution time, establishing sparse
+SpMM as the central target.
+
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+5
+
+Memory Bound
+TCA-BME (SpInfer)
+Tiled-CSL (FlashLLM)
+
+Performance [TOPS]
+
+4
+3
+
+B. Understanding Indexing Cost in Low-Bit Sparse LLM Inference
+Pruning and quantization help only if retained weights are
+extracted efficiently. Sparse payloads require offsets, indices,
+or bitmaps [38]–[40]; quantization shrinks values but not this
+metadata proportionally.
+To quantify the efficiency of payload extraction, we define
+the Payload-to-Metadata Ratio (PMR) as
+PMR =
+
+Bw × M × K × (1 − s)
+Stormeta
+
+(1)
+
+where Bw denotes bytes per weight element, M and K
+are the dimensions of the weight matrix, and s denotes the
+sparsity. Accordingly, M K(1−s) gives the number of nonzero
+elements (N N Z) remaining after pruning, and Bw · N N Z
+denotes the storage of useful payloads Storpayload . Stormeta
+denotes the metadata storage required to locate these payloads.
+A higher PMR indicates that a more useful payload can be
+obtained per metadata access, whereas a lower PMR implies
+that metadata overhead becomes more dominant.
+Figure 4 compares TCA-BME (SpInfer), Tiled-CSR (FlashLLM), and CSR. PMR decreases from FP16 to INT8 and
+INT4 for every format, showing that lower precision magnifies
+relative metadata cost; the persistent gap among formats shows
+that encoding design strongly affects payload efficiency. Thus,
+edge performance depends on both sparsity and maintaining
+high PMR at low precision.
+C. Roofline Analysis of PMR-Induced CI Shift
+For sparse low-bit SpMM, metadata overhead reduces the
+effective compute intensity seen by the hardware. Using PMR,
+the effective CI can be written as
+CI SpMM =
+
+2M N (1 − s)
+
+1
+Bw M (1 − s) 1 + PMR
++ Bw N
+
+(2)
+
+where Bw denotes bytes per weight element, the term
+1
+1 + PMR
+captures the inflation of weight-side memory traffic
+caused by metadata overhead. As PMRdecreases, metadata
+accounts for a larger fraction of total traffic, thereby reducing
+the effective CI even when sparsity lowers arithmetic work.
+Figure 5 plots the measured kernel performance against the
+analytically computed effective CI under W4A4 quantization.
+Here, the x-axis values are obtained from the above CI
+formulation, while the y-axis values are collected from actual
+kernel execution. The dashed line indicates the theoretical
+memory-bound roofline.
+
+CSR (cuSPARSE)
+IE-BME (UnionSparse)
+
+y
+emor
+
+1
+
+M
+
+0.5
+
+4
+2 1
+
+0.1
+1
+
+1
+
+0.01
+0.3
+
+2
+
+0.5
+
+4
+
+1 2
+
+5G
+d (20
+boun
+2
+
+1
+8
+
+16
+
+5)
+
+PDDR
+
+B/s L
+
+2
+
+0.05
+
+Fig. 4. PMR comparison across precision levels and sparse formats. The left
+panel compares FP16, INT8, and INT4 under three representative formats,
+while the right panel focuses on the INT4 regime and shows the PMR gap
+across different sparse representations.
+
+3
+
+4
+
+8
+
+16
+
+8
+
+16
+
+8
+
+4
+
+2
+16
+
+5
+
+10
+
+20
+
+Compute Intensity (CI) [OP/Byte]
+
+30
+
+40
+
+50
+
+Fig. 5. Roofline view of different sparse formats under W4A4 quantization,
+with m = 28,672, k = 8,192, and sparsity of 40%. The x-axis shows
+the analytically computed effective CI, while the y-axis shows measured
+kernel performance. For the same marked N value, higher-PMR formats shift
+rightward, indicating higher effective compute intensity and a greater ability
+to move away from the memory-bound region.
+
+Sparse formats with higher PMR consistently achieve higher
+effective CI and better measured performance. More importantly, for the same marked N value, the operating points
+of high-PMR formats shift to the right, indicating that less
+metadata overhead is incurred for the same workload and more
+useful computation is delivered per byte of memory traffic.
+This rightward shift makes the kernel more likely to move
+away from the bandwidth-bound region and better exploit the
+available system performance. In contrast, low-PMR formats
+remain much closer to the bandwidth ceiling, so the theoretical
+arithmetic reduction from sparsity is harder to translate into a
+practical speedup.
+Therefore, the key challenge of low-bit sparse LLM inference on edge is not merely to increase sparsity, but to
+improve index efficiency so that sparse kernels can sustain
+higher effective compute intensity and more readily escape
+the memory-bound regime.
+IV. U NION S PARSE D ESIGN OVERVIEW
+Figure 6 shows UnionSparse’s co-design of representation
+optimization for lower metadata overhead and execution optimization for efficient Tensor Core use.
+The representation optimization part is shown on the left
+side of Fig. 6. Starting from pruned low-bit quantized weights,
+UnionSparse first applies bitmap-aware row reordering within
+each local tile (LT) to reduce the number of active entries in the
+logical union mask. This step preserves the surviving nonzero
+values while reordering their rows to activate fewer unionmask positions. The reordered tile is then encoded using IndexEfficient Bitmap Encoding (IE-BME), in which four quantized
+payload areas share a single logical union bitmap, and their
+payloads are stored in aligned compressed streams. This design
+reduces index-heavy metadata while producing a regularized
+hierarchical layout suitable for later staging and decoding.
+The execution optimization part is shown on the right
+side of Fig. 6. During kernel execution, UnionSparse adopts
+a Decoupled Warp-Specialized Producer-Consumer (DW-PC)
+pipeline to overlap tile prefetch with current-tile computation.
+A producer warp prefetches the next weight and activation tiles
+into shared memory, while the consumer warps process the
+current tile. This decoupling enables overlap between next-tile
+data movement and current-tile computation while reducing
+
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+Union Mask
+
+(a)Representation
+
+(T) Fewer
+active !
+
+Union Mask
+
+(T)
+
+UnionSparse Format
+(stored in GMEM)
+...
+
+(b)Execution
+
+...
+
+...
+
+...
+
+...
+
+Warp0
+
+Prefetch
+
+Data[n]
+
+Data[n+1]
+
+Data[n]
+
+...
+
+Compute Current Tile
+K
+
+Buffer A
+
+Data[n+1]
+
+Compute Current Tile
+
+Warp3
+
+IE-BME
+
+N
+
+Shared Memory
+
+Compute Current Tile
+
+Warp2
+
+Prune
+
+Compute
+
+Buffer B
+
+...
+
+Warp1
+
+Row
+Reorder
+
+Warp0: Producer/Consumer
+Warp0~3: Consumer
+
+DW-PC Pipeline
+
+...
+...
+
+4
+
+TileX from Buffer A
+TileX
+
+...
+
+...
+
+...
+
+Data[n+1]
+
+Data[n]
+
+Data[n+1]
+
+Data[n]
+
+Next TileX to Buffer B
+TileX
+
+Warp0~3 Read
+
+Warp0 Prefetch
+Next TileW To Buffer B
+
+Pretrained Weight
+
+Pruned Weight
+
+Reordered Weight
+
+Next
+TileW
+TileW
+
+stored as
+UnionSparse format
+
+K
+
+Next TileX
+
+Warp0 Prefetch
+
+N
+
+TileW from Buffer A
+
+W
+
+Area3
+M
+Area2
+Area1
+Area0
+
+X
+
+Warp0~3 Read
+
+Tensor
+Core
+TO
+UB
+CV
+
+LSPD
+
+LSPD
+
+TileW
+
+FragX
+
+FragW FragC
+
+O
+M
+TileO
+
+In GMEM In SMEM
+In Register
+
+Fig. 6. Overall framework of UnionSparse with the representation and execution optimization. The representation part reduces logical union-mask activity
+through row reordering and encodes the reordered weights using IE-BME, while the execution part combines the Decoupled Warp-Specialized ProducerConsumer (DW-PC) pipeline and Low-Bit Shared-Memory Parallel Decoding (LSPD) to translate the compressed representation into Tensor-Core-ready
+et denote the logical union masks before and after row reordering, respectively. Pt = ∥Bt ∥0 and Pet = ∥B
+et ∥0 denote their numbers
+computation. Bt and B
+(q)
+of active entries, and Vt denotes the compressed value stream of Area q.
+
+concurrent warp-level pressure on the cache hierarchy. Once
+the compressed weight tile is staged in shared memory, LowBit Shared-Memory Parallel Decoding (LSPD) reconstructs
+the Tensor-Core-ready weight fragment directly into registers.
+In parallel, the corresponding activation tile is loaded into registers without sparse decoding. The decoded weight fragment
+and the activation fragment are then consumed by Tensor Core
+MMA instructions to produce the output tile.
+IE-BME and bitmap-aware row reordering reduce unionmask activity and metadata, while DW-PC and LSPD exploit
+the regular layout for efficient staging, decoding, and computation.
+V. R EPRESENTATION O PTIMIZATION
+
+Each spatial position (i, j), with
+HL
+KL
+,
+0≤j<
+RA
+CA
+defines one logical grouped position shared by all areas. The
+corresponding area-aligned value group is
+
+(0)
+(1)
+(Q−1)
+gt (i, j) = Wt (i, j), Wt (i, j), . . . , Wt
+(i, j) .
+0≤i<
+
+Shared Union Mask. IE-BME assigns one logical activity
+bit to each grouped position gt (i, j). Instead of storing Q
+independent bitmaps, IE-BME associates this group with a
+single shared logical union mask:
+!
+Q−1
+_
+HL
+K
+
+(q)
+× L
+Bt (i, j) = I
+Wt (i, j) ̸= 0 , Bt ∈ {0, 1} RA CA
+q=0
+
+A. IE-BME Representation
+IE-BME is designed to improve payload-to-metadata efficiency in low-bit sparse LLM inference while preserving a
+layout that can be decoded efficiently during online execution.
+As shown in Fig. 7, the key idea of IE-BME is to amortize a
+single logical bitmap across multiple low-bit payload regions,
+so that a single index structure can describe several compressed values at once. At the same time, the resulting payload
+layout is regularized to support shared-memory staging and
+direct fragment generation in the later kernel. To make the
+encoding process easier to follow, Fig. 7 should be read from
+left to right: IE-BME first groups area-aligned values into
+logical positions, then constructs a shared union mask for
+these groups, and finally materializes the encoded LT as three
+storage arrays, namely Union Value Offsets, Union Bitmaps,
+and Compressed Values.
+Area Partitioning. Consider a quantized local tile Wt ∈
+L ×KL
+QH
+, where Qb denotes the alphabet of a signed b-bit
+b
+quantizer. IE-BME partitions Wt into an RA × CA grid of
+areas. The total number of areas and a size of each area is
+HL
+KL
+Q = RA CA ,
+×
+RA
+CA
+
+Thus, Bt (i, j) = 1 indicates that at least one value in
+gt (i, j) is nonzero, while Bt (i, j) = 0 indicates that all Q
+values in this group are zero. One logical union-mask entry
+therefore represents the activity of Q payload values at the
+same area-aligned position. This shared-mask construction
+is the key reason why IE-BME reduces metadata overhead
+compared with per-area bitmap encoding. In the UnionSparse
+illustration of Fig. 7, we use a 2 × 2 partition, i.e., RA =
+CA = 2 and Q = 4, to visualize this process. For example,
+the red-framed logical position in Fig. 7 groups four values
+[1, 30, 59, 0] from Area0–Area3. Since at least one value is
+nonzero, IE-BME stores a single union-mask bit 1 for this
+group. This active bit contributes one compact payload rank,
+and the four aligned area streams append 1, 30, 59, and 0,
+respectively. The last value is still written because the shared
+union bit is active. Keeping this area-specific zero preserves
+stream alignment so that the same compact rank can later index
+all four area streams. In contrast, if the grouped values are
+[0, 0, 0, 0], the union-mask bit is 0, and no payload entry is
+emitted for any area.
+IE-BME Storage Layout. Let Pt = ∥Bt ∥0 denote the
+number of active entries in the logical union mask of LT t:
+
+Accordingly, the tile can be written as
+ (q) Q−1
+Wt = Wt q=0 ,
+
+(q)
+
+Wt
+
+HL
+RA
+HL
+RA
+
+∈ Qb
+
+K
+× CL
+A
+
+Pt =
+
+−1
+
+KL
+CA
+
+−1
+
+X
+
+X
+
+i=0
+
+j=0
+
+Bt (i, j).
+
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+Union Mask(bit)
+
+1
+
+：0x36DB
+：0x6DB6
+：
+：
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0 0
+
+0
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+1 0
+
+Row2
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1 0
+
+0
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0 1
+
+Row3 0x5B6D
+Row4 0xB6DA
+
+Area0
+1
+2
+3
+4
+9
+10
+11
+12
+
+LSB
+
+1
+
+2
+
+3
+9
+
+16
+
+4
+
+10 11
+
+17 18
+
+59 60
+
+23 24
+
+25
+
+61
+
+62 63
+
+66
+73
+
+5
+
+67 68
+74
+
+80
+
+82 83
+
+7
+
+22
+
+26 27
+
+28
+
+64
+
+LT9 LT10 LT11LT12
+
+29
+
+51
+
+52
+
+88
+
+89 90
+
+71 72
+
+95
+
+78 79
+84
+
+102
+
+85 86
+
+87
+
+109
+
+34 35
+
+36
+42
+
+50
+
+55
+
+56 57
+
+91
+
+92
+
+93 94
+
+97
+
+110 111
+
+43
+49
+
+53 54
+
+104
+112
+
+58
+
+98 99
+
+100101
+
+107
+
+108
+
+105106
+113 114
+
+115
+
+116
+
+5
+6
+7
+8
+13
+14
+15
+16
+
+Union Value Offsets (int)
+
+GT2
+
+GT3
+
+0
+
+160 312
+
+1
+
+4
+
+47 48
+
+96
+103
+
+1
+
+2
+
+3
+
+4
+
+compress
+
+1
+
+5
+1
+
+6
+0
+
+1
+
+0
+1
+
+0
+
+7
+1
+
+0x36DB
+
+8
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+0
+
+1
+
+1
+
+0
+
+1
+
+0
+
+1
+
+1
+
+1
+
+1
+
+0
+
+1
+
+1
+
+0
+
+0
+
+3
+
+40 41
+
+46
+
+1
+
+2
+
+33
+39
+
+44 45
+
+1
+
+Union Bitmaps
+
+Area3
+
+31 32
+37 38
+
+65
+
+70
+77
+
+Area2
+
+30
+15
+
+21
+
+LT1 LT2 LT3 LT4
+LT5 LT6 LT7 LT8
+
+8
+
+13 14
+20
+
+69
+
+75 76
+81
+
+6
+
+12
+19
+
+Area1
+
+Row1
+
+5
+
+5
+
+5
+
+6
+
+9
+
+11
+12
+
+LT13LT14 LT15 LT16
+
+30
+
+3
+
+4
+
+31 32
+
+5
+
+6
+
+0
+
+7
+
+33
+0
+
+Saved!
+
+8
+
+34 35
+
+1
+
+1
+
+0
+
+1
+
+1
+
+30 0 31 32 33 0 34 35 0 36
+
+8
+
+10
+
+... 1408
+
+0
+
+compress
+
+7
+
+9
+
+2
+
+59 60
+
+61
+
+compress
+
+62 63
+1
+
+0
+
+1
+
+1
+
+1
+
+1
+
+1
+
+0
+
+Saved!
+
+64
+1
+
+0x6DB6
+
+36
+0
+
+0
+
+1
+
+0x5B6D
+
+65
+1
+
+0
+
+1
+
+0
+
+1
+
+0
+
+Saved!
+
+59 60 61 0 62 63 0 64 65 0
+
+Union Bitmaps(64-bit)
+
+GT4
+
+GT5
+
+GT6
+
+0x36DB
+
+0x6DB6
+
+0x5B6D
+
+0XB6DA
+
+...
+
+13 13
+14
+
+GT7
+
+GT8
+
+GT9
+
+Compressed Values (int4)
+
+15
+
+1 2 ... 28 29 30 0 ... 57 58 59 60 ... 86 87 0 88 ... 0 116 ...
+
+16
+
+88
+
+compress
+
+89 90
+
+91
+0
+
+1
+
+0
+
+92
+1
+
+1
+
+0 88 89 90 0 91 92 0 93 94
+
+0xB6DA
+
+93 94
+0
+
+1
+
+1
+
+0
+
+1
+
+0 1
+
+Saved!
+
+Fig. 7. Hierarchical IE-BME representation. A sparse weight matrix is partitioned into global tiles (GTs), each containing multiple local tiles (LTs). For an LT
+(q)
+Wt , IE-BME constructs a shared logical union mask Bt , LT-level offsets ot , and Q aligned compressed payload streams Vt , where q ∈ {0, 1, . . . , Q − 1}.
+LT is actually 16 × 64, shown as 8 × 32 for illustration.
+
+IE-BME materializes the encoded sparse matrix using the
+following three arrays.
+Union Bitmaps. The logical mask Bt is scanned in rowmajor order and packed into bitmap words. In the simplified
+example of Fig. 7, the leftmost bit of each displayed mask
+row is treated as the least significant bit (LSB), so the four
+logical rows are packed as 0x36DB, 0x6DB6, 0x5B6D, and
+0xB6DA. These packed words are concatenated across LTs in
+the global Union Bitmaps array. In the actual implementation,
+the same rule is applied to the full LT shape and stored using
+64-bit bitmap words.
+Union Value Offsets. The offset array records the starting
+position of each LT’s compressed payload segment in the
+global Compressed Values array. Conceptually, the offset of
+LT t is a prefix sum over the compressed payload lengths of
+preceding LTs:
+X
+ot =
+QPτ .
+τ <t
+
+Therefore, the compressed payload segment of LT t occupies
+the range [ot , ot + QPt ) in the global value array. In the
+illustrated LT of Fig. 7, each of the four logical mask rows
+contains ten active bits, so Pt = 40. Since Q = 4, this LT
+contributes QPt = 160 int4 payload values, which explains
+the next offset value 160 in the Union Value Offsets array.
+Compressed Values. For every active logical position, IEBME assigns a compact rank according to the number of
+preceding active union-mask entries:
+X
+ρt (i, j) =
+Bt (u, v),
+(u,v)≺(i,j)
+
+where (u, v) ≺ (i, j) denotes row-major order over the logical
+mask. If Bt (i, j) = 1, IE-BME appends one value from every
+area using the same compact rank:
+(q)
+
+(q)
+
+Vt [ρt (i, j)] = Wt (i, j),
+
+q ∈ {0, 1, . . . , Q − 1}.
+
+Equivalently, when the Q aligned streams of LT t are stored
+consecutively in the global Compressed Values array, the
+storage address is
+(q)
+
+CV[ot + qPt + ρt (i, j)] = Wt (i, j).
+Positions with Bt (i, j) = 0 emit no values. Positions with
+Bt (i, j) = 1 emit Q aligned values even if some area-specific
+values are zero, as shown by the red-framed [1, 30, 59, 0]
+example. This aligned layout is the key reason why the later
+LSPD stage can use one bitmap traversal and one compact
+rank to gather all area streams, rather than maintaining separate
+sparse indices for each low-bit payload region. Consequently,
+IE-BME reduces metadata overhead while keeping the payload
+layout regular enough for shared-memory staging and direct
+fragment generation.
+B. Bitmap-Aware Row Reordering
+Although IE-BME reduces metadata overhead through
+shared union-mask encoding, its efficiency still depends on
+how many grouped positions in the logical union mask become
+active. For a fixed set of retained nonzeros, this number is not
+invariant: different row arrangements within a local tile may
+activate different numbers of union-mask entries. Therefore,
+beyond the sparse format itself, representation efficiency also
+depends on how rows are grouped across the RA row partitions
+of each LT. UnionSparse exploits this flexibility through an
+offline, bitmap-aware row-reordering step.
+Objective. Under a general RA × CA IE-BME partition,
+one local tile Wt ∈ QbHL ×KL is decomposed into Q = RA CA
+KL
+L
+areas, each of size H
+RA × CA . Each logical union-mask entry
+therefore corresponds to one grouped position spanning all RA
+row partitions and CA column partitions. For a fixed local tile,
+the total number of active entries in the logical union mask is
+determined by how rows are assigned to the RA row partitions.
+The objective of row reordering is to find a row permutation
+that minimizes this number before compression.
+
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+Algorithm 1 Bitmap-Aware Row Reordering via Grouped
+Subset DP
+
+Grouped Cost Formulation. Let
+Mt = I(Wt ̸= 0) ∈ {0, 1}HL ×KL
+denote the binary nonzero mask of tile t. For a candidate row
+group
+r = (r0 , r1 , . . . , rRA −1 ),
+define the grouped activity at grouped column index j as
+
+
+R_
+A −1 C_
+A −1
+KL
+KL
+ϕt (r; j) =
+Mt ra , j + c
+, 0≤j<
+.
+CA
+CA
+a=0
+c=0
+(3)
+The corresponding grouped cost is
+KL
+CA
+
+ct (r) =
+
+−1
+
+X
+
+ϕt (r; j),
+
+(4)
+
+j=0
+
+which counts the number of logical union-mask entries activated by grouping the rows in r. Hence, minimizing the total
+number of active mask entries is equivalent to partitioning
+the rows of Wt into groups of size RA with minimum total
+grouped cost.
+Grouped Subset Dynamic Programming. To support arbitrary RA and CA , UnionSparse solves the row-reordering
+problem with a subset dynamic programming (DP) procedure.
+Let S ⊆ {0, 1, . . . , HL −1} denote the set of rows that have not
+yet been grouped, with |S| divisible by RA . The DP state value
+F (S) is defined as the minimum grouped cost achievable on
+the remaining rows in S. For each state, we select the smallest
+row index r ∈ S, enumerate all row groups r ⊆ S of size RA
+that contain r, and minimize
+F (S) =
+
+min
+
+r⊆S, |r|=RA , r∈r
+
+(ct (r) + F (S \ r)) .
+
+(5)
+
+The base case is F (∅) = 0.
+After the optimal row groups are obtained, we canonicalize
+the result for deterministic output: rows inside each group
+are sorted in ascending order, and all groups are then sorted
+lexicographically. Let rg,p denote the p-th row in the g-th
+sorted row group, where
+g = 0, 1, . . . ,
+
+HL
+− 1,
+RA
+
+6
+
+p = 0, 1, . . . , RA − 1.
+
+Then the reordered permutation is constructed by concatenating rows partition-wise across all groups:
+
+
+HL
+πt⋆ = rg,p p = 0, . . . , RA − 1, g = 0, . . . ,
+−1 .
+RA
+Algorithm 1 summarizes this solver. In our implementation,
+row reordering is performed offline and independently for each
+LT, so it does not introduce any online decoding or scheduling
+overhead.
+Complexity and Offline Cost. For each LT, bitmap-aware
+row reordering consists of two stages. First, it builds a
+grouped-cost table by enumerating all candidate row groups
+of size RA and computing the number of union-mask entries
+activated by each group over the KL /CA grouped columns.
+L
+This stage takes O( H
+RA RA KL ) time. Second, the subset DP
+searches for the minimum-cost partition over row subsets.
+
+Input: Binary local-tile mask Mt ∈ {0, 1}HL ×KL , row partition count RA ,
+column partition count CA
+Output: Reordered permutation πt⋆
+1: Precompute grouped costs ct (r) for all row groups r of size RA
+2: Define DP state F (S) over row subsets S ⊆ {0, 1, . . . , HL − 1} with
+|S| ≡ 0 (mod RA )
+3: Initialize F (∅) ← 0
+4: for all valid DP states S in memoized recursion do
+5:
+Let r be the smallest row index in S
+6:
+for all row groups r ⊆ S such that |r| = RA and r ∈ r do
+7:
+Update
+
+F (S) ← min F (S), ct (r) + F (S \ r)
+8:
+9:
+10:
+11:
+12:
+13:
+
+end for
+end for
+Recover the optimal row groups from the DP solution
+Sort rows inside each group and sort all groups lexicographically
+Construct πt⋆ by concatenating rows partition-wise across all groups
+return πt⋆
+
+The number of DP states grows exponentially with HL .
+For each state, the smallest remaining row is fixed and
+only candidate groups containing this row are enumerated.
+Therefore, the number
+of DP transitions is upper bounded
+
+L −1
+by O(2HL H
+).
+Overall,
+the per-LT time complexity is
+ RA −1 H HL −1
+HL
+O RA RA KL + 2 L RA −1 , and the space complexity is
+
+L
+O(2HL + H
+RA ). For a weight matrix of size M × K, the
+number of LTs is (M/HL )(K/KL ), so the matrix-level cost
+is the above per-LT cost multiplied by the number of LTs. For
+a full model, the cost is summed over all weight matrices.
+This step is performed once during offline weight-format
+generation, and the reordered IE-BME weights are cached for
+subsequent online inference, introducing no online decoding
+or scheduling overhead. In our measurement, running this rowreordering step on OPT-13B takes about 4.07 hours using 14
+threads on the Arm Neoverse-V3AE CPU of Jetson AGX Thor.
+Practical Effect. Bitmap-aware row reordering does not
+change the number or values of surviving nonzeros, it only
+changes their row arrangement inside each LT. Its benefit
+arises from reducing the number of active grouped positions,
+which in turn decreases the size of the logical union mask and
+shortens the aligned area streams produced by IE-BME. Consequently, the representation becomes more payload-efficient
+before entering the online kernel stage.
+VI. E XECUTION O PTIMIZATION
+A. Decoupled Warp-Specialized Producer-Consumer Pipeline
+Figure 8 illustrates the Decoupled Warp-Specialized
+Producer-Consumer (DW-PC) pipeline used in the UnionSparse kernel. The key motivation is that, under small-batch
+decoding, the computation associated with one tile is often
+insufficient to hide memory latency if all warps synchronously
+participate in loading the next tile. In addition, concurrent
+requests issued by multiple warps can aggravate pressure on
+the cache hierarchy. UnionSparse addresses these issues by
+decoupling next-tile prefetch from current-tile processing at
+the warp level.
+Double Buffering Strategy. UnionSparse maintains two
+shared-memory buffers for the weight-tile stream and two
+
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+GMEM to SMEM
+
+Initialization
+
+Computation in TC
+
+Warp0
+(Producer)
+
+Prefetch
+TileW0
+Prefetch
+TileX0
+
+For decoding, each logical row is further partitioned into
+equal-width bitmap segments. Let the segment width be G
+bits, and let
+KB
+S=
+G
+
+Steady State
+Iteration 1
+
+SMEM to Reg
+
+Iteration 2
+
+Launch
+prefetch
+
+Launch
+prefetch
+
+Prefetch TileW1/TileX1 In Flight
+LSPD
+(TileW0)
+
+Load TileX0
+
+Prefetch TileW2/TileX2 In Flight
+LSPD
+(TileW1)
+
+Load TileX1
+
+Warp0~3
+(Consumers)
+
+Waiting
+
+Buffer A
+
+Write TileW0/TileX0
+
+Read TileW0/TileX0
+
+Write TileW2/TileX2
+
+Buffer B
+
+idling
+
+Write TileW1/TileX1
+
+Read TileW1/TileX1
+
+TC
+Compute(Tile0)
+
+TC
+Compute(Tile1)
+
+Time
+
+Fig. 8. Decoupled Warp-Specialized Producer-Consumer (DW-PC) pipeline.
+Next-tile prefetch is decoupled from current-tile processing at the warp level.
+The producer warp prefetches the next weight and activation tiles, while
+the consumer warps perform LSPD, activation loading, and Tensor Core
+computation on the current tile. This double-buffered design overlaps data
+movement with computation and reduces concurrent pressure on the memory
+hierarchy.
+
+for the activation-tile stream. At each iteration, one buffer
+pair serves as the read buffer for the current tiles, while the
+other serves as the write buffer for the next tiles. During
+initialization, the first tile pair, namely TileW0 and TileX0 , is
+staged into the read buffers. After the current iteration finishes,
+execution reaches a buffer-swap barrier, at which the write
+buffers become the read buffers for the next iteration. This
+ping-pong organization enables next-tile staging and currenttile processing to proceed in an overlapped manner.
+Warp-Specialized Roles. As shown in Fig. 8, Warp 0 is
+designated as the producer warp. Its role is to issue the globalto-shared-memory prefetch for the next tiles, i.e., TileWk+1
+and TileXk+1 . The remaining warps are not involved in this
+next-tile prefetch. Instead, they continue processing the current
+tiles already staged in shared memory. Importantly, Warp 0
+is not permanently detached from computation. Once the
+prefetch has been launched, it rejoins the other warps as a
+consumer and participates in current-tile execution. Therefore,
+the effective consumer set consists of Warp 0–3.
+Steady-State Schedule. In the steady state, the producer
+warp launches the prefetch of TileWk+1 and TileXk+1 into
+the write buffers, while the consumer warps process TileWk
+and TileXk from the read buffers. Current-tile processing
+consists of three stages: LSPD on TileWk , loading TileXk
+from shared memory to registers, and Tensor Core MMA on
+the resulting fragments. These two branches are synchronized
+only at the buffer-switching boundary. Once the prefetched
+next tiles are ready in shared memory, execution advances to
+the next iteration.
+B. Low-Bit Shared-Memory Parallel Decoding
+The compressed weight tile TileWk staged in shared memory cannot be directly consumed by Tensor Core MMA.
+Instead, it must be transformed into warp-level register fragments that match the operand layout required by the MMA
+instruction. UnionSparse performs this transformation using
+Low-Bit Shared-Memory Parallel Decoding (LSPD). Figure 9
+illustrates this procedure using instantiation RA = CA = 2
+for example.
+Thread-to-Segment Mapping. Under a general RA × CA
+IE-BME partition, the logical union mask of one LT has size
+HB × K B =
+
+KL
+HL
+×
+.
+RA
+CA
+
+7
+
+denote the number of segments per logical row. Then one
+thread is assigned to one bitmap segment, and one warp processes multiple logical rows in parallel. Figure 9(a) shows this
+thread-to-segment mapping under the current implementation.
+Bitmap-Guided Offset Generation. Let
+Bt ∈ {0, 1}HB ×KB
+be the logical union mask of tile t. For a thread assigned to row
+r and segment g, define the starting column of the segment as
+jg = gG.
+The starting payload index of this segment can be written
+in a parameterized form as
+idx base(r, g) =
+
+r−1 KX
+B −1
+X
+u=0 v=0
+
+jg −1
+
+Bt (u, v) +
+
+X
+
+Bt (r, v).
+
+v=0
+
+For each active bit inside the current segment, the final
+access index is
+global idx = idx base(r, g) + seg rank,
+where seg rank enumerates only the active positions within
+the segment. Figure 9(b) shows the corresponding offsetgeneration flow.
+Area Gathering and Register Packing. Once global idx
+is obtained, the same index is applied to all Q = RA CA
+compressed area streams:
+(q)
+
+Vt [global idx],
+
+q ∈ {0, 1, . . . , Q − 1}.
+
+Hence, one active union-mask entry selects a group of Q
+low-bit payload values, one from each area stream. Inactive
+positions do not trigger payload fetches and are padded with
+zeros instead. For example, Fig. 9(c) shows an 8-bit segment
+10110100. Its active bits are at positions 0, 2, 3, and 5.
+Given the segment base b = idx base, LSPD maps them to
+consecutive payload indices b, b + 1, b + 2, and b + 3, which
+are reused across the four aligned area streams under RA =
+CA = 2. The zero bits do not fetch payloads and are filled
+with zeros in the per-thread register fragment. The gathered
+values are then packed into a set of per-area register subvectors
+that serve as the decoded weight fragment for Tensor Core
+computation.
+Design Implication. LSPD is important for two reasons.
+First, it eliminates explicit sparse-coordinate storage and replaces it with bitmap-guided online index reconstruction.
+Second, it maps the recovered low-bit values directly into the
+register layout required by Tensor Core MMA. Together, these
+properties reduce online decoding overhead and enable the
+compact IE-BME representation to be consumed efficiently
+by the UnionSparse kernel.
+
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+(a)
+Row 0
+Row 1
+Row 2
+Row 3
+Row 4
+Row 5
+Row 6
+Row 7
+
+(b)
+
+Union Bitmap
+Seg0
+T0
+T4
+T8
+T12
+T16
+T20
+T24
+T28
+
+Seg1
+T1
+T5
+T9
+T13
+T17
+T21
+T25
+T29
+
+Seg2
+T2
+T6
+T10
+T14
+T18
+T22
+T26
+T30
+
+Seg3
+T3
+T7
+T11
+T15
+T19
+T23
+T27
+T31
+
+Per-Thread FragW in Registers
+4-bit
+
+a[0]:
+32-bit (stored in an integer)
+
+8
+
+MMA operand
+layout
+Area 0
+
+a[0]
+
+a[1]:
+
+Area 2
+
+a[1]
+
+a[2]:
+
+Area 1
+
+a[2]
+
+a[3]:
+
+Area 3
+
+a[3]
+
+(c)
+
+Word-Level Base Offsets
+BM0
+
+Area Gathering
+Current 8-bit segment
+
+64-bit packed union bitmap words
+BM1
+
+BM2
+
+1 0 1 1 0 1 0 0
+
+BM3
+seg_rank
+
+PopCount(BM0)
+
+PopCount(BM1)
+
+PopCount(BM2)
+
+0
+
+1 2
+
+3
+
+global_idx
+
+b=idx_base
+
+PopCount(BM3)
+
+Prefix Sum
+
+Area0
+
+b
+
+b+1
+
+b+2
+
+b+3
+
+word_base0=0 word_base1=popcnt(BM0) word_base2=popcnt(BM0)+popcnt(BM1) word_base3=popcnt(BM0)+popcnt(BM1)+popcnt(BM2)
+
+Area1
+
+b
+
+b+1
+
+b+2
+
+b+3
+
+Area2
+
+b
+
+b+1
+
+b+2
+
+b+3
+
+Area3
+
+b
+
+b+1
+
+b+2
+
+b+3
+
+Row/Segment-Level Base Index
+A 64-bit bitmap word contains two 32-bit rows.
+
+Row
+2r Seg0 Seg1 Seg2 Seg3
+Row
+2r+1 Seg0 Seg1 Seg2 Seg3
+
+Active-Rank Indexing
+Seg (8 bits)
+
+row_base
+row 2r
+0
+
+1
+
+row 2r+1
+popcnt(Row 2r)
+
+seg_base= current seg
+MaskedPopCount
+
+idx_base=word_base+row_base+seg_base
+
+0
+
+0
+
+1
+1
+
+1
+2
+
+0
+
+1
+
+Area0
+0
+
+0
+
+3
+
+active bits in current segment
+seg_rank=0,1,... for active bits only
+global_idx=idx_base+seq_rank
+
+Area1
+Area2
+Area3
+index into four
+compressed
+value streams
+
+Register Packing
+a[0]
+a[1]
+a[2]
+a[3]
+
+valid 0 valid valid 0 valid 0
+
+0
+
+valid 0 valid valid 0 valid 0
+
+0
+
+valid 0 valid valid 0 valid 0
+
+0
+
+valid 0 valid valid 0 valid 0
+
+0
+
+Fig. 9. Low-Bit Shared-Memory Parallel Decoding (LSPD). (a) Thread-to-segment mapping on the LT-level union bitmap. (b) Bitmap-guided offset generation
+using packed union-bitmap words. (c) Gathering aligned area streams and packing them into registers, enabling direct reconstruction of MMA-ready fragments
+from the compressed IE-BME representation.
+
+Algorithm 2 High-Performance UnionSparse Kernel
+Input: Compressed sparse matrix W in IE-BME format, dense activation
+matrix X, SplitK
+Output: Matrix Y
+1: BatchID ← ⌊blockIdx.y/(M/TM )⌋
+2: TileY ← blockIdx.y mod (M/TM ), TileX ← blockIdx.x
+3: (NumIter, KBlockStart) ← I NIT S CHEDULE(BatchID, SplitK)
+4: is producer ← (⌊threadIdx.x/32⌋ = 0)
+5: I NIT D OUBLE B UFFERS
+6: Initialize register fragment FragY
+7: // Initialization
+8: P REFETCH T ILE PAIR(W, X, TileY, TileX,
+KBlockStart, ReadBuffer)
+9: cp.async.commit()
+10: if is producer then
+11:
+cp.async.wait_group(0) // TileW0 , TileX0 ready
+12: end if
+13: __syncthreads() // Tile-0-ready barrier
+14: // Steady-state loop
+15: for k = 0 to NumIter − 2 do
+16:
+P RODUCER P REFETCH N EXT(W, X, TileY, TileX, KBlockStart +
+k + 1, WriteBuffer)
+17:
+cp.async.commit() // launch next-tile prefetch
+18:
+FragY ← P ROCESS C URRENT T ILE(ReadBuffer, FragY)
+19:
+if is producer then
+20:
+cp.async.wait_group(0) // next tile pair ready
+21:
+end if
+22:
+__syncthreads() // buffer-swap barrier
+23:
+S WAP B UFFERS(ReadBuffer, WriteBuffer)
+24: end for
+25: // Epilogue
+26: FragY ← P ROCESS C URRENT T ILE(ReadBuffer, FragY)
+27: S TORE T ILE(FragY, TileY, TileX, BatchID, ReductionWorkspace)
+28: Y ← R EDUCTION(ReductionWorkspace)
+
+C. UnionSparse Kernel
+Algorithm 2 summarizes the execution flow of the UnionSparse kernel. The kernel is organized as a double-buffered
+producer-consumer pipeline, in which Warp 0 prefetches the
+next tile pair and Warp 0–3 process the current tile pair. This
+organization matches the DW-PC schedule in Fig. 8, while
+LSPD instantiates the low-bit sparse decoding step inside
+P ROCESS C URRENT T ILE, as illustrated in Fig. 9.
+The initialization stage is given by lines 8–13. The
+first weight tile and activation tile are prefetched into
+the read buffer in line 8 and committed in line 9. The
+producer-side cp.async.wait_group(0) in line 11 confirms that the first tile pair is ready, and the block-wide
+__syncthreads() in line 13 establishes the tile-ready
+barrier. This stage prepares the pipeline so that the subsequent
+
+iterations can immediately start from a valid tile pair in shared
+memory.
+The steady-state loop is implemented in lines 15–23. In line
+16, the producer warp launches the prefetch of the next tile pair
+into the write buffer, and line 17 commits the corresponding
+asynchronous copy group. Meanwhile, the current tile pair
+in the read buffer is processed in line 18 through P RO CESS C URRENT T ILE, which fuses LSPD decoding, activation
+loading, and Tensor Core MMA into one logical step. After the
+producer confirms that the next tile pair is ready in line 20, the
+block reaches the buffer-swap barrier in line 22 and exchanges
+the read and write buffers in line 23. This loop therefore
+realizes the intended overlap between next-tile staging and
+current-tile computation.
+The epilogue is given by lines 26–28. After the steady-state
+loop terminates, one tile pair remains in the read buffer. The
+kernel processes this final tile pair, stores the partial output
+tile, and then performs reduction to obtain the final matrix
+Y . In this way, UnionSparse executes compressed sparse
+tiles through one unified pipeline that combines asynchronous
+staging and low-bit sparse computation.
+VII. E VALUATION
+A. Evaluation Setup
+Platform. All experiments are conducted on a Jetson AGX
+Orin 64GB edge platform [41] (Ampere GPU, Compute
+Capability 8.7) running Ubuntu 22.04.5 LTS, JetPack 6.1,
+and CUDA 12.6, with MAX-N mode enabled. The code is
+compiled using GCC 11.4.0 and NVCC 12.6.
+Kernel Benchmark Scope. We adopt a representative
+W4A4 quantization setting for evaluation, as it reflects a
+typical low-bit sparse LLM inference scenario on edge GPUs.
+For kernel-level evaluation, we construct a benchmark corpus from representative weight-matrix shapes extracted from
+LLaMA2-7B, LLaMA2-13B [42], OPT-13B [43], Qwen2-7B
+[44], and LLaMA3-8B [45]. The corpus covers decode widths
+N ∈ {1, 2, 4, 8, 16, 32} and sparsity levels of 40%, 50%, 60%,
+and 70%, resulting in 832 valid benchmark cases. Unless
+otherwise stated, each kernel is executed 25 times, and the
+average latency is reported. Let c denote one benchmark case,
+including the matrix shape, decode width N , and sparsity level.
+We use TM (c) to denote the average latency of method M
+
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+9
+
+Fig. 10. Kernel-Level Speedup across Decode Widths N (Batch Sizes) and Sparsity under W4A4 Quantization. Each subplot corresponds to a different
+decode width (batch size), with sparsity varying along the x-axis.
+
+on case c. Nsight Compute is used for profiling and metric
+analysis.
+
+TABLE I
+BASELINE CHARACTERISTICS IN THE EVALUATION .
+Method
+
+Baselines and Fairness. For kernel-level comparison, we
+evaluate UnionSparse against SpInfer [39], FlashLLM [38],
+CUTLASS [46], cuBLAS [47], cuSPARSE [36], Sputnik [30],
+and SparTA [35]. These baselines cover both dense and sparse
+implementations, as well as Tensor-Core-based and CUDAcore-based execution. Since these baselines do not all support
+an identical W4A4 sparse Tensor-Core path, each method is
+evaluated under its native or supported execution configuration
+on the target platform. Dense baselines serve as TensorCore GEMM references without exploiting sparsity, while
+cuSPARSE, Sputnik, and SparTA use their native CUDA-core
+sparse paths. For LLM-oriented sparse baselines, we extend
+SpInfer to INT4 Tensor-Core execution while preserving its
+original representation and scheduling, and evaluate FlashLLM
+with its original load-sparse, compute-dense FP16 path using
+inputs pre-converted to the required format. All reported kernel
+latencies exclude offline preprocessing, including pruning,
+quantization, format conversion, and reordering. They measure
+only the online execution latency of each method. Kernellevel results are reported as latency and speedup relative to
+cuBLAS-TC unless otherwise stated.
+End-to-End Setting. For end-to-end evaluation, we integrate UnionSparse into FasterTransformer [48] under W4A4
+deployment and evaluate OPT-13B [43] on the same platform.
+We use Wanda [49] for pruning and Atom [50] for W4A4
+quantization.
+Energy Measurement. We further measure end-to-end
+inference energy on Jetson AGX Orin using the on-board
+INA3221 power sensor through the hwmon/sysfs interface,
+with a sampling interval of 50 ms. The idle power measured
+before the experiment is 3.19 W, which is subtracted from
+the integrated power trace to obtain incremental energy. The
+energy experiment uses OPT-13B under W4A4 quantization
+with input length 64 and output length 128. The Orin board
+runs in MAXN power mode, with CPU, GPU, and EMC
+frequencies locked to their maximum values.
+
+cuBLAS-TC [47]
+CUTLASS [46]
+cuSPARSE [36]
+Sputnik [30]
+SparTA [35]
+FlashLLM [38]
+SpInfer [39]
+UnionSparse
+
+Type
+Dense
+Dense
+Sparse
+Sparse
+Sparse
+Sparse
+Sparse
+Sparse
+
+Backend
+Tensor
+Tensor
+CUDA
+CUDA
+CUDA
+Tensor
+Tensor
+Tensor
+
+Core
+Core
+Core
+Core
+Core
+Core
+Core
+Core
+
+Scope
+Kernel
+Kernel
+Kernel
+Kernel
+Kernel
+Kernel/E2E
+Kernel/E2E
+Kernel/E2E
+
+Notes
+Dense low-bit baseline
+Template dense kernel baseline
+Generic sparse baseline
+Sparse DNN baseline
+Hybrid sparse baseline
+Load-sparse, compute-dense
+TCA-BME-based sparse baseline
+IE-BME + DW-PC + LSPD
+
+B. Kernel Performance Comparison
+Figure 10 reports the kernel-level speedup of UnionSparse
+over multiple baselines across decode widths N and sparsity
+levels under W4A4 quantization. Each subplot corresponds
+to one decode width, while the x-axis sweeps sparsity and
+the boxplots summarize the distribution across the benchmark
+corpus. Several trends are immediately visible. First, UnionSparse consistently forms the upper envelope across most
+workloads, indicating that its advantage is robust across model
+shapes rather than concentrated on a few outliers. Second,
+the advantage is observed against both dense Tensor-Core
+baselines (CUTLASS and cuBLAS-TC) and sparse baselines
+(SpInfer, FlashLLM, cuSPARSE, Sputnik, and SparTA). Third,
+the gain remains stable across sparsity levels from 40% to
+70%, showing that the benefit of UnionSparse is not tied to a
+narrow sparsity regime.
+To summarize these results more compactly, Table II reports the arithmetic mean of per-case speedups of UnionSparse over each baseline at each decode width. Specifically,
+for a baseline B and decode width N , let CB,N be the
+set of benchmark cases with decode width N for which
+both UnionSparse and baseline B are supported. For each
+case c ∈ CB,N , we first compute the per-case speedup as
+SB (c) = TB (c)/TUnionSparse (c).
+PThe value reported in Table
+II is then S B,N = |CB,N |−1 c∈CB,N SB (c). Unsupported
+baseline configurations are marked with “–” and excluded from
+the corresponding average.
+Over the full W4A4 benchmark corpus in Jetson AGX Orin,
+UnionSparse achieves 1.56× speedup over CUTLASS, 3.46×
+over cuBLAS-TC, 2.30× over FlashLLM, and 1.43× over
+SpInfer. Compared with CUDA-core-based sparse baselines,
+
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+4
+2
+0
+5
+4
+
+40
+
+50
+
+60
+
+N=8
+
+70
+
+2.25×
+
+3
+2
+1
+0
+
+40
+
+50
+
+Sparsity (%)
+
+60
+
+70
+
+Flash-LLM
+
+N=2
+
+UnionSparse (Ours)
+
+2.37×
+
+3
+2
+1
+0
+8
+
+40
+
+50
+
+60
+
+N = 16
+
+70
+
+3.53×
+
+6
+4
+2
+0
+
+40
+
+50
+
+Sparsity (%)
+
+60
+
+Speedup vs cuBLAS_TC
+
+3.60×
+
+SpInfer
+
+Speedup vs cuBLAS_TC
+
+N=1
+
+Speedup vs cuBLAS_TC
+
+6
+
+Speedup vs cuBLAS_TC
+
+Speedup vs cuBLAS_TC
+
+Speedup vs cuBLAS_TC
+
+Cutlass
+4
+
+10
+
+70
+
+5
+4
+
+N=4
+
+2.57×
+
+3
+2
+1
+0
+
+2.0
+
+40
+
+50
+
+60
+
+N = 32
+
+70
+
+1.10×
+
+1.5
+1.0
+0.5
+0.0
+
+40
+
+50
+
+Sparsity (%)
+
+60
+
+70
+
+Fig. 11. Kernel-Level Speedup across Decode Widths N (Batch Sizes) and Sparsity under W2A4 Quantization. Each subplot corresponds to a different
+decode width (batch size), with sparsity varying along the x-axis.
+
+TABLE II
+A RITHMETIC - MEAN KERNEL SPEEDUP UNDER W4A4 ACROSS DECODE
+WIDTHS N ON O RIN /T HOR .
+Baseline
+SpInfer
+FlashLLM
+CUTLASS
+cuBLAS
+Sputnik
+cuSPARSE
+SparTA
+
+N =1
+
+N =2
+
+N =4
+
+N =8
+
+N = 16
+
+which is most critical when the workload remains bandwidthsensitive and metadata cost is difficult to amortize.
+
+N = 32
+
+4.60/1.09× 1.66/1.09×
+1.66/1.09×
+1.63/1.53×
+1.53/1.18×
+1.55/1.19×
+2.57/1.36× 3.08/1.35×
+3.07/1.35×
+2.97/1.34×
+2.56/0.99×
+2.39/0.61×
+1.81/—
+2.10/—
+2.08/—
+2.03/—
+1.90/—
+1.45/—
+3.50/1.29× 4.69/1.30×
+4.73/1.33×
+4.54/1.43×
+6.46/1.97×
+1.86/0.37×
+3.88/1.56× 27.32/2.67×
+26.28/2.67×
+25.60/2.65×
+18.20/1.86×
+16.50/1.49×
+9.38/1.87× 219.83/73.93× 225.31/74.74× 235.53/77.53× 235.22/106.62× 318.02/135.37×
+—
+—
+—
+13.89/—
+12.14/—
+9.50/—
+
+the advantage is even larger, reaching 11.84× over SparTA
+(available for N = 8/16/32), 19.63× over Sputnik, and
+207.21× over cuSPARSE. These results indicate that conventional sparse formats become increasingly inefficient in the
+targeted low-bit sparse decoding regime, whereas UnionSparse
+preserves the benefits of sparse execution on Tensor Core.
+A clear decode-width trend is also evident. UnionSparse
+is most effective in decode-oriented small- and medium-N
+regimes, achieving 3.50×, 4.69×, 4.73×, and 4.54× speedup
+over cuBLAS-TC at N = 1, 2, 4, and 8, respectively. The gain
+remains high at N = 16, and then narrows at N = 32, where
+dense Tensor-Core kernels benefit more from regular dataflow
+and higher arithmetic intensity.
+We also conduct a kernel-level analysis under the more
+aggressive W2A4 quantization setting. As shown in Figure 11,
+UnionSparse remains competitive across decode widths and
+sparsity levels, especially in small- and medium-N regimes
+where sparse weight access and metadata handling dominate
+the latency. The benefit becomes smaller at N = 32, where
+the workload is more compute-intensive. This confirms that
+UnionSparse’s advantage is not restricted to W4A4, but can
+also extend to lower-bit W2A4 inference.
+Additionally, we evaluate UnionSparse on Jetson Thor GPU
+shown in Figure II, an SM110-based Blackwell platform.
+CUTLASS is omitted because it does not provide a directly
+applicable SM110 baseline. SparTA is also excluded, as it only
+produces valid latency results for N ≥ 8 and thus does not
+cover the small-N decode regimes considered in this study. In
+this experiment, we don’t use optimization method based on
+hardware characteristic of Jetson thor and choose RA=2 and
+CA=2, so the performance is not as good as that in Orin.
+This trend is consistent with the motivation of UnionSparse:
+its main advantage comes from reducing metadata overhead
+and improving the efficiency of low-bit sparse execution,
+
+C. Ablation Study
+To quantify the contribution of each major component,
+we conduct a controlled kernel-level ablation study under
+a unified setting, where all configurations share the same
+matrix shape, sparsity ratio, quantization scheme, hardware
+platform, and decode scenario. Table III reports the latency
+and representative profiling metrics of five configurations: the
+baseline without the proposed optimizations, LSPD only, DB
+only, LSPD+DB, and LSPD+DB+Reorder.
+Three observations can be drawn. First, LSPD provides the
+dominant standalone gain, reducing latency from 126.40 µs
+to 102.72 µs, which shows that direct bitmap-guided fragment
+reconstruction is the most effective optimization in removing
+sparse decoding overhead. Second, DB alone brings a smaller
+but complementary benefit, reducing latency to 122.91 µs
+and improving scheduling-related metrics, indicating better
+overlap between memory access and computation. Third,
+LSPD and DB are complementary: combining them further
+reduces latency to 99.90 µs, outperforming either optimization
+in isolation.
+Adding Reorder on top of LSPD+DB further reduces latency to 99.52 µs and yields small but consistent improvements
+in bandwidth utilization, issue efficiency, and Tensor Core
+activity. Although its incremental kernel-level gain is smaller
+than that of LSPD or DB, it confirms that the representationside optimization also translates into measurable online benefit.
+Besides latency reduction, the auxiliary metrics in Table III
+show a consistent trend: LSPD and DB improve bandwidth
+utilization and issue efficiency while reducing warp cycles per
+instruction, and Reorder further provides small but consistent
+gains in bandwidth and Tensor Core activity. These trends are
+consistent with the intended roles of the three optimizations.
+Overall, the ablation results validate the two-part design
+of UnionSparse: execution-side optimizations contribute the
+main online speedup, while representation-side optimization
+provides an additional gain by improving the compactness and
+regularity of the compressed layout.
+
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+126.40 31.93 65.63
+
+10.74
+
+1.29 72.66
+
+✓
+
+102.72 33.12 67.48
+122.91 32.70 65.97
+
+9.98
+9.44
+
+1.56 68.77
+1.30 70.61
+
+✓
+✓
+
+99.90 33.67 67.94
+99.52 34.27 68.39
+
+9.42
+9.42
+
+1.65 67.92
+1.68 67.90
+
+Utilization (%)
+
+Batch = 4
+
+Cutlass
+
+40
+20
+
+30.5
+19.6
+
+7.2
+222
+91.0
+
+1.2
+
+Cutlass
+89.1
+
+42.5
+
+51.8
+
+49.7
+
+0.0
+
+Reg TC Mem L2 ALU
+
+2.7
+
+8.0
+
+Flash-LLM
+
+83.3 8,094,074
+
+9.6
+245
+
+Reg TC Mem L2 ALU
+
+5,508 104
+
+2.1
+
+Reg TC Mem L2 ALU
+
+102
+8
+
+82.2 107
+
+106
+
+46.5
+
+3.7
+
+103
+
+5.7
+
+2.1
+
+UnionSparse (Ours) 10
+
+72.9
+42.0
+
+31.4
+
+26.7
+
+18.8
+
+3.1
+
+0.9
+
+SpInfer
+1,678,886
+
+59.8
+
+57.3
+
+40
+
+105
+
+41.8
+21.6
+
+1,641,549
+
+60
+
+106
+
+58.4
+
+42.4
+28.2
+
+10.5
+
+8
+
+82.5 107
+
+72.9
+
+55.1
+
+50.8
+
+29.9
+
+CuBLAS_TC
+
+80
+
+0
+
+58.3
+
+0.0
+
+0
+
+20
+
+10
+Flash-LLM
+23,362,991 UnionSparse (Ours)
+
+SpInfer
+
+86.5
+
+1,354,365
+324,356
+
+60
+
+100
+
+Batch = 8
+
+91.0
+
+80
+
+Bank conflicts (log scale)
+
+CuBLAS_TC
+
+100
+
+Utilization (%)
+
+✓
+
+Bank conflicts (log scale)
+
+✓
+✓
+✓
+
+BW↑ Issue↑ Warp Cyc↓ TC↑ ALU↓
+(%)
+(%)
+/Inst
+(%) (%)
+
+4.0
+
+2.8
+
+12.5
+
+Reg TC Mem L2 ALU
+
+21.6
+
+20,836
+13.1
+
+2.1
+
+Reg TC Mem L2 ALU
+
+105
+104
+103
+102
+
+Fig. 12. Kernel Utilization Breakdown under W4A4 Quantization for Two
+Representative MatMul Sizes (m=28672, k=7168, batch=8) and (m=12288,
+k=49152, batch=4).
+
+D. Profiling and Metric Analysis
+To better understand the source of the kernel-level gains,
+we further examine representative profiling metrics of different
+baselines under W4A4 quantization. Figure 12 reports the utilization breakdown for two representative matrix sizes, namely
+(m = 28672, k = 7168, N = 8) and (m = 12288, k =
+49152, N = 4). We focus on register utilization, Tensor
+Core activity, memory-pipeline utilization, L2 utilization, ALU
+utilization, and shared-memory bank conflicts.
+Several trends can be observed. First, among the sparse
+baselines, UnionSparse consistently achieves the highest ALU
+utilization, reaching 82.5% at N = 4 and 82.2% at N = 8,
+substantially higher than SpInfer and Flash-LLM. This indicates that UnionSparse is more effective at converting low-bit
+sparse computation into sustained on-chip execution, rather
+than stalling in metadata decoding or irregular sparse traversal.
+Second, UnionSparse also maintains higher L2 utilization
+than prior sparse baselines, indicating that its compressed
+representation, together with reorder, improves memory access
+regularity and enhances cache locality. Although dense baselines such as CUTLASS naturally exhibit stronger regularity
+on some metrics, they do not benefit from sparse arithmetic
+reduction and therefore serve mainly as dense-performance
+references.
+A particularly important difference lies in bank conflicts.
+Compared with SpInfer and Flash-LLM, UnionSparse reduces
+shared-memory bank conflicts by orders of magnitude under
+both representative settings. This behavior is consistent with
+the design of IE-BME and LSPD: the shared union-mask
+representation reduces metadata indirection, while bitmapguided four-stream gathering regularizes fragment reconstruction in shared memory and registers. In addition, the DWPC pipeline decouples next-tile prefetch from current-tile processing, which helps avoid excessive concurrent pressure on
+
+Prefill
+
+UnionSparse Compute (est.)
+
+Metadata Decode (est.)
+
+100
+
+60
+40
+20
+0
+
+Decode
+
+KV-Cache
+
+Runtime Scheduling
+
+100
+
+80
+Latency (%)
+
+80
+
+Memory Access (est.)
+
+60
+40
+20
+
+8
+8
+4
+6
+4
+8
+6
+4
+4
+4
+4
+4*6 *25 6*6 *12 *12 *25 6*6 *12 4*6 4*6 4*6
+1*6 1*64 1*25 1*256 4*64 4*64 4*25 4*256 16*6 32*6 128*6
+
+0
+
+Other Ops
+
+P/D share
+Prefill
+Decode
+
+80
+Time share (%)
+
+Optimization
+Dur.↓
+LSPD DB Reorder (us)
+
+100
+
+Latency (%)
+
+TABLE III
+K ERNEL - LEVEL ABLATION STUDY OF LSPD, D OUBLE B UFFER P IPELINE ,
+AND REORDER .
+
+11
+
+60
+40
+20
+
+8
+8
+4
+6
+4
+8
+6
+4
+4
+4
+4
+4*6 *25 6*6 *12 *12 *25 6*6 *12 4*6 4*6 4*6
+1*6 1*64 1*25 1*256 4*64 4*64 4*25 4*256 16*6 32*6 128*6
+
+0
+
+4 6 4 8 8 6 4 8 4 4 4
+4*6 *25 6*6 *12 *12 *25 6*6 *12 4*6 4*6 4*6
+1*6 1*64 1*25 1*256 4*64 4*64 4*25 4*256 16*6 32*6 128*6
+
+Fig. 13. End-to-end latency breakdown of UnionSparse during prefill and
+decode phases in the FasterTransformer pipeline.
+
+the memory hierarchy. Together, these effects make the compressed sparse execution path substantially more hardwarefriendly than prior sparse baselines.
+These profiling results explain the performance trends observed in Fig. 10. In the targeted low-N regime, sparse lowbit execution is highly sensitive to metadata traffic, irregular
+accesses, and overlap inefficiency. By improving PMR on the
+representation side and reducing decode and staging overhead on the execution side, UnionSparse raises the effective
+compute intensity of sparse decode and allows the kernel
+to exploit the hardware more efficiently. This is precisely
+why its advantage is most pronounced in decode-oriented
+edge settings, where the cost of sparse metadata is hardest
+to amortize.
+E. End-to-End Model Evaluation
+We evaluate end-to-end inference performance of OPT-13B
+on Jetson AGX Orin under W4A4 quantization, as shown
+in Figure 14. We first use Wanda [49] to prune the weight
+matrices to 50% sparsity, and then apply Atom [50] to quantize
+the pruned weights to W4A4. After pruning and quantization,
+the resulting weights are converted from the dense layout to
+the UnionSparse format. We evaluate variable-length input
+sequences with an average input length of 10 tokens, which
+represents short-prompt edge inference scenarios. Across all
+batch sizes and output lengths, UnionSparse consistently outperforms state-of-the-art frameworks, including Flash-LLM,
+FasterTransformer, and SpInfer.
+In terms of throughput, UnionSparse achieves up to 2.63×
+speedup over FasterTransformer at output length 64. As the
+output length increases, the relative speedup gradually decreases, reaching 2.40× at output length 1024. This trend
+is consistent across different batch sizes, indicating that the
+benefit of UnionSparse is most pronounced in short-sequence
+and latency-sensitive decoding scenarios.
+Compared to SpInfer, which already optimizes sparse execution, UnionSparse further improves performance by reducing
+payload extraction overhead and enhancing compute efficiency
+under low-bit sparse formats. These gains are particularly
+evident in small-batch regimes, which are representative of
+real-world edge deployment settings.
+We profile the full FasterTransformer pipeline to decompose
+end-to-end latency into SpMM compute, metadata decoding,
+memory access, KV-cache, runtime scheduling, and nonSpMM operations. In Figure 13, each x-axis label follows B =
+b, I = ℓin , O = ℓout , denoting batch size, input length, and
+output length, respectively. It shows that prefill is dominated
+by KV-cache writes and dense/non-SpMM operations, with
+SpMM contributing only 12%–23%, so kernel-level speedup
+brings limited end-to-end gain. In decode, however, N = B is
+small and SpMM becomes the critical path, accounting for
+
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+UnionSparse (ours)
+
+Output Length 64
+
+300
+
+2.63x
+
+#Tokens/s
+
+250
+
+Flash-LLM
+
+Output Length 128
+
+12
+
+FasterTransformer
+
+Spinfer
+
+Output Length 256
+
+2.61x
+
+Output Length 512
+
+2.56x
+
+Output Length 1024
+OOM
+
+2.46x
+
+2.40x
+
+200
+150
+100
+50
+0
+
+1
+
+2
+
+4
+
+8 16 32
+
+Batch Size
+
+1
+
+2
+
+4
+
+8 16 32
+
+Batch Size
+
+1
+
+2
+
+4
+
+8 16 32
+
+Batch Size
+
+1
+
+2
+
+4
+
+8 16 32
+
+Batch Size
+
+1
+
+2
+
+4
+
+8 16 32
+
+Batch Size
+
+Fig. 14. End-to-End Inference Performance of UnionSparse on OPT-13B with W4A4 Quantization.
+
+TABLE IV
+E ND - TO - END ENERGY MEASUREMENT OF U NION S PARSE ON OPT-13B
+UNDER W4A4 QUANTIZATION .
+Batch
+
+Avg. Power (W)
+
+Inc. Energy / Seq. (J)
+
+Inc. Energy / Token (J)
+
+1
+2
+4
+8
+
+32.74
+32.96
+32.90
+32.82
+
+261.71
+135.14
+70.76
+38.69
+
+2.05
+1.06
+0.55
+0.30
+
+69%–75% of per-token latency, while KV-cache and other
+operations are much smaller. Thus, UnionSparse’s systemlevel acceleration mainly comes from the decode phase, where
+reducing sparse weight access and SpMM latency directly
+translates to end-to-end speedup.
+Despite substantial kernel-level improvements, the end-toend speedup is lower than the peak kernel-level gains. This
+is because SpMM kernel constitutes only part of the full
+inference pipeline. Other components such as embedding
+lookup, attention scheduling, KV-cache management, and sampling remain unchanged and limit the achievable system-level
+speedup.
+Moreover, as the output length increases, the proportion of
+non-SpMM operations grows, further diminishing the relative impact of SpMM acceleration. This indicates a shift in
+the system bottleneck from compute-bound sparse kernels to
+pipeline-level coordination and memory-bound components.
+Overall, these results demonstrate that UnionSparse effectively improves the efficiency of low-bit sparse decoding on
+edge GPUs, while also highlighting the importance of systemlevel co-design for achieving further end-to-end gains.
+F. End-to-End Energy Measurement
+Table IV reports the end-to-end energy of UnionSparse on
+OPT-13B. The energy is measured with input length 64 and
+output length 128 using the on-board INA3221 power sensor
+through the hwmon/sysfs interface. The average power remains stable at around 33 W. As the batch size increases from
+1 to 8, the incremental energy per generated token decreases
+from 2.05 J to 0.30 J, showing that batching amortizes weight
+access and runtime overheads and improves per-token energy
+efficiency.
+VIII. C ONCLUSION
+This paper introduces UnionSparse, an index-efficient sparsity framework and SpMM kernel for low-bit sparse LLM
+inference on edge-GPU platforms. By coupling Union Bitmap
+
+encoding with a decode-oriented SpMM kernel, UnionSparse
+reduces metadata overhead, regularizes sparse traversal, and
+improves the effective use of low-bit payloads. The PMR
+clarifies why these gains matter: in sparse decode, performance
+depends not only on how much data is removed, but also
+on how efficiently the remaining data can be indexed and
+consumed. Across the measured INT4 benchmark and end-toend framework, UnionSparse delivers clear kernel-level gains
+over dense and sparse baselines, with the strongest benefits
+appearing in low-N and low-bit sparse decoding regimes
+where metadata costs are hardest to amortize. More broadly,
+the results support co-designing sparse format layout and
+kernel mapping for latency and resource limited deployment.
+ACKNOWLEDGMENT
+This work was supported in part by the Strategic Priority
+Research Program of the Chinese Academy of Sciences, Grant
+Nos. XDB0660101, XDB0660000, and XDB0660100, in part
+by the National Natural Science Foundation of China under
+Grant No. 62502489, in part by Jiangsu Provincial Natural
+Science Foundation under Grants BK20241818,BK20251815,
+and BK20250479, in part by Anhui Provincial Natural Science
+Foundation under Grant 2508085MF141, in part by the Studentsnnovation and Entrepreneurship Foundation of University
+of Scienceand Technology of China (USTC) under Grant
+CY2025X011B.
+Generative AI tools were used during manuscript preparation only to assist with LaTeX formatting and editorial
+polishing. The authors reviewed and verified all AI-assisted
+edits and take full responsibility for the technical content,
+claims, experimental results, and conclusions of this article.
+R EFERENCES
+[1] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez,
+L. Kaiser, and I. Polosukhin, “Attention is all you need,” in Advances
+in Neural Information Processing Systems, vol. 30, 2017.
+[2] H. Touvron, L. Martin, K. Stone, P. Albert, A. Almahairi, Y. Babaei,
+N. Bashlykov, S. Batra, P. Bhargava, S. Bhosale et al., “LLaMA
+2: Open foundation and fine-tuned chat models,” arXiv preprint
+arXiv:2307.09288, 2023.
+[3] OpenAI, “GPT-4 technical report,” arXiv preprint arXiv:2303.08774,
+2023.
+[4] D. e. a. Xu, “Edgellm: Fast on-device llm inference with speculative
+decoding,” IEEE Transactions on Mobile Computing, 2025.
+[5] Z. e. a. Huang, “Tenet: An efficient sparsity-aware lut-centric architecture for ternary llm inference on edge,” arXiv preprint arXiv:2509.13765,
+2025.
+
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+[6] G. e. a. Cai, “Efficient inference for edge large language models,”
+Tsinghua Science and Technology, 2026.
+[7] D. Gopalan and R. Ali, “Hqp: Sensitivity-aware hybrid quantization
+and pruning for ultra-low-latency edge ai inference,” arXiv preprint
+arXiv:2602.06069, 2026.
+[8] E. J. e. a. Husom, “Sustainable llm inference for edge ai,” arXiv preprint
+arXiv:2504.03360, 2025.
+[9] Y. e. a. Wang, “A unified and resource-aware framework for adaptive
+inference optimization on edge devices,” Electronics, vol. 14, no. 11, p.
+2188, 2025.
+[10] X. e. a. Li, “Vec-lut: Vector table lookup for parallel ultra-low-bit llm
+inference on edge devices,” arXiv preprint arXiv:2512.06443, 2025.
+[11] Z. e. a. Fu, “H2eal: Hybrid-bonding architecture with hybrid sparse
+attention for efficient long-context llm inference,” arXiv preprint
+arXiv:2508.16653, 2025.
+[12] E. Frantar, S. Ashkboos, T. Hoefler, and D. Alistarh, “Gptq: Accurate
+post-training quantization for generative pre-trained transformers,” in
+The Eleventh International Conference on Learning Representations
+(ICLR), 2023.
+[13] J. Lin, J. Tang, H. Tang, S. Yang, W.-M. Chen, W.-C. Wang, G. Xiao,
+X. Dang, C. Gan, and S. Han, “Awq: Activation-aware weight quantization for on-device LLM compression and acceleration,” Proceedings
+of Machine Learning and Systems, vol. 6, 2024.
+[14] Y. Lin, H. Tang, S. Yang, Z. Zhang, G. Xiao, C. Gan, and S. Han,
+“Qserve: W4a8kv4 quantization and system co-design for efficient llm
+serving,” Proceedings of Machine Learning and Systems, vol. 7, 2025.
+[15] Y. Sun, R. Liu, H. Bai, H. Bao, K. Zhao, Y. Li, J. Hu, X. Yu, L. Hou,
+C. Yuan et al., “Flatquant: Flatness matters for llm quantization,” arXiv
+preprint arXiv:2410.09426, 2024.
+[16] T. Dettmers, M. Lewis, Y. Belkada, and L. Zettlemoyer, “LLM.int8():
+8-bit matrix multiplication for transformers at scale,” arXiv preprint
+arXiv:2208.07339, 2022.
+[17] G. Xiao, J. Lin, M. Seznec, H. Wu, J. Demouth, and S. Han,
+“SmoothQuant: Accurate and efficient post-training quantization for
+large language models,” in Proceedings of the 40th International Conference on Machine Learning, ser. Proceedings of Machine Learning
+Research, vol. 202, 2023, pp. 38 087–38 099.
+[18] E. Frantar and D. Alistarh, “Sparsegpt: Massive language models can be
+accurately pruned in one-shot,” in Proceedings of the 40th International
+Conference on Machine Learning, ser. Proceedings of Machine Learning
+Research, vol. 202, 2023, pp. 10 323–10 337.
+[19] W. Lou, L. Gong, C. Wang, J. Qian, X. Wang, C. Li, and X. Zhou,
+“Unleashing network/accelerator co-exploration potential on fpgas: A
+deeper joint search,” IEEE Transactions on Computer-Aided Design of
+Integrated Circuits and Systems, 2024.
+[20] D. Driess, F. Xia, M. S. Sajjadi, C. Lynch, A. Chowdhery, B. Ichter,
+A. Wahid, J. Tompson, Q. Vuong, T. Yu et al., “Palm-e: An embodied
+multimodal language model,” arXiv preprint arXiv:2303.03378, 2023.
+[21] Y. Gao, M. Piccinini, Y. Zhang, D. Wang, K. Moller, R. Brusnicki,
+B. Zarrouki, A. Gambi, J. F. Totz, K. Storms et al., “Foundation models
+in autonomous driving: A survey on scenario generation and scenario
+analysis,” IEEE Open Journal of Intelligent Transportation Systems,
+2026.
+[22] C. Aas, H. Abdelsalam, I. Belousova, S. Bhargava, J. Cheng, R. Daland,
+J. Driesen, F. Flego, T. Guigue, A. Johannsen et al., “Intelligent assistant
+language understanding on device,” arXiv preprint arXiv:2308.03905,
+2023.
+[23] J. Knoop and H. Holtmann, “Private llm inference on consumer blackwell gpus: A practical guide for cost-effective local deployment in smes,”
+arXiv preprint arXiv:2601.09527, 2026.
+[24] W. Kwon, Z. Li, S. Zhuang, Y. Sheng, L. Zheng, C. H. Yu, J. Gonzalez,
+H. Zhang, and I. Stoica, “Efficient memory management for large
+language model serving with pagedattention,” in Proceedings of the
+29th Symposium on Operating Systems Principles, ser. SOSP ’23.
+New York, NY, USA: Association for Computing Machinery, 2023, p.
+611–626. [Online]. Available: https://doi.org/10.1145/3600006.3613165
+[25] T. Hoefler, D. Alistarh, T. Ben-Nun, N. Dryden, and A. Peste, “Sparsity
+in deep learning: Pruning and growth for efficient inference and training
+in neural networks,” Journal of Machine Learning Research, vol. 22,
+no. 1, pp. 10 882–11 105, 2021.
+[26] Z. Tan, X. Zhang, and Z. Wei, “Wrp: Weight recover prune for structured
+sparsity,” in Proceedings of the 62nd Annual Meeting of the Association
+for Computational Linguistics (Volume 1: Long Papers), 2024, pp. 6433–
+6443.
+[27] H. Zhang, X. XiaolongShi, J. Sun, and G. Sun, “Structured pruning
+for large language models using coupled components elimination and
+
+[28]
+
+[29]
+
+[30]
+[31]
+
+[32]
+
+[33]
+
+[34]
+
+[35]
+
+[36]
+[37]
+[38]
+
+[39]
+
+[40]
+[41]
+[42]
+[43]
+
+[44]
+[45]
+[46]
+[47]
+[48]
+[49]
+[50]
+
+13
+
+minor fine-tuning,” in Findings of the Association for Computational
+Linguistics: NAACL 2024, 2024, pp. 1–12.
+Z. Wang, L. Gong, X. Qu, C. Tang, W. Lou, T. Wang, Q. Cheng,
+X. Chen, C. Wang, and X. Zhou, “Unisparta: A unified sparse tensor
+program tuning framework,” IEEE Transactions on Computer-Aided
+Design of Integrated Circuits and Systems, 2025.
+C. Tang, G. Sui, W. Lou, Z. Wang, J. Tuo, W. Xie, Y. Gao, Y. Zhu,
+L. Gong, C. Wang et al., “Closertome: A unified framework for accurate
+and transferable latency prediction across heterogeneous devices,” in
+Proceedings of the AAAI Conference on Artificial Intelligence, vol. 40,
+no. 30, 2026, pp. 25 805–25 813.
+T. Gale, M. Zaharia, C. Young, and E. Elsen, “Sparse gpu kernels for
+deep learning,” in SC20: International Conference for High Performance
+Computing, Networking, Storage and Analysis. IEEE, 2020, pp. 1–14.
+R. Fan, W. Wang, and X. Chu, “Dtc-spmm: Bridging the gap in
+accelerating general sparse matrix multiplication with tensor cores,” in
+Proceedings of the 29th ACM International Conference on Architectural
+Support for Programming Languages and Operating Systems, Volume 3,
+2024.
+P. Okanovic, G. Kwasniewski, P. Sylos Labini, M. Besta, F. Vella, and
+T. Hoefler, “High performance unstructured spmm computation using
+tensor cores,” arXiv preprint arXiv:2408.11551, 2024, accepted at SC
+’24.
+H. Zhao, S. Li, J. Wang, C. Zhou, J. Wang, Z. Xin, S. Li, Z. Liang,
+Z. Pan, F. Liu et al., “Acc-spmm: Accelerating general-purpose sparse
+matrix-matrix multiplication with gpu tensor cores,” in Proceedings of
+the 30th ACM SIGPLAN Annual Symposium on Principles and Practice
+of Parallel Programming, 2025, pp. 326–338.
+Y. Xia, W. Wang, D. Yang, X. Zhou, and D. Cheng, “Voltrix: Sparse
+{Matrix-Matrix} multiplication on tensor cores with asynchronous and
+balanced kernel optimization,” in 2025 USENIX Annual Technical Conference (USENIX ATC 25), 2025, pp. 699–714.
+N. Zheng, B. Lin, Q. Zhang, L. Ma, Y. Yang, F. Yang, Y. Wang, M. Yang,
+and L. Zhou, “{SparTA}:{Deep-Learning} model sparsity via {Tensorwith-Sparsity-Attribute},” in 16th USENIX Symposium on Operating
+Systems Design and Implementation (OSDI 22), 2022, pp. 213–232.
+“cusparse library user guide,” NVIDIA CUDA Documentation, 2024,
+https://docs.nvidia.com/cuda/cusparse/.
+NVIDIA, “cuSPARSELt,” https://developer.nvidia.com/cusparselt, 2024.
+H. Xia, Z. Zheng, Y. Li, D. Zhuang, Z. Zhou, X. Qiu, Y. Li, W. Lin, and
+S. L. Song, “Flash-llm: Enabling cost-effective and highly-efficient large
+generative model inference with unstructured sparsity,” arXiv preprint
+arXiv:2309.10285, 2023.
+R. Fan, X. Yu, P. Dong, Z. Li, G. Gong, Q. Wang, W. Wang, and X. Chu,
+“Spinfer: Leveraging low-level sparsity for efficient large language
+model inference on gpus,” in Proceedings of the Twentieth European
+Conference on Computer Systems (EuroSys ’25), 2025, pp. 243–260.
+“Sputnik: Sparse matrix multiplication on gpus,” Open-Source Project
+Repository, 2024, https://github.com/google-research/sputnik.
+“Nvidia jetson agx orin developer kit,” NVIDIA Developer
+Documentation,
+2024,
+https://developer.nvidia.com/embedded/
+jetson-agx-orin-developer-kit.
+H. Touvron et al., “Llama 2: Open foundation and fine-tuned chat
+models,” arXiv preprint arXiv:2307.09288, 2023.
+S. Zhang, S. Roller, N. Goyal, M. Artetxe, M. Chen, S. Chen, C. Dewan,
+M. Diab, X. Li, X. V. Lin, T. Mihaylov, M. Ott, S. Shleifer, K. Shuster,
+D. Simig, P. Singh Koura, A. Sridhar, T. Wang, and L. Zettlemoyer,
+“Opt: Open pre-trained transformer language models,” arXiv preprint
+arXiv:2205.01068, 2022.
+A. Yang, B. Yang, B. Hui, B. Zheng, B. Yu, C. Zhou, C. Li, C. Li,
+D. Liu, F. Huang et al., “Qwen technical report,” arXiv preprint
+arXiv:2407.10671, 2024.
+Meta, “Llama 3: Open foundation and instruction-tuned models,” 2024.
+“Cutlass: Cuda templates for linear algebra subroutines and solvers,”
+NVIDIA Developer Documentation and Open-Source Repository, 2024,
+https://github.com/NVIDIA/cutlass.
+“cublas library user guide,” NVIDIA CUDA Documentation, 2024,
+https://docs.nvidia.com/cuda/cublas/.
+“Fastertransformer,” NVIDIA Open-Source Repository, 2023, https://
+github.com/NVIDIA/FasterTransformer.
+M. Sun, Z. Liu, A. Bair, and J. Z. Kolter, “A simple and effective pruning
+approach for large language models,” in The Twelfth International
+Conference on Learning Representations (ICLR), 2024.
+Y. Zhao, C.-Y. Lin, K. Zhu, Z. Ye, L. Chen, S. Zheng, L. Ceze,
+A. Krishnamurthy, T. Chen, and B. Kasikci, “Atom: Low-bit quantization
+for efficient and accurate llm serving,” Proceedings of Machine Learning
+and Systems, vol. 6, pp. 196–209, 2024.
+
+IEEE TRANSACTIONS ON COMPUTER-AIDED DESIGN OF INTEGRATED CIRCUITS AND SYSTEMS
+
+Tianhao Jiang is currently pursuing the M.S. degree at
+the University of Science and Technology of China. He
+received the B.S. degree from East China Normal University. His research interests include efficient large language
+model inference in cloud and edge environments, distributed
+AI systems, FPGA-based acceleration, and performance
+optimization for heterogeneous computing platforms.
+
+14
+
+Chao Wang is currently a Professor with the University
+of Science and Technology of China, Hefei, China. His
+research interests focus on multicore and reconfigurable
+computing. He serves as an Associate Editor of the ACM
+Transactions on Design Automation of Electronic Systems,
+the IEEE/ACM Transactions on Computational Biology and
+Bioinformatics, and Microprocessors and Microsystems. He
+is a Senior Member of the ACM, IEEE, and CCF.
+
+Hang Gu received the B.E. degree in computer science and
+technology from Southeast University, Nanjing, China, in
+2023. In the same year, he began his master’s studies with
+the School of Computer Science and Technology, University
+of Science and Technology of China (USTC), Hefei, China.
+He is currently pursuing the Eng.D. degree with the School
+of Software Engineering, USTC. His research focuses on
+inference optimization and heterogeneous computing.
+Teng Wang is currently a research scientist with the
+Suzhou Institute for Advanced Research, University of
+Science and Technology of China. His research interests
+focus on algorithm-level and architecture-level acceleration
+for deep learning applications and AI-assisted architecture
+automation.
+Qianyu Cheng is currently a Ph.D. candidate in the School
+of Computer Science and Technology, University of Science
+and Technology of China. He received the bachelor’s degree
+from the Yingcai Honors College, University of Electronic
+Science and Technology of China, in 2022. His research
+interests include CPU-FPGA heterogeneous systems, distributed accelerator systems, and their applications to largescale analytical processing and multi-tenant cloud services.
+ZhenDong Zheng received the B.S. degree from the School
+of Computer Science and Technology, University of Science
+and Technology of China, Hefei, China, in 2022, where he
+is currently pursuing the Ph.D. degree. His current research
+focuses on LLM accelerators and automated programming
+framework design.
+
+Xi Li received the Ph.D. degree in computer science from
+the University of Science and Technology of China, Hefei,
+China, in 2003. He is currently a Professor with the University of Science and Technology of China, Hefei, China.
+He directs the research programs in the Embedded Systems
+Laboratory, examining various aspects of embedded systems, with a focus on performance, availability, flexibility,
+and energy efficiency. He has led several national key
+projects of China, several National High-Tech R&D Program (863 Program)
+projects, and projects supported by the National Natural Science Foundation
+of China.
+
+Cheng Tang is currently pursuing the Ph.D. degree in
+software engineering with the University of Science and
+Technology of China, Hefei, China. His research interests
+include large language model inference, machine learning
+systems, and efficient AI computing. His research focuses
+on improving the efficiency, scalability, and deployability of
+large language models across heterogeneous and resourceconstrained computing platforms.
+Qiyue Su is currently pursuing the M.S. degree at the
+University of Science and Technology of China. He received the B.S. degree from Harbin Institute of Technology.
+His research interests include recommender systems, fully
+homomorphic encryption, and machine learning.
+
+Wenqi Lou (Member, IEEE) received the B.S. degree
+from Northwestern Polytechnical University, Xi’an, China,
+in 2018, and the Ph.D. degree in computer science from
+the University of Science and Technology of China, Hefei,
+China, in 2023. He is currently an Associate Researcher
+with the School of Software Engineering, University of
+Science and Technology of China. His current research
+interests include deep learning accelerators and FPGAbased acceleration.
+Lei Gong received the Ph.D. degree in computer science
+from the University of Science and Technology of China in
+2019. He is currently a research scientist with the School of
+Computer Science, University of Science and Technology of
+China. He examines various aspects of embedded systems,
+with a focus on performance, availability, flexibility, and
+energy efficiency. His research interests include machine
+learning accelerators and FPGA-based systems.
+
+Xuehai Zhou received the B.S., M.S., and Ph.D. degrees
+from the University of Science and Technology of China,
+Hefei, China, in 1987, 1990, and 1997, respectively. He is
+currently a Professor with the School of Computer Science,
+University of Science and Technology of China. His current
+research interests include various aspects of multicore and
+distributed systems.
+
+

@@ -14,6 +14,7 @@ and the adaptive policy testable on a CPU-only host.
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import importlib
 import json
@@ -35,6 +36,7 @@ SCHEMA = "cubutterfly-stage-calibration-v1"
 PROBE_SCHEMA = "cubutterfly-stage-probe-v1"
 VERSION = "adaptive-group-sampling-v1"
 DEFAULT_MAX_POINTS = 33
+DEFAULT_REFINEMENT_ROUNDS = 4
 
 _LOAD_FIELDS = {
     "batch", "batch_tile_count", "work_blocks", "grid_ctas", "load", "waves",
@@ -153,19 +155,21 @@ def _point_number(point: dict[str, Any], name: str, default: int = 0) -> int:
 def _bulk_service_point(point: dict[str, Any]) -> dict[str, Any]:
     """Make the explicitly serial bulk copy used for service calibration.
 
-    Overlap and tiled-batch policy are composition axes.  They must not create
-    a second copy of an otherwise identical physical service curve.  Keep the
-    serialized mapping and top-level point synchronized whenever a mapping
-    carries these policy fields.
+    Overlap batch chunks are composition axes. Shared bulk CTA batching is a
+    physical shape and survives disabling composition. Keep the serialized
+    mapping and top-level point synchronized.
     """
     result = dict(point)
-    result["stage_overlap"] = 0
-    result["batch_tile_count"] = 1
-    result["factor_overlap"] = 0
     mapping = _decode_mapping(result.get("mapping_json", {}))
+    axes = {**result, **mapping} if isinstance(mapping, dict) else result
+    preserve_batch_tile = (axes.get("backend") == "shared-iterative" and
+                           not _truthy(axes.get("stage_overlap", False)))
+    result["stage_overlap"] = 0
+    result["batch_tile_count"] = axes.get("batch_tile_count", 1) if preserve_batch_tile else 1
+    result["factor_overlap"] = 0
     if isinstance(mapping, dict):
         mapping = dict(mapping)
-        for name, value in (("stage_overlap", 0), ("batch_tile_count", 1),
+        for name, value in (("stage_overlap", 0), ("batch_tile_count", result["batch_tile_count"]),
                             ("factor_overlap", 0)):
             # The copied point is itself a complete probe request.  Emit the
             # policy fields even when the source mapping omitted them so that
@@ -183,10 +187,10 @@ def _service_points(points: list[dict[str, Any]]) -> tuple[list[dict[str, Any]],
     for point in points:
         mapping = _decode_mapping(point.get("mapping_json", {}))
         mapping = mapping if isinstance(mapping, dict) else {}
-        stage_overlap = _truthy(point.get("stage_overlap", mapping.get("stage_overlap", False)))
-        factor_overlap = _truthy(point.get("factor_overlap", mapping.get("factor_overlap", False)))
-        factor_slices = _point_number(point, "factor_slices",
-                                      _point_number(mapping, "factor_slices", 1))
+        axes = {**point, **mapping}
+        stage_overlap = _truthy(axes.get("stage_overlap", False))
+        factor_overlap = _truthy(axes.get("factor_overlap", False))
+        factor_slices = _point_number(axes, "factor_slices", 1)
         if factor_slices > 1 and not factor_overlap:
             key = _json_key(point)
             if key not in seen_composition:
@@ -212,9 +216,16 @@ def _service_points(points: list[dict[str, Any]]) -> tuple[list[dict[str, Any]],
 def _point_static_key(point: dict[str, Any]) -> str:
     """Key mappings before a plan is resolved, excluding load-only metadata."""
     mapping = _decode_mapping(point.get("mapping_json", {}))
+    axes = {**point, **mapping} if isinstance(mapping, dict) else point
+    bulk_batch_shape = (axes.get("backend") == "shared-iterative" and
+                        not _truthy(axes.get("stage_overlap", False)))
     payload = {}
     for key, value in point.items():
-        if key in _LOAD_FIELDS or key in _POINT_METADATA_FIELDS:
+        if key in _LOAD_FIELDS and not (key == "batch_tile_count" and bulk_batch_shape):
+            continue
+        if key in _POINT_METADATA_FIELDS:
+            continue
+        if key == "batch_tile_count" and isinstance(mapping, dict) and key in mapping:
             continue
         payload[key] = value
     payload["mapping_json"] = mapping
@@ -281,6 +292,16 @@ def _cache_identity(binary: pathlib.Path | str, profile: dict[str, Any], protoco
                             if key not in {"mode", "max_points", "budget", "max_seconds",
                                            "wall_budget_seconds", "time_budget"}}
     identity.update({"binary_sha256": _binary_sha256(binary), "protocol": measurement_protocol})
+    from jit_calibration_identity import calibration_identity
+    jit_runtime = calibration_identity()
+    if jit_runtime is not None:
+        identity["jit_runtime"] = jit_runtime
+    library = pathlib.Path(binary).with_name("libcuntt.so")
+    # Static builds have no shared library and retain the historical identity
+    # shape. Shared builds must invalidate stage checkpoints when only the
+    # linked library is relinked.
+    if library.is_file():
+        identity["library_sha256"] = _binary_sha256(library)
     return identity
 
 
@@ -560,7 +581,57 @@ def _model_module() -> Any:
 def _build_model(records: list[dict[str, Any]], profile: dict[str, Any]) -> dict[str, Any]:
     model = _model_module()
     identity = _profile_identity(profile)
+    priors = profile.get("_resume_build_priors")
+    if priors:
+        # Only the model's temporary identity view omits runtime provenance.
+        # Durable samples, raw probe payloads and fingerprints stay intact.
+        identity.pop("runtime_fingerprint", None)
+        views = []
+        for record in records:
+            view = dict(record)
+            sample = dict(record.get("sample", {}))
+            sample.pop("runtime_fingerprint", None)
+            if isinstance(sample.get("hardware"), dict):
+                sample["hardware"] = {key: value for key, value in sample["hardware"].items()
+                                      if key != "runtime_fingerprint"}
+            view["sample"] = sample
+            views.append(view)
+        result = model.build_profile(views, identity=identity)
+        result["build_priors"] = priors
+        result["calibration_source"] = "development-cross-build-stage-priors"
+        return result
     return model.build_profile(records, identity=identity)
+
+
+def _adopt_build_priors(checkpoint: dict[str, Any], identity: dict[str, Any]) -> dict[str, Any]:
+    """Invalidate build-owned state while preserving original measurement evidence."""
+    old = checkpoint.get("identity", {})
+    build_fields = {"binary_sha256", "library_sha256", "jit_runtime", "runtime_fingerprint"}
+    stable = lambda value: {key: item for key, item in value.items() if key not in build_fields}
+    if stable(old) != stable(identity):
+        raise ValueError("stage build priors require matching hardware and measurement protocol")
+    origins = list(checkpoint.get("build_prior_origins", []))
+    origins.append({"identity": copy.deepcopy(old),
+                    "records": copy.deepcopy(checkpoint.get("raw_records", checkpoint.get("records", []))),
+                    "descriptions": copy.deepcopy(checkpoint.get("descriptions", {})),
+                    "candidates": copy.deepcopy(checkpoint.get("candidates", [])),
+                    "acquisition_inventory_ref": copy.deepcopy(checkpoint.get("acquisition_inventory_ref")),
+                    "composition_requests": copy.deepcopy(checkpoint.get("composition_requests", []))})
+    metadata = {"schema": "cubutterfly-stage-build-priors-v1",
+                "policy": "development-only-physical-curve-priors-current-describe",
+                "source_identities": [origin["identity"] for origin in origins],
+                "current_identity": identity,
+                "evidence_scope": "historical-build-measurements-and-current-descriptors",
+                "current_build_service_validation": "not-implied-by-prior-coverage",
+                "finalist_confirmation": "current-build-required-by-search"}
+    checkpoint.update(identity=identity, build_prior_origins=origins, build_priors=metadata,
+                      descriptions={}, candidates=[], composition_requests=[], model=None,
+                      status="build-priors-current-describe-required")
+    checkpoint.pop("acquisition_inventory_ref", None)
+    checkpoint["records"] = [record for record in checkpoint.get("records", [])
+                             if record.get("status") == "measured" and _truthy(record.get("correct"))
+                             and _truthy(record.get("measurement_exclusive_gpu", True))]
+    return metadata
 
 
 def _model_curve_key(sample: dict[str, Any], group: dict[str, Any]) -> str:
@@ -1310,7 +1381,10 @@ def _online_service_signature(description: dict[str, Any], group: dict[str, Any]
     if first is None or stages is None or (first, stages) not in intervals:
         return None
     position = 0 if first == 0 else 1
-    expected_core = ("register-tile" if position == 0 else "cufftdx-block") \
+    suffix_core = _service_text(_service_value(sample, "suffix_core", "cufftdx-block"))
+    if suffix_core not in {"cufftdx-block", "native"} or (suffix_core == "native" and fft_core != "register-tile"):
+        return None
+    expected_core = ("register-tile" if position == 0 or suffix_core == "native" else "cufftdx-block") \
         if fft_core == "register-tile" else "cufftdx-block"
     if _service_text(group.get("core")) != expected_core:
         return None
@@ -1532,8 +1606,12 @@ def _coverage(candidates: list[dict[str, Any]], records: list[dict[str, Any]], *
         if (str(description.get("status", "")).lower() == "resolved" and
                 description.get("groups") and not independent_keys and not candidate.get("service_reuse")):
             adapter_gaps.append({"candidate_key": candidate["key"],
-                                 "reason": "resolved-groups-not-independent"})
-        interval_info = _interval_coverage(candidate, records, max_points=max_points)
+                                 "reason": "resolved-groups-not-independent",
+                                 "point": candidate.get("point"),
+                                 "group_reasons": sorted({str(group.get("reason", "not-independent"))
+                                                          for group in description["groups"]})})
+        curve_max_points = candidate.get("max_points", max_points)
+        interval_info = _interval_coverage(candidate, records, max_points=curve_max_points)
         curve_key = sorted(actual_keys)[0] if len(actual_keys) == 1 else candidate.get("actual_key", candidate["key"])
         entry = curves.setdefault(curve_key, {
             "candidate_key": candidate["key"], "actual_curve_keys": sorted(actual_keys),
@@ -1561,7 +1639,8 @@ def _coverage(candidates: list[dict[str, Any]], records: list[dict[str, Any]], *
             "unavailable_group_count": unavailable_groups,
             "omitted": list(candidate.get("omitted", [])),
             "point_count": max((len(values) for values in coordinates.values()), default=0),
-            "measured_load_count": len(measured_batches), "max_points": max_points,
+            "measured_load_count": len(measured_batches), "max_points": curve_max_points,
+            "default_refinement_rounds": candidate.get("default_refinement_rounds"),
         })
         if entry["measured_batches"]:
             entry["measured_load_count"] = len(entry["measured_batches"])
@@ -1574,7 +1653,9 @@ def _coverage(candidates: list[dict[str, Any]], records: list[dict[str, Any]], *
     for entry in curves.values():
         requested = int(entry["requested_batch"])
         entry["requested_batch_measured"] = requested in entry["measured_batches"]
-        entry["one_point_only"] = entry["point_count"] < 2
+        # An unavailable adapter has zero curves, rather than a measured
+        # single-point curve. Keep its separate gap visible in the status.
+        entry["one_point_only"] = bool(entry["independent_curve_count"] and entry["point_count"] < 2)
         entry["complete"] = bool(entry["requested_batch_measured"] and not entry["omitted"] and
                                   entry["point_count"] >= 2 and entry["independent_curve_count"] and
                                   not entry["unavailable_group_count"] and
@@ -1841,6 +1922,8 @@ def _overall_status(candidates: list[dict[str, Any]], records: list[dict[str, An
         return "incomplete-unsupported"
     if not coverage.get("curve_count") or not model.get("training_groups"):
         return "incomplete-unsupported"
+    if coverage.get("adapter_gap_count"):
+        return "incomplete-unsupported"
     if coverage.get("one_point_curves"):
         return "incomplete-one-point-only"
     if coverage.get("omitted_count") or not coverage.get("coverage_complete"):
@@ -1885,6 +1968,25 @@ def _result(model: dict[str, Any], coverage: dict[str, Any], status: str,
         and not coverage.get("one_point_curves")
         and bool(validation.get("passed"))
     )
+    # Installation completeness and physical-curve validity are distinct.
+    # Retain every omission above while allowing consumers to require an
+    # independently certified key for the specific groups they want to rank.
+    eligible = {key for entry in coverage.get("curves", {}).values()
+                if entry.get("complete") and entry.get("validation_mode") in {"validated", "reused-validated"}
+                for key in entry.get("actual_curve_keys", [])}
+    certified = []
+    model_module = _model_module()
+    for key in sorted(eligible):
+        curve = model.get("curves", {}).get(key)
+        if (curve and len({point["k"] for point in curve.get("train_points", [])}) >= 2
+                and model_module._validation_report({"curves": {key: curve}}).get("passed")):
+            certified.append(key)
+    result["ranking_scope"] = {
+        "schema": "cubutterfly-stage-ranking-scope-v1",
+        "policy": "independent-holdout-per-curve-with-complete-interval-coverage",
+        "validated_curve_keys": certified,
+        "validated_curve_count": len(certified),
+    }
     return result
 
 
@@ -1892,18 +1994,25 @@ def calibrate(binary: pathlib.Path | str, path: pathlib.Path | str, profile: dic
               points: Iterable[dict[str, Any]], run: Callable[..., Any],
               exclusive: Callable[[], Any], mode: str = "full", warmup: int = 10,
               repeat: int = 20, trials: int = 3, max_points: int | None = None,
+              resume_build_priors: bool = False,
               **kwargs: Any) -> dict[str, Any]:
     """Measure executable mappings and build an adaptive service profile.
 
     An explicit ``max_points`` caps distinct loads per probe configuration.
-    Full-mode defaults reserve boundary seeds, independent midpoints and one
-    refinement of each midpoint interval, with a floor of DEFAULT_MAX_POINTS.
+    Full-mode defaults reserve boundary seeds and four rounds of midpoint
+    promotion followed by child-interval holdouts (31 probes per initial
+    interval), with a floor of DEFAULT_MAX_POINTS and a legal-load-span cap.
+    This finite budget can still end with incomplete validation.
     Optional bounded controls include
     ``budget``/``max_probes`` (global probe count) and ``max_seconds`` (wall
     time).  Wall time is consulted only in ``mode='bounded'`` unless
     ``enforce_wall_budget=True`` is supplied; full calibration has no implicit
     timeout.  Any runner or GPU reservation implementation remains the
     caller's responsibility.
+    ``resume_build_priors=True`` explicitly retains clean historical stage
+    measurements as development priors across builds on the same hardware and
+    timing protocol. Current descriptors are reacquired; original evidence and
+    source identities remain in ``build_prior_origins`` in the checkpoint.
     """
     if mode not in {"full", "bounded"}:
         raise ValueError("mode must be 'full' or 'bounded'")
@@ -1941,8 +2050,15 @@ def calibrate(binary: pathlib.Path | str, path: pathlib.Path | str, profile: dic
     if checkpoint is not None:
         old_identity = checkpoint.get("identity", {})
         if old_identity != identity:
-            raise ValueError("stage calibration checkpoint identity/protocol mismatch")
-        _refresh_curve_model_state(checkpoint, profile)
+            if not resume_build_priors:
+                raise ValueError("stage calibration checkpoint identity/protocol mismatch")
+            _adopt_build_priors(checkpoint, identity)
+        if checkpoint.get("build_priors"):
+            if not resume_build_priors:
+                raise ValueError("stage calibration checkpoint requires explicit resume_build_priors")
+            profile = {**profile, "_resume_build_priors": checkpoint["build_priors"]}
+        else:
+            _refresh_curve_model_state(checkpoint, profile)
         records = list(checkpoint.get("records", []))
         descriptions = dict(checkpoint.get("descriptions", {}))
         candidates = list(checkpoint.get("candidates", []))
@@ -2027,6 +2143,9 @@ def calibrate(binary: pathlib.Path | str, path: pathlib.Path | str, profile: dic
         return coverage
 
     def write_checkpoint(payload: dict[str, Any]) -> None:
+        if checkpoint and checkpoint.get("build_priors"):
+            payload["build_priors"] = checkpoint["build_priors"]
+            payload["build_prior_origins"] = checkpoint["build_prior_origins"]
         payload["acquisition_inventory_ref"] = inventory_ref
         acquisition_coverage(payload.setdefault("coverage", {}))
         _checkpoint_write(path, payload,
@@ -2122,11 +2241,19 @@ def calibrate(binary: pathlib.Path | str, path: pathlib.Path | str, profile: dic
             candidate.setdefault("seed_batches", candidate.get("loads", []))
             candidate.setdefault("intervals", {})
             candidate.setdefault("omitted", [])
+            curve_max_points = max_points
             if automatic_point_limit and mode == "full":
                 seeds = sorted(set(candidate["seed_batches"]))
                 intervals = sum(right - left > 1 for left, right in zip(seeds, seeds[1:]))
-                max_points = max(max_points, len(seeds) + 3 * intervals)
+                span = int(candidate["legal_max_batch"]) - int(candidate["legal_min_batch"]) + 1
+                holdouts = (2 ** (DEFAULT_REFINEMENT_ROUNDS + 1) - 1) * intervals
+                curve_max_points = min(max(1, span), max(DEFAULT_MAX_POINTS, len(seeds) + holdouts))
+                candidate["default_refinement_rounds"] = DEFAULT_REFINEMENT_ROUNDS
+                max_points = max(max_points, curve_max_points)
                 protocol["max_points"] = max_points
+            else:
+                candidate.pop("default_refinement_rounds", None)
+            candidate["max_points"] = curve_max_points
             description = candidate.get("description") or descriptions.get(candidate.get("static_key"))
             if not isinstance(description, dict):
                 candidate.setdefault("omitted", []).append("missing-description")
@@ -2141,6 +2268,11 @@ def calibrate(binary: pathlib.Path | str, path: pathlib.Path | str, profile: dic
                     candidate["omitted"].append(marker)
                 continue
             candidate.pop("service_reuse", None)
+            if description.get("groups") and not any(
+                    _truthy(group.get("independent")) for group in description["groups"]):
+                # Describe already proves that the probe cannot supply stage
+                # measurements. A timed invocation cannot repair its adapter.
+                continue
             if not any(record.get("candidate_key") == candidate["key"] for record in records):
                 reused = _reusable_shared_services(candidate, candidates, records, max_points=max_points)
                 if reused:
@@ -2158,7 +2290,7 @@ def calibrate(binary: pathlib.Path | str, path: pathlib.Path | str, profile: dic
             # Do not re-run a point whose result was checkpointed, regardless
             # of whether that result was measured or explicitly unavailable.
             for batch in list(candidate.get("loads", [])):
-                if len(seen_batches) >= max_points or batch in seen_batches:
+                if len(seen_batches) >= curve_max_points or batch in seen_batches:
                     continue
                 if budget is not None and sum(record.get("status") == "measured" for record in records) >= budget:
                     budget_exhausted = True
@@ -2201,7 +2333,7 @@ def calibrate(binary: pathlib.Path | str, path: pathlib.Path | str, profile: dic
             # Adaptive midpoint validation uses only points already classified
             # as training.  A failed holdout is promoted before another
             # midpoint is selected; successful holdouts never enter the hull.
-            while not candidate_unavailable and len(seen_batches) < max_points:
+            while not candidate_unavailable and len(seen_batches) < curve_max_points:
                 if budget is not None and sum(record.get("status") == "measured" for record in records) >= budget:
                     budget_exhausted = True
                     break

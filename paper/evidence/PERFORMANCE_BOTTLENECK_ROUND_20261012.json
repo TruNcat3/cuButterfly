@@ -1,0 +1,28 @@
+{
+  "schema": "performance-bottleneck-round-v1",
+  "gpu": {
+    "uuid": "GPU-0eae5f07-33de-321b-70a9-ffeae49309e6",
+    "name": "NVIDIA A100 80GB PCIe"
+  },
+  "cohorts": {
+    "fused_fwht": "results/paper_targeted_20261012/fused_short_fwht_candidate/guard/release/result.json",
+    "quarot_b1": "results/paper_targeted_20261012/quarot_fused_candidate/b1/guard/release/result.json",
+    "quarot_b4": "results/paper_targeted_20261012/quarot_fused_candidate/b4/guard/release/result.json",
+    "c2r_copy_elision": "results/paper_targeted_20261012/c2r_copy_elision_gpu_v5/comparison.json",
+    "fno_dispatch": "results/paper_targeted_20261012/fno_dispatch_v2",
+    "ncu": "results/performance_bottleneck_profile_20261012/guarded_v3/guard/release/stage_metrics.csv",
+    "filter": "results/paper_targeted_20261012/filter_normalization_optimization_v3/default_guard/release/result.json"
+  },
+  "claims": {
+    "fused_fwht_public_search_integrated": false,
+    "c2r_copy_elision_public_search_integrated": false,
+    "ncu_is_normal_timing": false,
+    "float_tolerance_added": false,
+    "c2r_same_mapping_output_exact": true,
+    "c2r_graph_available": false
+  },
+  "validation": {
+    "affected_tests": 23,
+    "status": "pass"
+  }
+}

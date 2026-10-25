@@ -1,8 +1,13 @@
 /build/
 /build-*/
+# Also exclude experiment-local CMake products.
+**/build-*/
+**/CMakeFiles/
 /Testing/
 /external/
 /.cache/
+# Raw campaigns are local. Publish only explicitly selected compact evidence.
+/results/
 **/__pycache__/
 /results/v100_numeric_regime_suite.json
 /results/.gpu.lock

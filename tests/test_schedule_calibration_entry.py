@@ -56,7 +56,7 @@ def test_cmake_installs_schedule_probe_and_cost_helper():
     assert helper_install and "${CMAKE_INSTALL_BINDIR}" in helper_install.group(0)
 
 
-@pytest.mark.parametrize("stage_mode", ["skip", "full"])
+@pytest.mark.parametrize("stage_mode", ["skip", "full", "interrupted"])
 def test_staged_entry_runs_schedule_probe_once_then_reuses_identity_cache(tmpdir, monkeypatch, stage_mode):
     tmp_path = pathlib.Path(str(tmpdir))
     build_dir = tmp_path / "build"
@@ -116,8 +116,11 @@ def test_staged_entry_runs_schedule_probe_once_then_reuses_identity_cache(tmpdir
     monkeypatch.setattr(local_calibration, "run", fake_run)
     monkeypatch.setattr(local_calibration, "require_exclusive_gpu", lambda: exclusive_calls.append("exclusive"))
     monkeypatch.setattr(local_calibration, "rank_model", lambda profile, output: 0)
-    monkeypatch.setattr(local_calibration, "run_operator_calibration",
-                        lambda args, output, cufftdx: {"status": "complete", "candidates": [], "operator_families": []})
+    operator_calls = []
+    def operator_calibration(args, output, cufftdx):
+        operator_calls.append(output)
+        return {"status": "complete", "candidates": [], "operator_families": []}
+    monkeypatch.setattr(local_calibration, "run_operator_calibration", operator_calibration)
     monkeypatch.setattr(local_calibration, "promote", lambda *args, **kwargs: 0)
     monkeypatch.setattr(local_calibration, "default_path", lambda: tmp_path / "registry.json")
     monkeypatch.setattr(local_calibration, "calibrate_scheduling", wrapped_schedule_calibration)
@@ -126,17 +129,28 @@ def test_staged_entry_runs_schedule_probe_once_then_reuses_identity_cache(tmpdir
         return {"source": "minimal-batch-pipeline"}
     monkeypatch.setattr(local_calibration, "calibrate_pipeline_scheduling", pipeline_calibration)
     monkeypatch.setattr(local_calibration, "runtime_candidates", lambda *args: [])
-    monkeypatch.setattr(local_calibration, "calibrate_stage_services", lambda *args, **kwargs: {"curves": {}})
+    monkeypatch.setattr(local_calibration, "calibrate_stage_services", lambda *args, **kwargs:
+                        {"curves": {}, "calibration_status": "interrupted"} if stage_mode == "interrupted" else {"curves": {}})
 
     args = [
         "--build-dir", str(build_dir),
         "--profile-dir", str(profile_dir),
         "--output-dir", str(output_dir),
         "--search-workloads", str(workloads),
-        "--cost-model", "staged", "--stage-calibration", stage_mode,
+        "--cost-model", "staged", "--stage-calibration", "full" if stage_mode == "interrupted" else stage_mode,
+        "--seed-registry", str(tmp_path / "seed-registry.json"),
     ]
     monkeypatch.setattr(sys, "argv", ["calibrate_local_hardware.py", *args])
+    if stage_mode == "interrupted":
+        with pytest.raises(InterruptedError, match="checkpoints saved"):
+            local_calibration.main()
+        assert not operator_calls
+        assert not (output_dir / "calibration_manifest.json").exists()
+        assert json.loads((output_dir / "calibration_device.json").read_text())["stage_service"]["calibration_status"] == "interrupted"
+        assert json.loads((output_dir / "stage_service_profile.json").read_text())["calibration_status"] == "interrupted"
+        return
     assert local_calibration.main() == 0
+    monkeypatch.setattr(sys, "argv", ["calibrate_local_hardware.py", *args, "--resume-search"])
     assert local_calibration.main() == 0
 
     schedule_path = output_dir / "schedule_calibration.json"

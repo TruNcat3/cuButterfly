@@ -17,8 +17,44 @@ import time
 
 try:
     import resident_mapping
+    from cufftdx_capabilities import load_database
 except ImportError:  # pragma: no cover - package import fallback
     from . import resident_mapping
+    from .cufftdx_capabilities import load_database
+
+
+def provider_capabilities(point, sm, database=None):
+    """Check only the cuFFTDx block cores consumed by this lowering."""
+    backend = point.get("backend")
+    if backend == "shared-iterative" or (backend == "factor-streamed" and
+                                         point.get("fft_core", "cufftdx-block") == "register-tile"):
+        return []
+    if database is None:
+        mathdx = os.environ.get("CUBUTTERFLY_MATHDX_ROOT")
+        database = load_database(mathdx or pathlib.Path(__file__).resolve().parents[1] /
+                                 "external/mathdx/nvidia/mathdx")
+    if backend == "factor-streamed":
+        factors = point.get("factor_partition") or point.get("stage_partition") or [int(point["logN"])]
+        requests = [("factor", group, 1 << int(log), int(point.get("factor_ept", 16)))
+                    for group, log in enumerate(factors)]
+    else:
+        geometry = resident_mapping.register_geometry(point)
+        if point.get("suffix_core", "cufftdx-block") == "native":
+            return []
+        requests = [("suffix", 1, 1 << geometry["suffix"], geometry["suffix_ept"])]
+    checks = []
+    for role, group, size, ept in requests:
+        precision = point.get("precision", "fp32")
+        status = database.check_both(sm * 10, precision, size, ept)
+        check = dict(provider="cufftdx-block", role=role, group=group, sm=sm * 10,
+                     precision=precision, size=size, ept=ept,
+                     directions=["forward", "inverse"], status=status)
+        checks.append(check)
+        if status == "unsupported":
+            raise ValueError("provider-implementation-missing: cuFFTDx block core "
+                             f"SM{sm * 10} {precision} size={size} EPT={ept} "
+                             f"requires forward and inverse implementations ({role} group {group})")
+    return checks
 
 
 @contextlib.contextmanager
@@ -51,26 +87,32 @@ def register_prefix_geometry(point):
             geometry["prefix_columns"], geometry["prefix_lanes"])
 
 
-def render_register_fft(point, sm, identity):
+def render_register_fft(point, sm, identity, database=None):
     geometry = resident_mapping.register_geometry(point)
     local, total, suffix = geometry["local"], geometry["total"], geometry["suffix"]
     pc, lanes = geometry["prefix_columns"], geometry["prefix_lanes"]
     ept, sc = geometry["suffix_ept"], geometry["suffix_columns"]
     suffix_chunk = geometry["suffix_chunk"]
+    suffix_core = point.get("suffix_core", "cufftdx-block")
+    if suffix_core not in ("cufftdx-block", "native"):
+        raise ValueError("register suffix_core must be cufftdx-block or native")
     fp64 = point.get("precision") == "fp64"
     real, complex_type, width = ("double", "Complex64", 16) if fp64 else ("float", "Complex32", 8)
     prefix_codelet = point.get("prefix_codelet", "native")
     prefix_layout = point.get("prefix_shared_layout", "linear")
-    if prefix_codelet not in ("native", "cufftdx-thread"):
-        raise ValueError("register prefix_codelet must be native or cufftdx-thread")
+    if prefix_codelet not in ("native", "radix4", "cufftdx-thread"):
+        raise ValueError("register prefix_codelet must be native, radix4 or cufftdx-thread")
     if prefix_layout not in ("linear", "xor"):
         raise ValueError("register prefix_shared_layout must be linear or xor")
     if fp64 and prefix_codelet == "cufftdx-thread":
         raise ValueError("cufftdx-thread register prefix is only supported for FP32")
     if any(x <= 0 or x & (x-1) for x in (pc, sc, ept)) or sc > 16:
         raise ValueError("grouped register FFT requires power-of-two column counts and EPT; suffix columns <=16")
+    provider_capabilities(point, sm, database)
     prefix_header = '#include "fft_thread_codelet.cuh"\n' if prefix_codelet == "cufftdx-thread" else ""
-    prefix_codelet_type = "register_tile::DxCodelet" if prefix_codelet == "cufftdx-thread" else "register_tile::NativeCodelet"
+    prefix_codelet_type = {"native": "register_tile::NativeCodelet",
+                           "radix4": "register_tile::Radix4Codelet",
+                           "cufftdx-thread": "register_tile::DxCodelet"}[prefix_codelet]
     prefix_xor = "true" if prefix_layout == "xor" else "false"
     # A function launch can deduce Complex from its pointer argument, but a
     # cudaFuncGetAttributes expression cannot. Keep the query explicit so an
@@ -99,18 +141,25 @@ def render_register_fft(point, sm, identity):
         suffix_launch += f",Complex,{suffix_chunk},{local}"
     suffix_resource += ">"
     suffix_launch += ">"
+    suffix_header = ""
+    suffix_alias = f'''template<bool Inverse> using Suffix = decltype(cufftdx::Block()+cufftdx::Size<(1U<<{suffix})>()+
+ cufftdx::Type<cufftdx::fft_type::c2c>()+cufftdx::Direction<Inverse ? cufftdx::fft_direction::inverse : cufftdx::fft_direction::forward>()+
+ cufftdx::Precision<{real}>()+cufftdx::ElementsPerThread<{ept}>()+cufftdx::FFTsPerBlock<{sc}>()+cufftdx::SM<{sm*10}>());'''
+    if suffix_core == "native":
+        suffix_header = '#include "fft_native_block.cuh"\n'
+        suffix_alias = f"template<bool Inverse> using Suffix = NativeBlock<{suffix},{ept},{sc},Inverse,Complex>;"
+        suffix_launch = (f"launch_grouped_suffix_core<{suffix},Suffix<Inverse>,{sc},Inverse,Complex,"
+                         f"{suffix_chunk},{local if suffix_chunk else 0}>")
     suffix_tile = (f"(1U<<{suffix})*{sc}*{width}"
                    if not suffix_chunk else
                    f"(1U<<{suffix})*{sc}*{width}*{suffix_chunk}/{ept}")
     return f'''#include <cubutterfly/module.h>
 #include "fft_register_tile.cuh"
-{prefix_header}#include "fft_grouped_suffix.cuh"
+{prefix_header}{suffix_header}#include "fft_grouped_suffix.cuh"
 using namespace cuntt;
 using namespace cuntt::detail;
 using Complex = {complex_type};
-template<bool Inverse> using Suffix = decltype(cufftdx::Block()+cufftdx::Size<(1U<<{suffix})>()+
- cufftdx::Type<cufftdx::fft_type::c2c>()+cufftdx::Direction<Inverse ? cufftdx::fft_direction::inverse : cufftdx::fft_direction::forward>()+
- cufftdx::Precision<{real}>()+cufftdx::ElementsPerThread<{ept}>()+cufftdx::FFTsPerBlock<{sc}>()+cufftdx::SM<{sm*10}>());
+{suffix_alias}
 template<bool Inverse> int resources_impl(uint32_t group, cubutterflyModuleResourcesV1* out, uint64_t* local=nullptr) {{
  if (!out || group>1) return int(cudaErrorInvalidValue);
  cudaFuncAttributes a{{}}; cudaError_t status;
@@ -176,7 +225,7 @@ def normalize_factor_io_policies(raw_policies, factor_count):
     return policies
 
 
-def render_factor_fft(point, sm, identity):
+def render_factor_fft(point, sm, identity, database=None):
     total = int(point["logN"])
     macro = point.get("stage_partition") or [total]
     factors = point.get("factor_partition") or macro
@@ -204,6 +253,7 @@ def render_factor_fft(point, sm, identity):
         raise ValueError("invalid factor EPT or columns")
     if slices<1 or slices&(slices-1) or (slices>1 and (len(factors)<2 or slices>(1<<factors[-1])//columns)):
         raise ValueError("factor slices must cover complete tiles within the last unprocessed digit")
+    provider_capabilities({**point, "backend": "factor-streamed"}, sm, database)
     real, complex_type = ("double", "Complex64") if fp64 else ("float", "Complex32")
     aliases, resources, launches, range_limits = [], [], [], []
     done = 0
@@ -228,7 +278,7 @@ def render_factor_fft(point, sm, identity):
         else:
             policy_args = f",{str(partial).lower()}" if partial else ""
         kernel = f"factor_streamed::kernel<F{group}<Inverse>,{total},{log},{done},{columns},{tiles},{depth},Inverse,Complex{policy_args}>"
-        shared = f"factor_streamed::shared_bytes<F{group}<Inverse>,{columns},{depth},Complex>()"
+        shared = f"factor_streamed::shared_bytes<F{group}<Inverse>,{columns},{tiles},{depth},Complex>()"
         resources.append(f'''case {group}: {{
  cudaFuncAttributes a{{}}; auto status=cudaFuncGetAttributes(&a,{kernel}); if(status) return int(status);
  constexpr unsigned bytes={shared};
@@ -320,11 +370,12 @@ def render_shared(point, sm, identity):
     native = "true" if point.get("accumulation", "native") == "native" else "false"
     low = precision in ("fp16", "bf16")
     real = {"fp64":"double", "fp32":"float", "fp16-fp32":"float", "fp16":"Fp16", "bf16":"Bf16",
-            "word32":"std::uint32_t", "word64":"std::uint64_t", "uint32":"std::uint32_t"}[precision]
+            "word32":"std::uint32_t", "word64":"std::uint64_t", "uint32":"std::uint32_t", "uint64":"std::uint64_t"}[precision]
     multiply = "ComplexMultiply::Gauss3" if point.get("complex_multiply") == "gauss3" else "ComplexMultiply::FourMul"
     if operator in ("subset-zeta", "superset-zeta", "xor-zeta"):
-        if precision != "uint32": raise ValueError("zeta traits require uint32")
-        trait, init = f"BooleanZetaOperator<{'true' if operator == 'superset-zeta' else 'false'}>", "bool(a.io.inverse)"
+        if precision not in ("uint32", "uint64"): raise ValueError("zeta traits require uint32/64")
+        integer_type = f",{real}" if precision == "uint64" else ""
+        trait, init = f"BooleanZetaOperator<{'true' if operator == 'superset-zeta' else 'false'}{integer_type}>", "bool(a.io.inverse)"
     elif operator == "fwht":
         trait = f"LowFwhtOperator<{real},{native}>" if low else f"FwhtOperator<{real}>"
         init = "bool(a.io.inverse),bool(a.io.normalize_inverse)"
@@ -362,7 +413,7 @@ def render_shared(point, sm, identity):
  return int(status); }}''')
         destination = "static_cast<Value*>(a.io.output)" if group+1 == len(partition) else f"static_cast<Value*>(a.io.workspace)+{group%2}*extent"
         group_launches.append(f'''case {group}: {{
- const auto blocks=((a.io.batch+{batch_tile}-1)/{batch_tile})*(1ULL<<{log_n-stages});
+ const auto blocks=((a.io.batch-1)/{batch_tile}+1)*(1ULL<<{log_n-stages});
  {kernel}<<<static_cast<unsigned>(blocks),{threads},2ULL*(1ULL<<{stages})*sizeof(Value),a.io.stream>>>(
  static_cast<const Value*>(a.io.input),static_cast<Value*>(a.io.output),{log_n},{first},{stages},
  a.io.batch_stride,a.io.element_stride,{aligned},a.io.batch,{batch_tile},op);
@@ -373,6 +424,7 @@ def render_shared(point, sm, identity):
  if(status!=cudaSuccess) return status; source=destination; }}''')
         first += stages
     needs_coefficients = operator in ("fft", "ntt", "structured-2x2")
+    value_assert = 'static_assert(sizeof(Value)==8,"UINT64 zeta requires eight-byte values");' if precision == "uint64" else ""
     resident_include = '#include "shared_resident.cuh"\n' if any(resident_parts) else ""
     return f'''#include <cubutterfly/module.h>
 #include "operator_traits.cuh"
@@ -384,6 +436,7 @@ using namespace cuntt::traits;
 using namespace cuntt::detail;
 using Operator={trait};
 using Value=Operator::Value;
+{value_assert}
 static int resources(int,uint32_t group,cubutterflyModuleResourcesV1* out) {{
  if(!out) return int(cudaErrorInvalidValue); cudaFuncAttributes attr{{}};
  switch(group) {{ {''.join(queries)} default: return int(cudaErrorInvalidValue); }}
@@ -434,6 +487,8 @@ def compile_mapping(point, *, root, mathdx, nvcc, sm, cache, timeout=600):
         factor_shape = point.get("factor_partition") or point.get("stage_partition") or [point.get("logN")]
         factor_io_policies = normalize_factor_io_policies(
             point.get("factor_io_policies", []), len(factor_shape))
+    database = load_database(mathdx)
+    provider_checks = provider_capabilities(point, sm, database)
     compiler = subprocess.run([str(nvcc), "--version"], text=True, capture_output=True, check=True).stdout
     # Keep effective lowering choices in the cache key even when callers rely
     # on their defaults.  This prevents a selector replay from aliasing a
@@ -447,22 +502,30 @@ def compile_mapping(point, *, root, mathdx, nvcc, sm, cache, timeout=600):
         cache_point.setdefault("exchange_chunks", [])
     if not shared and not factor:
         cache_point.setdefault("prefix_codelet", "native")
+        cache_point.setdefault("suffix_core", "cufftdx-block")
         cache_point.setdefault("prefix_shared_layout", "linear")
         cache_point.setdefault("prefix_codelet_lanes", 1)
     if factor:
         cache_point["factor_io_policies"] = factor_io_policies
-    digest = hashlib.sha256(json.dumps(dict(point=cache_point, sm=sm, compiler=compiler, abi=2 if shared else 1), sort_keys=True).encode())
+    digest = hashlib.sha256(json.dumps(dict(point=cache_point, sm=sm, compiler=compiler, abi=2 if shared else 1,
+                                            cuda_runtime="shared"), sort_keys=True).encode())
     files = list((root / "include").rglob("*.h")) + list((root / "include").rglob("*.hpp"))
     resident = bool(point.get("local_stage_partitions")) and any(point.get("local_stage_partitions"))
     templates = (("operator_traits.cuh", "ntt_traits.cuh", "shared_iterative.cuh", "shared_resident.cuh")
                  if resident else ("operator_traits.cuh", "ntt_traits.cuh", "shared_iterative.cuh")) if shared else ("fft_register_tile.cuh", "fft_grouped_suffix.cuh")
     if factor: templates = ("fft_register_tile.cuh", "fft_factor_streamed.cuh")
+    if not shared: templates += ("fft_radix4_codelet.cuh",)
     if factor and point.get("fft_core")=="register-tile": templates += ("fft_factor_native.cuh",)
     if not shared and not factor and point.get("prefix_codelet", "native") == "cufftdx-thread":
         templates += ("fft_thread_codelet.cuh",)
+    if not shared and not factor and point.get("suffix_core", "cufftdx-block") == "native":
+        templates += ("fft_native_block.cuh",)
     files += [root / "src" / name for name in templates]
-    files += [pathlib.Path(__file__), pathlib.Path(__file__).with_name("resident_mapping.py")]
-    if not shared: files += list((mathdx / "include").rglob("*.hpp"))
+    files += [pathlib.Path(__file__), pathlib.Path(__file__).with_name("resident_mapping.py"),
+              pathlib.Path(__file__).with_name("cufftdx_capabilities.py")]
+    if not shared:
+        files += list((mathdx / "include").rglob("*.hpp"))
+        files += list((mathdx / "include").rglob("*.hpp.inc"))
     for path in sorted(files):
         try:
             label = str(path.relative_to(root))
@@ -478,12 +541,12 @@ def compile_mapping(point, *, root, mathdx, nvcc, sm, cache, timeout=600):
         fcntl.flock(lock, fcntl.LOCK_EX)
         if module.exists():
             return module
-        source = render_shared(point, sm, identity) if shared else (render_factor_fft(point, sm, identity) if factor else render_register_fft(point, sm, identity))
+        source = render_shared(point, sm, identity) if shared else (render_factor_fft(point, sm, identity, database) if factor else render_register_fft(point, sm, identity, database))
         with tempfile.TemporaryDirectory(prefix="compile-", dir=directory) as staging:
             staging = pathlib.Path(staging)
             unit = staging / "module.cu"
             unit.write_text(source)
-            command = [str(nvcc), "-std=c++17", "-O3", "--shared", "-Xcompiler=-fPIC", f"-arch=sm_{sm}",
+            command = [str(nvcc), "-std=c++17", "-O3", "--shared", "--cudart=shared", "-Xcompiler=-fPIC", f"-arch=sm_{sm}",
                        f"-DCUBUTTERFLY_CUFFTDX_SM={sm*10}", "-I"+str(root/"include"), "-I"+str(root/"src"),
                        "-I"+str(mathdx/"include"), str(unit), "-o", str(staging/"module.so")]
             started = time.monotonic()
@@ -492,9 +555,12 @@ def compile_mapping(point, *, root, mathdx, nvcc, sm, cache, timeout=600):
             (directory/"compiler.log").write_text(completed.stdout+completed.stderr)
             if completed.returncode:
                 raise RuntimeError(f"specialization compilation failed; see {directory/'compiler.log'}")
-            manifest = dict(schema="cubutterfly-module-v1", identity=identity, mapping=point, sm=sm,
+            manifest = dict(schema="cubutterfly-module-v1", identity=identity, mapping=point, sm=sm, cuda_runtime="shared",
+                            provider_capabilities=dict(checks=provider_checks, database=database.metadata()),
                             compiler=compiler, command=command, compile_seconds=time.monotonic()-started,
                             module_sha256=hashlib.sha256((staging/"module.so").read_bytes()).hexdigest())
+            if not shared and not factor:
+                manifest["suffix_core"] = cache_point["suffix_core"]
             (directory/"manifest.json").write_text(json.dumps(manifest, indent=2)+"\n")
             os.replace(staging/"module.so", module)
     return module

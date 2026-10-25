@@ -1,0 +1,111 @@
+{
+  "schema": "cubutterfly-paper-rc2-snapshot-v1",
+  "snapshot": "0.9.1-rc.2/replay-fix.1",
+  "date": "2026-10-02",
+  "device": {
+    "name": "NVIDIA A100 80GB PCIe",
+    "compute_capability": "8.0",
+    "uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02"
+  },
+  "protocol": {
+    "trials": 3,
+    "warmup": 100,
+    "repeat": 100,
+    "ratio": "baseline median / cuButterfly median"
+  },
+  "suites": {
+    "fft36": {
+      "status": "complete-measured-matrix",
+      "cells": 36,
+      "cufft": {
+        "paired_cells": 36,
+        "geometric_mean_speedup": 1.0309024784559728,
+        "minimum_speedup": 0.8939855513969885,
+        "faster_cells": 21
+      },
+      "vkfft": {
+        "paired_cells": 20,
+        "geometric_mean_speedup": 1.0260641068323861,
+        "minimum_speedup": 0.8463700973940511,
+        "faster_cells": 13
+      },
+      "cufft_fp32_geometric_mean": 1.0267369486404978,
+      "cufft_fp64_geometric_mean": 1.0374824818709392
+    },
+    "fft_weak10": {
+      "status": "complete-measured-matrix",
+      "cells": 10,
+      "precision": "fp64",
+      "cufft": {
+        "paired_cells": 10,
+        "geometric_mean_speedup": 1.0607053218266758,
+        "minimum_speedup": 0.8945854041328799,
+        "faster_cells": 6
+      }
+    },
+    "ntt": {
+      "status": "complete-with-explicit-boundary",
+      "declared_cells": 346,
+      "complete_pairs": 214,
+      "unavailable": 78,
+      "blocked_baseline_correctness": 54,
+      "baseline": "GPU-NTT Merge",
+      "geometric_mean_speedup_complete_pairs": 1.472341243898213,
+      "median_speedup_complete_pairs": 1.4042388134329367,
+      "wins_complete_pairs": 209,
+      "word32_geometric_mean": 1.804965151248132,
+      "word64_geometric_mean": 1.3335426869211842,
+      "inverse_geometric_mean": 1.5716092188612187,
+      "forward_geometric_mean": 1.3793433586846147
+    },
+    "fwht": {
+      "status": "complete",
+      "cells": 36,
+      "protocol_domain": "logN={8,12,15}, batch={1,16,256}, precision={fp16,bf16}, direction={forward,inverse}",
+      "warp_register_vs_dao": {
+        "geometric_mean_speedup": 2.874221762821518,
+        "median_speedup": 4.195781290423387,
+        "minimum_speedup": 0.9625524488507669,
+        "maximum_speedup": 6.390335846470185,
+        "wins": 32
+      },
+      "warp_register_vs_shared_iterative": {
+        "geometric_mean_speedup": 2.844918365718551,
+        "median_speedup": 1.9884332291733524,
+        "minimum_speedup": 0.7358419330480744,
+        "maximum_speedup": 18.796479791395043,
+        "wins": 32
+      },
+      "correctness_scope_note": "DAO comparison uses the harness adapter round-trip scope; strict full-FP32 reference checking is separate."
+    }
+  },
+  "calibration": {
+    "status": "complete",
+    "stage_records": 1186,
+    "service_entries": 54,
+    "multi_point_service_entries": 54,
+    "singletons": 0,
+    "holdouts": 561,
+    "holdouts_covered": 561,
+    "holdout_relative_error_median": 0.0117,
+    "holdout_relative_error_p90": 0.0603
+  },
+  "correctness": {
+    "status": "complete",
+    "tests_passed": 12,
+    "tests_total": 12
+  },
+  "remaining": {
+    "traversal_controls": "20/24 complete; four NTT GS comparisons blocked before timing",
+    "a100_40gb_rc2": "waiting on the historical predecessor dependency",
+    "end_to_end": "not measured",
+    "same_version_v100": "not measured in this snapshot"
+  },
+  "sources": {
+    "fft36": "../cuButterfly-v0.9.1-rc2/results/integrated_repairs_20261001_replay_fix1/a100-80gb/fft36/summary.json",
+    "fft_weak10": "../cuButterfly-v0.9.1-rc2/results/integrated_repairs_20261001_replay_fix1/a100-80gb/fft_weak10/summary.json",
+    "ntt": "../cuButterfly-v0.9.1-rc2/results/integrated_repairs_20261001_replay_fix1/a100-80gb/ntt/summary.json",
+    "fwht": "../cuButterfly-v0.9.1-rc2/results/integrated_repairs_20261001_replay_fix1/a100-80gb/fwht/summary.json",
+    "traversal_controls": "../cuButterfly-v0.9.1-rc2/artifacts/revision_acceptance_20261001_replay_fix1/targets/nvidia-a100-80gb-pcie-80gb-2971e500-d3f/traversal_controls/results.json"
+  }
+}

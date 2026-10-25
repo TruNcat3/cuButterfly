@@ -1,0 +1,38 @@
+{
+  "schema": "cubutterfly-refresh-followups-v1",
+  "scope": "Runnable followups after the frozen 66-request comparison. Not completion of unresolved composition/CKKS coverage.",
+  "jobs": [
+    {
+      "id": "mechanism-timing",
+      "argv": ["scripts/run_controlled_experiment.py", "--study", "results/mechanism_current_20261017_v2/study.json", "--build-dir", "{build_dir}", "--output", "{output_dir}/mechanism/timing.json", "--mode", "run", "--resume", "--gpu-uuid", "{gpu_uuid}"]
+    },
+    {
+      "id": "ntt-five-point",
+      "argv": ["scripts/run_ntt_comparison_supplement.py", "--checkpoint", "{output_dir}/measurement/results.json", "--manifest", "{output_dir}/manifest.json", "--library", "{build_dir}/libcuntt.so", "--preparation", "{output_dir}/prepared", "--output", "{output_dir}/ntt_search_repair_5", "--gpu-uuid", "{gpu_uuid}", "--gpuntt-library", "{build_dir}/libgpuntt_semantic_bridge.so", "--automatic", "--trials", "3"]
+    },
+    {
+      "id": "fft-grouped",
+      "argv": ["scripts/run_fft_grouped_supplement.py", "--checkpoint", "{output_dir}/measurement/results.json", "--manifest", "{output_dir}/manifest.json", "--library", "{build_dir}/libcuntt.so", "--preparation", "{output_dir}/prepared", "--output", "{output_dir}/fft_xd_grouped_baseline", "--gpu-uuid", "{gpu_uuid}", "--vkfft-library", "build-a100-vkfft/libvkfft_xd_bridge.so"]
+    },
+    {
+      "id": "poisson-1024-b4",
+      "argv": ["paper/tools/run_periodic_poisson_graph_20261013.py", "--library", "{build_dir}/libcuntt.so", "--size", "1024", "--batch", "4", "--norm", "backward", "--calls", "20", "--warmup", "3", "--output", "{output_dir}/poisson/poisson-1024-b4/report.json"]
+    },
+    {
+      "id": "poisson-2048-b4",
+      "argv": ["paper/tools/run_periodic_poisson_graph_20261013.py", "--library", "{build_dir}/libcuntt.so", "--size", "2048", "--batch", "4", "--norm", "backward", "--calls", "20", "--warmup", "3", "--output", "{output_dir}/poisson/poisson-2048-b4/report.json"]
+    },
+    {
+      "id": "poisson-2048-b16",
+      "argv": ["paper/tools/run_periodic_poisson_graph_20261013.py", "--library", "{build_dir}/libcuntt.so", "--size", "2048", "--batch", "16", "--norm", "backward", "--calls", "20", "--warmup", "3", "--output", "{output_dir}/poisson/poisson-2048-b16/report.json"]
+    },
+    {
+      "id": "mechanism-profile",
+      "argv": ["scripts/profile_current_mechanism.py", "--journal", "{output_dir}/mechanism/timing.json", "--output-dir", "{output_dir}/mechanism/profile", "--gpu-uuid", "{gpu_uuid}", "--run"]
+    },
+    {
+      "id": "poisson-adaptive-trace",
+      "argv": ["paper/tools/run_periodic_poisson_graph_20261013.py", "--library", "{build_dir}/libcuntt.so", "--size", "2048", "--batch", "16", "--norm", "backward", "--calls", "20", "--warmup", "3", "--profile", "--output", "{output_dir}/poisson_adaptive_trace/report.json"]
+    }
+  ]
+}

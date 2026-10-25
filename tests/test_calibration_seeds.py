@@ -110,6 +110,51 @@ def test_real_column_axes_are_not_canonicalized(backend, core):
     assert calibration_seeds.canonical_mapping(mapping) == mapping
 
 
+@pytest.mark.parametrize("precision", ["fp32", "fp64"])
+def test_radix4_seed_file_and_registry_import_preserve_codelet(tmp_path, precision):
+    semantics = _semantics(precision=precision, log_n=16)
+    mapping = dict(_mapping((6, 10), threads=32), local_stages=6,
+                   prefix_codelet="radix4", prefix_ept=8,
+                   suffix_threads=256, suffix_ept=16,
+                   boundaries=[{"twiddle": "recurrence", "layout": "direct-strided",
+                                "residency": "global-scratch"}])
+    explicit = tmp_path / "radix4-seeds.json"
+    explicit.write_text(json.dumps({"schema": calibration_seeds.SCHEMA,
+        "seeds": [{"semantics": semantics, "mapping": mapping}]}))
+    registry = tmp_path / "registry.json"
+    _registry(registry, [_target("source-gpu", 80 << 30, [
+        _record(semantics, mapping, 0.01, "source-build", record_id="radix4")])])
+    snapshot = calibration_seeds.seed_snapshot(type("Args", (), {
+        "mapping_seeds": [explicit], "seed_registry": registry, "resume_search": False,
+    })(), tmp_path / "snapshot.json")
+    assert len(snapshot["seeds"]) == 2
+    candidates = calibration_seeds.candidates_for_workload(snapshot, semantics)
+    assert len(candidates) == 1 and len(candidates[0]["sources"]) == 2
+    assert _candidate_mapping(candidates[0]) == mapping
+    assert candidates[0]["point"]["precision"] == precision
+    _assert_no_latency(candidates[0]["point"])
+    calibration_seeds.validate_mapping(mapping, _candidate_mapping(candidates[0]))
+    with pytest.raises(ValueError, match="differs"):
+        calibration_seeds.validate_mapping(mapping, dict(mapping, prefix_codelet="native"))
+
+
+@pytest.mark.parametrize("operator,precision,changes,match", [
+    ("fft", "fp32", {"prefix_codelet": "unknown"}, "prefix_codelet"),
+    ("fft", "fp64", {"prefix_codelet": "cufftdx-thread"}, "unavailable for FP64"),
+    ("fwht", "fp32", {}, "FP32/FP64 FFT"),
+    ("ntt", "word32", {}, "FP32/FP64 FFT"),
+    ("fft", "fp16", {}, "FP32/FP64 FFT"),
+    ("fft", "fp32", {"backend": "shared-iterative"}, "only for online-reorder"),
+    ("fft", "fp32", {"fft_core": "cufftdx-block"}, "only for online-reorder"),
+    ("fft", "fp32", {"prefix_shared_layout": "unknown"}, "prefix_shared_layout"),
+])
+def test_radix4_seed_strategy_rejects_invalid_codelet_domain(operator, precision, changes, match):
+    mapping = {**_mapping((6, 10)), "prefix_codelet": "radix4", **changes}
+    with pytest.raises(ValueError, match=match):
+        calibration_seeds._seed(_semantics(operator=operator, precision=precision, log_n=16),
+                                mapping, {"kind": "explicit"})
+
+
 def test_registry_latency_selects_winners_only_within_original_context(tmpdir, monkeypatch):
     tmp_path = pathlib.Path(str(tmpdir))
     registry = tmp_path / "registry.json"
@@ -257,7 +302,67 @@ def test_resume_snapshot_is_frozen_against_registry_promotion(tmpdir, monkeypatc
     assert [_candidate_mapping(candidate) for candidate in candidates] == [old_mapping]
 
 
-def test_resume_rejects_changed_explicit_seed_hash(tmpdir, monkeypatch):
+@pytest.mark.parametrize("initial_explicit_source", [False, True])
+def test_fixed_seed_registry_survives_output_registry_change(tmpdir, monkeypatch,
+                                                           initial_explicit_source):
+    tmp_path = pathlib.Path(str(tmpdir))
+    source = tmp_path / "source-registry.json"
+    destination = tmp_path / "destination-registry.json"
+    snapshot_path = tmp_path / "snapshot.json"
+    key = _semantics(log_n=18)
+    source_mapping = _mapping((8, 10), threads=128)
+    destination_mapping = _mapping((9, 9), threads=512)
+    _registry(source, [_target("A100", 80 << 30, [
+        _record(key, source_mapping, 1.0, "fp-a", record_id="source"),
+    ])])
+    _registry(destination, [_target("A100", 80 << 30, [
+        _record(key, destination_mapping, 0.01, "fp-a", record_id="destination"),
+    ])])
+    monkeypatch.setenv("CUBUTTERFLY_REGISTRY",
+                       str(destination if initial_explicit_source else source))
+    original_read_text = pathlib.Path.read_text
+
+    def read_text(path, *args, **kwargs):
+        assert path != destination, "output registry must not be read as a seed source"
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(pathlib.Path, "read_text", read_text)
+    initial = calibration_seeds.seed_snapshot(type("Args", (), {
+        "mapping_seeds": [], "resume_search": False,
+        "seed_registry": source if initial_explicit_source else None,
+    })(), snapshot_path)
+    assert initial["inputs"]["registry_path"] == str(source.resolve())
+    assert [seed["mapping"] for seed in initial["seeds"]] == [source_mapping]
+
+    monkeypatch.setenv("CUBUTTERFLY_REGISTRY", str(destination))
+    resumed = calibration_seeds.seed_snapshot(type("Args", (), {
+        "mapping_seeds": [], "resume_search": True, "seed_registry": source,
+    })(), snapshot_path)
+    assert resumed == initial
+    assert [seed["mapping"] for seed in resumed["seeds"]] == [source_mapping]
+
+
+def test_resume_rejects_changed_seed_registry_source(tmpdir, monkeypatch):
+    tmp_path = pathlib.Path(str(tmpdir))
+    source = tmp_path / "source-registry.json"
+    changed_source = tmp_path / "changed-source-registry.json"
+    snapshot_path = tmp_path / "snapshot.json"
+    monkeypatch.setenv("CUBUTTERFLY_REGISTRY", str(tmp_path / "output-registry.json"))
+    for registry in (source, changed_source):
+        _registry(registry, [])
+    initial = calibration_seeds.seed_snapshot(type("Args", (), {
+        "mapping_seeds": [], "resume_search": False, "seed_registry": source,
+    })(), snapshot_path)
+
+    with pytest.raises(ValueError, match="inputs changed"):
+        calibration_seeds.seed_snapshot(type("Args", (), {
+            "mapping_seeds": [], "resume_search": True, "seed_registry": changed_source,
+        })(), snapshot_path)
+    assert json.loads(snapshot_path.read_text()) == initial
+
+
+@pytest.mark.parametrize("fixed_registry", [False, True])
+def test_resume_rejects_changed_explicit_seed_hash(tmpdir, monkeypatch, fixed_registry):
     tmp_path = pathlib.Path(str(tmpdir))
     registry = tmp_path / "registry.json"
     explicit = tmp_path / "explicit.json"
@@ -268,7 +373,10 @@ def test_resume_rejects_changed_explicit_seed_hash(tmpdir, monkeypatch):
                    "mapping": _mapping((8, 10)), "provenance": {}}],
     }) + "\n")
     snapshot_path = tmp_path / "snapshot.json"
-    args = type("Args", (), {"mapping_seeds": [explicit], "resume_search": False})()
+    args = type("Args", (), {
+        "mapping_seeds": [explicit], "resume_search": False,
+        "seed_registry": registry if fixed_registry else None,
+    })()
     calibration_seeds.seed_snapshot(args, snapshot_path)
 
     explicit.write_text(json.dumps({
@@ -279,6 +387,7 @@ def test_resume_rejects_changed_explicit_seed_hash(tmpdir, monkeypatch):
     with pytest.raises(ValueError, match="inputs changed"):
         calibration_seeds.seed_snapshot(type("Args", (), {
             "mapping_seeds": [explicit], "resume_search": True,
+            "seed_registry": registry if fixed_registry else None,
         })(), snapshot_path)
 
 

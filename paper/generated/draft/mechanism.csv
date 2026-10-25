@@ -1,0 +1,5 @@
+source,organization,hbm_bytes,resident_bytes,latency_us
+synthetic_example_not_measured,stagewise,1048576,0,10
+synthetic_example_not_measured,resident,720896,32768,8.6
+synthetic_example_not_measured,aligned,655360,32768,9.4
+synthetic_example_not_measured,overlap,622592,65536,10.4

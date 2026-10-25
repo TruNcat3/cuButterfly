@@ -1,0 +1,87 @@
+{
+  "schema": "cubutterfly-integrated-acceptance-plan-v1",
+  "id": "integrated-repairs-20260930",
+  "proposed_version": "0.9.1-rc.2",
+  "status": "planned-pending-integration",
+  "created_on": "2026-09-30",
+  "integration_root": "cuButterfly-v0.9.1-rc2",
+  "base_commit": "796a152b809cdc1bbdbab0eaa97d11677c483ea2",
+  "monitoring_deadline": 1791334800.0,
+  "monitoring_deadline_local": "2026-10-07T09:00:00+08:00",
+  "compile_mode": "research",
+  "activate_automatically": false,
+  "source_groups": [
+    {
+      "id": "rc1-foundation",
+      "root": "cuButterfly-v0.9.1",
+      "version": "0.9.1-rc.1",
+      "required_files": ["VERSION", "docs/release_sources_0_9_1.json", "src/butterfly.cu", "src/c_api.cpp", "scripts/run_research_target.py", "scripts/prepare_revision_acceptance.py", "scripts/stage_service_model.py", "artifacts/revision_acceptance_20260927/campaign/mapping_seeds.json", "tests/test_algorithm_form.cpp", "tests/test_ntt_hybrid_output_order.cpp", "tests/test_hybrid_layout.cpp", "tests/test_fp64_direct_validation.py"]
+    },
+    {
+      "id": "fft-pipeline-and-exchange",
+      "root": "cuButterfly-fp64-pipeline-20260927",
+      "version": "0.9.1-pipeline-dev.5.1",
+      "required_files": ["VERSION", "src/fft_factor_native.cuh", "src/fft_grouped_suffix.cuh", "src/fft_factor_plan.cpp", "src/fft_factor_streamed.cuh", "src/butterfly.cu", "scripts/evolutionary_search.py", "scripts/compile_module.py", "tests/test_fft_tile_layout.cpp", "tests/test_factor_pipeline.cpp", "tests/test_module_compiler.py", "tests/test_evolutionary_search.py", "docs/fft_weakspots_results_20260928.md", "artifacts/pipeline_dev5_1_checkpoint/manifest.json", "artifacts/fft_portfolio_dev5_20260928/mapping_seeds.json", "artifacts/fft_weakspots_dev5_20260928/optimized_mapping_seeds.json"]
+    },
+    {
+      "id": "ntt-boundary-and-candidates",
+      "root": "cuButterfly-ntt-boundary-20260929",
+      "version": "0.9.0-ntt-boundary.1",
+      "required_files": ["src/ntt.cu", "src/ntt_traits.cuh", "src/shared_iterative.cuh", "src/shared_resident.cuh", "src/c_api.cpp", "src/jit_module.cpp", "include/cuntt/ntt.hpp", "include/cubutterfly/module.h", "scripts/run_crypto_external.py", "scripts/run_ntt_boundary_comparison.py", "tests/test_ntt_boundary.cpp", "tests/test_ntt_boundary_api.cpp", "tests/test_ntt_geometric_folding.py", "tests/test_ntt_boundary_module.py", "tests/test_crypto_external_boundary.py", "docs/ntt_boundary_fusion.md"]
+    },
+    {
+      "id": "fwht-full-state",
+      "root": "cuButterfly-fwht-storage-20260929",
+      "version": "0.9.0-fwht-full.1",
+      "required_files": ["src/register_fwht.cuh", "src/butterfly.cu", "src/butterfly_reference.cpp", "src/shared_iterative.cuh", "src/shared_resident.cuh", "src/c_api.cpp", "src/mixed_dataflow.cpp", "scripts/run_fwht_full_comparison.py", "scripts/stage_service_calibration.py", "tests/test_fwht_full.cpp", "tests/test_fwht_full_codegen.py", "tests/test_fwht_full_projection.py", "tests/test_fwht_full_comparison.py", "tests/test_stage_probe_fp32_full.py", "tests/test_c_api.c", "docs/fwht_full_state.md"]
+    }
+  ],
+  "cohorts": [
+    {"id": "core", "family": "general", "source": "cuButterfly-v0.9.1/artifacts/revision_acceptance_20260927/campaign/core.json", "list_key": "workloads", "expected": 74},
+    {"id": "batch-precision", "family": "general", "source": "cuButterfly-v0.9.1/artifacts/revision_acceptance_20260927/campaign/batch_precision.json", "list_key": "workloads", "expected": 284},
+    {"id": "crypto", "family": "general", "source": "cuButterfly-v0.9.1/artifacts/revision_acceptance_20260927/campaign/crypto.json", "list_key": "workloads", "expected": 208},
+    {"id": "composed", "family": "general", "source": "cuButterfly-v0.9.1/artifacts/revision_acceptance_20260927/campaign/composed.json", "list_key": "workloads", "expected": 138},
+    {"id": "extensions", "family": "general", "source": "cuButterfly-v0.9.1/artifacts/revision_acceptance_20260927/campaign/operator_extensions.json", "list_key": "workloads", "expected": 29},
+    {"id": "planning", "family": "general", "source": "cuButterfly-v0.9.1/artifacts/revision_acceptance_20260927/campaign/plan_workloads.json", "list_key": "workloads", "expected": 16},
+    {"id": "fft36", "family": "repair", "source": "cuButterfly-fp64-pipeline-20260927/artifacts/fft_portfolio_dev5_20260928/workloads.json", "list_key": "workloads", "expected": 36},
+    {"id": "fft-weak10", "family": "repair", "source": "cuButterfly-fp64-pipeline-20260927/artifacts/fft_weakspots_dev5_20260928/optimized_mapping_seeds.json", "list_key": "seeds", "expected": 10, "reuse": "semantics and mapping proposals only; no timings"},
+    {"id": "ntt-external346", "family": "repair", "source": "cuButterfly-ntt-boundary-20260929/results/crypto_external_boundary_20260930/matrix.json", "list_key": "cells", "expected": 346, "comparable": 214, "baseline_unsupported": 78, "baseline_incorrect": 54},
+    {"id": "fwht-full36", "family": "repair", "source": "cuButterfly-fwht-storage-20260929/results/fwht_full_20260929/comparison/manifest.json", "list_key": "cells", "expected": 36, "reuse": "contracts only; ignore historical build, commands and timings"},
+    {"id": "fp64-direct68", "family": "regression", "source": "cuButterfly-v0.9.1/artifacts/revision_acceptance_20260927/campaign/fp64_direct_matrix.json", "list_key": "cases", "expected": 68},
+    {"id": "stage-basis56", "family": "calibration-seed", "source": "cuButterfly-v0.9.1/artifacts/revision_acceptance_20260927/campaign/stage_points.json", "list_key": "points", "expected": 56, "new_required_roles": ["fft native and heterogeneous groups/exchange", "ntt input and output boundary folding", "fwht fp32-full first/middle/last stages"]},
+    {"id": "controls24", "family": "mechanism", "source": "cuButterfly-v0.9.1/artifacts/revision_acceptance_20260927/campaign/traversal_controls.json", "list_key": "cases", "expected": 24, "variants_per_case": 4}
+  ],
+  "targets": [
+    {"id": "a100-40gb", "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e", "memory_gib": 40, "cuda_arch": 80, "predecessor_journal": "cuButterfly-ntt-hybrid-order/artifacts/resume_20260930/state/jobs/job-followup-a100-40gb.json"},
+    {"id": "a100-80gb", "uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02", "memory_gib": 80, "cuda_arch": 80, "predecessor_journal": "cuButterfly-ntt-hybrid-order/artifacts/resume_20260930/state/jobs/job-ntt-boundary-full-a100-80gb.json"}
+  ],
+  "phases": [
+    {"id": "integrate", "resource": "cpu", "after": [], "deliverables": ["isolated integrated source", "resolved patch provenance", "version and source manifest", "CPU regression results", "version/deadline/target-parameterized preparation runner"]},
+    {"id": "build-precompile", "resource": "cpu", "after": ["integrate"], "deliverables": ["same-source public and benchmark binaries", "module inventory", "build identity", "final frozen deduplicated campaign", "runnable fixed-first and search-last queue commands"]},
+    {"id": "correctness", "resource": "per-gpu", "after": ["build-precompile"], "requires_predecessor": true, "cohorts": ["fp64-direct68", "fft36", "fft-weak10", "ntt-external346", "fwht-full36"]},
+    {"id": "calibration", "resource": "per-gpu", "after": ["correctness"], "cohorts": ["stage-basis56"], "deliverables": ["target-specific new-role service coverage", "explicit missing-service report"]},
+    {"id": "fixed-repairs-and-controls", "resource": "per-gpu", "after": ["calibration"], "cohorts": ["fft36", "fft-weak10", "ntt-external346", "fwht-full36", "controls24", "planning"], "deliverables": ["fresh paired external comparisons", "same-contract controls", "public finite-selector replay", "fixed general-matrix baseline measurements"]},
+    {"id": "search-and-generation", "resource": "per-gpu", "after": ["fixed-repairs-and-controls"], "cohorts": ["core", "batch-precision", "crypto", "composed", "extensions", "planning"], "deliverables": ["budgeted search", "relative ranking evaluation", "public generated-plan replay", "same-build general-matrix acceptance"]},
+    {"id": "audit-report", "resource": "cpu", "after": ["search-and-generation"], "deliverables": ["coverage ledger", "identity and correctness audit", "per-cohort distributions and matched regressions", "setup and search cost report"]}
+  ],
+  "activation_requirements": [
+    "all four source groups reviewed and integrated into one source identity",
+    "new build and precompiled modules match that identity",
+    "fixed-first/search-last runner split supports every declared cohort",
+    "comparison scripts use integrated binary and templates, never historical binary paths",
+    "per-target predecessor resolved and UUID scheduling lock released",
+    "deadline has not elapsed"
+  ],
+  "reporting": {
+    "fresh_timings_required": true,
+    "deduplicate_semantic_contracts": true,
+    "preserve_cohort_membership": true,
+    "combine_external_and_in_tree_baselines": false,
+    "public_selector_distinct_from_best_of_pool": true,
+    "unsupported_is_not_pass": true,
+    "structured_semantics_mismatch_is_not_pass": true,
+    "regression_confirmation_threshold": 0.05,
+    "additional_regression_rounds": 5,
+    "outside_this_campaign": ["V100 remote acceptance", "FNO/QuaRot/HEonGPU end-to-end experiments"]
+  }
+}

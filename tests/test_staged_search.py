@@ -193,6 +193,18 @@ def test_staged_evolutionary_search_uses_probe_groups_records_failures_and_resum
 
     monkeypatch.setattr(stage_cost_model, "predict", recording_predict)
 
+    # Keep this fault-injection test at the scoring boundary after invariant
+    # feature preparation was introduced. Real-model equivalence is tested
+    # separately; here a cheap unresolved estimate must lose to probe rejection.
+    class RecordingPreparedPredictor:
+        def __init__(self, model):
+            pass
+        def prepare(self, sample):
+            return sample
+        def bind(self, model):
+            return lambda sample: recording_predict(sample, model)
+    monkeypatch.setattr(stage_cost_model, "PreparedPredictor", RecordingPreparedPredictor)
+
     args = SimpleNamespace(
         build_dir=build_dir,
         search_workloads=workloads_path,
@@ -388,7 +400,11 @@ def test_actual_stage_probe_keeps_serial_full_tail_descriptors_for_scoring_and_r
 
     output = tmp_path / "search_coverage.json"
     profile = _profile()
-    profile["stage_service"] = {"curves": {"mock-stage": {}}}
+    profile["stage_service"] = {
+        "curves": {"mock-stage": {}}, "validated": True,
+        "calibration_status": "complete", "inventory_complete": True,
+        "coverage": {"inventory_complete": True},
+    }
     (tmp_path / "calibration_device.json").write_text(json.dumps(profile) + "\n")
 
     workload = {

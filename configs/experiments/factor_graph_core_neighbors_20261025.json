@@ -1,0 +1,24 @@
+{
+  "schema": "cubutterfly-explicit-graph-suite-v1",
+  "purpose": "Local neighborhood of the best FP64 cuFFTDx factor shape",
+  "operator": "fft", "precision": "fp64", "logN": 20, "batch": 16,
+  "inverse": false, "seed": 6143, "warmup": 5, "repeat": 30, "trials": 7,
+  "base_mapping": {
+    "schema_version": 1, "kind": "butterfly", "backend": "factor-streamed",
+    "fft_core": "cufftdx-block", "compute_unit": "auto",
+    "shared_layout": "writer-aligned", "cross_twiddle": "recurrence",
+    "stage_partition": [20], "factor_partition": [10, 10],
+    "factor_ept": 8, "factor_columns": 2,
+    "data_tiles_per_cta": 1, "prefetch_depth": 0,
+    "factor_io_policies": ["dynamic", "dynamic"]
+  },
+  "cases": [
+    {"id": "e8-c2-f10-10-t1", "mapping": {}},
+    {"id": "e8-c1-f10-10-t1", "mapping": {"factor_columns": 1}},
+    {"id": "e8-c2-f9-11-t1", "mapping": {"factor_partition": [9, 11]}},
+    {"id": "e8-c2-f11-9-t1", "mapping": {"factor_partition": [11, 9]}},
+    {"id": "e8-c2-f10-10-static", "mapping": {"factor_io_policies": ["static-unrolled", "static-unrolled"]}},
+    {"id": "e8-c2-f10-10-t2", "mapping": {"data_tiles_per_cta": 2}},
+    {"id": "cufft", "mapping": {"backend": "cufft"}, "inherit_base": false}
+  ]
+}

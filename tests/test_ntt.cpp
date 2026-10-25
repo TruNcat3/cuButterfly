@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "cuntt/ntt.hpp"
+#include "cubutterfly/mapping.hpp"
 
 namespace {
 
@@ -118,6 +119,10 @@ void test_compact_stage_backend() {
         config.modulus      = kModulus;
         config.backend      = cuntt::Backend::CompactStage;
         config.output_order = order;
+        const auto candidates = cubutterfly::portable_ntt_candidates(config);
+        if (std::none_of(candidates.begin(),candidates.end(),[](const auto& c) {
+                return c.backend==cuntt::Backend::CompactStage; }))
+            throw std::runtime_error("native compact-stage missing from portable NTT inventory");
         cuntt::Plan                plan(config);
         check_ntt_dataflow_projection(plan);
         std::vector<std::uint64_t> output;
@@ -134,6 +139,36 @@ void test_compact_stage_backend() {
         }
         std::cout << "PASS compact-stage output_order=" << cuntt::output_order_name(order) << '\n';
     }
+}
+
+void test_portable_ntt_order_candidates() {
+    // Exercise the ordinary forward/inverse fallback outside the specialized
+    // native kernel. Validate its output permutation against the CPU reference.
+    for (const auto bits : {32U,64U}) for (const auto log_n : {7U,12U,14U})
+        for (const bool inverse : {false,true}) {
+            cuntt::PlanConfig config;
+            config.word_bits=bits; config.log_n=log_n; config.batch=2;
+            config.modulus=998244353; config.inverse=inverse;
+            config.output_order=cuntt::OutputOrder::BitReversed;
+            const auto candidates=cubutterfly::portable_ntt_candidates(config);
+            if (candidates.empty() || candidates.front().backend!=cuntt::Backend::SharedIterative ||
+                candidates.front().stage_partition.empty() ||
+                candidates.front().stage_partition.size()>=log_n)
+                throw std::runtime_error("portable NTT default degenerated to single-level CTAs");
+            if (std::any_of(candidates.begin(),candidates.end(),[](const auto& c) {
+                    return c.backend==cuntt::Backend::CompactStage; }))
+                throw std::runtime_error("unsupported native compact-stage entered inventory");
+            cuntt::Plan plan(candidates.front());
+            const auto input=make_input((1ULL<<log_n)*config.batch,config.modulus,log_n+bits+inverse);
+            const auto expected=reference_batch(input,log_n,config.batch,config.modulus,inverse);
+            std::vector<std::uint64_t> output;
+            plan.execute(input,output,0,1);
+            const std::size_t n=1ULL<<log_n;
+            for(std::size_t b=0;b<config.batch;++b) for(std::uint32_t i=0;i<n;++i)
+                if(output[b*n+reverse_bits(i,log_n)]!=expected[b*n+i])
+                    throw std::runtime_error("portable NTT terminal permutation failed exact verification");
+        }
+    std::cout << "PASS portable NTT orders, word widths and inverse fallback\n";
 }
 
 void test_device_api() {
@@ -209,9 +244,8 @@ void test_runtime_selector() {
     config.auto_select = true;
     cuntt::Plan plan(config);
     if (!plan.config().auto_select || plan.config().backend != cuntt::Backend::Hybrid2D ||
-        plan.config().compute_unit != cuntt::ComputeUnit::Radix4 || !plan.selection().calibrated ||
-        plan.selection().implementation != "cuNTT-Hybrid2D-radix4" || plan.selection().predicted_kernel_ms <= 0.0) {
-        throw std::runtime_error("NTT runtime selector did not resolve the calibrated Hybrid2D mapping");
+        plan.config().compute_unit != cuntt::ComputeUnit::Radix4) {
+        throw std::runtime_error("NTT runtime selector did not retain the platform Hybrid2D prior");
     }
 
     constexpr std::uint64_t kModulus30 = 1073479681ULL;
@@ -227,12 +261,10 @@ void test_runtime_selector() {
     config.log_n    = 14;
     config.word_bits = 64;
     config.modulus   = cuntt::kDefaultModulus;
-    try {
-        cuntt::Plan unsupported(config);
-        throw std::runtime_error("runtime selector accepted an uncalibrated NTT length");
-    } catch (const std::invalid_argument&) {
-    }
-    std::cout << "PASS calibrated NTT runtime selector\n";
+    cuntt::Plan fallback(config);
+    if(!fallback.config().auto_select || fallback.selection().calibrated)
+        throw std::runtime_error("unmeasured fallback incorrectly reported calibration");
+    std::cout << "PASS NTT platform prior and generic fallback\n";
 }
 
 void test_stage_pipeline_backend() {
@@ -2021,6 +2053,7 @@ int main() {
         test_hybrid2d_backend();
         test_roundtrip(cuntt::Backend::Hybrid2D, 16, 3);
         test_compact_stage_backend();
+        test_portable_ntt_order_candidates();
         test_stage_pipeline_backend();
         test_hybrid_dataflow_backend();
         test_hierarchical_dataflow_backend();

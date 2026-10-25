@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Historical V100-only offline Td analysis.
+
+This is not the installation or portable search cost model. Its resource
+constants reproduce the original V100 experiment; use stage_cost_model.py
+with a target calibration profile for cross-platform ranking.
+"""
 import argparse
 import csv
 import json

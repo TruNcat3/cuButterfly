@@ -125,6 +125,7 @@ struct Options {
     std::uint64_t seed = 1;
     InputPattern input_pattern = InputPattern::Random;
     std::string mapping_json;
+    bool auto_select = false;
     bool json = false;
     bool self_test_host = false;
 };
@@ -318,6 +319,9 @@ void validate_options(const Options& options) {
         throw std::invalid_argument("warmup/repeat are outside the supported finite range");
     }
     if (options.moduli.empty()) throw std::invalid_argument("at least one modulus is required");
+    if (options.auto_select && !options.mapping_json.empty()) {
+        throw std::invalid_argument("--auto-select cannot be combined with --mapping-json; provide either a mapping or a search request");
+    }
     for (std::size_t index = 0; index < options.moduli.size(); ++index) {
         const auto modulus = options.moduli[index];
         for (std::size_t previous = 0; previous < index; ++previous)
@@ -351,6 +355,7 @@ Options parse_options(int argc, char** argv) {
             std::cout << "crypto_ntt_bench --log-n K --batch B --word-bits 32|64 --moduli p[,p...]\n"
                          "  [--mode cyclic|negacyclic|coset] [--direction forward|inverse]\n"
                          "  [--coset-generator g] [--mapping-json JSON-or-file-or-array]\n"
+                         "  [--auto-select]\n"
                          "  [--warmup K] [--repeat K] [--seed K] [--input-pattern random|boundary]\n"
                          "  [--self-test-host] [--json]\n";
             std::exit(0);
@@ -377,6 +382,8 @@ Options parse_options(int argc, char** argv) {
             options.coset_generator = parse_u64(take_arg(index, argc, argv), "--coset-generator");
         } else if (arg == "--mapping-json") {
             options.mapping_json = read_mapping(take_arg(index, argc, argv));
+        } else if (arg == "--auto-select") {
+            options.auto_select = true;
         } else if (arg == "--warmup") {
             options.warmup = static_cast<std::uint32_t>(parse_u64(take_arg(index, argc, argv), "--warmup"));
         } else if (arg == "--repeat") {
@@ -596,6 +603,9 @@ struct ChannelRun {
     std::vector<std::uint64_t> host_values;
     std::string mapping_json;
     bool mapping_fallback = false;
+    bool selection_calibrated = false;
+    std::string selection_confidence;
+    std::string selection_reason;
     double plan_ms = 0.0;
     std::size_t workspace_bytes = 0;
 };
@@ -624,7 +634,7 @@ ChannelRun<Word> prepare_channel(const Options& options, const ChannelInfo& chan
     config.word_bits = options.word_bits;
     config.input_order = cuntt::InputOrder::Natural;
     config.output_order = cuntt::OutputOrder::Natural;
-    config.auto_select = false;
+    config.auto_select = options.auto_select;
     config.auto_allocate_workspace = false;
     const auto semantic_log_n = config.log_n;
     const auto semantic_batch = config.batch;
@@ -633,7 +643,7 @@ ChannelRun<Word> prepare_channel(const Options& options, const ChannelInfo& chan
     const auto semantic_word_bits = config.word_bits;
     const auto semantic_input_order = config.input_order;
     const auto semantic_output_order = config.output_order;
-    const bool mapping_fallback = mapping_spec.empty();
+    const bool mapping_fallback = mapping_spec.empty() && !options.auto_select;
     if (!mapping_spec.empty()) cubutterfly::apply_serialized_mapping(mapping_spec, config);
     if (config.log_n != semantic_log_n || config.batch != semantic_batch || config.modulus != semantic_modulus ||
         config.inverse != semantic_inverse || config.word_bits != semantic_word_bits ||
@@ -652,6 +662,9 @@ ChannelRun<Word> prepare_channel(const Options& options, const ChannelInfo& chan
     run.host_values = host_values;
     run.mapping_json = normalized_mapping;
     run.mapping_fallback = mapping_fallback;
+    run.selection_calibrated = run.plan->selection().calibrated;
+    run.selection_confidence = run.plan->selection().confidence;
+    run.selection_reason = run.plan->selection().reason;
     run.plan_ms = plan_ms;
     run.workspace_bytes = run.plan->workspace_size();
     run.source.allocate(count);
@@ -793,7 +806,12 @@ CompositionResult<Word> run_composition(const Options& options, const std::vecto
         result.records.push_back(Json{{"channel", index}, {"modulus", channels[index].modulus},
                                       {"modulus_bits", 64U - static_cast<unsigned>(__builtin_clzll(channels[index].modulus))},
                                       {"mapping_json", runs[index].mapping_json}, {"mapping_fallback", runs[index].mapping_fallback},
-                                      {"mapping_provenance", runs[index].mapping_fallback ? "shared-iterative-default" : "provided-mapping"},
+                                      {"mapping_provenance", runs[index].mapping_fallback ? "shared-iterative-default" :
+                                                              (!options.mapping_json.empty() ? "provided-mapping" :
+                                                               (runs[index].selection_calibrated ? "calibrated-registry" : "runtime-auto-select"))},
+                                      {"selection_calibrated", runs[index].selection_calibrated},
+                                      {"selection_confidence", runs[index].selection_confidence},
+                                      {"selection_reason", runs[index].selection_reason},
                                       {"root", channels[index].roots.root},
                                       {"default_root_2n", channels[index].roots.default_root_2n},
                                       {"default_root_2n_squared", channels[index].roots.default_root_2n_squared},
@@ -866,6 +884,7 @@ Json output_base(const Options& options, const DeviceInfo* device, bool correct,
     output["coset_generator"] = options.mode == Mode::Coset ? options.coset_generator : 0;
     output["input_pattern"] = pattern_name(options.input_pattern);
     output["seed"] = options.seed;
+    output["auto_select"] = options.auto_select;
     output["normalization"] = options.direction == Direction::Inverse ? "inverse" : "none";
     output["layout"] = "channel-batch-coefficient";
     output["rns_stream_order"] = "single-stream";

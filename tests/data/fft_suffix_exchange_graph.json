@@ -1,0 +1,91 @@
+[
+  {
+    "mode": "cufft",
+    "sample": {
+      "operator": "fft", "precision": "fp32", "N": 65536, "batch": 16,
+      "placement": "out-of-place", "element_stride": 1, "batch_stride": 65536,
+      "direction": "forward", "normalization": "none",
+      "mapping_json": {"backend": "cufft", "stage_partition": [16]}
+    }
+  },
+  {
+    "mode": "exchange-whole",
+    "sample": {
+      "operator": "fft", "precision": "fp32", "N": 65536, "batch": 16,
+      "placement": "out-of-place", "element_stride": 1, "batch_stride": 65536,
+      "direction": "forward", "normalization": "none",
+      "mapping_json": {
+        "backend": "online-reorder", "fft_core": "register-tile", "local_stages": 6,
+        "stage_partition": [6, 10], "prefix_threads": 128, "prefix_ept": 8,
+        "suffix_threads": 512, "suffix_ept": 8, "prefix_codelet": "native",
+        "prefix_shared_layout": "linear", "prefix_codelet_lanes": 1,
+        "shared_layout": "writer-aligned", "cross_twiddle": "recurrence",
+        "reorder_columns": 1, "exchange_chunks": [0, 0]
+      }
+    }
+  },
+  {
+    "mode": "exchange-chunk1",
+    "sample": {
+      "operator": "fft", "precision": "fp32", "N": 65536, "batch": 16,
+      "placement": "out-of-place", "element_stride": 1, "batch_stride": 65536,
+      "direction": "forward", "normalization": "none",
+      "mapping_json": {
+        "backend": "online-reorder", "fft_core": "register-tile", "local_stages": 6,
+        "stage_partition": [6, 10], "prefix_threads": 128, "prefix_ept": 8,
+        "suffix_threads": 512, "suffix_ept": 8, "prefix_codelet": "native",
+        "prefix_shared_layout": "linear", "prefix_codelet_lanes": 1,
+        "shared_layout": "writer-aligned", "cross_twiddle": "recurrence",
+        "reorder_columns": 1, "exchange_chunks": [0, 1]
+      }
+    }
+  },
+  {
+    "mode": "exchange-chunk2",
+    "sample": {
+      "operator": "fft", "precision": "fp32", "N": 65536, "batch": 16,
+      "placement": "out-of-place", "element_stride": 1, "batch_stride": 65536,
+      "direction": "forward", "normalization": "none",
+      "mapping_json": {
+        "backend": "online-reorder", "fft_core": "register-tile", "local_stages": 6,
+        "stage_partition": [6, 10], "prefix_threads": 128, "prefix_ept": 8,
+        "suffix_threads": 512, "suffix_ept": 8, "prefix_codelet": "native",
+        "prefix_shared_layout": "linear", "prefix_codelet_lanes": 1,
+        "shared_layout": "writer-aligned", "cross_twiddle": "recurrence",
+        "reorder_columns": 1, "exchange_chunks": [0, 2]
+      }
+    }
+  },
+  {
+    "mode": "exchange-chunk4",
+    "sample": {
+      "operator": "fft", "precision": "fp32", "N": 65536, "batch": 16,
+      "placement": "out-of-place", "element_stride": 1, "batch_stride": 65536,
+      "direction": "forward", "normalization": "none",
+      "mapping_json": {
+        "backend": "online-reorder", "fft_core": "register-tile", "local_stages": 6,
+        "stage_partition": [6, 10], "prefix_threads": 128, "prefix_ept": 8,
+        "suffix_threads": 512, "suffix_ept": 8, "prefix_codelet": "native",
+        "prefix_shared_layout": "linear", "prefix_codelet_lanes": 1,
+        "shared_layout": "writer-aligned", "cross_twiddle": "recurrence",
+        "reorder_columns": 1, "exchange_chunks": [0, 4]
+      }
+    }
+  },
+  {
+    "mode": "exchange-chunk8",
+    "sample": {
+      "operator": "fft", "precision": "fp32", "N": 65536, "batch": 16,
+      "placement": "out-of-place", "element_stride": 1, "batch_stride": 65536,
+      "direction": "forward", "normalization": "none",
+      "mapping_json": {
+        "backend": "online-reorder", "fft_core": "register-tile", "local_stages": 6,
+        "stage_partition": [6, 10], "prefix_threads": 128, "prefix_ept": 8,
+        "suffix_threads": 512, "suffix_ept": 8, "prefix_codelet": "native",
+        "prefix_shared_layout": "linear", "prefix_codelet_lanes": 1,
+        "shared_layout": "writer-aligned", "cross_twiddle": "recurrence",
+        "reorder_columns": 1, "exchange_chunks": [0, 8]
+      }
+    }
+  }
+]

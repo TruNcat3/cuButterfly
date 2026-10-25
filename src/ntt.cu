@@ -20,8 +20,11 @@
 #include "resident_mapping.hpp"
 #include "batch_pipeline.cuh"
 #include "ntt_traits.cuh"
+#include "ntt_hybrid2d.cuh"
 #include "jit_module.hpp"
 #include "stage_probe.hpp"
+#include "ntt_capabilities.hpp"
+#include "platforms/ntt_defaults.hpp"
 
 namespace cuntt {
 namespace {
@@ -132,52 +135,6 @@ std::uint64_t barrett_precompute(std::uint64_t modulus, std::uint32_t modulus_bi
 
 using traits::mul_shoup;
 
-struct Wide128 {
-    std::uint64_t low;
-    std::uint64_t high;
-};
-
-__device__ __forceinline__ Wide128 wide_multiply(std::uint64_t left, std::uint64_t right) {
-    return {left * right, __umul64hi(left, right)};
-}
-
-__device__ __forceinline__ Wide128 wide_shift_right(Wide128 value, std::uint32_t shift) {
-    if (shift == 0) {
-        return value;
-    }
-    if (shift < 64) {
-        return {(value.low >> shift) | (value.high << (64 - shift)), value.high >> shift};
-    }
-    if (shift < 128) {
-        return {value.high >> (shift - 64), 0};
-    }
-    return {0, 0};
-}
-
-__device__ __forceinline__ Wide128 wide_subtract(Wide128 left, Wide128 right) {
-    const std::uint64_t low = left.low - right.low;
-    return {low, left.high - right.high - (left.low < right.low)};
-}
-
-__device__ __forceinline__ std::uint64_t mul_barrett(std::uint64_t left, std::uint64_t right, std::uint64_t modulus, std::uint32_t modulus_bits,
-                                                     std::uint64_t mu) {
-    Wide128 product  = wide_multiply(left, right);
-    Wide128 quotient = wide_shift_right(product, modulus_bits - 2);
-    quotient         = wide_multiply(quotient.low, mu);
-    quotient         = wide_shift_right(quotient, modulus_bits + 3);
-    product          = wide_subtract(product, wide_multiply(quotient.low, modulus));
-    return product.low >= modulus ? product.low - modulus : product.low;
-}
-
-__device__ __forceinline__ std::uint32_t mul_barrett(std::uint32_t left, std::uint32_t right, std::uint32_t modulus, std::uint32_t modulus_bits,
-                                                     std::uint32_t mu) {
-    std::uint64_t product  = static_cast<std::uint64_t>(left) * right;
-    std::uint64_t quotient = product >> (modulus_bits - 2);
-    quotient               = static_cast<std::uint64_t>(static_cast<std::uint32_t>(quotient)) * mu;
-    quotient >>= modulus_bits + 3;
-    product -= static_cast<std::uint64_t>(static_cast<std::uint32_t>(quotient)) * modulus;
-    return static_cast<std::uint32_t>(product >= modulus ? product - modulus : product);
-}
 
 __device__ __forceinline__ void butterfly(std::uint64_t& left, std::uint64_t& right, std::uint64_t twiddle, std::uint64_t twiddle_shoup,
                                           std::uint64_t modulus) {
@@ -5759,313 +5716,10 @@ __global__ void tile_kernel(std::uint64_t* values, std::uint32_t tile_log, const
     }
 }
 
-constexpr std::uint32_t kHybridMinLocalLog = 6;
-constexpr std::uint32_t kHybridMaxLocalLog = 10;
-
-template <bool Fused, typename Word>
-__device__ __forceinline__ Word local_twiddle(const Word* standard, const Word* fused, std::uint32_t row_base, std::uint32_t row,
-                                              std::uint32_t local_n, std::uint32_t index) {
-    if constexpr (Fused) {
-        return fused[(row_base + row) * (local_n - 1) + index];
-    }
-    return standard[index];
-}
-
-template <bool Barrett, bool Fused, typename Word>
-__device__ __forceinline__ Word local_twiddle_shoup(const Word* standard, const Word* fused, std::uint32_t row_base, std::uint32_t row,
-                                                    std::uint32_t local_n, std::uint32_t index) {
-    if constexpr (Barrett) {
-        return 0;
-    }
-    return local_twiddle<Fused>(standard, fused, row_base, row, local_n, index);
-}
-
-template <bool Barrett, typename Word>
-__device__ __forceinline__ void local_butterfly(Word& left, Word& right, Word twiddle, Word twiddle_shoup, Word modulus, std::uint32_t modulus_bits,
-                                                Word barrett_mu) {
-    const Word u = left;
-    Word       v;
-    if constexpr (Barrett) {
-        v = mul_barrett(right, twiddle, modulus, modulus_bits, barrett_mu);
-    } else {
-        v = mul_shoup(right, twiddle, twiddle_shoup, modulus);
-    }
-    const Word sum = u + v;
-    left           = sum >= modulus ? sum - modulus : sum;
-    right          = u >= v ? u - v : modulus + u - v;
-}
-
-template <typename Word, std::uint32_t LocalLog, std::uint32_t RowsPerBlock, ComputeUnit Unit, bool Fused = false, bool Barrett = false>
-__device__ void local_ntt(Word* tiles, const Word* twiddles, const Word* twiddles_shoup, Word modulus, const Word* fused_twiddles = nullptr,
-                          const Word* fused_twiddles_shoup = nullptr, std::uint32_t row_base = 0, std::uint32_t modulus_bits = 0,
-                          Word barrett_mu = 0) {
-    constexpr std::uint32_t local_n = 1U << LocalLog;
-    constexpr std::uint32_t stride  = local_n + 1;
-    if constexpr (Unit == ComputeUnit::Radix2) {
-        constexpr std::uint32_t butterflies_per_row = local_n / 2;
-        for (std::uint32_t stage = 0; stage < LocalLog; ++stage) {
-            const std::uint32_t half           = 1U << stage;
-            const std::uint32_t twiddle_offset = half - 1;
-            for (std::uint32_t linear = threadIdx.x; linear < RowsPerBlock * butterflies_per_row; linear += blockDim.x) {
-                const std::uint32_t row         = linear / butterflies_per_row;
-                const std::uint32_t local       = linear - row * butterflies_per_row;
-                const std::uint32_t group       = local / half;
-                const std::uint32_t offset      = local - group * half;
-                const std::uint32_t left_index  = row * stride + group * (half << 1) + offset;
-                const std::uint32_t right_index = left_index + half;
-                Word                left        = tiles[left_index];
-                Word                right       = tiles[right_index];
-                local_butterfly<Barrett>(
-                    left, right, local_twiddle<Fused>(twiddles, fused_twiddles, row_base, row, local_n, twiddle_offset + offset),
-                    local_twiddle_shoup<Barrett, Fused>(twiddles_shoup, fused_twiddles_shoup, row_base, row, local_n, twiddle_offset + offset),
-                    modulus, modulus_bits, barrett_mu);
-                tiles[left_index]  = left;
-                tiles[right_index] = right;
-            }
-            __syncthreads();
-        }
-    } else if constexpr (Unit == ComputeUnit::Radix4) {
-        constexpr std::uint32_t radix4_units_per_row = local_n / 4;
-        std::uint32_t           stage                = 0;
-        for (; stage + 1 < LocalLog; stage += 2) {
-            const std::uint32_t half0           = 1U << stage;
-            const std::uint32_t twiddle_offset0 = half0 - 1;
-            const std::uint32_t twiddle_offset1 = (half0 << 1) - 1;
-            for (std::uint32_t linear = threadIdx.x; linear < RowsPerBlock * radix4_units_per_row; linear += blockDim.x) {
-                const std::uint32_t row      = linear / radix4_units_per_row;
-                const std::uint32_t local    = linear - row * radix4_units_per_row;
-                const std::uint32_t group    = local / half0;
-                const std::uint32_t offset   = local - group * half0;
-                const std::uint32_t i0       = row * stride + group * (half0 << 2) + offset;
-                const std::uint32_t i1       = i0 + half0;
-                const std::uint32_t i2       = i1 + half0;
-                const std::uint32_t i3       = i2 + half0;
-                Word                a        = tiles[i0];
-                Word                b        = tiles[i1];
-                Word                c        = tiles[i2];
-                Word                d        = tiles[i3];
-                const Word          twiddle0 = local_twiddle<Fused>(twiddles, fused_twiddles, row_base, row, local_n, twiddle_offset0 + offset);
-                const Word          twiddle0_shoup =
-                    local_twiddle_shoup<Barrett, Fused>(twiddles_shoup, fused_twiddles_shoup, row_base, row, local_n, twiddle_offset0 + offset);
-                local_butterfly<Barrett>(a, b, twiddle0, twiddle0_shoup, modulus, modulus_bits, barrett_mu);
-                local_butterfly<Barrett>(c, d, twiddle0, twiddle0_shoup, modulus, modulus_bits, barrett_mu);
-                local_butterfly<Barrett>(
-                    a, c, local_twiddle<Fused>(twiddles, fused_twiddles, row_base, row, local_n, twiddle_offset1 + offset),
-                    local_twiddle_shoup<Barrett, Fused>(twiddles_shoup, fused_twiddles_shoup, row_base, row, local_n, twiddle_offset1 + offset),
-                    modulus, modulus_bits, barrett_mu);
-                local_butterfly<Barrett>(b, d,
-                                         local_twiddle<Fused>(twiddles, fused_twiddles, row_base, row, local_n, twiddle_offset1 + half0 + offset),
-                                         local_twiddle_shoup<Barrett, Fused>(twiddles_shoup, fused_twiddles_shoup, row_base, row, local_n,
-                                                                             twiddle_offset1 + half0 + offset),
-                                         modulus, modulus_bits, barrett_mu);
-                tiles[i0] = a;
-                tiles[i1] = b;
-                tiles[i2] = c;
-                tiles[i3] = d;
-            }
-            __syncthreads();
-        }
-        if (stage < LocalLog) {
-            constexpr std::uint32_t butterflies_per_row = local_n / 2;
-            constexpr std::uint32_t half                = 1U << (LocalLog - 1);
-            constexpr std::uint32_t twiddle_offset      = half - 1;
-            for (std::uint32_t linear = threadIdx.x; linear < RowsPerBlock * butterflies_per_row; linear += blockDim.x) {
-                const std::uint32_t row         = linear / butterflies_per_row;
-                const std::uint32_t offset      = linear - row * butterflies_per_row;
-                const std::uint32_t left_index  = row * stride + offset;
-                const std::uint32_t right_index = left_index + half;
-                Word                left        = tiles[left_index];
-                Word                right       = tiles[right_index];
-                local_butterfly<Barrett>(
-                    left, right, local_twiddle<Fused>(twiddles, fused_twiddles, row_base, row, local_n, twiddle_offset + offset),
-                    local_twiddle_shoup<Barrett, Fused>(twiddles_shoup, fused_twiddles_shoup, row_base, row, local_n, twiddle_offset + offset),
-                    modulus, modulus_bits, barrett_mu);
-                tiles[left_index]  = left;
-                tiles[right_index] = right;
-            }
-            __syncthreads();
-        }
-    } else {
-        constexpr std::uint32_t radix8_units_per_row = local_n / 8;
-        std::uint32_t           stage                = 0;
-        for (; stage + 2 < LocalLog; stage += 3) {
-            const std::uint32_t eighth          = 1U << stage;
-            const std::uint32_t twiddle_offset0 = eighth - 1;
-            const std::uint32_t twiddle_offset1 = (eighth << 1) - 1;
-            const std::uint32_t twiddle_offset2 = (eighth << 2) - 1;
-            for (std::uint32_t linear = threadIdx.x; linear < RowsPerBlock * radix8_units_per_row; linear += blockDim.x) {
-                const std::uint32_t row       = linear / radix8_units_per_row;
-                const std::uint32_t local     = linear - row * radix8_units_per_row;
-                const std::uint32_t group     = local / eighth;
-                const std::uint32_t offset    = local - group * eighth;
-                const std::uint32_t i0        = row * stride + group * (eighth << 3) + offset;
-                const std::uint32_t i1        = i0 + eighth;
-                const std::uint32_t i2        = i1 + eighth;
-                const std::uint32_t i3        = i2 + eighth;
-                const std::uint32_t i4        = i3 + eighth;
-                const std::uint32_t i5        = i4 + eighth;
-                const std::uint32_t i6        = i5 + eighth;
-                const std::uint32_t i7        = i6 + eighth;
-                Word                x0        = tiles[i0];
-                Word                x1        = tiles[i1];
-                Word                x2        = tiles[i2];
-                Word                x3        = tiles[i3];
-                Word                x4        = tiles[i4];
-                Word                x5        = tiles[i5];
-                Word                x6        = tiles[i6];
-                Word                x7        = tiles[i7];
-                const auto          butterfly = [&](Word& left, Word& right, std::uint32_t twiddle_index) {
-                    local_butterfly<Barrett>(
-                        left, right, local_twiddle<Fused>(twiddles, fused_twiddles, row_base, row, local_n, twiddle_index),
-                        local_twiddle_shoup<Barrett, Fused>(twiddles_shoup, fused_twiddles_shoup, row_base, row, local_n, twiddle_index), modulus,
-                        modulus_bits, barrett_mu);
-                };
-                butterfly(x0, x1, twiddle_offset0 + offset);
-                butterfly(x2, x3, twiddle_offset0 + offset);
-                butterfly(x4, x5, twiddle_offset0 + offset);
-                butterfly(x6, x7, twiddle_offset0 + offset);
-                butterfly(x0, x2, twiddle_offset1 + offset);
-                butterfly(x1, x3, twiddle_offset1 + eighth + offset);
-                butterfly(x4, x6, twiddle_offset1 + offset);
-                butterfly(x5, x7, twiddle_offset1 + eighth + offset);
-                butterfly(x0, x4, twiddle_offset2 + offset);
-                butterfly(x1, x5, twiddle_offset2 + eighth + offset);
-                butterfly(x2, x6, twiddle_offset2 + 2 * eighth + offset);
-                butterfly(x3, x7, twiddle_offset2 + 3 * eighth + offset);
-                tiles[i0] = x0;
-                tiles[i1] = x1;
-                tiles[i2] = x2;
-                tiles[i3] = x3;
-                tiles[i4] = x4;
-                tiles[i5] = x5;
-                tiles[i6] = x6;
-                tiles[i7] = x7;
-            }
-            __syncthreads();
-        }
-        for (; stage < LocalLog; ++stage) {
-            constexpr std::uint32_t butterflies_per_row = local_n / 2;
-            const std::uint32_t     half                = 1U << stage;
-            const std::uint32_t     twiddle_offset      = half - 1;
-            for (std::uint32_t linear = threadIdx.x; linear < RowsPerBlock * butterflies_per_row; linear += blockDim.x) {
-                const std::uint32_t row         = linear / butterflies_per_row;
-                const std::uint32_t local       = linear - row * butterflies_per_row;
-                const std::uint32_t group       = local / half;
-                const std::uint32_t offset      = local - group * half;
-                const std::uint32_t left_index  = row * stride + group * (half << 1) + offset;
-                const std::uint32_t right_index = left_index + half;
-                Word                left        = tiles[left_index];
-                Word                right       = tiles[right_index];
-                local_butterfly<Barrett>(
-                    left, right, local_twiddle<Fused>(twiddles, fused_twiddles, row_base, row, local_n, twiddle_offset + offset),
-                    local_twiddle_shoup<Barrett, Fused>(twiddles_shoup, fused_twiddles_shoup, row_base, row, local_n, twiddle_offset + offset),
-                    modulus, modulus_bits, barrett_mu);
-                tiles[left_index]  = left;
-                tiles[right_index] = right;
-            }
-            __syncthreads();
-        }
-    }
-}
-
-template <typename Word, std::uint32_t N2Log, std::uint32_t RowsPerBlock, ComputeUnit Unit, CrossTwiddlePlacement Placement, bool Barrett>
-__global__ void hybrid2d_first_pass_kernel(const Word* input, Word* scratch, const Word* twiddles, const Word* twiddles_shoup,
-                                           const Word* root_powers, const Word* root_powers_shoup, Word modulus, std::uint32_t n1_log,
-                                           std::uint32_t modulus_bits, Word barrett_mu, std::uint32_t log_n) {
-    constexpr std::uint32_t         N2      = 1U << N2Log;
-    const std::uint32_t             n1_size = 1U << n1_log;
-    extern __shared__ unsigned char shared_storage[];
-    Word*                           tiles = reinterpret_cast<Word*>(shared_storage);
-
-    const std::uint32_t blocks_per_transform = n1_size / RowsPerBlock;
-    const std::uint64_t batch_index          = blockIdx.x / blocks_per_transform;
-    const std::uint32_t row_base             = (blockIdx.x % blocks_per_transform) * RowsPerBlock;
-    const std::uint64_t transform_base       = batch_index << log_n;
-
-    for (std::uint32_t linear = threadIdx.x; linear < RowsPerBlock * N2; linear += blockDim.x) {
-        const std::uint32_t n2           = linear / RowsPerBlock;
-        const std::uint32_t row          = linear - n2 * RowsPerBlock;
-        const std::uint32_t n1           = row_base + row;
-        const std::uint32_t reversed     = __brev(n2) >> (32 - N2Log);
-        tiles[row * (N2 + 1) + reversed] = input[transform_base + static_cast<std::uint64_t>(n2) * n1_size + n1];
-    }
-    __syncthreads();
-
-    local_ntt<Word, N2Log, RowsPerBlock, Unit, false, Barrett>(tiles, twiddles, twiddles_shoup, modulus, nullptr, nullptr, 0, modulus_bits,
-                                                               barrett_mu);
-
-    for (std::uint32_t linear = threadIdx.x; linear < RowsPerBlock * N2; linear += blockDim.x) {
-        const std::uint32_t k2    = linear / RowsPerBlock;
-        const std::uint32_t row   = linear - k2 * RowsPerBlock;
-        const std::uint32_t n1    = row_base + row;
-        Word                value = tiles[row * (N2 + 1) + k2];
-        if constexpr (Placement == CrossTwiddlePlacement::FirstPass) {
-            const std::uint32_t exponent = n1 * k2;
-            if constexpr (Barrett) {
-                value = mul_barrett(value, root_powers[exponent], modulus, modulus_bits, barrett_mu);
-            } else {
-                value = mul_shoup(value, root_powers[exponent], root_powers_shoup[exponent], modulus);
-            }
-        }
-        scratch[transform_base + static_cast<std::uint64_t>(k2) * n1_size + n1] = value;
-    }
-}
-
-template <typename Word, std::uint32_t N1Log, std::uint32_t RowsPerBlock, ComputeUnit Unit, CrossTwiddlePlacement Placement, bool Barrett>
-__global__ void hybrid2d_second_pass_kernel(const Word* scratch, Word* output, const Word* twiddles, const Word* twiddles_shoup, Word modulus,
-                                            const Word* root_powers, const Word* root_powers_shoup, bool apply_scale, Word scale, Word scale_shoup,
-                                            std::uint32_t modulus_bits, Word barrett_mu, std::uint32_t n2_log, std::uint32_t log_n) {
-    constexpr std::uint32_t         N1 = 1U << N1Log;
-    const std::uint32_t             n2 = 1U << n2_log;
-    extern __shared__ unsigned char shared_storage[];
-    Word*                           tiles = reinterpret_cast<Word*>(shared_storage);
-
-    const std::uint32_t blocks_per_transform = n2 / RowsPerBlock;
-    const std::uint64_t batch_index          = blockIdx.x / blocks_per_transform;
-    const std::uint32_t row_base             = (blockIdx.x % blocks_per_transform) * RowsPerBlock;
-    const std::uint64_t transform_base       = batch_index << log_n;
-
-    for (std::uint32_t linear = threadIdx.x; linear < RowsPerBlock * N1; linear += blockDim.x) {
-        const std::uint32_t row      = linear / N1;
-        const std::uint32_t n1       = linear - row * N1;
-        const std::uint32_t k2       = row_base + row;
-        const std::uint32_t reversed = __brev(n1) >> (32 - N1Log);
-        Word                value    = scratch[transform_base + static_cast<std::uint64_t>(k2) * N1 + n1];
-        if constexpr (Placement == CrossTwiddlePlacement::SecondPass) {
-            const std::uint32_t exponent = n1 * k2;
-            if constexpr (Barrett) {
-                value = mul_barrett(value, root_powers[exponent], modulus, modulus_bits, barrett_mu);
-            } else {
-                value = mul_shoup(value, root_powers[exponent], root_powers_shoup[exponent], modulus);
-            }
-        }
-        tiles[row * (N1 + 1) + reversed] = value;
-    }
-    __syncthreads();
-
-    if constexpr (Placement == CrossTwiddlePlacement::Fused) {
-        local_ntt<Word, N1Log, RowsPerBlock, Unit, true, Barrett>(tiles, twiddles, twiddles_shoup, modulus, root_powers, root_powers_shoup, row_base,
-                                                                  modulus_bits, barrett_mu);
-    } else {
-        local_ntt<Word, N1Log, RowsPerBlock, Unit, false, Barrett>(tiles, twiddles, twiddles_shoup, modulus, nullptr, nullptr, 0, modulus_bits,
-                                                                   barrett_mu);
-    }
-
-    for (std::uint32_t linear = threadIdx.x; linear < RowsPerBlock * N1; linear += blockDim.x) {
-        const std::uint32_t k1    = linear / RowsPerBlock;
-        const std::uint32_t row   = linear - k1 * RowsPerBlock;
-        const std::uint32_t k2    = row_base + row;
-        Word                value = tiles[row * (N1 + 1) + k1];
-        if (apply_scale) {
-            if constexpr (Barrett) {
-                value = mul_barrett(value, scale, modulus, modulus_bits, barrett_mu);
-            } else {
-                value = mul_shoup(value, scale, scale_shoup, modulus);
-            }
-        }
-        output[transform_base + static_cast<std::uint64_t>(k1) * n2 + k2] = value;
-    }
-}
+using hybrid2d_detail::kHybridMinLocalLog;
+using hybrid2d_detail::kHybridMaxLocalLog;
+using hybrid2d_detail::hybrid2d_first_pass_kernel;
+using hybrid2d_detail::hybrid2d_second_pass_kernel;
 
 __global__ void scale_kernel(std::uint64_t* values, std::uint64_t total_points, std::uint64_t scale, std::uint64_t scale_shoup,
                              std::uint64_t modulus) {
@@ -8429,7 +8083,13 @@ class Plan::Impl {
                 throw std::invalid_argument("shared resident processing units require on-demand compilation");
         } else if(!config_.local_stage_partitions.empty() || !config_.exchange_chunks.empty())
             throw std::invalid_argument("NTT resident local partitions require shared-iterative lowering");
-        dataflow_plan_ = make_dataflow_plan(config_);
+        dataflow_plan_ = make_dataflow_plan(config_.backend == Backend::SharedIterative ? logical_config_ : config_);
+        const auto hardware = query_hardware_resource_model();
+        const auto validate_dataflow = [&] {
+            if (!validate_plan(dataflow_plan_, hardware))
+                throw std::invalid_argument("NTT plan legality: " + dataflow_plan_.rejection_reason);
+        };
+        validate_dataflow();
         n_ = 1ULL << config_.log_n;
         if (config_.batch > std::numeric_limits<std::size_t>::max() / n_) {
             throw std::overflow_error("batch * N overflows size_t");
@@ -8476,6 +8136,7 @@ class Plan::Impl {
             device_compact_roots_shoup_.allocate(root_bytes);
             CUNTT_CUDA_CHECK(cudaMemcpy(device_compact_roots_.get(), compact_roots_.data(), root_bytes, cudaMemcpyHostToDevice));
             CUNTT_CUDA_CHECK(cudaMemcpy(device_compact_roots_shoup_.get(), compact_roots_shoup_.data(), root_bytes, cudaMemcpyHostToDevice));
+            validate_dataflow();
             dataflow_plan_.executable = true;
             dataflow_plan_.state = CandidateState::Compiled;
             return;
@@ -8513,6 +8174,7 @@ class Plan::Impl {
             shared_group_launch_=detail::prepared_group_launcher(shared_module_);
             detail::attach_module_resources(dataflow_plan_,shared_module_,config_.inverse);
         }
+        validate_dataflow();
         dataflow_plan_.executable = true;
         dataflow_plan_.state = CandidateState::Compiled;
     }
@@ -8713,6 +8375,16 @@ class Plan::Impl {
   private:
     void lower_resident_execution_groups() {
         logical_config_ = config_;
+        if (config_.backend == Backend::SharedIterative) {
+            // Keep the logical partition for replay; shared launchers consume
+            // the dependency-closed physical groups after resident boundaries.
+            const auto logical_plan = make_dataflow_plan(config_);
+            config_.stage_partition.clear();
+            for (const auto& group : logical_plan.execution_groups)
+                config_.stage_partition.push_back(group.stage_count);
+            config_.boundary_mappings.clear();
+            return;
+        }
         if (config_.backend != Backend::HierarchicalDataflow) {
             return;
         }
@@ -8845,6 +8517,8 @@ class Plan::Impl {
             int device = 0;
             CUNTT_CUDA_CHECK(cudaGetDevice(&device));
             CUNTT_CUDA_CHECK(cudaGetDeviceProperties(&device_properties_, device));
+            const auto platform_preferences =
+                detail::query_ntt_platform_preferences(device_properties_, config_);
             if (config_.flow_tile_log_n == 0) {
                 config_.flow_tile_log_n = config_.log_n <= 8 ? config_.log_n : (config_.log_n + 1) / 2;
                 config_.flow_tile_log_n = std::min<std::uint32_t>(8, config_.flow_tile_log_n);
@@ -8868,10 +8542,13 @@ class Plan::Impl {
                                         config_.dataflow_layout == DataflowLayout::HermesXor &&
                                         config_.dataflow_state_mode == DataflowStateMode::InPlace &&
                                         config_.stage_handoff == StageHandoff::NamedBarrier;
-            const bool v100 = device_properties_.major == 7 && device_properties_.minor == 0;
-            if (role_stages_automatic && data_time_automatic && token_interleave_automatic && primary_policy && v100) {
-                generated_default_applied = detail::apply_generated_hybrid_dataflow_default(
-                    config_, static_cast<std::uint32_t>(device_properties_.multiProcessorCount));
+            if (role_stages_automatic && data_time_automatic &&
+                token_interleave_automatic && primary_policy &&
+                platform_preferences.use_generated_hybrid_dataflow_defaults) {
+                generated_default_applied =
+                    platform_preferences.apply_generated_hybrid_dataflow_default(
+                        config_, static_cast<std::uint32_t>(
+                                     device_properties_.multiProcessorCount));
                 if (!compute_unit_automatic) {
                     config_.compute_unit = requested_compute_unit;
                 }
@@ -8908,7 +8585,7 @@ class Plan::Impl {
                                                config_.role_stages) * config_.role_stages * 32;
             dataflow_shared_bytes_    = hybrid_dataflow_shared_bytes(config_);
             if (role_stages_automatic && data_time_automatic && token_interleave_automatic) {
-                selection_.target = v100 ? "v100-sm70" : "unrecognized-device";
+                selection_.target = platform_preferences.target;
                 selection_.implementation = generated_default_applied
                                                 ? "hybrid-dataflow-generated-static-table"
                                                 : "hybrid-dataflow-resource-fallback";
@@ -8924,6 +8601,8 @@ class Plan::Impl {
             int device = 0;
             CUNTT_CUDA_CHECK(cudaGetDevice(&device));
             CUNTT_CUDA_CHECK(cudaGetDeviceProperties(&device_properties_, device));
+            const auto platform_preferences =
+                detail::query_ntt_platform_preferences(device_properties_, config_);
             if (config_.n1_log == 0) {
                 config_.n1_log = config_.log_n / 2;
             }
@@ -8979,8 +8658,7 @@ class Plan::Impl {
             config_.role_stages = 0;
             config_.token_interleave = 0;
             config_.pipeline_buffers = 0;
-            selection_.target = device_properties_.major == 7 && device_properties_.minor == 0
-                                    ? "v100-sm70" : "unrecognized-device";
+            selection_.target = platform_preferences.target;
             selection_.implementation = std::string("hierarchical-barrier-") +
                                         hierarchical_core_name(config_.hierarchical_core);
             selection_.confidence = "fallback";
@@ -8991,10 +8669,10 @@ class Plan::Impl {
             int device = 0;
             CUNTT_CUDA_CHECK(cudaGetDevice(&device));
             CUNTT_CUDA_CHECK(cudaGetDeviceProperties(&device_properties_, device));
-            const bool is_v100 = device_properties_.major == 7 &&
-                                 device_properties_.minor == 0;
+            const auto platform_preferences =
+                detail::query_ntt_platform_preferences(device_properties_, config_);
             if (config_.stage_partition.empty()) {
-                if (is_v100 && config_.log_n == 20) {
+                if (platform_preferences.hierarchical_default_10x10(config_.log_n)) {
                     // The generated 10+10 point reuses the mature resident
                     // radix-4 core and wins once independent transforms fill
                     // the two-role pipeline.
@@ -9011,101 +8689,12 @@ class Plan::Impl {
                     }
                 }
             }
-            const bool v100_10x10 = is_v100 && config_.log_n == 20 &&
-                                     config_.stage_partition ==
-                                         std::vector<std::uint32_t>{10, 10};
-            const bool v100_7x7x6 = is_v100 && config_.log_n == 20 &&
-                                     config_.stage_partition ==
-                                         std::vector<std::uint32_t>{7, 7, 6};
-            const bool v100_three_level =
-                is_v100 && config_.log_n == 20 &&
-                (config_.stage_partition ==
-                     std::vector<std::uint32_t>{6, 7, 7} ||
-                 config_.stage_partition ==
-                     std::vector<std::uint32_t>{7, 6, 7} ||
-                 v100_7x7x6 ||
-                 config_.stage_partition ==
-                     std::vector<std::uint32_t>{6, 6, 8} ||
-                 config_.stage_partition ==
-                     std::vector<std::uint32_t>{6, 8, 6} ||
-                 config_.stage_partition ==
-                     std::vector<std::uint32_t>{8, 6, 6});
             const bool appt_pipeline = uses_appt_pipeline(config_);
             const bool appt_online = uses_appt_online(config_);
             const bool appt_mapping = appt_pipeline || appt_online;
             const auto automatic_cta_weight = [&](std::size_t segment) {
-                if (v100_7x7x6 && appt_online) {
-                    const bool register_tail =
-                        config_.subgraph_mappings.front().core ==
-                            NttSubgraphCore::ApptOnlineRegisterTail ||
-                        config_.subgraph_mappings.front().core ==
-                            NttSubgraphCore::ApptOnlineRegisterTailWarp ||
-                        config_.subgraph_mappings.front().core ==
-                            NttSubgraphCore::ApptOnlineRegisterTailColumnWarp ||
-                        config_.subgraph_mappings.front().core ==
-                            NttSubgraphCore::ApptOnlineRegisterTailRadix8 ||
-                        config_.subgraph_mappings.front().core ==
-                            NttSubgraphCore::ApptOnlineRegisterTailGrouped ||
-                        config_.subgraph_mappings.front().core ==
-                            NttSubgraphCore::ApptOnlineRegisterTailGroupedWriterFinal ||
-                        config_.subgraph_mappings.front().core == NttSubgraphCore::
-                            ApptOnlineRegisterTailGroupedWriterFinalDataTime ||
-                        config_.subgraph_mappings.front().core == NttSubgraphCore::
-                            ApptOnlineRegisterTailGroupedWriterFinalResident ||
-                        config_.subgraph_mappings.front().core == NttSubgraphCore::
-                            ApptOnlineRegisterTailGroupedWriterFinalResidentQuarter;
-                    if (register_tail) {
-                        constexpr std::uint32_t u32_batch1[] = {8, 6, 6};
-                        constexpr std::uint32_t u32_batched[] = {7, 7, 6};
-                        constexpr std::uint32_t u64_weights[] = {10, 5, 5};
-                        return config_.word_bits == 32
-                                   ? (config_.batch == 1
-                                          ? u32_batch1[segment]
-                                          : u32_batched[segment])
-                                   : u64_weights[segment];
-                    }
-                    const bool split_tail =
-                        config_.subgraph_mappings.front().core ==
-                        NttSubgraphCore::ApptOnlineSplitTail;
-                    if (split_tail) {
-                        constexpr std::uint32_t split_weights[] = {7, 6, 7};
-                        return split_weights[segment];
-                    }
-                    const bool fused_tail =
-                        config_.subgraph_mappings.front().core ==
-                        NttSubgraphCore::ApptOnlineFusedTail;
-                    if (fused_tail) {
-                        constexpr std::uint32_t fused_weights[] = {7, 7, 6};
-                        return fused_weights[segment];
-                    }
-                    const bool cta_radix4 =
-                        config_.subgraph_mappings.front().core ==
-                        NttSubgraphCore::ApptOnlineRadix4;
-                    if (config_.word_bits == 32) {
-                        constexpr std::uint32_t warp_batch1[] = {6, 6, 8};
-                        constexpr std::uint32_t warp_batched[] = {7, 7, 6};
-                        constexpr std::uint32_t cta[] = {7, 6, 7};
-                        return cta_radix4 ? cta[segment]
-                                          : config_.batch == 1
-                                          ? warp_batch1[segment]
-                                          : warp_batched[segment];
-                    }
-                    constexpr std::uint32_t batch1[] = {4, 8, 8};
-                    constexpr std::uint32_t warp_batched[] = {6, 8, 6};
-                    constexpr std::uint32_t cta_batched[] = {5, 7, 8};
-                    return config_.batch == 1
-                               ? batch1[segment]
-                               : cta_radix4 ? cta_batched[segment]
-                                            : warp_batched[segment];
-                }
-                // The second subgraph also performs the fused cross-twiddle
-                // and finalization. Measured service time on V100 therefore
-                // favors a small consumer surplus over a stage-count split.
-                if (v100_10x10) return segment == 0 ? 9U : 11U;
-                // The final 6-stage subgraph owns the output permutation, so
-                // its measured service demand is larger than its stage count.
-                if (v100_7x7x6) return segment < 2 ? 6U : 8U;
-                return config_.stage_partition[segment];
+                return platform_preferences.hierarchical_cta_weight(
+                    config_, segment, appt_online);
             };
             if (config_.subgraph_mappings.empty()) {
                 config_.subgraph_mappings.resize(config_.stage_partition.size());
@@ -9113,7 +8702,9 @@ class Plan::Impl {
                     auto& mapping = config_.subgraph_mappings[segment];
                     mapping.core = NttSubgraphCore::DataflowRadix4;
                     mapping.threads_per_block = 256;
-                    mapping.units_per_cta = v100_three_level ? 32U : 1U;
+                    mapping.units_per_cta =
+                        platform_preferences.hierarchical_units_for_generated_mapping(
+                            config_);
                     mapping.cta_weight = automatic_cta_weight(segment);
                 }
             } else {
@@ -9181,7 +8772,9 @@ class Plan::Impl {
                                                        ? 1U : mapping.token_interleave;
                     }
                     if (mapping.units_per_cta == 0) {
-                        mapping.units_per_cta = v100_7x7x6 ? 32U : 1U;
+                        mapping.units_per_cta =
+                            platform_preferences.hierarchical_units_for_missing_mapping(
+                                config_);
                     }
                     if (mapping.cta_weight == 0) {
                         mapping.cta_weight = automatic_cta_weight(segment);
@@ -9199,10 +8792,6 @@ class Plan::Impl {
                 }
             }
             if (config_.target_ctas_per_sm == 0) {
-                const bool v100_log20_u32 = device_properties_.major == 7 &&
-                                             device_properties_.minor == 0 &&
-                                             config_.log_n == 20 &&
-                                             config_.word_bits == 32;
                 config_.target_ctas_per_sm = appt_mapping
                                                   ? uses_appt_fused_tail(config_)
                                                         ? config_.word_bits == 32 ? 2U : 1U
@@ -9215,9 +8804,8 @@ class Plan::Impl {
                                                         : uses_appt_split_tail(config_)
                                                         ? config_.word_bits == 32 ? 3U : 2U
                                                         : config_.word_bits == 32 ? 3U : 2U
-                                                  : v100_7x7x6 && config_.word_bits == 32
-                                                  ? 3
-                                                  : v100_log20_u32 ? 4 : 2;
+                                                  : platform_preferences
+                                                        .hierarchical_non_appt_target_ctas(config_);
             }
             const bool packet_shared_radix4 =
                 !config_.subgraph_mappings.empty() &&
@@ -9304,8 +8892,7 @@ class Plan::Impl {
             config_.n1_log = 0;
             config_.rows_per_block = 0;
             config_.threads_per_block = 0;
-            selection_.target = device_properties_.major == 7 && device_properties_.minor == 0
-                                    ? "v100-sm70" : "unrecognized-device";
+            selection_.target = platform_preferences.target;
             const bool uses_ring = std::any_of(
                 config_.boundary_mappings.begin(), config_.boundary_mappings.end(),
                 [](const NttBoundaryMapping& boundary) {
@@ -9549,22 +9136,22 @@ class Plan::Impl {
         int device = 0;
         CUNTT_CUDA_CHECK(cudaGetDevice(&device));
         CUNTT_CUDA_CHECK(cudaGetDeviceProperties(&device_properties_, device));
-        const bool is_v100 = device_properties_.major == 7 && device_properties_.minor == 0;
+        const auto platform_preferences =
+            detail::query_ntt_platform_preferences(device_properties_, config_);
         if (config_.n1_log == 0) {
             config_.n1_log = config_.log_n >= 2 ? config_.log_n / 2 : 1;
         }
         if (config_.compute_unit == ComputeUnit::Auto) {
-            config_.compute_unit = is_v100 && !(config_.word_bits == 64 && config_.log_n == 12) ? ComputeUnit::Radix4 : ComputeUnit::Radix2;
+            config_.compute_unit = platform_preferences.hybrid2d_compute_unit;
         }
         if (config_.threads_per_block == 0) {
-            const bool          fused             = config_.cross_twiddle_placement == CrossTwiddlePlacement::Fused;
-            const std::uint32_t preferred_threads = is_v100 && fused && config_.log_n >= 18 ? 512 : 256;
-            config_.threads_per_block             = std::min<std::uint32_t>(preferred_threads, device_properties_.maxThreadsPerBlock);
+            config_.threads_per_block = std::min<std::uint32_t>(
+                platform_preferences.hybrid2d_threads,
+                device_properties_.maxThreadsPerBlock);
             config_.threads_per_block -= config_.threads_per_block % device_properties_.warpSize;
         }
         if (config_.rows_per_block == 0) {
-            const bool fused = config_.cross_twiddle_placement == CrossTwiddlePlacement::Fused;
-            if (is_v100 && fused && config_.log_n == 20) {
+            if (platform_preferences.hybrid2d_prefers_two_rows) {
                 config_.rows_per_block = 2;
             } else if (config_.log_n <= 30 && config_.n1_log <= config_.log_n) {
                 const std::uint32_t larger_factor  = 1U << std::max(config_.n1_log, config_.log_n - config_.n1_log);
@@ -9615,6 +9202,10 @@ class Plan::Impl {
             throw std::invalid_argument("NTT stage-overlap requires multiple shared groups and a positive batch tile");
         if (config_.backend == Backend::SharedIterative) {
             std::uint32_t total=0;
+            if (!config_.stage_overlap && (config_.batch_tile_count < 1 || config_.batch_tile_count > 4))
+                throw std::invalid_argument("shared bulk batch tile count must be in [1,4]");
+            if (!config_.stage_overlap && config_.batch > std::numeric_limits<std::uint32_t>::max())
+                throw std::invalid_argument("shared bulk batch exceeds the kernel batch counter range");
             if (config_.compute_unit!=ComputeUnit::Radix2 || config_.modular_multiply!=ModularMultiply::Shoup)
                 throw std::invalid_argument("shared-iterative NTT implements the radix2 Shoup trait");
             if (config_.threads_per_block<32 || config_.threads_per_block%32 ||
@@ -9624,15 +9215,30 @@ class Plan::Impl {
                 if (!stages || stages>config_.log_n-total)
                     throw std::invalid_argument("shared-iterative NTT requires positive stages summing to logN");
                 total+=stages;
-                if (2ULL*(1ULL<<stages)*(config_.word_bits/8) >
-                    std::max(device_properties_.sharedMemPerBlock, device_properties_.sharedMemPerBlockOptin))
-                    throw std::invalid_argument("shared-iterative NTT live state exceeds shared memory capacity");
-                if (config_.batch > (static_cast<std::uint64_t>(device_properties_.maxGridSize[0]) >> (config_.log_n-stages)))
-                    throw std::invalid_argument("shared-iterative NTT grid exceeds device limits");
             }
             if (total!=config_.log_n) throw std::invalid_argument("shared-iterative NTT partition does not cover logN");
-            if (!config_.subgraph_mappings.empty() || !config_.boundary_mappings.empty() || !config_.execution_group_mappings.empty())
+            if (!config_.subgraph_mappings.empty() || !config_.execution_group_mappings.empty())
                 throw std::invalid_argument("shared-iterative NTT uses its partition, thread and layout axes; specialized streaming mappings are separate");
+            if (!config_.boundary_mappings.empty() && config_.boundary_mappings.size() + 1 != config_.stage_partition.size())
+                throw std::invalid_argument("shared-iterative NTT requires one boundary per logical edge");
+            for (const auto& boundary : config_.boundary_mappings)
+                if ((boundary.storage != BoundaryStorage::FullScratch &&
+                     boundary.storage != BoundaryStorage::ResidentFused) || boundary.buffers != 1)
+                    throw std::invalid_argument("shared-iterative NTT boundaries use full-scratch/resident-fused storage with one buffer; stage_overlap owns ring scheduling");
+            // Logical segments may be smaller than their fused physical group.
+            // Resource limits apply to the CTA that is actually launched.
+            const auto physical_plan = make_dataflow_plan(config_);
+            const auto launch_batches = config_.stage_overlap
+                ? std::min<std::size_t>(config_.batch, config_.batch_tile_count)
+                : (config_.batch - 1) / config_.batch_tile_count + 1;
+            for (const auto& group : physical_plan.execution_groups) {
+                if (group.live_shared_bytes > static_cast<std::uint64_t>(
+                        std::max(device_properties_.sharedMemPerBlock, device_properties_.sharedMemPerBlockOptin)))
+                    throw std::invalid_argument("shared-iterative NTT live state exceeds shared memory capacity");
+                if (launch_batches > (static_cast<std::uint64_t>(device_properties_.maxGridSize[0]) >>
+                                      (config_.log_n - group.stage_count)))
+                    throw std::invalid_argument("shared-iterative NTT grid exceeds device limits");
+            }
         }
         if (config_.input_order == InputOrder::ApptStatic &&
             !appt_static_capable) {
@@ -9645,15 +9251,8 @@ class Plan::Impl {
                 "APPT static output is supported only by hierarchical register-tail");
         }
         if (config_.backend == Backend::CompactStage) {
-            if (config_.log_n != 20 || config_.word_bits != 64 || config_.inverse) {
-                throw std::invalid_argument("compact-stage currently requires a forward, 64-bit logN=20 transform");
-            }
-            if (modulus_bit_length(config_.modulus) > 62) {
-                throw std::invalid_argument("compact-stage supports moduli of at most 62 bits");
-            }
-            if (config_.batch > 65535) {
-                throw std::invalid_argument("compact-stage batch exceeds the CUDA grid-z limit");
-            }
+            if (const auto* reason = detail::compact_stage_constraint(config_))
+                throw std::invalid_argument(reason);
         }
         if (config_.backend == Backend::StagePipeline) {
             if (config_.log_n != 8 || config_.word_bits != 64 || config_.inverse || config_.output_order != OutputOrder::Natural) {
@@ -10303,6 +9902,8 @@ class Plan::Impl {
             return;
         }
         const auto* source=static_cast<const Word*>(input);
+        const auto batch_space=config_.batch_tile_count;
+        const auto batch_groups=(config_.batch-1)/batch_space+1;
         unsigned first=0;
         for (std::size_t group=0; group<config_.stage_partition.size(); ++group) {
             const auto stages=config_.stage_partition[group];
@@ -10311,9 +9912,9 @@ class Plan::Impl {
             const auto shared=2ULL*(1ULL<<stages)*sizeof(Word);
             if (shared>48*1024) CUNTT_CUDA_CHECK(cudaFuncSetAttribute(detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1>,
                 cudaFuncAttributeMaxDynamicSharedMemorySize,static_cast<int>(shared)));
-            detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1><<<static_cast<unsigned>(config_.batch<<(config_.log_n-stages)),
+            detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1><<<static_cast<unsigned>(batch_groups<<(config_.log_n-stages)),
                 config_.threads_per_block,shared,stream_>>>(source,destination,config_.log_n,first,stages,n_,1,
-                    config_.dataflow_layout==DataflowLayout::HermesXor,config_.batch,1,op,
+                    config_.dataflow_layout==DataflowLayout::HermesXor,config_.batch,batch_space,op,
                     config_.output_order==OutputOrder::BitReversed);
             CUNTT_CUDA_CHECK(cudaGetLastError()); source=destination; first+=stages;
         }
@@ -10608,6 +10209,72 @@ StageProbeAdapter::StageProbeAdapter(Plan& plan) {
         return;
     }
 
+    if (impl->config_.backend == Backend::CompactStage) {
+        // Match launch_compact_stage_log20, including its in-place intermediate
+        // updates and fused natural-order writeback in the last launch.
+        const bool natural = impl->config_.output_order == OutputOrder::Natural;
+        cudaFuncAttributes attributes[3]{};
+        CUNTT_CUDA_CHECK(cudaFuncGetAttributes(&attributes[0], compact_stage_kernel<16, 16, 0, 5, false>));
+        CUNTT_CUDA_CHECK(cudaFuncGetAttributes(&attributes[1], compact_stage_kernel<8, 32, 5, 6, false>));
+        if (natural)
+            CUNTT_CUDA_CHECK(cudaFuncGetAttributes(&attributes[2], compact_stage_kernel<256, 1, 11, 9, true, true>));
+        else
+            CUNTT_CUDA_CHECK(cudaFuncGetAttributes(&attributes[2], compact_stage_kernel<256, 1, 11, 9, true>));
+        groups_.clear();
+        const unsigned partition[] = {5, 6, 9};
+        unsigned first = 0;
+        for (unsigned i = 0; i < 3; ++i) {
+            ExecutionGroup execution;
+            execution.first_stage = first;
+            execution.stage_count = partition[i];
+            execution.stage_space = partition[i];
+            execution.stage_time = 1;
+            execution.data_space = 256;
+            execution.data_time = 2;
+            execution.batch_time = impl->config_.batch;
+            execution.threads = 256;
+            execution.elements_per_thread = 2;
+            execution.core = "compact-stage";
+            execution.shared_layout = "linear";
+            execution.exchange = ExchangePolicy::SharedMemory;
+            execution.grid_ctas = 2048 * impl->config_.batch;
+            execution.compiler_resources_known = true;
+            execution.compiler_registers_per_thread = attributes[i].numRegs;
+            execution.compiler_local_resources_known = true;
+            execution.compiler_local_bytes_per_thread = attributes[i].localSizeBytes;
+            execution.static_shared_bytes = attributes[i].sharedSizeBytes;
+            execution.dynamic_shared_bytes = 0;
+            execution.shared_components_known = true;
+            execution.live_shared_bytes = attributes[i].sharedSizeBytes;
+            groups_.push_back({execution, true, "original compact-stage physical launch",
+                               i == 1 || (i == 2 && !natural)});
+            first += partition[i];
+        }
+        group_launch_ = [impl, natural](unsigned group, const void* input, void* output,
+                                       void*, cudaStream_t stream) {
+            const auto batch = static_cast<unsigned>(impl->config_.batch);
+            const auto* source = static_cast<const std::uint64_t*>(input);
+            auto* destination = static_cast<std::uint64_t*>(output);
+            const auto* roots = impl->device_compact_roots_.get();
+            const auto* shoup = impl->device_compact_roots_shoup_.get();
+            const auto modulus = impl->config_.modulus;
+            if (group == 0)
+                compact_stage_kernel<16, 16, 0, 5, false>
+                    <<<dim3(2048, 1, batch), dim3(16, 16), 0, stream>>>(source, destination, roots, modulus, shoup);
+            else if (group == 1)
+                compact_stage_kernel<8, 32, 5, 6, false>
+                    <<<dim3(64, 32, batch), dim3(8, 32), 0, stream>>>(source, destination, roots, modulus, shoup);
+            else if (natural)
+                compact_stage_kernel<256, 1, 11, 9, true, true>
+                    <<<dim3(1, 2048, batch), dim3(256, 1), 0, stream>>>(source, destination, roots, modulus, shoup);
+            else
+                compact_stage_kernel<256, 1, 11, 9, true>
+                    <<<dim3(1, 2048, batch), dim3(256, 1), 0, stream>>>(source, destination, roots, modulus, shoup);
+            CUNTT_CUDA_CHECK(cudaGetLastError());
+        };
+        return;
+    }
+
     // These older backends describe one logical transform in the plan. Expose
     // their real launches here rather than timing that transform as one stage.
     if (impl->config_.backend==Backend::Hybrid2D || impl->config_.backend==Backend::StagePipeline) {
@@ -10751,6 +10418,9 @@ StageProbeAdapter::StageProbeAdapter(Plan& plan) {
                 group.execution.compiler_local_resources_known = true;
                 group.execution.compiler_local_bytes_per_thread =
                     static_cast<std::uint64_t>(attributes.localSizeBytes);
+                group.execution.static_shared_bytes = attributes.sharedSizeBytes;
+                group.execution.dynamic_shared_bytes = dynamic_shared;
+                group.execution.shared_components_known = true;
                 group.execution.live_shared_bytes =
                     dynamic_shared + static_cast<std::uint64_t>(attributes.sharedSizeBytes);
             }
@@ -10767,8 +10437,9 @@ StageProbeAdapter::StageProbeAdapter(Plan& plan) {
                 }
                 const auto first =
                     impl->dataflow_plan_.execution_groups[group].first_stage;
+                const auto batch_space=impl->config_.batch_tile_count;
                 const auto blocks = static_cast<unsigned>(
-                    impl->config_.batch << (impl->config_.log_n - stages));
+                    ((impl->config_.batch-1)/batch_space+1) << (impl->config_.log_n - stages));
                 const auto writer_aligned =
                     impl->config_.dataflow_layout == DataflowLayout::HermesXor;
                 LaunchStreamScope scope(stream);
@@ -10793,7 +10464,7 @@ StageProbeAdapter::StageProbeAdapter(Plan& plan) {
                         <<<blocks, impl->config_.threads_per_block, shared, stream>>>(
                             static_cast<const Word*>(input), static_cast<Word*>(output),
                             impl->config_.log_n, first, stages, impl->n_, 1,
-                            writer_aligned, impl->config_.batch, 1, op,
+                            writer_aligned, impl->config_.batch, batch_space, op,
                             impl->config_.output_order==OutputOrder::BitReversed);
                 } else if (impl->config_.word_bits == 64) {
                     using Word = std::uint64_t;
@@ -10815,7 +10486,7 @@ StageProbeAdapter::StageProbeAdapter(Plan& plan) {
                         <<<blocks, impl->config_.threads_per_block, shared, stream>>>(
                             static_cast<const Word*>(input), static_cast<Word*>(output),
                             impl->config_.log_n, first, stages, impl->n_, 1,
-                            writer_aligned, impl->config_.batch, 1, op,
+                            writer_aligned, impl->config_.batch, batch_space, op,
                             impl->config_.output_order==OutputOrder::BitReversed);
                 } else {
                     throw std::invalid_argument("unsupported NTT word width for stage probe");

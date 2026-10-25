@@ -8,11 +8,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int report_failure(const char* function, int line) {
+    fprintf(stderr, "FAIL C API subtest %s at %s:%d\n", function, __FILE__, line);
+    fflush(stderr);
+    return EXIT_FAILURE;
+}
+
 #define CHECK_CUB(call) do { \
     cubutterflyStatus_t status_ = (call); \
     if (status_ != CUBUTTERFLY_STATUS_SUCCESS) { \
-        fprintf(stderr, "%s failed: %s\n", #call, cubutterflyGetStatusString(status_)); \
-        return 1; \
+        const char* detail_ = cubutterflyGetLastErrorString(); \
+        fprintf(stderr, "%s failed: %s (%s)\n", #call, cubutterflyGetStatusString(status_), \
+                detail_ != NULL ? detail_ : "no detail"); \
+        return report_failure(__func__, __LINE__); \
     } \
 } while (0)
 
@@ -20,7 +28,7 @@
     cudaError_t status_ = (call); \
     if (status_ != cudaSuccess) { \
         fprintf(stderr, "%s failed: %s\n", #call, cudaGetErrorString(status_)); \
-        return 1; \
+        return report_failure(__func__, __LINE__); \
     } \
 } while (0)
 
@@ -62,7 +70,7 @@ static int run_arbitrary_fft(cubutterflyHandle_t handle, cudaStream_t stream) {
     CHECK_CUB(cubutterflyPlanGetPhysicalExtents(forward, &physical_extent, 1));
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(forward, &workspace_bytes));
     if (physical_extent != 16 || workspace_bytes < physical_extent * sizeof(test_complex32_t))
-        return 1;
+        return report_failure(__func__, __LINE__);
     CHECK_CUDA(cudaMalloc((void**)&input, sizeof(original)));
     CHECK_CUDA(cudaMalloc((void**)&output, sizeof(spectrum)));
     CHECK_CUDA(cudaMalloc((void**)&result, sizeof(recovered)));
@@ -76,7 +84,7 @@ static int run_arbitrary_fft(cubutterflyHandle_t handle, cudaStream_t stream) {
         const double angle = -2.0 * 3.14159265358979323846 * (double)k / (double)extent;
         if (fabsf(spectrum[k].real - (float)cos(angle)) > 2.0e-5f ||
             fabsf(spectrum[k].imag - (float)sin(angle)) > 2.0e-5f)
-            return 1;
+            return report_failure(__func__, __LINE__);
     }
     CHECK_CUB(cubutterflySetDirection(descriptor, CUBUTTERFLY_DIRECTION_INVERSE, 1));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &inverse));
@@ -87,7 +95,7 @@ static int run_arbitrary_fft(cubutterflyHandle_t handle, cudaStream_t stream) {
     for (size_t i = 0; i < extent; ++i) {
         if (fabsf(recovered[i].real - original[i].real) > 2.0e-5f ||
             fabsf(recovered[i].imag - original[i].imag) > 2.0e-5f)
-            return 1;
+            return report_failure(__func__, __LINE__);
     }
     cudaFree(workspace);
     cudaFree(result);
@@ -118,16 +126,20 @@ static int run_2d_arbitrary_fft(cubutterflyHandle_t handle, cudaStream_t stream)
     CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_FFT));
     CHECK_CUB(cubutterflySetDataType(descriptor, CUBUTTERFLY_DATA_COMPLEX_FP32, CUBUTTERFLY_COMPUTE_FP32));
     CHECK_CUB(cubutterflySetShape(descriptor, 2, extents, 1));
+    /* This regression checks Bluestein's padded workspace specifically. */
+    CHECK_CUB(cubutterflySetExecutionMode(descriptor, CUBUTTERFLY_EXECUTION_COMPOSITE));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &forward));
     CHECK_CUB(cubutterflyPlanGetPhysicalExtents(forward, physical, 2));
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(forward, &workspace_bytes));
     if (physical[0] != 8 || physical[1] != 16)
-        return 1;
+        return report_failure(__func__, __LINE__);
     CHECK_CUDA(cudaMalloc((void**)&input, sizeof(original)));
     CHECK_CUDA(cudaMalloc((void**)&output, sizeof(spectrum)));
     CHECK_CUDA(cudaMalloc((void**)&result, sizeof(recovered)));
-    CHECK_CUDA(cudaMalloc(&workspace, workspace_bytes));
-    CHECK_CUB(cubutterflyPlanSetWorkspace(forward, workspace, workspace_bytes));
+    if (workspace_bytes != 0) {
+        CHECK_CUDA(cudaMalloc(&workspace, workspace_bytes));
+        CHECK_CUB(cubutterflyPlanSetWorkspace(forward, workspace, workspace_bytes));
+    }
     CHECK_CUDA(cudaMemcpyAsync(input, original, sizeof(original), cudaMemcpyHostToDevice, stream));
     CHECK_CUB(cubutterflyExecute(handle, forward, input, output));
     CHECK_CUDA(cudaMemcpyAsync(spectrum, output, sizeof(spectrum), cudaMemcpyDeviceToHost, stream));
@@ -139,7 +151,7 @@ static int run_2d_arbitrary_fft(cubutterflyHandle_t handle, cudaStream_t stream)
                 ((double)row / (double)extents[0] + 2.0 * (double)col / (double)extents[1]);
             if (fabsf(spectrum[index].real - (float)cos(angle)) > 4.0e-5f ||
                 fabsf(spectrum[index].imag - (float)sin(angle)) > 4.0e-5f)
-                return 1;
+                return report_failure(__func__, __LINE__);
         }
     }
     CHECK_CUB(cubutterflySetDirection(descriptor, CUBUTTERFLY_DIRECTION_INVERSE, 1));
@@ -151,7 +163,7 @@ static int run_2d_arbitrary_fft(cubutterflyHandle_t handle, cudaStream_t stream)
     for (size_t i = 0; i < 15; ++i) {
         if (fabsf(recovered[i].real - original[i].real) > 4.0e-5f ||
             fabsf(recovered[i].imag - original[i].imag) > 4.0e-5f)
-            return 1;
+            return report_failure(__func__, __LINE__);
     }
     cudaFree(workspace);
     cudaFree(result);
@@ -184,28 +196,36 @@ static int run_2d_power_fft(cubutterflyHandle_t handle, cudaStream_t stream) {
     CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_FFT));
     CHECK_CUB(cubutterflySetDataType(descriptor, CUBUTTERFLY_DATA_COMPLEX_FP32, CUBUTTERFLY_COMPUTE_FP32));
     CHECK_CUB(cubutterflySetShape(descriptor, 2, extents, 1));
+    CHECK_CUB(cubutterflySetExecutionMode(descriptor, CUBUTTERFLY_EXECUTION_XD));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &forward));
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(forward, &workspace_bytes));
     CHECK_CUDA(cudaMalloc((void**)&input, sizeof(original)));
     CHECK_CUDA(cudaMalloc((void**)&spectrum, sizeof(original)));
     CHECK_CUDA(cudaMalloc((void**)&output, sizeof(original)));
-    CHECK_CUDA(cudaMalloc(&workspace, workspace_bytes));
-    CHECK_CUB(cubutterflyPlanSetWorkspace(forward, workspace, workspace_bytes));
+    if (workspace_bytes != 0) {
+        CHECK_CUDA(cudaMalloc(&workspace, workspace_bytes));
+        CHECK_CUB(cubutterflyPlanSetWorkspace(forward, workspace, workspace_bytes));
+    }
     CHECK_CUDA(cudaMemcpyAsync(input, original, sizeof(original), cudaMemcpyHostToDevice, stream));
     CHECK_CUB(cubutterflyExecute(handle, forward, input, spectrum));
     CHECK_CUB(cubutterflySetDirection(descriptor, CUBUTTERFLY_DIRECTION_INVERSE, 1));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &inverse));
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(inverse, &inverse_workspace_bytes));
-    if (inverse_workspace_bytes > workspace_bytes)
-        return 1;
-    CHECK_CUB(cubutterflyPlanSetWorkspace(inverse, workspace, workspace_bytes));
+    if (inverse_workspace_bytes > workspace_bytes) {
+        CHECK_CUDA(cudaStreamSynchronize(stream));
+        cudaFree(workspace);
+        CHECK_CUDA(cudaMalloc(&workspace, inverse_workspace_bytes));
+        workspace_bytes = inverse_workspace_bytes;
+    }
+    if (inverse_workspace_bytes != 0)
+        CHECK_CUB(cubutterflyPlanSetWorkspace(inverse, workspace, workspace_bytes));
     CHECK_CUB(cubutterflyExecute(handle, inverse, spectrum, output));
     CHECK_CUDA(cudaMemcpyAsync(recovered, output, sizeof(recovered), cudaMemcpyDeviceToHost, stream));
     CHECK_CUDA(cudaStreamSynchronize(stream));
     for (size_t i = 0; i < 32; ++i) {
         if (fabsf(recovered[i].real - original[i].real) > 2.0e-4f ||
             fabsf(recovered[i].imag - original[i].imag) > 2.0e-4f)
-            return 1;
+            return report_failure(__func__, __LINE__);
     }
     cudaFree(workspace);
     cudaFree(output);
@@ -236,6 +256,7 @@ static int run_2d_ntt(cubutterflyHandle_t handle, cudaStream_t stream) {
     CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_NTT));
     CHECK_CUB(cubutterflySetDataType(descriptor, CUBUTTERFLY_DATA_UINT64, CUBUTTERFLY_COMPUTE_UINT64));
     CHECK_CUB(cubutterflySetShape(descriptor, 2, extents, 1));
+    CHECK_CUB(cubutterflySetExecutionMode(descriptor, CUBUTTERFLY_EXECUTION_XD));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &forward));
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(forward, &workspace_bytes));
     CHECK_CUDA(cudaMalloc((void**)&input, sizeof(original)));
@@ -248,15 +269,19 @@ static int run_2d_ntt(cubutterflyHandle_t handle, cudaStream_t stream) {
     CHECK_CUB(cubutterflySetDirection(descriptor, CUBUTTERFLY_DIRECTION_INVERSE, 1));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &inverse));
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(inverse, &inverse_workspace_bytes));
-    if (inverse_workspace_bytes > workspace_bytes)
-        return 1;
+    if (inverse_workspace_bytes > workspace_bytes) {
+        CHECK_CUDA(cudaStreamSynchronize(stream));
+        cudaFree(workspace);
+        CHECK_CUDA(cudaMalloc(&workspace, inverse_workspace_bytes));
+        workspace_bytes = inverse_workspace_bytes;
+    }
     CHECK_CUB(cubutterflyPlanSetWorkspace(inverse, workspace, workspace_bytes));
     CHECK_CUB(cubutterflyExecute(handle, inverse, spectrum, output));
     CHECK_CUDA(cudaMemcpyAsync(recovered, output, sizeof(recovered), cudaMemcpyDeviceToHost, stream));
     CHECK_CUDA(cudaStreamSynchronize(stream));
     for (size_t i = 0; i < 32; ++i)
         if (recovered[i] != original[i])
-            return 1;
+            return report_failure(__func__, __LINE__);
     cudaFree(workspace);
     cudaFree(output);
     cudaFree(spectrum);
@@ -264,6 +289,43 @@ static int run_2d_ntt(cubutterflyHandle_t handle, cudaStream_t stream) {
     cubutterflyDestroyPlan(inverse);
     cubutterflyDestroyPlan(forward);
     cubutterflyDestroyDescriptor(descriptor);
+    return 0;
+}
+
+/* Regression matrix for the portable uint32 NTT child used by xD selection.
+ * Plan creation is enough here: the historical failure rejected every xD
+ * candidate before an input could be allocated or timed. */
+static int run_xd_uint32_ntt_measure(cubutterflyHandle_t handle) {
+    const size_t shapes[][3] = {{128, 128, 1}, {32, 32, 32}, {64, 64, 64}};
+    const uint32_t ranks[] = {2, 3, 3};
+    const size_t batches[] = {1, 4, 16};
+    char algorithm[128];
+    for (size_t shape_index = 0; shape_index < 3; ++shape_index) {
+        for (size_t batch_index = 0; batch_index < 3; ++batch_index) {
+            for (int inverse = 0; inverse < 2; ++inverse) {
+                cubutterflyDescriptor_t descriptor = NULL;
+                cubutterflyPlan_t plan = NULL;
+                size_t algorithm_bytes = sizeof(algorithm);
+                CHECK_CUB(cubutterflyCreateDescriptor(&descriptor));
+                CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_NTT));
+                CHECK_CUB(cubutterflySetDataType(descriptor, CUBUTTERFLY_DATA_UINT32,
+                                                 CUBUTTERFLY_COMPUTE_UINT32));
+                CHECK_CUB(cubutterflySetModulus(descriptor, 257, 32));
+                CHECK_CUB(cubutterflySetShape(descriptor, ranks[shape_index],
+                                              shapes[shape_index], batches[batch_index]));
+                CHECK_CUB(cubutterflySetExecutionMode(descriptor, CUBUTTERFLY_EXECUTION_XD));
+                CHECK_CUB(cubutterflySetDirection(
+                    descriptor, inverse ? CUBUTTERFLY_DIRECTION_INVERSE : CUBUTTERFLY_DIRECTION_FORWARD, 1));
+                CHECK_CUB(cubutterflySetAlgorithmPolicy(descriptor, CUBUTTERFLY_ALGORITHM_MEASURE, NULL));
+                CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &plan));
+                CHECK_CUB(cubutterflyPlanGetAlgorithmName(plan, algorithm, &algorithm_bytes));
+                if (strncmp(algorithm, "xd[", 3) != 0)
+                    return report_failure(__func__, __LINE__);
+                CHECK_CUB(cubutterflyDestroyPlan(plan));
+                CHECK_CUB(cubutterflyDestroyDescriptor(descriptor));
+            }
+        }
+    }
     return 0;
 }
 
@@ -296,15 +358,19 @@ static int run_arbitrary_ntt(cubutterflyHandle_t handle, cudaStream_t stream) {
     CHECK_CUB(cubutterflySetDirection(descriptor, CUBUTTERFLY_DIRECTION_INVERSE, 1));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &inverse));
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(inverse, &inverse_workspace_bytes));
-    if (inverse_workspace_bytes > workspace_bytes)
-        return 1;
+    if (inverse_workspace_bytes > workspace_bytes) {
+        CHECK_CUDA(cudaStreamSynchronize(stream));
+        cudaFree(workspace);
+        CHECK_CUDA(cudaMalloc(&workspace, inverse_workspace_bytes));
+        workspace_bytes = inverse_workspace_bytes;
+    }
     CHECK_CUB(cubutterflyPlanSetWorkspace(inverse, workspace, workspace_bytes));
     CHECK_CUB(cubutterflyExecute(handle, inverse, spectrum, output));
     CHECK_CUDA(cudaMemcpyAsync(recovered, output, sizeof(recovered), cudaMemcpyDeviceToHost, stream));
     CHECK_CUDA(cudaStreamSynchronize(stream));
     for (size_t i = 0; i < extent; ++i)
         if (recovered[i] != original[i])
-            return 1;
+            return report_failure(__func__, __LINE__);
     cudaFree(workspace);
     cudaFree(output);
     cudaFree(spectrum);
@@ -327,7 +393,7 @@ static int run_hierarchical_ntt(cubutterflyHandle_t handle, cudaStream_t stream)
     char algorithm[64];
     size_t algorithm_bytes = sizeof(algorithm);
     if (host_output == NULL)
-        return 1;
+        return report_failure(__func__, __LINE__);
     CHECK_CUB(cubutterflyCreateDescriptor(&descriptor));
     CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_NTT));
     CHECK_CUB(cubutterflySetDataType(descriptor, CUBUTTERFLY_DATA_UINT32, CUBUTTERFLY_COMPUTE_UINT32));
@@ -338,10 +404,10 @@ static int run_hierarchical_ntt(cubutterflyHandle_t handle, cudaStream_t stream)
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &plan));
     CHECK_CUB(cubutterflyPlanGetAlgorithmName(plan, algorithm, &algorithm_bytes));
     if (strcmp(algorithm, "ntt-hierarchical-dataflow") != 0)
-        return 1;
+        return report_failure(__func__, __LINE__);
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(plan, &workspace_bytes));
     if (workspace_bytes <= extent * sizeof(uint32_t))
-        return 1;
+        return report_failure(__func__, __LINE__);
     CHECK_CUDA(cudaMalloc((void**)&input, extent * sizeof(uint32_t)));
     CHECK_CUDA(cudaMalloc((void**)&output, extent * sizeof(uint32_t)));
     CHECK_CUDA(cudaMalloc(&workspace, workspace_bytes));
@@ -356,7 +422,7 @@ static int run_hierarchical_ntt(cubutterflyHandle_t handle, cudaStream_t stream)
     CHECK_CUDA(cudaStreamSynchronize(stream));
     for (size_t i = 0; i < extent; ++i)
         if (host_output[i] != 1)
-            return 1;
+            return report_failure(__func__, __LINE__);
     cudaFree(workspace);
     cudaFree(output);
     cudaFree(input);
@@ -382,7 +448,7 @@ static int run_hierarchical_core_selection(cubutterflyHandle_t handle) {
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &plan));
     CHECK_CUB(cubutterflyPlanGetAlgorithmName(plan, algorithm, &algorithm_bytes));
     if (strcmp(algorithm, "ntt-hierarchical-barrier-hybrid2d-radix4") != 0)
-        return 1;
+        return report_failure(__func__, __LINE__);
     cubutterflyDestroyPlan(plan);
     cubutterflyDestroyDescriptor(descriptor);
     return 0;
@@ -405,13 +471,13 @@ static int run_measure_cache(cubutterflyHandle_t handle) {
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &measured));
     CHECK_CUB(cubutterflyPlanGetSelectionSource(measured, &source));
     if (source != CUBUTTERFLY_SELECTION_RUNTIME_MEASURED)
-        return 1;
+        return report_failure(__func__, __LINE__);
     cubutterflyDestroyPlan(measured);
     CHECK_CUB(cubutterflySetAlgorithmPolicy(descriptor, CUBUTTERFLY_ALGORITHM_DEFAULT, NULL));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &cached));
     CHECK_CUB(cubutterflyPlanGetSelectionSource(cached, &source));
     if (source != CUBUTTERFLY_SELECTION_USER_CACHE)
-        return 1;
+        return report_failure(__func__, __LINE__);
     cubutterflyDestroyPlan(cached);
 
     extent = 15;
@@ -423,13 +489,13 @@ static int run_measure_cache(cubutterflyHandle_t handle) {
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &measured));
     CHECK_CUB(cubutterflyPlanGetSelectionSource(measured, &source));
     if (source != CUBUTTERFLY_SELECTION_RUNTIME_MEASURED)
-        return 1;
+        return report_failure(__func__, __LINE__);
     cubutterflyDestroyPlan(measured);
     CHECK_CUB(cubutterflySetAlgorithmPolicy(descriptor, CUBUTTERFLY_ALGORITHM_DEFAULT, NULL));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &cached));
     CHECK_CUB(cubutterflyPlanGetSelectionSource(cached, &source));
     if (source != CUBUTTERFLY_SELECTION_USER_CACHE)
-        return 1;
+        return report_failure(__func__, __LINE__);
     cubutterflyDestroyPlan(cached);
 
     cubutterflyDestroyDescriptor(descriptor);
@@ -457,6 +523,7 @@ static int run_2d_zeta(cubutterflyHandle_t handle, cudaStream_t stream) {
     CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_SUBSET_ZETA));
     CHECK_CUB(cubutterflySetDataType(descriptor, CUBUTTERFLY_DATA_UINT32, CUBUTTERFLY_COMPUTE_UINT32));
     CHECK_CUB(cubutterflySetShape(descriptor, 2, extents, 1));
+    CHECK_CUB(cubutterflySetExecutionMode(descriptor, CUBUTTERFLY_EXECUTION_XD));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &forward));
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(forward, &workspace_bytes));
     CHECK_CUDA(cudaMalloc((void**)&input, sizeof(original)));
@@ -469,15 +536,19 @@ static int run_2d_zeta(cubutterflyHandle_t handle, cudaStream_t stream) {
     CHECK_CUB(cubutterflySetDirection(descriptor, CUBUTTERFLY_DIRECTION_INVERSE, 0));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &inverse));
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(inverse, &inverse_workspace_bytes));
-    if (inverse_workspace_bytes > workspace_bytes)
-        return 1;
+    if (inverse_workspace_bytes > workspace_bytes) {
+        CHECK_CUDA(cudaStreamSynchronize(stream));
+        cudaFree(workspace);
+        CHECK_CUDA(cudaMalloc(&workspace, inverse_workspace_bytes));
+        workspace_bytes = inverse_workspace_bytes;
+    }
     CHECK_CUB(cubutterflyPlanSetWorkspace(inverse, workspace, workspace_bytes));
     CHECK_CUB(cubutterflyExecute(handle, inverse, transformed, output));
     CHECK_CUDA(cudaMemcpyAsync(recovered, output, sizeof(recovered), cudaMemcpyDeviceToHost, stream));
     CHECK_CUDA(cudaStreamSynchronize(stream));
     for (size_t i = 0; i < 32; ++i)
         if (recovered[i] != original[i])
-            return 1;
+            return report_failure(__func__, __LINE__);
     cudaFree(workspace);
     cudaFree(output);
     cudaFree(transformed);
@@ -508,6 +579,7 @@ static int run_2d_structured(cubutterflyHandle_t handle, cudaStream_t stream) {
     CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_STRUCTURED_2X2));
     CHECK_CUB(cubutterflySetDataType(descriptor, CUBUTTERFLY_DATA_FP32, CUBUTTERFLY_COMPUTE_FP32));
     CHECK_CUB(cubutterflySetShape(descriptor, 2, extents, 1));
+    CHECK_CUB(cubutterflySetExecutionMode(descriptor, CUBUTTERFLY_EXECUTION_XD));
     CHECK_CUB(cubutterflySetStageMatrices(descriptor, 0, &matrix, 1));
     CHECK_CUB(cubutterflySetStageMatrices(descriptor, 1, &matrix, 1));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &forward));
@@ -522,15 +594,19 @@ static int run_2d_structured(cubutterflyHandle_t handle, cudaStream_t stream) {
     CHECK_CUB(cubutterflySetDirection(descriptor, CUBUTTERFLY_DIRECTION_INVERSE, 0));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &inverse));
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(inverse, &inverse_workspace_bytes));
-    if (inverse_workspace_bytes > workspace_bytes)
-        return 1;
+    if (inverse_workspace_bytes > workspace_bytes) {
+        CHECK_CUDA(cudaStreamSynchronize(stream));
+        cudaFree(workspace);
+        CHECK_CUDA(cudaMalloc(&workspace, inverse_workspace_bytes));
+        workspace_bytes = inverse_workspace_bytes;
+    }
     CHECK_CUB(cubutterflyPlanSetWorkspace(inverse, workspace, workspace_bytes));
     CHECK_CUB(cubutterflyExecute(handle, inverse, transformed, output));
     CHECK_CUDA(cudaMemcpyAsync(recovered, output, sizeof(recovered), cudaMemcpyDeviceToHost, stream));
     CHECK_CUDA(cudaStreamSynchronize(stream));
     for (size_t i = 0; i < 32; ++i)
         if (fabsf(recovered[i] - original[i]) > 3.0e-4f)
-            return 1;
+            return report_failure(__func__, __LINE__);
     cudaFree(workspace);
     cudaFree(output);
     cudaFree(transformed);
@@ -557,6 +633,7 @@ static int run_2d_fwht(cubutterflyHandle_t handle, cudaStream_t stream) {
     CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_FWHT));
     CHECK_CUB(cubutterflySetDataType(descriptor, CUBUTTERFLY_DATA_FP32, CUBUTTERFLY_COMPUTE_FP32));
     CHECK_CUB(cubutterflySetShape(descriptor, 2, extents, 1));
+    CHECK_CUB(cubutterflySetExecutionMode(descriptor, CUBUTTERFLY_EXECUTION_XD));
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &plan));
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(plan, &workspace_bytes));
     CHECK_CUDA(cudaMalloc((void**)&input, sizeof(host_input)));
@@ -568,14 +645,82 @@ static int run_2d_fwht(cubutterflyHandle_t handle, cudaStream_t stream) {
     CHECK_CUDA(cudaMemcpyAsync(host_output, output, sizeof(host_output), cudaMemcpyDeviceToHost, stream));
     CHECK_CUDA(cudaStreamSynchronize(stream));
     if (fabsf(host_output[0] - 32.0f) > 1.0e-5f)
-        return 1;
+        return report_failure(__func__, __LINE__);
     for (size_t i = 1; i < 32; ++i)
         if (fabsf(host_output[i]) > 1.0e-5f)
-            return 1;
+            return report_failure(__func__, __LINE__);
     cudaFree(workspace);
     cudaFree(output);
     cudaFree(input);
     cubutterflyDestroyPlan(plan);
+    cubutterflyDestroyDescriptor(descriptor);
+    return 0;
+}
+
+static int run_xd_rank3_fwht(cubutterflyHandle_t handle, cudaStream_t stream) {
+    const size_t extents[3] = {2, 2, 2};
+    float original[8];
+    float transformed_host[8];
+    float recovered[8];
+    float* input = NULL;
+    float* transformed = NULL;
+    float* output = NULL;
+    void* workspace = NULL;
+    cubutterflyDescriptor_t descriptor = NULL;
+    cubutterflyPlan_t forward = NULL;
+    cubutterflyPlan_t inverse = NULL;
+    size_t workspace_bytes = 0;
+    size_t inverse_workspace_bytes = 0;
+    char algorithm[256];
+    size_t algorithm_bytes = sizeof(algorithm);
+    for (size_t i = 0; i < 8; ++i)
+        original[i] = (float)(i + 1);
+    CHECK_CUB(cubutterflyCreateDescriptor(&descriptor));
+    CHECK_CUB(cubutterflySetOperator(descriptor, CUBUTTERFLY_OPERATOR_FWHT));
+    CHECK_CUB(cubutterflySetDataType(descriptor, CUBUTTERFLY_DATA_FP32, CUBUTTERFLY_COMPUTE_FP32));
+    CHECK_CUB(cubutterflySetShape(descriptor, 3, extents, 1));
+    CHECK_CUB(cubutterflySetExecutionMode(descriptor, CUBUTTERFLY_EXECUTION_XD));
+    CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &forward));
+    CHECK_CUB(cubutterflyPlanGetAlgorithmName(forward, algorithm, &algorithm_bytes));
+    if (strncmp(algorithm, "xd[", 3) != 0)
+        return report_failure(__func__, __LINE__);
+    CHECK_CUB(cubutterflyPlanGetWorkspaceSize(forward, &workspace_bytes));
+    CHECK_CUDA(cudaMalloc((void**)&input, sizeof(original)));
+    CHECK_CUDA(cudaMalloc((void**)&transformed, sizeof(transformed_host)));
+    CHECK_CUDA(cudaMalloc((void**)&output, sizeof(recovered)));
+    CHECK_CUDA(cudaMalloc(&workspace, workspace_bytes));
+    CHECK_CUB(cubutterflyPlanSetWorkspace(forward, workspace, workspace_bytes));
+    CHECK_CUDA(cudaMemcpyAsync(input, original, sizeof(original), cudaMemcpyHostToDevice, stream));
+    CHECK_CUB(cubutterflyExecute(handle, forward, input, transformed));
+    CHECK_CUDA(cudaMemcpyAsync(transformed_host, transformed, sizeof(transformed_host), cudaMemcpyDeviceToHost, stream));
+    CHECK_CUDA(cudaStreamSynchronize(stream));
+    {
+        const float expected[8] = {36.0f, -4.0f, -8.0f, 0.0f, -16.0f, 0.0f, 0.0f, 0.0f};
+        for (size_t i = 0; i < 8; ++i)
+            if (fabsf(transformed_host[i] - expected[i]) > 1.0e-4f)
+                return report_failure(__func__, __LINE__);
+    }
+    CHECK_CUB(cubutterflySetDirection(descriptor, CUBUTTERFLY_DIRECTION_INVERSE, 1));
+    CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &inverse));
+    CHECK_CUB(cubutterflyPlanGetWorkspaceSize(inverse, &inverse_workspace_bytes));
+    if (inverse_workspace_bytes > workspace_bytes) {
+        cudaFree(workspace);
+        CHECK_CUDA(cudaMalloc(&workspace, inverse_workspace_bytes));
+        workspace_bytes = inverse_workspace_bytes;
+    }
+    CHECK_CUB(cubutterflyPlanSetWorkspace(inverse, workspace, workspace_bytes));
+    CHECK_CUB(cubutterflyExecute(handle, inverse, transformed, output));
+    CHECK_CUDA(cudaMemcpyAsync(recovered, output, sizeof(recovered), cudaMemcpyDeviceToHost, stream));
+    CHECK_CUDA(cudaStreamSynchronize(stream));
+    for (size_t i = 0; i < 8; ++i)
+        if (fabsf(recovered[i] - original[i]) > 1.0e-4f)
+            return report_failure(__func__, __LINE__);
+    cudaFree(workspace);
+    cudaFree(output);
+    cudaFree(transformed);
+    cudaFree(input);
+    cubutterflyDestroyPlan(inverse);
+    cubutterflyDestroyPlan(forward);
     cubutterflyDestroyDescriptor(descriptor);
     return 0;
 }
@@ -606,7 +751,7 @@ static int run_embedding_fwht(cubutterflyHandle_t handle, cudaStream_t stream) {
     CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &forward));
     CHECK_CUB(cubutterflyPlanGetAlgorithmName(forward, algorithm, &algorithm_bytes));
     if (strstr(algorithm, "+fused-input") == NULL)
-        return 1;
+        return report_failure(__func__, __LINE__);
     CHECK_CUB(cubutterflyPlanGetWorkspaceSize(forward, &workspace_bytes));
     CHECK_CUDA(cudaMalloc((void**)&logical, sizeof(original)));
     CHECK_CUDA(cudaMalloc((void**)&physical, sizeof(spectrum)));
@@ -632,7 +777,7 @@ static int run_embedding_fwht(cubutterflyHandle_t handle, cudaStream_t stream) {
     CHECK_CUDA(cudaStreamSynchronize(stream));
     for (size_t i = 0; i < 6; ++i)
         if (fabsf(recovered[i] - original[i]) > 1.0e-5f)
-            return 1;
+            return report_failure(__func__, __LINE__);
     cudaFree(workspace);
     cudaFree(result);
     cudaFree(physical);
@@ -686,7 +831,7 @@ static int run_strided_embedding_fwht(cubutterflyHandle_t handle, cudaStream_t s
     CHECK_CUDA(cudaStreamSynchronize(stream));
     for (size_t index = 0; index < 8; ++index)
         if (fabsf(strided[2 * index] - expected[index]) > 1.0e-5f)
-            return 1;
+            return report_failure(__func__, __LINE__);
     cudaFree(workspace);
     cudaFree(output);
     cudaFree(input);
@@ -718,7 +863,28 @@ static int run_appt_layout_query(cubutterflyHandle_t handle) {
         layout.stage_partition[2] != 6 || layout.fragment_width != 32 ||
         layout.bank_bits != 5 || !layout.xor_permutation ||
         strstr(layout.compatibility_id, "appt-ntt-log20-7x7x6") == NULL)
-        return 1;
+        return report_failure(__func__, __LINE__);
+    {
+        size_t mapping_bytes = 0, replay_bytes = 0;
+        char* mapping = NULL;
+        char* replay_mapping = NULL;
+        cubutterflyPlan_t replay = NULL;
+        CHECK_CUB(cubutterflyPlanGetMappingJson(plan, NULL, &mapping_bytes));
+        mapping = (char*)malloc(mapping_bytes);
+        if (mapping == NULL) return report_failure(__func__, __LINE__);
+        CHECK_CUB(cubutterflyPlanGetMappingJson(plan, mapping, &mapping_bytes));
+        CHECK_CUB(cubutterflySetAlgorithmPolicy(
+            descriptor, CUBUTTERFLY_ALGORITHM_EXPLICIT, mapping));
+        CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &replay));
+        CHECK_CUB(cubutterflyPlanGetMappingJson(replay, NULL, &replay_bytes));
+        replay_mapping = (char*)malloc(replay_bytes);
+        if (replay_mapping == NULL) return report_failure(__func__, __LINE__);
+        CHECK_CUB(cubutterflyPlanGetMappingJson(replay, replay_mapping, &replay_bytes));
+        if (strcmp(mapping, replay_mapping) != 0) return report_failure(__func__, __LINE__);
+        CHECK_CUB(cubutterflyDestroyPlan(replay));
+        free(replay_mapping);
+        free(mapping);
+    }
     cubutterflyDestroyPlan(plan);
 
     CHECK_CUB(cubutterflySetNttLayouts(
@@ -732,7 +898,7 @@ static int run_appt_layout_query(cubutterflyHandle_t handle) {
         plan, algorithm, &algorithm_bytes));
     if (strcmp(algorithm,
                "ntt-appt-register-tail-grouped-writer-final-resident") != 0)
-        return 1;
+        return report_failure(__func__, __LINE__);
     cubutterflyDestroyPlan(plan);
 
     CHECK_CUB(cubutterflySetAlgorithmPolicy(
@@ -745,7 +911,7 @@ static int run_appt_layout_query(cubutterflyHandle_t handle) {
     if (strcmp(algorithm,
                "ntt-appt-register-tail-grouped-writer-final-resident-quarter") !=
         0)
-        return 1;
+        return report_failure(__func__, __LINE__);
     cubutterflyDestroyPlan(plan);
     cubutterflyDestroyDescriptor(descriptor);
     return 0;
@@ -778,17 +944,18 @@ static int run_ntt_output_order(cubutterflyHandle_t handle, cudaStream_t stream,
         cubutterflyPlan_t plan = NULL;
         void* workspace = NULL;
         size_t workspace_bytes = 0;
+        const cubutterflyAlgorithmPolicy_t policy =
+            reverse && measure ? CUBUTTERFLY_ALGORITHM_MEASURE :
+            reverse && !inverse ? CUBUTTERFLY_ALGORITHM_DEFAULT : CUBUTTERFLY_ALGORITHM_EXPLICIT;
         CHECK_CUB(cubutterflySetNttLayouts(descriptor, CUBUTTERFLY_NTT_LAYOUT_NATURAL,
             reverse ? CUBUTTERFLY_NTT_LAYOUT_BIT_REVERSED : CUBUTTERFLY_NTT_LAYOUT_NATURAL));
-        CHECK_CUB(cubutterflySetAlgorithmPolicy(descriptor,
-            reverse && measure ? CUBUTTERFLY_ALGORITHM_MEASURE :
-            reverse && !inverse ? CUBUTTERFLY_ALGORITHM_DEFAULT : CUBUTTERFLY_ALGORITHM_EXPLICIT,
-            "ntt-shared-iterative"));
+        CHECK_CUB(cubutterflySetAlgorithmPolicy(descriptor, policy,
+            policy == CUBUTTERFLY_ALGORITHM_EXPLICIT ? "ntt-shared-iterative" : NULL));
         CHECK_CUB(cubutterflyCreatePlan(handle, descriptor, &plan));
         if (reverse && measure) {
             cubutterflySelectionSource_t source;
             CHECK_CUB(cubutterflyPlanGetSelectionSource(plan, &source));
-            if (source != CUBUTTERFLY_SELECTION_RUNTIME_MEASURED) return 1;
+            if (source != CUBUTTERFLY_SELECTION_RUNTIME_MEASURED) return report_failure(__func__, __LINE__);
         }
         CHECK_CUB(cubutterflyPlanGetWorkspaceSize(plan, &workspace_bytes));
         if (workspace_bytes) {
@@ -806,17 +973,35 @@ static int run_ntt_output_order(cubutterflyHandle_t handle, cudaStream_t stream,
     for (unsigned b = 0; b < batch; ++b) for (unsigned i = 0; i < extent; ++i) {
         const unsigned j = ((i & 1U) << 2) | (i & 2U) | ((i & 4U) >> 2);
         if (word_bits == 32 ? reversed32[b*extent+i] != natural32[b*extent+j]
-                            : reversed64[b*extent+i] != natural64[b*extent+j]) return 1;
+                            : reversed64[b*extent+i] != natural64[b*extent+j]) return report_failure(__func__, __LINE__);
     }
-    // Unsupported input permutations and composite semantics must not silently
-    // turn into natural-order execution.
-    if (cubutterflySetNttLayouts(descriptor, CUBUTTERFLY_NTT_LAYOUT_BIT_REVERSED,
-                                CUBUTTERFLY_NTT_LAYOUT_NATURAL) == CUBUTTERFLY_STATUS_SUCCESS) return 1;
-    for (unsigned shape = 0; shape < 2; ++shape) {
-        const size_t extents[2] = {shape ? 8 : 7, 8};
-        cubutterflyPlan_t invalid = NULL;
-        CHECK_CUB(cubutterflySetShape(descriptor, shape ? 2 : 1, extents, 1));
-        if (cubutterflyCreatePlan(handle, descriptor, &invalid) != CUBUTTERFLY_STATUS_NOT_SUPPORTED) return 1;
+    // Legacy rank-one reversal now shares the general logical-order contract.
+    CHECK_CUB(cubutterflySetNttLayouts(descriptor, CUBUTTERFLY_NTT_LAYOUT_BIT_REVERSED,
+                                      CUBUTTERFLY_NTT_LAYOUT_NATURAL));
+    CHECK_CUB(cubutterflyDescriptorValidate(descriptor));
+    // Non-power-of-two reversal and rank-two legacy scalar reversal remain
+    // invalid on either side, both at descriptor validation and plan creation.
+    for (unsigned side = 0; side < 2; ++side) {
+        for (unsigned shape = 0; shape < 2; ++shape) {
+            const size_t extents[2] = {shape ? 8 : 7, 8};
+            cubutterflyPlan_t invalid = NULL;
+            CHECK_CUB(cubutterflySetShape(descriptor, shape ? 2 : 1, extents, 1));
+            CHECK_CUB(cubutterflySetNttLayouts(descriptor,
+                side ? CUBUTTERFLY_NTT_LAYOUT_NATURAL : CUBUTTERFLY_NTT_LAYOUT_BIT_REVERSED,
+                side ? CUBUTTERFLY_NTT_LAYOUT_BIT_REVERSED : CUBUTTERFLY_NTT_LAYOUT_NATURAL));
+            if (cubutterflyDescriptorValidate(descriptor) != CUBUTTERFLY_STATUS_INVALID_VALUE) return report_failure(__func__, __LINE__);
+            if (cubutterflyCreatePlan(handle, descriptor, &invalid) != CUBUTTERFLY_STATUS_INVALID_VALUE) return report_failure(__func__, __LINE__);
+        }
+    }
+    {
+        const cubutterflyLogicalOrder_t input_orders[2] = {
+            CUBUTTERFLY_ORDER_BIT_REVERSED, CUBUTTERFLY_ORDER_NATURAL};
+        const cubutterflyLogicalOrder_t output_orders[2] = {
+            CUBUTTERFLY_ORDER_NATURAL, CUBUTTERFLY_ORDER_BIT_REVERSED};
+        CHECK_CUB(cubutterflySetNttLayouts(descriptor, CUBUTTERFLY_NTT_LAYOUT_NATURAL,
+                                          CUBUTTERFLY_NTT_LAYOUT_NATURAL));
+        CHECK_CUB(cubutterflySetLogicalOrders(descriptor, input_orders, output_orders));
+        CHECK_CUB(cubutterflyDescriptorValidate(descriptor));
     }
     cudaFree(input); cudaFree(output);
     CHECK_CUB(cubutterflyDestroyDescriptor(descriptor));
@@ -848,7 +1033,7 @@ int main(int argc, char** argv) {
                       strcmp(argv[1], "--ntt-output-order-measure") == 0)) {
         const int measure = strcmp(argv[1], "--ntt-output-order-measure") == 0;
         for (unsigned bits = 32; bits <= 64; bits += 32) for (int inverse = 0; inverse < 2; ++inverse)
-            if (run_ntt_output_order(handle, stream, bits, inverse, measure)) return 1;
+            if (run_ntt_output_order(handle, stream, bits, inverse, measure)) return report_failure(__func__, __LINE__);
         cubutterflyDestroy(handle); cudaStreamDestroy(stream);
         return 0;
     }
@@ -864,10 +1049,10 @@ int main(int argc, char** argv) {
         cubutterflyNttLayoutInfo_t layout;
         if (cubutterflyPlanGetNttLayoutInfo(plan, &layout) !=
             CUBUTTERFLY_STATUS_NOT_SUPPORTED)
-            return 1;
+            return report_failure(__func__, __LINE__);
     }
     if (input_bytes != sizeof(host_input) || output_bytes != sizeof(host_output))
-        return 1;
+        return report_failure(__func__, __LINE__);
 
     CHECK_CUDA(cudaMalloc((void**)&device_input, input_bytes));
     CHECK_CUDA(cudaMalloc((void**)&device_output, output_bytes));
@@ -876,28 +1061,30 @@ int main(int argc, char** argv) {
     CHECK_CUDA(cudaMemcpyAsync(host_output, device_output, output_bytes, cudaMemcpyDeviceToHost, stream));
     CHECK_CUDA(cudaStreamSynchronize(stream));
     if (fabsf(host_output[0] - 8.0f) > 1.0e-5f)
-        return 1;
+        return report_failure(__func__, __LINE__);
 
-    if (run_2d_fwht(handle, stream) != 0 || run_embedding_fwht(handle, stream) != 0 ||
+    if (run_2d_fwht(handle, stream) != 0 || run_xd_rank3_fwht(handle, stream) != 0 ||
+        run_embedding_fwht(handle, stream) != 0 ||
         run_strided_embedding_fwht(handle, stream) != 0 ||
         run_arbitrary_fft(handle, stream) != 0)
-        return 1;
+        return report_failure(__func__, __LINE__);
     if (run_2d_arbitrary_fft(handle, stream) != 0)
-        return 1;
-    if (run_2d_power_fft(handle, stream) != 0 || run_2d_ntt(handle, stream) != 0)
-        return 1;
+        return report_failure(__func__, __LINE__);
+    if (run_2d_power_fft(handle, stream) != 0 || run_2d_ntt(handle, stream) != 0 ||
+        run_xd_uint32_ntt_measure(handle) != 0)
+        return report_failure(__func__, __LINE__);
     if (run_arbitrary_ntt(handle, stream) != 0 || run_hierarchical_ntt(handle, stream) != 0 ||
         run_hierarchical_core_selection(handle) != 0 ||
         run_appt_layout_query(handle) != 0)
-        return 1;
+        return report_failure(__func__, __LINE__);
     if (run_measure_cache(handle) != 0)
-        return 1;
+        return report_failure(__func__, __LINE__);
     for (unsigned bits = 32; bits <= 64; bits += 32) for (int inverse = 0; inverse < 2; ++inverse)
-        if (run_ntt_output_order(handle, stream, bits, inverse, 0)) return 1;
+        if (run_ntt_output_order(handle, stream, bits, inverse, 0)) return report_failure(__func__, __LINE__);
     if (run_2d_zeta(handle, stream) != 0 || run_2d_structured(handle, stream) != 0)
-        return 1;
+        return report_failure(__func__, __LINE__);
     if (warnings == 0)
-        return 1;
+        return report_failure(__func__, __LINE__);
 
     cubutterflyDestroyPlan(plan);
     cubutterflyDestroyDescriptor(descriptor);

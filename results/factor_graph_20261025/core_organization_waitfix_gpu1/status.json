@@ -1,0 +1,16 @@
+{
+  "state": "complete",
+  "gpu_uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02",
+  "command": [
+    "/home/wt/yes/envs/cubutterfly/bin/python",
+    "scripts/run_factor_graph_experiment.py",
+    "measure",
+    "--prepared",
+    "results/factor_graph_20261025/core_organization_waitfix.json",
+    "--binary",
+    "build-e13-cufftdx/cubutterfly_graph_bench"
+  ],
+  "updated": "2026-10-25T13:39:27.322458+08:00",
+  "deadline": "2026-10-25T15:00:00+08:00",
+  "release": "/home/wt/git/cuButterfly/results/factor_graph_20261025/core_organization_waitfix_gpu1/release"
+}

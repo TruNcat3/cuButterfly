@@ -1,0 +1,34 @@
+{
+  "schema": "cubutterfly-application-historical-v1",
+  "status": "historical-pinned-build",
+  "records": [
+    {
+      "workload": "FNO 64\u00b2 / B8",
+      "baseline_ms": 3.007,
+      "cubutterfly_ms": 3.152,
+      "speedup": 0.953997461928934
+    },
+    {
+      "workload": "FNO 128\u00b2 / B4",
+      "baseline_ms": 2.99,
+      "cubutterfly_ms": 3.14,
+      "speedup": 0.9522292993630573
+    },
+    {
+      "workload": "QuaRot 512 / 32",
+      "baseline_ms": 2668.6,
+      "cubutterfly_ms": 2647.4,
+      "speedup": 1.008007856765128
+    },
+    {
+      "workload": "QuaRot 2048 / 128",
+      "baseline_ms": 10573.719,
+      "cubutterfly_ms": 10544.185,
+      "speedup": 1.0028009751346358
+    }
+  ],
+  "missing": [
+    "HEonGPU CKKS bootstrap"
+  ],
+  "note": "Historical application records are separate from RC2 operator and pending E13 cohorts."
+}

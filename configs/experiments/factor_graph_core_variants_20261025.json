@@ -1,0 +1,25 @@
+{
+  "schema": "cubutterfly-explicit-graph-suite-v1",
+  "purpose": "Bounded local cuFFTDx factor-shape scan at the best tile organization",
+  "operator": "fft", "precision": "fp64", "logN": 20, "batch": 16,
+  "inverse": false, "seed": 6143, "warmup": 5, "repeat": 30, "trials": 7,
+  "base_mapping": {
+    "schema_version": 1, "kind": "butterfly", "backend": "factor-streamed",
+    "fft_core": "cufftdx-block", "compute_unit": "auto",
+    "shared_layout": "writer-aligned", "cross_twiddle": "recurrence",
+    "stage_partition": [20], "factor_partition": [10, 10],
+    "factor_ept": 8, "factor_columns": 4,
+    "data_tiles_per_cta": 1, "prefetch_depth": 0,
+    "factor_io_policies": ["dynamic", "dynamic"]
+  },
+  "cases": [
+    {"id": "e8-c4-t1", "mapping": {}},
+    {"id": "e4-c1-t1", "mapping": {"factor_ept": 4, "factor_columns": 1}},
+    {"id": "e4-c2-t1", "mapping": {"factor_ept": 4, "factor_columns": 2}},
+    {"id": "e4-c4-t1", "mapping": {"factor_ept": 4, "factor_columns": 4}},
+    {"id": "e8-c2-t1", "mapping": {"factor_ept": 8, "factor_columns": 2}},
+    {"id": "e16-c2-t1", "mapping": {"factor_ept": 16, "factor_columns": 2}},
+    {"id": "e16-c4-t1", "mapping": {"factor_ept": 16, "factor_columns": 4}},
+    {"id": "cufft", "mapping": {"backend": "cufft"}, "inherit_base": false}
+  ]
+}

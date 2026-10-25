@@ -1,0 +1,24 @@
+{
+  "cells": 36,
+  "csv_path": "/home/wt/git/cuButterfly/paper/generated/rc2_fft_absolute_throughput.csv",
+  "figure_paths": [
+    "/home/wt/git/cuButterfly/paper/figures/rc2_fft_absolute_boxplot.svg",
+    "/home/wt/git/cuButterfly/paper/figures/rc2_fft_absolute_boxplot.pdf",
+    "/home/wt/git/cuButterfly/paper/figures/rc2_fft_absolute_throughput.svg",
+    "/home/wt/git/cuButterfly/paper/figures/rc2_fft_absolute_throughput.pdf"
+  ],
+  "metrics": [
+    "transforms_per_s",
+    "butterfly_pairs_per_s"
+  ],
+  "note": "Absolute rates are paired by workload; boxplots summarize the sampled distribution and no cross-size aggregate is claimed.",
+  "rows": 92,
+  "schema": "cubutterfly-rc2-absolute-throughput-v2",
+  "source": "/home/wt/git/cuButterfly-v0.9.1-rc2/results/integrated_repairs_20261001_replay_fix1/a100-80gb/fft36/summary.json",
+  "source_status": "complete-measured-matrix",
+  "systems": [
+    "cuButterfly",
+    "cuFFT",
+    "VkFFT"
+  ]
+}

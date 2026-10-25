@@ -4,7 +4,39 @@
 
 The main C++ interface is `<cubutterfly/plan.hpp>`. `Transform` owns mathematical
 semantics; `PlanOptions` owns selection policy or an explicit execution mapping.
-C, C++, and the benchmark programs use the same registry and candidate projection.
+The C++ wrapper calls the public C API. Rank-one selection shares registry and
+candidate facilities with the benchmark programs; xD planning has a separate
+bounded selector. The [0.9.2 semantic contract](unified_semantics.md) now joins
+public C/C++/Python descriptors, workload identity and replay. The earlier
+[dimension audit](public_frontend_dimension_audit_20261007.md) records the
+defects that motivated this repair. Some arithmetic lowerings remain missing;
+capability queries distinguish them from invalid semantic requests.
+
+Rank-one construction shares a static-capacity legality gate and per-execution-
+group compiler feedback. On a registry miss, AUTO uses the existing stage cost
+model to rank candidates, then compiles and reranks bounded finalists. Selection
+provenance distinguishes a validated estimate, a hardware-rate prior and an
+unmeasured executable fallback. These paths do not acquire new measurements.
+See the [static profile policy](hardware_profile_install.md#static-profile-policy)
+for compatibility and exploration-budget controls; a missing physical cost
+descriptor is a modeling gap, not an unsupported operator.
+
+Dynamic cuFFTDx candidates additionally share an installed-provider capability
+contract across enumeration, explicit mapping validation and JIT. A missing
+local core implementation does not invalidate the user's transform; unknown
+provider versions remain subject to actual compilation. See the
+[provider capability contract](provider_capability_contract_20261014.md) for
+the support dimensions, candidate audit and cache identities.
+
+Online register FFT mappings additionally accept explicit `suffix_core="native"`.
+The default and automatically enumerated suffix core is `cufftdx-block`; its
+legal EPT choices come from the installed provider capability checks and the
+organization's geometry constraints. The new native suffix remains an explicit
+experimental mapping with a separate compiled and calibrated identity. Missing
+provider implementations never silently change an explicitly requested core.
+The [reuse policy](provider_reuse_20261014.md) explains the search correction;
+the [native suffix contract](native_suffix_core_20261014.md) preserves its measured
+geometry, shared-memory requirement and bounded validation.
 
 ```cpp
 #include <cubutterfly/plan.hpp>
@@ -25,8 +57,295 @@ cubutterfly::Plan same_mapping(context, transform, replay);
 `Plan` allocates its workspace by default. With `allocate_workspace=false`, bind
 an allocation of at least `workspace_size()` before execution. Inputs, outputs,
 and external workspace must remain valid until the stream completes. Set the
-context stream before constructing or executing plans. NTT uses distinct input
-and output allocations and requires matching storage and `word_bits` (32 or 64).
+context stream before constructing plans. NTT requires matching storage and
+`word_bits` (32 or 64); in-place requests use the common boundary adapter.
+
+## xD planning contract
+
+For rank-two through rank-eight transforms, `AUTO` and `XD` use the bounded xD
+selector. `COMPOSITE` forces the legacy per-axis composition and its generic
+rank-N layout boundary. The selector compares complete executable candidates
+when the device-memory budget permits it. It is a finite candidate search, not
+an exhaustive xD-space calibration or a global-optimality claim.
+
+The candidate inventory includes the legacy composite path, exact flattening
+only for FWHT, subset zeta, superset zeta, and structured 2x2 tensor products,
+resident shared subgraphs with device-valid warp-multiple thread counts and
+axis-order choices for supported small packed power-of-two
+cases, and FFT axis candidates based on imported rank-one cuFFT cores. The FFT
+axis candidates are `strided-axis-cufft`, `packed-axis-cufft` and the optional
+`axis-tiled-cufftdx` with EPT 8/16 variants. These combine axis access and
+local FFT in one kernel on covered axis lengths, retaining packed fallback
+for other axes. `pair-tiled-cufftdx` additionally fuses two short, physically
+trailing axes through a shared-memory plane; EPT variants affect its remaining
+unfused axes. The legacy Thread-pair fusion covers FP32 axes 8–64 and FP64
+axes 8–32 with its fixed 48 KiB shared-memory guard. The separate cooperative
+pair inventory adds finite 64/128-axis shapes with four-lane FFT cooperation;
+FP64 pair CTAs use 256 threads and fold 128-line passes into two rounds. Shape
+availability is filtered by the compiled SM, register/occupancy resources and
+the executing device's actual opt-in dynamic shared-memory budget. On A100,
+FP64 128x128 is unavailable under that budget. Full-plan timing chooses between
+these mappings and the earlier candidates.
+None delegates the whole xD transform to a vendor multidimensional routine. FFT and
+NTT are not eligible for the strict flattened candidate.
+
+The portable rank-one inventory also contains a compiled short FP16 FWHT
+provider for N=32 and N=64. Its semantic contract is forward, out-of-place,
+contiguous storage, FP32 accumulation and explicit
+`output_rounding=FINAL_STORAGE`. It uses a warp-register exchange, applies
+`output_scale`, and narrows once. Matching generic candidates keep FP32 working
+storage until the same scaled final store, recording both storage conversions.
+Default `STAGE_STORAGE` requests cannot select this final-only provider.
+The output contract is part of the public descriptor, registry and cache key;
+unsupported combinations report missing lowerings. QuaRot now requests it
+through public plans rather than the earlier standalone provider.
+
+The long-axis inventory adds 2048/4096 points in both precisions and directions
+with EPT 8/16 and device opt-in shared-memory checks. The
+`axis-packed-cufftdx`/`axis-packed-cufftdx-ept16` choices explicitly permute
+noncontiguous axes into contiguous core inputs, retain that layout across
+compatible axes, and restore the public output at the end. Their complete-plan
+cost includes these permutations. The v18 xD cache namespace separates this
+inventory from prior bounded searches; explicit mappings still record the
+actual per-axis core and access policy. See
+[application integration evidence](e2e_unified_coverage_20261013.md).
+
+Compact C2R mappings record `c2r_input_boundary` and
+`c2r_input_copy_elision`. With one or more complex-axis plans, the first axis
+reads the compact input directly and writes owned scratch. Rank-one C2R keeps
+the scratch-copy fallback required to preserve input from the destructive
+real boundary. These fields describe the executed lowering and are not
+unchecked requests to skip a required copy.
+
+The v9 cooperative lowerings are `axis-tiled-register`,
+`pair-tiled-cooperative`, and `pair-tiled-cooperative-register`. The first is a
+four-lane register-only core for non-contiguous axes of length 64 and 128. The second combines
+the cooperative pair with the existing cuFFTDx axis core; the third uses the
+register core for eligible remaining axes. Mapping JSON records
+`axis_core`, `pair_core`, `cooperative_lanes`, and the actual physical core
+names. Their finite inventory is not a complete subblock cross-axis pipeline
+or a global-optimality claim.
+
+The v10 inventory additionally exposes `axis-tiled-register-l8`/`-l16` and
+`pair-tiled-cooperative-register-l8`/`-l16`. The lane count changes the
+non-contiguous axis core; a cooperative pair still uses four lanes per FFT.
+`pair-tiled-cooperative-layout1` and
+`pair-tiled-cooperative-register-layout1` use an XOR permutation of shared
+rows with the same padded allocation. The baseline layout remains available.
+More lanes or a different layout are candidates, not unconditional upgrades.
+The original cooperative cores use a shared 128-root constant table;
+their per-axis mapping records `twiddle_policy=constant-roots-128`. This avoids
+inlined transcendental polynomial work in the previous phase construction.
+
+The v26 pair inventory includes `xd:pair-tiled-radix4` for 32×32 complex
+planes in FP32 and FP64. FP64 uses double arithmetic and double root constants.
+The pair dispatcher records the core, `[4,4,2]` axis radices, precision-specific
+padded shared exchange, and separable-axis semantics. Packed plans can move
+two scheduled complex axes together to the trailing positions, retain that
+layout, and restore the public layout at the final boundary. Compact R2C/C2R
+uses the same path; its Hermitian axis remains a plane index and is never
+treated as a full complex FFT axis. Permutations, real boundaries and scaling
+remain in complete-call timing. An explicit pair request with no eligible pair
+is rejected. Automatic selection may choose an existing axis core or whole
+cuFFT instead. Cache namespaces are `xd-v26-packed-pair-fp64` and
+`xd-real-v26-packed-pair-fp64`; exact replay checks the actual physical mapping.
+
+The v14 inventory extends `axis-tiled-register-l8`/`-l16` to non-contiguous
+256-point axes in both precisions and directions. It composes the existing
+Thread FFT32/16 codelets with the same warp butterfly, using
+`twiddle_policy=constant-roots-256` for that axis. Four lanes remain unavailable
+at length 256 in this inventory because the imported FP64 Thread64 codelet is
+absent. Availability is checked for the length/lane configuration. Unsupported
+axes retain their explicit Block fallback; a forced register family with no
+actual register axis is rejected. Compact-real axes and batch-tile children use
+the same configuration check. Pair-core length support is unchanged.
+The v14.1 lane helper replaces small-radix DIF table lookups with analytic
+unity/quarter/eighth turns and uniform literal coefficients. Nontrivial
+cross-sub-FFT phases still use the recorded 128/256 root table. This affects
+the eight/sixteen-lane cores; the dedicated four-lane codelet is unchanged.
+
+Packed C2C plans can finish all axes of a batch tile before advancing to the
+next tile. The bounded rank-three selector proposes tiles near the device's
+L2 capacity for two live complex buffers, retaining whole-batch execution.
+Exact replay admits any legal positive tile smaller than the batch, including
+a tail; it is not limited to the proposal set. Mapping fields `batch_tile`,
+`batch_chunks`, `tile_body`, and optional `tile_tail` describe this schedule.
+Top-level axes describe a full tile when `axes_scope` is `per-batch-tile`;
+the top-level batch and semantic contract still describe the complete call.
+This schedule improves cross-axis cache locality for independent transforms;
+it does not implement overlapping kernels or a general within-transform
+subblock pipeline. Complete-call timing includes every tile and tail.
+
+The v11 inventory additionally exposes `axis-tiled-cufftdx-cap8`/`-cap16` and
+`axis-tiled-cufftdx-ept16-cap8`/`-cap16`. Their independent
+`axis_ffts_per_block_cap` bounds the existing FFTs-per-CTA policy without changing
+EPT. It applies to contiguous and staged axes, both precisions and directions;
+per-axis `ffts_per_block` records the actual value. Default 0 retains v10.1's
+policy and serialization, including exact replay of existing mappings. Automatic
+search omits cap candidates that would instantiate only identical default cores.
+This finite cap inventory is a resource-granularity experiment, not the complete
+theoretical parameter space. Compact real plans use the same cap on complex axes.
+
+The v12 axis inventory adds `-direct` and `-unrolled` suffixes to each Block
+EPT/cap family. `axis_exchange_policy=1` loads a non-contiguous axis directly
+into the imported core's registers; policy 2 preserves shared staging with
+compile-time transfer loops and hoisted address calculations. Policy 0 retains
+the original staged implementation. These are measured tradeoffs: fewer shared
+exchanges can increase global transactions or register pressure. The per-axis
+`io_exchange` records the actual path; contiguous axes always reuse the existing
+contiguous-register kernel. The policy reaches compact-real complex axes and
+batch-tile children. Default-policy mappings keep their previous serialization.
+These named families apply policy/EPT/cap across eligible axes in a plan. The
+v15 mixed resource mapping below additionally supports independent axis choices.
+
+The v13 resource inventory adds EPT4 families and `-unrolled32` exchange
+variants. Policy 3 uses 32-bit element indices for a staged strided axis only
+when its complete local span fits `UINT32_MAX`; larger explicit requests are
+rejected, and automatic C2C search records the unavailable candidate. Buffer
+pointers remain full width. Batch-tile children check their own local spans,
+so tiling may make a large complete call eligible. Contiguous axes retain the
+old path. `io_exchange=unrolled-staged-u32` identifies the actual narrow path.
+EPT4 changes the local FFT mapping, while policy 3 changes address arithmetic;
+both remain candidates alongside the old implementations.
+
+The v15 `axis-tiled-mixed` physical mapping stores `axis_resources` by logical
+complex-axis index, independently of execution order or retained physical
+layout. Each entry specifies `core`, `ept`, `register_lanes`, `block_cap` and
+`exchange`. C2C has one entry per axis; compact R2C/C2R excludes the final real
+axis. Empty overrides preserve prior mapping serialization. Batch body and tail
+receive the same vector and validate their own local index spans. Nonempty
+overrides require packed fused axes without paired-axis fusion. A requested
+register core must be executable on that particular strided axis; an unavailable
+Block core retains the explicit vendor fallback recorded in `axes[].core`.
+Thus `axis_resources` describes requests, while `axes` describes execution.
+
+After measuring the existing uniform candidates, the selector refines the
+fastest eligible unpaired axis plan with one coordinate sweep. The current v19
+inventory includes 36 legacy EPT/cap/exchange combinations, 12 exact-group
+combinations, three register lane widths, and four local-core combinations.
+It removes physical duplicates and records unavailable proposals. All timing
+covers the complete call; the default promotion factor is 0.99, and its effective
+configured value participates in cache identity. The sweep preserves the seed's
+axis order and batch tile, so it is bounded by 55 proposals per axis and is not
+a Cartesian-product search. Explicit complete
+mapping replay restores per-axis resources without search. The short diagnostic
+name `xd:axis-tiled-mixed` alone is insufficient to specify a resource vector.
+Compact real plans use the same refinement, while their real boundary is fixed.
+
+The historical v15 retained-layout mappings used the cache namespaces
+`xd-v15-axis-resources` and `xd-real-v15-axis-resources`. Compact real R2C/C2R
+plans also support cooperative-register cores for eligible complex axes, but do not fuse a
+cooperative pair or apply the C2C batch-tile wrapper at the compact real boundary.
+
+The v19 inventory adds optional `axis_resources[].ffts_per_block` as an exact
+CTA line count, independent of the older upper-bound `block_cap`. Values 2/4
+are compiled for 2048/4096-point Block cores with EPT8/16 and exchange 0/2/3.
+An exact request requires `block_cap=0`; device thread/shared-memory limits and
+compiled core availability still apply. An unavailable exact request is rejected
+instead of silently falling back. Zero or an absent field retains the previous
+policy and serialization. Public compact-real selection measures these uniform
+candidates; the shared per-axis refinement also makes them available to C2C.
+Both directions and small outer grids are supported. This is a finite compiled
+inventory, not a bound on the theoretical space.
+
+Inverse compact-real plans can additionally set `c2r_prefix_scale=true` to absorb
+the requested normalization/output scale into the final complex-axis core's
+store. `c2r_scale_placement=last-complex-axis` records this choice and
+`cost.scale_kernel_launches=0` records the removed real-output pass. It requires
+a fused final complex axis and is invalid for forward or C2C requests. Automatic
+selection measures this candidate alongside the previous post-C2R scale pass;
+old mappings without the field keep the old execution. The scalar commutes with
+the remaining linear C2R operation, but floating-point rounding may differ, so
+matching-precision numerical errors are reported for both paths.
+
+The v19 cache namespaces were `xd-v19-grouped-axis` and
+`xd-real-v19-grouped-scale`. Per-axis actual grouping, scaling placement,
+candidate times and omission reasons remain in the public mapping/search report.
+
+The v20 inventory adds `axis_resources[].core="vkfft"` and the uniform
+`xd:axis-vkfft` family for both C2C and compact-real complex axes. This imports
+one unnormalized C2C axis from VkFFT, not a whole multidimensional transform.
+The public axis scheduler continues to own axis order, retained layout, real
+boundaries, scale placement and complete-plan selection. Different axes may
+use different providers in the same resource vector. Both uniform selection
+and the shared coordinate sweep measure the new provider; explicit mapping
+replay retains the actual provider and its resource metadata.
+
+The current adapter accepts power-of-two axis lengths at least two, both
+FP32/FP64 and both directions. A logical axis is presented as
+`[prefix, length, suffix]`; for a strided axis, VkFFT omits the suffix dimension
+and executes all prefixes in a batched invocation without an external packing
+pass. The suffix need not be a power of two. Unsupported lengths or disabled
+builds are recorded as unavailable candidates; other existing providers remain
+eligible. This is the adapter's validated support domain, not a claim that
+VkFFT itself only supports power-of-two transforms.
+
+VkFFT does not expose arbitrary fused output scaling through this adapter.
+The lowering keeps the complete final scale pass when the last core requires
+it, and rejects a `c2r_prefix_scale=true` request with such a final core.
+Provider-owned scratch/LUT storage is reported separately from caller workspace;
+an axis invocation may contain several provider kernels, so it is not a device
+kernel-count measurement. The provider compiles and allocates while creating
+the plan, before steady-state timing or Graph capture.
+
+The v21 core contract now defines `XdAxisResources` and its compiled candidate
+inventory in one CPU-only header, `src/xd_axis_resources.hpp`. Public JSON
+decoding, lowering validation and per-axis refinement consume the same validator
+and candidate factory. This prevents a parameter from being accepted by one
+layer while being silently ignored by another. The inventory includes the
+existing block/register/local choices, optional VkFFT, packed exchange policy 4,
+and the local length-64 32-line variants. These are finite compiled candidates;
+shape and device resource checks remain lowering responsibilities, and the
+theoretical space is wider. The cache namespace is `xd-v22-common-organization` (and
+`xd-real-v21-core-contract`) so old mappings cannot be replayed under the new
+parameter contract. Other butterfly families retain their own operator-specific
+core predicates, documented in the [template audit](template_parameter_audit_20261013.md);
+they are not claimed to share unsupported lowerings merely because their
+semantic traits are compatible.
+
+Enable the optional provider with `-DCUBUTTERFLY_ENABLE_XD_VKFFT=ON`; its default
+follows `CUBUTTERFLY_ENABLE_VKFFT`. It uses the existing vendored VkFFT checkout
+and CUDA driver/NVRTC libraries. Disabling it builds a stub and preserves the
+existing providers. Current cache namespaces are `xd-v22-common-organization` and
+`xd-real-v21-core-contract`, with provider availability in the key; the CMake
+build fingerprint also includes the provider enable option.
+
+The compact real API supports FP32/FP64 R2C and C2R for ranks one through eight.
+The core uses packed out-of-place storage; the public semantic boundary handles
+independent layouts, orders and in-place requests. R2C uses the full logical
+shape and emits `N_last / 2 + 1` on the last axis. C2R accepts that compact
+shape and emits the full shape. Odd and even lengths, inverse normalization,
+and `fft_output_scale` are part of the contract. FP16/BF16 power-of-two real
+requests have an explicit same-precision full-spectrum adapter. FP32 storage
+with FP64 compute has an explicit cast/FP64-child/cast adapter. Mapping and
+whole-call timing include these boundaries. Arbitrary-length C2C requests beyond
+rank two use exact-length rank-one children and the generic permutation boundary.
+For more than three complex axes, default order candidates are cyclic rotations
+of forward/reverse traversal; explicit replay still accepts any legal order.
+
+Research compilation is completed before steady-state timing. If tuning fits
+`CUBUTTERFLY_XD_TUNE_MAX_BYTES`, complete candidates use three trials and
+median timing; a replacement must improve the retained baseline by more than
+one percent by default, subject to the configured promotion margin. When
+unset, the bound has a `512 MiB` floor, a `2 GiB` cap, and
+uses at most one quarter of currently free VRAM, with a second free-memory fit
+check before temporary allocations. This avoids silently bypassing large-batch
+candidate selection while keeping installation-time search bounded. Setting
+the variable to `0` skips empirical promotion. This policy provides a
+reproducible selector, not a performance guarantee. Mapping JSON contains the
+semantic contract, device name/VRAM/SM/fingerprint, physical candidate, and
+replay information. Explicit diagnostic mappings such as `xd:resident-t128`
+are useful for controlled experiments and still undergo contract and resource
+validation.
+
+For cooperative candidates, codelet preparation, dynamic-shared-memory
+attribute setup and occupancy checks finish before candidate execution or
+complete-plan timing. These resource steps are not steady-state kernel timing.
+The bounded implementation record is
+[xD v10.1 scheduling and cores](../results/paper_profile_rc2/end_to_end/xd_schedule_v10/README.md),
+with [v9 controls](../results/paper_profile_rc2/end_to_end/xd_register_v9/README.md);
+it records correctness and resource gating without asserting a complete
+cross-axis pipeline or global optimum.
 
 The six mathematical operators are FFT, NTT, FWHT, subset zeta, superset zeta,
 and structured 2x2 butterflies. The legacy `xor-zeta` name retains its subset-zeta
@@ -35,6 +354,20 @@ accumulation contract. Structured coefficients are semantic inputs, not tuning
 parameters. Rank-2 and embedding plans serialize every physical axis; Bluestein
 serializes both internal convolution transforms. External cuFFT remains an
 explicit baseline option.
+
+In implementation revision 0.9.3.4, normalized FP16/BF16 FFT and FWHT inverses
+apply a factor of 1/2 at each radix-two butterfly. The factor follows the
+butterfly when all input components have magnitude at most one quarter of the
+storage maximum, and precedes it otherwise. The bound leaves room for a complex
+product and addition; deferring the factor on small operands avoids premature
+subnormal rounding. Across an axis the total factor is the requested 1/N.
+The same trait serves real-FFT adapters, complex FFT, shared subgraphs and
+generated stage partitions. This changes the rounding schedule and requires
+new error evidence; it neither promotes the requested precision nor rescales
+the user's input. It cannot make mathematically out-of-range outputs representable.
+Forward and unnormalized requests retain their original scaling semantics.
+The [repair record](numeric_plan_repair_20261009_v0934.md) documents the original
+failures, intermediate regression, final diagnostics and performance scope.
 
 ## Compile policy
 
@@ -73,8 +406,8 @@ caller's stream. Shared workspace is therefore
 `2 * (groups - 1) * batch_tile_count * batch_stride * sizeof(value)`.
 The two-group cuFFTDx and register-prefix FFT adapters use the same scheduler.
 Register FFT supports both FP32 and FP64; its precompiled and on-demand
-candidates expose bulk execution and power-of-two batch tile choices. Arbitrary
-positive tile counts can also be replayed explicitly.
+candidates expose bulk execution, power-of-two interior tiles, and the full
+batch tile. Arbitrary positive tile counts can also be replayed explicitly.
 
 Shared V2 modules export `cubutterfly_module_launch_group_v2`; register FFT V1
 modules export `cubutterfly_module_launch_group_v1`. These optional versioned
@@ -89,6 +422,14 @@ Installed packages include the template sources and enabled MathDx headers.
 `CUBUTTERFLY_JIT_PYTHON` override discovery for relocated or cross-compiled setups.
 
 ## Resident processing units and output exchange
+
+The common organization implementation and its cross-operator validation are
+tracked in [the organization extension](common_organization_20261013.md).
+For shared bulk execution, `batch_tile_count=1..4` folds independent batches
+inside a CTA using the same shared storage. With `stage_overlap=true`, the field
+instead sizes pipeline chunks and per-edge double buffers. Shared logical
+resident-boundary fusion is available to NTT as well as the other five operators;
+local partitions are indexed by the resulting physical groups.
 
 The public mapping has two axes indexed by **physical execution group**:
 
@@ -146,7 +487,7 @@ through the same public mapping JSON used by explicit replay and search:
 
 | Mapping field | Values | Applicable lowering |
 | --- | --- | --- |
-| `prefix_codelet` | `native` (default), `cufftdx-thread` | OnlineReorder register-prefix FFT |
+| `prefix_codelet` | `native` (default), `radix4`, `cufftdx-thread` | OnlineReorder register-prefix FFT |
 | `prefix_codelet_lanes` | Power of two, default `1` | Threads cooperating on one register-prefix codelet |
 | `prefix_shared_layout` | `linear` (default), `xor` | OnlineReorder register-prefix FFT |
 | `factor_io_policies` | Empty/default, or one `dynamic`/`static-unrolled` entry per physical factor | FactorStreamed FFT |
@@ -156,10 +497,24 @@ handoff. It is separate from the existing `shared_layout=writer-aligned`
 contract for the lowering. The XOR choice changes the matching write/read
 addresses without adding shared storage. `cufftdx-thread` replaces the FP32
 prefix's local thread FFT, retaining the surrounding dataflow and suffix.
-The FP64 native core supports both layouts; an explicit FP64
+The FP64 native and radix4 cores support both layouts; an explicit FP64
 `cufftdx-thread` request is rejected rather than silently substituted.
-Nondefault prefix strategies require on-demand compilation; `precompiled`
-mode reports them unavailable.
+The linked radix4 inventory covers the FP32 linear, one-lane, local-stage-8
+provider. Other legal radix4 configurations use on-demand compilation;
+`precompiled` mode reports uncovered configurations unavailable.
+
+The radix4 codelet combines pairs of FFT stages and retains a radix2 remainder
+for odd local logarithms. It supports FP32/FP64 and the same rectangular,
+cooperative-lane and shared-layout geometry as the register-prefix template,
+subject to the existing resource checks. FP64 invokes the selected codelet
+instead of bypassing it with native arithmetic. JIT projection and candidate
+enumeration preserve this identity. Long 1D requests retain their cross-factor
+twiddles and global ordering; they are not replaced by separable 2D FFTs.
+The shared codelet header is installed and participates in the JIT source hash.
+Portable calibration seeds accept this core for FP32/FP64 FFT, and bounded
+post-install tuning can propose both native-to-radix4 and radix4-to-native
+neighbors. A core change resets dependent physical group metadata; it does not
+reuse the previous core's measured time as a calibrated result.
 
 For a prefix of size `R*R`, `prefix_codelet_lanes=G` splits each length-`R`
 FFT among `G` lanes. Each lane runs a length-`R/G` register FFT, applies its
@@ -220,7 +575,7 @@ The `factor-streamed` lowering separates these mapping axes:
 | `fft_core` | Imported `cufftdx-block` or local `register-tile` processing core |
 | `factor_ept`, `factor_columns` | Local core shape and independent FFTs per CTA |
 | `data_tiles_per_cta` | Consecutive independent data tiles processed by one CTA, including at batch=1 |
-| `prefetch_depth` | Number of input tiles buffered in shared memory; zero selects synchronous loading |
+| `prefetch_depth` | Number of input **groups** in the shared ring; a group contains `factor_columns` complete local FFTs; zero selects synchronous loading |
 | `factor_slices`, `factor_overlap` | Power-of-two dependency-closed slices of the unprocessed digit; optional cross-factor streams |
 
 For example, one logical macro stage can contain three physical factors:
@@ -253,6 +608,17 @@ final factor waits for all slices because each of its local transforms consumes
 as many producer transforms as the final factor's size. `factor_overlap=false` is the serialized control
 using the same partial ranges. The existing batch-level `stage_overlap` scheduler
 is a separate lowering and cannot be combined with this mapping.
+
+The ring unit is currently coupled to the core group, not an independent
+transfer chunk. For local size `F`, columns `C`, value bytes `W` and depth `D`,
+the dynamic allocation is `D*F*C*W + max(F*C*W, core_shared_bytes)`.
+The second term is reused for the core and output layout. Thus depth one
+already overlaps a future input group with the current group's computation;
+depth two adds two input groups, not just two buffers in total. Neither `N`
+nor batch multiplies this per-CTA allocation when the local geometry is fixed.
+Search must constrain the complete shape/buffer combination. A rejected large
+group does not invalidate smaller groups with the same prefetch mechanism.
+Independent transfer chunking inside this provider call remains unimplemented.
 
 The slice contract is derived from address matching, not from a contiguous CTA
 tile assumption. For factor `g`, `P=2^Done` and last-factor size `K`, a tile row
@@ -312,6 +678,13 @@ remain different targets. Calibration updates the cumulative registry in
 `$XDG_CACHE_HOME/cubutterfly/registry.json` (normally `~/.cache/cubutterfly`), or
 `CUBUTTERFLY_REGISTRY`. It does not rewrite the frozen legacy selector or require
 a second library build. Registry and user measurement-cache writers use locks.
+
+Optional [platform tuning rules](platform_tuning.md) contribute mapping priors
+to the same exported candidate inventory. The generic selector contains no
+GPU-model dispatch table. Exact measured registry records take precedence;
+DEFAULT otherwise takes the first legal unmeasured candidate, while MEASURE
+and installation search can time the candidates. Rule-file contents participate
+in selection-cache and calibration identities.
 
 The search and additional compilation budgets are separate; zero disables each
 limit. The search budget is distributed over workload cells. These budgets cover
@@ -381,3 +754,151 @@ and last transforms against the CPU reference. CSV records `verified_batches`;
 zero checks every transform, which remains the benchmark/calibrator default.
 Only the acceptance runner opts into bounded checking by default. Compilation,
 initialization and CPU verification are outside CUDA-event kernel time.
+
+## Explicit-root RNS NTT integration
+
+`prepare_rns_plan()` adds persistent, request-specific mapping preparation to
+the C++ RNS entry point. Its `Prefer`, `Require`, and `Refresh` policies use the
+complete semantics, placement, hardware capabilities, build/runtime identity,
+and measurement protocol. `Require` never tunes on a miss. Both HEonGPU adapter
+paths consume this cache; the additive `cubutterflyRns*` C ABI and
+`cubutterfly.rns` Python module expose the same preparation and execution path.
+Actual application requests can be exported and prepared offline with
+`scripts/prepare_rns_requests.py`. See [prepared RNS integration](rns_prepared_integration.md)
+for commands, ownership, timing, and Python callback contracts. This measured
+cache does not imply integration with the general descriptor or installation
+cost model. Records distinguish timing evidence from independent exact checks.
+
+Call `plan.tune(RnsPlacement::InPlace, stream)` for aliased input/output, or
+`RnsPlacement::Separate` for distinct buffers. The original `tune(stream)`
+overload still measures separate buffers. Selection records the measured
+placement; the HEonGPU adapter includes placement in its plan-cache key.
+Tuning uses private canonical data and excludes initialization from event
+timing. Aliased layouts that move rows between domains are reset between
+single-transform timing samples, so replay cannot feed residues to the wrong
+modulus.
+
+Equal-offset, disjoint rows can execute fused CT/GS directly in place at its
+native boundaries (forward natural to bit-reversed, inverse bit-reversed to
+natural). Other boundary orders retain the two-pass scratch path. Global bit
+reversal can cross CTA ownership and cannot safely overwrite unread input.
+Explicit offsets also support sparse and permuted physical row lists.
+
+Independent requests whose dependencies have completed may share a packed
+arena and one `RnsPlanConfig.polynomials` list. This already provides an explicit
+stage batch. An application must arrange the arena and lifetimes; the adapter
+cannot postpone synchronous transform dependencies to collect future calls.
+The stage-only diagnostic `benchmarks/rns_stage_batch_compare.cu` compares
+looped and packed requests for both cuButterfly and pinned GPU-NTT, with CPU
+exact checks. `--include-packing 1` adds identical gather/scatter kernels for
+both libraries and measures their full cost on independently allocated request
+buffers. These remain stage controls, not complete applications.
+
+`cuntt::RnsPlan` (`include/cuntt/rns_ntt.hpp`) is an additive C++ entry point for
+word64 polynomial batches with explicit per-domain roots, cyclic or negacyclic
+rings, independent polynomial offsets, and natural/bit-reversed boundaries.
+Inputs are canonical residues. It shares the existing Hybrid2D arithmetic
+template with the single-domain plan and fuses twists, inverse scaling and
+permutations into the two pass boundaries. All RNS domains participate in each
+launch; the HEonGPU adapter no longer needs separate pack/NTT/unpack calls per
+modulus when this mode is selected.
+
+Its current compiled families cover logN 12..20. `tune()` measures a bounded
+set of split, row, thread, radix, cross-twiddle and boundary-traversal configurations using private input
+and CUDA Graphs before application capture. `measured-rns-request` reports this
+request-local evidence; `calibrated=false` explicitly means the installation
+cost model was not used. This interface has not yet been added to the general
+C descriptor, global planner candidate inventory, or installation calibration
+schema. Those remain integration work. Cross-ciphertext batching is now an
+explicit HEonGPU Graph lowering option, described below; eager calls retain
+their original dependency contract. See [CKKS comparison](../paper/experiments/README_ckks.md) for the
+controlled legacy path, semantics and reproduction commands.
+
+`adapters/heongpu/rns_stage_batch.hpp` binds independent RNS requests to their
+actual source/destination pointers. It deduplicates domains by modulus and root,
+gathers explicit polynomial offsets, executes a packed `RnsPlan`, and scatters
+the results. Its native GPU-NTT control uses the identical packing layout and
+deduplicated domains. Packing and scattering are part of the complete call.
+Overlapping outputs or dependencies between different requests are rejected.
+Within-request aliasing is safe because gathering snapshots every input before
+any output is written. This adapter currently requires canonical word64,
+negacyclic native boundary orders and logN 12..20. The pinned native control
+further bounds polynomial count to `min(65535, INT_MAX/N)`.
+
+`ntt_capture.hpp` and `ntt_graph_batch.hpp` preserve whole-application dependencies.
+Each ciphertext is first captured in a private, persistent allocation arena.
+Explicit NTT markers carry the prepared semantics and buffer bindings; these
+graphs cannot run directly. `BatchedNttGraph` checks the entire stage sequence,
+replaces each corresponding stage with one gather/NTT/scatter child graph, and
+clones all remaining nodes and edges. Unsupported graph node types or incompatible
+stage signatures fail explicitly. Each stage owns its workspace. The caller
+keeps the source graphs, arenas, context and keys alive until execution ends.
+`adapters/heongpu/graph_schedule.hpp` adds reusable complete-Graph selection.
+Named launch callbacks supply equivalent, prevalidated candidates. `tune()`
+measures alternating candidates on an explicit stream, stores every sample and
+selects the minimum median. `launch()` reuses that instance's choice without
+events, synchronization or new search. Callbacks borrow their graph/buffer
+lifetimes; capture-time tuning and uninitialized selection are rejected.
+
+The CKKS runner's `--auto-schedule --stage-batch --graph` supplies its existing
+loop and stage-batched implementations. It validates both before selection,
+then checks the selected path with changed/restored inputs and independently
+measures it alongside the fixed controls. The `.selection.csv` and `.samples.csv`
+sidecars distinguish selection from holdout timing. Selection is
+`measured-full-graph-request`, not an installation-model prediction or a
+cross-process cache hit. This does not close global RNS descriptor/model
+integration. No shape, batch threshold or device-name rule fixes the winner.
+
+This is a bounded one-device Graph lowering, not a transparent delay or merge of
+ordinary eager API calls. `--stage-batch` compares this candidate against the
+scalar-call loop; selection between these application schedules is still explicit.
+
+The RNS boundary-traversal option changes lane-to-address mapping, not transform
+order. Bit-reversed input/output were already directly supported without a
+standalone permutation kernel. Physical traversal coalesces that boundary's
+global addresses while preserving logical coefficient indices. Both traversals
+remain searchable, as shared-memory costs can differ. Rows per block now range
+over 1/2/4/8/16/32 for Hybrid2D, subject to the actual device's shared-memory and grid limits.
+
+`RnsCoreFamily::FusedCTGS` adds the mature negacyclic fused-root CT/GS strategy
+to the same request tuner. Its template binds stage intervals, independent
+lines, threads, explicit roots, polynomial addresses and boundary orders. It
+uses existing Shoup arithmetic and explicit CTA synchronization. Forward and
+inverse are compiled separately; power-of-two indexing uses shifts and masks.
+Radix2 and register-fused radix4 are executable candidates. Radix4 keeps two
+adjacent stages in four registers before shared writeback and synchronization;
+an odd local stage count has a radix2 remainder. Both variants enter the same
+resource validation, dispatch and request-local measurements. Neither is forced
+by application or device name. The family has no separate twist/cross operation;
+incompatible mapping fields are rejected. It is an additional executable family,
+not a claim that the global planner or installation model has been integrated.
+
+`RnsCoreFamily::GpuNttMerge` exposes the pinned GPU-NTT Merge contract as a
+separate searchable provider. It is legal only for negacyclic radix2 Barrett
+execution with moduli below 2^62 and independently addressable, N-aligned
+input/output rows with an explicit per-polynomial domain sequence. Logical
+polynomial order may be a modulus-grouped permutation or sparse selection; the
+compact stage uses each polynomial's physical offset rather than assuming
+`index*N`.
+The provider keeps the same stage descriptor and CUDA Graph timing protocol as
+FusedCTGS. Equal input/output offsets and native CT/GS boundary orders preserve
+the direct in-place path; other layouts or boundary orders use scratch. This constraint is checked by
+the plan and is never inferred from a library or application name.
+Both compiled addressing variants consume explicit polynomial offsets; their
+names do not imply that physical-offset loads have been removed. The tuner also measures a
+provider-specific 512-thread candidate for `N >= 2^16`; it is eligible only
+when the device accepts that launch and is selected only when timing confirms
+it.
+
+FusedCTGS local stage logs range from 2 through 10; its power-of-two row groups
+extend through 128, bounded by the independent tile count and device resources.
+`second_rows_per_block` and `second_threads_per_block` independently configure
+the second executed pass; zero inherits the first pass. Inverse transforms
+reverse stage intervals, not these execution-order fields. Resource validation
+and launch dispatch use the effective parameters separately for each pass.
+The tuner retains coupled mappings and adds equal tile-word capacities with
+independent threads per pass. For example, a 5+9 split with 16/1 rows represents
+512 words in either tile without forcing the same row count. This is a bounded
+search subset, not the full Cartesian product of independently legal mappings.
+Explicit mappings can replay additional combinations. Changing the C++ mapping
+structure requires rebuilding consumers against the matching header and library.

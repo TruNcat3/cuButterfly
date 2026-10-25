@@ -139,7 +139,7 @@ def test_rank2_is_separate_and_uses_plan_bench_compare_cufft(tmp_path):
     )
     audit = json.loads((output / "rank2_audit.json").read_text())
     assert audit["public_api"]["rank2"].startswith("supported")
-    assert audit["public_api"]["rank3"].startswith("unsupported")
+    assert audit["public_api"]["rank3"].startswith("supported")
     assert audit["adapter"]["acceptance_adapter"] is False
     assert len(audit["cases"]) == 8
     assert audit["search"] == {

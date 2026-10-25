@@ -83,6 +83,22 @@ def _fixture(tmp_path, *, batch=4):
     return binary, profile, protocol, identity, static_key, point, group, raw_description, candidate
 
 
+def test_stage_cache_identity_tracks_shared_library_relink(tmpdir):
+    tmp_path = pathlib.Path(str(tmpdir))
+    binary = tmp_path / "stage-probe"
+    binary.write_bytes(b"stage-probe-binary")
+    library = tmp_path / "libcuntt.so"
+    library.write_bytes(b"library-v1")
+    profile = {"device": "test", "compute_capability": "8.0"}
+    protocol = {"warmup": 1, "repeat": 2, "trials": 1, "mode": "full"}
+
+    first = calibration._cache_identity(binary, profile, protocol, "ignored")
+    library.write_bytes(b"library-v2-relinked")
+    second = calibration._cache_identity(binary, profile, protocol, "ignored")
+
+    assert first["library_sha256"] != second["library_sha256"]
+
+
 def _record(point, group, candidate, *, role="train", trial_tag=None):
     row = {
         "schema": calibration.PROBE_SCHEMA,

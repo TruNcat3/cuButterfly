@@ -1,0 +1,63 @@
+\subsection{Prior execution and generation approaches}
+\label{sec:related}
+Existing work addresses this problem at several levels, from the transform
+formula to a tensor program or a hardware mapping. These approaches provide
+important building blocks. The relevant distinction is the object they use
+to connect local computation, communication, and scheduling.
+
+\noindent\textbf{Transform generation and specialized execution.}
+Transform planners already exploit mathematical structure and implementation
+search. FFTW uses codelets and empirical planning, SPIRAL generates transform
+implementations from algebraic descriptions, and FFTX extends this approach to
+composed FFT plans and surrounding user computation
+\cite{fftw2005,spiral2005,fftx2018}. GPU libraries also optimize organization.
+VkFFT generates complete FFT implementations, while GPU-NTT optimizes memory
+accesses and CUDA kernel/block parameters
+\cite{vkfft2023,vkfft,gpuntt2023,gpuntt2025}.
+FlashFFTConv jointly chooses FFT decomposition, tensor-core execution, and
+memory-aware fusion for long convolutions~\cite{flashfftconv2024}. HadaCore
+uses a hardware-aware Hadamard decomposition to accelerate computation and
+data exchange~\cite{hadacore2024}. These works establish transform generation
+and joint core/organization optimization. Our aim is to carry these decisions
+across arithmetic families using the dependency relation as a common
+organizing object, while preserving each operator's numerical contract.
+
+\noindent\textbf{Tensor compilation and tile scheduling.}
+General tensor compilers supply closely related abstractions. TVM separates
+computation from scheduling~\cite{tvm2018}. Ansor generates hierarchical
+schedule sketches and searches their annotations~\cite{ansor2020}. ROLLER
+constructs hardware-aligned tiles across memory levels~\cite{roller2022}.
+TensorIR isolates local computation through block signatures and supports
+outer transformations and tensorization~\cite{tensorir2023}. Welder's
+hierarchical tile-graph connects producer and consumer tiles, propagates tile
+shapes, and schedules reuse using traffic and footprint estimates
+\cite{welder2023}. These systems establish tiling, reusable compute interfaces,
+and cross-operator reuse as prior techniques. For butterflies, the changing
+pair relation provides additional structure. It can determine which values a
+stage group needs and which producers a successor must await, before committing
+to a physical tile or arithmetic core. Section~\ref{sec:method} develops this
+relation into a construction of local regions, their handoffs, and their
+hierarchical organization.
+
+\noindent\textbf{Hierarchical dataflow and positioning.}
+Eyeriss analyzes data movement under controlled hardware resources, and
+Timeloop separates workload, architecture, and mapping descriptions to
+explore hierarchical spatial/temporal tiling
+\cite{eyeriss2016,timeloop2019}. These works establish spatial/temporal mapping
+and separate descriptions as prior principles. Applying that perspective to
+butterflies still requires identifying legal resident regions and the
+communication that remains between them. On GPUs, independently scheduled
+blocks also share execution and memory resources, so spatial organization
+cannot assume dedicated pipeline hardware.
+
+Table~\ref{tab:related-work} summarizes the methodological distinction.
+The open question we address is how to derive \textbf{a common execution
+construction from butterfly dependencies}, so that arithmetic specialization
+and resource allocation operate on the same local regions and handoffs.
+The contribution is not generic tiling, transform generation, or the existence
+of spatial and temporal parallelism. It is their concrete combination through
+butterfly closure, communication, readiness, and layout rules. To see why this
+combination is needed, we next examine what is lost when reuse or parallelism
+is optimized in isolation.
+
+\input{generated/related_work_table}

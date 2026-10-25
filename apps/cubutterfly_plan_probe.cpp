@@ -2,15 +2,22 @@
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <sstream>
+#include "../src/hardware_model.hpp"
 
 using Json = nlohmann::json;
 
-Json hardware() {
-    const auto h = cuntt::query_hardware_resource_model();
+Json hardware(bool live_only = false) {
+    const auto h = live_only ? cuntt::detail::query_live_hardware_resource_model()
+                             : cuntt::query_hardware_resource_model();
     return {{"device", h.device_name}, {"sm_count", h.sm_count}, {"memory_bytes", h.memory_bytes},
+        {"compute_capability", std::to_string(h.compute_major) + "." + std::to_string(h.compute_minor)},
         {"max_blocks_per_sm", h.max_blocks_per_sm}, {"max_threads_per_sm", h.max_threads_per_sm},
         {"registers_per_sm", h.registers_per_sm}, {"shared_bytes_per_sm", h.shared_bytes_per_sm},
-        {"max_threads_per_block", h.max_threads_per_block}};
+        {"max_threads_per_block", h.max_threads_per_block},
+        {"registers_per_block", h.registers_per_block}, {"shared_bytes_per_block", h.shared_bytes_per_block},
+        {"cooperative_launch", h.cooperative_launch},
+        {"resource_source", live_only ? "live-cuda-properties:explicit-hardware-probe"
+                                      : cuntt::detail::hardware_resource_model_source()}};
 }
 
 template<class Plan> Json describe(const Plan& plan) {
@@ -67,9 +74,10 @@ Json probe(const Json& point) {
 int main(int argc, char** argv) {
     try {
         if (argc == 2 && std::string(argv[1]) == "--hardware") std::cout << hardware() << '\n';
+        else if (argc == 2 && std::string(argv[1]) == "--hardware-live") std::cout << hardware(true) << '\n';
         else if (argc == 3 && std::string(argv[1]) == "--point-json")
             std::cout << probe(Json::parse(argv[2])) << '\n';
-        else throw std::invalid_argument("usage: cubutterfly_plan_probe --hardware | --point-json JSON");
+        else throw std::invalid_argument("usage: cubutterfly_plan_probe --hardware | --hardware-live | --point-json JSON");
         return 0;
     } catch (const std::exception& error) {
         std::cout << Json{{"status", "unavailable"}, {"reason", error.what()}} << '\n';

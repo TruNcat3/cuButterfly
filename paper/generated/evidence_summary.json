@@ -1,0 +1,204 @@
+{
+  "claims": [
+    {
+      "id": "C1",
+      "scope": "Only these named shapes and the focused V100 cohort.",
+      "statement": "The selected V100 vectorized FP32 FFT points supersede the older vectorized rows at logN=18,batch=16 and logN=20,batch=4."
+    },
+    {
+      "id": "C2",
+      "scope": "Only the named stable V100 rows; no global operator claim.",
+      "statement": "Selected V100 FWHT and NTT external comparisons have matched semantic contracts and five-trial records."
+    },
+    {
+      "id": "C3",
+      "scope": "FFT uses the three-trial quick cohort; FWHT/NTT use the separate five-trial external cohort; the A10040 FWHT row is unstable.",
+      "statement": "A100 40GB has separate matched FFT, FWHT and NTT examples in the C0 rebenchmark cohorts."
+    },
+    {
+      "id": "C4",
+      "scope": "5/72 cells only; interrupted run, not full migration qualification.",
+      "statement": "The A100 80GB acceptance produced five complete paired cells with correctness records."
+    },
+    {
+      "id": "C5",
+      "scope": "Build identity is unknown for V100/A10040 and the A10080 run is partial.",
+      "statement": "These historical records do not establish a current-version or full-matrix performance claim."
+    },
+    {
+      "id": "C6",
+      "scope": "Do not infer causation from mapping comparisons across different cohorts or organizations.",
+      "statement": "The ordinary-core versus optimized-core by basic versus hybrid organization factorial ablation remains pending."
+    },
+    {
+      "id": "C7",
+      "scope": "27 diagnostic plans and an independent scheduling-floor probe; this is model evidence, not a kernel speedup claim.",
+      "statement": "A separate A100 80GB physical-stage composition diagnostic measures model error and exposes an unresolved short-kernel scheduling/concurrency assumption."
+    }
+  ],
+  "cohort_completion": {
+    "a10040_external": {
+      "status": "historical selected rows"
+    },
+    "a10040_fft_quick": {
+      "status": "historical selected rows"
+    },
+    "a10080_acceptance_partial": {
+      "completed_cells": 5,
+      "coverage": "5/72",
+      "expected_cells": 72,
+      "full_migration_qualified": false,
+      "status": "interrupted"
+    },
+    "a10080_composition_diagnostic": {
+      "status": "historical selected rows"
+    },
+    "v100_external": {
+      "status": "historical selected rows"
+    },
+    "v100_vectorized_fft": {
+      "status": "historical selected rows"
+    }
+  },
+  "composition_study": {
+    "cohort": "a10080_composition_diagnostic",
+    "plans": 27,
+    "prediction_error_maximum": {
+      "fft": 0.16381,
+      "fwht": 0.40287,
+      "ntt": 0.15067
+    },
+    "prediction_error_median": {
+      "fft": 0.04998,
+      "fwht": 0.12846,
+      "ntt": 0.04109
+    },
+    "prediction_error_reported_percent": {
+      "fft": 4.998,
+      "fwht": 12.846,
+      "largest_fwht": 40.287,
+      "ntt": 4.109
+    },
+    "public_correctness_passed": 81,
+    "public_correctness_trials": 81,
+    "scheduling_floor": {
+      "groups": 3,
+      "minimal_payload_us": 343.562,
+      "protocol": "one-CTA one-thread distinct uint64 store; BatchPipeline::enqueue",
+      "tiles": 32
+    },
+    "serial_case": {
+      "batch": 64,
+      "independent_serial_service_sum_us": 80.2,
+      "interpretation": "Evidence of an unresolved submission/event release and useful-overlap assumption; not evidence that all schedules serialize.",
+      "operator": "fwht",
+      "profiled_concurrent_kernel_time_us": 0.0,
+      "tile_batch": 8,
+      "unprofiled_latency_us": 82.276
+    },
+    "source_ids": [
+      "a10080_composition_report",
+      "a10080_composition_services",
+      "a10080_composition_pipeline"
+    ],
+    "status": "complete diagnostic; concurrency remains unqualified"
+  },
+  "correct_rows": 12,
+  "factorial_ablation": {
+    "design": "2x2",
+    "factors": [
+      "core_class: ordinary | optimized",
+      "organization: basic | hybrid"
+    ],
+    "interpretation_guard": "Do not infer a causal core or organization effect from the existing mapping comparisons, which change multiple factors and/or cohorts.",
+    "required_controls": [
+      "same hardware",
+      "same operator/precision/shape/placement",
+      "same warmup/repeat/trial protocol",
+      "same correctness contract"
+    ],
+    "status": "pending"
+  },
+  "frozen_on": "2026-09-16",
+  "gaps": [
+    {
+      "blocks": [
+        "C4",
+        "C5"
+      ],
+      "description": "A10080 has 5 complete cells out of 72; 67 cells have no completed paired measurement in this frozen run.",
+      "id": "G1"
+    },
+    {
+      "blocks": [
+        "C5"
+      ],
+      "description": "V100 and A10040 source build identities are unknown; recorded device and, where available, binary hashes are provenance, not a current-version assertion.",
+      "id": "G2"
+    },
+    {
+      "blocks": [
+        "C6"
+      ],
+      "description": "The ordinary-core/optimized-core by basic/hybrid organization 2x2 factorial ablation has not been run with matched semantics and protocol.",
+      "id": "G3"
+    },
+    {
+      "blocks": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "description": "No cross-cohort average is defined because hardware, trial count, run protocol and source-build provenance differ.",
+      "id": "G4"
+    },
+    {
+      "blocks": [
+        "C7"
+      ],
+      "description": "The composition diagnostic still has a concurrent handoff/scheduling gap: an aggregate scheduling floor does not prove useful overlap of short kernels.",
+      "id": "G5"
+    }
+  ],
+  "generated_from": "paper/evidence/manifest.json",
+  "ratio_max": 3.690860725821775,
+  "ratio_min": 0.8973256924546323,
+  "row_count": 12,
+  "rows_by_cohort": {
+    "a10040_external": 2,
+    "a10040_fft_quick": 1,
+    "a10080_acceptance_partial": 5,
+    "v100_external": 2,
+    "v100_vectorized_fft": 2
+  },
+  "rows_by_operator": {
+    "fft": 7,
+    "fwht": 3,
+    "ntt": 2
+  },
+  "schema": "cubutterfly-paper-evidence-export-v1",
+  "source_files_are_not_read": true,
+  "source_sha256": {
+    "a10040_environment": "a42812a9bc668bd7ceef588e0049c0ec4fd070c7f68b5915e0d2c3db302e9888",
+    "a10040_external_raw": "a3a1966f8410fea329dcdb390d7af7e4e7f7ebf992793b5fedb4fae9103f796f",
+    "a10040_external_summary": "092a6a552bc92828e35726825d98a829f5075931d3b2dad6dd0ac3e0b60b7e8c",
+    "a10040_external_tables": "51fbf4fb63a5d9b6ab3846766b045a781383787fa3b0ed092d46498f95f38acf",
+    "a10040_raw": "555bf9aa676a64b445eed52657ad9428c673764a131b588157c4fc9c6ce086a3",
+    "a10040_summary": "eaa08c6804ad59b55f7c16358507a9019f141c1f9143fca7bacae21168ccd7f5",
+    "a10080_acceptance": "2e8cb77aa0303815119c4f69f55434c4906bba2cb509a58d7338c3c96eeb0a3d",
+    "a10080_composition_pipeline": "8b24bc6883a9ee9e6d68cc8707a27db8481d4856e15a61c947154876c830eecf",
+    "a10080_composition_report": "eaec7b7d4b178f174a2cfbe471c6471b6df869e80972cf2152d8337e19c0337d",
+    "a10080_composition_services": "77d3e1891c25e9df7742ffcdb9ccba35580ff79f6841aecd3250be3412449381",
+    "a10080_summary": "0ae2a8ae293170cd64c7683f7bc36b8322ce123ad02f242603578d500be85089",
+    "v100_external_raw": "ba9d688d191779ab7b56b73fc0f13ac4168688dc067091029d7cb0c2b49a399f",
+    "v100_external_report": "48e77aa28c5b048b8ec46876a79cc44dd520aab8c647a9cd20237d7dfdd1a2ba",
+    "v100_external_summary": "03f55284b8a520a1a23abac47dd3a66024924e629c170aea3caffc49235286ef",
+    "v100_full_summary": "57cbad74e7c1cdf549d40863f790e409dcfc7e6483b5393b3363ba034043d2f0",
+    "v100_protocol_doc": "f04e1f5ccd6311583de0a5af1aa6e0804434e1f7dbc39be66a7de3d29454f99f",
+    "v100_vectorized_raw": "4764c91ecc946da994b9f46d97cb1c3ba2f60cb4915976f5df1c377682cf7bcc",
+    "v100_vectorized_report": "04721ee929c85912104da6af159cda75570a19e9dcc2274f19bb788993774ce7",
+    "v100_vectorized_summary": "1ee094e47219c8ca8b19687aa07f46c22780bbdd1ce58f7ef571ee8525cc3dfc"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "status": "passed",
+  "scope": "CPU mathematical examples; not CUDA or performance validation",
+  "counts": {
+    "bit_reversal_edges": 3586,
+    "floating_transforms": 24,
+    "exact_ntt_transforms": 20,
+    "zeta_roundtrips": 12,
+    "bank_layouts": 5,
+    "local_inverse_identities": 96
+  },
+  "max_fft_absolute_error": 9.640386107808457e-13,
+  "negative_controls": [
+    "unpermuted GS output differs",
+    "unswizzled columns collide"
+  ],
+  "bank_assumptions": "P lanes, P single-word banks, one word per lane, full row or column",
+  "unproved_by_enumeration": [
+    "general graph partition correctness",
+    "all floating rounding contracts",
+    "real multiword GPU transactions",
+    "GPU overlap or global optimality"
+  ]
+}

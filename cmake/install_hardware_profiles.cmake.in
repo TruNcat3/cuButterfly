@@ -1,0 +1,19 @@
+# Repository profiles are seeds. Reinstallation must preserve local calibration.
+set(_hardware_source "@CMAKE_CURRENT_SOURCE_DIR@/config/hardware")
+if(IS_ABSOLUTE "@CMAKE_INSTALL_DATADIR@")
+    set(_hardware_destination "@CMAKE_INSTALL_DATADIR@/cuButterfly/hardware")
+else()
+    set(_hardware_destination "${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_DATADIR@/cuButterfly/hardware")
+endif()
+file(GLOB_RECURSE _hardware_seeds LIST_DIRECTORIES FALSE
+    RELATIVE "${_hardware_source}" "${_hardware_source}/*.json")
+foreach(_hardware_seed IN LISTS _hardware_seeds)
+    set(_hardware_target "$ENV{DESTDIR}${_hardware_destination}/${_hardware_seed}")
+    if(NOT EXISTS "${_hardware_target}" AND NOT IS_SYMLINK "${_hardware_target}")
+        # file(INSTALL) applies DESTDIR itself; only the existence check above
+        # needs the staged destination.
+        get_filename_component(_hardware_parent "${_hardware_destination}/${_hardware_seed}" DIRECTORY)
+        file(INSTALL DESTINATION "${_hardware_parent}" TYPE FILE
+            FILES "${_hardware_source}/${_hardware_seed}")
+    endif()
+endforeach()

@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 import copy
+import csv
 import json
 import pathlib
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
+import run_comprehensive_suite as comprehensive_suite
 from run_comprehensive_suite import (build_command, expected_semantics, load_manifest, ntt_prime,
                                      parse_csv_record, selected_cases)
 from summarize_comprehensive_suite import summarize
@@ -91,12 +94,95 @@ class ComprehensiveSuiteTest(unittest.TestCase):
         document = copy.deepcopy(self.document)
         # Command construction needs an existing executable, not an unrelated
         # build directory from the historical benchmark manifest.
-        document["binaries"][case["runner"]] = sys.executable
+        document["runners"][case["runner"]]["executable"] = sys.executable
         command = build_command(ROOT, document, case, document["protocols"]["full"], 17, False)
         self.assertIn("--element-stride", command)
         self.assertEqual(command[command.index("--element-stride") + 1], "2")
         self.assertEqual(command[command.index("--batch") + 1], "17")
         self.assertEqual(command[command.index("--repeat") + 1], "100")
+
+    def test_timed_verification_targets_only_internal_runners(self):
+        document = copy.deepcopy(self.document)
+        for runner in ("butterfly", "ntt", "fft-library"):
+            document["runners"][runner]["executable"] = sys.executable
+        protocol = dict(document["protocols"]["full"], verify_timed_batches=2)
+        cases = [
+            next(case for case in document["cases"] if case["id"] == "fft8_cub"),
+            next(case for case in document["cases"] if case["id"] == "ntt12_30_hybrid"),
+            next(case for case in document["cases"] if case["id"] == "fft8_cufft"),
+        ]
+        for case in cases:
+            with self.subTest(runner=case["runner"]):
+                command = build_command(ROOT, document, case, protocol, 7, False, 2)
+                if case["runner"] in ("butterfly", "ntt"):
+                    self.assertIn("--verify", command)
+                    self.assertEqual(command[command.index("--verify-batches") + 1], "2")
+                else:
+                    self.assertNotIn("--verify", command)
+                    self.assertNotIn("--verify-batches", command)
+        preflight = build_command(ROOT, document, cases[0], protocol, 1, True, 2)
+        self.assertNotIn("--verify-batches", preflight)
+
+    def test_timed_verification_uses_actual_batch_and_writes_count(self):
+        document = copy.deepcopy(self.document)
+        document["runners"]["butterfly"]["executable"] = sys.executable
+        document["protocols"]["quick"] = {
+            "target_points": 1792, "warmup": 0, "repeat": 1, "trials": 1,
+            "verify_batch": 1, "verify_timed_batches": 2,
+        }
+        responses = iter((
+            {"correct": "1", "max_error": "0", "kernel_ms": "0.1"},
+            {"correct": "1", "verified_batches": "2", "kernel_ms": "0.2"},
+        ))
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = pathlib.Path(directory) / "manifest.json"
+            output = pathlib.Path(directory) / "raw.csv"
+            manifest.write_text(json.dumps(document))
+            with mock.patch.object(comprehensive_suite, "execute", side_effect=responses) as execute, \
+                    mock.patch.object(sys, "argv", [
+                        "run_comprehensive_suite.py", "--manifest", str(manifest), "--mode", "quick",
+                        "--only", "fft8_cub", "--exact", "--output", str(output),
+                    ]):
+                comprehensive_suite.main()
+            timed_command = execute.call_args_list[1][0][0]
+            self.assertEqual(timed_command[timed_command.index("--batch") + 1], "7")
+            self.assertEqual(timed_command[timed_command.index("--verify-batches") + 1], "2")
+            with output.open(newline="") as source:
+                row = next(csv.DictReader(source))
+            self.assertEqual(row["performance_batch"], "7")
+            self.assertEqual(row["verified_batches"], "2")
+
+    def test_timed_verification_rejects_incorrect_timed_row(self):
+        document = copy.deepcopy(self.document)
+        document["runners"]["butterfly"]["executable"] = sys.executable
+        document["protocols"]["quick"] = {
+            "target_points": 1792, "warmup": 0, "repeat": 1, "trials": 1,
+            "verify_batch": 1, "verify_timed_batches": 2,
+        }
+        responses = iter((
+            {"correct": "1", "max_error": "0", "kernel_ms": "0.1"},
+            {"correct": "-1", "verified_batches": "2", "kernel_ms": "0.2"},
+        ))
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = pathlib.Path(directory) / "manifest.json"
+            output = pathlib.Path(directory) / "raw.csv"
+            manifest.write_text(json.dumps(document))
+            with mock.patch.object(comprehensive_suite, "execute", side_effect=responses), \
+                    mock.patch.object(sys, "argv", [
+                        "run_comprehensive_suite.py", "--manifest", str(manifest), "--mode", "quick",
+                        "--only", "fft8_cub", "--exact", "--output", str(output),
+                    ]):
+                with self.assertRaisesRegex(RuntimeError, "timed correctness check"):
+                    comprehensive_suite.main()
+
+    def test_invalid_timed_verification_protocol_is_rejected(self):
+        invalid = copy.deepcopy(self.document)
+        invalid["protocols"]["quick"]["verify_timed_batches"] = "2"
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "invalid.json"
+            path.write_text(json.dumps(invalid))
+            with self.assertRaisesRegex(ValueError, "verify_timed_batches"):
+                load_manifest(path)
 
     def test_csv_parser_ignores_non_csv_output(self):
         output = "notice\ndevice,kernel_ms,correct\n\"V100\",0.125,1\n"

@@ -1,0 +1,97 @@
+{
+  "schema": "cubutterfly-benchmark-manifest-v1",
+  "id": "full-default",
+  "description": "Bounded full matrix; dimensions are explicit and reproducible.",
+  "axes": {
+    "sizes": [4096, 16384, 32768, 65536],
+    "batches": [1, 4, 16],
+    "precisions": ["fp16", "bf16", "fp32", "fp64", "word32", "word64"],
+    "directions": ["forward", "inverse"],
+    "layouts": ["natural", "bit-reversed", "strided"],
+    "operators": ["fft", "ntt", "fwht", "subset-zeta", "superset-zeta", "xor-zeta"]
+  },
+  "modes": {
+    "full": {"case_ids": ["operator-core-gpu", "operator-core-cpu", "fft-h-core", "fft-l-core", "fft-h-cpu", "fft-e2e", "fft-profile", "e2e-core", "profile-core"]}
+  },
+  "execution": {"gpu": true, "cpu": true},
+  "output": {"root": "results/benchmark/full", "format": "json"},
+  "cases": [
+    {
+      "id": "fft-h-core", "scope": "operator", "modes": ["full"],
+      "operators": ["fft-h"], "precisions": ["fp32", "fp64"],
+      "targets": [
+        {"backend": "cubutterfly", "provider": "cuda", "execution": {"gpu": true, "cpu": false}},
+        {"backend": "cufft", "provider": "cuda", "execution": {"gpu": true, "cpu": false}},
+        {"backend": "vkfft", "provider": "cuda", "execution": {"gpu": true, "cpu": false}}
+      ], "runner": "operator"
+    },
+    {
+      "id": "fft-l-core", "scope": "operator", "modes": ["full"],
+      "operators": ["fft-l"], "precisions": ["fp16", "bf16"], "accumulation": "native",
+      "layouts": ["natural"],
+      "targets": [{"backend": "cubutterfly", "provider": "cuda", "execution": {"gpu": true, "cpu": false}}],
+      "runner": "operator"
+    },
+    {
+      "id": "fft-h-cpu", "scope": "operator", "modes": ["full"],
+      "operators": ["fft-h"], "precisions": ["fp32", "fp64"],
+      "targets": [{"backend": "cpu", "provider": "cpu", "execution": {"gpu": false, "cpu": true}}],
+      "runner": "operator"
+    },
+    {
+      "id": "fft-e2e", "scope": "e2e", "modes": ["full"],
+      "operators": ["fft-h"], "sizes": [16384, 32768, 65536], "batches": [1, 4, 16],
+      "precisions": ["fp32"], "directions": ["forward", "inverse"],
+      "layouts": ["natural"], "scenes": ["image_filter", "poisson"],
+      "backends": ["cubutterfly", "reference"], "providers": ["cuda"],
+      "execution": {"gpu": true, "cpu": false}, "runner": "e2e"
+    },
+    {
+      "id": "fft-profile", "scope": "profile", "modes": ["full"],
+      "operators": ["fft-h"], "sizes": [16384, 32768, 65536], "batches": [1, 4],
+      "precisions": ["fp32", "fp64"], "directions": ["forward", "inverse"],
+      "layouts": ["natural", "strided"], "scenes": ["regular_bootstrapping", "image_filter"],
+      "backends": ["cubutterfly", "reference"], "providers": ["cuda"],
+      "execution": {"gpu": true, "cpu": false}, "runner": "ncu"
+    },
+    {
+      "id": "operator-core-gpu", "scope": "operator", "modes": ["full"],
+      "operators": ["ntt", "fwht", "subset-zeta", "superset-zeta", "xor-zeta"],
+      "sizes": [4096, 16384, 32768, 65536], "batches": [1, 4, 16],
+      "precisions": ["fp16", "bf16", "fp32", "fp64", "word32", "word64"],
+      "directions": ["forward", "inverse"], "layouts": ["natural", "bit-reversed", "strided"],
+      "targets": [
+        {"backend": "cubutterfly", "provider": "cuda", "execution": {"gpu": true, "cpu": false}},
+        {"backend": "cufft", "provider": "cuda", "execution": {"gpu": true, "cpu": false}},
+        {"backend": "vkfft", "provider": "cuda", "execution": {"gpu": true, "cpu": false}},
+        {"backend": "gpuntt", "provider": "cuda", "execution": {"gpu": true, "cpu": false}}
+      ], "runner": "operator"
+    },
+    {
+      "id": "operator-core-cpu", "scope": "operator", "modes": ["full"],
+      "operators": ["ntt", "fwht", "subset-zeta", "superset-zeta", "xor-zeta"],
+      "sizes": [4096, 16384, 32768, 65536], "batches": [1, 4, 16],
+      "precisions": ["fp16", "bf16", "fp32", "fp64", "word32", "word64"],
+      "directions": ["forward", "inverse"], "layouts": ["natural", "bit-reversed", "strided"],
+      "targets": [
+        {"backend": "cpu", "provider": "cpu", "execution": {"gpu": false, "cpu": true}}
+      ], "runner": "operator"
+    },
+    {
+      "id": "e2e-core", "scope": "e2e", "modes": ["full"],
+      "operators": ["ntt"], "sizes": [16384, 32768, 65536], "batches": [1, 4, 16],
+      "precisions": ["fp32", "word64"], "directions": ["forward", "inverse"],
+      "layouts": ["natural"], "scenes": ["regular_bootstrapping", "image_filter", "poisson", "keyswitch"],
+      "backends": ["cubutterfly", "reference"], "providers": ["cuda"],
+      "execution": {"gpu": true, "cpu": false}, "runner": "e2e"
+    },
+    {
+      "id": "profile-core", "scope": "profile", "modes": ["full"],
+      "operators": ["ntt", "fwht"], "sizes": [16384, 32768, 65536], "batches": [1, 4],
+      "precisions": ["fp32", "fp64", "word64"], "directions": ["forward", "inverse"],
+      "layouts": ["natural", "strided"], "scenes": ["regular_bootstrapping", "image_filter"],
+      "backends": ["cubutterfly", "reference"], "providers": ["cuda"],
+      "execution": {"gpu": true, "cpu": false}, "runner": "ncu"
+    }
+  ]
+}

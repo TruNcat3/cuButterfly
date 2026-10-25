@@ -14,6 +14,95 @@ from fit_local_cost_model import feature_vector, FEATURE_NAMES
 from calibration_space import butterfly_candidates
 
 
+def test_shared_library_identity_is_cached_and_detects_relink(tmpdir):
+    import calibrate_local_hardware as calibration
+
+    tmp_path = pathlib.Path(str(tmpdir))
+    for name in ("cubutterfly_bench", "cuntt_bench"):
+        (tmp_path / name).write_bytes(name.encode())
+    library = tmp_path / "libcuntt.so"
+    library.write_bytes(b"library-v1")
+    args = SimpleNamespace(build_dir=tmp_path)
+    guard = calibration._SharedLibraryGuard(tmp_path)
+    identity = calibration.measurement_identity(args, guard)
+
+    assert identity["library_sha256"] == guard.digest()
+    guard.assert_matches(identity["library_sha256"], "before")
+    library.write_bytes(b"library-v2-relinked")
+    with pytest.raises(RuntimeError, match="libcuntt.so changed"):
+        guard.assert_matches(identity["library_sha256"], "after")
+
+
+def test_static_build_identity_preserves_legacy_shape(tmpdir):
+    import calibrate_local_hardware as calibration
+
+    tmp_path = pathlib.Path(str(tmpdir))
+    for name in ("cubutterfly_bench", "cuntt_bench"):
+        (tmp_path / name).write_bytes(name.encode())
+    identity = calibration.measurement_identity(SimpleNamespace(build_dir=tmp_path))
+    assert "library_sha256" not in identity
+
+
+def test_invalid_runtime_candidate_is_recorded_without_aborting(tmpdir, monkeypatch):
+    import calibrate_local_hardware as calibration
+
+    tmp_path = pathlib.Path(str(tmpdir))
+    for name in ("cubutterfly_bench", "cuntt_bench"):
+        (tmp_path / name).write_bytes(name.encode())
+    workload = {
+        "operator": "fft", "precision": "fp32", "logN": 12, "batch": 2,
+        "direction": "forward", "normalization": "none",
+        "placement": "out-of-place",
+    }
+    mapping = {"schema_version": 1, "kind": "butterfly",
+               "backend": "shared-iterative", "fft_core": "scalar",
+               "stage_partition": [6, 6], "tile_threads": 128}
+    valid = {**workload, "mapping_json": json.dumps(mapping, sort_keys=True),
+             "backend": mapping["backend"], "fft_core": mapping["fft_core"]}
+    invalid = dict(valid, direction="sideways")
+    workload_path = tmp_path / "workloads.json"
+    workload_path.write_text(json.dumps({
+        "schema": "cubutterfly-install-search-v1", "scope": "invalid-candidate",
+        "workloads": [workload],
+    }))
+
+    def fake_run(command, check=True):
+        command = [str(value) for value in command]
+        if "--list-processing-units" in command:
+            stdout = "precision,logN,threads,ept\n"
+        elif "--list-register-tile-mappings" in command:
+            stdout = "logN,local_stages\n"
+        else:
+            requested = json.loads(command[command.index("--mapping-json") + 1])
+            sample = {**workload, "backend": requested["backend"],
+                      "fft_core": requested["fft_core"], "correct": "1",
+                      "kernel_ms": "0.25", "mapping_json": json.dumps(requested, sort_keys=True),
+                      "warmup": "3", "repeat": "5"}
+            output = io.StringIO()
+            writer = csv.DictWriter(output, fieldnames=list(sample))
+            writer.writeheader()
+            writer.writerow(sample)
+            stdout = output.getvalue()
+        return SimpleNamespace(returncode=0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr(calibration, "run", fake_run)
+    monkeypatch.setattr(calibration, "runtime_candidates", lambda *args: [invalid, valid])
+    monkeypatch.setattr(calibration, "require_exclusive_gpu", lambda: None)
+    args = SimpleNamespace(
+        build_dir=tmp_path, search_workloads=workload_path, resume_search=False,
+        search_budget=2, search_seconds=0, search_finalists=1,
+        operator_warmup=3, operator_repeat=5, operator_trials=1,
+        verify_batches=0, seed_budget=0, compile_seconds=0,
+        cost_model="legacy", search_strategy="model", stage_calibration="skip",
+    )
+
+    rows = calibration.run_compiled_search(args, tmp_path / "coverage.json")
+    assert any(row["status"] == "invalid-candidate" for row in rows)
+    assert sum(row["status"] == "measured" for row in rows) == 1
+    audit = json.loads((tmp_path / "coverage.json").read_text())
+    assert audit["workloads"][0]["complete"] is True
+
+
 def test_incumbent_confirmation_resumes_individual_trials(tmp_path,monkeypatch):
     import calibrate_local_hardware as calibration
     for name in ("cubutterfly_bench","cuntt_bench"): (tmp_path/name).write_bytes(b"trial-checkpoint")
@@ -372,7 +461,7 @@ def test_compiled_product_preserves_asymmetric_axes_and_budget_coverage():
     units = [{"precision": "fp64", "logN": s, "threads": t, "ept": e}
              for s in (7, 8, 9) for t, e in ((128, 4), (256, 8))]
     points = list(online_candidates(units, {"precision": "fp64", "logN": 16, "batch": 64}))
-    assert len(points) == 3 * 2 * 2 * 2 * 2 * 7
+    assert len(points) == 3 * 2 * 2 * 2 * 2 * 8
     assert {p["local_stages"] for p in points} == {7, 8, 9}
     assert any(p["prefix_threads"] != p["suffix_threads"] and p["prefix_ept"] != p["suffix_ept"] for p in points)
     screened = stratified_candidates(points, 24)
@@ -554,7 +643,9 @@ def test_overlap_is_a_schedule_axis_and_survives_selector_replay():
     units = [{"precision": "fp32", "logN": s, "threads": 256, "ept": 16} for s in (8, 12)]
     points = list(online_candidates(units, {"precision": "fp32", "logN": 20, "batch": 5}))
     assert {p["reorder_columns"] for p in points} == {1}
-    assert {p["batch_tile_count"] for p in points if p["stage_overlap"]} == {1, 2, 4}
+    assert {p["batch_tile_count"] for p in points if p["stage_overlap"]} == {1, 2, 4, 5}
+    power_of_two = list(online_candidates(units, {"precision": "fp32", "logN": 20, "batch": 16}))
+    assert 16 in {p["batch_tile_count"] for p in power_of_two if p["stage_overlap"]}
     point = next(p for p in points if p["stage_overlap"])
     assert "--stage-overlap" in command_for("bench", point)
     sample = {k: str(v) for k, v in point.items()}

@@ -45,6 +45,34 @@ def test_ntt_prime_order_and_direction_are_exact(paths):
         assert not names(dict(ntt, **changes), paths)
 
 
+@pytest.mark.parametrize("output_order,naturalize,name", [
+    ("natural", True, "GPU-NTT-natural"),
+    ("bit-reversed", False, "GPU-NTT-bit-reversed"),
+])
+def test_gpuntt_batch_limit_preserves_boundary_and_rejects_before_launch(
+        monkeypatch, paths, output_order, naturalize, name):
+    ntt = dict(operator="ntt", precision="word64", logN=12, batch=65535,
+               modulus=baselines.GPU_NTT_MODULUS, input_order="natural",
+               output_order=output_order)
+    supported = baselines.available_baselines(ntt, paths)
+    assert [spec["name"] for spec in supported["available"]] == [name]
+    assert supported["available"][0]["naturalize"] is naturalize
+
+    rejected_workload = dict(ntt, batch=65536)
+    rejected = baselines.available_baselines(rejected_workload, paths)
+    assert not rejected["available"]
+    assert rejected["unavailable"] == [{"name": name,
+                                        "reason": baselines.GPU_NTT_BATCH_LIMIT_REASON}]
+
+    launched = []
+    monkeypatch.setattr(baselines.subprocess, "run",
+                        lambda *args, **kwargs: launched.append((args, kwargs)))
+    with pytest.raises(ValueError, match="not supported"):
+        baselines.run_baseline(rejected_workload, supported["available"][0],
+                               dict(warmup=100, repeat=100, verify_batches=0), paths)
+    assert launched == []
+
+
 def test_gpuntt_checks_exact_layout_marker_and_modulus(monkeypatch, paths):
     workload = dict(operator="ntt", precision="word64", logN=16, batch=4,
                     modulus=baselines.GPU_NTT_MODULUS, input_order="natural", output_order="natural")

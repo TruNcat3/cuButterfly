@@ -131,7 +131,9 @@ MixedDataflowPlan make_factor_dataflow_plan(const ButterflyConfig& input) {
     p.dispatch=DataflowDispatch::ExternalFft; p.boundary=BoundaryPolicy::GlobalScratch;
     p.exchange=ExchangePolicy::SharedMemory; p.threads_per_block=c.tile_threads;
     p.subgraph_log_n=*std::max_element(c.factor_partition.begin(),c.factor_partition.end());
-    p.persistent=c.data_tiles_per_cta>1; p.pipeline_buffers=std::max(1U,c.prefetch_depth);
+    const unsigned effective_depth=c.data_tiles_per_cta>1 ? c.prefetch_depth : 0;
+    p.persistent=c.data_tiles_per_cta>1 || effective_depth>0;
+    p.pipeline_buffers=effective_depth+1;
     p.cross_subgraph_dependencies=c.factor_partition.size()>1;
     p.boundary_policies.assign(c.stage_partition.size()-1,BoundaryPolicy::GlobalScratch);
     const unsigned width=c.precision==ButterflyPrecision::Fp64 ? 16 : 8;
@@ -143,15 +145,18 @@ MixedDataflowPlan make_factor_dataflow_plan(const ButterflyConfig& input) {
         g.logical_macro_group=macro; g.threads=m.threads; g.elements_per_thread=m.ept;
         g.units_per_cta=c.factor_columns; g.core=fft_core_name(c.fft_core); g.shared_layout="writer-aligned";
         g.io_policy=c.factor_io_policies[i];
-        g.data_tiles_per_cta=c.data_tiles_per_cta; g.prefetch_depth=c.prefetch_depth;
+        // Mapping retains the requested depth; the execution group reports the
+        // effective schedule, including the synchronous one-tile lowering.
+        g.data_tiles_per_cta=c.data_tiles_per_cta; g.prefetch_depth=effective_depth;
         g.data_space=m.threads; g.data_time=((1U<<s)*c.factor_columns/2/m.threads)*c.data_tiles_per_cta;
         const auto tiles=(std::uint64_t(c.batch)<<(c.log_n-s))/c.factor_columns;
         g.launch_count=i+1<c.factor_partition.size() ? c.factor_slices : 1;
         g.partial_dependency_ready=c.factor_overlap && i && i+1<c.factor_partition.size();
         g.grid_ctas=(tiles/g.launch_count+c.data_tiles_per_cta-1)/c.data_tiles_per_cta;
-        // Input ring and reusable FFT/output work area. The compiler replaces
-        // this conservative estimate with the imported core's actual footprint.
-        g.live_shared_bytes=(1ULL<<s)*c.factor_columns*width*(c.prefetch_depth+1);
+        // Input ring plus one reusable FFT/output work tile. The compiler
+        // replaces this lower bound with the imported core's exact footprint.
+        const auto slots = effective_depth ? effective_depth + 2 : 1;
+        g.live_shared_bytes=(1ULL<<s)*c.factor_columns*width*slots;
         p.grid_ctas=std::max(p.grid_ctas,g.grid_ctas); p.execution_groups.push_back(g);
         if(i) {
             const auto bytes=(std::uint64_t(c.batch)<<c.log_n)*width;

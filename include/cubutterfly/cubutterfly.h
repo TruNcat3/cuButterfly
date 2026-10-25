@@ -17,7 +17,16 @@ extern "C" {
 
 #define CUBUTTERFLY_VERSION_MAJOR 0
 #define CUBUTTERFLY_VERSION_MINOR 9
-#define CUBUTTERFLY_VERSION_PATCH 0
+#define CUBUTTERFLY_VERSION_PATCH 3
+#define CUBUTTERFLY_MAX_EXECUTION_RANK 8
+
+/* Per-axis logical indexing, independent of physical memory strides and the
+ * DIT/DIF/GS implementation selected by the planner. For bit reversal, logical
+ * coordinate i is stored at reverse_bits(i, log2(axis_extent)). */
+typedef enum cubutterflyLogicalOrder {
+    CUBUTTERFLY_ORDER_NATURAL = 0,
+    CUBUTTERFLY_ORDER_BIT_REVERSED
+} cubutterflyLogicalOrder_t;
 
 typedef struct cubutterflyHandle* cubutterflyHandle_t;
 typedef struct cubutterflyDescriptor* cubutterflyDescriptor_t;
@@ -74,15 +83,41 @@ typedef enum cubutterflyPlacement {
     CUBUTTERFLY_PLACEMENT_IN_PLACE
 } cubutterflyPlacement_t;
 
+/* STAGE_STORAGE preserves the legacy intermediate rounding. FINAL_STORAGE
+ * retains compute precision until the output scale and final storage cast. */
+typedef enum cubutterflyOutputRounding {
+    CUBUTTERFLY_ROUNDING_STAGE_STORAGE = 0,
+    CUBUTTERFLY_ROUNDING_FINAL_STORAGE
+} cubutterflyOutputRounding_t;
+
 typedef enum cubutterflyLengthMode {
     CUBUTTERFLY_LENGTH_STANDARD = 0,
     CUBUTTERFLY_LENGTH_ZERO_EXTENDED_EMBEDDING
 } cubutterflyLengthMode_t;
 
+/* Multidimensional execution/lowering policy. AUTO retains rank-1 selection
+ * and enables bounded complete-plan selection for rank 2/3. XD requires a
+ * multidimensional descriptor; COMPOSITE keeps per-axis composition. */
+typedef enum cubutterflyExecutionMode {
+    CUBUTTERFLY_EXECUTION_AUTO = 0,
+    CUBUTTERFLY_EXECUTION_XD,
+    CUBUTTERFLY_EXECUTION_COMPOSITE
+} cubutterflyExecutionMode_t;
+
+/* R2C/C2R use real storage to specify scalar precision. Shape is the full
+ * real-domain shape; only the last axis is shortened in complex storage.
+ * Strides count elements of the respective input/output type. */
+typedef enum cubutterflyFftTransformType {
+    CUBUTTERFLY_FFT_C2C = 0,
+    CUBUTTERFLY_FFT_R2C,
+    CUBUTTERFLY_FFT_C2R
+} cubutterflyFftTransformType_t;
+
 typedef enum cubutterflyNttLayout {
     CUBUTTERFLY_NTT_LAYOUT_NATURAL = 0,
     CUBUTTERFLY_NTT_LAYOUT_APPT_STATIC,
-    /* Output only, rank-1 power-of-two NTT with natural input. */
+    /* Legacy scalar spelling for rank-one bit-reversed logical order. New
+     * callers can use per-axis SetLogicalOrders for any operator. */
     CUBUTTERFLY_NTT_LAYOUT_BIT_REVERSED
 } cubutterflyNttLayout_t;
 
@@ -107,7 +142,9 @@ typedef enum cubutterflySelectionSource {
     CUBUTTERFLY_SELECTION_USER_CACHE,
     CUBUTTERFLY_SELECTION_RUNTIME_MEASURED,
     CUBUTTERFLY_SELECTION_STATIC_MODEL,
-    CUBUTTERFLY_SELECTION_EXPLICIT
+    CUBUTTERFLY_SELECTION_EXPLICIT,
+    /* No compatible performance estimate; preserved executable/prior choice. */
+    CUBUTTERFLY_SELECTION_UNMEASURED_FALLBACK
 } cubutterflySelectionSource_t;
 
 typedef enum cubutterflyLogLevel {
@@ -129,6 +166,9 @@ typedef void (*cubutterflyLogCallback_t)(cubutterflyLogLevel_t level,
                                          void* user_data);
 
 CUBUTTERFLYAPI const char* cubutterflyGetStatusString(cubutterflyStatus_t status);
+/* Detailed error for the calling thread; valid until its next protected API
+ * call. Reading this string does not clear it. */
+CUBUTTERFLYAPI const char* cubutterflyGetLastErrorString(void);
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyGetVersion(int* major, int* minor, int* patch);
 
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyCreate(cubutterflyHandle_t* handle);
@@ -140,6 +180,14 @@ CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetLogCallback(cubutterflyHandle_t
                                                             void* user_data);
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetCachePath(cubutterflyHandle_t handle, const char* path);
 
+/* Legacy real-FFT adapter kernels. New callers can use public R2C/C2R plans. */
+CUBUTTERFLYAPI int cubutterflyPackRealFp32(const float* input, void* output,
+                                           size_t elements, float scale,
+                                           uint64_t stream);
+CUBUTTERFLYAPI int cubutterflyExpandHermitianFp32(const void* half, void* full,
+                                                  uint32_t height, uint32_t width,
+                                                  size_t batch, uint64_t stream);
+
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyCreateDescriptor(cubutterflyDescriptor_t* descriptor);
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyDestroyDescriptor(cubutterflyDescriptor_t descriptor);
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetOperator(cubutterflyDescriptor_t descriptor,
@@ -147,15 +195,57 @@ CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetOperator(cubutterflyDescriptor_
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetDataType(cubutterflyDescriptor_t descriptor,
                                                          cubutterflyDataType_t storage,
                                                          cubutterflyComputeType_t compute);
+/* Descriptors express any positive rank. Capability queries distinguish the
+ * currently executable rank range from the mathematical descriptor. */
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetShape(cubutterflyDescriptor_t descriptor,
                                                       uint32_t rank,
                                                       const size_t* extents,
                                                       size_t batch);
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetExecutionMode(
+    cubutterflyDescriptor_t descriptor,
+    cubutterflyExecutionMode_t mode);
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetFftTransformType(
+    cubutterflyDescriptor_t descriptor,
+    cubutterflyFftTransformType_t type);
+/* Additional finite output scale for compact R2C/C2R (default 1).  Inverse
+ * normalization, when requested, is multiplied into this scale. */
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetFftOutputScale(
+    cubutterflyDescriptor_t descriptor, double scale);
+/* Explicit output scale (default 1), applied before the final output narrowing.
+ * Non-default scales require an implemented floating-point lowering. */
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetOutputScale(
+    cubutterflyDescriptor_t descriptor, double scale);
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetOutputRounding(
+    cubutterflyDescriptor_t descriptor, cubutterflyOutputRounding_t rounding);
+/* A NULL side selects its packed axis strides, resolved from its own shape.
+ * Nonzero batch strides are preserved independently of the axis pointers. */
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetStrides(cubutterflyDescriptor_t descriptor,
                                                         const size_t* input_strides,
                                                         size_t input_batch_stride,
                                                         const size_t* output_strides,
                                                         size_t output_batch_stride);
+/* Each nullable array has descriptor rank entries. NULL selects natural
+ * logical order, independently for each side. This replaces legacy NTT order
+ * settings; APPT_STATIC remains available through cubutterflySetNttLayouts. */
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetLogicalOrders(
+    cubutterflyDescriptor_t descriptor,
+    const cubutterflyLogicalOrder_t* input_orders,
+    const cubutterflyLogicalOrder_t* output_orders);
+/* CPU-only semantic validation and canonical serialization. A valid semantic
+ * description does not guarantee an executable lowering on a target GPU.
+ * SetJson replaces the descriptor atomically; unknown fields are rejected.
+ * String queries accept NULL to query size, including the trailing NUL. */
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyDescriptorValidate(cubutterflyDescriptor_t descriptor);
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyDescriptorGetJson(
+    cubutterflyDescriptor_t descriptor, char* json, size_t* bytes);
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyDescriptorSetJson(
+    cubutterflyDescriptor_t descriptor, const char* json);
+/* Reports static lowering eligibility/reasons without probing a device.
+ * Actual resources, compiled candidates and performance are checked later. */
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyDescriptorGetCapabilities(
+    cubutterflyDescriptor_t descriptor, char* json, size_t* bytes);
+/* normalize_inverse controls FFT/FWHT scaling. Modular inverse NTT always
+ * uses inverse_n; structured/zeta inverse semantics are operator-defined. */
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetDirection(cubutterflyDescriptor_t descriptor,
                                                           cubutterflyDirection_t direction,
                                                           int normalize_inverse);
@@ -182,6 +272,8 @@ CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t han
                                                         cubutterflyDescriptor_t descriptor,
                                                         cubutterflyPlan_t* plan);
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyDestroyPlan(cubutterflyPlan_t plan);
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyPlanGetDescriptorJson(
+    cubutterflyPlan_t plan, char* json, size_t* bytes);
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyPlanGetWorkspaceSize(cubutterflyPlan_t plan, size_t* bytes);
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyPlanGetInputSize(cubutterflyPlan_t plan, size_t* bytes);
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyPlanGetOutputSize(cubutterflyPlan_t plan, size_t* bytes);
@@ -210,6 +302,13 @@ CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyExecute(cubutterflyHandle_t handle
                                                      cubutterflyPlan_t plan,
                                                      const void* input,
                                                      void* output);
+/* Submit a reused plan through the steady-state path. The first call and any
+ * call after a stream change transparently fall back to cubutterflyExecute so
+ * child streams remain correctly bound. */
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflyExecuteSteady(cubutterflyHandle_t handle,
+                                                            cubutterflyPlan_t plan,
+                                                            const void* input,
+                                                            void* output);
 
 #ifdef __cplusplus
 }

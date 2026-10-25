@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import resident_mapping
 from pathlib import Path
 
 from calibration_space import candidate_id, mapping_point
@@ -25,6 +26,8 @@ def canonical_mapping(mapping):
     every real mapping axis and leave scalar/factor columns untouched.
     """
     normalized = dict(mapping)
+    if normalized.get("suffix_core") == "cufftdx-block":
+        normalized.pop("suffix_core")
     if (normalized.get("backend") == "online-reorder"
             and normalized.get("fft_core") in {"register-tile", "cufftdx-block"}
             and "reorder_columns" in normalized):
@@ -37,17 +40,21 @@ def _validate_strategy_axes(mapping, semantics=None):
     if not isinstance(mapping, dict):
         raise ValueError("mapping seed mapping must be an object")
     backend = mapping.get("backend")
+    resident_mapping.validate_suffix_core({**mapping, "operator": (semantics or {}).get("operator", mapping.get("operator", "fft"))})
     core = mapping.get("fft_core")
     codelet = mapping.get("prefix_codelet", "native")
     layout = mapping.get("prefix_shared_layout", "linear")
-    if codelet not in {"native", "cufftdx-thread"}:
-        raise ValueError("prefix_codelet must be native or cufftdx-thread")
+    if codelet not in {"native", "radix4", "cufftdx-thread"}:
+        raise ValueError("prefix_codelet must be native, radix4 or cufftdx-thread")
     if layout not in {"linear", "xor"}:
         raise ValueError("prefix_shared_layout must be linear or xor")
     if (codelet != "native" or layout != "linear") and not (
             backend == "online-reorder" and core == "register-tile"):
         raise ValueError("prefix codelet/layout are valid only for online-reorder register-tile")
     precision = str((semantics or {}).get("precision", "")).lower()
+    operator = (semantics or {}).get("operator", mapping.get("operator", "fft"))
+    if codelet == "radix4" and (operator != "fft" or precision not in {"fp32", "fp64"}):
+        raise ValueError("radix4 register prefix requires FP32/FP64 FFT")
     if precision == "fp64" and codelet == "cufftdx-thread":
         raise ValueError("cufftdx-thread prefix is unavailable for FP64")
     policies = mapping.get("factor_io_policies", [])
@@ -115,7 +122,8 @@ def seed_snapshot(args, path):
     """Freeze automatic registry inputs across resume and later promotion."""
     files = [Path(p).expanduser().resolve() for p in (getattr(args, "mapping_seeds", None) or [])]
     sources = [{"path": str(p), "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in files]
-    registry = default_path().expanduser().resolve()
+    seed_registry = getattr(args, "seed_registry", None)
+    registry = Path(seed_registry if seed_registry is not None else default_path()).expanduser().resolve()
     inputs = {"files": sources, "registry_path": str(registry)}
     if getattr(args, "resume_search", False) and path.exists():
         snapshot = json.loads(path.read_text())
@@ -170,6 +178,10 @@ def candidates_for_workload(snapshot, workload):
 
 def validate_mapping(requested, resolved):
     """Reject changed requested axes; allow the decoder to add default axes."""
+    if requested.get("suffix_core", "cufftdx-block") != resolved.get("suffix_core", "cufftdx-block"):
+        raise ValueError("resolved mapping differs from requested suffix_core")
+    requested = canonical_mapping(requested)
+    resolved = canonical_mapping(resolved)
     def contains(expected, actual):
         if isinstance(expected, dict):
             return isinstance(actual, dict) and all(k in actual and contains(v, actual[k]) for k, v in expected.items())

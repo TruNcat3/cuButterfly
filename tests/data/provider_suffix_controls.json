@@ -1,0 +1,70 @@
+[
+  {
+    "name": "provider-s10-e2-fp32",
+    "main": true,
+    "mapping": {
+      "backend": "online-reorder", "fft_core": "register-tile", "suffix_core": "cufftdx-block",
+      "operator": "fft", "precision": "fp32", "logN": 16, "batch": 64,
+      "local_stages": 6, "stage_partition": [6, 10], "local_stage_partitions": [[4, 2], []],
+      "prefix_codelet": "native", "prefix_codelet_lanes": 4, "prefix_ept": 4,
+      "prefix_threads": 32, "prefix_units_per_cta": 2, "prefix_shared_layout": "linear",
+      "suffix_ept": 2, "suffix_threads": 1024, "suffix_units_per_cta": 2,
+      "exchange_chunks": [0, 2], "execution_group_mappings": [], "boundaries": [],
+      "cross_twiddle": "recurrence", "shared_layout": "writer-aligned", "local_exchange": "shared",
+      "direct_boundary": "direct-strided", "compute_unit": "auto", "reorder_columns": 1,
+      "placement": "out-of-place", "normalization": "none", "stage_overlap": false,
+      "batch_tile_count": 1
+    }
+  },
+  {
+    "name": "provider-s10-e16-fp32",
+    "main": true,
+    "mapping": {
+      "backend": "online-reorder", "fft_core": "register-tile", "suffix_core": "cufftdx-block",
+      "operator": "fft", "precision": "fp32", "logN": 16, "batch": 64,
+      "local_stages": 6, "stage_partition": [6, 10], "local_stage_partitions": [[4, 2], []],
+      "prefix_codelet": "native", "prefix_codelet_lanes": 4, "prefix_ept": 4,
+      "prefix_threads": 32, "prefix_units_per_cta": 2, "prefix_shared_layout": "linear",
+      "suffix_ept": 16, "suffix_threads": 128, "suffix_units_per_cta": 2,
+      "exchange_chunks": [0, 2], "execution_group_mappings": [], "boundaries": [],
+      "cross_twiddle": "recurrence", "shared_layout": "writer-aligned", "local_exchange": "shared",
+      "direct_boundary": "direct-strided", "compute_unit": "auto", "reorder_columns": 1,
+      "placement": "out-of-place", "normalization": "none", "stage_overlap": false,
+      "batch_tile_count": 1
+    }
+  },
+  {
+    "name": "provider-s10-e2-fp64",
+    "main": true,
+    "mapping": {
+      "backend": "online-reorder", "fft_core": "register-tile", "suffix_core": "cufftdx-block",
+      "operator": "fft", "precision": "fp64", "logN": 16, "batch": 64,
+      "local_stages": 6, "stage_partition": [6, 10], "local_stage_partitions": [[4, 2], []],
+      "prefix_codelet": "native", "prefix_codelet_lanes": 4, "prefix_ept": 4,
+      "prefix_threads": 32, "prefix_units_per_cta": 2, "prefix_shared_layout": "linear",
+      "suffix_ept": 2, "suffix_threads": 1024, "suffix_units_per_cta": 2,
+      "exchange_chunks": [0, 2], "execution_group_mappings": [], "boundaries": [],
+      "cross_twiddle": "recurrence", "shared_layout": "writer-aligned", "local_exchange": "shared",
+      "direct_boundary": "direct-strided", "compute_unit": "auto", "reorder_columns": 1,
+      "placement": "out-of-place", "normalization": "none", "stage_overlap": false,
+      "batch_tile_count": 1
+    }
+  },
+  {
+    "name": "provider-s10-e16-fp64",
+    "main": true,
+    "mapping": {
+      "backend": "online-reorder", "fft_core": "register-tile", "suffix_core": "cufftdx-block",
+      "operator": "fft", "precision": "fp64", "logN": 16, "batch": 64,
+      "local_stages": 6, "stage_partition": [6, 10], "local_stage_partitions": [[4, 2], []],
+      "prefix_codelet": "native", "prefix_codelet_lanes": 4, "prefix_ept": 4,
+      "prefix_threads": 32, "prefix_units_per_cta": 2, "prefix_shared_layout": "linear",
+      "suffix_ept": 16, "suffix_threads": 128, "suffix_units_per_cta": 2,
+      "exchange_chunks": [0, 2], "execution_group_mappings": [], "boundaries": [],
+      "cross_twiddle": "recurrence", "shared_layout": "writer-aligned", "local_exchange": "shared",
+      "direct_boundary": "direct-strided", "compute_unit": "auto", "reorder_columns": 1,
+      "placement": "out-of-place", "normalization": "none", "stage_overlap": false,
+      "batch_tile_count": 1
+    }
+  }
+]

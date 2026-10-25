@@ -122,7 +122,7 @@ def test_fresh_install_resolves_identity_and_forwards_verification(tmp_path):
     assert f"--profile-dir {profile}" in calibration
     assert "--verify-batches 2" in calibration
     assert "--seed-budget 8" in calibration
-    assert "--force" in calibration
+    assert "--force" not in calibration
     assert "verify_local_selector.py" not in log
 
 
@@ -158,6 +158,7 @@ def test_existing_build_without_overrides_preserves_cache(tmp_path):
     (build / "CMakeCache.txt").write_text(
         "CMAKE_CUDA_ARCHITECTURES:STRING=86\n"
         "CUBUTTERFLY_FFT_CODEGEN_MODE:STRING=on-demand\n"
+        f"CMAKE_INSTALL_PREFIX:PATH={pathlib.Path.home() / '.local'}\n"
     )
     log = _run_installer(tmp_path, [
         "--build-dir", str(build),

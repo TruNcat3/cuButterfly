@@ -727,12 +727,11 @@ def _enum_values(field: str, current: Any, backend: str, operator: str) -> list[
         # These choices describe only the online register-tile prefix.  Do
         # not propose them for imported or generic lowerings where the axes
         # are not consumed by the compiler.
-        if backend != "online-reorder" or str(current) not in {
-                "native", "cufftdx-thread", "linear", "xor"}:
+        choices = (("native", "radix4", "cufftdx-thread") if field == "prefix_codelet"
+                   else ("linear", "xor"))
+        if backend != "online-reorder" or operator != "fft" or current not in choices:
             return []
-        if field == "prefix_codelet":
-            return [value for value in ("native", "cufftdx-thread") if value != current]
-        return [value for value in ("linear", "xor") if value != current]
+        return [value for value in choices if value != current]
     if field == "fft_core":
         choices = _BUTTERFLY_CORE_CHOICES.get(backend, (str(current),))
     elif field == "shared_layout":
@@ -1132,20 +1131,17 @@ def _strategy_candidates(point: Mapping[str, Any], mapping: Mapping[str, Any]) -
     """
     backend = str(mapping.get("backend", ""))
     yield from _resident_axis_neighbors(point, mapping)
-    if backend == "online-reorder" and mapping.get("fft_core") == "register-tile":
+    if (point.get("operator", "fft") == "fft" and backend == "online-reorder" and
+            mapping.get("fft_core") == "register-tile"):
         yield from _prefix_lane_neighbors(point, mapping)
         codelet = mapping.get("prefix_codelet", "native")
         layout = mapping.get("prefix_shared_layout", "linear")
-        if codelet == "native" and point.get("precision") != "fp64":
-            mutated = copy.deepcopy(dict(mapping)); mutated["prefix_codelet"] = "cufftdx-thread"
-            _reset_derived(mutated, _stage_partition(point, mapping) or (),
-                           _stage_partition(point, mapping) or (), ("move", -1))
-            yield mutated
-        elif codelet == "cufftdx-thread":
-            mutated = copy.deepcopy(dict(mapping)); mutated["prefix_codelet"] = "native"
-            _reset_derived(mutated, _stage_partition(point, mapping) or (),
-                           _stage_partition(point, mapping) or (), ("move", -1))
-            yield mutated
+        for value in _enum_values("prefix_codelet", codelet, backend, "fft"):
+            if value == "cufftdx-thread" and point.get("precision") == "fp64":
+                continue
+            if value == "radix4" and point.get("precision") not in {"fp32", "fp64"}:
+                continue
+            yield _axis_mapping(point, mapping, "prefix_codelet", value)
         if layout == "linear":
             mutated = copy.deepcopy(dict(mapping)); mutated["prefix_shared_layout"] = "xor"
             _reset_derived(mutated, _stage_partition(point, mapping) or (),
@@ -1225,6 +1221,8 @@ def neighbors(point: dict[str, Any]) -> list[dict[str, Any]]:
                 if backend != "online-reorder" or mapping.get("fft_core") != "register-tile":
                     continue
                 if field == "prefix_codelet" and value == "cufftdx-thread" and point.get("precision") == "fp64":
+                    continue
+                if field == "prefix_codelet" and value == "radix4" and point.get("precision") not in {"fp32", "fp64"}:
                     continue
             if backend == "factor-streamed" and field == "fft_core":
                 factors = _factor_partition(point, mapping, _stage_partition(point, mapping))

@@ -1,0 +1,5 @@
+Metadata-Version: 2.1
+Name: cubutterfly
+Version: 0.9.3.11
+Summary: Thin ctypes frontend for the cuButterfly public C API
+Requires-Python: >=3.9

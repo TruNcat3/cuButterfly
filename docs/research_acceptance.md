@@ -1,5 +1,10 @@
 # Cross-operator research acceptance
 
+Use the [project research principles](research_principles.md) for the shared
+all-operator claims and three-table evidence contract, including fixed-core
+organization transfer and component-disabled re-search. The finite workflows
+and historical matrices below establish only their explicitly recorded scope.
+
 > Note: Paths marked `local artifact` are local experiment records and are not included in this source release.
 
 For a separate machine, use the [portable V100 workflow](hardware/v100.md).
@@ -121,8 +126,12 @@ and output directory.
 | cuFFT | fp32/fp64 FFT with matching direction, normalization, placement and strides | Public benchmark CPU reference; all batches by default |
 | VkFFT | fp32 forward contiguous FFT | cuFFT reference, all batches |
 | Dao FWHT | Native fp16/bf16/fp32, logN 3–15, contiguous out-of-place | Existing adapter checks a normalized round trip for up to two batches |
-| GPU-NTT | Forward cyclic word64, fixed prime `576460756061519873`, natural input | Existing harness CPU reference for one batch; exact modulus and output-order marker checked |
+| GPU-NTT | Forward cyclic word64, fixed prime `576460756061519873`, natural input, batch ≤ 65535 | Existing harness CPU reference for one batch; exact modulus and output-order marker checked |
 | In-tree radix2 | Non-NTT operator ablation; fixed shared scalar radix2 realization | Public benchmark CPU reference; all batches by default |
+
+The legacy GPU-NTT harness maps batch directly to CUDA grid Z. Larger batches
+are reported as an unavailable baseline before launch; cuButterfly still runs
+the declared workload. Missing baseline measurements are not speedup wins.
 
 GPU-NTT natural-order timing includes its output permutation. Dao inverse FWHT
 uses the same Hadamard primitive with matching scaling; its original CSV is

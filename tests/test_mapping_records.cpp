@@ -4,9 +4,11 @@
 #include <stdexcept>
 #include <set>
 #include <string>
+#include <cstdlib>
 #include "../src/partition_space.hpp"
 #include "../src/fft_factor_plan.hpp"
 #include "../src/resident_mapping.hpp"
+#include "../src/fwht_contract.hpp"
 
 void require(bool condition, const char* message) {
     if (!condition) throw std::runtime_error(message);
@@ -14,6 +16,32 @@ void require(bool condition, const char* message) {
 
 int main() try {
     using namespace cuntt;
+    MixedDataflowPlan descriptor;
+    ExecutionGroup physical;
+    physical.exchange = ExchangePolicy::WarpShuffle;
+    physical.grid_ctas = 17;
+    physical.live_shared_bytes = 12288;
+    physical.static_shared_bytes = 4096;
+    physical.dynamic_shared_bytes = 8192;
+    physical.shared_components_known = true;
+    descriptor.execution_groups.push_back(physical);
+    const auto execution_json = cubutterfly::execution_groups_json(descriptor);
+    require(execution_json.find("\"exchange\":1") != std::string::npos,
+            "execution descriptor omitted physical exchange");
+    require(execution_json.find("\"work_blocks\":17") != std::string::npos,
+            "execution descriptor omitted physical work blocks");
+    require(execution_json.find("\"static_shared_bytes\":4096") != std::string::npos &&
+                execution_json.find("\"dynamic_shared_bytes\":8192") != std::string::npos &&
+                execution_json.find("\"shared_components_known\":true") != std::string::npos,
+            "execution descriptor omitted measured shared-memory components");
+    MixedDataflowPlan estimated;
+    ExecutionGroup estimated_group;
+    estimated_group.live_shared_bytes = 16384;
+    estimated.execution_groups.push_back(estimated_group);
+    const auto estimated_json = cubutterfly::execution_groups_json(estimated);
+    require(estimated_json.find("\"shared_components_known\":false") != std::string::npos &&
+                estimated_json.find("\"dynamic_shared_bytes\"") == std::string::npos,
+            "logical estimate fabricated dynamic shared-memory components");
     const auto partitions=detail::shared_partitions(6,3,0);
     std::set<std::vector<std::uint32_t>> expected;
     for(unsigned cuts=0;cuts<(1U<<5);++cuts) {
@@ -88,6 +116,26 @@ int main() try {
     require(legacy_mapping.prefix_codelet_lanes == 1,
             "legacy mapping without prefix_codelet_lanes did not default to one");
 
+    ButterflyConfig register_shape;
+    register_shape.op = ButterflyOperator::Fwht;
+    register_shape.local_exchange = LocalExchange::WarpRegister;
+    register_shape.register_threads = 64;
+    register_shape.tile_threads = 64;
+    auto register_replay = register_shape;
+    register_replay.register_threads = 256;
+    cubutterfly::apply_serialized_mapping(cubutterfly::serialize_mapping(register_shape), register_replay);
+    require(register_replay.register_threads == 64 && register_replay.tile_threads == 64,
+            "register resource request was lost in public mapping replay");
+    cubutterfly::apply_serialized_mapping("{}", register_replay);
+    require(register_replay.register_threads == 0, "legacy replay retained explicit register resources");
+    for (const auto* invalid : {"{\"register_threads\":-1}", "{\"register_threads\":4294967360}",
+                                "{\"register_threads\":64.5}"}) {
+        bool failed = false;
+        try { cubutterfly::apply_serialized_mapping(invalid, register_replay); }
+        catch (const std::exception&) { failed = true; }
+        require(failed, "invalid register resource encoding was accepted");
+    }
+
     ButterflyConfig factor;
     factor.op=ButterflyOperator::Fft; factor.precision=ButterflyPrecision::Fp64;
     factor.backend=ButterflyBackend::FactorStreamed; factor.fft_core=FftCore::CufftDxBlock;
@@ -104,7 +152,7 @@ int main() try {
     const auto ir=make_dataflow_plan(factor);
     require(ir.stage_partition.size()==1 && ir.execution_groups.size()==3 && ir.execution_boundaries.size()==2,
             "macro group incorrectly implies a single physical launch");
-    require(ir.execution_groups[0].grid_ctas==1639 && ir.execution_groups[0].live_shared_bytes==98304,
+    require(ir.execution_groups[0].grid_ctas==1639 && ir.execution_groups[0].live_shared_bytes==131072,
             "data folding and prefetch capacity projection disagree");
     require(ir.execution_groups[0].io_policy == "static-unrolled" &&
             ir.execution_groups[1].io_policy == "dynamic" &&
@@ -184,5 +232,75 @@ int main() try {
     try {detail::validate_shared_resident_axes({{3,3}}, {4}, {6});} catch(const std::invalid_argument&) {rejected_chunk=true;}
     require(rejected_chunk,"ignored shared output chunk accepted");
     std::cout << "Complete mapping roundtrip and semantic isolation passed\n";
+    ButterflyConfig epilogue;
+    epilogue.op = ButterflyOperator::Fwht;
+    epilogue.precision = ButterflyPrecision::Fp16;
+    epilogue.accumulation = ButterflyAccumulation::Fp32;
+    epilogue.final_storage_rounding = true;
+    epilogue.output_scale = 0.125;
+    for (auto log_n : {5U, 6U}) {
+        auto domain = epilogue;
+        domain.log_n = log_n;
+        domain.placement = ButterflyPlacement::OutOfPlace;
+        require(detail::short_fp16_fwht_supported(domain), "final-storage short candidate absent");
+        auto stage = domain;
+        stage.final_storage_rounding = false;
+        stage.output_scale = 1.0;
+        require(!detail::short_fp16_fwht_supported(stage), "stage-storage admitted final-only short candidate");
+        domain.inverse = true;
+        require(!detail::short_fp16_fwht_supported(domain), "inverse short candidate admitted");
+        domain.inverse = false;
+        domain.element_stride = 2;
+        require(!detail::short_fp16_fwht_supported(domain), "strided short candidate admitted");
+        domain.element_stride = 1;
+        domain.accumulation = ButterflyAccumulation::Native;
+        require(!detail::short_fp16_fwht_supported(domain), "native accumulation short candidate admitted");
+    }
+    auto epilogue_copy = epilogue;
+    const auto epilogue_mapping = cubutterfly::serialize_mapping(epilogue);
+    cubutterfly::apply_serialized_mapping(epilogue_mapping, epilogue_copy);
+    require(cubutterfly::serialize_mapping(epilogue_copy) == epilogue_mapping, "output epilogue mapping roundtrip");
+    require(epilogue_mapping.find("promoted-full-fp32-final-storage") != std::string::npos,
+            "promoted fallback metadata missing");
+    epilogue_copy.output_scale = 0.25;
+    bool rejected_epilogue = false;
+    try { cubutterfly::apply_serialized_mapping(epilogue_mapping, epilogue_copy); }
+    catch (const std::invalid_argument&) { rejected_epilogue = true; }
+    require(rejected_epilogue, "mapping accepted conflicting output scale");
+
+    // Constrained research re-search must classify mechanisms from the
+    // serialized mapping, rather than relying on a hand-written candidate id.
+    auto overlap = epilogue;
+    overlap.stage_overlap = true;
+    require(detail::mapping_uses_disabled_mechanism(
+                cubutterfly::serialize_mapping(overlap), {"stage-overlap"}),
+            "stage-overlap restriction did not match the mapping");
+    auto fused = resident;
+    fused.boundaries = {{CrossTwiddleMode::Table, DirectBoundary::Strided,
+                         FftBoundaryResidency::Fused}};
+    require(detail::mapping_uses_disabled_mechanism(
+                cubutterfly::serialize_mapping(fused), {"resident-fusion"}),
+            "resident-fusion restriction did not match the mapping");
+    auto successor = resident;
+    successor.shared_layout = SharedLayout::WriterAligned;
+    require(detail::mapping_uses_disabled_mechanism(
+                cubutterfly::serialize_mapping(successor), {"successor-layout"}),
+            "successor-layout restriction did not match the mapping");
+    successor.shared_layout = SharedLayout::XorSwizzle;
+    require(detail::mapping_uses_disabled_mechanism(
+                cubutterfly::serialize_mapping(successor), {"successor-layout"}),
+            "xor successor-layout restriction did not match the mapping");
+    unsetenv("CUBUTTERFLY_SEARCH_DISABLE");
+    require(detail::search_disabled_mechanisms().empty(), "unset search restriction was not empty");
+    setenv("CUBUTTERFLY_SEARCH_DISABLE", "stage-overlap, successor-layout,stage-overlap", 1);
+    const auto restrictions = detail::search_disabled_mechanisms();
+    require(restrictions == std::vector<std::string>({"stage-overlap", "successor-layout"}),
+            "search restriction parsing did not preserve unique order");
+    setenv("CUBUTTERFLY_SEARCH_DISABLE", "unknown-mechanism", 1);
+    bool rejected_restriction = false;
+    try { (void)detail::search_disabled_mechanisms(); }
+    catch (const std::invalid_argument&) { rejected_restriction = true; }
+    unsetenv("CUBUTTERFLY_SEARCH_DISABLE");
+    require(rejected_restriction, "unknown search restriction was accepted");
     return 0;
 } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

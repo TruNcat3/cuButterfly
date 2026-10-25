@@ -1,0 +1,357 @@
+{
+  "schema_version": 1,
+  "name": "cuButterfly external comparison catalog",
+  "version": "xd-v9-cooperative-cores",
+  "precision_evidence_scope": "precision_support.local_measured lists only precision cohorts verified for this catalog update; empty lists mean not_verified_in_this_update, not proof that no historical measurement exists. Bind exact campaign/raw records before aggregating results.",
+  "comparison_rules": [
+    "direct baselines require matching operator, precision, direction, normalization, placement, layout and timing scope",
+    "processing-unit entries are measured only inside a cuButterfly composition and are not whole-library baselines",
+    "source-only and end-to-end entries provide method context until a matching local adapter exists",
+    "published or upstream performance numbers are never copied into local result aggregates",
+    "cooperative xD candidates are a finite, resource-gated local inventory and are not a complete cross-axis pipeline or global-optimality claim",
+    "FFT-H requires FP32/FP64 input storage and core arithmetic; FFT-L includes FP16/BF16 inputs and explicit low-precision multiplication with high-precision accumulation; retain storage/compute/accumulation separately",
+    "TF32 multiplication would belong to FFT-L but has no supported local manifest execution contract; never count it as FP32 arithmetic",
+    "precision_support.provider records bounded upstream capability domains while local_measured records precision cohorts only; every comparison still requires exact campaign provenance and matching semantics"
+  ],
+  "local_xd_candidates": [
+    {
+      "id": "axis-tiled-register",
+      "kind": "axis",
+      "lengths": [64, 128],
+      "cooperative_lanes": 4,
+      "core": "register-cooperative-axis",
+      "cache_namespaces": ["xd-v9-cooperative-cores", "xd-real-v9-cooperative-cores"],
+      "prepare_before_timing": true
+    },
+    {
+      "id": "pair-tiled-cooperative",
+      "kind": "pair",
+      "lengths": [64, 128],
+      "cooperative_lanes": 4,
+      "fp64_pair_threads": 256,
+      "core": "register-cooperative-pair",
+      "cache_namespaces": ["xd-v9-cooperative-cores"],
+      "prepare_before_timing": true,
+      "fp64_128x128_a100": "unavailable_due_to_opt_in_dynamic_shared_memory"
+    },
+    {
+      "id": "pair-tiled-cooperative-register",
+      "kind": "pair-and-axis",
+      "lengths": [64, 128],
+      "cooperative_lanes": 4,
+      "fp64_pair_threads": 256,
+      "core": "register-cooperative-pair+register-cooperative-axis",
+      "cache_namespaces": ["xd-v9-cooperative-cores"],
+      "prepare_before_timing": true,
+      "fp64_128x128_a100": "unavailable_due_to_opt_in_dynamic_shared_memory"
+    }
+  ],
+  "entries": [
+    {
+      "id": "cufft",
+      "compute_types": ["fft-h", "fft-l"],
+      "precision_support": {
+        "provider": {"fft-h": ["fp32", "fp64"], "fft-l": ["fp16", "bf16"]},
+        "local_measured": {"fft-h": ["fp32", "fp64"], "fft-l": []},
+        "local_measurement_status": {"fft-h": "verified_precision_cohort", "fft-l": "not_verified_in_this_update"},
+        "local_adapter": "scripts/run_semantic_campaign.py:baseline_contract and scripts/semantic_fft_baseline.py accept only complex FP32/FP64; NativeCufft binds cufftExecC2C/Z2Z, not cufftXt low precision",
+        "low_precision_adapter_status": "missing-exact-fp16-bf16-binding",
+        "cpu_preparation": "python -m benchmark.prepare_fft_l_quick --library build-e13-cufftdx/libcuntt.so --output FRESH_DIRECTORY",
+        "constraints": "FP16/BF16 provider support is hardware-, size-, layout- and API-dependent; provider support is not local measurement evidence"
+      },
+      "name": "NVIDIA cuFFT",
+      "comparison_class": "direct-baseline",
+      "operators": ["fft"],
+      "status": "measured",
+      "runner": "scripts/benchmark_fft_libraries.sh",
+      "source": "https://docs.nvidia.com/cuda/cufft/",
+      "scope": "complete GPU FFT library with 1D/2D/3D, batches, strides and compact real transforms"
+    },
+    {
+      "id": "vkfft",
+      "compute_types": ["fft-h", "fft-l"],
+      "precision_support": {
+        "provider": {"fft-h": ["fp32", "fp64"], "fft-l": ["fp16"]},
+        "local_measured": {"fft-h": ["fp32", "fp64"], "fft-l": []},
+        "local_measurement_status": {"fft-h": "verified_precision_cohort", "fft-l": "not_verified_in_this_update"},
+        "local_adapter": "scripts/vkfft_xd.py:NativeVkfft accepts only complex64/complex128 and forwards an fp64 boolean; no half/BF16 mode is bound",
+        "low_precision_adapter_status": "missing-exact-fp16-bf16-binding",
+        "cpu_preparation": "python -m benchmark.prepare_fft_l_quick --library build-e13-cufftdx/libcuntt.so --output FRESH_DIRECTORY",
+        "constraints": "Upstream half support does not imply BF16 support or a locally measured low-precision path; exact pinned provider contracts are campaign-specific"
+      },
+      "name": "VkFFT",
+      "comparison_class": "direct-baseline",
+      "operators": ["fft"],
+      "status": "measured",
+      "runner": "scripts/benchmark_fft_libraries.sh",
+      "source": "https://github.com/DTolm/VkFFT",
+      "scope": "cross-platform complete GPU FFT library; pinned versions and exact contracts are recorded per campaign"
+    },
+    {
+      "id": "dao-fht",
+      "name": "Dao-AILab fast-hadamard-transform",
+      "comparison_class": "direct-baseline",
+      "operators": ["fwht"],
+      "status": "measured",
+      "runner": "scripts/benchmark_external_fht.py",
+      "source": "https://github.com/Dao-AILab/fast-hadamard-transform",
+      "scope": "CUDA/PyTorch FWHT for supported FP16/BF16/FP32 shapes"
+    },
+    {
+      "id": "gpu-ntt",
+      "name": "GPU-NTT",
+      "comparison_class": "direct-baseline",
+      "operators": ["ntt"],
+      "status": "measured",
+      "runner": "scripts/run_external_baseline_suite.py",
+      "source": "https://github.com/Alisah-Ozcan/GPU-NTT",
+      "scope": "fixed-prime NTT contracts; natural and bit-reversed output are separate cases"
+    },
+    {
+      "id": "cufftdx",
+      "compute_types": ["fft-h", "fft-l"],
+      "precision_support": {
+        "provider": {"fft-h": ["fp32", "fp64"], "fft-l": ["fp16"]},
+        "local_measured": {"fft-h": ["fp32", "fp64"], "fft-l": []},
+        "local_measurement_status": {"fft-h": "verified_precision_cohort", "fft-l": "not_verified_in_this_update"},
+        "constraints": "A local processing core inside cuButterfly organization; provider precision support does not change this role"
+      },
+      "name": "NVIDIA cuFFTDx",
+      "comparison_class": "processing-unit",
+      "operators": ["fft"],
+      "status": "measured-local-core",
+      "runner": "scripts/benchmark_fft_processing_units.sh",
+      "source": "https://docs.nvidia.com/cuda/cufftdx/",
+      "scope": "device-side thread/block FFT core imported into a cuButterfly mapping"
+    },
+    {
+      "id": "turbofft",
+      "compute_types": ["fft-h"],
+      "compute_types_unknown": ["fft-l"],
+      "precision_support": {
+        "provider": {"fft-h": ["fp32"]},
+        "local_measured": {"fft-h": ["fp32"]},
+        "unverified_provider_precisions": ["fp64", "fp16", "bf16"],
+        "constraints": "FP32 local processing-core cohort; other provider precision domains are unknown in this update and are not classified as measured"
+      },
+      "name": "TurboFFT",
+      "comparison_class": "processing-unit",
+      "operators": ["fft"],
+      "status": "measured-local-core",
+      "runner": "scripts/benchmark_fft_processing_units.sh",
+      "source": "https://arxiv.org/abs/2412.05824",
+      "scope": "generated architecture-aware FFT kernels; local-core and complete-library roles remain separate"
+    },
+    {
+      "id": "tcfft",
+      "compute_types": ["fft-l"],
+      "precision_support": {
+        "provider": {"fft-l": ["fp16"]},
+        "local_measured": {"fft-l": []},
+        "constraints": "Upstream half Tensor Core implementation; local adapter CPU-compiled for SM80, GPU execution and CUDA Graph behavior unverified"
+      },
+      "name": "tcFFT",
+      "comparison_class": "processing-unit",
+      "operators": ["fft"],
+      "status": "prepared",
+      "runner": "scripts/tcfft_baseline.py",
+      "local_adapter_status": "cpu-compiled-graph-unverified",
+      "upstream_commit": "3e87a7083577741815e21b2a3c2bed22520786ce",
+      "license": "GPL-3.0",
+      "local_build": {
+        "path": "build/tcfft_sm80/libtcfft_baseline.so",
+        "toolchain": "CUDA 12.4 nvcc",
+        "architecture": "SM80",
+        "validation": "CPU compilation and contract tests only; no GPU availability, correctness, performance or Graph validation claim"
+      },
+      "source": "https://github.com/rox906/tcFFT",
+      "scope": "Prepared rank-1 forward unnormalized C2C FP16 storage/multiply/WMMA accumulation adapter with explicit reorder/copy; exact length, batch-divisibility and grid limits checked by scripts/tcfft_baseline.py:support; GPU validation pending"
+    },
+    {
+      "id": "fftx-spectralpack",
+      "name": "FFTX/SpectralPack",
+      "comparison_class": "method-context",
+      "operators": ["fft"],
+      "status": "source-only",
+      "runner": null,
+      "source": "https://www.spiral.net/doc/papers/hipc_2018.pdf",
+      "scope": "symbolic transform composition, code generation and fused data movement"
+    },
+    {
+      "id": "fftw",
+      "compute_types": ["fft-h"],
+      "precision_support": {
+        "provider": {"fft-h": ["fp32", "fp64"]},
+        "local_measured": {"fft-h": ["fp32", "fp64"]},
+        "constraints": "CPU FFT cohort; excluded from GPU speedup aggregates"
+      },
+      "name": "FFTW",
+      "comparison_class": "direct-baseline",
+      "operators": ["fft"],
+      "status": "measured",
+      "platform": "cpu",
+      "runner": "scripts/cpu_external_baselines.py",
+      "source": "https://www.fftw.org/fftw-paper-ieee.pdf",
+      "scope": "CPU C2C FP32/FP64 rank1-8 packed natural requests, FFTW_MEASURE, 1/8 threads; required scaling included; cross-platform results kept separate from GPU speedup aggregates"
+    },
+    {
+      "id": "fxt-cpu",
+      "name": "FXT",
+      "comparison_class": "direct-baseline",
+      "operators": ["fwht", "subset-zeta", "superset-zeta"],
+      "status": "measured",
+      "platform": "cpu",
+      "runner": "scripts/cpu_external_baselines.py",
+      "source": "https://www.jjj.de/fxt/fxtpage.html",
+      "scope": "Original single-thread FXT cores: FP32/FP64 Walsh-Hadamard, uint32/uint64 arithmetic and reversed arithmetic transforms; inverse, copy and normalization adapters timed; xD flattening uses the tensor-product identity"
+    },
+    {
+      "id": "hexl-cpu",
+      "name": "Intel HEXL",
+      "comparison_class": "direct-baseline",
+      "operators": ["ntt"],
+      "status": "measured",
+      "platform": "cpu",
+      "runner": "scripts/cpu_external_baselines.py",
+      "source": "https://github.com/intel/hexl",
+      "scope": "Pinned external uint64 CPU NTT with timed cyclic/root/order and per-axis adapters; uint32 requests explicitly report exact storage widening and narrowing, never native word32; host ISA recorded"
+    },
+    {
+      "id": "butterfly-author-cpu",
+      "name": "HazyResearch butterfly author CPU implementation",
+      "comparison_class": "direct-baseline",
+      "operators": ["structured-2x2"],
+      "status": "measured",
+      "platform": "cpu",
+      "runner": "scripts/cpu_external_baselines.py",
+      "source": "https://github.com/HazyResearch/butterfly",
+      "scope": "Unmodified author CPU core for matching broadcast 2x2 FP32/FP64 stages, per-axis packing and complete output cost included; author baseline, not a claim of fastest CPU implementation"
+    },
+    {
+      "id": "spiral",
+      "name": "SPIRAL",
+      "comparison_class": "method-context",
+      "operators": ["fft", "generic"],
+      "status": "source-only",
+      "runner": null,
+      "source": "https://doi.org/10.1109/JPROC.2004.840306",
+      "scope": "symbolic transform search and generated implementations; no matching local GPU contract"
+    },
+    {
+      "id": "flashfftconv",
+      "compute_types": ["fft-l"],
+      "precision_support": {
+        "provider": {"fft-l": ["fp16", "bf16"]},
+        "local_measured": {"fft-l": []},
+        "constraints": "FP16/BF16 input FFT convolution end-to-end library; internal accumulation does not make it an FFT-H or a complete raw FFT baseline"
+      },
+      "name": "FlashFFTConv",
+      "comparison_class": "end-to-end-context",
+      "operators": ["fft", "convolution"],
+      "status": "source-only",
+      "runner": null,
+      "source": "https://github.com/HazyResearch/flash-fft-conv",
+      "scope": "fused long convolution with factorized FFT; not a raw C2C FFT baseline"
+    },
+    {
+      "id": "gpuntt-paper",
+      "name": "GPU-NTT Merge/Four-Step paper",
+      "comparison_class": "method-context",
+      "operators": ["ntt"],
+      "status": "source-only",
+      "runner": null,
+      "source": "https://eprint.iacr.org/2023/1410",
+      "scope": "NTT-specific factorization, shared-memory reuse and stage organization"
+    },
+    {
+      "id": "hadacore",
+      "name": "HadaCore",
+      "comparison_class": "processing-unit",
+      "operators": ["fwht"],
+      "status": "source-only",
+      "runner": null,
+      "source": "https://arxiv.org/abs/2412.08832",
+      "scope": "Tensor-Core Hadamard processing unit; no matching local adapter is installed"
+    },
+    {
+      "id": "tensorir",
+      "name": "TensorIR",
+      "comparison_class": "method-context",
+      "operators": ["generic"],
+      "status": "source-only",
+      "runner": null,
+      "source": "https://doi.org/10.1145/3575693.3576933",
+      "scope": "separation of local compute blocks, outer mapping and tensorization"
+    },
+    {
+      "id": "tvm",
+      "name": "TVM",
+      "comparison_class": "method-context",
+      "operators": ["generic"],
+      "status": "source-only",
+      "runner": null,
+      "source": "https://www.usenix.org/conference/osdi18/presentation/chen",
+      "scope": "tensor compiler and scheduling separation; no butterfly-specific local-core adapter"
+    },
+    {
+      "id": "ansor",
+      "name": "Ansor",
+      "comparison_class": "method-context",
+      "operators": ["generic"],
+      "status": "source-only",
+      "runner": null,
+      "source": "https://www.usenix.org/conference/osdi20/presentation/zheng",
+      "scope": "hierarchical sketch generation, evolutionary search and learned cost models"
+    },
+    {
+      "id": "roller",
+      "name": "ROLLER",
+      "comparison_class": "method-context",
+      "operators": ["generic"],
+      "status": "source-only",
+      "runner": null,
+      "source": "https://www.usenix.org/conference/osdi22/presentation/zhu",
+      "scope": "hardware-aware tile construction and micro-performance modeling"
+    },
+    {
+      "id": "welder",
+      "name": "Welder",
+      "comparison_class": "method-context",
+      "operators": ["generic"],
+      "status": "source-only",
+      "runner": null,
+      "source": "https://www.usenix.org/conference/osdi23/presentation/shi",
+      "scope": "tile graph, storage-level connecting, traffic and footprint modeling"
+    },
+    {
+      "id": "timeloop",
+      "name": "Timeloop",
+      "comparison_class": "method-context",
+      "operators": ["generic"],
+      "status": "source-only",
+      "runner": null,
+      "source": "https://doi.org/10.1109/ISPASS.2019.00042",
+      "scope": "separate workload, architecture and mapping spaces for hierarchical dataflow analysis"
+    },
+    {
+      "id": "quipsharp",
+      "name": "QuIP#",
+      "comparison_class": "end-to-end-context",
+      "operators": ["fwht", "quantization"],
+      "status": "source-only",
+      "runner": null,
+      "source": "https://proceedings.mlr.press/v235/tseng24a.html",
+      "scope": "randomized Hadamard transforms in low-bit LLM quantization; application context rather than a raw FWHT baseline"
+    },
+    {
+      "id": "triton",
+      "name": "Triton",
+      "comparison_class": "method-context",
+      "operators": ["generic"],
+      "status": "source-only",
+      "runner": null,
+      "source": "https://doi.org/10.1145/3315508.3329973",
+      "scope": "tiled GPU program generation; no native cross-CTA butterfly stage contract"
+    }
+  ]
+}

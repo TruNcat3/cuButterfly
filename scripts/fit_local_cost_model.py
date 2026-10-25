@@ -81,6 +81,12 @@ FEATURE_NAMES = (
     "factor_slices", "factor_overlap", "factor_total_launches",
     "factor_partial_ready_groups", "factor_boundary_workspace_mib",
     "factor_event_waits", "factor_total_ctas", "factor_max_grid_ctas_per_launch",
+    # xD plans expose costs that are not represented by generic stage groups.
+    # Keep these as explicit physical features so static ranking cannot treat
+    # a multi-axis plan as one rank-one launch.
+    "xd_axis_count", "xd_prefix_loops", "xd_permutation_count",
+    "xd_workspace_mib", "xd_boundary_bytes_mib", "xd_scale_kernel_count",
+    "xd_d2d_copy_count", "xd_real_boundary_launches", "xd_launch_count",
 )
 
 
@@ -162,6 +168,74 @@ def feature_vector(sample: dict[str, Any]) -> list[float]:
         if isinstance(value, str):
             return value.strip().lower() in ("1", "true", "yes", "on")
         return bool(value)
+
+    # The public xD mapping nests physical metadata under ``physical``. Older
+    # rows may store it directly or omit it; those rows retain zero-valued xD
+    # features and remain valid legacy training samples.
+    xd_physical = mapping.get("physical", mapping) if isinstance(mapping, dict) else {}
+    xd_cost = xd_physical.get("cost", {}) if isinstance(xd_physical, dict) else {}
+    if not isinstance(xd_cost, dict):
+        xd_cost = {}
+
+    def _cost_number(key: str, default: float) -> float:
+        value = xd_cost.get(key, default)
+        try:
+            value = float(value)
+        except (TypeError, ValueError, OverflowError):
+            return default
+        return value if math.isfinite(value) else default
+    xd_axes = xd_physical.get("axes", []) if isinstance(xd_physical, dict) else []
+    if not isinstance(xd_axes, list):
+        xd_axes = []
+    xd_axis_count = float(len(xd_axes))
+    xd_prefix_loops = _number(xd_cost, "prefix_launches", 0.0)
+    if xd_prefix_loops <= 0.0:
+        xd_prefix_loops = sum(max(0.0, _group_number(axis, "prefix_loops", 1.0))
+                              for axis in xd_axes if isinstance(axis, dict))
+    xd_permutation_count = 0.0
+    for axis in xd_axes:
+        if not isinstance(axis, dict):
+            continue
+        permutation = axis.get("permutation", [])
+        boundary = str(axis.get("boundary", "none"))
+        if boundary not in ("", "none") or (isinstance(permutation, list) and
+                                                any(index != value for index, value in enumerate(permutation))):
+            xd_permutation_count += 1.0
+    if "permutation_launches" in xd_cost:
+        xd_permutation_count = _cost_number("permutation_launches", xd_permutation_count)
+    xd_workspace_bytes = _number(sample, "workspace_bytes", 0.0)
+    if xd_workspace_bytes <= 0.0 and isinstance(mapping, dict):
+        xd_workspace_bytes = _number(mapping, "workspace_bytes", 0.0)
+    if xd_workspace_bytes <= 0.0 and isinstance(xd_physical, dict):
+        xd_workspace_bytes = _number(xd_physical, "workspace_bytes", 0.0)
+    if _cost_number("workspace_bytes", 0.0) > 0.0:
+        xd_workspace_bytes = _cost_number("workspace_bytes", xd_workspace_bytes)
+    xd_workspace_mib = max(0.0, xd_workspace_bytes) / (1024.0 * 1024.0)
+    xd_boundary_bytes = _number(sample, "boundary_bytes", 0.0)
+    if xd_boundary_bytes <= 0.0:
+        xd_boundary_bytes = _number(sample, "input_bytes", 0.0) + _number(sample, "output_bytes", 0.0)
+    if xd_boundary_bytes <= 0.0 and isinstance(mapping, dict):
+        xd_boundary_bytes = _number(mapping, "input_bytes", 0.0) + _number(mapping, "output_bytes", 0.0)
+    xd_boundary_bytes_mib = max(0.0, xd_boundary_bytes) / (1024.0 * 1024.0)
+    xd_scale_requested = isinstance(xd_physical, dict) and abs(_number(xd_physical, "output_scale", 1.0) - 1.0) > 0.0
+    xd_scale_kernel_count = float(xd_scale_requested and not _flag(xd_physical.get("fused_axes", False)))
+    if "scale_kernel_launches" in xd_cost:
+        xd_scale_kernel_count = _cost_number("scale_kernel_launches", xd_scale_kernel_count)
+    xd_inverse = _flag(xd_physical.get("inverse", False)) if isinstance(xd_physical, dict) else False
+    xd_complex_only = _flag(xd_physical.get("complex_only", True)) if isinstance(xd_physical, dict) else True
+    # The compact C2R path has no copy when an axis plan can write into owned
+    # scratch. A rank-one compact path still needs the legacy D2D boundary.
+    xd_d2d_copy_count = float(xd_inverse and not xd_complex_only and xd_axis_count == 0)
+    # Every compact real call has one vendor R2C or C2R boundary launch,
+    # including rank-one plans whose physical axis list is empty.
+    xd_real_boundary = float(not xd_complex_only)
+    if "c2r_d2d_copy_launches" in xd_cost:
+        xd_d2d_copy_count = _cost_number("c2r_d2d_copy_launches", xd_d2d_copy_count)
+    if "real_boundary_launches" in xd_cost:
+        xd_real_boundary = _cost_number("real_boundary_launches", xd_real_boundary)
+    xd_launch_count = _cost_number("total_launches", 0.0)
+    if xd_launch_count <= 0.0:
+        xd_launch_count = xd_prefix_loops + xd_permutation_count + xd_scale_kernel_count + xd_d2d_copy_count + xd_real_boundary
 
     raw_launch_counts = [max(1.0, _group_number(group, "launch_count", 1.0)) for group in physical]
     explicit_launch_counts = [
@@ -302,6 +376,15 @@ def feature_vector(sample: dict[str, Any]) -> list[float]:
         factor_event_waits,
         factor_total_ctas,
         factor_max_grid_ctas,
+        xd_axis_count,
+        xd_prefix_loops,
+        xd_permutation_count,
+        xd_workspace_mib,
+        xd_boundary_bytes_mib,
+        xd_scale_kernel_count,
+        xd_d2d_copy_count,
+        xd_real_boundary,
+        xd_launch_count,
     ]
 
 

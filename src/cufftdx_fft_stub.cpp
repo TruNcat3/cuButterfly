@@ -15,6 +15,10 @@ void launch_cufftdx_block(std::uint32_t, const Complex32*, Complex32*, std::uint
 bool cufftdx_fp64_block_available(std::uint32_t) noexcept { return false; }
 bool cufftdx_fp64_online_available(std::uint32_t, std::uint32_t, std::uint32_t) noexcept { return false; }
 
+void attach_cufftdx_fp64_online_resources(MixedDataflowPlan&, const ButterflyConfig&) {
+    throw std::runtime_error("FP64 online cufftdx-block was not enabled at build time");
+}
+
 void launch_cufftdx_fp64_block(std::uint32_t, const Complex64*, Complex64*, std::uint64_t, std::uint64_t,
                                std::uint64_t, bool, bool, cudaStream_t) {
     throw std::runtime_error("FP64 cufftdx-block was not enabled at build time");

@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\caption{Methodological comparison. Short entries expose the dimensions that
+matter for butterfly execution; the text gives the detailed positioning.
+Entries describe the organizing abstraction, not an exhaustive list of
+everything a system can represent.}
+\label{tab:related-work}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{.20\columnwidth}>{\raggedright\arraybackslash}p{.16\columnwidth}>{\raggedright\arraybackslash}p{.18\columnwidth}>{\raggedright\arraybackslash}p{.16\columnwidth}>{\raggedright\arraybackslash}p{.15\columnwidth}@{}}
+\toprule
+Approach & Object & Parallel organization & Core form & Order / search \\
+\midrule
+SPIRAL / FFTX~\cite{spiral2005,fftx2018} & transform formulas & generated stages & codelets & algebraic search \\
+GPU transform libraries~\cite{vkfft2023,vkfft,gpuntt2023,hadacore2024} & FFT, NTT, Hadamard & kernel or tile schedule & specialized kernels & order-specific; hardware tuned \\
+FlashFFTConv~\allowbreak\cite{flashfftconv2024} & long convolutions & fused decomposition & tensor cores & layout-aware search \\
+Ansor / ROLLER~\cite{ansor2020,roller2022} & tensor schedules & hierarchical tiles & tensor programs & hardware-guided search \\
+TensorIR~\cite{tensorir2023} & tensor blocks & block-local plus outer schedule & tensorized intrinsics & explicit layouts \\
+Welder~\cite{welder2023} & producer--consumer tiles & tile graph & surrounding kernels & shape / traffic search \\
+Timeloop / Eyeriss~\cite{timeloop2019,eyeriss2016} & accelerator mappings & spatial / temporal tiling & architecture-specific & mapping search \\
+\system{} & labeled radix-two stages & closed subgraphs plus streaming handoffs & compatible local cores & order-aware; bounded search \\
+\bottomrule
+\end{tabular}
+\end{table}

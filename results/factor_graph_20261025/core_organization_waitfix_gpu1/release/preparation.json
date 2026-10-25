@@ -1,0 +1,314 @@
+{
+  "config_sha256": "d1de65fd7f42e39ec62b20643a383bfc54a85c3e5a2c66a9e23e607e926bb5e3",
+  "prepared_sha256": "f93f35b9f9b2035f8c10db9838aea09c0899430f984baa5138326ed240325afc",
+  "binary_sha256": "cbdb0af0f75a11517fc6d8e6ce839b72ba6e8585259ec1e68613b9b585124ce6",
+  "library_sha256": "fac10905e8c7d88a1c42f669545df6182e988409a297ee99f55d00e6d5e57778",
+  "hardware_model": "/home/wt/git/cuButterfly/config/hardware/NVIDIA-A100-80GB-PCIe-sm80-84974239744B/hardware_model.json",
+  "hardware_sha256": "27d360400478070efb4948cc7fe62b14b4cad51592f49fbd7008248d669e2206",
+  "cache": "/home/wt/.cache/cubutterfly/modules",
+  "modules": [
+    {
+      "id": "native-t1-d0",
+      "point": {
+        "backend": "factor-streamed",
+        "precision": "fp64",
+        "logN": 16,
+        "stage_partition": [
+          16
+        ],
+        "factor_partition": [
+          8,
+          8
+        ],
+        "factor_ept": 16,
+        "factor_columns": 4,
+        "data_tiles_per_cta": 1,
+        "prefetch_depth": 0,
+        "factor_io_policies": [
+          "dynamic",
+          "dynamic"
+        ],
+        "fft_core": "register-tile"
+      },
+      "module": "/home/wt/.cache/cubutterfly/modules/f4dbbfc4f03690c409562a8e2c775fdc55c0303c59c1748fb570d695456d3dcf/module.so",
+      "sha256": "d0541ae629000d679a8ae1c25b2194d5865119bd2b8ab982036a7268a69c56ae"
+    },
+    {
+      "id": "native-t4-d0",
+      "point": {
+        "backend": "factor-streamed",
+        "precision": "fp64",
+        "logN": 16,
+        "stage_partition": [
+          16
+        ],
+        "factor_partition": [
+          8,
+          8
+        ],
+        "factor_ept": 16,
+        "factor_columns": 4,
+        "data_tiles_per_cta": 4,
+        "prefetch_depth": 0,
+        "factor_io_policies": [
+          "dynamic",
+          "dynamic"
+        ],
+        "fft_core": "register-tile"
+      },
+      "module": "/home/wt/.cache/cubutterfly/modules/1fb966252c7342632b5f52be109cd86d292856bf9cd5eaf8533554bbfb67f9fb/module.so",
+      "sha256": "89029ecd40376ee7233a15423e482eb6ed1f43fca3b1bfdcac4ea7a63dcf88dd"
+    },
+    {
+      "id": "native-t4-d1",
+      "point": {
+        "backend": "factor-streamed",
+        "precision": "fp64",
+        "logN": 16,
+        "stage_partition": [
+          16
+        ],
+        "factor_partition": [
+          8,
+          8
+        ],
+        "factor_ept": 16,
+        "factor_columns": 4,
+        "data_tiles_per_cta": 4,
+        "prefetch_depth": 1,
+        "factor_io_policies": [
+          "dynamic",
+          "dynamic"
+        ],
+        "fft_core": "register-tile"
+      },
+      "module": "/home/wt/.cache/cubutterfly/modules/c027e9db2bd942148752f0172484f4b85dabb26e65d6797066d4d98767d49398/module.so",
+      "sha256": "5c2366b57c27a9b31165db1e3daaa218c2f34ba01e56632c2db3913db529d37a"
+    },
+    {
+      "id": "native-t4-d2",
+      "point": {
+        "backend": "factor-streamed",
+        "precision": "fp64",
+        "logN": 16,
+        "stage_partition": [
+          16
+        ],
+        "factor_partition": [
+          8,
+          8
+        ],
+        "factor_ept": 16,
+        "factor_columns": 4,
+        "data_tiles_per_cta": 4,
+        "prefetch_depth": 2,
+        "factor_io_policies": [
+          "dynamic",
+          "dynamic"
+        ],
+        "fft_core": "register-tile"
+      },
+      "module": "/home/wt/.cache/cubutterfly/modules/c048f3f6ce37bd7580cc805489558226ed53f5726757061e1318e0da800d988b/module.so",
+      "sha256": "0ea6101fc400da3a75ceb73c0a5120377753c8388424feda9e105ed212ddd69d"
+    },
+    {
+      "id": "cufftdx-t1-d0",
+      "point": {
+        "backend": "factor-streamed",
+        "precision": "fp64",
+        "logN": 16,
+        "stage_partition": [
+          16
+        ],
+        "factor_partition": [
+          8,
+          8
+        ],
+        "factor_ept": 16,
+        "factor_columns": 4,
+        "data_tiles_per_cta": 1,
+        "prefetch_depth": 0,
+        "factor_io_policies": [
+          "dynamic",
+          "dynamic"
+        ]
+      },
+      "module": "/home/wt/.cache/cubutterfly/modules/6ad6befe22327cd54dfa628b10338f22aa1c0c4c71f3aa1f859e803569553907/module.so",
+      "sha256": "b82c06d89153041da8106bb7fa8eb1be0da1875477dd82cf5733fef5832228a0"
+    },
+    {
+      "id": "cufftdx-t4-d0",
+      "point": {
+        "backend": "factor-streamed",
+        "precision": "fp64",
+        "logN": 16,
+        "stage_partition": [
+          16
+        ],
+        "factor_partition": [
+          8,
+          8
+        ],
+        "factor_ept": 16,
+        "factor_columns": 4,
+        "data_tiles_per_cta": 4,
+        "prefetch_depth": 0,
+        "factor_io_policies": [
+          "dynamic",
+          "dynamic"
+        ]
+      },
+      "module": "/home/wt/.cache/cubutterfly/modules/c662bf0ef9adfaef454ee6d14d94a615c20838e7ca976b838c1227faf6d883e6/module.so",
+      "sha256": "1f64f5f93952d5cf3695e5415a6798313f637e93c74b3b290e689defe720aebe"
+    },
+    {
+      "id": "cufftdx-t4-d1",
+      "point": {
+        "backend": "factor-streamed",
+        "precision": "fp64",
+        "logN": 16,
+        "stage_partition": [
+          16
+        ],
+        "factor_partition": [
+          8,
+          8
+        ],
+        "factor_ept": 16,
+        "factor_columns": 4,
+        "data_tiles_per_cta": 4,
+        "prefetch_depth": 1,
+        "factor_io_policies": [
+          "dynamic",
+          "dynamic"
+        ]
+      },
+      "module": "/home/wt/.cache/cubutterfly/modules/b330bc8d2c552d63aebc4e4a7cde88cd87f2a45ed3dff2b138108a457e7d69ee/module.so",
+      "sha256": "3bbd9232a9cfebec68ef4bcac4c86ee2c4f255c332b8e001c52796cc249285ef"
+    },
+    {
+      "id": "cufftdx-t4-d2",
+      "point": {
+        "backend": "factor-streamed",
+        "precision": "fp64",
+        "logN": 16,
+        "stage_partition": [
+          16
+        ],
+        "factor_partition": [
+          8,
+          8
+        ],
+        "factor_ept": 16,
+        "factor_columns": 4,
+        "data_tiles_per_cta": 4,
+        "prefetch_depth": 2,
+        "factor_io_policies": [
+          "dynamic",
+          "dynamic"
+        ]
+      },
+      "module": "/home/wt/.cache/cubutterfly/modules/20a5999e58acde5c5aa22dd7e1c961ae5666789398d65942ceb586cb52c2edc2/module.so",
+      "sha256": "9481645ac642fa2d29c7927755434ac325e4f6f974c6e5b264817f98d536a089"
+    },
+    {
+      "id": "cufft",
+      "provider": "cufft",
+      "preparation": "library plan created before timing"
+    }
+  ],
+  "sm": 80,
+  "control_groups": [
+    {
+      "id": "native-factor-fixed-core",
+      "baseline": "native-t1-d0",
+      "fft_core": "register-tile",
+      "semantics": {
+        "operator": "fft",
+        "precision": "fp64",
+        "logN": 16,
+        "batch": 16,
+        "inverse": false
+      },
+      "allowed_differences": [
+        "data_tiles_per_cta",
+        "prefetch_depth"
+      ],
+      "differences": {
+        "native-t4-d0": {
+          "data_tiles_per_cta": [
+            1,
+            4
+          ]
+        },
+        "native-t4-d1": {
+          "data_tiles_per_cta": [
+            1,
+            4
+          ],
+          "prefetch_depth": [
+            0,
+            1
+          ]
+        },
+        "native-t4-d2": {
+          "data_tiles_per_cta": [
+            1,
+            4
+          ],
+          "prefetch_depth": [
+            0,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "id": "cufftdx-block-fixed-core",
+      "baseline": "cufftdx-t1-d0",
+      "fft_core": "cufftdx-block",
+      "semantics": {
+        "operator": "fft",
+        "precision": "fp64",
+        "logN": 16,
+        "batch": 16,
+        "inverse": false
+      },
+      "allowed_differences": [
+        "data_tiles_per_cta",
+        "prefetch_depth"
+      ],
+      "differences": {
+        "cufftdx-t4-d0": {
+          "data_tiles_per_cta": [
+            1,
+            4
+          ]
+        },
+        "cufftdx-t4-d1": {
+          "data_tiles_per_cta": [
+            1,
+            4
+          ],
+          "prefetch_depth": [
+            0,
+            1
+          ]
+        },
+        "cufftdx-t4-d2": {
+          "data_tiles_per_cta": [
+            1,
+            4
+          ],
+          "prefetch_depth": [
+            0,
+            2
+          ]
+        }
+      }
+    }
+  ],
+  "created": "2026-10-25T13:30:14.294452+08:00",
+  "reference_sha256": "7f44382de8e4fc652a536997fc22da29bf40b7b41261593d7e5f6b824355765d",
+  "complete": true
+}

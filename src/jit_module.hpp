@@ -2,6 +2,8 @@
 #include <cuntt/butterfly.hpp>
 #include <cubutterfly/module.h>
 namespace cuntt::detail {
+enum class CompilePolicy { Precompiled, Auto, OnDemand, Research, Invalid };
+CompilePolicy compile_policy() noexcept;
 bool on_demand_compilation_enabled();
 bool specialize_shared_templates();
 const cubutterflyModuleV2* prepare_shared_module(const ButterflyConfig& config);
