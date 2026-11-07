@@ -1,8 +1,8 @@
 {
   "schema": "current-paper-refresh-figures-v1",
   "snapshot": "paper/generated/current_refresh/snapshot.json",
-  "snapshot_sha256": "e0580468ae39da379bee3f313f3e5f6591e6451a189819940949521b7909636f",
-  "renderer_sha256": "dc74984b9fe0d55d2240ab7b6e879d28059d7179ba9206051d557b99a9ff9e91",
+  "snapshot_sha256": "8af841214c03793fc9455c512517341151337b3c4f9c61f16241a8d1c9051e91",
+  "renderer_sha256": "6e5ca885f437083728e2da25bc8fbd01a9f8125a8823dd5b205b49617873f804",
   "matplotlib": "3.10.9",
   "figures": {
     "operators": {
@@ -10,8 +10,8 @@
       "width_inches": 7.0,
       "height_inches": 2.55,
       "files": {
-        "paper/figures/current_refresh_operators.pdf": "ec8145ed8801d3cb7a090941e5bb9d4e3b85048ae4b1d4d388a2f16556dd655e",
-        "paper/figures/current_refresh_operators.svg": "5442afd083031df2bf7c747a9f95ad81a155ab36086701d1878d26955b1cafe7",
+        "paper/figures/current_refresh_operators.pdf": "bd52af0b1a7501f507641c7f1d86ae27ffc68e86ab8faa8f5929316b873a7bed",
+        "paper/figures/current_refresh_operators.svg": "bc9e2133503c8be7834b5d438f573f48bf63547956d7c380aa30bb310b97dd82",
         "paper/figures/current_refresh_operators.png": "bd465f83ba8b6f3047358d49863803ba112f72ecf6150c2c2af14b1d4222c991"
       },
       "main_requests": 66,
@@ -79,23 +79,39 @@
       ]
     },
     "applications": {
-      "description": "Top: unchanged snapshot comparisons and four legacy pinned-build FNO/QuaRot points. Bottom: all 14 audited closure ratios (four QuaRot losses, four CuPy filter repeats, four separately marked same-padding filter diagnostics, two bootstrap repeats) and two historical FNO hotpath Graph aggregate ratios. FNO eager rows remain separate in frozen data/table. Panels use different labeled ratio ranges; no cohorts or builds are pooled.",
+      "description": "Top: snapshot comparisons and two numerically checked historical FNO points. Two earlier QuaRot records are archived but excluded for invalid random-state preparation and absent output checks. Bottom: all 14 audited closure ratios (four QuaRot losses, four CuPy filter repeats, four separately marked same-padding filter diagnostics, two bootstrap repeats) and two historical FNO hotpath Graph aggregate ratios, plus separately marked fused QuaRot follow-up processes when available. FNO eager rows remain separate in frozen data/table. Panels use different labeled ratio ranges; no cohorts or builds are pooled.",
       "width_inches": 3.45,
       "height_inches": 4.65,
       "files": {
-        "paper/figures/current_refresh_applications.pdf": "6cd079453ac929eb236586236e7b7b325d7fc43add3b9eb24dc3096095fb0ba7",
-        "paper/figures/current_refresh_applications.svg": "550896070bf0587a7f08ee3a8e5b839092d3f13241175adcd467c78495d6b1a8",
-        "paper/figures/current_refresh_applications.png": "d1091c31c97e18c18f4be7a9e99a6511a48130c237411d4b878baf87d2ab35da"
+        "paper/figures/current_refresh_applications.pdf": "690fdd0c86c0a783b24d02232673bb17c8348ddba5b749e8a3b6b568dca28277",
+        "paper/figures/current_refresh_applications.svg": "6cc02639e3497a4c9c1eb68eb853100a8022c5c9c05861848187909eee3f1916",
+        "paper/figures/current_refresh_applications.png": "74decbe709229171edaf29f1f92ed461ad015bcaea7d53bea364bd96e39b056c"
       },
       "pair_count": 46,
       "ckks_pairs": 36,
       "ckks_requests_per_control": 36,
-      "historical_records": 4,
+      "historical_records": 2,
       "historical_source": "paper/generated/application_historical_complete_call.json",
-      "historical_source_sha256": "384f60197539929579a813131302550634548e5279f9c280bd3330d23cc93caa",
+      "historical_archived_records": 4,
+      "historical_exclusions": [
+        {
+          "workload": "QuaRot 512 / 32",
+          "reason": "Pre-repair random state and cache-position path was invalidated by project repair record; raw has no finite/output validation or state hashes. Per-output NaN status is unknown.",
+          "source": "results/paper_profile_rc2/end_to_end/quarot_random_prefill512_decode32_sdpa.json",
+          "source_sha256": "b739603dd20b2e10a56ea6db163362edbb7142f718b9896142b494d042392f45"
+        },
+        {
+          "workload": "QuaRot 2048 / 128",
+          "reason": "Pre-repair random state and cache-position path was invalidated by project repair record; raw has no finite/output validation or state hashes. Per-output NaN status is unknown.",
+          "source": "results/paper_profile_rc2/end_to_end/quarot_random_prefill2048_decode128_sdpa.json",
+          "source_sha256": "21c561ccca1247b6b4063ee3dd9c20db0bc8e15e95ed68c050b2e79487581827"
+        }
+      ],
+      "historical_source_sha256": "c4f5d2f74474e7698b10cbac8e85bf9a6878460f47befe18c680600a60b8c81a",
       "matched_integration_pairs_in_controlled_table": 36,
       "supplemental_graph_rows": 16,
       "supplemental_eager_rows_in_table": 2,
+      "fused_quarot_processes": 4,
       "supplement_source": "paper/generated/current_refresh/application_closeout.json",
       "supplement_sources": {
         "results/a100_e2e_closure_20261107/audit.json": "2489bb43bf8eb0c969b5cb68028ec755362d6e97e5890eb4b5b52107193028de",
@@ -118,8 +134,8 @@
       "width_inches": 3.45,
       "height_inches": 2.55,
       "files": {
-        "paper/figures/current_refresh_organization.pdf": "d54c04d3a4656b26d4bbc3dcf65413186f94b9e70eb9bcf62888ffe607afdd81",
-        "paper/figures/current_refresh_organization.svg": "808ce8be301cf7a4b0b5fb937945899f8db63d5173f11f5b86d81206594ba782",
+        "paper/figures/current_refresh_organization.pdf": "ebacdc2efad0b4255675c5502c9af738a8c0dafa19548e60ade3add37fab64b1",
+        "paper/figures/current_refresh_organization.svg": "ebd0fc6968b4a736ef6f71a9979392d7bc9e2776bb486336d7c3fe02f426c273",
         "paper/figures/current_refresh_organization.png": "7a2ad6c71c7bd81fc740e1d7a564dbbea91984cf45715417992dfed631a4bdb5"
       },
       "source": "paper/generated/motivation_organization_a100.csv",
@@ -277,6 +293,7 @@
   "fft_l_acceptance": null,
   "frozen_inputs": true,
   "frozen_fp16_sha256": "d8afb30a01ff81099bbe4255ac0fa1ccfa8829d77663ff06b9439424b1768a05",
-  "application_closeout_sha256": "62a96a924ad7f0d230faf776b82b89fe8bc27c038644551e3e953c59fae41b63",
-  "application_closeout_exporter_sha256": "8fdab613573a71d1419b0cf5d0ec5d68f4fa8b11d9e9fb6e90caf67b6400ec34"
+  "application_closeout_sha256": "156277b1865c9cb2111e9c5eadc8060b76671586a25231c81af45fd17a67f8aa",
+  "application_closeout_exporter_sha256": "bf34fd86f198c4fa15912e26a283bccd1566e9ac88f6b0e93e6dc47113c9c406",
+  "quarot_fused_followup_sha256": "e9ef94b60c34a9aab45f99bcd4333c0bf348362dc4a4cb81c22c2caf9debb9c4"
 }

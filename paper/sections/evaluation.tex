@@ -4,6 +4,7 @@
 \centering
 \includegraphics[width=.98\textwidth]{figures/current_refresh_operators.pdf}
 \caption{Complete-call comparisons group operators by precision;
+DaoFHT includes copying its returned tensor to the supplied output buffer.
 FP16 FFT uses a separate public-selection cohort, while further BF16 experiments are deferred.}
 \label{fig:rc2-absolute-throughput}
 \end{figure*}
@@ -30,8 +31,8 @@ the fixed-core FFT controls use 80GB, with an independent 40GB FP32 replication.
 An eleven-request 40GB FP16 supplement gives an installed-default cuFFT/\system{}
 GM of 0.858410$\times$ (0.738866--1.08757$\times$), excluding it from the
 80GB mean. Its omitted independent stage calibration leaves unseen-request
-ranking unvalidated. Cohorts preserve distinct device, build, and protocol identities; application
-timings do not evaluate the later FP16 build. All measurements are A100;
+ranking unvalidated. Cohorts preserve distinct device, build, and protocol identities;
+the QuaRot fused follow-up alone uses the later FP16 build. All measurements are A100;
 Blackwell remains unmeasured.
 
 \textbf{Numerical and timing contracts.}
@@ -43,6 +44,10 @@ applicable operator baselines capture twenty calls per CUDA graph and report
 the median of seven event-timed replays divided by twenty. Replays within one
 process are not independent trials.
 Steady-state timing excludes search, compilation, setup, capture, and checking.
+Application clocks and reductions follow their recorded protocols: FNO and
+QuaRot use host-wall medians, filtering and Poisson use device-event medians,
+and CKKS/bootstrap use device-event sample means. Each ratio compares matching
+boundaries within its cohort; no overall application mean combines these protocols.
 Profiler timings do not replace ordinary timings; ranges are not confidence
 intervals, and near-parity differences do not establish significance.
 NTT controls check every batch; local-grouping and cross-core floating controls
@@ -62,7 +67,8 @@ independent FP16 public selections. Boxes span workloads; annotations give
 paired geometric means (GM) and counts. Table~\ref{tab:current-operators}
 separates matched populations by competitor and precision. Ratios are
 baseline/\system{} latency; faster counts ratios above one. Missing pairs
-remain unmeasured.
+remain unmeasured. The main 66 requests yield 49 external pairs, with multiple
+competitors for some requests and no matched baseline for others.
 FP64 FFT and FP32 FWHT win most pairs; FP32 FFT retains small-length and
 multidimensional losses.
 Five word64 NTT pairs yield \CurrentNTT$\times$ on average.
@@ -71,14 +77,25 @@ Three-trial replay gives 1.175$\times$; forward $N=65536,B=1$ remains near parit
 
 \begin{table}[t]
 \centering\small
-\caption{Matched operator speedups retain separate study populations.}
+\caption{Matched operator speedups retain separate populations. N/A/X counts
+native, adapted, and axis-composed baseline calls; DaoFHT includes supplied-output copying.}
 \label{tab:current-operators}
 \input{generated/current_refresh/operator_table}
 \end{table}
 
 \textbf{Native computation and adaptation.}
-Eight directly supported cuFFT comparisons give 1.102$\times$; seven
-including normalization/layout adaptation give 1.385$\times$. Two rank-4/8 axis-composition replays retain 1.925$\times$ and 2.748$\times$ against cuFFT compositions.
+Directly supported cuFFT requests give 1.034$\times$ for five FP32 pairs
+and 1.225$\times$ for three FP64 pairs. Including required normalization or
+layout adaptation gives 1.290$\times$ across four FP32 pairs and
+1.524$\times$ across three FP64 pairs. These complete-call comparisons include
+the baseline's required conversions; their aggregate gains are not solely
+arithmetic-core gains. Two independent rank-4/8 axis-composition replays retain
+1.925$\times$ and 2.748$\times$ against cuFFT compositions.
+All ten DaoFHT pairs include copying the returned tensor to a supplied output
+buffer. This matches the tested C-API boundary, but the FWHT operation itself
+also permits consuming DaoFHT's returned tensor directly. The 1.474$\times$
+aggregate therefore concerns the adapted interface; a matched comparison
+without this extra copy has not been measured for these ten requests.
 FP64 FWHT, zeta, and structured
 butterflies lack matched GPU baselines. The separate 34-request CPU study
 uses two processes on a shared host and a different timing boundary.
@@ -124,25 +141,23 @@ Figure~\ref{fig:application-batch} separates 46 current Poisson/filter, CKKS,
 and bootstrap comparisons from historical and independent replays. Hollow
 markers identify single-process filters; CKKS diamonds show 12-request batch GMs.
 
-For FP32 periodic Poisson, the three $(N,B)$ pairs are $(1024,4)$,
-$(2048,4)$, and $(2048,16)$. Complete-call medians are
-0.200, 0.893, and 3.245~ms for \system{}, giving
-1.082--1.107$\times$ over Torch/cuFFT and 1.097--1.125$\times$ over CuPy.
-Twenty event samples include input refresh, both transforms, frequency
-multiplication, and independent output copies. CPU, changed/restored-input,
-and lifetime checks pass; relative $L_2$ error is below $5.7\times10^{-7}$.
+FP32 periodic Poisson at $(N,B)=(1024,4),(2048,4),(2048,16)$ takes
+0.200, 0.893, and 3.245~ms, giving 1.082--1.107$\times$ over Torch/cuFFT
+and 1.097--1.125$\times$ over CuPy. Twenty event samples include input refresh,
+both transforms, frequency multiplication, and output copies.
+Changed/restored-input and lifetime checks pass; CPU-reference relative
+$L_2$ error stays below $5.7\times10^{-7}$.
 
-Fixed-filter endpoints use $1024^2/2048^2$ images, $B=16$, a shared
-$31^2$ filter, cached filter spectra, and identical $1080^2/2100^2$ padding.
-Complete-call medians are 1.409/5.647~ms versus CuPy's 1.502/5.912~ms,
-giving 1.066/1.047$\times$ from one process per endpoint.
-An earlier recomputed-filter contract won three of nine requests; filter
-caching changes the application contract.
+Fixed filtering uses $1024^2/2048^2$ images, $B=16$, cached $31^2$ spectra,
+and matched $1080^2/2100^2$ padding. Medians of 1.409/5.647~ms versus
+CuPy's 1.502/5.912~ms give 1.066/1.047$\times$ in one process per endpoint.
+Recomputing the filter instead won only three of nine earlier requests.
 
-The CKKS matrix crosses four operations---key switching, square/relinearize/
-rescale, square/rescale/key switching, and rotation---with $B=1,8,32$.
-It uses key-switch methods I/II at $N=16384$ and method I at $N=65536$.
-Loop/stage-batch selection precedes twenty holdout rounds of ten Graph replays.
+CKKS crosses key switching, square/relinearize/rescale, square/rescale/key
+switching, and rotation with $B=1,8,32$: methods I/II at $N=16384$ and
+method I at $N=65536$. After loop/stage-batch selection, each request averages
+twenty holdout event-timed rounds of ten Graph replays. GMs summarize ratios
+across requests.
 
 All 36 selected paths produce elementwise-identical ciphertexts.
 Their geometric mean is \CurrentCKKSLoop$\times$ over native loop, with
@@ -152,22 +167,24 @@ Small-parameter regular bootstrap at $N=4096$, $B=1/8$ yields
 1.030/1.032$\times$ over HEonGPU, using five event samples per backend.
 Both CKKS cohorts use \texttt{sec\_level=none}.
 
-Historical pinned-build FNO at $64^2/128^2$, $B=8/4$, gives
-0.954/0.952$\times$; random-weight QuaRot at prefill/decode $512/32$ and
-$2048/128$ gives 1.008/1.003$\times$~\cite{neuraloperatorcode,quarotcode}.
-These complete-call records include input refresh and output materialization
-and remain outside current-batch aggregates. QuaRot makes no trained-model
-quality claim.
+Historical FNO at $64^2/128^2$, $B=8/4$, gives 0.954/0.952$\times$,
+including input refresh and output materialization~\cite{neuraloperatorcode}.
+Earlier QuaRot traces lack valid random-state preparation and output checks;
+they are archived but excluded from performance evidence~\cite{quarotcode}.
 
-Independent application cohorts (Table~\ref{tab:application-cohorts}) retain
-four random-weight QuaRot losses at prefill/decode $128/8$, $B=1/4$
-(0.957--0.968$\times$), including baseline-first and treatment-first orders.
-Their FP16 adapter composes FP32 conversion, FWHT, scaling, and narrowing;
-these adaptation costs are not quantified separately.
-FNO at $64^2/128^2$, $B=4$, gives 1.030/1.056$\times$ in Graph mode,
-including input copy, full forward/replay, output clone, and synchronization.
-Its eager ratios are 0.955/0.957$\times$, reported separately. These cohorts
-neither replace historical records nor enter the 46-comparison aggregate.
+Table~\ref{tab:application-cohorts} retains four QuaRot losses at prefill/decode
+$128/8$, $B=1/4$ (0.957--0.968$\times$), using both process orders.
+That adapter composes FP32 conversion, FWHT, scaling, and narrowing.
+The fused follow-up loads FP16 inputs, computes and scales in FP32, then
+stores FP16 through an existing core.
+\input{generated/current_refresh/quarot_fused_numbers}
+Both process orders yield \CurrentQuaRotFusedBOne$\times$ at $B=1$ and
+\CurrentQuaRotFusedBFour$\times$ at $B=4$ for the complete 7B model;
+all nine output steps match exactly. Whole-model gains remain small.
+Different selected cores preclude attributing them solely to fusion.
+FNO at $64^2/128^2$, $B=4$, gives 1.030/1.056$\times$ with Graph and
+0.955/0.957$\times$ in eager mode, including input/output copies and
+synchronization. These cohorts do not enter the 46-comparison aggregate.
 
 \begin{table}[t]
 \centering\small

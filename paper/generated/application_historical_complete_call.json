@@ -4,31 +4,103 @@
   "records": [
     {
       "workload": "FNO 64\u00b2 / B8",
-      "baseline_ms": 3.007,
-      "cubutterfly_ms": 3.152,
-      "speedup": 0.953997461928934
+      "baseline_ms": 3.0065239407122135,
+      "cubutterfly_ms": 3.1516216695308685,
+      "speedup": 0.9539609305833167,
+      "source": "results/paper_profile_rc2/end_to_end/fno_darcy_64_v9.json",
+      "source_sha256": "447e417e301083c0c64d7a6124736d799ec8dc78b54a41846d8b0d40d11d8bd0",
+      "performance_eligible": true,
+      "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+      "scope": "historical pinned build only; not current-build performance",
+      "numerical_status": "passed-frozen-gate-before-timing",
+      "numerical_evidence": {
+        "pass": true,
+        "gate_before_timing": true,
+        "tolerance": "max_abs <= 1e-4 and relative_l2 <= 1e-4 (frozen E13 manifest)",
+        "max_abs_output_error": 8.344650268554688e-07,
+        "max_relative_l2_error": 1.0560813563405931e-07
+      },
+      "embedded_identity": {
+        "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+        "runner_sha256": "bfaa11702133604287bfaf367e68f0a103d55131be3b1495e9adbe9cb0dc25cb",
+        "adapter_sha256": "a6581447219d46e8a4eb53b14351743443524c57b7e6441a1685e39bfe679645",
+        "checkpoint_sha256": "062e2d5493d9dd26cf57044c294c12e29186d1b2ca07853d2bd6c84583a48507",
+        "test_tensor_sha256": "8091b1660ba1ec7858af1d19a836a603b9dae899a0fdf6e03af130a77a1e8c38"
+      },
+      "aggregation": "median of three process-trial medians, separately by variant; ratio of raw exact medians"
     },
     {
       "workload": "FNO 128\u00b2 / B4",
-      "baseline_ms": 2.99,
-      "cubutterfly_ms": 3.14,
-      "speedup": 0.9522292993630573
+      "baseline_ms": 2.989774104207754,
+      "cubutterfly_ms": 3.1403121538460255,
+      "speedup": 0.9520627115193299,
+      "source": "results/paper_profile_rc2/end_to_end/fno_darcy_128_v9.json",
+      "source_sha256": "6e227576bd97041026c3d86fc26b67d4af802588585064f100efb1447671699a",
+      "performance_eligible": true,
+      "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+      "scope": "historical pinned build only; not current-build performance",
+      "numerical_status": "passed-frozen-gate-before-timing",
+      "numerical_evidence": {
+        "pass": true,
+        "gate_before_timing": true,
+        "tolerance": "max_abs <= 1e-4 and relative_l2 <= 1e-4 (frozen E13 manifest)",
+        "max_abs_output_error": 8.344650268554688e-07,
+        "max_relative_l2_error": 1.3240302417885498e-07
+      },
+      "embedded_identity": {
+        "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+        "runner_sha256": "bfaa11702133604287bfaf367e68f0a103d55131be3b1495e9adbe9cb0dc25cb",
+        "adapter_sha256": "a6581447219d46e8a4eb53b14351743443524c57b7e6441a1685e39bfe679645",
+        "checkpoint_sha256": "4faf4a7bc90d3c6a4567f1a33d5f0f440056833763bfb209608cde1f68e6794e",
+        "test_tensor_sha256": "549ac096e1a772ac355297deed98955f7ca6d03c97295705f66e3c194cf20382"
+      },
+      "aggregation": "median of three process-trial medians, separately by variant; ratio of raw exact medians"
     },
     {
       "workload": "QuaRot 512 / 32",
       "baseline_ms": 2668.6,
       "cubutterfly_ms": 2647.4,
-      "speedup": 1.008007856765128
+      "speedup": 1.008007856765128,
+      "source": "results/paper_profile_rc2/end_to_end/quarot_random_prefill512_decode32_sdpa.json",
+      "source_sha256": "b739603dd20b2e10a56ea6db163362edbb7142f718b9896142b494d042392f45",
+      "performance_eligible": false,
+      "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+      "numerical_status": "pre-repair-output-validation-absent",
+      "exclusion_reason": "Pre-repair random state and cache-position path was invalidated by project repair record; raw has no finite/output validation or state hashes. Per-output NaN status is unknown.",
+      "exclusion_evidence": [
+        "paper/experiments/e13/README_quarot.md#historical-e13-execution-before-the-2026-10-12-repair",
+        "paper/experiments/targeted_evaluation_followup_20261012.md:133"
+      ],
+      "missing_identities": [
+        "runner_sha256",
+        "adapter_sha256",
+        "state_sha256"
+      ]
     },
     {
       "workload": "QuaRot 2048 / 128",
       "baseline_ms": 10573.719,
       "cubutterfly_ms": 10544.185,
-      "speedup": 1.0028009751346358
+      "speedup": 1.0028009751346358,
+      "source": "results/paper_profile_rc2/end_to_end/quarot_random_prefill2048_decode128_sdpa.json",
+      "source_sha256": "21c561ccca1247b6b4063ee3dd9c20db0bc8e15e95ed68c050b2e79487581827",
+      "performance_eligible": false,
+      "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+      "numerical_status": "pre-repair-output-validation-absent",
+      "exclusion_reason": "Pre-repair random state and cache-position path was invalidated by project repair record; raw has no finite/output validation or state hashes. Per-output NaN status is unknown.",
+      "exclusion_evidence": [
+        "paper/experiments/e13/README_quarot.md#historical-e13-execution-before-the-2026-10-12-repair",
+        "paper/experiments/targeted_evaluation_followup_20261012.md:133"
+      ],
+      "missing_identities": [
+        "runner_sha256",
+        "adapter_sha256",
+        "state_sha256"
+      ]
     }
   ],
   "missing": [
     "HEonGPU CKKS bootstrap"
   ],
-  "note": "Historical application records are separate from RC2 operator and pending E13 cohorts."
+  "note": "Historical pinned-build records; performance_eligible controls display. FNO retains validated historical negative results. Pre-repair QuaRot timings are archived but excluded from performance evidence; missing output validation does not establish per-output NaN."
 }

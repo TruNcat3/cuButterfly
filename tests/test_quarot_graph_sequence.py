@@ -159,3 +159,13 @@ def test_graph_extension_requires_matching_current_stream_receipt():
         extension.write_bytes(b"changed extension")
         with pytest.raises(RuntimeError, match="hash mismatch"):
             runner._validated_graph_extension(extension)
+
+
+def test_runner_defaults_and_historical_replay_are_cpu_parseable():
+    args = runner.parse_args(['--output', 'report.json'])
+    assert args.compute_contract == 'public_fp32_final'
+    assert args.execution_mode == 'graph'
+    for contract in ('native', 'fp32_composed'):
+        args = runner.parse_args(['--output', 'old.json', '--compute-contract', contract,
+                                  '--execution-mode', 'eager'])
+        assert args.compute_contract == contract and args.execution_mode == 'eager'

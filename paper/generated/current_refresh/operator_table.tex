@@ -1,13 +1,13 @@
 \begin{tabular}{@{}llrrrr@{}}
 \toprule
-Operator & Baseline & Pairs & GM & Faster & PRO\\\midrule
+Operator & Baseline & Pairs & GM & Faster & N/A/X\\\midrule
 \multicolumn{6}{@{}l}{\emph{Main 66-request study}}\\
-FFT FP32 & cuFFT & 11 & 1.298$\times$ & 9/11 & --\\
-FFT FP32 & VkFFT & 11 & 1.190$\times$ & 5/11 & --\\
-FFT FP64 & cuFFT & 6 & 1.366$\times$ & 5/6 & --\\
-FFT FP64 & VkFFT & 6 & 1.354$\times$ & 6/6 & --\\
-FWHT FP32 & DaoFHT & 10 & 1.474$\times$ & 9/10 & --\\
-NTT w64 & GPU-NTT & 5 & 1.188$\times$ & 4/5 & --\\
+FFT FP32 & cuFFT & 11 & 1.298$\times$ & 9/11 & 5/4/2\\
+FFT FP32 & VkFFT & 11 & 1.190$\times$ & 5/11 & 9/0/2\\
+FFT FP64 & cuFFT & 6 & 1.366$\times$ & 5/6 & 3/3/0\\
+FFT FP64 & VkFFT & 6 & 1.354$\times$ & 6/6 & 6/0/0\\
+FWHT FP32 & DaoFHT & 10 & 1.474$\times$ & 9/10 & 0/10/0\\
+NTT w64 & GPU-NTT & 5 & 1.188$\times$ & 4/5 & 0/5/0\\
 \midrule
 \multicolumn{6}{@{}l}{\emph{Independent FP16 public DEFAULT study}}\\
 FFT FP16 & cuFFT & 9 & 0.854$\times$ & 1/9 & --\\

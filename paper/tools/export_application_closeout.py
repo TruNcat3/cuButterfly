@@ -12,6 +12,27 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def timing_contract(scenario, mode="graph"):
+    """Label the selected persisted latency; do not change its aggregation."""
+    if "Llama" in scenario:
+        return dict(statistic="sample median", clock="wall", boundary=
+            "device input copy + full prefill/decode graph replay + independent output clone + synchronization; setup excluded",
+            evidence="source summary.end_to_end; baseline/cubutterfly wall_ms.end_to_end")
+    if "filter" in scenario:
+        return dict(statistic="sample median", clock="cuda_event", boundary=
+            "input refresh + complete fixed-filter graph + output materialization; setup excluded",
+            evidence="scripts/run_fft_filter_end_to_end.py:212-277")
+    if "bootstrap" in scenario.lower():
+        return dict(statistic="sample arithmetic mean", clock="cuda_event", boundary=
+            "complete captured batch graph; event interval divided by graph replays; setup excluded",
+            evidence="paper/experiments/heongpu_ckks_e2e_bench.cu:359-371,819-845,898-906; source/binary correspondence not verified")
+    if scenario.startswith("FNO"):
+        return dict(statistic="median of independent process medians", clock="wall", boundary=
+            "device input copy + complete forward/replay + independent output clone + synchronization; setup excluded",
+            evidence="fno_hotpath_summary.json aggregation and wall_median_ms; mode=" + mode)
+    return dict(statistic="unknown", clock="unknown", boundary="unknown", evidence="unknown")
+
+
 def export(root=ROOT):
     audit_path = root / 'results/a100_e2e_closure_20261107/audit.json'
     fno_path = root / 'results/e2e_unified_20261013/fno_hotpath_summary.json'
@@ -35,6 +56,7 @@ def export(root=ROOT):
         source(root / row['source'])
         row['source_sha256'] = digest(root / row['source'])
         row['role'] = 'diagnostic' if 'diagnostic' in row['baseline'] else 'external'
+        row['timing_contract'] = timing_contract(row['scenario'])
         rows.append(row)
     for row in fno['results']:
         for mode in ('graph', 'eager'):
@@ -47,6 +69,7 @@ def export(root=ROOT):
                 independent_processes=fno['independent_processes_per_size'],
                 library_sha256=fno['library_sha256'], gpu_uuid=fno['gpu_uuid'],
                 timing_scope=fno['timing_scope'], aggregation=fno['aggregation'],
+                timing_contract=timing_contract(f"FNO {row['size']}^2", mode),
                 source=str(fno_path.relative_to(root)), source_sha256=digest(fno_path), role='external'))
     return dict(schema='paper-application-closeout-v1', sources=sources, records=rows,
         note='Build-prior measurements, not installed-Nov5 timings. No pooling with snapshot or legacy records. Diagnostic same-padding filter comparisons are separate. FNO Graph and eager are separate contracts.',
@@ -89,7 +112,7 @@ def table(data):
     return '\n'.join(lines) + '\n'
 
 
-def cohort_table(data):
+def cohort_table(data, fused_rows=None):
     groups = {}
     for row in data['records']:
         if row['timing_mode'] != 'graph' or row['role'] != 'external':
@@ -114,6 +137,8 @@ def cohort_table(data):
             title, size = name.split(' ')
             name = title + r" $" + size + r"^2$"
         lines.append(f"{name}, B{batch} & {kind} & {baseline} & {ratio}" + r"\\")
+    if fused_rows:
+        lines += [r"\midrule", *fused_rows.strip().splitlines()]
     lines += [r"\bottomrule", r"\end{tabular}"]
     return '\n'.join(lines) + '\n'
 
@@ -126,7 +151,9 @@ def main():
     args.output.write_text(json.dumps(export(), indent=2) + '\n')
     data = load(args.output)
     args.output.with_suffix(".tex").write_text(table(data))
-    (args.output.parent / "application_cohorts.tex").write_text(cohort_table(data))
+    fused_path = args.output.parent / "quarot_fused_rows.tex"
+    (args.output.parent / "application_cohorts.tex").write_text(
+        cohort_table(data, fused_path.read_text() if fused_path.exists() else None))
     if args.fp16_acceptance:
         from load_fp16_acceptance import load_fp16_acceptance
         frozen = load_fp16_acceptance(args.fp16_acceptance)

@@ -1,0 +1,311 @@
+{
+  "schema": "performance-contract-audit-operators-v1",
+  "date": "2026-11-07",
+  "scope": "CPU only; no GPU, calibration, paper or runner changes; no sdb access",
+  "source_hashes": {
+    "paper/generated/current_refresh/snapshot.json": "e0580468ae39da379bee3f313f3e5f6591e6451a189819940949521b7909636f",
+    "paper/generated/current_refresh/fp16_comparison.json": "d8afb30a01ff81099bbe4255ac0fa1ccfa8829d77663ff06b9439424b1768a05",
+    "paper/generated/current_refresh/operator_table.tex": "74049e131eadd5a69c688d409aa41e74ca7b5b5faa5f4e5d3df090b2f2ef06a1",
+    "paper/generated/current_refresh/numbers.tex": "146081f936588dff8821120080876f2a2fb5ebc6a28ebed53e657560c274519a"
+  },
+  "verification": {
+    "exporter_operators_exact_match": true,
+    "exporter_cyclic_exact_match": true,
+    "main_requests": 66,
+    "main_unique_ids": 66,
+    "main_numeric_pairs": 49,
+    "main_timing_medians_checked": 115,
+    "main_own_protocols": {
+      "20 complete calls per CUDA graph; 7 replays; 10 warmup": 66
+    },
+    "main_rows_with_repeated_own_replay_values": 65,
+    "fp16_checked_result_pairs": 9,
+    "cyclic_requests": 90,
+    "cyclic_numeric_pairs": 54,
+    "cyclic_summary": {
+      "count": 54,
+      "geometric_mean": 1.3084045937798219,
+      "median": 1.3148543774563877,
+      "minimum": 0.9721254263533662,
+      "maximum": 1.9896756090405943,
+      "wins": 51,
+      "losses": 3,
+      "ties": 0
+    }
+  },
+  "main_table_recomputed": [
+    {
+      "operator": "fft",
+      "precision": "fp32",
+      "baseline": "cufft",
+      "n": 11,
+      "gm": 1.2979131637566619,
+      "wins": 9
+    },
+    {
+      "operator": "fft",
+      "precision": "fp32",
+      "baseline": "vkfft",
+      "n": 11,
+      "gm": 1.1902901987740082,
+      "wins": 5
+    },
+    {
+      "operator": "fft",
+      "precision": "fp64",
+      "baseline": "cufft",
+      "n": 6,
+      "gm": 1.3662182270479908,
+      "wins": 5
+    },
+    {
+      "operator": "fft",
+      "precision": "fp64",
+      "baseline": "vkfft",
+      "n": 6,
+      "gm": 1.353940859449353,
+      "wins": 6
+    },
+    {
+      "operator": "fwht",
+      "precision": "fp32",
+      "baseline": "daofht",
+      "n": 10,
+      "gm": 1.4743320301965002,
+      "wins": 9
+    },
+    {
+      "operator": "ntt",
+      "precision": "word64",
+      "baseline": "gpu-ntt",
+      "n": 5,
+      "gm": 1.188155690798691,
+      "wins": 4
+    }
+  ],
+  "groups_by_comparison_mode": [
+    {
+      "cohort": "cyclic90",
+      "operator": "ntt",
+      "precision": "word32",
+      "baseline": "gpu-ntt",
+      "comparison_mode": "adapter",
+      "n": 18,
+      "gm": 1.4001898156058665,
+      "wins": 18
+    },
+    {
+      "cohort": "cyclic90",
+      "operator": "ntt",
+      "precision": "word64",
+      "baseline": "gpu-ntt",
+      "comparison_mode": "adapter",
+      "n": 36,
+      "gm": 1.26479352371338,
+      "wins": 33
+    },
+    {
+      "cohort": "fft_grouped2",
+      "operator": "fft",
+      "precision": "fp32",
+      "baseline": "cufft",
+      "comparison_mode": "external-axis-composition",
+      "n": 2,
+      "gm": 2.3000770342770975,
+      "wins": 2
+    },
+    {
+      "cohort": "fft_grouped2",
+      "operator": "fft",
+      "precision": "fp32",
+      "baseline": "vkfft",
+      "comparison_mode": "external-axis-composition",
+      "n": 2,
+      "gm": 2.219478984408036,
+      "wins": 2
+    },
+    {
+      "cohort": "fp16_public_default9_20261105",
+      "operator": "fft",
+      "precision": "fp16",
+      "baseline": "cufft",
+      "comparison_mode": "native-storage/vendor-arithmetic-unspecified",
+      "n": 9,
+      "gm": 0.8535832448099131,
+      "wins": 1
+    },
+    {
+      "cohort": "main66",
+      "operator": "fft",
+      "precision": "fp32",
+      "baseline": "cufft",
+      "comparison_mode": "adapter",
+      "n": 4,
+      "gm": 1.2895406625437222,
+      "wins": 4
+    },
+    {
+      "cohort": "main66",
+      "operator": "fft",
+      "precision": "fp32",
+      "baseline": "cufft",
+      "comparison_mode": "external-axis-composition",
+      "n": 2,
+      "gm": 2.319050344913709,
+      "wins": 2
+    },
+    {
+      "cohort": "main66",
+      "operator": "fft",
+      "precision": "fp32",
+      "baseline": "cufft",
+      "comparison_mode": "native",
+      "n": 5,
+      "gm": 1.034351856109444,
+      "wins": 3
+    },
+    {
+      "cohort": "main66",
+      "operator": "fft",
+      "precision": "fp32",
+      "baseline": "vkfft",
+      "comparison_mode": "external-axis-composition",
+      "n": 2,
+      "gm": 2.225437277182974,
+      "wins": 2
+    },
+    {
+      "cohort": "main66",
+      "operator": "fft",
+      "precision": "fp32",
+      "baseline": "vkfft",
+      "comparison_mode": "native",
+      "n": 9,
+      "gm": 1.0357649025316158,
+      "wins": 3
+    },
+    {
+      "cohort": "main66",
+      "operator": "fft",
+      "precision": "fp64",
+      "baseline": "cufft",
+      "comparison_mode": "adapter",
+      "n": 3,
+      "gm": 1.523998990818315,
+      "wins": 3
+    },
+    {
+      "cohort": "main66",
+      "operator": "fft",
+      "precision": "fp64",
+      "baseline": "cufft",
+      "comparison_mode": "native",
+      "n": 3,
+      "gm": 1.2247726246300894,
+      "wins": 2
+    },
+    {
+      "cohort": "main66",
+      "operator": "fft",
+      "precision": "fp64",
+      "baseline": "vkfft",
+      "comparison_mode": "native",
+      "n": 6,
+      "gm": 1.353940859449353,
+      "wins": 6
+    },
+    {
+      "cohort": "main66",
+      "operator": "fwht",
+      "precision": "fp32",
+      "baseline": "daofht",
+      "comparison_mode": "adapter",
+      "n": 10,
+      "gm": 1.4743320301965002,
+      "wins": 9
+    },
+    {
+      "cohort": "main66",
+      "operator": "ntt",
+      "precision": "word64",
+      "baseline": "gpu-ntt",
+      "comparison_mode": "adapter",
+      "n": 5,
+      "gm": 1.188155690798691,
+      "wins": 4
+    },
+    {
+      "cohort": "ntt5",
+      "operator": "ntt",
+      "precision": "word64",
+      "baseline": "gpu-ntt",
+      "comparison_mode": "adapter",
+      "n": 5,
+      "gm": 1.1754402230994472,
+      "wins": 4
+    }
+  ],
+  "main_ntt_source_mapping": [
+    {
+      "id": "65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f",
+      "source": "measurement/rows/65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f.json",
+      "in_repair": true
+    },
+    {
+      "id": "5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e",
+      "source": "measurement/rows/5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e.json",
+      "in_repair": true
+    },
+    {
+      "id": "38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e",
+      "source": "measurement/rows/38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e.json",
+      "in_repair": true
+    },
+    {
+      "id": "83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b",
+      "source": "measurement/rows/83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b.json",
+      "in_repair": true
+    },
+    {
+      "id": "eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa",
+      "source": "measurement/rows/eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa.json",
+      "in_repair": true
+    }
+  ],
+  "findings": [
+    {
+      "status": "confirmed",
+      "finding": "Table statistics reproduce; NTT main table uses main66 rows, not ntt5 substitution."
+    },
+    {
+      "status": "issue",
+      "finding": "Main table aggregates native, adapted and axis-composed complete calls without a category column; preserve valid pairs and disclose modes."
+    },
+    {
+      "status": "issue",
+      "finding": "Compact main66 export drops compute, orders, normalization, strides and baseline adapter_operations; raw descriptor and row remain authoritative."
+    },
+    {
+      "status": "confirmed",
+      "finding": "cyclic54 uses separately measured supplements, same UUID/protocol and checksummed provenance; not interleaved independent trial evidence."
+    },
+    {
+      "status": "unconfirmed",
+      "finding": "Source-to-binary correspondence, exclusive GPU occupancy, vendor internal arithmetic and statistical significance are not established by this CPU audit."
+    }
+  ],
+  "supplied_output_followup": {
+    "status": "pending-matched-native-return-cohort",
+    "dao_pairs": 10,
+    "contract": "supplied caller output; backend allocation, native FWHT and result copy included",
+    "semantic_boundary": "out-of-place alone does not require caller-provided output address",
+    "interpretation": "1.474x compares complete supplied-output adapters, not bare cores or isolated organization",
+    "missing": "No native-return-tensor comparison matched to all ten main requests",
+    "prohibited_inference": "Do not subtract estimated copy costs from historical timings",
+    "evidence": [
+      "scripts/semantic_dao_baseline.py:_Core.__call__",
+      "include/cubutterfly/cubutterfly.h:301",
+      "main66 Dao adapter_operations"
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "kind": "derived diagnostic only; not a measured full-model trace",
+  "formula": "32 calls per prefill request + 8*32 calls per decode request; sum matched standalone median times",
+  "source": "quarot_matched_20261107.json",
+  "scope": "excludes hadK, KV-cache FWHT and all other model work; standalone scheduling differs from whole-model execution; old composed historical applications use another library build",
+  "rows": [
+    {
+      "batch": 1,
+      "derived_subpath_sum_ms": {
+        "dao": 2.8905947875976565,
+        "fp32_composed": 7.914501037597656,
+        "public_fp32_final": 2.057409469604492
+      },
+      "estimated_old_extra_vs_dao_ms": 5.02390625,
+      "estimated_fused_saving_vs_dao_ms": 0.8331853179931645
+    },
+    {
+      "batch": 4,
+      "derived_subpath_sum_ms": {
+        "dao": 6.249406921386719,
+        "fp32_composed": 13.84597607421875,
+        "public_fp32_final": 3.262417907714844
+      },
+      "estimated_old_extra_vs_dao_ms": 7.596569152832031,
+      "estimated_fused_saving_vs_dao_ms": 2.9869890136718755
+    }
+  ]
+}

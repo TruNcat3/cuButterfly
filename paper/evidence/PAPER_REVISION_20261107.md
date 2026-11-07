@@ -1,5 +1,19 @@
 # Paper prose revision, November 7
 
+Later same-day follow-up: the [matched path and full-model report](../../docs/quarot_fused_path_20261107.md)
+adds four clean 7B processes on the fused path, with ratios 1.004–1.005 at B1
+and 1.015–1.017 at B4. They appear separately in the application table and
+figure; the earlier negative records remain. A performance-contract audit also
+corrects CKKS/bootstrap mean/median labels and discloses the supplied-output
+copy in the main DaoFHT comparison. Native-return FWHT for those ten requests
+is still unmeasured. The follow-up PDFs are 15 pages, including references;
+the application table and figure were checked at their rendered sizes.
+The same audit removes two early QuaRot traces from plotted performance evidence:
+they preceded the random-state repair and had no output gate. Their records and
+hashes remain archived. The two historical FNO records do have numerical gates;
+their ratios now use unrounded raw medians (three-decimal labels are unchanged).
+The earlier prose-only revision and its checks follow.
+
 This revision changes prose in abstract, introduction, evaluation, related work
 and conclusion. It performs no new experiment and does not change plotted data
 or headline operator, NTT, or CKKS aggregates.

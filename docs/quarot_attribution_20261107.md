@@ -1,5 +1,9 @@
 # QuaRot 性能归因审计（2026-11-07）
 
+后续八点匹配诊断已经完成，旧适配与公共融合路径已在相同构建下比较。
+新实测及完整模型复跑记录见[融合路径验证](quarot_fused_path_20261107.md)。
+下文保留首次审计和首次等待窗口的原始结论，不将后来的测量追溯为当时已有证据。文末为最终四进程结果；以下“尚未量化”“最小后续点”和首次 expired 均描述历史状态。
+
 本次仅 CPU 读取已有证据，未跑 GPU、未访问外部数据盘。完整证据 SHA256、逐进程计划及原始报告定位见 [派生 JSON](quarot_attribution_20261107.json)。结论针对 Nov2 `fac10905…` 构建；不能自动解释 Nov5 安装库的性能。
 
 ## 可以确认的结果
@@ -42,7 +46,7 @@ Nov2 treatment 明确为 `fp32_composed`。`paper/experiments/e13/quarot_adapter
 
 当前读取的应用报告和历史诊断没有可对应上述四类合同、同一构建/Graph/归一化/布局、同时覆盖双方的分项 trace。因此可确认转换与独立缩放存在，尚不能判断它们、短 N 核心效率、布局或其他交互各解释多少毫秒。Amdahl 只能限制局部收益的传播；仅说“核心占比低”不能解释整体倒退的正增量，更不能替代 matched 测量。历史 `docs/e2e_framework_hotpath_20261021.md:11` 对固定开销的宽泛解释不能作为本次负结果的定量证据。
 
-## 公共接口已有融合能力；最小后续点
+## 历史决策：公共接口已有融合能力；最小后续点
 
 当前 `src/c_api.cpp:2962` 已允许 standard rank-one FP16 storage、FP32 compute、FINAL_STORAGE rounding 和 output_scale；`:4681` 把 epilogue 参数传入 common Butterfly 配置。E13 adapter 已有 `public_fp32_final`：`:294` 保留 FP16 storage 并设 FP32 compute，`:322` 设置最终舍入和输出缩放；`:451` 直接返回核心结果，跳过外部 cast/mul/narrow。runner CLI `:470` 已允许此合同。**无需先新增 kernel**；Nov2 queue 仍明确使用旧 `fp32_composed`，当前接口能力不能追溯视为旧库已经融合。
 
@@ -50,7 +54,7 @@ Nov2 treatment 明确为 `fp32_composed`。`paper/experiments/e13/quarot_adapter
 
 工程已证实：现有应用走旧 composed；公共接口和 adapter 已具备融合接入。工程可疑：短 N 的额外带宽和 launch 成本、当前选择的短 N 核心效率。无法判定：各分项占比以及融合接入能否回收全部约5–8ms。没有发现需要本审计直接修 kernel 的已证实缺陷。
 
-## 当前安装库的八点隔离诊断尝试
+## 历史记录：当前安装库的首次八点隔离尝试
 
 2026-11-07 使用 `scripts/benchmark_quarot_contracts.py` 与 `configs/experiments/quarot_contracts_20261107.json`，固定当前安装库 `results/a100_fp16_acceptance_20261105/build/libcuntt.so`。CPU 合同、稠密 Hadamard oracle 和拒绝覆盖测试共3项通过，`--help` 与语法检查通过。脚本复现 attention 的非连续 `[B,S,128,32]` 输入，比较 Dao、旧 composed 与已有 public fused 路径；Graph event 只覆盖完整变换子路径，包含需要的 contiguous/cast/scale，不含 hadK matmul、输入 copy、输出 clone 或7B模型。
 
@@ -71,4 +75,23 @@ env -u CUBUTTERFLY_HARDWARE_MODEL -u CUBUTTERFLY_PROFILE_ROOT \
 
 显式继承的硬件/profile/registry/cache/platform变量已清除，保留正常默认路径。默认 registry 有分开的80GB/40GB目标；首 attempt 的 runner 日志确认实际选择 `config/hardware/NVIDIA-A100-80GB-PCIe-sm80-84974239744B/hardware_model.json`。
 
-最终结果：guard 退出码2，状态 `expired`，没有 `release`。首 attempt 于19:08:26启动，19:09:24因新增外部 PID3631472被 guard 中断并隔离，此后持续等待直至截止。状态写于19:14:12（guard等待轮询可能略晚于19:13:58绝对截止）。没有可接纳的八点时间、kernel counts或数值误差，不能更新为融合已回收多少成本。隔离记录与工具/配置 SHA256已追加到派生JSON；现有约5–8ms归因边界保持不变。
+该首次窗口结果：guard 退出码2，状态 `expired`，没有 `release`。首 attempt 于19:08:26启动，19:09:24因新增外部 PID3631472被 guard 中断并隔离，此后持续等待直至截止。状态写于19:14:12（guard等待轮询可能略晚于19:13:58绝对截止）。没有可接纳的八点时间、kernel counts或数值误差，不能更新为融合已回收多少成本。隔离记录与工具/配置 SHA256已追加到派生JSON；现有约5–8ms归因边界保持不变。
+
+## 完整 7B 最终结果（2026-11-07）
+
+四个独立 clean 进程已经完成。来源为 [生成证据](../paper/generated/current_refresh/quarot_fused_e2e.json)，其中记录逐进程原始报告路径、SHA256、库与 runner 身份、全部 wall/event 样本和数值误差。CPU 核验逐份原始报告 hash，并从每变体各7个样本重算两时钟中位数及其比值；下表与生成证据一致。
+
+A100 80GB PCIe，UUID `GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02`；库 SHA256 `775a85c8f76e44bbfee886fd90489e7c309bd097b60e968183e446aa006177b2`。固定32层随机权重 Llama-2-7B、seed20261003、prefill128/decode8、SDPA prefill、验证预热4次、计时预热2次、每变体7次完整 Graph 调用。边界为设备输入 refresh、完整 prefill/decode、独立 logits clone 和同步，wall 包含 host 调用；setup、计划创建与 Graph capture 排除。输入输出 FP16 storage、FP32 compute、final FP16 writeback；实际走 `public_fp32_final`。该路径已成为默认值，旧 native/composed/eager 可显式重放。
+
+| B / 顺序 | wall 基线 / 自方 ms | wall 比值 | event 基线 / 自方 ms | event 比值 |
+| --- | ---: | ---: | ---: | ---: |
+| 1 / baseline-first | 154.198675 / 153.553649 | 1.004201 | 154.169342 / 153.520126 | 1.004229 |
+| 1 / treatment-first | 154.220778 / 153.519231 | 1.004570 | 154.175491 / 153.489410 | 1.004470 |
+| 4 / baseline-first | 177.825060 / 174.839853 | 1.017074 | 177.782791 / 174.736389 | 1.017434 |
+| 4 / treatment-first | 177.559008 / 174.942173 | 1.014958 | 177.528839 / 174.910461 | 1.014970 |
+
+四进程各9组跨后端 prefill/decode 输出均 finite，最大绝对误差和相对 L2 误差均0；同后端 Graph 原输入/改输入/恢复及输出生命周期检查通过。未指定应用误差阈值，状态保留 `pass_timing_numerical_unassessed`；随机权重测量不提供模型质量证据。四个 clean 进程含第四任务的显式后续窗口，原窗口中断 attempt 仍是历史中断证据，不计作第五个样本；最终不存在待运行任务。
+
+B1 wall 比值为1.004201–1.004570，B4为1.014958–1.017074；每批次保留两种顺序的范围，不挑最快进程、不与旧 cohort 池化，不声称统计显著。八点组件对照更大的局部收益只部分传至完整模型：组件计时不含 K=172 matmul、完整模型、输入 refresh 或输出 clone，不能称作同边界的端到端结果。旧 composed 选择 radix4/radix8，public fused 选择 radix2；这是公共选中路径的工程改进，改变了局部核心及外围操作，不能声称纯融合或固定核心因果消融。
+
+旧 Nov2 composed 负结果仍保留：B1约0.9684×，B4约0.9567–0.9592×；它们属于不同构建与 cohort。新结果证明当前公共路径的完整应用表现，不能把跨构建变化定量拆成5–8ms的纯融合贡献。无需扩展本轮矩阵或追加 GPU 任务。

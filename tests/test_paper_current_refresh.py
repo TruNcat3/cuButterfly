@@ -390,5 +390,87 @@ def test_source_release_can_redraw_without_results_tree(tmp_path):
     assert not (tmp_path / 'results').exists()
     manifest = json.loads((generated / 'figure_manifest.json').read_text())
     assert manifest['figures']['applications']['supplemental_graph_rows'] == 16
-    assert manifest['figures']['applications']['historical_records'] == 4
+    assert manifest['figures']['applications']['historical_records'] == 2
+    assert manifest['figures']['applications']['historical_archived_records'] == 4
+    exclusions = manifest['figures']['applications']['historical_exclusions']
+    assert len(exclusions) == 2 and all('QuaRot' in row['workload'] for row in exclusions)
     assert (tmp_path / 'paper/figures/current_refresh_applications.pdf').is_file()
+
+
+def test_operator_export_preserves_full_semantics_and_unknown_contract():
+    semantics = dict(operator=0, storage=4, compute=0, shape=[16], batch=2,
+                     inverse=0, normalize_inverse=False, input_orders=[1],
+                     output_orders=[0], input_strides=[2], placement=0)
+    timing = dict(median_ms=2, protocol='20 complete calls per CUDA graph; 7 replays; 10 warmup')
+    row = dict(id='contract', status='accuracy-review-required', semantics=semantics,
+               timing=timing, baselines=[dict(name='cufft', category='adapter',
+                   adapter_operations=['reorder'], timing=dict(timing, median_ms=4))])
+    request, pairs = refresh.Exporter('.').operator_row(row, 'main66', 'fixture')
+    assert request['semantics'] == pairs[0]['semantics'] == semantics
+    assert pairs[0]['adapter_operations'] == ['reorder']
+    assert request['adapter_operations'] == 'unknown'
+    assert pairs[0]['timing_contract']['own']['clock'] == 'cuda_event'
+    assert pairs[0]['timing_contract']['baseline']['statistic'] == 'sample median'
+    missing, _ = refresh.Exporter('.').operator_row({}, 'main66', 'fixture')
+    assert missing['semantics'] == 'unknown'
+    assert missing['timing_contract'] == dict(statistic='unknown', clock='unknown',
+                                             boundary='unknown', protocol='unknown')
+
+
+def test_frozen_metadata_and_operator_aggregates():
+    root = MODULE.parents[2]
+    data = json.loads((root / 'paper/generated/current_refresh/snapshot.json').read_text())
+    assert data['operators']['comparison_groups'] == data['operators']['groups']
+    pairs = [p for p in data['operators']['pairs'] if p['cohort'] == 'main66' and p['speedup'] is not None]
+    assert len(pairs) == 49
+    values = [p['speedup'] for p in pairs if (p['operator'], p['precision'], p['baseline']) == ('fft', 'fp32', 'cufft')]
+    import math
+    assert math.exp(sum(map(math.log, values)) / len(values)) == pytest.approx(1.2979131637566619)
+    assert data['cyclic']['summary']['geometric_mean'] == pytest.approx(1.3084045937798219)
+    for pair in data['applications']['pairs']:
+        contract = pair['timing_contract']
+        assert contract['clock'] == 'cuda_event'
+        expected = 'sample arithmetic mean' if pair['cohort'].startswith('ckks') else 'sample median'
+        assert contract['statistic'] == expected
+    assert 'matching reported latency' in data['aggregation']['ratio']
+
+
+def test_local_operator_evidence_reproduces_frozen_snapshot():
+    root = MODULE.parents[2]
+    campaign = root / 'results/full_current_20261025'
+    if not campaign.is_dir():
+        pytest.skip('raw campaign is local evidence, not bundled in source releases')
+    assert refresh.Exporter(campaign).export() == json.loads(
+        (root / 'paper/generated/current_refresh/snapshot.json').read_text())
+
+
+def test_application_closeout_timing_metadata_and_ratios():
+    path = MODULE.with_name('export_application_closeout.py')
+    spec = importlib.util.spec_from_file_location('closeout_contract', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    root = MODULE.parents[2]
+    data = module.load(root / 'paper/generated/current_refresh/application_closeout.json')
+    assert len(data['records']) == 18
+    for row in data['records']:
+        assert row['speedup'] == pytest.approx(row['baseline_ms'] / row['own_ms'], abs=1e-8)
+        timing = row['timing_contract']
+        if 'Llama' in row['scenario'] or row['scenario'].startswith('FNO'):
+            assert timing['clock'] == 'wall'
+            assert 'median' in timing['statistic']
+        elif 'bootstrap' in row['scenario'].lower():
+            assert timing['clock'] == 'cuda_event'
+            assert timing['statistic'] == 'sample arithmetic mean'
+        else:
+            assert timing['clock'] == 'cuda_event'
+            assert timing['statistic'] == 'sample median'
+    assert module.timing_contract('unrecognized')['statistic'] == 'unknown'
+
+
+def test_local_application_evidence_reproduces_frozen_snapshot():
+    root = MODULE.parents[2]
+    if not (root / 'results/a100_e2e_closure_20261107/audit.json').is_file():
+        pytest.skip('raw application reports are local evidence, not bundled in source releases')
+    module, _ = application_modules()
+    assert module.export() == json.loads(
+        (root / 'paper/generated/current_refresh/application_closeout.json').read_text())

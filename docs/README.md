@@ -1,5 +1,9 @@
 # Documentation Index
 
+The [QuaRot fused-path validation and reporting audit](quarot_fused_path_20261107.md)
+records matched short-transform measurements and distinguishes supplied-output,
+native-return, device-event and host-wall comparison contracts.
+
 The [November 7 GitHub handoff](pro6000_handoff_20261107.md) identifies the target entry, frozen paper inputs and validation boundary for work on the PRO6000 server.
 
 The [PRO6000 Blackwell Server96 runbook](hardware/pro6000_server96.md) covers separate CUDA/MathDx installation, CPU preparation, target-local calibration and quick12/full66 comparison through `scripts/research_platform.py`. Its [population contract](../config/paper_portability/README.md) keeps later paper tracks separate.

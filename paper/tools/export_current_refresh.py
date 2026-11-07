@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Export the finite current campaign, using only persisted CPU-readable evidence.
 
-Ratios use reported complete-call medians. Repeated NTT trials use the median
+Ratios use matching reported latencies; statistics are recorded per cohort.
+Repeated NTT trials use the median
 of paired trial ratios; group summaries give every case one vote. No historical
 results, tuning populations, selection traces, or raw samples are imported.
 """
@@ -97,6 +98,30 @@ def mapping_summary(mapping):
     return result
 
 
+def timing_contract(timing=None):
+    """Describe persisted operator timing without inventing missing protocol data."""
+    timing = timing or {}
+    protocol = timing.get("protocol", "unknown")
+    known = protocol in ("20 complete calls per CUDA graph; 7 replays; 10 warmup",
+                         "7 single event calls; reset enqueued before start event; 10 warmup")
+    return dict(statistic="sample median" if "median_ms" in timing else "unknown",
+                clock="cuda_event" if known else "unknown",
+                boundary="complete GPU execute; setup and warmup excluded" if known else "unknown",
+                protocol=protocol)
+
+
+def application_timing(statistic, clock, boundary, evidence):
+    return dict(statistic=statistic, clock=clock, boundary=boundary, evidence=evidence)
+
+
+def ckks_timing(mode):
+    if mode != "cuda_graph":
+        return application_timing("unknown", "unknown", "unknown", "unrecognized CKKS mode")
+    return application_timing("sample arithmetic mean", "cuda_event",
+        "complete captured batch graph; event interval divided by graph replays; setup excluded",
+        "paper/experiments/heongpu_ckks_e2e_bench.cu:359-371,819-845,898-906; source/binary correspondence not verified")
+
+
 def semantic_fields(semantics):
     op = OPERATORS.get(semantics.get("operator"), "unknown")
     storage = semantics.get("storage")
@@ -151,7 +176,9 @@ class Exporter:
                        own_us=own, status=row.get("status", "accuracy-review-required"),
                        algorithm=row.get("algorithm"), category=row.get("category"),
                        mapping_summary=mapping_summary(row.get("actual_mapping") or row.get("mapping")),
-                       correctness=correctness, source=source)
+                       correctness=correctness, source=source, semantics=sem or "unknown",
+                       timing_contract=timing_contract(row.get("timing")),
+                       adapter_operations=row.get("adapter_operations", "unknown"))
         pairs = []
         for b in row.get("baselines", row.get("baseline_results", [])):
             baseline = number(b.get("timing", {}).get("median_ms"))
@@ -160,7 +187,10 @@ class Exporter:
                               category=b.get("category"), own_us=own, baseline_us=baseline,
                               speedup=ratio(baseline, own) if speedup_allowed(row, floating) and speedup_allowed(b, floating) else None,
                               status=b.get("status", "unreported"),
-                              correctness=correctness, source=source))
+                              correctness=correctness, source=source, semantics=sem or "unknown",
+                              adapter_operations=b.get("adapter_operations", "unknown"),
+                              timing_contract=dict(own=timing_contract(row.get("timing")),
+                                                   baseline=timing_contract(b.get("timing")))))
         return request, pairs
 
     def operators(self):
@@ -204,11 +234,17 @@ class Exporter:
                                       baseline="gpu-ntt", category="adapter", own_us=request["own_us"],
                                       baseline_us=median(base) * 1000 if base else None,
                                       speedup=median(ratios) if ratios and speedup_allowed(row) else None, trials=len(trials),
-                                      status=row.get("status"), correctness=request["correctness"], source=source)]
+                                      status=row.get("status"), correctness=request["correctness"], source=source,
+                                      semantics=row.get("semantics") or "unknown",
+                                      adapter_operations=row.get("adapter_operations", "unknown"),
+                                      timing_contract=dict(statistic="median of paired trial ratios",
+                                          own=timing_contract(trials[0].get("cubutterfly")) if trials else timing_contract(),
+                                          baseline=timing_contract(trials[0].get("gpu-ntt")) if trials else timing_contract()))]
                 requests.append(request)
                 pairs.extend(row_pairs)
         return dict(requests=requests, pairs=pairs,
-                    groups=summarize(pairs, ("cohort", "operator", "precision", "baseline", "category")))
+                    groups=summarize(pairs, ("cohort", "operator", "precision", "baseline", "category")),
+                    comparison_groups=summarize(pairs, ("cohort", "operator", "precision", "baseline", "category")))
 
     def cyclic(self):
         source = "recovery_followups_20261029/cyclic_mapping/measurement/results.json"
@@ -341,7 +377,8 @@ class Exporter:
                                   speedup=ratio(baseline, own) if eligible else None, cohort="ckks_bootstrap" if bootstrap else "ckks_auto36",
                                   eligibility="exact-ciphertext-validated" if eligible else "pending-unvalidated",
                                   correctness=dict(exact_ciphertext=row["exact_ciphertext"] == "1", mismatch_count=int(row["mismatch_count"])),
-                                  method=row["keyswitch_method"], mode=row["mode"], source=source))
+                                  method=row["keyswitch_method"], mode=row["mode"], source=source,
+                                  timing_contract=ckks_timing(row["mode"])))
         for name in ("poisson-1024-b4", "poisson-2048-b4", "poisson-2048-b16"):
             source = "poisson/" + name + "/report.json"
             data = self.read(source)
@@ -354,7 +391,10 @@ class Exporter:
                 pairs.append(dict(scenario="periodic-poisson", type="FFT", shape=[data["size"]] * 2,
                                   batch=data["batch"], baseline=backend, own_ms=own, baseline_ms=baseline,
                                   speedup=ratio(baseline, own), cohort="poisson_graph", mode="cuda_graph",
-                                  eligibility="error-report-only", correctness="error-report-only", source=source))
+                                  eligibility="error-report-only", correctness="error-report-only", source=source,
+                                  timing_contract=application_timing("sample median", "cuda_event",
+                                      "input refresh + complete Poisson graph + independent output copy; setup excluded",
+                                      "report timings.*.cuda_event_median_ms")))
         for size in (1024, 2048):
             name = "image%d_filter31_batch16" % size
             source = "fft_filters/" + name + "/" + name + ".current_graph_fast.json"
@@ -380,6 +420,9 @@ class Exporter:
                               source_numerical_reports={name: {key: row.get(key) for key in
                                   ("accepted", "formal_performance_eligible", "numerical_acceptance", "error",
                                    "graph_changing_input_validation")} for name, row in compared.items()},
+                              timing_contract=application_timing("sample median", "cuda_event",
+                                  "input refresh + complete fixed-filter graph + output materialization; setup excluded",
+                                  "scripts/run_fft_filter_end_to_end.py:212-277"),
                               source=source))
         strongest = {}
         for row in pairs:
@@ -412,7 +455,11 @@ class Exporter:
                                   trials=len(paired), status=comp["status"],
                                   baseline_stage_partition=comp.get("baseline_resolved_mapping", {}).get("stage_partition"),
                                   treatment_stage_partition=comp.get("treatment_resolved_mapping", {}).get("stage_partition"),
-                                  changed_axes=comp.get("actual_changed_axes"), source=source))
+                                  changed_axes=comp.get("actual_changed_axes"), source=source,
+                                  timing_contract=dict(statistic="median of paired trial ratios",
+                                      latency_statistic="median across trials", clock="unknown",
+                                      boundary="reported baseline/treatment kernel interval",
+                                      protocol="unknown")))
         return dict(pairs=pairs, scope="fixed-core stage organization; internal comparison, not external library speedups")
 
     def export(self):
@@ -428,7 +475,7 @@ class Exporter:
                                                          "source", "supplement_source", "source_status", "supplement_status")},
                         operator_status_counts=dict(Counter(r["status"] for r in operators["requests"] if r["cohort"] == "main66")))
         return dict(schema="current-paper-refresh-v1", campaign=self.campaign.name,
-                    aggregation=dict(ratio="baseline complete-call median / own complete-call median; NTT5 median of paired trial ratios",
+                    aggregation=dict(ratio="baseline / own matching reported latency; see per-row timing_contract for statistic, clock and boundary; NTT5 uses median of paired trial ratios",
                                      mechanisms="median of paired trial baseline/treatment ratios, which can differ from the ratio of median times; trial_speedups and min/max retain the observed trial range",
                                      groups="geometric mean of per-case ratios within cohort/operator/precision/baseline/category; missing excluded, never zero",
                                      interpretation="nominal faster counts only; no statistical significance; all floating point results error-report-only",

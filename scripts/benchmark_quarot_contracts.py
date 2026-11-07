@@ -57,12 +57,23 @@ def errors(torch, actual, reference):
             'threshold_assessed': False}
 
 
-def profile_graph(torch, graph, stream):
+def ms_per_call(elapsed_ms, repeats, graph_calls):
+    return elapsed_ms / (repeats * graph_calls)
+
+
+def checkpoint(path, report):
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
+    temporary.replace(path)
+
+
+def profile_graph(torch, graph, stream, graph_calls=1):
     try:
         torch.cuda.synchronize()
         with torch.profiler.profile(activities=[torch.profiler.ProfilerActivity.CPU,
                                                torch.profiler.ProfilerActivity.CUDA]) as prof:
-            with torch.cuda.stream(stream):
+            # Captured outputs are inference tensors; replay must retain that mode.
+            with torch.inference_mode(), torch.cuda.stream(stream):
                 graph.replay()
             stream.synchronize()
         events = []
@@ -71,7 +82,8 @@ def profile_graph(torch, graph, stream):
                 events.append({'name': event.name, 'duration_us': event.time_range.elapsed_us(),
                                'device_index': event.device_index})
         kernels = [e for e in events if not any(word in e['name'].lower() for word in ('memcpy', 'memset'))]
-        return {'status': 'ok', 'boundary': 'one graph replay after timing',
+        return {'status': 'ok', 'boundary': 'one graph replay after timing', 'graph_calls': graph_calls,
+                'kernels_per_call': len(kernels) / graph_calls,
                 'kernel_count': len(kernels), 'kernel_duration_us': sum(e['duration_us'] for e in kernels),
                 'kernel_count_method': 'CUDA activities excluding names containing memcpy or memset',
                 'cuda_activity_count': len(events), 'cuda_activity_duration_us': sum(e['duration_us'] for e in events),
@@ -134,7 +146,8 @@ def run(args, report):
                     stream.synchronize()
                     graph = torch.cuda.CUDAGraph()
                     with torch.cuda.graph(graph, stream=stream):
-                        outputs[variant] = fn()
+                        for _ in range(args.graph_calls):
+                            outputs[variant] = fn()
                     graphs[variant] = graph
                     graph.replay()
                     stream.synchronize()
@@ -150,13 +163,14 @@ def run(args, report):
                             graphs[variant].replay()
                         end.record(stream)
                         end.synchronize()
-                        record['timings_ms_per_call'][variant] = start.elapsed_time(end) / args.repeats
+                        record['timings_ms_per_call'][variant] = ms_per_call(start.elapsed_time(end), args.repeats, args.graph_calls)
                     result['rounds'].append(record)
             result['medians_ms'] = {v: statistics.median(r['timings_ms_per_call'][v] for r in result['rounds']) for v in VARIANTS}
             result['adapter_plans'] = {v: a.plan_statistics() for v, a in adapters.items()}
             for variant in VARIANTS:
-                result['profiles'][variant] = profile_graph(torch, graphs[variant], stream)
+                result['profiles'][variant] = profile_graph(torch, graphs[variant], stream, args.graph_calls)
             result['status'] = 'complete'
+            checkpoint(args.output, report)
         finally:
             torch.cuda.synchronize()
             graphs.clear()
@@ -173,25 +187,26 @@ def parser():
     p.add_argument('--warmup', type=int, default=20)
     p.add_argument('--repeats', type=int, default=100)
     p.add_argument('--rounds', type=int, default=7)
+    p.add_argument('--graph-calls', type=int, default=20, help='complete transforms per captured graph')
     p.add_argument('--seed', type=int, default=20261107)
     return p
 
 
 def main():
     args = parser().parse_args()
-    if min(args.warmup, args.repeats, args.rounds) < 1:
+    if min(args.warmup, args.repeats, args.rounds, args.graph_calls) < 1:
         raise ValueError('warmup, repeats, and rounds must be positive')
     load_cases(args.cases)
     if args.output is None:
         if not os.environ.get('XD_REPORT_DIR'):
             raise ValueError('provide --output or XD_REPORT_DIR')
         args.output = Path(os.environ['XD_REPORT_DIR']) / 'report.json'
-    report = {'schema': 'quarot-matched-contracts-v1', 'status': 'running', 'results': [],
-              'timing_boundary': 'CUDA events around repeated single-transform graph replays / repeats; includes contiguous, casts and scale required by variant; excludes preparation, warmup, capture, CPU oracle, profiler, input copy, output clone, hadK matmul and 7B model',
+    report = {'schema': 'quarot-matched-contracts-v2', 'status': 'partial', 'graph_calls': args.graph_calls, 'results': [],
+              'timing_boundary': 'CUDA events around repeated graph replays / (repeats * graph_calls); each graph captures graph_calls complete transforms; includes contiguous, casts and scale required by variant; excludes preparation, warmup, capture, CPU oracle, profiler, input copy, output clone, hadK matmul and 7B model',
               'source_sha256': {str(p.relative_to(ROOT)): sha(p) for p in (Path(__file__).resolve(), ROOT / 'paper/experiments/e13/quarot_adapter.py')},
               'library': str(args.library.resolve()), 'library_sha256': sha(args.library),
               'numerical_contract': 'CPU FP32 Sylvester FWHT, FP32 normalization multiplication, final FP16 storage; errors reported without a new threshold',
-              'timing_note': 'Events may include idle gaps between host graph replay submissions; graph capture contains one complete transform subpath',
+              'timing_note': 'Events may include idle gaps between host graph replay submissions; graph capture contains graph_calls complete transform subpaths; profile counts cover the whole graph and kernels_per_call divides by graph_calls',
               'selection_environment': {key: os.environ.get(key) for key in ('CUBUTTERFLY_E13_ALGORITHM_POLICY', 'CUBUTTERFLY_SEARCH_BUDGET', 'CUBUTTERFLY_REGISTRY', 'CUBUTTERFLY_PLAN_CACHE')},
               'cases_sha256': sha(args.cases), 'parameters': {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()}}
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -205,7 +220,7 @@ def main():
         report.update(status='failed', error=f'{type(exc).__name__}: {exc}', traceback=traceback.format_exc())
         raise
     finally:
-        args.output.write_text(json.dumps(report, indent=2, allow_nan=False) + '\n')
+        checkpoint(args.output, report)
 
 
 if __name__ == '__main__':

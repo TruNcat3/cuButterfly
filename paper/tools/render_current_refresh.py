@@ -174,6 +174,11 @@ def application_plot(data, output, manifest):
     historical = json.loads(historical_path.read_text())
     if historical.get("status") != "historical-pinned-build" or len(historical.get("records", [])) != 4:
         raise ValueError("the four historical complete-call records are required explicitly")
+    if any(type(r.get("performance_eligible")) is not bool for r in historical["records"]):
+        raise ValueError("historical records require explicit numerical-evidence eligibility")
+    eligible_history = [r for r in historical["records"] if r["performance_eligible"]]
+    if [r["workload"] for r in eligible_history] != ["FNO 64² / B8", "FNO 128² / B4"]:
+        raise ValueError("historical figure layout requires the two audited FNO records")
     fig, ax = plt.subplots(figsize=(3.45, 4.65))
     fig.subplots_adjust(left=.16, right=.985, bottom=.59, top=.86)
     fft = [r for r in pairs if r["cohort"] in ("poisson_graph", "fft_filter_graph")]
@@ -218,7 +223,7 @@ def application_plot(data, output, manifest):
                             ha="center", fontsize=6)
     # Historical complete-call records are a separate pinned-build cohort.
     historical_points = []
-    for i, record in enumerate(historical["records"]):
+    for i, record in enumerate(eligible_history):
         center = 11.0 + i * 1.0
         workload = record["workload"]
         color, marker = (("#246a9e", "D") if workload.startswith("FNO")
@@ -227,13 +232,12 @@ def application_plot(data, output, manifest):
         ax.scatter(center, value, s=18, color=color, marker=marker,
                    facecolors="none", linewidths=.75, zorder=4)
         historical_points.append(dict(workload=workload, speedup=value))
-    ax.set_xlim(-.5, 14.65)
+    ax.set_xlim(-.5, 12.65)
     ax.set_ylim(.8, 2.55)
     ax.set_xticks([0, .8, 1.6, 2.4, 3.2, 4.6, 5.9, 7.2, 8.7, 9.5,
-                   11.0, 12.0, 13.0, 14.0],
+                   11.0, 12.0],
                   ["P1\n4", "P2\n4", "P2\n16", "F1*\n16", "F2*\n16",
-                   "1", "8", "32", "1", "8", "64²\nB8", "128²\nB4",
-                   "Q512", "Q2048"], fontsize=5.4)
+                   "1", "8", "32", "1", "8", "64²\nB8", "128²\nB4"], fontsize=5.4)
     for tick in ax.get_xticklabels():
         tick.set_rotation(18)
         tick.set_ha("right")
@@ -242,9 +246,9 @@ def application_plot(data, output, manifest):
     ax.set_xlabel("")
     for boundary in (3.85, 8.05, 10.35):
         ax.axvline(boundary, color="#BBBBBB", linewidth=.6)
-    ax.axvspan(10.35, 14.65, color="#f4f7f8", zorder=0)
+    ax.axvspan(10.35, 12.65, color="#f4f7f8", zorder=0)
     for x, title in ((1.6, "Poisson / filter"), (5.9, "CKKS"), (9.1, "Bootstrap"),
-                     (12.5, "Pinned build")):
+                     (11.5, "Pinned build")):
         ax.text(x, 1.04, title, transform=ax.get_xaxis_transform(),
                 ha="center", fontsize=6.2)
     axis_style(ax)
@@ -255,19 +259,22 @@ def application_plot(data, output, manifest):
                for color, marker, label in (
                    ("#A34D00", "s", "Torch/cuFFT"), ("#007B59", "^", "CuPy"),
                    ("#A34D00", "o", "Native loop"), ("#0072B2", "s", "Native bootstrap"),
-                   ("#246a9e", "D", "FNO historical"), ("#30856d", "X", "QuaRot historical"))]
+                   ("#246a9e", "D", "FNO historical"))]
     fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(.53, 1.0),
                ncol=3, frameon=False, fontsize=5.7, handletextpad=.3,
                columnspacing=.7)
     fig.text(.5, .49, "P/F: Poisson/filter; 1/2: 1024/2048; *single process.\n"
-             "FNO/QuaRot are historical pinned-build records, kept separate from current ratios.",
+             "FNO retains its historical build; invalid earlier QuaRot traces are excluded.",
              ha="center", fontsize=5.25, linespacing=1.25)
     supplement = data["application_closeout"]
     lower = fig.add_axes([.16, .12, .825, .25])
-    categories = [("QuaRot", 1), ("QuaRot", 4), ("filter", 1024), ("filter", 2048),
+    fused = data.get("quarot_fused_followup", {}).get("records", [])
+    fused_categories = [("QuaRot fused", 1), ("QuaRot fused", 4)] if fused else []
+    categories = [("QuaRot", 1), ("QuaRot", 4), *fused_categories, ("filter", 1024), ("filter", 2048),
                   ("bootstrap", 1), ("bootstrap", 8), ("FNO", 64), ("FNO", 128)]
     for i, (kind, key) in enumerate(categories):
-        selected = []
+        selected = ([dict(row, role="external") for row in fused if row["batch"] == key]
+                    if kind == "QuaRot fused" else [])
         for row in supplement["records"]:
             if row["timing_mode"] != "graph":
                 continue
@@ -281,37 +288,48 @@ def application_plot(data, output, manifest):
         # Every process is shown. Offsets separate repeats; they are not uncertainty intervals.
         for j, row in enumerate(selected):
             diagnostic = row["role"] == "diagnostic"
-            color = "#777777" if diagnostic else "#0072B2" if kind != "FNO" else "#AA3377"
+            color = ("#777777" if diagnostic else "#007B59" if kind == "QuaRot fused"
+                     else "#0072B2" if kind != "FNO" else "#AA3377")
             lower.scatter(i + (j - (len(selected) - 1) / 2) * .09, row["speedup"],
                           marker="D" if diagnostic else "o", s=15,
                           facecolors="none" if diagnostic else color, edgecolors=color, linewidths=.7)
     lower.axhline(1, color="#555555", linestyle="--", linewidth=.8)
-    lower.axvline(5.5, color="#BBBBBB", linewidth=.6)
-    lower.axvspan(5.5, 7.5, color="#f4f7f8", zorder=0)
-    lower.set_xlim(-.5, 7.5)
+    tail = len(categories) - .5
+    lower.axvline(tail - 2, color="#BBBBBB", linewidth=.6)
+    lower.axvspan(tail - 2, tail, color="#f4f7f8", zorder=0)
+    if fused:
+        lower.axvspan(1.5, 3.5, color="#edf7f2", zorder=0)
+    lower.set_xlim(-.5, tail)
     lower.set_ylim(.93, 1.12)
     lower.set_yticks([.95, 1, 1.05, 1.10])
-    lower.set_xticks(range(8), ["Q\nB1", "Q\nB4", "F1\nB16", "F2\nB16",
-                               "BS\nB1", "BS\nB8", "64²\nB4", "128²\nB4"], fontsize=5.7)
+    lower.set_xticks(range(len(categories)), ["Q\nB1", "Q\nB4", *(["Qf\nB1", "Qf\nB4"] if fused else []),
+                               "F1\nB16", "F2\nB16", "BS\nB1", "BS\nB8", "64²\nB4", "128²\nB4"], fontsize=5.7)
     lower.tick_params(axis="y", labelsize=6)
     lower.set_ylabel("Baseline / cuButterfly", fontsize=7)
-    lower.set_title("Build-prior closure repeats / historical FNO hotpath", fontsize=6.3, pad=7)
+    lower.set_title("Independent application cohorts", fontsize=6.3, pad=7)
     axis_style(lower)
-    fig.text(.5, .015, "Bottom: each dot is a process (FNO: median of 2). Hollow diamonds:\n"
-             "same-padding filter diagnostic; no pooling. FNO eager retained in data/table.",
+    fig.text(.5, .015, "Bottom: dots are processes (FNO: median of 2); Q/Qf: composed/fused.\n"
+             "Hollow diamonds: filter diagnostics; no pooling. FNO eager kept in table.",
              ha="center", fontsize=5.5, linespacing=1.25)
     save(fig, "applications", output, manifest,
-         "Top: unchanged snapshot comparisons and four legacy pinned-build FNO/QuaRot points. "
+         "Top: snapshot comparisons and two numerically checked historical FNO points. "
+         "Two earlier QuaRot records are archived but excluded for invalid random-state preparation and absent output checks. "
          "Bottom: all 14 audited closure ratios (four QuaRot losses, four CuPy filter repeats, "
          "four separately marked same-padding filter diagnostics, two bootstrap repeats) and two historical "
-         "FNO hotpath Graph aggregate ratios. FNO eager rows remain separate in frozen data/table. "
+         "FNO hotpath Graph aggregate ratios, plus separately marked fused QuaRot follow-up processes when available. "
+         "FNO eager rows remain separate in frozen data/table. "
          "Panels use different labeled ratio ranges; no cohorts or builds are pooled.")
     manifest["figures"]["applications"].update(
         pair_count=len(pairs), ckks_pairs=len(ckks), ckks_requests_per_control=36,
         historical_records=len(historical_points), historical_source=str(historical_path.relative_to(ROOT)),
+        historical_archived_records=len(historical["records"]),
+        historical_exclusions=[dict(workload=r["workload"], reason=r["exclusion_reason"],
+                                    source=r["source"], source_sha256=r["source_sha256"])
+                               for r in historical["records"] if not r["performance_eligible"]],
         historical_source_sha256=digest(historical_path),
         matched_integration_pairs_in_controlled_table=len(controls),
         supplemental_graph_rows=16, supplemental_eager_rows_in_table=2,
+        fused_quarot_processes=len(fused),
         supplement_source="paper/generated/current_refresh/application_closeout.json",
         supplement_sources=supplement["sources"],
         statistic="Snapshot CKKS diamonds are GMs of 12 ratios. Supplemental closure dots retain every process; FNO dots are medians of two process medians. No confidence intervals or cross-cohort means.",
@@ -411,7 +429,7 @@ def write_tables(data, generated):
                          "baseline": "gpu-ntt", "n": len(a), "gm": gm(a),
                          "faster": sum(v > 1 for v in a), "min": min(a), "max": max(a)})
     tex = [r"\begin{tabular}{@{}llrrrr@{}}", r"\toprule",
-           r"Operator & Baseline & Pairs & GM & Faster & PRO\\\midrule"]
+           r"Operator & Baseline & Pairs & GM & Faster & N/A/X\\\midrule"]
     cohort = None
     for r in rows:
         if r["cohort"] != cohort:
@@ -424,8 +442,16 @@ def write_tables(data, generated):
             tex.append(r"\multicolumn{6}{@{}l}{\emph{" + title + r"}}\\")
             cohort = r["cohort"]
         name = f"{r['operator'].upper()} {r['precision'].upper().replace('WORD', 'w')}"
+        mix = "--"
+        if r["cohort"] == "main66":
+            selected = [p for p in pairs if (p["operator"], p["precision"], p["baseline"]) ==
+                        (r["operator"], r["precision"], r["baseline"])]
+            categories = ("native", "adapter", "external-axis-composition")
+            if any(p.get("category") not in categories for p in selected):
+                raise ValueError("Main operator table requires an explicit comparison category")
+            mix = "/".join(str(sum(p["category"] == c for p in selected)) for c in categories)
         if r["n"]:
-            tex.append(f"{name} & {NAMES[r['baseline']]} & {r['n']} & {r['gm']:.3f}$\\times$ & {r['faster']}/{r['n']} & --\\\\")
+            tex.append(f"{name} & {NAMES[r['baseline']]} & {r['n']} & {r['gm']:.3f}$\\times$ & {r['faster']}/{r['n']} & {mix}\\\\")
         else:
             tex.append(f"{name} & {NAMES[r['baseline']]} & 0 & -- & -- & --\\\\")
     tex.extend([r"\bottomrule", r"\end{tabular}"])
@@ -482,6 +508,9 @@ def main():
                                 if args.frozen_inputs else load_fp16_acceptance(args.fp16_acceptance)
                                 if args.fp16_acceptance else load_fft_l_comparison())
     data["application_closeout"] = load_application_closeout(args.snapshot.parent / "application_closeout.json")
+    fused_path = args.snapshot.parent / "quarot_fused_e2e.json"
+    if fused_path.exists():
+        data["quarot_fused_followup"] = json.loads(fused_path.read_text())
     unexpected = {(r["operator"], r["precision"]) for r in data["operators"]["requests"]
                   if r["cohort"] == "main66"} - set(GROUPS)
     if unexpected:
@@ -500,6 +529,8 @@ def main():
         manifest["frozen_fp16_sha256"] = digest(args.snapshot.parent / "fp16_comparison.json")
     manifest["application_closeout_sha256"] = digest(args.snapshot.parent / "application_closeout.json")
     manifest["application_closeout_exporter_sha256"] = digest(Path(__file__).with_name("export_application_closeout.py"))
+    if fused_path.exists():
+        manifest["quarot_fused_followup_sha256"] = digest(fused_path)
     with plt.rc_context({"font.family": "DejaVu Sans", "font.size": 8, "pdf.fonttype": 42,
                          "ps.fonttype": 42, "svg.fonttype": "none", "axes.linewidth": .6}):
         operator_plot(data, args.figures, manifest)

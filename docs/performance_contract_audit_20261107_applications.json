@@ -1,0 +1,289 @@
+{
+  "schema": "application-contract-audit-v1",
+  "scope": "CPU persisted evidence only; excludes QuaRot",
+  "ckks": [
+    {
+      "batch": 1,
+      "unique_requests": 12,
+      "HEonGPU_native_loop": {
+        "n": 12,
+        "gmean": 1.0357833503470666
+      },
+      "HEonGPU_native_stage_batch": {
+        "n": 12,
+        "gmean": 1.2901971025476038
+      },
+      "strongest_native": {
+        "n": 12,
+        "gmean": 1.0357833503470666
+      }
+    },
+    {
+      "batch": 8,
+      "unique_requests": 12,
+      "HEonGPU_native_loop": {
+        "n": 12,
+        "gmean": 1.6478245378812544
+      },
+      "HEonGPU_native_stage_batch": {
+        "n": 12,
+        "gmean": 1.183404176467577
+      },
+      "strongest_native": {
+        "n": 12,
+        "gmean": 1.1816571244247855
+      }
+    },
+    {
+      "batch": 32,
+      "unique_requests": 12,
+      "HEonGPU_native_loop": {
+        "n": 12,
+        "gmean": 1.7053619160328413
+      },
+      "HEonGPU_native_stage_batch": {
+        "n": 12,
+        "gmean": 1.182190009122406
+      },
+      "strongest_native": {
+        "n": 12,
+        "gmean": 1.182190009122406
+      }
+    }
+  ],
+  "fixed_core": [
+    {
+      "case": "fft-fp32-n12-b4",
+      "mapping_diff": [
+        "boundaries",
+        "stage_partition"
+      ],
+      "n": 3,
+      "median_paired_ratio": 11.545817057291666,
+      "ratio_medians": 11.527190209903559
+    },
+    {
+      "case": "fft-fp32-n18-b1",
+      "mapping_diff": [
+        "boundaries",
+        "stage_partition"
+      ],
+      "n": 3,
+      "median_paired_ratio": 21.40678361764121,
+      "ratio_medians": 21.40678361764121
+    },
+    {
+      "case": "fwht-fp32-n12-b4",
+      "mapping_diff": [
+        "boundaries",
+        "stage_partition"
+      ],
+      "n": 3,
+      "median_paired_ratio": 13.67432630039691,
+      "ratio_medians": 13.663672446208482
+    },
+    {
+      "case": "fwht-fp32-n18-b1",
+      "mapping_diff": [
+        "boundaries",
+        "stage_partition"
+      ],
+      "n": 3,
+      "median_paired_ratio": 24.096420509513063,
+      "ratio_medians": 24.149376252343092
+    },
+    {
+      "case": "ntt-word64-n12-b4",
+      "mapping_diff": [
+        "stage_partition"
+      ],
+      "n": 3,
+      "median_paired_ratio": 11.056669379300141,
+      "ratio_medians": 11.075608493008804
+    },
+    {
+      "case": "ntt-word64-n18-b1",
+      "mapping_diff": [
+        "stage_partition"
+      ],
+      "n": 3,
+      "median_paired_ratio": 19.83544827793834,
+      "ratio_medians": 19.83544827793834
+    }
+  ],
+  "quarot_fused_e2e": {
+    "generated_source": "paper/generated/current_refresh/quarot_fused_e2e.json",
+    "generated_source_sha256": "e9ef94b60c34a9aab45f99bcd4333c0bf348362dc4a4cb81c22c2caf9debb9c4",
+    "records": [
+      {
+        "job_id": "b1_baseline_first",
+        "source": "results/quarot_fused_followup_20261107/b1_baseline_first/release/report.json",
+        "source_sha256": "a1e660ae30b498000b2fb3f737ed8729135ac3b955093c89c6b2d380d9153bd8",
+        "calls": 7,
+        "clocks": {
+          "wall_ms": {
+            "baseline_median_ms": 154.19867495074868,
+            "cubutterfly_median_ms": 153.55364902643487,
+            "baseline_over_cubutterfly": 1.0042006551352145
+          },
+          "cuda_event_ms": {
+            "baseline_median_ms": 154.16934204101562,
+            "cubutterfly_median_ms": 153.52012634277344,
+            "baseline_over_cubutterfly": 1.0042288637568773
+          }
+        },
+        "max_abs_error": 0,
+        "relative_l2_error": 0,
+        "numerical_status": "pass_timing_numerical_unassessed"
+      },
+      {
+        "job_id": "b1_treatment_first",
+        "source": "results/quarot_fused_followup_20261107/b1_treatment_first/release/report.json",
+        "source_sha256": "9624d0408bc36024d7d3cdf92a8d5a8c8d5a1c685dd3ce7e4346d13eef952a96",
+        "calls": 7,
+        "clocks": {
+          "wall_ms": {
+            "baseline_median_ms": 154.22077797120437,
+            "cubutterfly_median_ms": 153.51923101115972,
+            "baseline_over_cubutterfly": 1.004569765985824
+          },
+          "cuda_event_ms": {
+            "baseline_median_ms": 154.1754913330078,
+            "cubutterfly_median_ms": 153.48941040039062,
+            "baseline_over_cubutterfly": 1.0044698909900525
+          }
+        },
+        "max_abs_error": 0,
+        "relative_l2_error": 0,
+        "numerical_status": "pass_timing_numerical_unassessed"
+      },
+      {
+        "job_id": "b4_baseline_first",
+        "source": "results/quarot_fused_followup_20261107/b4_baseline_first/release/report.json",
+        "source_sha256": "d50b66a021bb356523177682ed3cacfaace8e2129bd32860af8aab8b7bd65591",
+        "calls": 7,
+        "clocks": {
+          "wall_ms": {
+            "baseline_median_ms": 177.8250599745661,
+            "cubutterfly_median_ms": 174.83985295984894,
+            "baseline_over_cubutterfly": 1.017073950613552
+          },
+          "cuda_event_ms": {
+            "baseline_median_ms": 177.7827911376953,
+            "cubutterfly_median_ms": 174.73638916015625,
+            "baseline_over_cubutterfly": 1.0174342733770632
+          }
+        },
+        "max_abs_error": 0,
+        "relative_l2_error": 0,
+        "numerical_status": "pass_timing_numerical_unassessed"
+      },
+      {
+        "job_id": "b4_treatment_first",
+        "source": "results/quarot_fused_followup_20261107/b4_treatment_first/release/report.json",
+        "source_sha256": "13a13b8d98bfbd2e0029408a71ef4bfa39f1a23a5451f0cf77a940f387991dee",
+        "calls": 7,
+        "clocks": {
+          "wall_ms": {
+            "baseline_median_ms": 177.5590080069378,
+            "cubutterfly_median_ms": 174.94217300554737,
+            "baseline_over_cubutterfly": 1.0149582856805344
+          },
+          "cuda_event_ms": {
+            "baseline_median_ms": 177.52883911132812,
+            "cubutterfly_median_ms": 174.91046142578125,
+            "baseline_over_cubutterfly": 1.0149698174952098
+          }
+        },
+        "max_abs_error": 0,
+        "relative_l2_error": 0,
+        "numerical_status": "pass_timing_numerical_unassessed"
+      }
+    ],
+    "scope": "Four clean independent 7B Graph processes; CPU hash and raw median verification; no GPU rerun",
+    "aggregation": "per-process median ratios, two order ranges per batch; no pooling with old losses",
+    "attribution": "selected path and different core; not pure fusion ablation",
+    "significance": "not assessed"
+  },
+  "historical_four_point_followup": {
+    "scope": "Bounded read-only source verification of two old QuaRot and two old FNO points; no GPU",
+    "snapshot_source": "paper/evidence/application_snapshot_20261009.json",
+    "repair_record": "paper/experiments/targeted_evaluation_followup_20261012.md:133",
+    "renderer_issue": "render_application_historical.py hardcodes rounded latencies and drops raw provenance and numerical eligibility",
+    "records": [
+      {
+        "id": "fno_64_v9",
+        "source": "results/paper_profile_rc2/end_to_end/fno_darcy_64_v9.json",
+        "source_sha256": "447e417e301083c0c64d7a6124736d799ec8dc78b54a41846d8b0d40d11d8bd0",
+        "snapshot_hash_matches": true,
+        "embedded_identity": {
+          "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+          "runner_sha256": "bfaa11702133604287bfaf367e68f0a103d55131be3b1495e9adbe9cb0dc25cb",
+          "adapter_sha256": "a6581447219d46e8a4eb53b14351743443524c57b7e6441a1685e39bfe679645",
+          "checkpoint_sha256": "062e2d5493d9dd26cf57044c294c12e29186d1b2ca07853d2bd6c84583a48507",
+          "test_tensor_sha256": "8091b1660ba1ec7858af1d19a836a603b9dae899a0fdf6e03af130a77a1e8c38"
+        },
+        "baseline_median_ms": 3.0065239407122135,
+        "own_median_ms": 3.1516216695308685,
+        "ratio_from_raw_medians": 0.9539609305833167,
+        "performance_evidence_status": "eligible-historical-build-only",
+        "reason": "Raw pass=true and frozen numerical gate_before_timing=true; three process medians reconstructed from samples; raw identities retained."
+      },
+      {
+        "id": "fno_128_v9",
+        "source": "results/paper_profile_rc2/end_to_end/fno_darcy_128_v9.json",
+        "source_sha256": "6e227576bd97041026c3d86fc26b67d4af802588585064f100efb1447671699a",
+        "snapshot_hash_matches": true,
+        "embedded_identity": {
+          "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+          "runner_sha256": "bfaa11702133604287bfaf367e68f0a103d55131be3b1495e9adbe9cb0dc25cb",
+          "adapter_sha256": "a6581447219d46e8a4eb53b14351743443524c57b7e6441a1685e39bfe679645",
+          "checkpoint_sha256": "4faf4a7bc90d3c6a4567f1a33d5f0f440056833763bfb209608cde1f68e6794e",
+          "test_tensor_sha256": "549ac096e1a772ac355297deed98955f7ca6d03c97295705f66e3c194cf20382"
+        },
+        "baseline_median_ms": 2.989774104207754,
+        "own_median_ms": 3.1403121538460255,
+        "ratio_from_raw_medians": 0.9520627115193299,
+        "performance_evidence_status": "eligible-historical-build-only",
+        "reason": "Raw pass=true and frozen numerical gate_before_timing=true; three process medians reconstructed from samples; raw identities retained."
+      },
+      {
+        "id": "quarot_random_512_32_sdpa",
+        "source": "results/paper_profile_rc2/end_to_end/quarot_random_prefill512_decode32_sdpa.json",
+        "source_sha256": "b739603dd20b2e10a56ea6db163362edbb7142f718b9896142b494d042392f45",
+        "snapshot_hash_matches": true,
+        "embedded_identity": {
+          "library": "/home/wt/git/cuButterfly/build-e13-shared/libcuntt.so",
+          "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+          "runner_sha256": null,
+          "adapter_sha256": null,
+          "missing_identity_reason": "Neither runner_sha256 nor adapter_sha256 is embedded in the raw QuaRot JSON; do not substitute FNO identities."
+        },
+        "baseline_median_ms": 2668.5998952016234,
+        "own_median_ms": 2647.4002031609416,
+        "ratio_from_raw_medians": 1.008007739825422,
+        "performance_evidence_status": "excluded-pre-repair-no-output-validation",
+        "reason": "Project repair record identifies old zero Linear4bit scale and cache-position defects; raw has no state hash or finite/output validation. Per-file NaN status cannot be established."
+      },
+      {
+        "id": "quarot_random_2048_128_sdpa",
+        "source": "results/paper_profile_rc2/end_to_end/quarot_random_prefill2048_decode128_sdpa.json",
+        "source_sha256": "21c561ccca1247b6b4063ee3dd9c20db0bc8e15e95ed68c050b2e79487581827",
+        "snapshot_hash_matches": true,
+        "embedded_identity": {
+          "library": "/home/wt/git/cuButterfly/build-e13-shared/libcuntt.so",
+          "library_sha256": "90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4",
+          "runner_sha256": null,
+          "adapter_sha256": null,
+          "missing_identity_reason": "Neither runner_sha256 nor adapter_sha256 is embedded in the raw QuaRot JSON; do not substitute FNO identities."
+        },
+        "baseline_median_ms": 10573.719390667975,
+        "own_median_ms": 10544.185072183609,
+        "ratio_from_raw_medians": 1.0028010053202006,
+        "performance_evidence_status": "excluded-pre-repair-no-output-validation",
+        "reason": "Project repair record identifies old zero Linear4bit scale and cache-position defects; raw has no state hash or finite/output validation. Per-file NaN status cannot be established."
+      }
+    ],
+    "resolution": "Historical generated JSON retains four rows and source hashes; FNO exact raw median ratios and eligible historical status; old QuaRot excluded with eligibility=false and reason; three-decimal FNO display unchanged."
+  }
+}

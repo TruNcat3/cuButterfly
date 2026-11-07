@@ -81,11 +81,21 @@ When the full QuaRot environment is available, use the context manager around
 the existing application path without modifying the pinned checkout:
 
 ```python
-from quarot_adapter import patched_quarot
+from quarot_adapter import QuaRotFWHTAdapter, patched_quarot_hadamard
 
-with patched_quarot("build-e13-shared/libcuntt.so"):
-    output = existing_quarot_model(input_ids)
+adapter = QuaRotFWHTAdapter(
+    "build-e13-shared/libcuntt.so", compute_contract="public_fp32_final")
+try:
+    with patched_quarot_hadamard(adapter=adapter):
+        output = existing_quarot_model(input_ids)
+finally:
+    adapter.close()
 ```
+
+This example uses FP16 storage, FP32 computation, and fused final scaling and
+rounding. The adapter's explicitly selected `native` and `fp32_composed` paths
+remain available for historical comparisons; the application runner defaults to
+`public_fp32_final` and Graph execution.
 
 Alternatively, pass the imported `quarot.functional` module explicitly to
 `patched_quarot_hadamard` or retain the object returned by
@@ -99,7 +109,7 @@ It records complete baseline/treatment state hashes and checks finite prefill
 and every decode output before timing. Output comparisons are implementation
 checks only. Supply `--atol` and `--rtol` explicitly to assess equivalence;
 without both, the runner records errors as `numerical_tolerance_unassessed`
-and does not time or claim a pass. RoPE uses actual attention position IDs
+and may time finite outputs with `pass_timing_numerical_unassessed`; it does not claim numerical equivalence. RoPE uses actual attention position IDs
 checked against the paged cache position, including layer-0 length updates.
 
 CPU preparation probe (no vendor imports, CUDA, or 7B allocation):
@@ -121,9 +131,7 @@ CUDA_VISIBLE_DEVICES=2 /home/wt/yes/envs/cubutterfly/bin/python \
 FlashAttention remains the default and a missing dependency blocks execution.
 Use `--attention-backend torch_sdpa` only to explicitly select the labeled
 fallback. All validation and timing use inference mode; plan creation during
-timed treatment calls causes failure. Timing follows a passed numerical gate,
-with treatment followed by baseline in one process; independent process trials
-and order balancing remain outside this repaired runner.
+timed treatment calls causes failure. Timing requires finite outputs and exact same-backend Graph behavior checks. Cross-backend errors are report-only unless both tolerances are explicitly supplied. Variant order is explicit; the finite followup queue balances order across independent processes.
 
 The earlier 2026-10-12 full 7B short-sequence validation confirmed matching state
 hashes and finite outputs, but found large output differences. A separate
@@ -306,3 +314,46 @@ under this fallback, without the new numerical gate. For `512/32`, combined late
 versus 2648.06 ms (1.008x); for `2048/128`, it is 10573.72 ms versus 10544.19
 ms (1.003x).  Both reports exclude roughly 0.45 s of FWHT plan creation from
 steady-state timing.
+
+## Fused public-contract followup, 2026-11-07
+
+The runner now defaults to `--compute-contract public_fp32_final` and
+`--execution-mode graph`. This is `sameFP16storageFP32compute`: FP16 boundary
+storage with FP32 FWHT compute and final writeback. The existing K-factor
+matrix multiply remains unchanged and is included in the complete call;
+the FP32 label does not describe that multiply or the rest of the model.
+Explicit `native`, `fp32_composed`, and `eager` options replay older contracts.
+Both synchronized host wall time and CUDA events are retained; summary ratios
+use median wall times for the complete device-resident sequence, host replay,
+input refresh, output ownership copies, and synchronization. Setup is excluded.
+No application tolerance is selected by the followup; errors remain report-only.
+
+The fixed config `configs/experiments/quarot_fused_followup_20261107.json`
+contains exactly B1/B4 × baseline-first/treatment-first, prefill128/decode8,
+seed20261003, validation warmup4, timing warmup2, **7 calls**, Graph and the
+public FP32 contract. All four jobs share one explicit timezone-aware deadline.
+Prepare hashes files and prints commands without importing Torch or creating a
+model. Supply your built library and current-stream extension paths:
+
+```bash
+python scripts/run_quarot_fused_followup.py --mode prepare \
+  --library "$QUAROT_LIBRARY" --quarot-extension "$QUAROT_EXTENSION" \
+  --output results/quarot_fused_followup_20261107
+python scripts/run_quarot_fused_followup.py --mode run \
+  --library "$QUAROT_LIBRARY" --quarot-extension "$QUAROT_EXTENSION" \
+  --gpu-uuid "$QUAROT_GPU_UUID" --until "$QUAROT_DEADLINE_ISO" \
+  --output results/quarot_fused_followup_20261107
+```
+
+Run with the research Python environment. Each job uses `run_isolated_gpu.py`
+and a fresh job directory. Compatible clean releases are skipped; mismatched
+releases are rejected. Interrupted directories remain evidence and require a
+fresh output root. The deadline is never extended automatically.
+
+New execution identities also bind selection environment values, registry and
+static profile contents, and the ranker inputs. Changing these inputs rejects
+reuse. This finite queue does not accept a mutable custom plan cache or the
+unsupported runtime overrides `CUBUTTERFLY_COST_MODEL` and
+`CUBUTTERFLY_HARDWARE_PROFILE`; use the hardware-model/profile-root interfaces.
+Older identities remain readable as historical evidence but cannot authorize
+new execution under an unknown environment.

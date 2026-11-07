@@ -452,7 +452,7 @@ def _measure_variant(model, patch_context, input_ids, next_token, args, device, 
     }
 
 
-def main() -> int:
+def build_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--library", type=Path, default=ROOT / "build-e13-shared/libcuntt.so")
     parser.add_argument("--device", default="cuda:0")
@@ -467,27 +467,37 @@ def main() -> int:
     parser.add_argument("--prepare-check", action="store_true", help="CPU-only small random-state probe; no model execution")
     parser.add_argument("--validation-only", action="store_true", help="GPU numerical comparison without latency measurements")
     parser.add_argument('--require-cache', action='store_true', help='Require all FWHT plans to replay the prepared persistent cache')
-    parser.add_argument("--compute-contract", choices=("native", "fp32_composed", "public_fp32_final"), default="native",
+    parser.add_argument("--compute-contract", choices=("native", "fp32_composed", "public_fp32_final"), default="public_fp32_final",
                         help="Explicit FP32 accumulation and scale-before-FP16 composition to match Dao")
     parser.add_argument("--algorithm-policy", choices=("default", "measure"), default=None,
                         help="Override FWHT plan selection; measure performs bounded local tuning before timing")
     parser.add_argument("--validation-warmup", type=int, default=4,
                         help="Complete untimed sequences to stabilize TorchScript quantization before comparison")
     parser.add_argument("--variant-order", choices=("baseline-first", "treatment-first"), default="treatment-first")
-    parser.add_argument("--execution-mode", choices=("eager", "graph"), default="eager",
+    parser.add_argument("--execution-mode", choices=("eager", "graph"), default="graph",
                         help="Run eager calls or capture a fixed-shape full prefill+decode CUDA graph")
     parser.add_argument("--quarot-extension", type=Path,
                         help="Isolated current-stream private extension, shared by both variants")
     parser.add_argument("--atol", type=float, help="Explicit output comparison absolute tolerance")
     parser.add_argument("--rtol", type=float, help="Explicit output comparison relative tolerance")
     parser.add_argument("--output", type=Path, required=True)
-    args = parser.parse_args()
+    return parser
+
+
+def parse_args(argv=None):
+    parser = build_parser()
+    args = parser.parse_args(argv)
     if min(args.batch_size, args.prefill, args.decode, args.calls) <= 0 or args.warmup < 1:
         parser.error("batch/prefill/decode/calls must be positive and warmup >= 1")
     if args.validation_warmup < 0:
         parser.error("validation-warmup must be nonnegative")
     if any(value is not None and (not math.isfinite(value) or value < 0) for value in (args.atol, args.rtol)):
         parser.error("tolerances must be finite and nonnegative")
+    return args
+
+
+def main() -> int:
+    args = parse_args()
     if args.algorithm_policy is not None:
         os.environ["CUBUTTERFLY_E13_ALGORITHM_POLICY"] = args.algorithm_policy
     output = args.output
@@ -506,6 +516,8 @@ def main() -> int:
         "validation_only": args.validation_only,
         "compute_contract": args.compute_contract,
         "validation_warmup_sequences": args.validation_warmup,
+        "timing_warmup_sequences": args.warmup,
+        "timing_calls": args.calls,
         "variant_order": args.variant_order,
         "execution_mode": args.execution_mode,
         "runner_sha256": _sha256(Path(__file__)),
@@ -711,6 +723,11 @@ def main() -> int:
             for name in measured_names
         },
         "timing_contract": {
+            "clocks": ["host_wall_with_device_synchronization", "cuda_event"],
+            "summary_statistic": "median",
+            "summary_clock": "host_wall_with_device_synchronization",
+            "boundary": "complete GPU sequence plus host replay/call and synchronization; device-resident inputs; host-device transfer excluded",
+            "precision_contract": ("sameFP16storageFP32compute" if args.compute_contract == "public_fp32_final" else args.compute_contract),
             "plan_and_first_use_excluded": True,
             "same_random_state_seed": args.seed,
             "quality_claim": False,

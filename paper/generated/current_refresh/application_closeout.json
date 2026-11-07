@@ -36,7 +36,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "cc16f005f784d3a781be909e7d10dedd23b5d26e1581dad36477782c9d0ce1c5",
-      "role": "external"
+      "role": "external",
+      "timing_contract": {
+        "statistic": "sample median",
+        "clock": "wall",
+        "boundary": "device input copy + full prefill/decode graph replay + independent output clone + synchronization; setup excluded",
+        "evidence": "source summary.end_to_end; baseline/cubutterfly wall_ms.end_to_end"
+      }
     },
     {
       "job_id": "quarot_b1_p128d8_process2",
@@ -60,7 +66,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "0f7f37f20b4713f91a0d33fea24f637270e43ba862c740c38a6d0b3c882f5f45",
-      "role": "external"
+      "role": "external",
+      "timing_contract": {
+        "statistic": "sample median",
+        "clock": "wall",
+        "boundary": "device input copy + full prefill/decode graph replay + independent output clone + synchronization; setup excluded",
+        "evidence": "source summary.end_to_end; baseline/cubutterfly wall_ms.end_to_end"
+      }
     },
     {
       "job_id": "quarot_b4_p128d8_process1",
@@ -84,7 +96,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "d98181b36d82858d0e667e73f0d25a195c380cda0f9bdd778d9e21973a160484",
-      "role": "external"
+      "role": "external",
+      "timing_contract": {
+        "statistic": "sample median",
+        "clock": "wall",
+        "boundary": "device input copy + full prefill/decode graph replay + independent output clone + synchronization; setup excluded",
+        "evidence": "source summary.end_to_end; baseline/cubutterfly wall_ms.end_to_end"
+      }
     },
     {
       "job_id": "quarot_b4_p128d8_process2",
@@ -108,7 +126,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "6632ee5ed84aa317480442ffe32d81e30ea36fd7d7d4d10f4aaa9354edd4e01b",
-      "role": "external"
+      "role": "external",
+      "timing_contract": {
+        "statistic": "sample median",
+        "clock": "wall",
+        "boundary": "device input copy + full prefill/decode graph replay + independent output clone + synchronization; setup excluded",
+        "evidence": "source summary.end_to_end; baseline/cubutterfly wall_ms.end_to_end"
+      }
     },
     {
       "job_id": "filter1024_process2",
@@ -131,7 +155,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "c30ca39f80a1db770f8effe23a8dc763b87fd23f30285ba9b79701bf3a1e79f9",
-      "role": "external"
+      "role": "external",
+      "timing_contract": {
+        "statistic": "sample median",
+        "clock": "cuda_event",
+        "boundary": "input refresh + complete fixed-filter graph + output materialization; setup excluded",
+        "evidence": "scripts/run_fft_filter_end_to_end.py:212-277"
+      }
     },
     {
       "job_id": "filter1024_process2",
@@ -154,7 +184,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "c30ca39f80a1db770f8effe23a8dc763b87fd23f30285ba9b79701bf3a1e79f9",
-      "role": "diagnostic"
+      "role": "diagnostic",
+      "timing_contract": {
+        "statistic": "sample median",
+        "clock": "cuda_event",
+        "boundary": "input refresh + complete fixed-filter graph + output materialization; setup excluded",
+        "evidence": "scripts/run_fft_filter_end_to_end.py:212-277"
+      }
     },
     {
       "job_id": "filter2048_process2",
@@ -177,7 +213,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "2ea3e4a976529947d27dd09d6c9c90cfce0d0aab268fb0020e95f8c5a2698d26",
-      "role": "external"
+      "role": "external",
+      "timing_contract": {
+        "statistic": "sample median",
+        "clock": "cuda_event",
+        "boundary": "input refresh + complete fixed-filter graph + output materialization; setup excluded",
+        "evidence": "scripts/run_fft_filter_end_to_end.py:212-277"
+      }
     },
     {
       "job_id": "filter2048_process2",
@@ -200,7 +242,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "2ea3e4a976529947d27dd09d6c9c90cfce0d0aab268fb0020e95f8c5a2698d26",
-      "role": "diagnostic"
+      "role": "diagnostic",
+      "timing_contract": {
+        "statistic": "sample median",
+        "clock": "cuda_event",
+        "boundary": "input refresh + complete fixed-filter graph + output materialization; setup excluded",
+        "evidence": "scripts/run_fft_filter_end_to_end.py:212-277"
+      }
     },
     {
       "job_id": "filter1024_process3",
@@ -223,7 +271,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "25b3011817a21b6899f825f9ae3215b6dba3785bceb1619479ca6984e50bc9f9",
-      "role": "external"
+      "role": "external",
+      "timing_contract": {
+        "statistic": "sample median",
+        "clock": "cuda_event",
+        "boundary": "input refresh + complete fixed-filter graph + output materialization; setup excluded",
+        "evidence": "scripts/run_fft_filter_end_to_end.py:212-277"
+      }
     },
     {
       "job_id": "filter1024_process3",
@@ -246,7 +300,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "25b3011817a21b6899f825f9ae3215b6dba3785bceb1619479ca6984e50bc9f9",
-      "role": "diagnostic"
+      "role": "diagnostic",
+      "timing_contract": {
+        "statistic": "sample median",
+        "clock": "cuda_event",
+        "boundary": "input refresh + complete fixed-filter graph + output materialization; setup excluded",
+        "evidence": "scripts/run_fft_filter_end_to_end.py:212-277"
+      }
     },
     {
       "job_id": "filter2048_process3",
@@ -269,7 +329,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "d148587ca287912167e750f5498ddbcdab56187e1ba2c31206f2a715d49a2404",
-      "role": "external"
+      "role": "external",
+      "timing_contract": {
+        "statistic": "sample median",
+        "clock": "cuda_event",
+        "boundary": "input refresh + complete fixed-filter graph + output materialization; setup excluded",
+        "evidence": "scripts/run_fft_filter_end_to_end.py:212-277"
+      }
     },
     {
       "job_id": "filter2048_process3",
@@ -292,7 +358,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "d148587ca287912167e750f5498ddbcdab56187e1ba2c31206f2a715d49a2404",
-      "role": "diagnostic"
+      "role": "diagnostic",
+      "timing_contract": {
+        "statistic": "sample median",
+        "clock": "cuda_event",
+        "boundary": "input refresh + complete fixed-filter graph + output materialization; setup excluded",
+        "evidence": "scripts/run_fft_filter_end_to_end.py:212-277"
+      }
     },
     {
       "job_id": "bootstrap_small_process2",
@@ -318,7 +390,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "d3421fb8284e5c1900bcadec3aa1785dbf41bd5d011ab2366a998eb10a1bc0d8",
-      "role": "external"
+      "role": "external",
+      "timing_contract": {
+        "statistic": "sample arithmetic mean",
+        "clock": "cuda_event",
+        "boundary": "complete captured batch graph; event interval divided by graph replays; setup excluded",
+        "evidence": "paper/experiments/heongpu_ckks_e2e_bench.cu:359-371,819-845,898-906; source/binary correspondence not verified"
+      }
     },
     {
       "job_id": "bootstrap_small_process2",
@@ -344,7 +422,13 @@
       "cohort": "nov2-application-closure",
       "timing_mode": "graph",
       "source_sha256": "d3421fb8284e5c1900bcadec3aa1785dbf41bd5d011ab2366a998eb10a1bc0d8",
-      "role": "external"
+      "role": "external",
+      "timing_contract": {
+        "statistic": "sample arithmetic mean",
+        "clock": "cuda_event",
+        "boundary": "complete captured batch graph; event interval divided by graph replays; setup excluded",
+        "evidence": "paper/experiments/heongpu_ckks_e2e_bench.cu:359-371,819-845,898-906; source/binary correspondence not verified"
+      }
     },
     {
       "cohort": "historical-fno-hotpath",
@@ -365,6 +449,12 @@
       "gpu_uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02",
       "timing_scope": "device-resident input copy + complete forward/replay + independent output clone + synchronization; setup excluded",
       "aggregation": "median of independent process medians; eager and graph kept separate",
+      "timing_contract": {
+        "statistic": "median of independent process medians",
+        "clock": "wall",
+        "boundary": "device input copy + complete forward/replay + independent output clone + synchronization; setup excluded",
+        "evidence": "fno_hotpath_summary.json aggregation and wall_median_ms; mode=graph"
+      },
       "source": "results/e2e_unified_20261013/fno_hotpath_summary.json",
       "source_sha256": "597aedcc465871ecd51407d5d6f180b7656593c454c2cffa87531188d81729fe",
       "role": "external"
@@ -388,6 +478,12 @@
       "gpu_uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02",
       "timing_scope": "device-resident input copy + complete forward/replay + independent output clone + synchronization; setup excluded",
       "aggregation": "median of independent process medians; eager and graph kept separate",
+      "timing_contract": {
+        "statistic": "median of independent process medians",
+        "clock": "wall",
+        "boundary": "device input copy + complete forward/replay + independent output clone + synchronization; setup excluded",
+        "evidence": "fno_hotpath_summary.json aggregation and wall_median_ms; mode=eager"
+      },
       "source": "results/e2e_unified_20261013/fno_hotpath_summary.json",
       "source_sha256": "597aedcc465871ecd51407d5d6f180b7656593c454c2cffa87531188d81729fe",
       "role": "external"
@@ -411,6 +507,12 @@
       "gpu_uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02",
       "timing_scope": "device-resident input copy + complete forward/replay + independent output clone + synchronization; setup excluded",
       "aggregation": "median of independent process medians; eager and graph kept separate",
+      "timing_contract": {
+        "statistic": "median of independent process medians",
+        "clock": "wall",
+        "boundary": "device input copy + complete forward/replay + independent output clone + synchronization; setup excluded",
+        "evidence": "fno_hotpath_summary.json aggregation and wall_median_ms; mode=graph"
+      },
       "source": "results/e2e_unified_20261013/fno_hotpath_summary.json",
       "source_sha256": "597aedcc465871ecd51407d5d6f180b7656593c454c2cffa87531188d81729fe",
       "role": "external"
@@ -434,6 +536,12 @@
       "gpu_uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02",
       "timing_scope": "device-resident input copy + complete forward/replay + independent output clone + synchronization; setup excluded",
       "aggregation": "median of independent process medians; eager and graph kept separate",
+      "timing_contract": {
+        "statistic": "median of independent process medians",
+        "clock": "wall",
+        "boundary": "device input copy + complete forward/replay + independent output clone + synchronization; setup excluded",
+        "evidence": "fno_hotpath_summary.json aggregation and wall_median_ms; mode=eager"
+      },
       "source": "results/e2e_unified_20261013/fno_hotpath_summary.json",
       "source_sha256": "597aedcc465871ecd51407d5d6f180b7656593c454c2cffa87531188d81729fe",
       "role": "external"

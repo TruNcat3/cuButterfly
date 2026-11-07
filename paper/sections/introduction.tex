@@ -80,8 +80,9 @@ resource behavior of generated implementations.
 
 The A100 80GB operator evaluation reports FFT geometric-mean speedups of
 \CurrentFFTSingle$\times$ and \CurrentFFTDouble$\times$ over cuFFT for
-its FP32 and FP64 cohorts, including multidimensional requests,
+its FP32 and FP64 complete-call cohorts, including adapted and multidimensional requests,
 with an independent cyclic NTT study reaching \CurrentCyclicNTT$\times$
-over GPU-NTT and FP32 FWHT reaching \CurrentFWHT$\times$ over DaoFHT.
+over GPU-NTT and FP32 FWHT reaching \CurrentFWHT$\times$ over DaoFHT
+with supplied-output adaptation.
 Section~\ref{sec:evaluation} distinguishes external comparisons, fixed-core
 controls, and complete applications, including their remaining gaps.

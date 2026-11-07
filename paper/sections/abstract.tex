@@ -16,7 +16,8 @@ cores and workloads while evaluating demand against target hardware constraints.
 
 An A100 80GB evaluation observes geometric-mean latency ratios
 of \CurrentFFTSingle$\times$ and \CurrentFFTDouble$\times$ over cuFFT
-for its FP32 and FP64 FFT cohorts, including multidimensional requests.
+for its FP32 and FP64 FFT complete-call cohorts, including adapted and
+multidimensional requests.
 An independent cyclic NTT study reaches \CurrentCyclicNTT$\times$ over
 GPU-NTT across 54 matched 32/64-bit-word requests.
 Separate fixed-core controls improve complete-call performance by approximately
