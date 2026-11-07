@@ -32,7 +32,8 @@ An eleven-request 40GB FP16 supplement gives an installed-default cuFFT/\system{
 GM of 0.858410$\times$ (0.738866--1.08757$\times$), excluding it from the
 80GB mean. Its omitted independent stage calibration leaves unseen-request
 ranking unvalidated. Cohorts preserve distinct device, build, and protocol identities;
-the QuaRot fused follow-up alone uses the later FP16 build. All measurements are A100;
+the QuaRot fused, FWHT return-interface, and non-FFT endpoint follow-ups use
+the later FP16 build. All measurements are A100;
 Blackwell remains unmeasured.
 
 \textbf{Numerical and timing contracts.}
@@ -91,11 +92,19 @@ layout adaptation gives 1.290$\times$ across four FP32 pairs and
 the baseline's required conversions; their aggregate gains are not solely
 arithmetic-core gains. Two independent rank-4/8 axis-composition replays retain
 1.925$\times$ and 2.748$\times$ against cuFFT compositions.
-All ten DaoFHT pairs include copying the returned tensor to a supplied output
-buffer. This matches the tested C-API boundary, but the FWHT operation itself
-also permits consuming DaoFHT's returned tensor directly. The 1.474$\times$
-aggregate therefore concerns the adapted interface; a matched comparison
-without this extra copy has not been measured for these ten requests.
+All ten historical DaoFHT pairs include copying its returned tensor to a
+supplied buffer; their 1.474$\times$ aggregate concerns that adapted interface.
+An independent follow-up repeats the same ten requests and CPU references
+on the newer build, measuring both interfaces in three processes.
+With a supplied buffer, process GMs are 1.236--1.242$\times$, with ten wins
+per process. With independently owned return values and no Dao copy, they
+are 0.936--0.938$\times$, with one win per process: Dao is faster on average.
+Both backends retain twenty distinct outputs in the return-interface Graph;
+the supplied-buffer Graph reuses one. Thus each comparison matches output
+lifetime, but differences between interfaces also reflect working-set changes.
+These results neither isolate copy cost nor replace the historical cohort.
+All outputs remain finite, with full errors recorded against the same FP32
+CPU reference and no new acceptance threshold.
 FP64 FWHT, zeta, and structured
 butterflies lack matched GPU baselines. The separate 34-request CPU study
 uses two processes on a shared host and a different timing boundary.
@@ -326,12 +335,74 @@ warp-register radix-2 cores. Throughput falls to 0.872--0.937$\times$ and 0.797-
 Wide three-trial ranges provide no evidence of positive transfer or latency
 hiding; these are controlled organizations, not optimized plans.
 
+\textbf{Retaining and tuning the original endpoint.}
+A separate follow-up keeps the $B=16$ requests and fixes each arithmetic
+leaf while tuning both organization domains. For FWHT, the conventional
+domain tunes 128/256 threads with one suffix column per block; the extended
+domain also permits two/four columns. For NTT, both leaves support 256
+threads, and the extended domain adds two/four transforms per packet to
+the original one-transform endpoint. Both domains share a six-candidate
+budget ceiling; their distinct legal pool sizes are 2/6 for FWHT and 1/3
+for NTT. Candidates and resource expectations are frozen before screening;
+three new processes confirm the selected mappings, reversing execution
+order in the second process.
+
+\begin{table}[t]
+\centering\small
+\caption{Independent confirmations retain the original endpoint in each
+extended domain. Times and paired ratios are three-process medians.}
+\label{tab:nonfft-endpoints}
+\input{generated/resource_measured_selection_20261107}
+\end{table}
+
+Table~\ref{tab:nonfft-endpoints} reports only independent confirmations.
+FWHT selects 256 threads/four columns over 128 threads/one column, with
+three-process paired ratios of 1.315--1.318$\times$ and
+1.365--1.367$\times$. These are gains from tuning execution organization,
+not from columns alone. Both NTT domains select the identical original
+mapping, measured once per process; unity denotes identity, not two
+equivalent noisy measurements. The shared NTT endpoint retains its
+specialized wrapper. Fixing a leaf does not fix its complete kernel.
+All NTT candidates pass full-batch exact checks; all twelve FWHT candidates
+also match the FP32 CPU reference on all $2^{20}$ outputs. The two FWHT
+leaves are internal codelet implementations, not imported library cores. This bounded
+follow-up supports conditional reuse without requiring every added choice
+to improve performance.
+
 
 \subsection{Analysis}
 \textbf{Question 4: Which resource costs accompany organization choices?}
 Nsight Compute (NCU) counters and Nsight Systems (NSYS) timelines characterize
 internal controls, not causes of external-library gains. Ordinary timings
 determine performance.
+
+\textbf{Connecting resource characterization to measured choices.}
+The dependency structure supplies closed-region counts and logical interface
+traffic; compiled kernels supply actual storage and register requirements.
+Independent service curves add timing information. Table~\ref{tab:resource-decisions}
+connects these layers for three requests, using 34 service keys from 117
+clean probes. The median relative errors are 0.565\% over 68 group holdouts
+and 0.429\% over 15 complete-plan confirmations. The displayed predictions
+use independent measured services, unchanged when complete-plan-fitted
+fallback parameters are removed. However, the final composition artifact
+was produced after confirmation; this is retrospective validation, not
+certified prospective selection. The three requests cover FFT and FWHT,
+not NTT.
+
+\begin{table}[t]
+\centering\footnotesize
+\caption{Service composition predicts complete-plan times retrospectively.
+G counts execution groups; maximum kernel shared storage is in KiB and times are in ms.}
+\label{tab:resource-decisions}
+\input{generated/resource_decisions_20261107}
+\end{table}
+
+The newer endpoint study in Table~\ref{tab:nonfft-endpoints} supplies a
+prospective resource-constrained selection check for FWHT and NTT:
+resource expectations and candidate domains precede screening, and chosen
+mappings precede independent confirmation. It uses measured selection,
+not an NTT service-time prediction. Neither study establishes a global
+optimum or predicts overlap and unseen hardware.
 
 % Scaling timings and their matched resource profiles are discussed together.
 \begin{figure}[!hbp]

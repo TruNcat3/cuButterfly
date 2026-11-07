@@ -83,6 +83,7 @@ The A100 80GB operator evaluation reports FFT geometric-mean speedups of
 its FP32 and FP64 complete-call cohorts, including adapted and multidimensional requests,
 with an independent cyclic NTT study reaching \CurrentCyclicNTT$\times$
 over GPU-NTT and FP32 FWHT reaching \CurrentFWHT$\times$ over DaoFHT
-with supplied-output adaptation.
+with supplied-output adaptation. An independent FWHT follow-up using
+native return values instead yields 0.936--0.938$\times$ against DaoFHT.
 Section~\ref{sec:evaluation} distinguishes external comparisons, fixed-core
 controls, and complete applications, including their remaining gaps.

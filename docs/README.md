@@ -1,5 +1,10 @@
 # Documentation Index
 
+The [A100 paper-evidence follow-up](a100_evidence_followup_20261107.md)
+completes the FWHT return-interface comparison, fixed-leaf FWHT/NTT endpoint
+controls, and resource-to-selection evidence audit. It reports the native-return
+FWHT loss alongside the organization gains; PRO6000 remains a separate target run.
+
 The [QuaRot fused-path validation and reporting audit](quarot_fused_path_20261107.md)
 records matched short-transform measurements and distinguishes supplied-output,
 native-return, device-event and host-wall comparison contracts.

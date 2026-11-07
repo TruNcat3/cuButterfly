@@ -1,0 +1,16 @@
+\begingroup
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Leaf & Conv. $\mu$s & Ext. $\mu$s & Ratio\\\midrule
+FWHT r2 & 60.447 & 45.875 & 1.318\\
+FWHT r4 & 59.894 & 43.878 & 1.365\\
+NTT shared-r4 & 1585.398 & same & 1.000\\
+NTT warp-r2 & 3706.778 & same & 1.000\\
+\bottomrule
+\end{tabular}
+\endgroup
+% Ratio is median of process-paired ratios, not ratio of median times.
+% N/B and selected mappings are described in the text; FWHT FP32 N=2^16 B16, NTT word64 N=2^20 B16.
+% Measured selection from a frozen resource-constrained pool; no numeric cost forecast.
+% NTT same means the identical dt1 mapping and sample are reused: ratio 1 by identity.

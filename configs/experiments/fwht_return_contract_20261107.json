@@ -1,0 +1,660 @@
+{
+  "schema": "fwht-return-contract-v1",
+  "gpu_uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02",
+  "library_sha256": "775a85c8f76e44bbfee886fd90489e7c309bd097b60e968183e446aa006177b2",
+  "precision": "FP32 storage and FP32 compute",
+  "processes": 3,
+  "contracts": [
+    "supplied-output",
+    "native-return"
+  ],
+  "protocol": {
+    "graph_calls": 20,
+    "replays": 7,
+    "warmup_calls": 10,
+    "clock": "cuda_event",
+    "statistic": "median of 7 replay event intervals / 20",
+    "numeric_policy": "finite required; full error distribution report only; no acceptance threshold",
+    "capture_ownership": "native-return retains all 20 independently allocated outputs within each graph; graph replay reuses its private capture addresses"
+  },
+  "cases": [
+    {
+      "id": "0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9",
+      "descriptor": {
+        "schema": "cubutterfly-descriptor-v1",
+        "selection": {
+          "algorithm_policy": 0,
+          "execution_mode": 0,
+          "explicit_algorithm": ""
+        },
+        "semantics": {
+          "batch": 1,
+          "compute": 1,
+          "fft_output_scale": 1.0,
+          "fft_type": 0,
+          "input_batch_stride": 256,
+          "input_orders": [
+            0
+          ],
+          "input_strides": [
+            1
+          ],
+          "inverse": 0,
+          "length_mode": 0,
+          "matrices": [
+            []
+          ],
+          "modulus": null,
+          "normalize_inverse": false,
+          "ntt_input_layout": 0,
+          "ntt_output_layout": 0,
+          "operator": 2,
+          "output_batch_stride": 256,
+          "output_orders": [
+            0
+          ],
+          "output_strides": [
+            1
+          ],
+          "placement": 0,
+          "schema": "cubutterfly-semantic-v1",
+          "shape": [
+            256
+          ],
+          "storage": 2,
+          "word_bits": null
+        }
+      },
+      "historical_source": "results/full_current_20261025/measurement/rows/0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9.json",
+      "historical_source_sha256": "25f73b03098c5debbbe5389755a669dd0be31ad6101f17752a4e97d4b65a3ed5",
+      "historical_row_sha256": "e363e4cd143ed4bf95ae469c18d8eca3653ffd58c63132aea18399f060f908d7",
+      "historical_adapter_operations": [
+        "backend_output_allocation",
+        "native_fp32_fwht_and_fused_output_scale",
+        "copy_backend_result_to_supplied_output"
+      ]
+    },
+    {
+      "id": "bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c",
+      "descriptor": {
+        "schema": "cubutterfly-descriptor-v1",
+        "selection": {
+          "algorithm_policy": 0,
+          "execution_mode": 0,
+          "explicit_algorithm": ""
+        },
+        "semantics": {
+          "batch": 1,
+          "compute": 1,
+          "fft_output_scale": 1.0,
+          "fft_type": 0,
+          "input_batch_stride": 256,
+          "input_orders": [
+            0
+          ],
+          "input_strides": [
+            1
+          ],
+          "inverse": 1,
+          "length_mode": 0,
+          "matrices": [
+            []
+          ],
+          "modulus": null,
+          "normalize_inverse": true,
+          "ntt_input_layout": 0,
+          "ntt_output_layout": 0,
+          "operator": 2,
+          "output_batch_stride": 256,
+          "output_orders": [
+            0
+          ],
+          "output_strides": [
+            1
+          ],
+          "placement": 0,
+          "schema": "cubutterfly-semantic-v1",
+          "shape": [
+            256
+          ],
+          "storage": 2,
+          "word_bits": null
+        }
+      },
+      "historical_source": "results/full_current_20261025/measurement/rows/bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c.json",
+      "historical_source_sha256": "cc278f43a54cf5c21f8eb2a4da5133a450fa7ddfe3368ed1967fff9c0a7dfd53",
+      "historical_row_sha256": "6b0376a81b32d2d2f662e9ba96f96a5fe2b02b6d6571420c4b9901c9bab91cf0",
+      "historical_adapter_operations": [
+        "backend_output_allocation",
+        "native_fp32_fwht_and_fused_output_scale",
+        "copy_backend_result_to_supplied_output"
+      ]
+    },
+    {
+      "id": "3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485",
+      "descriptor": {
+        "schema": "cubutterfly-descriptor-v1",
+        "selection": {
+          "algorithm_policy": 0,
+          "execution_mode": 0,
+          "explicit_algorithm": ""
+        },
+        "semantics": {
+          "batch": 32,
+          "compute": 1,
+          "fft_output_scale": 1.0,
+          "fft_type": 0,
+          "input_batch_stride": 4096,
+          "input_orders": [
+            0
+          ],
+          "input_strides": [
+            1
+          ],
+          "inverse": 0,
+          "length_mode": 0,
+          "matrices": [
+            []
+          ],
+          "modulus": null,
+          "normalize_inverse": false,
+          "ntt_input_layout": 0,
+          "ntt_output_layout": 0,
+          "operator": 2,
+          "output_batch_stride": 4096,
+          "output_orders": [
+            0
+          ],
+          "output_strides": [
+            1
+          ],
+          "placement": 0,
+          "schema": "cubutterfly-semantic-v1",
+          "shape": [
+            4096
+          ],
+          "storage": 2,
+          "word_bits": null
+        }
+      },
+      "historical_source": "results/full_current_20261025/measurement/rows/3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485.json",
+      "historical_source_sha256": "443d99035908987d4027183ed1515c848a00014bee52d9781d838caf7feed93d",
+      "historical_row_sha256": "4f7f4e19c9a55fe955f63fc4af710445a298f993ff5f1567f9ac038f2deaa79f",
+      "historical_adapter_operations": [
+        "backend_output_allocation",
+        "native_fp32_fwht_and_fused_output_scale",
+        "copy_backend_result_to_supplied_output"
+      ]
+    },
+    {
+      "id": "0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043",
+      "descriptor": {
+        "schema": "cubutterfly-descriptor-v1",
+        "selection": {
+          "algorithm_policy": 0,
+          "execution_mode": 0,
+          "explicit_algorithm": ""
+        },
+        "semantics": {
+          "batch": 32,
+          "compute": 1,
+          "fft_output_scale": 1.0,
+          "fft_type": 0,
+          "input_batch_stride": 4096,
+          "input_orders": [
+            0
+          ],
+          "input_strides": [
+            1
+          ],
+          "inverse": 1,
+          "length_mode": 0,
+          "matrices": [
+            []
+          ],
+          "modulus": null,
+          "normalize_inverse": true,
+          "ntt_input_layout": 0,
+          "ntt_output_layout": 0,
+          "operator": 2,
+          "output_batch_stride": 4096,
+          "output_orders": [
+            0
+          ],
+          "output_strides": [
+            1
+          ],
+          "placement": 0,
+          "schema": "cubutterfly-semantic-v1",
+          "shape": [
+            4096
+          ],
+          "storage": 2,
+          "word_bits": null
+        }
+      },
+      "historical_source": "results/full_current_20261025/measurement/rows/0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043.json",
+      "historical_source_sha256": "b476f2fe68c8ffcfae428f95c9de42056bbb1175a9c0536800bccd4bac9dcccf",
+      "historical_row_sha256": "ae4f7a90bc897163187ebd4c3b664caac264e150728e2cbee4252731eb318b2d",
+      "historical_adapter_operations": [
+        "backend_output_allocation",
+        "native_fp32_fwht_and_fused_output_scale",
+        "copy_backend_result_to_supplied_output"
+      ]
+    },
+    {
+      "id": "dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51",
+      "descriptor": {
+        "schema": "cubutterfly-descriptor-v1",
+        "selection": {
+          "algorithm_policy": 0,
+          "execution_mode": 0,
+          "explicit_algorithm": ""
+        },
+        "semantics": {
+          "batch": 1,
+          "compute": 1,
+          "fft_output_scale": 1.0,
+          "fft_type": 0,
+          "input_batch_stride": 32768,
+          "input_orders": [
+            0
+          ],
+          "input_strides": [
+            1
+          ],
+          "inverse": 0,
+          "length_mode": 0,
+          "matrices": [
+            []
+          ],
+          "modulus": null,
+          "normalize_inverse": false,
+          "ntt_input_layout": 0,
+          "ntt_output_layout": 0,
+          "operator": 2,
+          "output_batch_stride": 32768,
+          "output_orders": [
+            0
+          ],
+          "output_strides": [
+            1
+          ],
+          "placement": 0,
+          "schema": "cubutterfly-semantic-v1",
+          "shape": [
+            32768
+          ],
+          "storage": 2,
+          "word_bits": null
+        }
+      },
+      "historical_source": "results/full_current_20261025/measurement/rows/dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51.json",
+      "historical_source_sha256": "3a6169ebd82f102bf8ebb29ebfc9831257f86d81d9217bb91f1716feb470423b",
+      "historical_row_sha256": "7b7f162796f2facc4a3adddad6bf75c33d3baedcdd8462bcb51759b4c7f9642b",
+      "historical_adapter_operations": [
+        "backend_output_allocation",
+        "native_fp32_fwht_and_fused_output_scale",
+        "copy_backend_result_to_supplied_output"
+      ]
+    },
+    {
+      "id": "e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2",
+      "descriptor": {
+        "schema": "cubutterfly-descriptor-v1",
+        "selection": {
+          "algorithm_policy": 0,
+          "execution_mode": 0,
+          "explicit_algorithm": ""
+        },
+        "semantics": {
+          "batch": 1,
+          "compute": 1,
+          "fft_output_scale": 1.0,
+          "fft_type": 0,
+          "input_batch_stride": 32768,
+          "input_orders": [
+            0
+          ],
+          "input_strides": [
+            1
+          ],
+          "inverse": 1,
+          "length_mode": 0,
+          "matrices": [
+            []
+          ],
+          "modulus": null,
+          "normalize_inverse": true,
+          "ntt_input_layout": 0,
+          "ntt_output_layout": 0,
+          "operator": 2,
+          "output_batch_stride": 32768,
+          "output_orders": [
+            0
+          ],
+          "output_strides": [
+            1
+          ],
+          "placement": 0,
+          "schema": "cubutterfly-semantic-v1",
+          "shape": [
+            32768
+          ],
+          "storage": 2,
+          "word_bits": null
+        }
+      },
+      "historical_source": "results/full_current_20261025/measurement/rows/e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2.json",
+      "historical_source_sha256": "d0f5f921a7421fd8b03aa24f478ff38a97d5adb9324786539d4efb8a61708cbf",
+      "historical_row_sha256": "40041298d5e4d6277426bb67d67f112195d102130d2d7f599f2345c26b4b014e",
+      "historical_adapter_operations": [
+        "backend_output_allocation",
+        "native_fp32_fwht_and_fused_output_scale",
+        "copy_backend_result_to_supplied_output"
+      ]
+    },
+    {
+      "id": "f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d",
+      "descriptor": {
+        "schema": "cubutterfly-descriptor-v1",
+        "selection": {
+          "algorithm_policy": 0,
+          "execution_mode": 0,
+          "explicit_algorithm": ""
+        },
+        "semantics": {
+          "batch": 4,
+          "compute": 1,
+          "fft_output_scale": 1.0,
+          "fft_type": 0,
+          "input_batch_stride": 16384,
+          "input_orders": [
+            0,
+            0
+          ],
+          "input_strides": [
+            128,
+            1
+          ],
+          "inverse": 0,
+          "length_mode": 0,
+          "matrices": [
+            [],
+            []
+          ],
+          "modulus": null,
+          "normalize_inverse": false,
+          "ntt_input_layout": 0,
+          "ntt_output_layout": 0,
+          "operator": 2,
+          "output_batch_stride": 16384,
+          "output_orders": [
+            0,
+            0
+          ],
+          "output_strides": [
+            128,
+            1
+          ],
+          "placement": 0,
+          "schema": "cubutterfly-semantic-v1",
+          "shape": [
+            128,
+            128
+          ],
+          "storage": 2,
+          "word_bits": null
+        }
+      },
+      "historical_source": "results/full_current_20261025/measurement/rows/f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d.json",
+      "historical_source_sha256": "d2a44a1cd1a68fa746a4de7548e5e859e8b92698d1b8a9ef01e363be076f6094",
+      "historical_row_sha256": "a207ec1f85ac1e5ffd5a598a289aa9094b4ce66abaf7768e20b16071a891fb96",
+      "historical_adapter_operations": [
+        "backend_output_allocation",
+        "native_fp32_fwht_and_fused_output_scale",
+        "copy_backend_result_to_supplied_output"
+      ]
+    },
+    {
+      "id": "eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a",
+      "descriptor": {
+        "schema": "cubutterfly-descriptor-v1",
+        "selection": {
+          "algorithm_policy": 0,
+          "execution_mode": 0,
+          "explicit_algorithm": ""
+        },
+        "semantics": {
+          "batch": 4,
+          "compute": 1,
+          "fft_output_scale": 1.0,
+          "fft_type": 0,
+          "input_batch_stride": 32768,
+          "input_orders": [
+            0,
+            0,
+            0
+          ],
+          "input_strides": [
+            1024,
+            32,
+            1
+          ],
+          "inverse": 1,
+          "length_mode": 0,
+          "matrices": [
+            [],
+            [],
+            []
+          ],
+          "modulus": null,
+          "normalize_inverse": true,
+          "ntt_input_layout": 0,
+          "ntt_output_layout": 0,
+          "operator": 2,
+          "output_batch_stride": 32768,
+          "output_orders": [
+            0,
+            0,
+            0
+          ],
+          "output_strides": [
+            1024,
+            32,
+            1
+          ],
+          "placement": 0,
+          "schema": "cubutterfly-semantic-v1",
+          "shape": [
+            32,
+            32,
+            32
+          ],
+          "storage": 2,
+          "word_bits": null
+        }
+      },
+      "historical_source": "results/full_current_20261025/measurement/rows/eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a.json",
+      "historical_source_sha256": "acce64c448d14639ce3c501146aaab1d775a3cc2da62a4902abe251e1b850271",
+      "historical_row_sha256": "b7b94d193ce1ccb4f76914ee526424621ac5b258c9377c401b103edc2410ff69",
+      "historical_adapter_operations": [
+        "backend_output_allocation",
+        "native_fp32_fwht_and_fused_output_scale",
+        "copy_backend_result_to_supplied_output"
+      ]
+    },
+    {
+      "id": "4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3",
+      "descriptor": {
+        "schema": "cubutterfly-descriptor-v1",
+        "selection": {
+          "algorithm_policy": 0,
+          "execution_mode": 0,
+          "explicit_algorithm": ""
+        },
+        "semantics": {
+          "batch": 4,
+          "compute": 1,
+          "fft_output_scale": 1.0,
+          "fft_type": 0,
+          "input_batch_stride": 4096,
+          "input_orders": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "input_strides": [
+            512,
+            64,
+            8,
+            1
+          ],
+          "inverse": 0,
+          "length_mode": 0,
+          "matrices": [
+            [],
+            [],
+            [],
+            []
+          ],
+          "modulus": null,
+          "normalize_inverse": false,
+          "ntt_input_layout": 0,
+          "ntt_output_layout": 0,
+          "operator": 2,
+          "output_batch_stride": 4096,
+          "output_orders": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "output_strides": [
+            512,
+            64,
+            8,
+            1
+          ],
+          "placement": 0,
+          "schema": "cubutterfly-semantic-v1",
+          "shape": [
+            8,
+            8,
+            8,
+            8
+          ],
+          "storage": 2,
+          "word_bits": null
+        }
+      },
+      "historical_source": "results/full_current_20261025/measurement/rows/4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3.json",
+      "historical_source_sha256": "bf3dcc1a4be0fed96f2a704ce05630043aa7e99567847d44ab423936b6fada05",
+      "historical_row_sha256": "8fe3251e1cf7a04a4dd90b0f0652903c6e442d0e0e880e704ad59381077bc30a",
+      "historical_adapter_operations": [
+        "backend_output_allocation",
+        "native_fp32_fwht_and_fused_output_scale",
+        "copy_backend_result_to_supplied_output"
+      ]
+    },
+    {
+      "id": "db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be",
+      "descriptor": {
+        "schema": "cubutterfly-descriptor-v1",
+        "selection": {
+          "algorithm_policy": 0,
+          "execution_mode": 0,
+          "explicit_algorithm": ""
+        },
+        "semantics": {
+          "batch": 16,
+          "compute": 1,
+          "fft_output_scale": 1.0,
+          "fft_type": 0,
+          "input_batch_stride": 256,
+          "input_orders": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "input_strides": [
+            128,
+            64,
+            32,
+            16,
+            8,
+            4,
+            2,
+            1
+          ],
+          "inverse": 1,
+          "length_mode": 0,
+          "matrices": [
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            []
+          ],
+          "modulus": null,
+          "normalize_inverse": true,
+          "ntt_input_layout": 0,
+          "ntt_output_layout": 0,
+          "operator": 2,
+          "output_batch_stride": 256,
+          "output_orders": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "output_strides": [
+            128,
+            64,
+            32,
+            16,
+            8,
+            4,
+            2,
+            1
+          ],
+          "placement": 0,
+          "schema": "cubutterfly-semantic-v1",
+          "shape": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "storage": 2,
+          "word_bits": null
+        }
+      },
+      "historical_source": "results/full_current_20261025/measurement/rows/db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be.json",
+      "historical_source_sha256": "b1e511e9edb573d6a582de17750cff920ba5ac02512a8f8755b47639eaa0f84c",
+      "historical_row_sha256": "f4c7608ab23462746be6544b3dafc1b3f451debbaeda44e7118cb5dd9e540b0e",
+      "historical_adapter_operations": [
+        "backend_output_allocation",
+        "native_fp32_fwht_and_fused_output_scale",
+        "copy_backend_result_to_supplied_output"
+      ]
+    }
+  ]
+}

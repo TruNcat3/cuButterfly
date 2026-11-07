@@ -1,5 +1,18 @@
 # Frozen Paper Evidence
 
+## November 7 resource and interface follow-up
+
+The [bounded follow-up report](../../docs/a100_evidence_followup_20261107.md)
+records the ten-request FWHT return-interface comparison and the fixed-leaf
+FWHT/NTT endpoint study. The [resource-chain audit](RESOURCE_DECISIONS_20261107.md)
+distinguishes retrospective independent-service prediction checks from
+prospective measured selection. Frozen, portable inputs live in
+`../generated/fwht_return_contract_20261107.json`,
+`../generated/nonfft_endpoint_control_20261107.json`, and
+`../generated/resource_decisions_20261107.json`.
+The native-return FWHT loss and unchanged NTT endpoints remain in the evidence;
+the study adds no PRO6000 result or NTT numerical service prediction.
+
 ## Current manuscript evidence — 2026-10-25
 
 [The frozen October 25 diagnostic](factor_organization_20261025.json)
