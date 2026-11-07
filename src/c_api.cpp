@@ -2367,7 +2367,8 @@ std::unique_ptr<cubutterflyPlan> select_xd_plan(cubutterflyHandle_t handle,
             flat.execution_mode = CUBUTTERFLY_EXECUTION_COMPOSITE;
             flat.input_strides = flat.output_strides = {1};
             flat.input_batch_stride = flat.output_batch_stride = flat.extents[0];
-            flat.algorithm_policy = CUBUTTERFLY_ALGORITHM_DEFAULT;
+            flat.algorithm_policy = d.algorithm_policy == CUBUTTERFLY_ALGORITHM_MEASURE
+                ? CUBUTTERFLY_ALGORITHM_MEASURE : CUBUTTERFLY_ALGORITHM_DEFAULT;
             flat.explicit_algorithm.clear();
             if (d.op == CUBUTTERFLY_OPERATOR_STRUCTURED_2X2) {
                 flat.stage_matrices[0].clear();

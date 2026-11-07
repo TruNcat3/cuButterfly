@@ -108,6 +108,20 @@ rank-N layout boundary. The selector compares complete executable candidates
 when the device-memory budget permits it. It is a finite candidate search, not
 an exhaustive xD-space calibration or a global-optimality claim.
 
+For exact tensor-product flattening (FWHT, subset/superset zeta, and structured
+2x2), a parent `MEASURE` request also tunes the rank-one child through the same
+handle and cache. `DEFAULT` retains ordinary child selection, while explicit
+replay takes precedence and preserves the supplied physical mapping. Child
+tuning and complete xD selection remain separate steps; timings from different
+output-lifetime or launch protocols are not interchangeable.
+
+The generated FP32 register FWHT provider specializes aligned unit-stride
+accesses at launch without changing its arithmetic or public mapping. Pointer
+alignment and batch distances select this lowering; strided, unaligned, and
+zero-extended inputs retain their general paths. This is an implementation
+choice under the existing semantic contract, not a shape-specific winner table.
+The [A100 layout follow-up](fwht_native_repair_20261107.md) records its measured scope.
+
 The rank-two composite path consumes a packed, standard-length input directly
 in its first axis, without an initial full-array copy. The first butterfly axis
 is out-of-place internally, including when the public request is in-place; the

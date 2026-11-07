@@ -92,19 +92,26 @@ layout adaptation gives 1.290$\times$ across four FP32 pairs and
 the baseline's required conversions; their aggregate gains are not solely
 arithmetic-core gains. Two independent rank-4/8 axis-composition replays retain
 1.925$\times$ and 2.748$\times$ against cuFFT compositions.
-All ten historical DaoFHT pairs include copying its returned tensor to a
-supplied buffer; their 1.474$\times$ aggregate concerns that adapted interface.
-An independent follow-up repeats the same ten requests and CPU references
-on the newer build, measuring both interfaces in three processes.
-With a supplied buffer, process GMs are 1.236--1.242$\times$, with ten wins
-per process. With independently owned return values and no Dao copy, they
-are 0.936--0.938$\times$, with one win per process: Dao is faster on average.
-Both backends retain twenty distinct outputs in the return-interface Graph;
-the supplied-buffer Graph reuses one. Thus each comparison matches output
-lifetime, but differences between interfaces also reflect working-set changes.
-These results neither isolate copy cost nor replace the historical cohort.
-All outputs remain finite, with full errors recorded against the same FP32
-CPU reference and no new acceptance threshold.
+All ten historical DaoFHT pairs copy its returned tensor to a supplied
+buffer; their 1.474$\times$ aggregate concerns that interface.
+A separate ten-request study measures both supplied buffers and native return
+values. Each native-return Graph retains twenty independent outputs on both
+backends, whereas each supplied-buffer Graph reuses one caller buffer.
+Comparisons therefore match output lifetime within each interface; differences
+between interfaces also reflect working-set changes.
+
+Specializing aligned contiguous accesses while retaining the arithmetic,
+threads, and selected mappings improves both interfaces.
+Across three matched processes, native-return GMs rise from
+0.941--0.955$\times$ to 1.013--1.031$\times$, and supplied-output GMs
+from 1.226--1.229$\times$ to 1.320--1.330$\times$.
+These are explicit replays of existing mappings on each build, not new
+search winners. All sixty paired old/new outputs are byte-identical.
+CPU FP32 checks and separate historical FP64-reference diagnostics retain
+full errors without a new threshold.
+A separate public-default run reproduces all ten mappings, yielding
+1.009$\times$/1.324$\times$ for native/supplied outputs. Plan preparation
+totals 43.2 minutes across these requests, excluded from steady-state timing.
 FP64 FWHT, zeta, and structured
 butterflies lack matched GPU baselines. The separate 34-request CPU study
 uses two processes on a shared host and a different timing boundary.

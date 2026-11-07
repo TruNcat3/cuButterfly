@@ -161,7 +161,19 @@ __device__ __forceinline__ void exchange_warps(float (&values)[Traits::kChunks][
     }
 }
 
-template <std::uint32_t LogN, bool ExactShape = false, std::uint32_t Threads = register_fwht_threads(LogN)>
+// Check the complete address, not only the transform-relative element offset.
+__host__ __device__ inline bool register_fwht_vector_aligned(const float* pointer, std::uint64_t element_offset = 0) {
+    return ((reinterpret_cast<std::uintptr_t>(pointer) + element_offset * sizeof(float)) & 15U) == 0;
+}
+
+inline bool register_fwht_packed_layout(const float* input, const float* output,
+                                        std::uint64_t batch_distance, std::uint64_t element_stride) {
+    return element_stride == 1 && (batch_distance & 3U) == 0 &&
+           register_fwht_vector_aligned(input) && register_fwht_vector_aligned(output);
+}
+
+template <std::uint32_t LogN, bool ExactShape = false, std::uint32_t Threads = register_fwht_threads(LogN),
+          bool PackedAligned = false>
 __global__ __launch_bounds__(RegisterFwhtTraits<LogN, Threads>::kThreads) void register_fwht_kernel(const float* input, float* output,
                                                                                            std::uint64_t transforms,
                                                                                            std::uint64_t input_batch_distance,
@@ -169,6 +181,7 @@ __global__ __launch_bounds__(RegisterFwhtTraits<LogN, Threads>::kThreads) void r
                                                                                            std::uint64_t input_element_stride,
                                                                                            std::uint64_t output_element_stride,
                                                                                            std::uint32_t logical_points, float scale) {
+    static_assert(!PackedAligned || ExactShape, "packed lowering requires exact shape");
     using Traits = RegisterFwhtTraits<LogN, Threads>;
     extern __shared__ __align__(16) unsigned char storage[];
     float4*                                       shared    = reinterpret_cast<float4*>(storage);
@@ -183,8 +196,10 @@ __global__ __launch_bounds__(RegisterFwhtTraits<LogN, Threads>::kThreads) void r
     for (std::uint32_t chunk = 0; chunk < Traits::kChunks; ++chunk) {
         const std::uint32_t vector_index = chunk * Traits::kThreads + threadIdx.x;
         const std::uint32_t vector_base = vector_index * 4;
-        if constexpr (ExactShape) {
-            if (input_element_stride == 1 && (input_base & 3U) == 0) {
+        if constexpr (PackedAligned) {
+            unpack_float4(reinterpret_cast<const float4*>(input + input_base)[vector_index], values[chunk]);
+        } else if constexpr (ExactShape) {
+            if (input_element_stride == 1 && register_fwht_vector_aligned(input, input_base)) {
                 unpack_float4(reinterpret_cast<const float4*>(input + input_base)[vector_index], values[chunk]);
             } else {
 #pragma unroll
@@ -193,7 +208,7 @@ __global__ __launch_bounds__(RegisterFwhtTraits<LogN, Threads>::kThreads) void r
                     values[chunk][item] = input[input_base + static_cast<std::uint64_t>(index) * input_element_stride];
                 }
             }
-        } else if (input_element_stride == 1 && (input_base & 3U) == 0 &&
+        } else if (input_element_stride == 1 && register_fwht_vector_aligned(input, input_base) &&
                    vector_base + 3 < logical_points) {
             unpack_float4(reinterpret_cast<const float4*>(input + input_base)[vector_index], values[chunk]);
         } else {
@@ -237,8 +252,8 @@ __global__ __launch_bounds__(RegisterFwhtTraits<LogN, Threads>::kThreads) void r
 #pragma unroll
     for (std::uint32_t chunk = 0; chunk < Traits::kChunks; ++chunk) {
         const std::uint32_t vector_index = chunk * Traits::kThreads + threadIdx.x;
-        const std::uint64_t effective_output_stride = ExactShape ? input_element_stride : output_element_stride;
-        if (effective_output_stride == 1 && (output_base & 3U) == 0) {
+        const std::uint64_t effective_output_stride = PackedAligned ? 1 : ExactShape ? input_element_stride : output_element_stride;
+        if (PackedAligned || (effective_output_stride == 1 && register_fwht_vector_aligned(output, output_base))) {
             float4 result = pack_float4(values[chunk]);
             result.x *= scale;
             result.y *= scale;
@@ -260,9 +275,15 @@ void launch_register_fwht(const float* input, float* output, std::uint64_t trans
                           bool normalize, cudaStream_t stream) {
     using Traits      = RegisterFwhtTraits<LogN, Threads>;
     const float scale = normalize ? 1.0F / static_cast<float>(Traits::kN) : 1.0F;
-    register_fwht_kernel<LogN, true, Threads><<<static_cast<unsigned int>(transforms), Traits::kThreads, Traits::kSharedBytes, stream>>>(
-        input, output, transforms, batch_distance, batch_distance, element_stride,
-        element_stride, Traits::kN, scale);
+    if (register_fwht_packed_layout(input, output, batch_distance, element_stride)) {
+        register_fwht_kernel<LogN, true, Threads, true><<<static_cast<unsigned int>(transforms), Traits::kThreads, Traits::kSharedBytes, stream>>>(
+            input, output, transforms, batch_distance, batch_distance, element_stride,
+            element_stride, Traits::kN, scale);
+    } else {
+        register_fwht_kernel<LogN, true, Threads><<<static_cast<unsigned int>(transforms), Traits::kThreads, Traits::kSharedBytes, stream>>>(
+            input, output, transforms, batch_distance, batch_distance, element_stride,
+            element_stride, Traits::kN, scale);
+    }
 }
 
 template <std::uint32_t LogN, std::uint32_t Threads = register_fwht_threads(LogN)>

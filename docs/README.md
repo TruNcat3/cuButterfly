@@ -1,5 +1,9 @@
 # Documentation Index
 
+The [FWHT layout repair](fwht_native_repair_20261107.md) records the subsequent
+same-mapping improvement, both return contracts, matched NCU counters, and the
+correction from a mislabeled FP32 reference to separately reported FP32/FP64 references.
+
 The [A100 paper-evidence follow-up](a100_evidence_followup_20261107.md)
 completes the FWHT return-interface comparison, fixed-leaf FWHT/NTT endpoint
 controls, and resource-to-selection evidence audit. It reports the native-return
