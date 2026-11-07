@@ -1,25 +1,35 @@
 \begin{table}[t]
 \centering
-\caption{Methodological comparison. Short entries expose the dimensions that
-matter for butterfly execution; the text gives the detailed positioning.
-Entries describe the organizing abstraction, not an exhaustive list of
-everything a system can represent.}
+\caption{Transform systems expose different execution and placement choices.}
 \label{tab:related-work}
-\scriptsize
-\setlength{\tabcolsep}{3pt}
+\footnotesize
+\setlength{\tabcolsep}{2pt}
 \renewcommand{\arraystretch}{1.08}
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{.20\columnwidth}>{\raggedright\arraybackslash}p{.16\columnwidth}>{\raggedright\arraybackslash}p{.18\columnwidth}>{\raggedright\arraybackslash}p{.16\columnwidth}>{\raggedright\arraybackslash}p{.15\columnwidth}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{.17\columnwidth}>{\raggedright\arraybackslash}p{.11\columnwidth}>{\raggedright\arraybackslash}p{.14\columnwidth}>{\raggedright\arraybackslash}p{.14\columnwidth}>{\raggedright\arraybackslash}p{.14\columnwidth}>{\raggedright\arraybackslash}p{.17\columnwidth}@{}}
 \toprule
-Approach & Object & Parallel organization & Core form & Order / search \\
+System & Ops. & Work unit & Stage split & Data split & Placement \\
 \midrule
-SPIRAL / FFTX~\cite{spiral2005,fftx2018} & transform formulas & generated stages & codelets & algebraic search \\
-GPU transform libraries~\cite{vkfft2023,vkfft,gpuntt2023,hadacore2024} & FFT, NTT, Hadamard & kernel or tile schedule & specialized kernels & order-specific; hardware tuned \\
-FlashFFTConv~\allowbreak\cite{flashfftconv2024} & long convolutions & fused decomposition & tensor cores & layout-aware search \\
-Ansor / ROLLER~\cite{ansor2020,roller2022} & tensor schedules & hierarchical tiles & tensor programs & hardware-guided search \\
-TensorIR~\cite{tensorir2023} & tensor blocks & block-local plus outer schedule & tensorized intrinsics & explicit layouts \\
-Welder~\cite{welder2023} & producer--consumer tiles & tile graph & surrounding kernels & shape / traffic search \\
-Timeloop / Eyeriss~\cite{timeloop2019,eyeriss2016} & accelerator mappings & spatial / temporal tiling & architecture-specific & mapping search \\
-\system{} & labeled radix-two stages & closed subgraphs plus streaming handoffs & compatible local cores & order-aware; bounded search \\
+FFTW~\cite{fftw2005} & FFT, DCT/\allowbreak DST & codelets & recursive plans & vector loops & buffered copies \\
+\addlinespace[2pt]
+SPIRAL / FFTX~\cite{spiral2005,fftx2018} & FFT apps. & formulas / plans & algebraic rewrite & NR & generated glue \\
+\addlinespace[2pt]
+VkFFT~\cite{vkfft2023,vkfft} & FFT, DCT & GPU kernels & Four-Step & grouped FFTs & reshuffled layout \\
+\addlinespace[2pt]
+GPU-NTT~\cite{gpuntt2023,gpuntt2025} & NTT & CUDA kernels & Merge / Four-Step & NR & global-memory exchange \\
+\addlinespace[2pt]
+Flash\allowbreak FFTConv~\cite{flashfftconv2024} & FFT conv. & CUDA kernels & matrix factors & batch / hidden & retain / materialize \\
+\addlinespace[2pt]
+HadaCore \cite{hadacore2024} & FWHT & CTA vectors & 16-point groups & warp chunks & SMEM transpose \\
+\midrule
+\textsc{cu\allowbreak Butterfly} & FFT, NTT, FWHT & tile subgraphs & bit bands & tile groups & successor-aligned stores \\
 \bottomrule
 \end{tabular}
+\par\smallskip
+\begin{minipage}{\columnwidth}
+\footnotesize
+Representative mechanisms. Apps./conv.: applications/convolution;
+CTA: threadblock; SMEM: shared memory.
+NR: the partition is unresolved in this comparison, not unsupported.
+Matrix factors and 16-point groups describe local transforms.
+\end{minipage}
 \end{table}

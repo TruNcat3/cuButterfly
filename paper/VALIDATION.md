@@ -1,5 +1,573 @@
 # Working-draft validation
 
+## Public FP16 cohort update — 2026-11-06
+
+The operator plot and table now show nine completed public DEFAULT FP16
+requests separately from main66 and cyclic90. The paired geometric mean is
+0.853583, with a range of 0.733471–1.066737 and one nominal win. MEASURE and
+installed DEFAULT are separate evidence; no minimum across policies enters
+the comparison. Further BF16 automatic comparisons are deferred by the user's scope decision. The loader verifies
+parent completion, current-build calibration/installation receipts, all request
+and output hashes, matched inputs and complete-call timing. Its eight CPU tests
+pass, including refusal of incomplete evidence and selection among policies.
+
+Both PDF variants compile to 14 pages. Updated operator comparisons on page 9
+and analysis on pages 12–13 were rendered for visual review. No undefined
+references/citations, missing characters or overfull boxes occur; existing
+underfull-box and PDF-version advisories remain. Main66, cyclic NTT and
+application headline denominators are unchanged. See the
+[cohort evidence](evidence/FP16_PUBLIC_ACCEPTANCE_20261105.md).
+
+## Unified precision comparison refinement — 2026-11-04
+
+The standalone FFT-L mechanism float has been removed. FP16/BF16 now occupy
+precision columns in the shared operator plot and rows in the comparison table.
+Only the valid FP16 N8192 B32 public-winner replay is admitted (0.711864x against
+cuFFT); further BF16 experiments are deferred; cuFFT Xt supports BF16 storage. The
+22 fixed two-band controls remain separate evidence and do not enter these
+figures, tables, or original headline macros. Single observations are points.
+Boundary counters and the single-band endpoint remain in the common analysis.
+
+The offline loader checks frozen CSV hashes, paired semantics, hardware,
+prepared-input identity and timing medians. Changed CSV or preparation identity
+is rejected. Counts, missing cells, figure hashes and unchanged headline macros
+were checked. Both PDF variants compile to 15 pages, with no undefined
+references/citations, missing characters or overfull boxes. The revised operator
+figure and table on pages 9 and 10 were rendered and inspected without clipping
+or overlap. This change runs no GPU experiments or implicit measurement refresh.
+The earlier standalone figure and its renderer remain archived, outside the
+manuscript. Precision/variant placement is recorded in the research principles.
+
+## FFT-L evidence and argument update — 2026-11-04
+
+The new `generated/fft_l_20261104/` export checks all 111 scale summary rows
+against their raw result JSONs and all 78 boundary rows against recorded hashes
+and medians. It retains 24 old single-band lowering gaps, the two excluded
+stream-timing probes, all negative controls, and the full build/semantic identity.
+No new benchmark ran during this writing update. The newest repair build's 212
+clean stage samples remain incomplete calibration, not new comparison evidence.
+
+The manuscript adds a compact two-panel figure from all six confirmed N4096
+boundary cases and a separate matched A100 40GB NCU capture. Ordinary speedups
+and store sectors/request use different panels and platforms; no mixed-unit
+counter aggregation or profiler timing ratio is used. The renderer and frozen
+inputs have a hash manifest. Existing main66 and cyclic statistics are unchanged.
+Public-selection weak FFT/FWHT points and the low-precision cuFFT gap are explicit.
+
+The introduction now distinguishes ideal intensity from actual resource ceilings.
+The method separates dependency-derived demands, compiled resources, and measured
+services; it includes the single-band endpoint and no longer says dependency
+intersections alone determine conflict-free physical layouts. CLAIMS is synchronized
+with the current cohorts while retaining historical identities. Application history
+and duplicated motivation prose are compressed without removing negative evidence.
+
+Both manuscript entries compile to **15 Letter pages including references**, the
+same page count as the PDF present before this update. Bibliographies are nonempty;
+there are no undefined citations/references, missing characters, or overfull boxes.
+Existing underfull-box advisories remain. Pages 1, 10, 12, and 13 were rendered and
+visually inspected, including the new single-column figure and weak-point discussion.
+Labels, captions, and text are legible without clipping or overlap. This is a working
+draft review, not certification against a current venue's submission rules.
+
+## Comprehensive result refresh — 2026-11-02
+
+The exporter now joins the completed cyclic NTT recovery with its baseline-only
+supplement. It verifies report and row hashes, manifest identities, descriptors,
+actual mappings, root-helper identity and timing contracts before accepting a
+replacement. Only a missing external binding can be replaced. The 90 requests,
+54 measured pairs and 36 arithmetic-domain exclusions remain a separate cohort;
+the main 66-request study and its historical replays retain their denominators.
+All 20 targeted evidence-export tests pass, including changed source identities,
+invalid replacements, duplicate rows and stale timing guards.
+
+Table II adds word32/word64 cyclic rows with geometric means 1.400x/1.265x.
+The abstract and introduction use the generated combined cyclic value 1.308x,
+with scope stated. Main FFT/FWHT and application figures were regenerated from
+the verified frozen snapshot. The three cyclic losses remain in the text, and
+the 138 default finite-field contracts are identified as execution coverage.
+The historical QuaRot 1.8% loss is explicitly an eager diagnostic; failed Graph
+validation produces no Graph performance claim. No benchmark or numerical
+acceptance policy was changed in this manuscript update.
+
+Both PDF variants build to 14 Letter pages. Pages 9, 10 and 12 were visually
+inspected for the updated table, application figure, NTT discussion and profile
+text; no clipping or overlapping labels were observed. The logs contain no
+undefined citations/references, missing characters or overfull boxes. Existing
+underfull-box and input-PDF version advisories remain. Source paths, statuses,
+negative results and remaining gaps are summarized in
+`evidence/CURRENT_EVIDENCE_20261102.md`.
+
+## Contribution boundaries and terminology — 2026-10-29
+
+The manuscript now separates the dependency/resource characterization, the
+hierarchical hybrid dataflow organization policy, its tile-subgraph lowering,
+and the engineering search used to instantiate a plan. Search is explicitly
+not presented as a contribution. External library/application comparisons and
+controlled organization experiments use separate subsection names and evidence
+populations.
+
+The CKKS native-loop application comparison and the matched stage-batch
+integration control are now separated in presentation. The external application
+figure contains 46 ratios; the other 36 matched-batch ratios remain in the
+unchanged snapshot and are summarized in the controlled-experiment table.
+The table distinguishes the external Loop reference from the Batch and
+Faster-native integration controls. This is a change of evidence organization,
+not a new measurement, a numerical exclusion, or a claim of fixed-core causality.
+Negative application and mechanism results remain in the text.
+
+The canonical vocabulary is maintained in `TERMINOLOGY.md`. In the manuscript,
+a dependency-closed region is the logical unit derived from a stage band; a tile
+subgraph is its executable lowering; a resident tile subgraph retains its
+values at a storage scope; and a handoff includes producer/consumer readiness
+and representation. This revision removes avoidable alternation between
+component, resident region, and resident group in the prose without changing
+the mathematical labels or measured controls.
+
+Related Work now compares the algebraic-generation interface of SPIRAL/FFTX
+and the workload/architecture mapping interface of Timeloop with the
+butterfly-specific region, intersection, and resource-demand construction.
+It does not claim that arithmetic/organization separation itself is new or
+that prior systems cannot represent equivalent programs. Existing BibTeX keys
+and the primary-source audit are retained.
+
+Both PDF variants build to 14 pages. The latest logs contain no undefined
+citations/references, missing characters, duplicate labels, or overfull boxes.
+The revised application figure and pages 10 and 12 were visually inspected at
+manuscript scale; the grouped CKKS table fits the column. Underfull boxes and
+input-PDF version advisories remain. The figure manifest records the 46/36
+presentation split and preserves the source-snapshot checksum.
+All seven `tests/test_paper_current_refresh.py` checks pass.
+
+## Discovery path and decision-chain revision — 2026-10-29
+
+The introduction now states the historical discovery path explicitly: related
+butterfly dependencies were optimized separately by domain; arithmetic-core
+strength did not explain the observed changes across workloads and targets; a
+Roofline/intensity check showed different rates at equal ideal intensity; and
+the remaining variable was execution organization. This is a clarification of
+the research argument, not a new contribution or measurement claim.
+
+The motivation now connects that observation to the method and states that
+mechanisms are choices, not universally beneficial features. A running 16-point
+example in the method makes the decision chain explicit: dependency closure
+defines legal regions, capacity removes infeasible mappings, service and ready
+work select among feasible organizations, and producer/consumer intersections
+bind the handoff layout. The arithmetic, workload, and target change the
+inputs, while the construction remains shared.
+
+Both PDF variants rebuild to 14 Letter pages. The changes introduce no new
+experimental values and do not alter the frozen evaluation populations.
+
+## Front-matter pacing and related-work matrix — 2026-10-29
+
+This revision supersedes the figure placement described in the entries below.
+Related Work is now a separate section after Evaluation and before Conclusion.
+Background and Motivation proceeds directly from butterfly dependencies to the
+resource/organization trade-off. Repeated explanations in the introduction and
+motivation were condensed while retaining every measured example, the analytical
+hardware/capacity cases, and their different evidence boundaries.
+
+The compiled placement is now Figure 1 (Roofline) on page 1, Figure 2
+(same-workload organization) on page 2, the method opening on page 3, and
+Figures 3–4 (overview and worked boundary example) on page 4. The first-column
+top-float suppression keeps the abstract first and places Figure 1 in the right
+column. The complete-library plot now appears on page 9 with its discussion.
+No font or margin reduction was used to achieve these placements.
+
+The old related-work Table I is now Table IV on page 12. Its matrix separates
+operators, scheduling unit, stage decomposition, independent-work partition,
+and boundary placement/exchange. Entries are short mechanism names rather
+than prose. Its font increased from scriptsize to footnotesize. NR denotes an
+unresolved partition in this comparison, not an unsupported feature. The
+source audit is maintained in `evidence/RELATED_WORK_DIMENSIONS_20261029.md`.
+
+Both variants compile to 14 Letter pages including references. Final logs have
+no undefined citations/references, missing characters, duplicate labels, or
+overfull boxes. Underfull-box and input-PDF version advisories remain. Pages
+were rasterized; the opening pages and final method, evaluation, related-work,
+and conclusion placements were inspected. The numerical snapshot and all
+figure measurements remain unchanged. This revision needed no GPU runs or
+repeat numerical tests.
+
+## Figure order, compact plots, and explicit mapping — 2026-10-29
+
+The figure order now follows the argument: Figure 1 presents the Roofline gap,
+Figure 2 compares organizations of one workload, and Figure 3 introduces the
+common construction at the opening of the method. The overview is no longer
+an introductory float. The remaining figures retain their numbers. Figure 5
+now isolates a concrete eight-index bit-reversal correspondence; Figure 6's
+canvas height drops from 366 to 274. Figure 7 adds a concrete producer/consumer
+example and selected-plan bindings at the existing size.
+
+Figure 9 is a single-column partitioned plot with a common ratio axis and all
+82 previously plotted application pairs. Figure 12 is a single-column 2×3
+grouped-bar plot retaining 54 configurations and all 162 timings. These edits
+change presentation, not the frozen experimental population. Missing baselines,
+provisional filters, numerical-policy limits, and negative application results
+remain explicit. Captions are grammatical sentences; statistical details move
+to the surrounding discussion.
+
+Table I now compares actual operator families, scheduled units, and stage/data
+organization, with primary-source evidence in
+`evidence/RELATED_WORK_DIMENSIONS_20261029.md`. It does not equate kernels with
+simple data parallelism or imply that kernel and subgraph abstractions exclude
+each other.
+
+Algorithm 1 gives the APPT bank/offset rule and its precise assumptions.
+The CPU checker passed 381 parameter cases and 1,527,934 logical values,
+including aligned contiguous and cross-stride groups. The report
+`evidence/BOUNDARY_MAPPING_CHECK_20261029.md` distinguishes bank-major storage
+from GPU interleaved bank addressing; these checks do not prove arbitrary
+vector accesses conflict-free.
+
+Both PDF variants build to 14 Letter pages. The final logs contain no undefined
+references/citations, missing characters, duplicate labels, or overfull boxes.
+The remaining advisories are underfull boxes and input-PDF version messages.
+All pages were rasterized; pages 3, 4, 6–12 were visually inspected for table
+widths, figure order, labels, algorithm placement, and single-column readability.
+The seven current-refresh regression tests pass. No GPU measurements, queue
+changes, or refresh of the live experimental snapshot occurred.
+
+## Figure and boundary-layout revision — 2026-10-29
+
+The method now states the missing implementation difficulty at a stage boundary:
+successor-aligned writeback preserves value identity, while producer and
+consumer access groups can still serialize on limited storage banks. The paper
+uses **bank conflict** for the phenomenon and **swizzle** for an address
+remapping that can avoid it. The illustrative XOR map is scoped to its stated
+single-word access pattern; outer-storage layouts are evaluated by alignment,
+transaction count, and coalescing. No universal conflict-free map or automatic
+fallback is claimed.
+
+The overview, semantic-transport, and system-architecture schematics were
+redrawn on 1000 × 300, 480 × 274, and 1000 × 330 canvases. The architecture
+example now shows two producer groups writing four successor pairs. The operator
+box plot uses compact labels to remain legible at single-column height, and the
+fixed-core figure is 3.45 × 1.85 inches. Both PDF builds remain 14 pages; the
+latest build has no undefined references, missing characters, or overfull boxes.
+Remaining underfull boxes and input-PDF-version advisories are layout warnings
+already documented below.
+
+## Parallel organization argument and core attribution — 2026-10-29
+
+The motivation now concerns the gap between a resource roof and realized
+execution, including its dependence on workload and target hardware. It no
+longer identifies insufficient independent work as the general cause. Three
+explicit analytical limiting cases distinguish batch scaling, cross-target
+roof efficiency, and capacity refinement. A component-size/traffic example
+connects the dependency construction to a concrete organization decision.
+
+The existing two-core × two-organization FFT control leads the ablation section.
+Its independently recomputed organization geometric means are 1.217015944 and
+1.220723259. Stronger organization references test the size of residual gains,
+not whether the fixed-core attribution already exists. All previously described
+negative controls remain. Development milestones and pending collection details
+move to `evidence/ORGANIZATION_ARGUMENT_20261028.md`; numerical policy and
+measured-population limitations remain visible in the manuscript.
+
+The editable Roofline is now 480 × 252 and contains seven measured A100 40GB M1
+organization points at their derived ideal boundary intensity. The three FFT,
+two FWHT, and two NTT points use medians from the frozen scaling CSV; trial
+ranges and source provenance are retained in
+`generated/roofline_cases_20261029.csv`. The blue roof remains symbolic and is
+not fitted to the observations or presented as a hardware peak. Source, bundle,
+and exported PDF/SVG/PNG hashes match the draw.io manifest. Existing tooling
+attribution stays in the figure documentation, outside the paper's research
+evidence.
+
+The new FWHT scaling and NTT grouping examples were recomputed from the unchanged
+M1 CSV. Their exact times, trial ranges, derived throughput, and evidence limits
+are recorded in the revision evidence file. The analytical 16-/32-point component
+and transfer counts were checked separately. No GPU execution, new performance
+samples, threshold changes, or queue changes were performed.
+
+Both PDF builds pass and remain **14 Letter pages** including references.
+Reader copies equal their build outputs. Final logs contain no undefined
+references/citations, missing characters, duplicate labels, or overfull boxes.
+Existing underfull-box and input-PDF-version advisories remain. All main pages
+were rendered; pages 1, 4, 6, and 11–13 were visually inspected for the argument,
+Roofline, analytical example, reorganized ablations, scaling evidence, and
+conclusion. No clipping or overlapping labels were found. New evidence links
+resolve, and the manuscript contains no obsolete work-supply-limit label or
+unresolved-reference marker. No submission-readiness claim is made.
+
+## Current measured tables and figures — 2026-10-28
+
+The current main comparison now reads the 66-request A100 80GB campaign,
+not the earlier 36-request screen. Its snapshot preserves all twelve actual
+operator/precision groups, 49 measured external pairs, missing comparisons,
+actual mappings, build/device identities and 91 source-file hashes. NTT5 and
+grouped-FFT2 remeasurements remain separate. The application snapshot contains
+82 pairs: 72 CKKS control pairs for 36 requests, six Poisson pairs, two
+provisional filters, and two bootstrap pairs. Neither tuning populations nor
+selection/sample CSVs increase the workload count.
+
+Three vector figures and two LaTeX tables are included by the manuscript:
+the unified latency boxes, application ratios, same-core organization control,
+matched operator summary and CKKS batch summary. PRO 6000 is explicitly
+unmeasured. Missing external libraries never become wins; floating results
+retain error-report-only status. CKKS includes both native controls and their
+per-request faster alternative. Historical FNO, QuaRot, and recomputed-filter
+losses remain described separately. No experimental result, GPU queue or
+accuracy threshold was changed.
+
+The exporter passes seven focused CPU tests, including failed-timing exclusion,
+metadata/exactness gates, paired-ratio aggregation and cohort separation.
+Snapshot and all nine figure output hashes were checked. Explicit
+`make refresh-data` freezes live inputs before rendering; ordinary PDF builds
+consume that snapshot. Generated operator and CKKS headline numbers also feed
+the prose. Full-cohort additions still require a scope and prose review.
+
+Both `make all evidence` builds pass and remain **14 Letter pages**, including
+references. Reader copies match build outputs. Final logs have no unresolved
+references/citations, missing glyphs, duplicate labels or overfull boxes.
+Underfull-box and existing input-PDF-version advisories remain. Main pages
+1 and 9–12 and evidence pages 10–11 were rendered and inspected at manuscript
+scale. The twelve-group boxplot, both single-column tables, application panel
+labels and the single-column ablation remain legible without clipping.
+The three application panels explicitly label differing y limits; mechanism
+whiskers are observed three-trial ranges, not confidence intervals.
+
+Sources, regeneration commands and unresolved evidence are documented in
+`generated/current_refresh/README.md` and `figures/README.md`.
+
+## Hardware constraints, search scope and A100-first order — 2026-10-27, evening
+
+The introduction and motivation now state explicitly that efficient cores remain
+constrained by hardware memory access, caches, capacity and concurrency. The
+contribution connects common dependencies and space--time organization to those
+resource demands. Search is an implementation mechanism: the text distinguishes
+static/registry planning, model-based installation, explicit neighborhood tuning,
+and complete-plan xD selection. A ranking-policy competition is no longer required
+evidence. Historical replay data remain archived; matched tuning, actual mappings,
+independent confirmation and preparation costs remain relevant to organization
+ablations. Experiment plans require completion of the defined finite A100 list
+before PRO6000 migration, with internal intervention losses distinguished from
+external library comparisons.
+
+Both `make all evidence` targets pass and remain 14 pages including references.
+Reader copies match their respective build outputs. Final logs have no undefined
+references/citations, overfull boxes, missing characters or duplicate labels.
+Extracted main text has no unresolved markers or V100 mentions. Existing underfull
+box and input-PDF-version advisories remain. Pages 1, 4, 8 and 11 were rendered and
+checked for the revised introduction, motivation, selection and evaluation text;
+figures, captions and paragraphs are legible without clipping. No numerical result
+or figure value was changed by this revision.
+
+## Single-column Roofline without the duplicate ratio panel — 2026-10-27
+
+Figure 3 is now a compact, single-column 480 × 184 schematic on page 4.
+The former second panel tested whether local organization changes performance
+under fixed scalar arithmetic and HBM stage boundaries. It did not directly
+identify insufficient parallel work as the cause of that change and duplicated
+the complete local-organization experiment. It is therefore retained as an
+audit asset rather than included beside the symbolic roof.
+
+The motivation retains the cross-arithmetic observation and points to the
+full Figure 12 in the evaluation. All 18 requests, 54 configurations, and
+162 timing rows remain there, including deeper-grouping regressions. The
+derived-ratio CSV is unchanged (SHA-256
+`55f90d495c54968a0df940e526e6d32c5ae2cc42e32c9df8c6c99854fb12b66e`).
+No raw measurements or experiment processes were changed.
+
+Both `make all evidence` targets pass and remain 14 pages including references.
+Reader copies match their build outputs. Logs contain no undefined references
+or citations, overfull boxes, missing characters, or duplicate labels; existing
+underfull-box and PDF-version advisories remain. The final figure page in both
+PDFs and the following method page were rendered and visually checked. Labels
+and the shortened caption remain legible without clipping at column width.
+The earlier two-panel validation below records the superseded layout.
+
+## Roofline motivation and A100/PRO 6000 scope — 2026-10-27
+
+Figure 3 now contrasts a symbolic bandwidth/core roof with an illustrative,
+mapping-dependent work-supply limit. It identifies the unattained resource
+opportunity and explains why batch can change available work at unchanged
+ideal intensity. Neither the roof nor the dashed limit is a measured or
+calibrated bound. The adjacent measured panel now covers FFT/FWHT FP64 and
+word64 NTT on A100 40GB, replacing the earlier single-operator panel.
+
+`tools/render_motivation_organization.py` validates the complete M1 collection
+and all 18 original release hashes. All 162 trial values and 36 derived
+stagewise/grouped ratios are retained in CSV/JSON. The six boxes contain six
+workloads each, with quartiles and min/max describing workload spread rather
+than trial uncertainty. Ratios use separate three-process medians; geometry
+and jitter do not change their values. The six geometric means reproduce
+the existing result report, including deeper-grouping losses. The original
+scaling figure still shows ordinary timing ranges. A10040 is a diagnostic
+cohort, distinct from A10080 library comparisons.
+
+All V100 measurements and dependent claims were removed from the active
+manuscript, including the indirect introduction/search references and Volta
+bibliography entry. Active platform plans now name A10080 and the pending
+RTX PRO 6000 Blackwell Server Edition 96GB comparison; A10040 remains separate.
+Historical evidence, old generated figures, and dated validation records below
+remain archived and are not current paper inputs or future test requirements.
+No running experiment or raw measurement was changed.
+
+Both `make -C paper all evidence` targets pass and remain 14 Letter pages.
+Reader copies match build outputs. Recursive source references resolve;
+extracted PDF text contains no V100, Volta, or unresolved-reference marker.
+Final logs contain no undefined citations/references, overfull boxes, or
+missing characters. Existing underfull-box and included-PDF-version advisories
+remain, with PDF 1.7 output. The updated figure, surrounding motivation/method
+pages, and evaluation platform scope were rendered and inspected. Figure
+labels remain legible at their final half-page width, with no text clipping.
+Draw.io source/export/bundle hashes, all new measured-panel artifact hashes,
+and updated local Markdown links pass. Tool attribution remains in the figure
+maintenance documentation; no tooling reference is presented as research evidence.
+
+## Figure consolidation and prose compression — 2026-10-27
+
+The two reader PDFs decrease from 16 to **14 Letter pages**, including references.
+The manuscript has 12 figures instead of 14 and retains four evaluation
+subsections. Template type sizes and margins are unchanged. Evaluation text
+decreases from 3136 to 2519 words under `texcount -sum` (about 20%); shared
+protocols move to setup while cohort-specific differences remain explicit.
+This remains a working draft, not a claim of submission page-limit compliance.
+
+Figure 2 now abstracts repeated butterfly components into stage-band strips
+on a 480 × 328 single-column draw.io canvas. Its generator checks index
+coverage, closure, 32 pair updates in every organization, local component
+sizes/counts, and 128/64/32 analytical value transfers. These transfers are
+not relabeled as measured HBM transactions. The merged 480 × 436 hierarchy
+figure preserves row/column fan-in, capacity refinement, and an explicitly
+independent four-bank XOR example; it does not compose the two address maps.
+
+Two fixed-core cohorts share a 7 × 2.2 inch figure with separate panels and
+7–8 pt labels. Its renderer checks all 12 FP32 points and paired trial ratios
+against the original CSV and all nine FP64 cases and 63 timings against the
+frozen snapshot/CSV. Sources, point/sample tables, and hashes are recorded in
+`generated/core_organization_compact_metadata.json`. Negative outcomes and the
+complete-cuFFT comparator remain. The Poisson plot is redrawn at 3.5 × 1.75
+inches with 7–7.5 pt labels, keeping all 120 observations, quartiles, medians,
+and min/max whiskers. Its sample CSV, summary CSV, and generated table are
+byte-identical to their pre-layout versions. Both plots embed TrueType fonts.
+
+`make -C paper all evidence` passes and reader copies match build outputs.
+All active labels and citations resolve. Final logs have no overfull boxes,
+missing characters, or unresolved references; existing underfull-box and
+included-PDF-version advisories remain, with PDF 1.7 output. All manuscript
+pages were rendered and reviewed, with a final pass over the resized Poisson
+figure and subsequent evaluation pages. Figures, captions, and cross-references
+remain legible without clipping. Editable draw.io sources, exports, bundle,
+and provenance manifests are synchronized. No GPU task or measurement input
+was changed by this revision.
+
+## Hardware-constrained characterization and four-section evaluation — 2026-10-27
+
+The abstract, introduction, motivation, method, execution, search, and conclusion
+now connect dependency-derived space--time organization to resource demand and
+target constraints. The method distinguishes stage/data spatial expansion and
+temporal reuse, with a compact four-row demand table and an ideal fixed-compute
+budget example. Retained feedback need not cross HBM; resource characterization
+is distinct from measured service rates and timing prediction. Hardware adaptation
+is scoped to characterized resources, compatible cores, and executable lowerings.
+
+Evaluation has exactly four subsections: experimental setup, performance comparison,
+ablation studies, and analysis of generated kernels. Applications remain within
+performance comparison; component controls and core-by-organization crossings
+remain in ablations. Existing internal profiles are explicitly distinguished from
+the still-needed matched external-library profiles. The second platform is the
+user-confirmed RTX PRO 6000 Blackwell Server Edition 96GB, pending measurement.
+`EXPERIMENTS.md` and `experiments/hardware_characterization_closure_20261027.md`
+specify bounded missing evidence and distinguish migration pilots from the formal
+cross-platform comparison. No GPU experiment, running queue, or raw statistic was
+changed by this paper revision.
+
+`make -C paper all evidence` passes. Both reader copies match their build outputs
+and remain 16 Letter pages including references. Active-source labels resolve
+without duplicates; final logs contain no undefined references/citations, missing
+characters, or overfull boxes. Extracted text has no unresolved reference markers.
+Updated Markdown local links resolve. Existing underfull-box and included-PDF
+version advisories remain; output PDFs are version 1.7.
+
+Rendered pages were inspected for the revised introduction and related-work table,
+the resource-demand table and method continuation, setup, and all reordered
+evaluation pages. Operator comparison is on page 11, application figures on page
+12, core controls on page 13, scaling/prefetch controls on page 14, and kernel
+analysis on page 15. Labels and captions are legible with no clipping or overlap.
+No template font or margin reduction was used. The 16-page length remains an
+open submission-budget issue; this revision does not claim final page compliance.
+
+## Completed bounded M1--M3 evidence — 2026-10-27, afternoon
+
+The later revision adds the complete 54-cell M1 curve (162 independent process
+trials), nine matched NCU/NSYS cells, M2 source reuse and exceptions, and the
+16-cell M3 crossing (48 trials plus four matched NTT profiles). The source
+ledgers and numerical limits are in `evidence/NARRATIVE_SCALING_RESULTS_20261027.md`,
+`evidence/NARRATIVE_SCALING_PROFILE_20261027.md`,
+`evidence/ORGANIZATION_REUSE_AUDIT_20261027.md`, and
+`evidence/CORE_CROSSING_RESULTS_20261027.md`. These independent 40GB cohorts do
+not change the frozen operator or application populations.
+
+The M1 renderer validates every original release/hash before accepting the
+complete collection, retains all trial values, and emits CSV plus a provenance
+manifest. Six panels show point throughput versus batch with median/min/max
+from three processes. These are neither FLOP/s comparisons across arithmetic
+nor confidence intervals. Counter interpretations separate ordinary timing,
+single cold profiler captures, source ownership, active warps, and unmeasured
+shared transactions/spills. Negative M1/M3 outcomes remain in the text.
+
+`make -C paper all evidence` passes for both 16-page Letter PDFs. The added
+curve and revised discussion on pages 12--13 were rendered and visually
+checked at final inclusion size; labels, captions and trial ranges remain
+legible. No undefined reference/citation, missing character or overfull-box
+diagnostic appears. Existing underfull boxes and draw.io PDF-version warnings
+remain; the resulting PDFs are version 1.7. No font or margin reduction was
+used. The page count exceeds the earlier 15-page draft and remains a writing
+task, not a completed submission budget.
+
+Supporting CPU checks passed for nested mapping/NTT input validation (51),
+preparation (6), per-case queue/checkpoint handling (13), and compile-proxy
+dispatch plus related ranking/resource contracts (45). These checks are not
+full-repository or full-numerical acceptance. Full float distributions,
+parameter holdouts, matched adaptation costs and adaptive-selection evidence
+remain open. The original 66-request refresh was separately recovered and is
+still active; its future results are not claimed by this manuscript build.
+
+## Research narrative and historical motivation control — 2026-10-27
+
+The abstract, introduction, motivation, section transitions, evaluation framing,
+and conclusion now follow the agreed research question: whether shared butterfly
+dependencies support reusable performance organization despite different local
+arithmetic. The argument separates a Roofline resource opportunity from sustained
+parallel work, motivates a common construction using fixed-core observations,
+and distinguishes competitiveness from organization attribution and transfer.
+It does not claim that prior libraries optimize only arithmetic, that organization
+and core performance are independent, or that selection proves global optimality.
+
+The added motivation panel reads all three rows of the first table in
+`results/homogeneous_warp_dual_groups/analysis.md`. Its historical V100 NTT
+dual/single throughput ratios are 0.999, 0.906, and 1.154 at B=1, 4, and 16.
+They are preserved as reported, rather than recomputed from rounded latencies.
+The caption identifies the historical platform, fixed factorization and register
+continuation, and the lack of trial-level uncertainty in this summary. The CTA
+organization changes launch and resource configuration; it is not an identical
+whole-kernel control. The symbolic Roofline and measured batch curve occupy
+separate panels. The three CSV ratios and all six source, script, and output
+hashes in `generated/motivation_crossover_20261027.json` were verified.
+
+Both `make -C paper all evidence` targets pass. Both reader copies match their
+build outputs and remain 15 Letter pages, unchanged from the pre-revision PDFs.
+Final logs have no undefined citation/reference, missing character, or overfull
+box, and extracted text contains no unresolved reference markers. Underfull-box
+advisories and the existing draw.io PDF-version warning remain. Rendered pages
+were inspected, including the changed introduction and motivation, method
+transitions, evaluation figures and tables, conclusion, and references. The
+organization illustration now appears on page 4 beside its explanation; the
+combined Roofline/crossover figure appears on page 5. Panel labels are aligned
+and distinguish the analytical model from the historical measurement. Template
+font sizes and margins are unchanged. This is still a working draft, not a
+claim that the submission page budget has been met.
+
+The frozen operator statistics and existing application figures retain their
+measurement populations. No new GPU measurement was performed for this revision.
+The M1–M3 controlled-measurement, implementation-reuse, and core-crossing work
+in `NARRATIVE_EVIDENCE_PLAN.md` remains pending. This revision does not close
+floating-point numerical acceptance or demonstrate adaptation-cost savings.
+No kernel, calibration, or experiment queue was changed by the paper edits.
+
 ## Principle-aligned evaluation and evidence reuse — 2026-10-12
 
 Evaluation now follows five questions: automatically selected library performance,
@@ -327,8 +895,9 @@ evaluation from accepted records, and connects motivation, construction,
 execution, selection, and evaluation through explicit transitions and the
 N=16 example. Figure scope and inheritance are in `figures/README.md`.
 
-The compressed output is 15 US Letter pages with eight figure environments:
-seven analytical figures and one dense measured-results panel. Final source
+The compressed output is 14 US Letter pages with eight figure environments:
+analytical diagrams and measured-results panels. The Roofline now includes
+seven measured A100 organization points under a symbolic resource roof. Final source
 traversal finds no duplicate labels or unresolved cross-reference target. The
 final TeX log has no undefined references, missing characters, or overfull
 boxes. Underfull spacing advisories remain.

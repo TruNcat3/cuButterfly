@@ -75,6 +75,48 @@ def _physical_stages(stages: Sequence[int]) -> list[int]:
     return result
 
 
+def shared_group_threads(mapping: Mapping[str, Any], stages: Sequence[int],
+                         operator: str | None = None) -> list[int]:
+    """Resolve launch widths from public shared physical-group descriptors."""
+    physical = _physical_stages(stages)
+    ntt = (operator == "ntt" or (operator is None and
+           (mapping.get("operator") == "ntt" or mapping.get("kind") == "ntt")))
+    entries = mapping.get("execution_group_mappings", [])
+    if not isinstance(entries, list):
+        raise ValueError("execution_group_mappings must be an array")
+    if entries and len(entries) != len(physical):
+        raise ValueError("execution_group_mappings must have one entry per physical execution group")
+    fallback = mapping.get("threads_per_block", 128) if ntt else mapping.get("tile_threads", 128)
+    defaults = (dict(core="radix2", units_per_cta=1, data_space=1, data_time=1,
+                     role_stages=1, token_interleave=1, coefficient_reuse_stages=0, cta_weight=0)
+                if ntt else dict(core="scalar", exchange="shared", codelet="native",
+                                 io_policy="dynamic", ept=0))
+    thread_field = "threads_per_block" if ntt else "threads"
+    result = []
+    for index in range(len(physical)):
+        entry = entries[index] if entries else {}
+        if not isinstance(entry, Mapping):
+            raise ValueError("shared execution group mapping must be an object")
+        if any(key not in {*defaults, thread_field} for key in entry):
+            raise ValueError("unsupported shared execution group mapping field")
+        for key, expected in defaults.items():
+            if key in entry and (entry[key] != expected or
+                                 isinstance(expected, int) and type(entry[key]) is not int):
+                raise ValueError(f"shared execution group {key} must be {expected}")
+        if entries and not ntt and (entry.get("core") != "scalar" or entry.get("exchange") != "shared"):
+            raise ValueError("shared butterfly execution groups require explicit scalar core and shared exchange")
+        if entries and ntt and entry.get("core") != "radix2":
+            raise ValueError("shared NTT execution groups require explicit radix2 core")
+        if thread_field in entry and type(entry[thread_field]) is not int:
+            raise ValueError("shared execution group threads must be an integer")
+        default_threads = (256 if ntt else 0) if entries else fallback
+        threads = _int(entry.get(thread_field, default_threads), f"execution group {index} threads", minimum=32)
+        if threads > 1024 or threads % 32:
+            raise ValueError("shared execution group threads must be a multiple of 32 in [32,1024]")
+        result.append(threads)
+    return result
+
+
 def _register_logs(parts: list[list[int]], local: int) -> tuple[int, int]:
     if parts:
         if len(parts) != 2:
@@ -135,9 +177,26 @@ def validate_suffix_core(mapping: Mapping[str, Any], *, register: bool | None = 
     return core
 
 
+def validate_prefix_twiddle(mapping: Mapping[str, Any], *, register: bool | None = None) -> str:
+    value = mapping.get("prefix_twiddle", "runtime")
+    if value not in ("runtime", "table"):
+        raise ValueError("prefix_twiddle must be runtime or table")
+    if register is None:
+        register = (mapping.get("operator", "fft") == "fft" and
+                    mapping.get("backend") == "online-reorder" and
+                    mapping.get("fft_core") == "register-tile")
+    if value != "runtime" and not register:
+        raise ValueError("prefix_twiddle applies only to online-reorder register-tile FFT")
+    return value
+
+
 def register_geometry(mapping: Mapping[str, Any], stages: Sequence[int] | None = None) -> dict[str, str | int | list[list[int]] | list[int]]:
     """Resolve rectangular register-prefix and grouped-suffix geometry."""
     total = _int(mapping.get("logN"), "logN", minimum=1)
+    prefix_twiddle = validate_prefix_twiddle(mapping, register=(
+        mapping.get("operator", "fft") == "fft" and
+        mapping.get("backend", "online-reorder") == "online-reorder" and
+        mapping.get("fft_core", "register-tile") == "register-tile"))
     suffix_core = validate_suffix_core(mapping, register=(
         mapping.get("operator", "fft") == "fft" and
         mapping.get("backend", "online-reorder") == "online-reorder" and
@@ -203,12 +262,18 @@ def register_geometry(mapping: Mapping[str, Any], stages: Sequence[int] | None =
         "suffix_ept": suffix_ept, "suffix_threads": suffix_threads,
         "suffix_columns": suffix_columns, "suffix_chunk": chunk,
         "suffix_core": suffix_core,
+        "prefix_twiddle": prefix_twiddle,
         "local_stage_partitions": parts, "exchange_chunks": chunks,
     }
 
 
 def group_axis(mapping: Mapping[str, Any], name: str, index: int, default: Any) -> Any:
     """Return one group-local axis, treating omitted/empty entries as default."""
+    if name == "threads" and mapping.get("backend") == "shared-iterative":
+        entries = mapping.get("execution_group_mappings", [])
+        if isinstance(entries, list) and index < len(entries) and isinstance(entries[index], Mapping):
+            return entries[index].get("threads", entries[index].get("threads_per_block", default))
+        return default
     parts, chunks = normalize_axes(mapping) if name in {
         "local_stage_partition", "exchange_chunk"} else ([], [])
     values = parts if name == "local_stage_partition" else chunks

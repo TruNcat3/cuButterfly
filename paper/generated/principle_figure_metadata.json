@@ -75,17 +75,17 @@
       }
     },
     "application_poisson_endpoint": {
-      "width_inches": 7,
-      "height_inches": 2.8,
+      "width_inches": 3.5,
+      "height_inches": 1.75,
       "png_dpi": 300,
-      "description": "Measured 2-D periodic spectral Poisson endpoint at N=2048 and B=16; eager and CUDA Graph modes across three backends.",
+      "description": "Measured 2-D periodic spectral Poisson endpoint at N=2048 and B=16; eager and CUDA Graph modes across three backends. Boxes: quartiles and median; whiskers: min/max; all 20 individual wall samples per box shown.",
       "sources": [
         "results/e2e_current_20261017/poisson_2048_b16_adaptive_trace/report.json"
       ],
       "outputs": {
-        "paper/figures/principle_application_poisson_endpoint.pdf": "1ebe8a1d55d081ff2f98f647caf48153e68479c459443277dd8fe837114ec18f",
-        "paper/figures/principle_application_poisson_endpoint.png": "f73068cc5f826541e1cf745755c7a5f7ed68c2507cc248924ef19b7fd77f940f",
-        "paper/figures/principle_application_poisson_endpoint.svg": "e6e8f6921b9a82cdb8bdeb4c8e2558ddc69d5d4a7fbf5168f809659aa3f830cd"
+        "paper/figures/principle_application_poisson_endpoint.pdf": "6f8fb30a395aa3d6f827031bdee468ce816783339f563073e12cf199eb89fa93",
+        "paper/figures/principle_application_poisson_endpoint.png": "a55505044188fc90393b926e023a6c66c54f8b7c75b2ddeadc35d5adf6ca4590",
+        "paper/figures/principle_application_poisson_endpoint.svg": "66c9ef2e2c8034b8d3337c3447c7aab36449b8b6d011f8620c1afc984b1ea647"
       }
     }
   },
@@ -98,7 +98,7 @@
     "results/paper_targeted_20261012/ntt_extension/summary.json": "a6a31a8797c23037b3243cb8e078cd20277999652d6190b2a204bbdb3ed0c186",
     "docs/research_principles.md": "bcd79c2e06142bf2cbee441e54a973170b7a541db5a2023735798e580049389b",
     "results/e2e_current_20261017/poisson_2048_b16_adaptive_trace/report.json": "d572d18ffa1eefa75ca900109a12779108207e5d758150000bf7fd2073be0616",
-    "paper/tools/render_principle_evaluation.py": "767d5b98bc781310ebe28871aa121168d2495feebf293a9172fd5d4736bb4d13"
+    "paper/tools/render_principle_evaluation.py": "a157e3cfdb4ee1055f1f073749937f29fec2927d36b62ee3c6cdbe7a8a575741"
   },
   "software": {
     "matplotlib": "3.10.9",

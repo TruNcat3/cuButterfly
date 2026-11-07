@@ -128,6 +128,78 @@ def test_skip_compile_and_completed_cells_touch_no_broker(tmp_path, monkeypatch)
     assert not state['compile_ready'] and not state['gpu_verified']
 
 
+@pytest.mark.parametrize('complete', [False, True])
+@pytest.mark.parametrize('compile_only', [False, True])
+def test_saved_compilation_gaps_are_prepared_without_changing_measurements(
+        tmp_path, monkeypatch, complete, compile_only):
+    path, document, points, models, broker = package(tmp_path, monkeypatch)
+    document['cells'][0]['complete'] = complete
+    point = dict(points[0], score=103)
+    training_path = path.parent / document['training']['path']
+    training = {'rows': {'measured': dict(correct=True, samples=[{'old': 'sample'}], median_kernel_ms=2),
+                         'pending': dict(status='needs-compilation', configuration=point,
+                                         correct=False, errors=['compilation budget exhausted'], samples=[]),
+                         'other-cell': dict(status='needs-compilation', configuration=dict(point, operator='ntt')),
+                         'unavailable': dict(status='unavailable', configuration=dict(point, score=104))}}
+    training_path.write_text(json.dumps(training))
+    original = training_path.read_bytes()
+    document['training']['sha256'] = hashlib.sha256(original).hexdigest()
+    path.write_text(json.dumps(document))
+    monkeypatch.setenv('CUBUTTERFLY_COMPILE_BUDGET_FILE', '/exhausted/installation-budget')
+    monkeypatch.setenv('CUBUTTERFLY_COMPILE_BUDGET_SECONDS', '1')
+    requested = []
+    ready = set()
+    def project(candidate, policy):
+        assert 'CUBUTTERFLY_COMPILE_BUDGET_FILE' not in os.environ
+        assert 'CUBUTTERFLY_COMPILE_BUDGET_SECONDS' not in os.environ
+        return {'id': candidate['score']}
+    monkeypatch.setattr(preparation.research_compile_requests, 'compile_request', project)
+    def request(broker, config, mapping, events, timeout):
+        requested.append(mapping['id'])
+        if mapping['id'] not in ready:
+            raise RuntimeError('pending')
+        return tmp_path / 'module.so'
+    monkeypatch.setattr(preparation.broker_api, 'runtime_request', request)
+    def work(*args, **kwargs):
+        assert 'CUBUTTERFLY_COMPILE_BUDGET_FILE' not in os.environ
+        ready.update(requested)
+        return {'pending': 0}
+    monkeypatch.setattr(preparation.broker_api, 'work', work)
+    if compile_only:
+        monkeypatch.setattr(preparation.stage_cost_model, 'fit', lambda *args: pytest.fail('model fit'))
+    output = tmp_path / 'output'
+    result = preparation.prepare(path, output, broker, compile_top=1, compile_only=compile_only)
+    assert requested[0] == 103
+    assert result['needs_compilation_candidates'] == 1
+    assert result['compile_ready'] and not result['gpu_verified']
+    assert result['scoring_complete'] is not compile_only
+    assert result['scored_candidates'] == (0 if complete or compile_only else 5)
+    if compile_only:
+        assert not models and not (output / 'model.json').exists()
+    if complete or compile_only:
+        assert set(requested) == {103}
+    assert training_path.read_bytes() == original
+    assert os.environ['CUBUTTERFLY_COMPILE_BUDGET_FILE'] == '/exhausted/installation-budget'
+    assert os.environ['CUBUTTERFLY_COMPILE_BUDGET_SECONDS'] == '1'
+
+
+def test_offline_budget_is_restored_when_worker_raises(tmp_path, monkeypatch):
+    path, _, _, _, broker = package(tmp_path, monkeypatch)
+    monkeypatch.setenv('CUBUTTERFLY_COMPILE_BUDGET_SECONDS', '7')
+    monkeypatch.delenv('CUBUTTERFLY_COMPILE_BUDGET_FILE', raising=False)
+    monkeypatch.setattr(preparation.research_compile_requests, 'compile_request', lambda *args, **kwargs: None)
+    def fail(*args, **kwargs):
+        assert 'CUBUTTERFLY_COMPILE_BUDGET_SECONDS' not in os.environ
+        raise RuntimeError('worker failed')
+    monkeypatch.setattr(preparation.broker_api, 'work', fail)
+    with pytest.raises(RuntimeError, match='worker failed'):
+        preparation.prepare(path, tmp_path / 'output', broker)
+    assert os.environ['CUBUTTERFLY_COMPILE_BUDGET_SECONDS'] == '7'
+    assert 'CUBUTTERFLY_COMPILE_BUDGET_FILE' not in os.environ
+    state = json.loads((tmp_path / 'output/status.json').read_text())
+    assert state['status'] == 'failed' and not state['compile_ready']
+
+
 def test_unvalidated_service_is_not_a_ranking_prior():
     profile = {'hardware': {}, 'stage_service': {'curves': {'key': {}}}}
     assert 'stage_service' not in preparation.ranking_profile(profile)

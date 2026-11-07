@@ -1,0 +1,70 @@
+[
+  {
+    "variant": "old",
+    "kernel": "hierarchical_prefix_kernel",
+    "warpinstructions": 21757952.0,
+    "store_requests": 32768.0,
+    "store_sectors": 1048576.0,
+    "bank_load_conflicts": 16616.0,
+    "bank_store_conflicts": 4203.0,
+    "registers": 27.0,
+    "barrier_stall_pct": 75.1980292028459,
+    "arithmetic": {
+      "HMUL2": 2621440,
+      "HFMA2": 7864320,
+      "HADD2": 2621440
+    },
+    "mufu": 0
+  },
+  {
+    "variant": "old",
+    "kernel": "online_reorder_suffix_kernel",
+    "warpinstructions": 12558336.0,
+    "store_requests": 32768.0,
+    "store_sectors": 1048576.0,
+    "bank_load_conflicts": 161063.0,
+    "bank_store_conflicts": 131471.0,
+    "registers": 23.0,
+    "barrier_stall_pct": 55.835910997374896,
+    "arithmetic": {
+      "HMUL2": 3670016,
+      "HFMA2": 11010048,
+      "HADD2": 3670016
+    },
+    "mufu": 4194304
+  },
+  {
+    "variant": "new",
+    "kernel": "hierarchical_prefix_kernel",
+    "warpinstructions": 5349376.0,
+    "store_requests": 32768.0,
+    "store_sectors": 131072.0,
+    "bank_load_conflicts": 131072.0,
+    "bank_store_conflicts": 131072.0,
+    "registers": 25.0,
+    "barrier_stall_pct": 10.51120530893595,
+    "arithmetic": {
+      "HMUL2": 2621440,
+      "HFMA2": 7864320,
+      "HADD2": 2621440
+    },
+    "mufu": 0
+  },
+  {
+    "variant": "new",
+    "kernel": "online_reorder_suffix_kernel",
+    "warpinstructions": 6127616.0,
+    "store_requests": 32768.0,
+    "store_sectors": 131072.0,
+    "bank_load_conflicts": 229376.0,
+    "bank_store_conflicts": 229376.0,
+    "registers": 25.0,
+    "barrier_stall_pct": 14.047203019071564,
+    "arithmetic": {
+      "HMUL2": 3670016,
+      "HFMA2": 11010048,
+      "HADD2": 3670016
+    },
+    "mufu": 0
+  }
+]

@@ -177,7 +177,9 @@ def watch(root, gpu_uuid, command, poll_seconds=10, idle_seconds=30,
                       or str(campaign.get('status', '')).startswith('stopped-')):
                     record('failed', error='existing campaign failure requires inspection')
                     return 2
-                elif preparation is not None and not preparation.get('scoring_complete'):
+                elif preparation is not None and (
+                        not preparation.get('scoring_complete') or
+                        not preparation.get('compile_ready')):
                     idle_since = None
                     if preparation.get('status') == 'failed':
                         record('failed', error='CPU preparation failed; see its status file')
@@ -239,7 +241,7 @@ def main():
     parser.add_argument('--idle-graphics-name', action='append', default=[],
                         help='Explicit idle display process name from nvidia-smi; only G type, zero utilization and memory limit still required')
     parser.add_argument('--cpu-preparation-status', type=Path,
-                        help='Wait for independent CPU scoring_complete before checking GPU readiness')
+                        help='Wait for CPU scoring_complete and compile_ready before checking GPU readiness')
     parser.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     command = args.command[1:] if args.command[:1] == ['--'] else args.command

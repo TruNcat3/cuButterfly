@@ -49,7 +49,7 @@ def lifecycle(tmp_path, monkeypatch):
     config = dict(root=str(ROOT), mathdx=str(args.mathdx), nvcc=str(args.nvcc),
                   cache=str(args.jit_cache), sm=80)
     document = dict(config=config, id='broker-test', sources_sha256='sources-test')
-    monkeypatch.setattr(refresh.calibration, 'validate_build', lambda path: None)
+    monkeypatch.setattr(refresh.calibration, 'validate_build', lambda path: 80)
     monkeypatch.setattr(refresh, 'validate_preparation', lambda *a: 2)
     monkeypatch.setattr(refresh.broker, 'initialize', lambda *a: document)
     monkeypatch.setattr(refresh.broker, '_sources', lambda *a: 'sources-test')
@@ -118,6 +118,28 @@ def test_real_cpu_children_complete_all_gates_and_cleanup_producer(lifecycle):
     assert compare_env['CUBUTTERFLY_REGISTRY'].endswith('finalized/registry.json')
 
 
+@pytest.mark.parametrize('gap', ['scoring', 'compilation', 'input-identity'])
+def test_offline_readiness_rejects_gaps_before_launch(lifecycle, gap):
+    c = lifecycle
+    c.args.calibration_cpu_input = c.args.output_dir / 'cpu-input.json'
+    c.args.calibration_cpu_input.write_text('{}')
+    c.args.calibration_cpu_dir = c.args.output_dir / 'cpu-prepared'
+    c.args.calibration_cpu_dir.mkdir()
+    receipt = dict(scoring_complete=True, compile_ready=True,
+                   input_sha256=refresh.calibration.digest(c.args.calibration_cpu_input))
+    if gap == 'scoring':
+        receipt['scoring_complete'] = False
+    elif gap == 'compilation':
+        receipt['compile_ready'] = False
+    else:
+        receipt['input_sha256'] = 'different-input'
+    (c.args.calibration_cpu_dir / 'status.json').write_text(json.dumps(receipt))
+    with pytest.raises(ValueError, match='must finish before GPU work'):
+        refresh.orchestrate(c.args)
+    assert c.children == []
+    assert not (c.args.output_dir / 'executed').exists()
+
+
 def test_phase_failure_never_advances_and_cannot_automatically_resume(lifecycle):
     c = lifecycle
     c.plan[0] = ('calibrate', c.command('calibrate', 'raise SystemExit(7)'))
@@ -168,6 +190,84 @@ def test_busy_gpu_wait_state_is_retryable_without_launching(lifecycle, monkeypat
     assert not c.children
     assert c.state()['remaining'] == 2
     assert monitor.exit_action(1, c.state(), 0) == 'retry'
+
+
+def test_external_producer_is_never_spawned_or_stopped_by_refresh(lifecycle, monkeypatch):
+    c = lifecycle
+    c.args.external_compile_producer = True
+    observations = []
+    producer = SimpleNamespace(external=True, poll=lambda: None)
+    monkeypatch.setattr(refresh, 'ExternalCompileProducer',
+        lambda directory, identifier: observations.append((directory, identifier)) or producer)
+    assert refresh.orchestrate(c.args) == 0
+    assert observations == [(c.args.output_dir / 'compile', c.document['id'])]
+    assert not any(owned for owned, _, _, _ in c.children)
+    c.args.resume = True
+    monkeypatch.setattr(refresh, 'ExternalCompileProducer',
+        lambda *args: pytest.fail('completed comparison must not need a live compiler'))
+    assert refresh.orchestrate(c.args) == 0
+
+
+def test_foreign_gpu_interruption_does_not_stop_external_cpu_service(lifecycle, monkeypatch):
+    c = lifecycle
+    c.args.external_compile_producer = True
+    producer = SimpleNamespace(external=True, poll=lambda: None)
+    monkeypatch.setattr(refresh, 'ExternalCompileProducer', lambda *args: producer)
+    c.plan[-1] = ('compare', c.command('compare', 'import time; time.sleep(60)'))
+    def observe(uuid):
+        return [os.getpid()] if any(cmd == c.plan[-1][1] for _, _, cmd, _ in c.children) else []
+    monkeypatch.setattr(refresh, 'gpu_pids', observe)
+    with pytest.raises(RuntimeError, match='foreign GPU work'):
+        refresh.orchestrate(c.args)
+    assert c.state()['status'] == 'interrupted-by-foreign-gpu-work'
+    assert not any(owned for owned, _, _, _ in c.children)
+
+
+def test_comparison_detects_foreign_gpu_before_parent_and_resumes(lifecycle):
+    c = lifecycle
+    code = ('import os, time; '
+            f'p=Path({str(c.args.output_dir / "measurement/gpu_interruption.json")!r}); '
+            'p.parent.mkdir(exist_ok=True); '
+            f'p.write_text(json.dumps(dict(status="interrupted-by-foreign-gpu-work", gpu_uuid={c.args.gpu_uuid!r}, '
+            'pid=os.getpid(), observed_unix=time.time()))); '
+            f'raise SystemExit({refresh.GPU_BUSY_EXIT})')
+    c.plan[-1] = ('compare', c.command('compare', code))
+    with pytest.raises(RuntimeError, match='foreign GPU work detected by comparison worker'):
+        refresh.orchestrate(c.args)
+    state = c.state()
+    assert state['phases']['compare']['status'] == 'interrupted'
+    assert state['phases']['compare']['returncode'] == refresh.GPU_BUSY_EXIT
+    assert monitor.exit_action(1, state, 0) == 'retry'
+    c.args.resume = True
+    c.plan[-1] = ('compare', c.command('compare'))
+    assert refresh.orchestrate(c.args) == 0
+    assert c.executed() == ['calibrate', 'finalize', 'xd', 'compare', 'compare']
+
+
+@pytest.mark.parametrize('invalid', ['missing', 'gpu_uuid', 'pid', 'observed_unix'])
+def test_busy_exit_without_current_comparison_receipt_is_failure(lifecycle, invalid):
+    c = lifecycle
+    code = ''
+    if invalid != 'missing':
+        value = {'gpu_uuid': 'GPU-other', 'pid': -1, 'observed_unix': 0}[invalid]
+        code = ('import os, time; '
+                f'p=Path({str(c.args.output_dir / "measurement/gpu_interruption.json")!r}); '
+                'p.parent.mkdir(exist_ok=True); '
+                f'r=dict(status="interrupted-by-foreign-gpu-work", gpu_uuid={c.args.gpu_uuid!r}, '
+                'pid=os.getpid(), observed_unix=time.time()); '
+                f'r[{invalid!r}]={value!r}; p.write_text(json.dumps(r)); ')
+    c.plan[-1] = ('compare', c.command('compare', code + f'raise SystemExit({refresh.GPU_BUSY_EXIT})'))
+    with pytest.raises(refresh.PhaseFailure):
+        refresh.orchestrate(c.args)
+    assert c.state()['status'] == 'failed'
+
+
+def test_noncomparison_busy_exit_remains_a_phase_failure(lifecycle):
+    c = lifecycle
+    c.plan[0] = ('calibrate', c.command('calibrate', f'raise SystemExit({refresh.GPU_BUSY_EXIT})'))
+    with pytest.raises(refresh.PhaseFailure):
+        refresh.orchestrate(c.args)
+    assert c.state()['status'] == 'failed'
 
 
 def test_resume_skips_completed_children_but_rechecks_gates(lifecycle):
@@ -309,6 +409,19 @@ def test_build_commands_bind_paths_external_libraries_and_resume_receipts(tmp_pa
     assert commands['compare'][commands['compare'].index('--cpu-workers') + 1] == '3'
     assert commands['compare'][commands['compare'].index('--calibration-manifest') + 1].endswith(
         'calibration/finalized/calibration_manifest.json')
+    args.calibration_cpu_input = tmp_path / 'cpu/input.json'
+    args.calibration_cpu_dir = tmp_path / 'cpu/prepared'
+    prepared = dict(refresh.build_commands(args))['calibrate']
+    assert prepared[prepared.index('--cpu-preparation-input')+1] == str(args.calibration_cpu_input)
+    assert prepared[prepared.index('--cpu-preparation-dir')+1] == str(args.calibration_cpu_dir)
+    assert prepared[prepared.index('--compile-seconds')+1] == '0'
+    assert '--retry-compilation-gaps' in prepared
+    args.calibration_cpu_dir = None
+    args.calibration_cpu_inventory_only = True
+    inventory = dict(refresh.build_commands(args))['calibrate']
+    assert '--cpu-preparation-inventory-only' in inventory
+    assert '--cpu-preparation-dir' not in inventory
+    assert '--retry-compilation-gaps' in inventory
 
 
 def test_identity_binds_build_broker_and_measurement_budgets(tmp_path):
@@ -500,6 +613,19 @@ def test_followup_arguments_and_identity_bind_plan_and_entrypoint(tmp_path, monk
     assert refresh.identity(args, document, {}) != after_script
 
 
+def test_identity_binds_cpu_helper_proxy_and_external_supervision(tmp_path, monkeypatch):
+    args = arguments(tmp_path)
+    monkeypatch.setattr(refresh.calibration, 'digest', lambda path: 'fixture')
+    document = dict(id='broker', sources_sha256='sources')
+    initial = refresh.identity(args, document, {})
+    assert str(refresh.ROOT / 'scripts/semantic_resource_compile_proxy.py') in initial['files']
+    assert 'external_compile_producer' not in initial
+    args.external_compile_producer = True
+    updated = refresh.identity(args, document, {})
+    assert updated['external_compile_producer'] is True
+    assert {k: v for k, v in updated.items() if k != 'external_compile_producer'} == initial
+
+
 @pytest.mark.parametrize('name', ['calibrate', 'finalize', 'xd', 'compare'])
 def test_followup_cannot_shadow_builtin_phase(tmp_path, name):
     args = arguments(tmp_path)
@@ -518,3 +644,180 @@ def test_followup_rejects_ambiguous_or_invalid_job_contract(tmp_path, jobs):
     write_followup_plan(args, jobs)
     with pytest.raises((ValueError, FileNotFoundError, IsADirectoryError)):
         refresh.followup_jobs(args)
+
+
+def test_failed_prerequisite_blocks_transitive_children_but_keeps_independent_jobs(lifecycle, monkeypatch):
+    c = lifecycle
+    c.jobs = [('prepare-app', c.command('prepare-app', 'raise SystemExit(3)')),
+              ('measure-app', c.command('measure-app')),
+              ('profile-app', c.command('profile-app')),
+              ('independent', c.command('independent'))]
+    monkeypatch.setattr(refresh, 'followup_dependencies', lambda args: {
+        'measure-app': ['prepare-app'], 'profile-app': ['measure-app']})
+    assert refresh.orchestrate(c.args) == 0
+    assert c.executed()[-2:] == ['prepare-app', 'independent']
+    state = c.state()
+    assert state['followup_blocked'] == {'measure-app': ['prepare-app'],
+                                         'profile-app': ['measure-app']}
+    assert state['phases']['measure-app']['status'] == 'blocked-by-dependency'
+    assert state['status'] == 'complete-runnable-refresh-with-gaps'
+    c.args.resume = True
+    before = c.executed()
+    assert refresh.orchestrate(c.args) == 0
+    assert c.executed() == before
+    assert c.state()['followup_blocked'] == state['followup_blocked']
+
+
+def test_followup_waits_for_all_completed_prerequisites(lifecycle, monkeypatch):
+    c = lifecycle
+    c.jobs = [('prepare-app', c.command('prepare-app')),
+              ('measure-app', c.command('measure-app'))]
+    monkeypatch.setattr(refresh, 'followup_dependencies', lambda args: {
+        'measure-app': ['compare', 'prepare-app']})
+    assert refresh.orchestrate(c.args) == 0
+    assert c.executed()[-2:] == ['prepare-app', 'measure-app']
+    assert not c.state()['followup_blocked']
+
+
+@pytest.mark.parametrize('dependencies', [['missing'], ['later'], ['first'],
+    ['compare', 'compare'], 'compare'])
+def test_followup_rejects_unknown_forward_self_and_duplicate_dependencies(tmp_path, dependencies):
+    args = arguments(tmp_path)
+    write_followup_plan(args, [
+        dict(id='first', argv=['scripts/run_full_semantic_refresh.py'], depends_on=dependencies),
+        dict(id='later', argv=['scripts/run_full_semantic_refresh.py'])])
+    with pytest.raises(ValueError, match='dependencies'):
+        refresh.followup_jobs(args)
+
+
+def test_followup_identity_includes_transitive_static_input_files(tmp_path):
+    args = arguments(tmp_path)
+    config = args.output_dir / 'consumer.json'
+    config.write_text('{"build": "one"}')
+    write_followup_plan(args, [])
+    plan = json.loads(args.followup_plan.read_text())
+    plan['input_paths'] = ['{output_dir}/consumer.json']
+    args.followup_plan.write_text(json.dumps(plan))
+    document = dict(id='broker', sources_sha256='sources')
+    first = refresh.identity(args, document, {})
+    assert str(config) in first['files']
+    config.write_text('{"build": "two"}')
+    assert refresh.identity(args, document, {}) != first
+
+
+def test_prepared_application_queue_is_loaded_and_bound_to_identity(tmp_path):
+    args = arguments(tmp_path)
+    write_followup_plan(args, [dict(id='parent', argv=['scripts/run_full_semantic_refresh.py'])])
+    child = args.output_dir / 'prepared-followups.json'
+    child.write_text(json.dumps(dict(schema='cubutterfly-refresh-followups-v1',
+        jobs=[dict(id='application', depends_on=['parent'], argv=['scripts/run_full_semantic_refresh.py'])])))
+    plan = json.loads(args.followup_plan.read_text())
+    plan['include_prepared_plans'] = ['{output_dir}/prepared-followups.json']
+    args.followup_plan.write_text(json.dumps(plan))
+    assert [name for name, _ in refresh.followup_jobs(args)] == ['parent', 'application']
+    initial = refresh.identity(args, dict(id='broker', sources_sha256='sources'), {})
+    assert initial['files'][str(child)] == refresh.calibration.digest(child)
+    child.write_text(child.read_text().replace('application', 'new-application'))
+    assert refresh.identity(args, dict(id='broker', sources_sha256='sources'), {}) != initial
+
+
+def test_prepared_application_queue_rejects_wrong_schema_before_gpu_use(tmp_path):
+    args = arguments(tmp_path)
+    write_followup_plan(args, [])
+    child = args.output_dir / 'prepared-followups.json'
+    child.write_text('{"schema": "unrecognized", "jobs": []}')
+    plan = json.loads(args.followup_plan.read_text())
+    plan['include_prepared_plans'] = [str(child)]
+    args.followup_plan.write_text(json.dumps(plan))
+    with pytest.raises(ValueError, match='prepared followup plan'):
+        refresh.followup_jobs(args)
+
+
+def test_followup_compiler_runs_only_for_declared_job_and_is_stopped_after_failure(lifecycle, monkeypatch):
+    c = lifecycle
+    c.jobs = [('needs-jit', c.command('needs-jit', 'raise SystemExit(3)')),
+              ('independent', c.command('independent'))]
+    report = c.args.output_dir / 'cyclic/results.json'
+    monkeypatch.setattr(refresh, 'followup_producers', lambda args: {'needs-jit': report})
+    spawn = refresh.subprocess.Popen
+    def checked_spawn(command, **kwargs):
+        if command == c.jobs[1][1]:
+            assert all(p.poll() is not None for is_producer, p, _, _ in c.children if is_producer)
+        return spawn(command, **kwargs)
+    monkeypatch.setattr(refresh.subprocess, 'Popen', checked_spawn)
+    assert refresh.orchestrate(c.args) == 0
+    producers = [(p, cmd, env) for flag, p, cmd, env in c.children if flag]
+    assert len(producers) == 2
+    assert all(p.poll() is not None and env['CUDA_VISIBLE_DEVICES'] == '' for p, _, env in producers)
+    assert producers[1][1][-1] == str(report)
+    assert c.executed()[-2:] == ['needs-jit', 'independent']
+    c.args.resume = True
+    assert refresh.orchestrate(c.args) == 0
+    assert len([p for flag, p, _, _ in c.children if flag]) == 2  # completed comparison needs no producer
+
+
+def test_declared_followup_worker_recycles_without_losing_dependency(lifecycle, monkeypatch):
+    c = lifecycle
+    marker = c.args.output_dir / 'followup-recycled'
+    code = (f'p=Path({str(marker)!r}); first=not p.exists(); p.touch(); '
+            'exec("raise SystemExit(75)" if first else "pass")')
+    c.jobs = [('async-followup', c.command('async-followup', code)),
+              ('consume-result', c.command('consume-result'))]
+    monkeypatch.setattr(refresh, 'followup_recycles', lambda args: {'async-followup'})
+    monkeypatch.setattr(refresh, 'followup_dependencies', lambda args: {'consume-result': ['async-followup']})
+    assert refresh.orchestrate(c.args) == 0
+    assert c.executed()[-3:] == ['async-followup', 'async-followup', 'consume-result']
+    assert not c.state()['followup_failures'] and not c.state()['followup_blocked']
+
+
+def test_undeclared_followup_exit75_is_failure(lifecycle):
+    c = lifecycle
+    c.jobs = [('ordinary', c.command('ordinary', 'raise SystemExit(75)'))]
+    assert refresh.orchestrate(c.args) == 0
+    assert c.executed().count('ordinary') == 1
+    assert 'ordinary' in c.state()['followup_failures']
+
+
+def test_sm120_prepare_only_passes_build_target_without_gpu(lifecycle, monkeypatch):
+    c = lifecycle
+    c.args.prepare_only = True
+    cache = c.args.build_dir / 'CMakeCache.txt'
+    cache.write_text('CUBUTTERFLY_BUILD_SHARED:BOOL=ON\n'
+                     'CUBUTTERFLY_ENABLE_CUFFTDX:BOOL=ON\n'
+                     'CUBUTTERFLY_ENABLE_XD_CUFFTDX:BOOL=ON\n'
+                     'CMAKE_CUDA_ARCHITECTURES:STRING=120-real;120-virtual\n')
+    # The fixture replaces validation; restore the real CPU implementation.
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('real_calibration',
+        ROOT / 'scripts/run_current_recalibration.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(refresh.calibration, 'validate_build', module.validate_build)
+    captured = []
+    def initialize(directory, config):
+        captured.append(config)
+        return dict(c.document, config=config)
+    monkeypatch.setattr(refresh.broker, 'initialize', initialize)
+    monkeypatch.setattr(refresh, 'gpu_pids', lambda *a: pytest.fail('prepare-only queried GPU'))
+    monkeypatch.setattr(refresh.subprocess, 'Popen', lambda *a, **kw: pytest.fail('spawned child'))
+    assert refresh.orchestrate(c.args) == 0
+    assert captured[0]['sm'] == 120
+
+
+def test_refresh_scrubs_inherited_profile_and_injects_local_model(lifecycle, monkeypatch):
+    c = lifecycle
+    monkeypatch.setenv('CUBUTTERFLY_HARDWARE_MODEL', '/foreign/a100.json')
+    monkeypatch.setenv('CUBUTTERFLY_PROFILE_ROOT', '/foreign/profile')
+    hardware = c.args.output_dir / 'calibration/hardware/hardware_model.json'
+    hardware.parent.mkdir(parents=True)
+    hardware.write_text('{}')
+    env = refresh.build_environment(c.args, c.document['config'])
+    assert 'CUBUTTERFLY_HARDWARE_MODEL' not in env
+    assert 'CUBUTTERFLY_PROFILE_ROOT' not in env
+    assert refresh.orchestrate(c.args) == 0
+    for producer, child, command, child_env in c.children:
+        assert 'CUBUTTERFLY_PROFILE_ROOT' not in child_env
+        if any('calibrate' in str(part) for part in command):
+            assert 'CUBUTTERFLY_HARDWARE_MODEL' not in child_env
+        else:
+            assert child_env['CUBUTTERFLY_HARDWARE_MODEL'] == str(hardware)

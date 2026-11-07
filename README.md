@@ -1,5 +1,9 @@
 # cuButterfly
 
+For RTX PRO 6000 Blackwell Server96 migration, use the [target runbook](docs/hardware/pro6000_server96.md) and [quick12/full66 population contract](config/paper_portability/README.md). The platform entry separates CPU preparation from target-local GPU calibration; full covers the main66 comparison only.
+
+Current A100 evidence and paper updates are summarized in the [November 7 handoff](docs/pro6000_handoff_20261107.md). The [paper](paper/main.pdf) includes separate operator, mechanism and application results, with negative results retained.
+
 **Hardware-mapped space-time parallelism for regular butterfly computations on GPUs.**
 
 [![Repository checks](https://github.com/TruNcat3/cuButterfly/actions/workflows/repository-checks.yml/badge.svg)](https://github.com/TruNcat3/cuButterfly/actions/workflows/repository-checks.yml)

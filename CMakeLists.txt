@@ -291,6 +291,7 @@ file(GLOB_RECURSE CUBUTTERFLY_FINGERPRINT_INPUTS CONFIGURE_DEPENDS
 list(APPEND CUBUTTERFLY_FINGERPRINT_INPUTS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/compile_module.py")
 list(APPEND CUBUTTERFLY_FINGERPRINT_INPUTS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/resident_mapping.py")
 list(APPEND CUBUTTERFLY_FINGERPRINT_INPUTS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/cufftdx_capabilities.py")
+list(APPEND CUBUTTERFLY_FINGERPRINT_INPUTS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/cufftdx_low_module.py")
 file(GLOB_RECURSE CUBUTTERFLY_PROVIDER_INPUTS CONFIGURE_DEPENDS
     "${CUBUTTERFLY_MATHDX_ROOT}/include/*.hpp" "${CUBUTTERFLY_MATHDX_ROOT}/include/*.hpp.inc")
 list(APPEND CUBUTTERFLY_FINGERPRINT_INPUTS ${CUBUTTERFLY_PROVIDER_INPUTS})
@@ -340,6 +341,15 @@ add_custom_command(OUTPUT "${CUNTT_GENERATED_DIR}/build_fingerprint.hpp"
 target_sources(cuntt PRIVATE ${CUNTT_GENERATED_SOURCES} "${CUNTT_GENERATED_DIR}/build_fingerprint.hpp")
 set_property(SOURCE src/platforms/legacy_selector.cpp APPEND PROPERTY OBJECT_DEPENDS "${CUNTT_LOCAL_SELECTOR_HEADER}")
 
+if(CUBUTTERFLY_ENABLE_CUFFTDX OR CUBUTTERFLY_ENABLE_XD_CUFFTDX)
+    include(cmake/CuFFTDxTarget.cmake)
+    cubutterfly_cufftdx_target(CUBUTTERFLY_CODELET_ARCH CUBUTTERFLY_CODELET_SM
+        ${CMAKE_CUDA_ARCHITECTURES})
+    cubutterfly_probe_cufftdx("${CMAKE_CUDA_COMPILER}" "${CUBUTTERFLY_MATHDX_ROOT}"
+        "${CUBUTTERFLY_CODELET_ARCH}" "${CUBUTTERFLY_CODELET_SM}"
+        "${CMAKE_CURRENT_BINARY_DIR}/cufftdx-target-probe")
+endif()
+
 if(CUBUTTERFLY_ENABLE_CUFFTDX)
     if(NOT EXISTS "${CUBUTTERFLY_MATHDX_ROOT}/include/cufftdx.hpp")
         message(FATAL_ERROR
@@ -355,17 +365,7 @@ if(CUBUTTERFLY_ENABLE_CUFFTDX)
             CUBUTTERFLY_APPT_STAGE_CONTRACT=1
             CUBUTTERFLY_APPT_PARALLELISM=${CUBUTTERFLY_APPT_PARALLELISM})
     endif()
-    # Keep cuFFTDx's generated codelet target aligned with the CUDA arch.
-    set(CUBUTTERFLY_CUFFTDX_SM 700)
-    if(CMAKE_CUDA_ARCHITECTURES MATCHES "(^|;)80($|;)")
-        set(CUBUTTERFLY_CUFFTDX_SM 800)
-    elseif(CMAKE_CUDA_ARCHITECTURES MATCHES "(^|;)86($|;)")
-        set(CUBUTTERFLY_CUFFTDX_SM 860)
-    elseif(CMAKE_CUDA_ARCHITECTURES MATCHES "(^|;)89($|;)")
-        set(CUBUTTERFLY_CUFFTDX_SM 890)
-    elseif(CMAKE_CUDA_ARCHITECTURES MATCHES "(^|;)90($|;)")
-        set(CUBUTTERFLY_CUFFTDX_SM 900)
-    endif()
+    set(CUBUTTERFLY_CUFFTDX_SM "${CUBUTTERFLY_CODELET_SM}")
     target_compile_definitions(cuntt PRIVATE CUBUTTERFLY_CUFFTDX_SM=${CUBUTTERFLY_CUFFTDX_SM})
 else()
     target_sources(cuntt PRIVATE src/cufftdx_fft_stub.cpp src/fft_register_dispatch_stub.cpp)
@@ -378,14 +378,7 @@ if(CUBUTTERFLY_ENABLE_XD_CUFFTDX)
     if(NOT EXISTS "${CUBUTTERFLY_MATHDX_ROOT}/include/cufftdx.hpp")
         message(FATAL_ERROR "xD cuFFTDx needs headers under CUBUTTERFLY_MATHDX_ROOT; run scripts/install_cufftdx.sh")
     endif()
-    # A codelet is instantiated for one architecture. Other devices retain
-    # the existing axis candidates; availability checks reject mismatched SMs.
-    list(GET CMAKE_CUDA_ARCHITECTURES 0 CUBUTTERFLY_XD_ARCH)
-    string(REGEX REPLACE "-(real|virtual)$" "" CUBUTTERFLY_XD_ARCH "${CUBUTTERFLY_XD_ARCH}")
-    if(NOT CUBUTTERFLY_XD_ARCH MATCHES "^(70|72|75|80|86|87|89|90)$")
-        message(FATAL_ERROR "xD cuFFTDx requires a numeric supported CUDA architecture")
-    endif()
-    math(EXPR CUBUTTERFLY_XD_SM "${CUBUTTERFLY_XD_ARCH} * 10")
+    set(CUBUTTERFLY_XD_SM "${CUBUTTERFLY_CODELET_SM}")
     target_sources(cuntt PRIVATE src/xd_axis_fft.cu src/xd_pair_fft.cu
         src/xd_register_fft.cu src/xd_cooperative_pair_fft.cu src/xd_local_fft.cu)
     set_source_files_properties(src/xd_axis_fft.cu src/xd_pair_fft.cu
@@ -745,6 +738,9 @@ if(BUILD_TESTING)
         COMMAND "${Python3_EXECUTABLE}" -m pytest -q "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_hardware_registry.py")
     add_test(NAME fft_tile_layout_contract COMMAND cubutterfly_fft_tile_layout_tests)
     add_test(NAME mixed_dataflow COMMAND cubutterfly_mixed_dataflow_tests)
+    add_executable(cubutterfly_online_reorder_grouping_tests tests/test_online_reorder_grouping.cu)
+    target_link_libraries(cubutterfly_online_reorder_grouping_tests PRIVATE cuntt)
+    add_test(NAME online_reorder_grouping COMMAND cubutterfly_online_reorder_grouping_tests)
     add_test(NAME hardware_model_cpu COMMAND cubutterfly_hardware_model_tests)
     add_test(NAME static_ranking_cpu COMMAND "${CMAKE_COMMAND}" -E env
         "CUBUTTERFLY_TEST_PYTHON=${Python3_EXECUTABLE}" $<TARGET_FILE:cubutterfly_static_ranking_tests>
@@ -1101,7 +1097,9 @@ install(PROGRAMS
     DESTINATION "${CMAKE_INSTALL_BINDIR}")
 install(FILES scripts/calibration_seeds.py scripts/calibration_space.py scripts/local_selector_data.py scripts/evolutionary_search.py scripts/schedule_cost_model.py
     scripts/benchmark_semantics.py
-    scripts/resident_mapping.py scripts/cufftdx_capabilities.py
+    scripts/shared_work_geometry.py
+    scripts/calibration_cpu_cache.py
+    scripts/resident_mapping.py scripts/cufftdx_capabilities.py scripts/cufftdx_low_module.py
     scripts/research_compile_requests.py scripts/jit_calibration_identity.py scripts/semantic_compile_broker.py
     scripts/stage_service_model.py scripts/stage_service_calibration.py
     scripts/stage_schedule_native.py scripts/stage_schedule_native.cpp
@@ -1110,11 +1108,13 @@ install(FILES scripts/calibration_seeds.py scripts/calibration_space.py scripts/
     scripts/composition_inventory.py
     scripts/pipeline_schedule_model.py
     scripts/run_comprehensive_suite.py DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(FILES benchmark/__init__.py benchmark/runner_registry.py
+    DESTINATION "${CMAKE_INSTALL_BINDIR}/benchmark")
 install(FILES config/install_search_workloads.json
     DESTINATION "${CMAKE_INSTALL_DATADIR}/cuButterfly/config")
 install(DIRECTORY include/ DESTINATION "${CMAKE_INSTALL_DATADIR}/cuButterfly/templates/include")
-install(FILES src/fft_register_tile.cuh src/fft_radix4_codelet.cuh src/fft_thread_codelet.cuh src/fft_grouped_suffix.cuh src/fft_native_block.cuh src/fft_factor_streamed.cuh src/fft_factor_native.cuh src/shared_iterative.cuh src/shared_resident.cuh
-    src/operator_traits.cuh src/ntt_traits.cuh
+install(FILES src/fft_register_tile.cuh src/fft_fixed_roots.cuh src/fft_radix4_codelet.cuh src/fft_thread_codelet.cuh src/fft_grouped_suffix.cuh src/fft_native_block.cuh src/fft_factor_streamed.cuh src/fft_factor_native.cuh src/shared_iterative.cuh src/shared_resident.cuh
+    src/operator_traits.cuh src/ntt_traits.cuh src/cufftdx_low_block.cuh
     DESTINATION "${CMAKE_INSTALL_DATADIR}/cuButterfly/templates/src")
 if(CUBUTTERFLY_ENABLE_CUFFTDX)
     install(DIRECTORY "${CUBUTTERFLY_MATHDX_ROOT}/include/"
@@ -1125,7 +1125,7 @@ if(CUBUTTERFLY_ENABLE_CUFFTDX)
 endif()
 install(PROGRAMS scripts/compile_module.py
     DESTINATION "${CMAKE_INSTALL_DATADIR}/cuButterfly/templates/scripts")
-install(FILES scripts/resident_mapping.py scripts/cufftdx_capabilities.py
+install(FILES scripts/resident_mapping.py scripts/cufftdx_capabilities.py scripts/cufftdx_low_module.py
     DESTINATION "${CMAKE_INSTALL_DATADIR}/cuButterfly/templates/scripts")
 install(TARGETS cubutterfly_bench cubutterfly_graph_bench cuntt_bench cuntt_hardware_microbench cubutterfly_plan_probe cubutterfly_schedule_microbench cubutterfly_stage_microbench cubutterfly_pipeline_microbench
     RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")

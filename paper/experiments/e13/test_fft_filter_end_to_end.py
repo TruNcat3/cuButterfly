@@ -5,6 +5,7 @@ from scipy.signal import convolve2d
 from run_fft_filter_end_to_end import cpu_convolve, error_distribution, padding_shape, same_crop, rotate_methods, require_valid_reports
 from run_fft_filter_end_to_end import validate_graph_replay
 from run_fft_filter_end_to_end import runtime_contract, method_call_contract
+from run_fft_filter_end_to_end import performance_eligible
 
 
 class RuntimeContract(unittest.TestCase):
@@ -91,6 +92,10 @@ class ConvolutionSemantics(unittest.TestCase):
             require_valid_reports([dict(row, accepted=False)])
         with self.assertRaises(RuntimeError):
             require_valid_reports([dict(row, error={'finite': False})])
+        self.assertTrue(performance_eligible(row['error'], None, {'median_us': 1}))
+        self.assertFalse(performance_eligible(row['error'], False, {'median_us': 1}))
+        self.assertFalse(performance_eligible({'finite': False}, None, {'median_us': 1}))
+        self.assertFalse(performance_eligible(row['error'], None, None))
 
     def test_batch_has_independent_images_and_shared_filter(self):
         images = np.arange(3*5*7, dtype=np.float64).reshape(3,5,7) - 11

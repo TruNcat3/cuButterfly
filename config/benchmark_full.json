@@ -27,7 +27,7 @@
     },
     {
       "id": "fft-l-core", "scope": "operator", "modes": ["full"],
-      "operators": ["fft-l"], "precisions": ["fp16", "bf16"], "accumulation": "native",
+      "operators": ["fft-l"], "precisions": ["fp16"], "accumulation": "native",
       "layouts": ["natural"],
       "targets": [{"backend": "cubutterfly", "provider": "cuda", "execution": {"gpu": true, "cpu": false}}],
       "runner": "operator"

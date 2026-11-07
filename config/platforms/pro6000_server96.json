@@ -1,0 +1,15 @@
+{
+  "schema": "cubutterfly-research-platform-v1",
+  "id": "pro6000-server96",
+  "cuda_arch": 120,
+  "device_name_pattern": "RTX PRO 6000.*Blackwell.*Server",
+  "memory_mib_range": [90000, 100000],
+  "description": "NVIDIA RTX PRO 6000 Blackwell Server Edition 96GB; no measurements yet",
+  "mathdx_version": "25.6.0",
+  "workloads": "config/current_recalibration_workloads.json",
+  "scope": "config/paper_portability/scope.json",
+  "modes": {
+    "quick": {"config": "config/paper_portability/quick.json", "requests": 12, "search_budget": 16, "comparison_search_budget": 32, "stage_point_budget": 24},
+    "full": {"config": "config/paper_portability/full.json", "requests": 66, "search_budget": 32, "comparison_search_budget": 512, "stage_point_budget": 24}
+  }
+}

@@ -1,7 +1,9 @@
 # Editable draw.io method figures
 
 Open [cubutterfly-methods.drawio](cubutterfly-methods.drawio) in draw.io Desktop
-or diagrams.net. Its eight named pages correspond to the manuscript figures.
+or diagrams.net. Seven of its eight named pages are included in the manuscript;
+the standalone `bank_layout` page remains as an editable source after its
+example was merged into `hierarchy`.
 All diagrams use native shapes, text, and connectors; they are not images
 wrapped inside an editable file. Individual `.drawio` files are the canonical
 sources used by the exporter. The combined document is an editing convenience.
@@ -9,11 +11,11 @@ sources used by the exporter. The combined document is an editing convenience.
 | Page | Question answered |
 | --- | --- |
 | `overview` | How do common dependencies connect local arithmetic, closed regions, and hierarchical execution? |
-| `organization_tradeoffs` | What changes when the same graph is grouped stage-wise, in bands, or as a whole transform? |
-| `roofline` | Why does a higher intensity ceiling still require enough ready parallel work? |
-| `hierarchy` | How do row producers feed column consumers, and how can a larger domain be refined? |
+| `organization_tradeoffs` | How do stage groups change local values, independent components, and transfers in the same graph? |
+| `roofline` | Why can legal organizations attain different rates below the same resource roof? |
+| `hierarchy` | How do row/column handoffs, capacity refinement, and an independent bank-layout example constrain mappings? |
 | `semantic_transport` | Which structural correspondences carry across order, tensor axes, and inverse local arithmetic? |
-| `bank_layout` | How does a row-dependent XOR offset distribute a column across banks? |
+| `bank_layout` | Retained standalone version of the four-bank XOR example now shown within `hierarchy` |
 | `pipeline` | When may consumers start and buffers be reused? |
 | `system_architecture` | How does preparation produce a checked plan for complete runtime execution? |
 
@@ -69,16 +71,32 @@ exports are sufficient to compile the paper without an installed editor.
 
 ## Layout and evidence
 
-Three overview/comparison figures use a 1000-unit double-column canvas. The
-five worked examples use a 480-unit single-column canvas. A common muted palette,
-white background, and labels of at least 14 units keep their typography consistent
-at manuscript size. Color is supplemented by panel titles, group boxes, logical
-indices, and lane labels.
+The 2026-11-04 redraw uses one 1000 × 310 overview and six single-column
+figures. The selected-plan figure is now 480 × 292 instead of a second wide
+architecture diagram. The overview owns the common input/construction/resource
+story; the selected-plan figure owns preparation versus execution and a concrete
+boundary binding. The two figures no longer repeat the same architecture boxes.
 
-The transfer counts, index mappings, bank example, and buffer schedule are
-analytical constructions. The roofline has symbolic axes, and the timeline has
-illustrative durations. None of these diagrams is a measured performance result.
-Measured experimental plots remain separate data-driven assets.
+| Source | Canvas | Visual evidence |
+| --- | --- | --- |
+| overview | 1000 × 310 | N=8 dependency edges; stage/data × space/time choices; bounded workers |
+| organization_tradeoffs | 480 × 414 | Full N=16 dependency network, stage cuts, local values and transfers |
+| roofline | 480 × 292 | Seven frozen A100 40GB points; symbolic roof; categorical gap mechanisms |
+| hierarchy | 480 × 436 | Row/column writeback; bounded child bands; bank contention versus XOR |
+| semantic_transport | 480 × 274 | Directed adjacent/strided pair graphs and carried arithmetic labels |
+| pipeline | 480 × 414 | Cross-band readiness plus within-band load/compute/store with two slots |
+| system_architecture | 480 × 292 | Static preparation, reusable execution, concrete successor pairs |
+
+Transfer counts, index maps, bank examples, and buffer schedules are analytical
+constructions. Timeline durations are illustrative. Roofline execution points
+come from `generated/roofline_cases_20261029.csv`; its roof is symbolic, not a
+measured hardware ceiling. The three causal boxes have no quantitative encoding.
+Neither worker lanes nor the symbolic roof establish actual hardware overlap,
+occupancy, or an attainable optimum. In particular, the row/column transpose and
+four-bank XOR examples are separate maps, not a composition proven conflict-free.
+
+Use [the redesign review](../../evidence/FIGURE_REDESIGN_20261104.md) for reference
+paper provenance, the purpose of each change, and remaining measurement gaps.
 
 `tools/drawio_common.py` and `tools/drawio_*_figures.py` produced the initial
 native diagrams and include checks for the analytical examples. They are

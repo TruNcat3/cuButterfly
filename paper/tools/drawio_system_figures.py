@@ -1,136 +1,91 @@
-"""Editable overview and generation/selection diagrams for the paper."""
+"""Native diagrams: a unified method and a concrete generated-plan witness."""
 from drawio_common import Diagram, BLUE, GREEN, ORANGE, PURPLE, INK, GRAY, LIGHT, PALE, butterfly
 
 
 def overview():
-    d = Diagram('overview', 1000, 370)
-    for x in (320, 680):
-        d.line([(x, 15), (x, 355)], color=LIGHT, width=1)
-    d.text(10, 12, 300, 25, '(a) Labeled dependencies', size=16, bold=True)
-    d.text(330, 12, 340, 25, '(b) Bounded bands and fan-in', size=16, bold=True)
-    d.text(690, 12, 300, 25, '(c) Recursive hardware placement', size=16, bold=True)
-
-    # Arithmetic contracts remain attached to the common pairing envelope.
-    arithmetic = [('FFT', 'a +/- twiddle * b', BLUE),
-                  ('NTT', 'a +/- twiddle * b (mod q)', ORANGE),
-                  ('FWHT', 'a + b, a - b', GREEN),
-                  ('zeta', 'a, a + b', PURPLE),
-                  ('structured', 'M [a, b]', INK)]
-    for i, (name, operation, color) in enumerate(arithmetic):
-        y = 47 + 23 * i
-        d.dot(25, y + 10, radius=3, color=color)
-        d.text(38, y, 83, 20, name, color=color, bold=True, align='left')
-        d.text(123, y, 184, 20, operation, align='left')
-    d.line([(160, 164), (160, 185)], color=GRAY, arrow=True)
-    xs = [64, 131, 198, 265]
-    ys = [211 + 16 * i for i in range(8)]
-    butterfly(d, xs, ys, [0, 1, 2], color=BLUE, node_radius=2.3)
-    for x, label in zip(xs, ['input', 'bit 0', 'bit 1', 'bit 2']):
-        d.text(x - 27, 187, 54, 20, label, color=GRAY)
-    d.text(17, 330, 289, 25, 'N = 8; common pairing envelope', color=GRAY)
-
-    # Bits 0 and 1 close over the two components obtained by fixing bit 2.
-    d.text(334, 47, 151, 35, 'band {0, 1}', color=BLUE, bold=True)
-    d.text(567, 47, 104, 35, 'band {2}', color=GREEN, bold=True)
-    for y, color, fill, label in [(91, BLUE, PALE[0], 'bit 2 = 0'),
-                                  (208, ORANGE, PALE[1], 'bit 2 = 1')]:
-        d.box(341, y, 146, 104, fill=fill, stroke=color, rounded=False)
-        d.text(349, y + 4, 130, 21, label, color=color, bold=True)
-        butterfly(d, [359, 415, 471], [y + 36 + 17 * i for i in range(4)],
-                  [0, 1], color=color, node_radius=2.3)
-    d.text(339, 315, 150, 22, '2 closed subgraphs', color=BLUE)
-    d.text(339, 338, 150, 20, '4 values each', color=GRAY)
-    for i in range(4):
-        y = 95 + 54 * i
-        d.box(571, y, 94, 44, fill=PALE[2], stroke=GREEN, rounded=False)
-        d.text(572, y + 2, 92, 18, f'pair ({i}, {i + 4})', color=GREEN)
-        # Both components supply one value to each bit-2 consumer.
-        d.line([(471, 127 + 17 * i), (571, y + 26)], color=BLUE, width=1)
-        d.line([(471, 244 + 17 * i), (571, y + 37)], color=ORANGE, width=1)
-        butterfly(d, [587, 650], [y + 26, y + 37], [0], color=GREEN,
-                  node_radius=2)
-    d.text(497, 83, 65, 23, 'handoff', color=GRAY)
-    d.text(566, 315, 106, 22, '4 consumers', color=GREEN)
-    d.text(560, 338, 113, 20, '2 values each', color=GRAY)
-
-    # Boxes are execution groups, not a nesting claim about address spaces.
-    d.box(699, 52, 282, 245, stroke=PURPLE, fill='#ffffff', rounded=False)
-    d.text(710, 59, 260, 23, 'Device work: global handoffs', color=PURPLE, bold=True)
-    d.box(715, 94, 250, 151, stroke=ORANGE, fill=PALE[1], rounded=False)
-    d.text(723, 101, 234, 23, 'Block group: shared exchange', color=ORANGE, bold=True)
-    for y, name in [(137, 'Thread group A'), (188, 'Thread group B')]:
-        d.box(729, y, 222, 40, fill='#ffffff', stroke=BLUE, rounded=False)
-        d.text(737, y + 3, 130, 18, name, color=BLUE, align='left')
-        d.text(737, y + 21, 130, 16, 'register residency', color=GRAY, align='left')
-        butterfly(d, [887, 933], [y + 11, y + 29], [0], color=BLUE)
-    d.line([(840, 177), (840, 188)], color=ORANGE, arrow=True)
-    d.text(713, 259, 252, 26, 'Repeat local work + explicit exchange', color=PURPLE)
-    for i, x in enumerate([710, 800, 890]):
-        d.box(x, 312, 71, 28, f'tile {i}', fill=PALE[2], stroke=GREEN, rounded=False)
-    d.text(701, 342, 279, 26, 'Independent tiles reuse resources', color=GRAY)
+    d = Diagram('overview', 1000, 310)
+    # Distinct inputs share a construction, not a universal arithmetic kernel.
+    for x,w,title,detail,color,fill in [
+        (12,294,'Operator + numeric contract','FFT / NTT / FWHT / zeta / structured',BLUE,PALE[0]),
+        (328,320,'Workload domain','shape, batch, strides, placement',GREEN,PALE[2]),
+        (670,318,'Hardware capabilities','local capacity, service rates, compatible cores',ORANGE,PALE[1])]:
+        d.box(x,8,w,45,fill=fill,stroke=color,rounded=False)
+        d.text(x+5,10,w-10,20,title,size=15,bold=True,color=color)
+        d.text(x+5,31,w-10,18,detail,size=14)
+    d.line([(159,61),(829,61)],color=GRAY)
+    for x in [159,488,829]:
+        d.line([(x,53),(x,61)],color=GRAY)
+        d.line([(x,61),(x,70)],color=GRAY,arrow=True)
+    d.text(12,72,296,23,'1  Derive regions and handoffs',size=15,bold=True)
+    d.text(339,72,315,23,'2  Characterize legal organizations',size=15,bold=True)
+    d.text(687,72,301,23,'3  Bind cores and execute tiles',size=15,bold=True)
+    # Real N8 graph, two closed four-value prefix subgraphs, then q2 handoff.
+    ys=[116+15*i+(12 if i>=4 else 0) for i in range(8)]
+    for y,c,f,lab in [(104,BLUE,PALE[0],'A'),(176,ORANGE,PALE[1],'B')]:
+        d.box(24,y,152,65,fill=f,stroke=c,rounded=False)
+        d.text(27,y+2,18,16,lab,size=13,bold=True,color=c)
+    butterfly(d,[45,105,165,280],ys,[0,1,2],node_radius=2)
+    d.line([(191,101),(191,242)],color=GREEN,dashed=True)
+    d.text(200,105,77,18,'handoff',size=13,color=GREEN)
+    d.text(12,246,294,19,'closed regions -> predecessor sets',size=14,color=BLUE)
+    d.line([(305,177),(326,177)],color=INK,arrow=True)
+    # Two orthogonal dimensions, each may use space or time. No made-up bars.
+    d.text(350,104,90,20,'Dimension',size=13,color=GRAY)
+    d.text(451,104,88,20,'Space',size=14,bold=True,color=GREEN)
+    d.text(552,104,88,20,'Time',size=14,bold=True,color=PURPLE)
+    for y,name in [(132,'Stages'),(177,'Data tiles')]:
+        d.text(343,y+8,88,22,name,size=14,bold=True)
+        for xx,color,fill in [(450,GREEN,PALE[2]),(552,PURPLE,PALE[3])]:
+            for j in range(3):
+                d.box(xx+j*27,y,22,24,str(j),fill=fill,stroke=color,rounded=False,size=13)
+            if xx==552: d.line([(xx,y+32),(xx+78,y+32)],color=color,arrow=True)
+    d.box(340,224,310,42,'state / traffic / ready work\nchecked against capacity and service',fill='#ffffff',stroke=ORANGE,rounded=False,size=14)
+    d.line([(655,177),(680,177)],color=INK,arrow=True)
+    # Nested scope has bounded tiles; outer data is not all resident.
+    d.box(694,107,281,128,fill='#ffffff',stroke=GRAY,rounded=False)
+    d.text(700,110,269,20,'External handoff buffers',size=14,color=GRAY)
+    for row in range(2):
+        y=140+42*row
+        d.box(706,y,257,35,fill=PALE[2],stroke=GREEN,rounded=False)
+        d.text(711,y+6,72,22,'worker '+str(row),size=13)
+        for j in range(3):
+            d.box(790+j*52,y+6,43,23,'tile '+str(2*j+row),fill=PALE[row],stroke=[BLUE,ORANGE][row],rounded=False,size=13)
+    # Expand one tile into its local pair graph rather than add a prose box.
+    butterfly(d,[714,746,778],[243,251,259,267],[0,1],node_radius=1.2)
+    d.line([(788,254),(810,254)],color=GREEN,arrow=True)
+    d.text(819,239,154,31,'local core +\noutput placement',size=13,color=BLUE)
+    d.box(12,279,976,23,'Same construction across storage scopes; one band and expansion factor 1 remain legal endpoints.',fill='#f3f5f7',stroke='none',rounded=False,size=14)
     return d.save()
 
 
 def system_architecture():
-    d = Diagram('system_architecture', 1000, 390)
-    d.text(20, 9, 960, 25, 'Automatic realization: finite search, confirmed execution plan',
-           size=16, bold=True)
-    inputs = [(35, 180, 'Semantic contract', 'arithmetic, precision, order', BLUE, PALE[0]),
-              (245, 180, 'Workload', 'N, batch, shape, placement', GREEN, PALE[2]),
-              (455, 180, 'Target + core catalog', 'capacity, compatible cores', ORANGE, PALE[1]),
-              (730, 240, 'Measured services', 'core, tile, layout, resources', PURPLE, PALE[3])]
-    for x, w, title, detail, color, fill in inputs:
-        d.box(x, 48, w, 55, fill=fill, stroke=color)
-        d.text(x + 5, 53, w - 10, 22, title, bold=True, color=color)
-        d.text(x + 5, 77, w - 10, 20, detail)
-    for x in [125, 335, 545]:
-        d.line([(x, 103), (x, 117)], color=GRAY)
-    d.line([(125, 117), (545, 117)], color=GRAY)
-    d.line([(142, 117), (142, 151)], color=GRAY, arrow=True)
-    d.line([(850, 103), (850, 126), (650, 126), (650, 151)],
-           color=PURPLE, arrow=True)
-
-    d.text(260, 124, 355, 20, 'Preparation: build, validate and select',
-           color=GRAY, align='left')
-    stages = [(35, 215, 'Legal candidates', 'subgraphs + handoffs\ncores, layouts, schedules', GREEN, PALE[2]),
-              (290, 210, 'Compile + validate', 'resource / dependency checks\nnumerical contract', ORANGE, PALE[1]),
-              (540, 220, 'Prioritize + measure', 'service model, finite budget\ncomplete-plan confirmation', PURPLE, PALE[3]),
-              (810, 160, 'Selected plan / cache', 'fastest confirmed\nmatching contract', BLUE, PALE[0])]
-    for x, w, title, detail, color, fill in stages:
-        d.box(x, 151, w, 65, fill=fill, stroke=color)
-        d.text(x + 5, 155, w - 10, 21, title, color=color, bold=True)
-        d.text(x + 6, 178, w - 12, 34, detail)
-    for x1, x2 in [(250, 290), (500, 540), (760, 810)]:
-        d.line([(x1, 184), (x2, 184)], color=INK, arrow=True)
-
-    d.box(290, 230, 210, 39, 'Unsupported / invalid\nrecord explicit gap',
-          fill='#ffffff', stroke=ORANGE, rounded=False)
-    d.line([(395, 216), (395, 230)], color=ORANGE, arrow=True)
-    # Only measurement feedback is dashed. The gap branch terminates explicitly.
-    d.line([(650, 216), (650, 273), (142, 273), (142, 216)],
-           color=PURPLE, dashed=True, arrow=True)
-    d.text(155, 230, 128, 38, 'Measurements\nrefine candidates', color=PURPLE)
-
-    d.line([(20, 288), (980, 288)], color=LIGHT, width=1)
-    d.text(27, 293, 750, 24, 'Warm device path: adaptation, execution, handoffs and synchronization',
-           size=16, bold=True, color=ORANGE, align='left')
-    runtime = [(35, 95, 'Input', BLUE), (170, 120, 'Adapt', BLUE),
-               (330, 165, 'Resident groups', GREEN),
-               (535, 190, 'Handoffs + sync', PURPLE), (765, 130, 'Output', ORANGE)]
-    for x, w, title, color in runtime:
-        d.box(x, 328, w, 39, title, stroke=color, fill='#ffffff', bold=True)
-    for x1, x2 in [(130, 170), (290, 330), (495, 535), (725, 765)]:
-        d.line([(x1, 347), (x2, 347)], color=INK, arrow=True)
-    # Dispatch the whole plan at adaptation; a cache hit does not bypass it.
-    d.line([(970, 184), (985, 184), (985, 321), (230, 321), (230, 328)],
-           color=BLUE, arrow=True)
-    d.text(821, 243, 150, 38, 'Matching cache hit:\ndispatch complete plan', color=BLUE)
-    d.line([(35, 375), (895, 375)], color=ORANGE, width=1.5)
-    d.line([(35, 370), (35, 380)], color=ORANGE, width=1.5)
-    d.line([(895, 370), (895, 380)], color=ORANGE, width=1.5)
+    # One column: the overview now owns the common architecture. This figure
+    # makes a selected plan concrete without repeating its input boxes.
+    d=Diagram('system_architecture',480,292)
+    d.title('A selected plan connects construction to execution')
+    d.text(12,36,210,20,'Preparation (outside timing)',size=14,bold=True,color=BLUE)
+    d.text(265,36,203,20,'Reusable execution',size=14,bold=True,color=GREEN)
+    for y,title,detail,color,fill in [
+        (65,'Static profile','capacity + local service',ORANGE,PALE[1]),
+        (120,'Construct and check','bands + core + layout',BLUE,PALE[0]),
+        (175,'Confirm complete plan','correctness + timing',PURPLE,PALE[3])]:
+        d.box(17,y,198,42,fill=fill,stroke=color,rounded=False)
+        d.text(20,y+2,192,19,title,size=14,bold=True,color=color)
+        d.text(20,y+22,192,17,detail,size=13)
+        if y<175: d.line([(115,y+42),(115,y+55)],color=GRAY,arrow=True)
+    d.line([(216,194),(248,194),(248,85),(270,85)],color=BLUE,arrow=True)
+    for j,(label,col,fill) in enumerate([('input',BLUE,PALE[0]),('subgraph A | B',GREEN,PALE[2]),('boundary layout',PURPLE,PALE[3]),('successor tiles',GREEN,PALE[2]),('output',ORANGE,PALE[1])]):
+        y=67+j*32
+        d.box(275,y,185,25,label,fill=fill,stroke=col,rounded=False,size=14)
+        if j<4: d.line([(367,y+25),(367,y+32)],color=GRAY,arrow=True)
+    d.line([(12,231),(468,231)],color=LIGHT)
+    d.text(12,236,456,18,'Example binding: bands {0,1} -> {2}; four-value local core',size=13,bold=True)
+    for i in range(4):
+        x=90+i*75
+        d.box(x,259,29,23,str(i),fill=PALE[0],stroke=BLUE,rounded=False,size=13)
+        d.box(x+29,259,29,23,str(i+4),fill=PALE[1],stroke=ORANGE,rounded=False,size=13)
+    d.text(8,260,76,20,'next pairs',size=13,color=GREEN)
     return d.save()
 
-
-if __name__ == '__main__':
-    for make in (overview, system_architecture):
-        print(make())
+if __name__=='__main__':
+    for make in (overview,system_architecture): print(make())

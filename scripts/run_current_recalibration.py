@@ -8,6 +8,7 @@ import hashlib
 import io
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import statistics
@@ -21,6 +22,11 @@ ARTIFACTS = ("libcuntt.so", "cubutterfly_bench", "cuntt_bench", "cuntt_hardware_
              "cubutterfly_schedule_microbench", "cubutterfly_pipeline_microbench",
              "cubutterfly_plan_bench", "generated/build_fingerprint.hpp", "CMakeCache.txt")
 SOURCE_INPUTS = ("run_current_recalibration.py", "calibrate_local_hardware.py",
+                 "initialize_hardware_profile.py", "check_hardware_profile.py",
+                 "static_hardware_profile.py", "rank_static_candidates.py",
+                 "calibration_cpu_cache.py", "capture_calibration_cpu_inputs.py",
+                 "prepare_calibration_cpu.py", "research_compile_requests.py",
+                 "prepare_refresh_calibration.py",
                  "calibration_seeds.py",
                  "finalize_recalibration.py", "run_research_acceptance.py", "research_baselines.py",
                  "calibration_space.py", "stage_cost_model.py", "stage_service_model.py",
@@ -62,8 +68,14 @@ def validate_build(build):
                  "CUBUTTERFLY_ENABLE_XD_CUFFTDX"):
         if cache.get(name) not in ("ON", "TRUE", "1"):
             raise ValueError("current retest requires " + name + "=ON")
-    if "80" not in cache.get("CMAKE_CUDA_ARCHITECTURES", "").split(";"):
-        raise ValueError("current A100 retest requires SM80")
+    targets = cache.get("CMAKE_CUDA_ARCHITECTURES", "").split(";")
+    if not targets or any(not re.fullmatch(r"[0-9]+(?:-real|-virtual)?", target)
+                          for target in targets):
+        raise ValueError("CMAKE_CUDA_ARCHITECTURES requires explicit numeric SM targets")
+    architectures = {int(target.split("-", 1)[0]) for target in targets}
+    if len(architectures) != 1 or next(iter(architectures)) <= 0:
+        raise ValueError("CMAKE_CUDA_ARCHITECTURES must specify one unique positive SM")
+    return architectures.pop()
 
 
 def identity(args):
@@ -91,6 +103,12 @@ def environment(args, finalized=False):
     env = os.environ.copy()
     env.update(CUDA_VISIBLE_DEVICES=args.gpu_uuid, CUBUTTERFLY_COMPILE_MODE="research",
                CUBUTTERFLY_REGISTRY=str(args.output_dir / ("finalized" if finalized else "initial") / "registry.json"))
+    env.pop("CUBUTTERFLY_HARDWARE_MODEL", None)
+    env.pop("CUBUTTERFLY_PROFILE_ROOT", None)
+    if finalized:
+        hardware = args.output_dir / "hardware/hardware_model.json"
+        if hardware.is_file():
+            env["CUBUTTERFLY_HARDWARE_MODEL"] = str(hardware)
     env.pop("CUBUTTERFLY_HARDWARE_PROFILE", None)
     env.pop("CUBUTTERFLY_COST_MODEL", None)
     env.pop("LD_PRELOAD", None)

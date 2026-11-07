@@ -4,6 +4,8 @@ import pathlib
 import stat
 import subprocess
 
+import pytest
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "prepare_research_target.sh"
@@ -60,6 +62,7 @@ def test_dry_run_is_portable_and_does_not_create_target_or_install(tmp_path):
     assert "crypto-ntt-sm70" in result.stdout
     assert "CUDA_VISIBLE_DEVICES=" in result.stdout
     assert "--parallel 3" in result.stdout
+    assert f"-DCMAKE_INSTALL_PREFIX={prefix}".replace(" ", "\\ ") in result.stdout
     assert "BF16: emulated storage/rounding only" in result.stdout
     assert "install" in result.stdout
     assert "A100" not in result.stdout
@@ -129,7 +132,8 @@ def test_missing_archived_selector_is_a_build_dependency(tmp_path):
     assert not target.exists()
 
 
-def test_mocked_cpu_prepare_builds_crypto_bench_lists_tests_and_records_bf16(tmp_path):
+@pytest.mark.parametrize("arch", [70, 120])
+def test_mocked_cpu_prepare_builds_crypto_bench_lists_tests_and_records_bf16(tmp_path, arch):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     log = tmp_path / "commands.log"
@@ -164,8 +168,12 @@ set -euo pipefail
         "PYTHON": os.environ.get("PYTHON", "python3"),
     })
     build = tmp_path / "v100 build with spaces"
+    prefix = tmp_path / "conda prefix"
+    (prefix / "conda-meta").mkdir(parents=True)
     result = _run([
         "--build-dir", str(build),
+        "--prefix", str(prefix), "--install", "--shared",
+        "--fft-codegen-mode", "on-demand", "--cuda-arch", str(arch),
         "--mathdx-root", str(mathdx),
         "--json-root", str(json_root),
         "--nvcc", str(nvcc),
@@ -183,20 +191,47 @@ set -euo pipefail
     assert all(not path.startswith("results/") for path in portable["layers"]["runtime_selection"]["paths"])
     assert portable["generated_artifact_paths"]["runtime_selection"] == missing_result_paths
     assert portable["portable_source_manifest"]["generated_artifacts_are_informational"] is True
-    assert manifest["cuda_architecture"] == 70
+    assert manifest["target"] == "CUDA"
+    assert manifest["cuda_architecture"] == arch
     assert manifest["cufftdx_enabled"] is True
     assert manifest["runtime_selector"]["source"] == "legacy-build-input"
     assert manifest["runtime_selector"]["calibration_required"] is True
     assert manifest["architecture_manifest"]["portable"] == str((build / "portable_architecture_manifest.json").resolve())
     assert manifest["nlohmann_json_root"] == str(json_root.resolve())
-    assert manifest["bf16"]["native_arithmetic"] is False
-    assert manifest["bf16"]["measurement_label"] == "emulated_native"
+    assert manifest["bf16"]["native_arithmetic"] is (False if arch == 70 else None)
+    assert manifest["bf16"]["measurement_label"] == ("emulated_native" if arch == 70 else "unmeasured")
+    for phase in ("activate", "deactivate"):
+        hook = prefix / f"etc/conda/{phase}.d/cubutterfly_profile.sh"
+        assert hook.read_bytes() == (ROOT / f"scripts/conda_{phase}_profile.sh").read_bytes()
     assert manifest["preparation"]["gpu_execution"] is False
     commands = log.read_text()
-    assert "-DCMAKE_CUDA_ARCHITECTURES=70" in commands
+    assert f"-DCMAKE_CUDA_ARCHITECTURES={arch}" in commands
     assert "-DFETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON=" in commands
     assert "-DCUBUTTERFLY_NLOHMANN_INCLUDE=" in commands
     assert "-DCUBUTTERFLY_ARCHITECTURE_MANIFEST=" in commands
-    assert "crypto-ntt-sm70" in commands
+    assert f"crypto-ntt-sm{arch}" in commands
     assert "ctest" in commands and "-N" in commands
-    assert "--install" not in commands
+    assert "--install" in commands
+    assert "-DCUBUTTERFLY_BUILD_SHARED=ON" in commands
+    assert "-DCUBUTTERFLY_FFT_CODEGEN_MODE=on-demand" in commands
+    assert f"-DCMAKE_INSTALL_PREFIX={prefix}".replace(" ", "\\ ") in commands
+
+
+def test_sm120_dry_run_plans_actual_support_probe_without_gpu(tmp_path):
+    build = tmp_path / "blackwell"
+    result = _run(["--cuda-arch", "120", "--build-dir", str(build), "--dry-run"])
+    assert result.returncode == 0, result.stderr
+    assert not build.exists()
+    assert "target: CUDA sm120" in result.stdout
+    assert "-DCUBUTTERFLY_PROBE_ARCHITECTURES=120" in result.stdout
+    assert "CuFFTDxTarget.cmake" in result.stdout
+    assert "-DCMAKE_CUDA_ARCHITECTURES=120" in result.stdout
+    assert "V100-compatible" not in result.stdout
+
+
+def test_codegen_mode_rejects_unknown_before_build(tmp_path):
+    target = tmp_path / "invalid"
+    result = _run(["--build-dir", str(target), "--fft-codegen-mode", "unknown"])
+    assert result.returncode == 2
+    assert "invalid --fft-codegen-mode" in result.stderr
+    assert not target.exists()

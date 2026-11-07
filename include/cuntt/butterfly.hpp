@@ -246,6 +246,8 @@ struct ButterflyConfig {
     // Factor boundaries materialize global state, including inside a macro stage.
     std::vector<std::uint32_t> factor_partition;
     std::uint32_t factor_ept = 16, factor_columns = 8;
+    // Scalar OnlineReorder: independent prefix tiles per CTA; reorder_columns
+    // groups independent suffix columns. Both grouping factors are powers of two.
     std::uint32_t data_tiles_per_cta = 1, prefetch_depth = 0;
     // Divide an unprocessed FFT digit into dependency-closed data slices.
     // Serial slices are a control for the same layout with factor_overlap off.
@@ -292,6 +294,8 @@ struct ButterflyConfig {
     // Defaults preserve the historical native/linear implementation.
     std::string         prefix_codelet = "native";
     std::string         prefix_shared_layout = "linear";
+    // Diagonal twiddle supply between the two prefix-local FFT factors.
+    std::string         prefix_twiddle = "runtime";
     // Online register FFT suffix provider; never an implicit fallback.
     std::string         suffix_core = "cufftdx-block";
     // One policy per physical factor group.  An empty vector means dynamic

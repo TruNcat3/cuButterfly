@@ -1,6 +1,7 @@
 #include "jit_module.hpp"
 #include "jit_config.hpp"
 #include "cufftdx_provider.hpp"
+#include "fft_local_core_contract.hpp"
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <cstdlib>
@@ -28,11 +29,22 @@ std::string cache_path() {
     return setting("CUBUTTERFLY_JIT_CACHE", setting("XDG_CACHE_HOME", setting("HOME", ".")+"/.cache")+"/cubutterfly/modules");
 }
 std::string mapping(const ButterflyConfig& c) {
+    if (fp16_local_block(c)) {
+        fp16_local_block_shape(c);
+        return nlohmann::json{{"backend", "temporal-tile"}, {"fft_core", "cufftdx-block"},
+            {"precision", "fp16"}, {"accumulation", "native"}, {"logN", c.log_n},
+            {"tile_threads", c.tile_threads}, {"prefix_ept", c.prefix_ept},
+            {"packing", "half2-transform-pair-v1"}}.dump();
+    }
     if(c.backend==ButterflyBackend::FactorStreamed) {
         auto point=nlohmann::json{{"backend","factor-streamed"},{"precision",butterfly_precision_name(c.precision)},
             {"logN",c.log_n},{"stage_partition",c.stage_partition},{"factor_partition",c.factor_partition},
             {"factor_ept",c.factor_ept},{"factor_columns",c.factor_columns},
             {"data_tiles_per_cta",c.data_tiles_per_cta},{"prefetch_depth",c.prefetch_depth}};
+        if (c.precision == ButterflyPrecision::Fp16) {
+            point["accumulation"] = "native";
+            point["packing"] = "half2-transform-pair-v1";
+        }
         // Preserve the legacy cache point for the all-dynamic policy.  A
         // static-unrolled policy is a distinct lowering and must be visible
         // in the key rather than reusing a dynamic module.
@@ -48,6 +60,7 @@ std::string mapping(const ButterflyConfig& c) {
         {"prefix_ept", c.prefix_ept}, {"suffix_threads", c.suffix_threads}, {"suffix_ept", c.suffix_ept},
         {"prefix_codelet_lanes", c.prefix_codelet_lanes}, {"suffix_core", c.suffix_core},
         {"prefix_codelet", c.prefix_codelet}, {"prefix_shared_layout", c.prefix_shared_layout},
+        {"prefix_twiddle", c.prefix_twiddle},
         {"local_stage_partitions",c.local_stage_partitions},{"exchange_chunks",c.exchange_chunks}}.dump();
 }
 std::string key(const ButterflyConfig& c) {
@@ -175,21 +188,34 @@ bool specialize_shared_templates() {
 }
 
 const cubutterflyModuleV2* prepare_shared_module(const ButterflyConfig& c) {
-    return prepare_shared({{"backend","shared-iterative"},{"operator",butterfly_operator_name(c.op)},
+    nlohmann::json point{{"backend","shared-iterative"},{"operator",butterfly_operator_name(c.op)},
         {"precision",butterfly_precision_name(c.precision)},{"accumulation",butterfly_accumulation_name(c.accumulation)},
         {"complex_multiply",complex_multiply_name(c.complex_multiply)},{"logN",c.log_n},
         {"stage_partition",c.stage_partition},{"threads",c.tile_threads},
+        {"data_tiles_per_cta",c.data_tiles_per_cta},
         {"local_stage_partitions",c.local_stage_partitions},{"exchange_chunks",c.exchange_chunks},
         {"writer_aligned",c.shared_layout==SharedLayout::WriterAligned},
-        {"batch_tile",c.stage_overlap ? 1U : c.batch_tile_count}});
+        {"batch_tile",c.stage_overlap ? 1U : c.batch_tile_count}};
+    if (!c.execution_group_mappings.empty()) {
+        point["group_threads"] = nlohmann::json::array();
+        for (const auto& group : c.execution_group_mappings)
+            point["group_threads"].push_back(group.threads);
+    }
+    return prepare_shared(std::move(point));
 }
 const cubutterflyModuleV2* prepare_shared_module(const PlanConfig& c) {
-    return prepare_shared({{"backend","shared-iterative"},{"operator","ntt"},
+    nlohmann::json point{{"backend","shared-iterative"},{"operator","ntt"},
         {"precision","word"+std::to_string(c.word_bits)},{"logN",c.log_n},{"stage_partition",c.stage_partition},
         {"threads",c.threads_per_block},{"writer_aligned",c.dataflow_layout==DataflowLayout::HermesXor},
         {"local_stage_partitions",c.local_stage_partitions},{"exchange_chunks",c.exchange_chunks},
         {"output_order",output_order_name(c.output_order)},
-        {"batch_tile",c.stage_overlap ? 1U : c.batch_tile_count}});
+        {"batch_tile",c.stage_overlap ? 1U : c.batch_tile_count}};
+    if (!c.execution_group_mappings.empty()) {
+        point["group_threads"] = nlohmann::json::array();
+        for (const auto& group : c.execution_group_mappings)
+            point["group_threads"].push_back(group.threads_per_block);
+    }
+    return prepare_shared(std::move(point));
 }
 template <typename ModuleApi>
 void attach_resources(MixedDataflowPlan& plan, const ModuleApi* module, bool inverse) {
@@ -249,13 +275,21 @@ void prepare_register_module(const ButterflyConfig& c) {
     if (modules.count(id)) return;
     const auto device = current_device_info();
     const auto sm = device.compute_major*10 + device.compute_minor;
-    const auto precision_bits = c.precision==ButterflyPrecision::Fp64 ? 64U : 32U;
-    if (c.backend==ButterflyBackend::FactorStreamed) {
+    const auto require_provider = [&](unsigned size, unsigned ept) {
+        const auto precision_bits = cufftdx_arithmetic_precision_bits(c);
+        if (!precision_bits)
+            throw ProviderImplementationMissing("local-arithmetic-not-implemented: cuButterfly cuFFTDx adapter does not implement the requested precision/accumulation/normalization contract");
+        require_cufftdx_provider(sm*10, *precision_bits, size, ept);
+    };
+    if (fp16_local_block(c)) {
+        fp16_local_block_shape(c);
+        require_provider(1U<<c.log_n, c.prefix_ept);
+    } else if (c.backend==ButterflyBackend::FactorStreamed) {
         if (c.fft_core==FftCore::CufftDxBlock)
             for (auto stage : c.factor_partition)
-                require_cufftdx_provider(sm*10, precision_bits, 1U<<stage, c.factor_ept);
+                require_provider(1U<<stage, c.factor_ept);
     } else if (c.suffix_core == "cufftdx-block") {
-        require_cufftdx_provider(sm*10, precision_bits, 1U<<(c.log_n-c.local_stages), c.suffix_ept);
+        require_provider(1U<<(c.log_n-c.local_stages), c.suffix_ept);
     }
     const auto path = compile(mapping(c),sm);
     auto module = std::make_unique<Module>();
@@ -272,7 +306,8 @@ void prepare_register_module(const ButterflyConfig& c) {
     if(c.factor_slices>1 && !module->range_launch) throw std::runtime_error("factor module has no partial launch entry");
     if (!module->register_group_launch) throw std::runtime_error("register module has no group launch entry");
     if (!module->api || module->api->abi_version!=1 || module->api->struct_size!=sizeof(cubutterflyModuleV1) ||
-        module->api->sm!=static_cast<unsigned>(sm) || module->api->group_count!=(c.backend==ButterflyBackend::FactorStreamed ? c.factor_partition.size() : 2))
+        module->api->sm!=static_cast<unsigned>(sm) || module->api->group_count!=(fp16_local_block(c) ? 1 :
+            c.backend==ButterflyBackend::FactorStreamed ? c.factor_partition.size() : 2))
         throw std::runtime_error("specialization ABI or hardware mismatch");
     const auto hardware = query_hardware_resource_model();
     for (unsigned direction=0; direction<2; ++direction) for (unsigned group=0; group<module->api->group_count; ++group) {

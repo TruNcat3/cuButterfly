@@ -214,6 +214,11 @@ def main(argv=None):
     parser.add_argument("--dry-run", action="store_true", help="print bounded protocol without importing CUDA")
     args = parser.parse_args(argv)
     output, library = args.output.resolve(), args.library.resolve()
+    # The refresh driver declares the output file, while a fresh campaign may
+    # not have materialized the phase directory yet.  Creating only this
+    # narrowly scoped parent is part of the phase setup and does not overwrite
+    # an existing checkpoint.
+    output.parent.mkdir(parents=True, exist_ok=True)
     cache, csv_path = output.with_suffix(".cache.json"), output.with_suffix(".csv")
     for target in (output, cache, csv_path, output.with_name(output.name + ".tmp")):
         if target.exists():

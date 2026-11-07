@@ -115,3 +115,18 @@ scope、manifest、build identity 和生成脚本。论文只读取已经接纳�
 显式 2 GiB tuning 和自适应默认三种状态，明确记录构建 hash、GPU UUID、候选来源、Graph 计时、
 kernel trace、负结果及复现路径。该案例的自适应结果可以作为论文的独立 2D Poisson endpoint，
 但不能覆盖旧的 9 点 image-filter cohort。
+
+## 源码发布与未附带的历史原始工件
+
+源码发布保留历史实验文档及其原始工件链接，但不打包本机完整 `results/`。
+[显式工件清单](../config/repository_local_artifacts.json) 逐项登记本次发布中缺失的
+202 个确切路径；它不按目录前缀豁免子文件，也不承认工件内容已经核验。
+论文读者可先查看随源码发布的[冻结证据快照](../paper/generated/current_refresh/snapshot.json)
+及[应用 cohort 说明](../paper/generated/current_refresh/APPLICATION_COHORTS.md)。冻结派生
+数据不代替未附带的原始测量、输入或构建工件。
+
+`python scripts/check_repository.py` 检查源码链接，并单独报告已登记但未附带的原始工件数量。
+未登记的 `results/` 拼写错误、缺失源码和缺失论文资产仍使检查失败。若本机已有原始工件，
+运行 `python scripts/check_repository.py --strict-local-artifacts` 要求清单全部路径存在；
+此选项仅检查存在性，不证明数值正确、来源一致或实验通过。新增清单项须逐条审核具体路径，
+不能用通配符或整个结果目录掩盖新的失效链接。

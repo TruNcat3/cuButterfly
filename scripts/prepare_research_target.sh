@@ -23,6 +23,8 @@ PYTHON_BIN=${PYTHON:-}
 WITH_VKFFT=0
 CREATE_ENV=0
 INSTALL=0
+SHARED=0
+FFT_CODEGEN_MODE=
 DRY_RUN=0
 PYTHON_EXPLICIT=0
 [[ -n "${PYTHON:-}" ]] && PYTHON_EXPLICIT=1
@@ -31,7 +33,7 @@ usage() {
     cat <<'EOF'
 Usage: scripts/prepare_research_target.sh [options]
 
-Prepare an isolated target build for V100 research.  The default target is
+Prepare an isolated target build for CUDA research.  The default target is
 sm70.  The script configures and builds the top-level project, configures the
 isolated crypto NTT benchmark, and runs `ctest -N` only; it does not calibrate,
 run GPU tests, or install the package unless explicitly requested.
@@ -39,8 +41,8 @@ run GPU tests, or install the package unless explicitly requested.
 Options:
   --repo-dir DIR       repository root (default: directory containing script)
   --build-dir DIR      target-local build directory
-                       (default: <repo>/build-v100-sm70)
-  --prefix DIR         install prefix used only with --install
+                       (default: <repo>/build-v100-sm70 for SM70, otherwise build-sm<SM>)
+  --prefix DIR         CMake install prefix (also used for runtime data lookup)
   --env-prefix DIR     conda prefix used with --create-env, or its Python
   --create-env         explicitly create --env-prefix with conda
   --install            run cmake --install into --prefix (or target-local
@@ -48,6 +50,8 @@ Options:
   --cuda-arch ARCH     explicit CUDA architecture (default: 70)
   --cuda-arch70        alias for --cuda-arch 70
   --jobs N             parallel build jobs (default: CMAKE_BUILD_PARALLEL_LEVEL or 2)
+  --shared             build a shared library for Python/semantic runners
+  --fft-codegen-mode M precompiled or on-demand (default: preserve CMake policy)
   --with-vkfft         enable the existing local VkFFT checkout; never downloads it
   --mathdx-root DIR    existing MathDx root containing include/cufftdx.hpp
   --json-root DIR      existing nlohmann_json source tree for offline CMake
@@ -60,8 +64,10 @@ Options:
 
 MathDx is required for this research build and is never silently disabled.
 If it is absent, install it separately with scripts/install_cufftdx.sh or pass
---mathdx-root.  V100 has no native BF16 arithmetic path; this script records
-BF16 as emulated storage/rounding, never as native BF16 throughput. The
+--mathdx-root. The compiler must advertise the target through --list-gpu-code;
+a small cuFFTDx compilation checks MathDx support without GPU execution.
+SM70 BF16 is labelled as emulated storage/rounding. Other targets require
+target-specific validation. The
 legacy runtime-selector CSV is a required build input and is never treated as
 target calibration data.
 EOF
@@ -88,6 +94,10 @@ while (($#)); do
             need_arg "$@"; ENV_PREFIX=$2; shift 2 ;;
         --create-env)
             CREATE_ENV=1; shift ;;
+        --shared)
+            SHARED=1; shift ;;
+        --fft-codegen-mode)
+            need_arg "$@"; FFT_CODEGEN_MODE=$2; shift 2 ;;
         --install)
             INSTALL=1; shift ;;
         --cuda-arch|--cuda-architectures)
@@ -116,7 +126,10 @@ while (($#)); do
 done
 
 [[ "$CUDA_ARCH" =~ ^[0-9]+$ ]] || die "invalid CUDA architecture '$CUDA_ARCH' (expected digits, e.g. 70)"
-(( CUDA_ARCH >= 50 && CUDA_ARCH <= 100 )) || die "unsupported CUDA architecture '$CUDA_ARCH'"
+(( CUDA_ARCH > 0 )) || die "unsupported CUDA architecture '$CUDA_ARCH'"
+if [[ -n "$FFT_CODEGEN_MODE" && "$FFT_CODEGEN_MODE" != precompiled && "$FFT_CODEGEN_MODE" != on-demand ]]; then
+    die "invalid --fft-codegen-mode '$FFT_CODEGEN_MODE' (expected precompiled or on-demand)"
+fi
 [[ "$JOBS" =~ ^[1-9][0-9]*$ ]] || die "invalid jobs value '$JOBS'"
 
 REPO_DIR=$(cd "$REPO_DIR" 2>/dev/null && pwd -P) || die "repository directory does not exist: $REPO_DIR"
@@ -124,7 +137,9 @@ if (( CREATE_ENV )); then
     [[ -n "$ENV_PREFIX" ]] || die "--create-env requires --env-prefix DIR"
     [[ "$ENV_PREFIX" != "/" ]] || die "refusing to use / as --env-prefix"
 fi
-[[ -n "$BUILD_DIR" ]] || BUILD_DIR="$REPO_DIR/build-v100-sm${CUDA_ARCH}"
+if [[ -z "$BUILD_DIR" ]]; then
+    if [[ "$CUDA_ARCH" == 70 ]]; then BUILD_DIR="$REPO_DIR/build-v100-sm70"; else BUILD_DIR="$REPO_DIR/build-sm${CUDA_ARCH}"; fi
+fi
 if (( DRY_RUN )); then
     BUILD_DIR=$(realpath -m "$BUILD_DIR")
 else
@@ -240,6 +255,14 @@ if [[ -n "$JSON_ROOT" ]]; then
     fi
 fi
 
+# Check the selected compiler and instantiate a small codelet before the build.
+run_with_empty_cuda_visibility cmake \
+    "-DCUBUTTERFLY_PROBE_ARCHITECTURES=$CUDA_ARCH" \
+    "-DCUBUTTERFLY_PROBE_NVCC=$NVCC" \
+    "-DCUBUTTERFLY_PROBE_MATHDX=$MATHDX_ROOT" \
+    "-DCUBUTTERFLY_PROBE_DIRECTORY=$BUILD_DIR/cufftdx-target-probe" \
+    -P "$SCRIPT_ROOT/cmake/CuFFTDxTarget.cmake"
+
 RUNTIME_SELECTOR_SUMMARY="$REPO_DIR/results/v100_scaling_full_summary.csv"
 [[ -f "$RUNTIME_SELECTOR_SUMMARY" ]] || die "missing required legacy runtime-selector CSV: $RUNTIME_SELECTOR_SUMMARY; include the tracked file in the source package"
 
@@ -289,6 +312,7 @@ fi
 CMAKE_ARGS=(
     cmake -S "$REPO_DIR" -B "$BUILD_DIR"
     -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_INSTALL_PREFIX="$PREFIX"
     -DCMAKE_CUDA_ARCHITECTURES="$CUDA_ARCH"
     -DCMAKE_CUDA_COMPILER="$NVCC"
     -DPython3_EXECUTABLE="$PYTHON_BIN"
@@ -297,6 +321,10 @@ CMAKE_ARGS=(
     -DCUBUTTERFLY_RUNTIME_SELECTOR_SUMMARY="$RUNTIME_SELECTOR_SUMMARY"
     -DCUBUTTERFLY_ARCHITECTURE_MANIFEST="$PORTABLE_ARCHITECTURE_MANIFEST"
 )
+if (( SHARED )); then CMAKE_ARGS+=(-DCUBUTTERFLY_BUILD_SHARED=ON); fi
+if [[ -n "$FFT_CODEGEN_MODE" ]]; then
+    CMAKE_ARGS+=("-DCUBUTTERFLY_FFT_CODEGEN_MODE=$FFT_CODEGEN_MODE")
+fi
 if [[ -n "$JSON_ROOT" ]]; then
     CMAKE_ARGS+=(-DFETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON="$JSON_ROOT")
 fi
@@ -304,7 +332,7 @@ if (( WITH_VKFFT )); then
     CMAKE_ARGS+=(-DCUBUTTERFLY_ENABLE_VKFFT=ON -DCUBUTTERFLY_VKFFT_ROOT="$VKFFT_ROOT")
 fi
 
-printf 'target: V100-compatible sm%s\n' "$CUDA_ARCH"
+printf 'target: CUDA sm%s\n' "$CUDA_ARCH"
 printf 'repository: %s\n' "$REPO_DIR"
 printf 'build: %s\n' "$BUILD_DIR"
 printf 'python: %s\n' "$PYTHON_BIN"
@@ -312,7 +340,11 @@ printf 'nvcc: %s\n' "$NVCC"
 printf 'MathDx: %s\n' "$MATHDX_ROOT"
 printf 'runtime selector: %s (%s)\n' "$RUNTIME_SELECTOR_SUMMARY" "$RUNTIME_SELECTOR_SOURCE"
 printf 'architecture manifest: %s (portable build copy)\n' "$PORTABLE_ARCHITECTURE_MANIFEST"
-printf 'BF16: emulated storage/rounding only; SM70 has no native BF16 arithmetic path\n'
+if [[ "$CUDA_ARCH" == 70 ]]; then
+    printf 'BF16: emulated storage/rounding only; no native arithmetic claim\n'
+else
+    printf 'BF16: target-specific arithmetic capability is unvalidated\n'
+fi
 printf 'GPU execution: disabled during preparation (CUDA_VISIBLE_DEVICES=empty)\n'
 
 run_with_empty_cuda_visibility "${CMAKE_ARGS[@]}"
@@ -349,7 +381,7 @@ import sys
 manifest_path, repo, build, arch, mathdx, with_vkfft, json_root, selector, selector_source, architecture_source, architecture_manifest = sys.argv[1:]
 pathlib.Path(manifest_path).write_text(json.dumps({
     "schema": "cubutterfly-research-target-v1",
-    "target": "V100-compatible",
+    "target": "CUDA",
     "cuda_architecture": int(arch),
     "repository": str(pathlib.Path(repo).resolve()),
     "build_directory": str(pathlib.Path(build).resolve()),
@@ -371,7 +403,11 @@ pathlib.Path(manifest_path).write_text(json.dumps({
     "bf16": {
         "native_arithmetic": False,
         "measurement_label": "emulated_native",
-        "note": "SM70 has no native BF16 arithmetic path; BF16 storage and per-operation rounding must not be reported as native BF16 throughput.",
+        "note": "SM70 uses BF16 storage and per-operation rounding; do not report it as native BF16 throughput.",
+    } if int(arch) == 70 else {
+        "native_arithmetic": None,
+        "measurement_label": "unmeasured",
+        "note": "Target-specific BF16 arithmetic capability has not been validated.",
     },
     "preparation": {
         "gpu_execution": False,
@@ -384,6 +420,13 @@ fi
 
 if (( INSTALL )); then
     run_with_empty_cuda_visibility cmake --install "$BUILD_DIR" --prefix "$PREFIX"
+    if [[ -d "$PREFIX/conda-meta" ]]; then
+        run install -d "$PREFIX/etc/conda/activate.d" "$PREFIX/etc/conda/deactivate.d"
+        run install -m 644 "$REPO_DIR/scripts/conda_activate_profile.sh" \
+            "$PREFIX/etc/conda/activate.d/cubutterfly_profile.sh"
+        run install -m 644 "$REPO_DIR/scripts/conda_deactivate_profile.sh" \
+            "$PREFIX/etc/conda/deactivate.d/cubutterfly_profile.sh"
+    fi
     printf 'installed cuButterfly under %s\n' "$PREFIX"
 else
     printf 'installation skipped; pass --install explicitly (prefix: %s)\n' "$PREFIX"

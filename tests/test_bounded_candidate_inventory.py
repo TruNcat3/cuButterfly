@@ -112,6 +112,37 @@ void fairness() {
     }
 }
 
+void organization_coverage() {
+    // Early backends have many core variants; the last two organizations were
+    // absent under first-family-only budget allocation (BF16 regression shape).
+    const std::vector<Candidate> candidates{
+        {0,0,0,false,0}, {0,1,0,false,1}, {0,2,0,false,2},
+        {1,0,0,false,3}, {2,0,0,false,4}, {1,1,0,false,5},
+        {2,1,0,false,6}, {1,2,0,false,7}, {2,2,0,false,8},
+        {3,0,0,false,9}, {3,0,0,true,10}, {3,0,0,true,11}};
+    const auto organization = [](const Candidate& c) {
+        return std::make_tuple(c.backend, c.overlap);
+    };
+    const auto run = [&](std::size_t budget) {
+        return cuntt::detail::bounded_candidate_indices(candidates, budget, key, organization);
+    };
+    const auto selected = run(8);
+    check_indices(selected, candidates.size(), 8);
+    for (const auto i : {0U, 3U, 4U, 9U, 10U})
+        assert(std::binary_search(selected.begin(), selected.end(), i));
+    // A budget smaller than the five organizations remains strict and only
+    // covers their first occurrences; it cannot promise complete coverage.
+    assert((run(3) == std::vector<std::size_t>{0,3,4}));
+    for (std::size_t budget=0; budget<=14; ++budget) {
+        const auto result=run(budget);
+        check_indices(result,candidates.size(),budget?std::min(budget,candidates.size()):candidates.size());
+        assert(result==run(budget));
+    }
+    // Exhaustive and empty cases also work with the coarser key.
+    assert(cuntt::detail::bounded_candidate_indices(
+        std::vector<Candidate>{}, 8, key, organization).empty());
+}
+
 void deterministic() {
     const auto candidates = regression_inventory();
     const auto before = candidates;
@@ -132,6 +163,7 @@ int main(int argc, char** argv) {
     else if (mode == "families") families();
     else if (mode == "fairness") fairness();
     else if (mode == "deterministic") deterministic();
+    else if (mode == "organizations") organization_coverage();
     else return 1;
 }
 """
@@ -154,6 +186,6 @@ def inventory_fixture(tmp_path_factory):
     return binary
 
 
-@pytest.mark.parametrize("mode", ["regression", "boundaries", "families", "fairness", "deterministic"])
+@pytest.mark.parametrize("mode", ["regression", "boundaries", "families", "fairness", "deterministic", "organizations"])
 def test_bounded_candidate_inventory(inventory_fixture, mode):
     subprocess.run([str(inventory_fixture), mode], check=True, capture_output=True, text=True)

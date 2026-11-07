@@ -4,6 +4,24 @@
 #include <algorithm>
 
 namespace cuntt::detail::factor_streamed {
+// cuFFTDx native-half values pack two independent logical column transforms.
+// Global/shared storage keeps the public Complex16 layout and logical columns.
+template<class Complex> constexpr unsigned packed_transforms =
+    std::is_same_v<Complex, Complex16> ? 2U : 1U;
+
+__device__ __forceinline__ cufftdx::complex<__half2> half_pair_multiply(
+    cufftdx::complex<__half2> a, cufftdx::complex<__half2> b) {
+    return {__hsub2_rn(__hmul2_rn(a.x,b.x),__hmul2_rn(a.y,b.y)),
+            __hadd2_rn(__hmul2_rn(a.x,b.y),__hmul2_rn(a.y,b.x))};
+}
+template<bool Inverse,unsigned Denominator>
+__device__ __forceinline__ cufftdx::complex<__half2> half_pair_root(unsigned row,unsigned s0,unsigned s1) {
+    // Phase calculation is coefficient generation; arithmetic products below
+    // still round in FP16. Never convert a large index/denominator to half.
+    const auto a=register_tile::root<Inverse,Complex32>(float(row*s0)/float(Denominator));
+    const auto b=register_tile::root<Inverse,Complex32>(float(row*s1)/float(Denominator));
+    return {__floats2half2_rn(a.real,b.real),__floats2half2_rn(a.imag,b.imag)};
+}
 template<bool Partial> __device__ __forceinline__ std::uint64_t physical_tile(
     std::uint64_t i,std::uint64_t first,std::uint64_t period,std::uint64_t span) {
     if constexpr(Partial) return first+(i/span)*period+i%span;
@@ -52,7 +70,7 @@ __device__ __forceinline__ void load_tile(const Complex* input,Complex* tile,
         static_assert((F * Columns) % Threads == 0,
                       "static factor I/O requires an integral load iteration count");
         constexpr unsigned LoadIterations=F*Columns/Threads;
-        const auto tid=(Threads/Columns)*threadIdx.y+threadIdx.x;
+        const auto tid=(Threads/(Columns/packed_transforms<Complex>))*threadIdx.y+threadIdx.x;
         if(tile_id<tile_count) {
             #pragma unroll
             for(unsigned element=0;element<LoadIterations;++element) {
@@ -85,6 +103,8 @@ __global__ void kernel(const Complex* input,Complex* output,std::uint64_t batch,
     using Real=decltype(Complex{}.real);
     constexpr unsigned F=1U<<Log,P=1U<<Done,S=1U<<(Total-Done-Log),Rows=F/FFT::elements_per_thread;
     constexpr unsigned Threads=FFT::max_threads_per_block;
+    constexpr unsigned Packed=packed_transforms<Complex>;
+    static_assert(Columns%Packed==0, "packed FFT columns must contain complete transform pairs");
     // prefetch_depth is the number of tiles ahead of the current tile.  The
     // current tile therefore needs one additional ring slot: depth=1 is
     // explicitly a current+next double buffer, while depth=0 keeps a single
@@ -100,7 +120,7 @@ __global__ void kernel(const Complex* input,Complex* output,std::uint64_t batch,
         static_assert(FFT::input_length == F, "static factor I/O FFT input length must match tile");
         static_assert(Threads == FFT::block_dim.x*FFT::block_dim.y,
                       "static factor I/O thread count must match the FFT block shape");
-        static_assert(FFT::block_dim.y == Columns && FFT::block_dim.x == Rows,
+        static_assert(FFT::block_dim.y == Columns/Packed && FFT::block_dim.x == Rows,
                       "static factor I/O block shape must match columns and EPT");
         static_assert(TileValues % Threads == 0,
                       "static factor I/O requires an integral store iteration count");
@@ -127,8 +147,12 @@ __global__ void kernel(const Complex* input,Complex* output,std::uint64_t batch,
         typename FFT::value_type values[FFT::storage_size];
         #pragma unroll
         for(unsigned i=0;i<FFT::storage_size;++i) {
-            const auto v=current[index<Columns,Complex>(threadIdx.x+i*Rows,threadIdx.y)];
-            values[i]=typename FFT::value_type{v.real,v.imag};
+            const auto row=threadIdx.x+i*Rows;
+            const auto v=current[index<Columns,Complex>(row,Packed*threadIdx.y)];
+            if constexpr(Packed==2) {
+                const auto b=current[index<Columns,Complex>(row,2*threadIdx.y+1)];
+                values[i]={__halves2half2(v.real,b.real),__halves2half2(v.imag,b.imag)};
+            } else values[i]=typename FFT::value_type{v.real,v.imag};
         }
         __syncthreads(); // Every reader releases the ring slot before reuse.
         if constexpr(EffectiveDepth) load_tile<Total,Log,Done,Columns,Threads,EffectiveDepth,Complex,Partial,StaticIO>(
@@ -136,6 +160,27 @@ __global__ void kernel(const Complex* input,Complex* output,std::uint64_t batch,
         FFT().execute(values,work);
         __syncthreads(); // cuFFTDx work area is now available for output layout.
         const auto physical=physical_tile<Partial>(first+iteration,range_first,period,span);
+        if constexpr(Packed==2) {
+            const auto transform=physical*Columns+2*threadIdx.y;
+            const auto j0=transform&((1ULL<<(Total-Log))-1);
+            const auto j1=(transform+1)&((1ULL<<(Total-Log))-1);
+            auto cross=half_pair_root<Inverse,F*S>(threadIdx.x,j0>>Done,j1>>Done);
+            const auto step=half_pair_root<Inverse,F*S>(Rows,j0>>Done,j1>>Done);
+            #pragma unroll
+            for(unsigned i=0;i<FFT::storage_size;++i) {
+                const auto row=threadIdx.x+i*Rows;
+                auto v=values[i];
+                if constexpr(S>1) {
+                    if(i && i%8==0) cross=half_pair_root<Inverse,F*S>(row,j0>>Done,j1>>Done);
+                    v=half_pair_multiply(v,cross);
+                    cross=half_pair_multiply(cross,step);
+                }
+                // Native-half normalized inverse is explicitly rejected by
+                // the public contract and module entry points, not rescaled here.
+                tile[index<Columns,Complex>(row,2*threadIdx.y)]={__low2half(v.x),__low2half(v.y)};
+                tile[index<Columns,Complex>(row,2*threadIdx.y+1)]={__high2half(v.x),__high2half(v.y)};
+            }
+        } else {
         const auto transform=physical*Columns+threadIdx.y;
         const auto j=transform&((1ULL<<(Total-Log))-1);
         const auto s=j>>Done;
@@ -152,10 +197,11 @@ __global__ void kernel(const Complex* input,Complex* output,std::uint64_t batch,
             }
             tile[index<Columns,Complex>(row,threadIdx.y)]={v.real*scale,v.imag*scale};
         }
+        }
         __syncthreads();
         if constexpr(StaticIO) {
             constexpr unsigned StoreIterations=TileValues/Threads;
-            const auto static_tid=(Threads/Columns)*threadIdx.y+threadIdx.x;
+            const auto static_tid=(Threads/(Columns/Packed))*threadIdx.y+threadIdx.x;
             #pragma unroll
             for(unsigned element=0;element<StoreIterations;++element) {
                 const auto i=static_tid+element*Threads;

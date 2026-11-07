@@ -2,7 +2,10 @@
 #include "cuntt/butterfly.hpp"
 #include "fft_factor_plan.hpp"
 #include "resident_mapping.hpp"
+#include "shared_thread_mapping.hpp"
 #include "hardware_model.hpp"
+#include "fft_local_core_contract.hpp"
+#include "shared_tile_contract.hpp"
 
 #include <cuda_runtime_api.h>
 
@@ -93,6 +96,16 @@ void project_resident_axes(ExecutionGroup& group,const detail::LocalPartitions& 
     if(shared && !group.local_stage_partition.empty()) {
         group.codelet="native-register-subgraph";
         group.elements_per_thread=1U<<*std::max_element(group.local_stage_partition.begin(),group.local_stage_partition.end());
+        // Envelope only: leaves can have different work-item counts. Cost
+        // models derive each leaf's arithmetic work from the partition.
+        group.data_space=0;
+        group.data_time=0;
+        for (const auto stages : group.local_stage_partition) {
+            const auto work=1ULL<<(group.stage_count-stages);
+            const auto active=std::min<std::uint64_t>(std::max(1U,group.threads),work);
+            group.data_space=std::max(group.data_space,static_cast<std::uint32_t>(active));
+            group.data_time=std::max(group.data_time,static_cast<std::uint32_t>((work+active-1)/active));
+        }
     }
 }
 
@@ -134,12 +147,14 @@ void project_generic_butterfly_groups(MixedDataflowPlan& plan, const ButterflyCo
         return;
     const auto remaining_stages = plan.stage_partition.back();
     const auto remaining_points = std::uint64_t{1} << remaining_stages;
+    const auto prefix_tiles = std::max(1U, config.data_tiles_per_cta);
     const auto columns = std::max(1U, config.reorder_columns);
     const auto column_tiles = (local_points + columns - 1) / columns;
     const auto suffix_grid = static_cast<std::uint64_t>(plan.graph.batch) * column_tiles;
     const auto suffix_butterflies = static_cast<std::uint64_t>(columns) * (remaining_points / 2);
-    set_generic_group_shape(plan.execution_groups[0], config.tile_threads, prefix_grid, prefix_shared,
-                            ExchangePolicy::SharedMemory, prefix_butterflies);
+    set_generic_group_shape(plan.execution_groups[0], config.tile_threads,
+                            (prefix_grid + prefix_tiles - 1) / prefix_tiles, prefix_shared * prefix_tiles,
+                            ExchangePolicy::SharedMemory, prefix_butterflies * prefix_tiles);
     set_generic_group_shape(plan.execution_groups[1], config.tile_threads,
                             suffix_grid, remaining_points * columns * value_bytes,
                             ExchangePolicy::SharedMemory, suffix_butterflies);
@@ -424,9 +439,12 @@ MixedDataflowPlan make_dataflow_plan(const ButterflyConfig& config) {
         if (plan.dispatch == DataflowDispatch::TemporalTile || plan.dispatch == DataflowDispatch::Hierarchical ||
             plan.dispatch == DataflowDispatch::OnlineReorder) {
             auto state_points = std::uint64_t{1} << plan.subgraph_log_n;
-            if (plan.dispatch == DataflowDispatch::OnlineReorder && plan.stage_partition.size() == 2)
+            if (plan.dispatch == DataflowDispatch::OnlineReorder && plan.stage_partition.size() == 2) {
+                const bool generic = config.op != ButterflyOperator::Fft || config.fft_core == FftCore::Scalar;
+                if (generic) state_points *= std::max(1U, config.data_tiles_per_cta);
                 state_points = std::max(state_points, (std::uint64_t{1} << plan.stage_partition.back()) *
                                                         std::max(1U, config.reorder_columns));
+            }
             plan.shared_bytes_per_subgraph = static_cast<std::uint32_t>(state_points * (plan.graph.word_bits / 8) *
                                                                          (plan.graph.complex_values ? 2 : 1));
         }
@@ -441,13 +459,16 @@ MixedDataflowPlan make_dataflow_plan(const ButterflyConfig& config) {
         }
         plan.subgraph_log_n = largest;
         plan.pipeline_buffers = 2;
-        plan.shared_bytes_per_subgraph = (2ULL << largest) * (plan.graph.word_bits / 8) * (plan.graph.complex_values ? 2 : 1);
+        detail::validate_shared_tiles(config.log_n, {largest}, config.data_tiles_per_cta);
+        plan.shared_bytes_per_subgraph = detail::shared_tile_bytes(largest, config.data_tiles_per_cta,
+            (plan.graph.word_bits / 8) * (plan.graph.complex_values ? 2 : 1));
         if (!config.stage_overlap && (config.batch_tile_count < 1 || config.batch_tile_count > 4))
             throw std::invalid_argument("shared bulk batch tile count must be in [1,4]");
         const auto batch_space = config.stage_overlap ? 1U : config.batch_tile_count;
         plan.grid_ctas = ((static_cast<std::uint64_t>(config.batch) - 1) / batch_space + 1)
             << (config.log_n - largest);
-        plan.data_time = std::max(1U, (1U << largest) / (2 * std::max(1U, config.tile_threads)));
+        plan.grid_ctas /= config.data_tiles_per_cta;
+        plan.data_time = std::max(1U, ((1U << largest) * config.data_tiles_per_cta) / (2 * std::max(1U, config.tile_threads)));
         plan.batch_tile_count = batch_space;
         plan.steady_state_buffers = 1;
     }
@@ -478,6 +499,27 @@ MixedDataflowPlan make_dataflow_plan(const ButterflyConfig& config) {
         plan.persistent = false;
     }
     project_execution_groups(plan);
+    if (detail::fp16_local_block(config)) {
+        const auto shape = detail::fp16_local_block_shape(config);
+        if (plan.execution_groups.size() != 1)
+            throw std::invalid_argument("FP16 local cuFFTDx requires one physical execution group");
+        auto& group = plan.execution_groups.front();
+        group.threads = config.tile_threads;
+        group.elements_per_thread = config.prefix_ept;
+        group.units_per_cta = shape.transforms_per_cta;
+        group.batch_space = shape.transforms_per_cta;
+        group.batch_time = (config.batch + shape.transforms_per_cta - 1) / shape.transforms_per_cta;
+        group.grid_ctas = group.batch_time;
+        group.data_space = shape.lanes;
+        group.data_time = config.prefix_ept;
+        group.codelet = "half2-transform-pair-v1";
+        group.io_policy = "native-fp16-final-normalization";
+        plan.grid_ctas = group.grid_ctas;
+        plan.batch_tile_count = shape.transforms_per_cta;
+        // Core scratch and registers are supplied by the compiled module.
+    }
+    const auto shared_threads = config.backend == ButterflyBackend::SharedIterative
+        ? detail::shared_group_threads(config, plan.execution_groups.size()) : std::vector<std::uint32_t>{};
     for (std::size_t i = 0; i < plan.execution_groups.size(); ++i) {
         auto& group = plan.execution_groups[i];
         group.shared_layout = shared_layout_name(config.shared_layout);
@@ -491,10 +533,16 @@ MixedDataflowPlan make_dataflow_plan(const ButterflyConfig& config) {
             group.io_policy = mapping.io_policy;
         }
         if (config.backend == ButterflyBackend::SharedIterative) {
-            group.data_space = std::max(1U, std::min(group.threads, 1U << (group.stage_count - 1)));
-            group.data_time = ((1U << (group.stage_count - 1)) + group.data_space - 1) / group.data_space;
-            group.live_shared_bytes = (2ULL << group.stage_count) * (plan.graph.word_bits / 8) *
-                                      (plan.graph.complex_values ? 2 : 1);
+            group.threads = shared_threads[i];
+            group.data_tiles_per_cta = config.data_tiles_per_cta;
+            const auto work = (1ULL << (group.stage_count - 1)) * config.data_tiles_per_cta;
+            group.data_space = std::max(1U, static_cast<unsigned>(std::min<std::uint64_t>(group.threads, work)));
+            group.data_time = (work + group.data_space - 1) / group.data_space;
+            group.live_shared_bytes = detail::shared_tile_bytes(group.stage_count, config.data_tiles_per_cta,
+                (plan.graph.word_bits / 8) * (plan.graph.complex_values ? 2 : 1));
+            const auto batches = config.stage_overlap ? std::min<std::uint64_t>(config.batch, config.batch_tile_count) :
+                (config.batch - 1) / config.batch_tile_count + 1;
+            group.grid_ctas = (batches << (config.log_n - group.stage_count)) / config.data_tiles_per_cta;
         }
         if (config.op == ButterflyOperator::Fft && config.fft_core==FftCore::RegisterTile && plan.execution_groups.size()==2) {
             group.threads=i==0 ? config.prefix_threads : config.suffix_threads;
@@ -523,6 +571,9 @@ MixedDataflowPlan make_dataflow_plan(const ButterflyConfig& config) {
                               config.backend==ButterflyBackend::SharedIterative);
     project_generic_butterfly_groups(plan, config);
     if (config.backend == ButterflyBackend::SharedIterative) {
+        plan.grid_ctas = 0;
+        for (const auto& group : plan.execution_groups)
+            plan.grid_ctas = std::max(plan.grid_ctas, group.grid_ctas);
         // A tiled materialized boundary is a producer/consumer layout change,
         // not merely a different name for the same global address order. Keep
         // that distinction in the common descriptor for resource estimation.
@@ -629,6 +680,8 @@ MixedDataflowPlan make_dataflow_plan(const PlanConfig& config) {
             std::count(plan.boundary_policies.begin(),plan.boundary_policies.end(),BoundaryPolicy::RingBuffer);
     }
     project_execution_groups(plan);
+    const auto shared_threads = config.backend == Backend::SharedIterative
+        ? detail::shared_group_threads(config, plan.execution_groups.size()) : std::vector<std::uint32_t>{};
     for (std::size_t i = 0; i < plan.execution_groups.size(); ++i) {
         auto& group = plan.execution_groups[i];
         group.shared_layout = dataflow_layout_name(config.dataflow_layout);
@@ -651,7 +704,7 @@ MixedDataflowPlan make_dataflow_plan(const PlanConfig& config) {
             const auto size=1ULL<<stages;
             group.core="radix2-shoup";
             group.shared_layout=config.dataflow_layout==DataflowLayout::HermesXor ? "writer-aligned" : "linear";
-            group.threads=plan.threads_per_block; group.units_per_cta=1;
+            group.threads=shared_threads[i]; group.units_per_cta=1;
             group.data_space=std::min<std::uint64_t>(group.threads,size/2);
             group.data_time=(size/2+group.data_space-1)/group.data_space;
             group.live_shared_bytes=2*size*word_bytes;

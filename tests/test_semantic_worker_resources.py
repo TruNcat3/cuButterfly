@@ -13,6 +13,12 @@ import semantic_resource_compile_proxy as proxy
 import semantic_gpu_pipeline as gpu
 
 
+@pytest.fixture(autouse=True)
+def isolate_helper_events(monkeypatch):
+    monkeypatch.delenv('CUBUTTERFLY_PREPARE_EVENTS', raising=False)
+    monkeypatch.delenv('CUBUTTERFLY_HELPER_ATTEMPT', raising=False)
+
+
 def test_linux_resource_snapshot(tmp_path):
     process = tmp_path / '42'
     process.mkdir()
@@ -57,8 +63,124 @@ def test_proxy_forwards_exact_arguments_without_gpu_import(monkeypatch):
     assert received == [arguments]
 
 
+def test_proxy_cpu_script_preserves_interpreter_arguments_and_exit(monkeypatch):
+    monkeypatch.setattr(proxy, 'snapshot', lambda pid: dict(vma_count=1, rss_bytes=0, max_map_count=65530))
+    arguments = ['/a path/rank_static_candidates.py', '--request', '/request path/input.json',
+                 '--output', '/output path/result.json']
+    received = []
+    monkeypatch.setattr(proxy.broker, 'main', lambda args: pytest.fail('CPU helper sent to compile broker'))
+    monkeypatch.setattr(proxy.subprocess, 'run', lambda args, **kwargs:
+                        received.append((args, kwargs)) or SimpleNamespace(returncode=7))
+    assert proxy.main(arguments) == 7
+    assert received == [([sys.executable, *arguments], {'check': False})]
+
+
+def test_proxy_main_argv_uses_transparent_cpu_interpreter(monkeypatch, tmp_path):
+    import subprocess
+
+    helper = tmp_path / 'ordinary CPU helper.py'
+    helper.write_text('import json, sys\nprint(json.dumps(sys.argv[1:]))\nraise SystemExit(9)\n')
+    arguments = ['--request', 'path with spaces', '--output', 'result.json']
+    completed = subprocess.run([sys.executable, str(Path(proxy.__file__)), str(helper), *arguments],
+                               text=True, capture_output=True, check=False)
+    assert completed.returncode == 9
+    assert json.loads(completed.stdout) == arguments
+    assert completed.stderr == ''
+
+
+@pytest.mark.parametrize('exit_code', [0, 9])
+def test_first_cpu_helper_creates_log_before_any_broker_request(monkeypatch, tmp_path, exit_code):
+    import subprocess
+    events = tmp_path / 'new-campaign/measurement/compile_events/first-1.jsonl'
+    helper = tmp_path / 'helper.py'
+    helper.write_text('import os\nfrom pathlib import Path\n'
+        'assert Path(os.environ["CUBUTTERFLY_PREPARE_EVENTS"]).is_file()\n'
+        f'raise SystemExit({exit_code})\n')
+    monkeypatch.setenv('CUBUTTERFLY_PREPARE_EVENTS', str(events))
+    monkeypatch.setenv('CUBUTTERFLY_HELPER_ATTEMPT', 'fresh-attempt')
+    assert not events.parent.exists()
+    result = subprocess.run([sys.executable, proxy.__file__, str(helper)],
+                            text=True, capture_output=True, timeout=10)
+    assert result.returncode == exit_code, result.stderr
+    records = [json.loads(line) for line in events.read_text().splitlines()]
+    assert [r['kind'] for r in records] == ['cpu_helper_started', 'cpu_helper_finished']
+    assert all(r['attempt_token'] == 'fresh-attempt' for r in records)
+    assert records[-1]['returncode'] == exit_code
+    assert records[-1]['termination_signal'] is None
+    assert records[-1]['received_signals'] == []
+    gpu.check_preparation_events(events)
+
+
+def test_bad_log_destination_prevents_helper_spawn(monkeypatch, tmp_path):
+    parent = tmp_path / 'not-directory'
+    parent.write_text('existing unrelated data')
+    monkeypatch.setenv('CUBUTTERFLY_PREPARE_EVENTS', str(parent / 'events.jsonl'))
+    monkeypatch.setattr(proxy.subprocess, 'Popen', lambda *a, **k: pytest.fail('spawned without a log'))
+    with pytest.raises(FileExistsError):
+        proxy.run_cpu_helper(['helper.py'])
+    assert parent.read_text() == 'existing unrelated data'
+
+
+def test_receipt_write_failure_reaps_started_cpu_helper(monkeypatch, tmp_path):
+    from contextlib import contextmanager
+    import subprocess
+    monkeypatch.setenv('CUBUTTERFLY_PREPARE_EVENTS', str(tmp_path / 'events.jsonl'))
+    helper = tmp_path / 'helper.py'
+    helper.write_text('import time\ntime.sleep(60)\n')
+    class BrokenLog:
+        def write(self, value):
+            raise OSError('simulated receipt write failure')
+    @contextmanager
+    def broken_log(path):
+        yield BrokenLog()
+    monkeypatch.setattr(proxy, 'open_event_log', broken_log)
+    children = []
+    spawn = subprocess.Popen
+    def observed(*args, **kwargs):
+        child = spawn(*args, **kwargs)
+        children.append(child)
+        return child
+    monkeypatch.setattr(proxy.subprocess, 'Popen', observed)
+    try:
+        with pytest.raises(OSError, match='receipt write failure'):
+            proxy.run_cpu_helper([str(helper)])
+        assert len(children) == 1 and children[0].poll() is not None
+    finally:
+        for child in children:
+            if child.poll() is None:
+                child.kill()
+                child.wait(timeout=5)
+
+
+def test_proxy_runs_actual_cpu_static_ranker_not_broker(tmp_path):
+    import subprocess
+
+    request = tmp_path / 'request.json'
+    request.write_text('{"schema":"invalid-test-request"}')
+    output = tmp_path / 'ranking.json'
+    completed = subprocess.run([sys.executable, str(Path(proxy.__file__)),
+                               str(Path(proxy.__file__).with_name('rank_static_candidates.py')),
+                               '--request', str(request), '--output', str(output)],
+                              text=True, capture_output=True, check=False)
+    assert completed.returncode == 1
+    assert 'static ranking error: unsupported static-ranking request schema' in completed.stderr
+    assert 'unrecognized arguments' not in completed.stderr
+    assert not output.exists()
+
+
+def test_proxy_compiler_path_still_goes_to_broker_validation(monkeypatch):
+    monkeypatch.setattr(proxy, 'snapshot', lambda pid: dict(vma_count=1, rss_bytes=0, max_map_count=65530))
+    arguments = ['/wrong root/compile_module.py', '--mapping', '{}']
+    monkeypatch.setattr(proxy.subprocess, 'run', lambda *args, **kwargs:
+                        pytest.fail('compiler bypassed broker validation'))
+    received = []
+    monkeypatch.setattr(proxy.broker, 'main', lambda args: received.append(args) or 4)
+    assert proxy.main(arguments) == 4
+    assert received == [arguments]
+
+
 def test_proxy_resource_event_discards_selection_without_querying_broker(monkeypatch, tmp_path):
-    events = tmp_path / 'events.jsonl'
+    events = tmp_path / 'fresh/compile_events/events.jsonl'
     monkeypatch.setenv('CUBUTTERFLY_PREPARE_EVENTS', str(events))
     monkeypatch.setattr(proxy, 'snapshot', lambda pid: dict(vma_count=45000, rss_bytes=0, max_map_count=65530))
     monkeypatch.setattr(proxy.broker, 'main', lambda args: pytest.fail('broker queried after resource limit'))

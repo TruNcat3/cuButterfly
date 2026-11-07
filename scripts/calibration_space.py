@@ -10,12 +10,12 @@ import resident_mapping
 
 from benchmark_semantics import normalize_benchmark_semantics
 
-PROJECTION_VERSION = "physical-generic-launch-axes-v7-organization-ownership"
+PROJECTION_VERSION = "physical-generic-launch-axes-v9-shared-group-threads"
 MAPPING_PROJECTION_FIELDS = (
     "fft_core", "local_stages", "prefix_threads", "suffix_threads", "prefix_ept", "suffix_ept",
     "prefix_units_per_cta", "suffix_units_per_cta", "units_per_cta",
     "shared_layout", "cross_twiddle", "stage_partition", "stage_overlap", "batch_tile_count",
-    "local_stage_partitions", "exchange_chunks", "prefix_codelet", "prefix_shared_layout",
+    "local_stage_partitions", "exchange_chunks", "prefix_codelet", "prefix_shared_layout", "prefix_twiddle",
     "prefix_codelet_lanes", "factor_io_policies", "register_threads", "tile_threads",
     "suffix_core",
     "compute_unit", "local_exchange", "reorder_columns", "direct_boundary",
@@ -139,6 +139,7 @@ def register_tile_candidates(mappings, workload):
                     resolved[key] = integer if str(integer) == str(value).strip() else value
         resolved.setdefault("prefix_codelet", "native")
         resolved.setdefault("prefix_shared_layout", "linear")
+        resolved.setdefault("prefix_twiddle", "runtime")
         resolved.setdefault("prefix_codelet_lanes", 1)
         resolved.setdefault("factor_io_policies", [])
         resolved.setdefault("register_threads", 0)
@@ -197,6 +198,7 @@ def _strategy_identity(mapping, policies):
     return (
         mapping.get("prefix_codelet", "native"),
         mapping.get("prefix_shared_layout", "linear"),
+        mapping.get("prefix_twiddle", "runtime"),
         _prefix_lane_identity(mapping),
         mapping.get("suffix_core", "cufftdx-block"),
         tuple(str(value) for value in policies),
@@ -212,7 +214,7 @@ def _strategy_order(strategies):
     the complete remainder stays available in deterministic order. This keeps
     an unbounded inventory export linear apart from that fixed prefix.
     """
-    default = ("native", "linear", 1, "cufftdx-block", (), (), ())
+    default = ("native", "linear", "runtime", 1, "cufftdx-block", (), (), ())
     remaining = set(strategies)
     result = []
     counts = [{} for _ in default]
@@ -508,9 +510,12 @@ def predicted_sample(point):
     register = fft and mapping.get("fft_core") == "register-tile"
     register_prefix = register and mapping.get("backend") == "online-reorder"
     suffix_core = resident_mapping.validate_suffix_core({**mapping, "operator": point.get("operator", "fft")})
+    prefix_twiddle = resident_mapping.validate_prefix_twiddle({**mapping, "operator": point.get("operator", "fft")})
     if mapping.get("backend") == "shared-iterative" or register_prefix:
         local_parts, exchange_chunks = resident_mapping.validate_resident_axes(
             mapping, partition, backend=mapping.get("backend"), operator=point.get("operator","fft"))
+        shared_threads = (resident_mapping.shared_group_threads(mapping, partition, point.get("operator", "fft"))
+                          if mapping.get("backend") == "shared-iterative" else None)
     else:
         local_parts, exchange_chunks = resident_mapping.normalize_axes(mapping)
         if local_parts or exchange_chunks:
@@ -528,6 +533,7 @@ def predicted_sample(point):
         raise ValueError("prefix_codelet_lanes are valid only for online-reorder register-tile")
     if register_prefix:
         sample["prefix_codelet_lanes"] = prefix_lanes
+        sample["prefix_twiddle"] = prefix_twiddle
     if generic:
         sample["group_cores"] = ":".join(["scalar"] * groups)
     elif not sample["group_cores"]:
@@ -545,6 +551,8 @@ def predicted_sample(point):
     if point.get("operator","fft")=="fft": width*=2
     for i, stages in enumerate(partition):
         threads=int(mapping.get("tile_threads",mapping.get("threads_per_block",128))) or 128
+        if mapping.get("backend") == "shared-iterative":
+            threads = shared_threads[i]
         if mapping.get("local_exchange") == "warp-register":
             threads = resolved_tile_threads(mapping)
         live=0
@@ -558,6 +566,12 @@ def predicted_sample(point):
             live=(1<<stages)*columns*width
         grid_columns=columns if register else 1
         tiles,depth=1,0
+        if mapping.get("backend") == "shared-iterative":
+            tiles = mapping.get("data_tiles_per_cta", 1)
+            if (isinstance(tiles, bool) or not isinstance(tiles, int) or tiles < 1 or
+                    tiles & (tiles - 1) or tiles > (1 << (int(point["logN"]) - stages))):
+                raise ValueError("shared data_tiles_per_cta must fit independent power-of-two tile columns")
+            live *= tiles
         if mapping.get("backend")=="factor-streamed":
             grid_columns=int(mapping.get("factor_columns",8))
             threads=(1<<stages)//int(mapping.get("factor_ept",16))*grid_columns
@@ -594,7 +608,7 @@ def predicted_sample(point):
         if i < len(explicit) and not generic:
             core = explicit[i].get("core", core)
             ept = int(explicit[i].get("elements_per_thread", explicit[i].get("ept", ept)))
-            threads = int(explicit[i].get("threads", threads))
+            threads = int(explicit[i].get("threads", explicit[i].get("threads_per_block", threads)))
         data_space = min(threads, (1 << stages)//2 * grid_columns)
         data_time = max(1,((1<<stages)//2*grid_columns+threads-1)//threads)*tiles
         exchange = mapping.get("local_exchange", "shared")
@@ -641,9 +655,13 @@ def predicted_sample(point):
             group_layout = mapping.get("shared_layout", "linear")
         local_part = local_parts[i] if local_parts else []
         exchange_chunk = exchange_chunks[i] if exchange_chunks else 0
-        if mapping.get("backend") == "shared-iterative" and local_part:
-            codelet = "native-register-subgraph"
-            ept = 1 << max(local_part)
+        if mapping.get("backend") == "shared-iterative":
+            if local_part:
+                codelet = "native-register-subgraph"
+                ept = 1 << max(local_part)
+            from shared_work_geometry import shared_work_geometry
+            geometry = shared_work_geometry(stages, threads, local_part, tiles)
+            data_space, data_time = geometry["data_space"], geometry["data_time"]
         physical.append(dict(index=i, stage_count=stages,live_shared_bytes=live,threads=threads,elements_per_thread=ept,
             core=core,codelet=codelet,io_policy=io_policy,shared_layout=group_layout,
             local_stage_partition=list(local_part),exchange_chunk=exchange_chunk,

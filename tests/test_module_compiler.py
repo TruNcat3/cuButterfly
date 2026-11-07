@@ -11,6 +11,38 @@ from compile_module import compile_mapping, render_register_fft, render_shared, 
 from benchmark_factor_streamed import make_parser, points, schedule_points
 
 
+@pytest.mark.parametrize("precision", ["fp32", "fp64"])
+def test_local_coefficient_table_has_exact_axes_and_rounded_quadrant_symmetry(precision):
+    import math
+    import struct
+    values = compile_module.local_root_values(10, precision)
+    assert len(values) == 1024
+    assert [values[k] for k in (0, 256, 512, 768)] == [(1., 0.), (0., -1.), (-1., 0.), (0., 1.)]
+    diagonal = math.sqrt(0.5)
+    if precision == "fp32":
+        diagonal = struct.unpack("f", struct.pack("f", diagonal))[0]
+    assert values[128] == (diagonal, -diagonal)
+    for k in range(256):
+        x, y = values[k]
+        assert values[k + 256] == (y, -x)
+        assert values[k + 512] == (-x, -y)
+        assert abs(x*x + y*y - 1) < (1e-7 if precision == "fp32" else 3e-16)
+
+
+@pytest.mark.parametrize("parts,lanes", [([], 1), ([], 2), ([[4, 6], []], 1)])
+def test_local_table_reaches_both_resource_and_launch_templates(parts, lanes):
+    point = dict(fft_core="register-tile", precision="fp64", logN=20, local_stages=10,
+                 prefix_threads=256, prefix_ept=16 if parts or lanes == 2 else 32,
+                 suffix_threads=128, suffix_ept=16, prefix_codelet_lanes=lanes,
+                 local_stage_partitions=parts, prefix_twiddle="table")
+    generated = render_register_fft(point, 80, "table")
+    assert "__device__ const Complex local_root_table[1U<<10]" in generated
+    assert "__constant__" not in generated
+    assert generated.count("PrecomputedLocalRoots>") == 2
+    assert "launch_grouped_suffix<10,16,2,Inverse>" in generated
+    assert "Inverse ? -value.imag : value.imag" in generated
+
+
 def test_standalone_module_is_one_mapping_with_versioned_entry_and_resources():
     point = dict(logN=21, local_stages=10, prefix_threads=256, prefix_ept=32, suffix_threads=256, suffix_ept=16)
     source = render_register_fft(point, 80, "test")
@@ -84,6 +116,89 @@ def test_ntt_shared_specialization_carries_output_order_and_defaults_to_natural(
     assert "shared_iterative_kernel<Operator,12,0,6,1,1>" in bit_reversed
     assert "shared_iterative_kernel<Operator,12,6,6,1,1>" in bit_reversed
     assert natural != bit_reversed
+
+
+@pytest.mark.parametrize("operator,precision", [("fft", "fp32"), ("fwht", "fp64"),
+                                               ("subset-zeta", "uint32"), ("ntt", "word64")])
+def test_shared_group_threads_reach_resource_queries_and_launches(operator, precision):
+    point = dict(operator=operator, precision=precision, logN=12,
+                 stage_partition=[6, 6], threads=128, group_threads=[64, 256])
+    source = render_shared(point, 80, "groups")
+    assert "out->threads=64;" in source
+    assert "out->threads=256;" in source
+    assert "out->threads=128;" not in source
+    assert "<<<static_cast<unsigned>(blocks),64," in source
+    assert "<<<static_cast<unsigned>(blocks),256," in source
+    assert "shared_iterative_kernel<Operator,12,0,6,1,0>" in source
+    assert "shared_iterative_kernel<Operator,12,6,6,1,0>" in source
+    resident = render_shared(dict(point, local_stage_partitions=[[3, 3], []]), 80, "resident")
+    assert "shared_resident_kernel<Operator,12,0,6,1,0,3,3>" in resident
+    assert "<<<static_cast<unsigned>(blocks),64," in resident
+
+
+@pytest.mark.parametrize("operator,precision", [("fft", "bf16"), ("fft", "fp16"),
+                                               ("fft", "fp64"), ("fwht", "fp32"),
+                                               ("subset-zeta", "uint64")])
+def test_shared_tile_columns_reach_kernel_capacity_and_grid(operator, precision):
+    point = dict(operator=operator, precision=precision, logN=12,
+                 stage_partition=[6, 6], threads=128, data_tiles_per_cta=4)
+    source = render_shared(point, 80, "columns")
+    assert "shared_iterative_kernel<Operator,12,0,6,1,0,4>" in source
+    assert "shared_iterative_kernel<Operator,12,6,6,1,0,4>" in source
+    assert "bytes=2ULL*(1ULL<<6)*4*sizeof(Value)" in source
+    assert "((1ULL<<6)/4)" in source
+
+
+@pytest.mark.parametrize("tiles", [0, 3, True, 4.0, 128])
+def test_shared_tile_columns_reject_invalid_geometry(tiles):
+    point = dict(operator="fft", precision="bf16", logN=12,
+                 stage_partition=[6, 6], threads=128, data_tiles_per_cta=tiles)
+    with pytest.raises(ValueError, match="shared data"):
+        render_shared(point, 80, "invalid")
+
+
+def test_shared_tile_columns_do_not_ignore_resident_partitions():
+    point = dict(operator="fft", precision="bf16", logN=12,
+                 stage_partition=[6, 6], threads=128, data_tiles_per_cta=4,
+                 local_stage_partitions=[[3, 3], []])
+    with pytest.raises(ValueError, match="iterative template"):
+        render_shared(point, 80, "invalid")
+
+
+@pytest.mark.parametrize("group_threads", [[64], [64, 128, 256], [0, 128], [33, 128],
+                                          [1056, 128], [True, 128], [64.0, 128],
+                                          ["64", 128], None, "64x128"])
+def test_shared_group_threads_reject_invalid_canonical_requests(group_threads):
+    point = dict(operator="fwht", precision="fp32", logN=12,
+                 stage_partition=[6, 6], threads=128, group_threads=group_threads)
+    with pytest.raises(ValueError, match="group_threads"):
+        render_shared(point, 80, "invalid")
+
+
+def test_shared_group_threads_cache_identity_and_empty_default(tmp_path, monkeypatch):
+    def fake_run(command, **kwargs):
+        if command[1:] == ["--version"]:
+            return SimpleNamespace(returncode=0, stdout="fake nvcc\n", stderr="")
+        pathlib.Path(command[-1]).write_bytes(b"fake module")
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(compile_module.subprocess, "run", fake_run)
+    point = dict(backend="shared-iterative", operator="ntt", precision="word32",
+                 logN=12, stage_partition=[6, 6], threads=128)
+    kwargs = dict(root=pathlib.Path(__file__).resolve().parents[1],
+                  mathdx=tmp_path / "mathdx", nvcc=pathlib.Path("fake-nvcc"),
+                  sm=80, cache=tmp_path / "cache")
+    default = compile_mapping(point, **kwargs)
+    assert compile_mapping(dict(point, data_tiles_per_cta=1), **kwargs) == default
+    grouped = compile_mapping(dict(point, data_tiles_per_cta=4), **kwargs)
+    assert grouped != default
+    assert compile_mapping(dict(point, group_threads=[]), **kwargs) == default
+    first = compile_mapping(dict(point, group_threads=[64, 256]), **kwargs)
+    second = compile_mapping(dict(point, group_threads=[256, 64]), **kwargs)
+    assert len({default, first, second}) == 3
+    assert json.loads((first.parent / "manifest.json").read_text())["mapping"]["group_threads"] == [64, 256]
+    with pytest.raises(ValueError, match="group_threads"):
+        compile_mapping(dict(point, group_threads=[64]), **kwargs)
 
 
 def test_shared_jit_rejects_unknown_or_non_ntt_bit_reversed_output_order():
@@ -161,9 +276,13 @@ def test_register_strategy_cache_identity_distinguishes_physical_choices(tmp_pat
     dx = compile_mapping(dict(point, prefix_codelet="cufftdx-thread"), root=root,
                          mathdx=tmp_path / "mathdx", nvcc=pathlib.Path("fake-nvcc"),
                          sm=80, cache=cache)
-    assert len({native.parent, xor.parent, dx.parent}) == 3
+    table = compile_mapping(dict(point, prefix_twiddle="table"), root=root,
+                            mathdx=tmp_path / "mathdx", nvcc=pathlib.Path("fake-nvcc"),
+                            sm=80, cache=cache)
+    assert len({native.parent, xor.parent, dx.parent, table.parent}) == 4
+    assert json.loads((table.parent / "manifest.json").read_text())["local_coefficient_table"]["method"] == "binary-half-angle-decimal80"
     assert json.loads((xor.parent / "manifest.json").read_text())["mapping"]["prefix_shared_layout"] == "xor"
-    assert len([command for command in calls if len(command) > 2]) == 3
+    assert len([command for command in calls if len(command) > 2]) == 4
 
 
 def test_factor_policy_validation_precedes_cache_hit(tmp_path, monkeypatch):

@@ -4,6 +4,39 @@ These are editable vector drafts for the cuButterfly manuscript. PDF files
 are included by LaTeX; SVGs support inspection and editing. Schematics and
 qualitative curves are explicitly distinguished from measured results.
 
+## Reading-order revision
+
+See [the experiment reading map](../evidence/EVALUATION_READING_MAP_20261104.md).
+Figure 2 now includes the full sixteen-point pairing graph before the three
+partitions; Figure 6 separates cross-band readiness from within-band tile supply.
+Figure 10 names stage-retention and tile-supply interventions and spells out
+its group/prefetch coordinates. It is 3.45 × 2.50 inches; numerical inputs are
+unchanged. Platform identities are recorded in setup and manifests rather than
+repeated inside plots. The four evaluation sections are setup, performance,
+ablations, and analysis; Figure 12 belongs to analysis.
+
+## Current visual revision, 2026-11-04
+
+The method overview now carries the common dependency/resource/execution story.
+The selected-plan diagram has become a single-column worked realization. Native
+Draw.io sources add actual directed pair connections, hierarchical band boxes,
+bank-contention slots, and publication/buffer-release events. See
+[the current source sizes and evidence rules](drawio/README.md) and
+[the reference-driven design review](../evidence/FIGURE_REDESIGN_20261104.md).
+Dimensions and layout descriptions dated earlier below are historical.
+
+The measured operator plot has separate family and precision label rows.
+Application and fixed-core plots add qualitative insets, preserving every
+measured point and timing range. Insets do not encode duration or resource use.
+Run `python paper/tools/render_current_refresh.py --figures-only` to redraw from
+the frozen snapshot without refreshing a running experiment or rewriting tables.
+Current measured figure sizes are 7 × 2.55, 3.45 × 2.85, and 3.45 × 2.05 inches.
+The mixed-scope NCU captures remain outside the plots. The independent A100
+40GB scaling figure now adds three profile panels from its audited 18 main
+kernels, with register use, active warps, and barrier stalls. Its 3.45 × 4.0 inch
+canvas retains all 162 timing observations. Profile spans describe two kernels,
+not trial uncertainty. No synthetic counters or unverified aggregates appear.
+
 ## Inherited APPT artwork
 
 The author's APPT26 source is `../APPT26/samplepaper.tex` relative to the
@@ -23,8 +56,8 @@ contracts remain operator-specific.
 
 ## Adapted and new analytical figures
 
-The eight analytical figures included by the manuscript now use native
-draw.io sources in [`drawio/`](drawio/README.md). Edit their named pages in
+The draw.io assets included by the manuscript use native draw.io sources in
+[`drawio/`](drawio/README.md). Edit their named pages in
 [`cubutterfly-methods.drawio`](drawio/cubutterfly-methods.drawio) or an individual
 `.drawio` file, then export with `tools/export_drawio_figures.py`. LaTeX includes
 `drawio/exports/*.pdf`. The earlier Matplotlib redraws remain for provenance;
@@ -40,42 +73,151 @@ environment. It neither accesses a GPU nor reads performance measurements.
 | `overview` | Extend the stage/data organization to labeled butterfly families | Main figure connects dependency construction, closed subgraphs and explicit exchange, and physical hierarchy |
 | `system_architecture` | New system architecture | Preparation produces a checked, selected plan; runtime follows its groups, buffers, and dependencies |
 | `butterfly` | Earlier redraw of the butterfly-network vocabulary | Retained source asset, superseded in the manuscript by `overview` |
-| `roofline` | Adapt APPT's roofline motivation | Two-panel analytical schematic: traffic/core ceilings plus the independent-ready-subgraph ceiling |
-| `organization_tradeoffs` | APPT same-workload stage/data comparison, generalized to butterfly bands | Same 16-point FWHT shown as stage-wise, two-band, and whole-transform organizations; exact analytical transfer and component counts |
+| `roofline` | Adapt APPT's roofline motivation | Symbolic bandwidth/core roof with seven measured A100 organization points at their derived ideal intensity; matched FFT, FWHT, and NTT cases expose different execution gaps |
+| `organization_tradeoffs` | APPT same-workload stage/data comparison, generalized to butterfly bands | Single-column stage-group strips for the same 16-point FWHT; exact local-value, component, and analytical transfer counts without repeated network elements |
 | `hybrid_dataflow` | Earlier redraw of APPT's aligned stage/data progression | Retained source asset, its main-text role is merged into `overview` |
-| `hierarchy` | Extend partial-stage/data grouping | N=16 producer/consumer example and a hypothetical capacity-limited 8+8+8 decomposition |
-| `bank_layout` | Adapt `data_arrangement.pdf` and bank/offset reasoning | Exact four-bank XOR example for single-word values; not a universal GPU transaction proof |
+| `hierarchy` | Extend partial-stage/data grouping and bank/offset reasoning | Single-column N=16 row/column handoff, capacity-limited 8+8+8 strip, and a separately labeled four-bank XOR example; the two address maps are not composed |
+| `bank_layout` | Adapt `data_arrangement.pdf` and bank/offset reasoning | Retained standalone source; its exact four-bank example is now included in `hierarchy`, not a separate manuscript figure |
 | `pipeline` | Extend APPT's block progression and UnionSparse event lanes | A/B/C readiness barriers and buffer lifetime witness; not a measured trace or guaranteed GPU overlap |
-| `semantic_transport` | TensorIR-style explicit interface plus butterfly order correspondence | Bit reversal, axis labels, and CT/local-inverse GS contracts; not arbitrary stage commutation |
+| `semantic_transport` | Explicit butterfly order correspondence | Eight-index bit reversal maps adjacent to strided pairs while preserving the attached labels; not arbitrary stage commutation |
 | `framework` | Earlier GPU generation workflow | Retained source asset, superseded by `system_architecture` |
 
 The analytical figures use a shared palette and consistent labels. The roofline
-uses symbolic ceilings and explicit attainment conditions; it contains no
-measured points. `organization_tradeoffs` is the same-workload bridge from
-the background to the roofline. `semantic_transport` makes the structural
+uses a symbolic resource ceiling and measured execution points. The points are
+derived from `../generated/roofline_cases_20261029.csv`, whose medians and trial
+ranges are frozen from the A100 40GB M1 scaling evidence. The symbolic roof is
+not fitted to those observations or presented as a hardware peak.
+`organization_tradeoffs` follows the Roofline gap with a same-workload
+organization comparison. `semantic_transport` makes the structural
 correspondence and arithmetic contract visible. `hybrid_dataflow` is the generic
 replacement candidate for the inherited NTT-only two-panel artwork and keeps
 both panels geometrically aligned. Their numerical
 indices are analytical examples, not placeholders for measured performance.
 
-The main figure explains the organization, and the architecture figure explains
-its automatic realization. Neither is a performance measurement. The
+The overview follows those two motivation figures at the opening of the method,
+where it becomes Figure 3. It explains the common organization, and the
+architecture figure explains its automatic realization. Neither is a performance measurement. The
 N=16 `hierarchy` figure remains the worked construction example. The paper
-uses eight analytical figures plus the measured cohorts listed below, without
-adding empty application bars. Pending application evidence retains its explicit
-status. Retained earlier redraws are not included merely to
+uses the analytical draw.io assets plus the measured cohorts listed below,
+without adding empty application bars. Pending application evidence retains
+its explicit status. Retained earlier redraws are not included merely to
 increase the figure count.
+
+The later 2026-10-29 pacing revision places Roofline on the first page and the
+same-workload organization example on the second. The method starts on page 3,
+with its overview and boundary example on page 4. Related work and its compact
+feature matrix follow the evaluation, so the earlier pages can develop the
+problem and construction without a detour through the literature survey.
 
 ## Experimental figures
 
-The current manuscript includes `principle_e1_latency`, the historical
-`principle_core_organization`, `principle_application_throughput_ratio`, and
+### Current refresh, 2026-10-28
+
+The current operator and application figures are now
+`current_refresh_operators`, `current_refresh_applications`, and
+`current_refresh_organization`, generated from the explicit snapshot in
+`../generated/current_refresh/snapshot.json`. The first shows all 66 requests
+in twelve actual operator/precision groups. Boxes retain available workloads;
+paired ratios use only the intersection with each competitor. Missing external
+baselines are explicit. The application figure retains all 36 CKKS requests
+against each native control, the three Poisson endpoints, two provisional
+fixed-filter endpoints, and two small-parameter bootstrap endpoints.
+
+The single-column organization figure fixes the radix-2 core and changes only
+stage grouping. Whiskers show the full range of three paired trial ratios;
+these are internal controls, not external-library speedups. The application
+figure is a 3.45 × 2.65 inch single-column plot with Poisson/filter, CKKS, and
+bootstrap partitions sharing a linear speedup axis and a parity line. All 82
+pairs remain. Workload points and geometric
+means are not confidence intervals. Source/output hashes, data units,
+aggregation rules, and descriptions are recorded in the snapshot and
+`../generated/current_refresh/figure_manifest.json`.
+
+Run `make -C paper refresh-data PYTHON=/home/wt/yes/envs/cubutterfly/bin/python`
+from the repository root. This is CPU-only. The earlier `principle_e1_latency`,
+filter-batch, and Poisson endpoint figures remain historical assets and no
+longer supply current headline statistics. Their descriptions below document
+their original populations. The compact cross-core and A100 40GB scaling
+figures remain independent evidence in the manuscript.
+
+`motivation_organization_a100` replaces the historical single-operator motivation
+panel. Run `python paper/tools/render_motivation_organization.py` to validate
+all 18 original releases and summarize all 162 M1 timings. Each of the six
+boxes shows six workload ratios, median(stagewise)/median(grouped), for two
+local groupings across FFT/FWHT FP64 and word64 NTT. All 36 ratios are plotted;
+boxes are workload quartiles, whiskers min/max, not timing uncertainty. The
+three-trial raw times, source hashes, and transformations are preserved in
+`../generated/motivation_organization_a100.{csv,json}`. The separate six-panel
+scaling plot retains the timing ranges. Neither plot substitutes for external
+library comparisons or floating-point acceptance.
+
+The manuscript now uses the compact 480 × 252 draw.io `roofline` figure at
+single-column width. The ratio panel remains an audit asset rather than
+duplicating the complete `narrative_scaling_20261027` measurements in the
+evaluation. Seven markers report measured A100 40GB M1 medians: three matched
+FFT FP64 organizations, two FWHT batch points, and two NTT organizations.
+Their x coordinates are the derived ideal boundary intensity and their y
+coordinates are pair rate; all use two materialized stage groups. The symbolic
+roof is intentionally not fitted to the observations or treated as a hardware
+peak. Equal ideal intensity therefore makes the execution gap visible without
+claiming equal measured traffic or a unique bottleneck. Trial ranges and source
+provenance remain in `../generated/roofline_cases_20261029.csv`.
+Current paper evidence uses A100; PRO 6000 Server 96GB remains pending.
+
+The 2026-10-29 compression combines two independent fixed-core cohorts into
+`core_organization_compact`, a 3.45 × 1.85 inch two-panel single-column figure.
+Reproduce it with
+`python paper/tools/render_core_organization_compact.py`. Panel (a) preserves
+all 12 historical FP32 ratios and paired three-trial ranges; panel (b) preserves
+all nine FP64 cases, including complete cuFFT, and all 63 timing samples.
+The renderer verifies the original source hashes and compares every plotted
+point and range with the earlier CSVs. It does not resolve live binaries.
+Separate point/sample CSVs and source/output hashes are in
+`../generated/core_organization_compact*`. The cohorts are neither pooled nor
+relabeled as current automatic-library results. The original standalone figures
+remain available for audit.
+
+The 2026-10-29 analytical redraws use compact canvases: `overview` is 1000 ×
+300, `semantic_transport` is 480 × 274, and `system_architecture` is 1000 ×
+330. The `pipeline` canvas is 480 × 274, reduced from 480 × 366 without changing
+its readiness or buffer-lifetime witness. The architecture example shows two producer groups writing four successor
+pairs through a shared aligned representation. The execution text defines the
+remaining bank-conflict check and distinguishes local bank swizzles from
+outer-storage coalescing; these schematics remain analytical and do not claim
+that one XOR map is valid for every core or target.
+
+The Poisson endpoint remains a separate figure, now drawn at native single-column
+width rather than reducing a double-column plot. Both eager and graph modes,
+all three backends, and all twenty repeated calls per cell remain visible.
+
+`narrative_scaling_20261027` is the complete independent A100 40GB local
+organization study. Run `python paper/tools/render_narrative_scaling.py` to
+validate and plot the 18 original per-case releases referenced by
+`results/narrative_gap_20261027/m1_gpu40_cases/collection.json`. Its six panels
+cross FFT/FWHT FP64 and word64 NTT with N=2^16/2^20; each panel retains all
+three batches and all three local groupings. Physical HBM groups are fixed
+within each panel. Grouped bars/whiskers represent medians/full ranges of three
+independent process trials, not confidence intervals. The ordinate counts
+complex FFT values and scalar FWHT/NTT values, not common FLOPs. CSV and source,
+script, identity, and output hashes are in
+`../generated/narrative_scaling_20261027.{csv,json}`. The 3.45 × 3.15 inch
+single-column PDF uses two rows by three columns, with operator-matched vertical
+limits across rows and embedded TrueType fonts. All 54 configurations and 162
+timings remain; its actual manuscript rendering was checked.
+See the [result report](../evidence/NARRATIVE_SCALING_RESULTS_20261027.md) for
+all 162 timings, exact NTT checks, floating-report limitations and negative
+results. Interrupted attempts and other hardware never fill its cells.
+
+The earlier manuscript included `principle_e1_latency`,
+`principle_application_throughput_ratio`, and
 `principle_application_poisson_endpoint`. Regenerate them with
 `python paper/tools/render_principle_evaluation.py`. Their separate operator,
 historical-core, image-filter, and Poisson populations and source/output hashes
-are recorded in `../generated/principle_figure_metadata.json`. The headline
-operator statistics retain the 36-request screen and independent 12-request
-NTT extension; later prose supplements do not enter those populations.
+are recorded in `../generated/principle_figure_metadata.json`. The historical
+`principle_core_organization` is retained as an audit source for the combined
+figure above. The headline
+operator statistics in those archived figures retain the 36-request screen and
+independent 12-request NTT extension; they are not pooled into the current refresh.
 
 `factor_organization_20261025` is a separate FP64, N=65536, B=16 diagnostic:
 two fixed cores, four organizations per core, and complete cuFFT. Regenerate
@@ -104,6 +246,12 @@ performance values come from the frozen measurement evidence above.
 
 The assets below are retained historical figures rather than the current
 manuscript's performance-figure inputs.
+
+`motivation_crossover_20261027` and `tools/render_motivation_crossover.py`
+retain the historical V100 NTT diagnostic and its original provenance.
+They are no longer included in the manuscript and do not supply its claims
+or future platform test requirements. The raw data and old exports remain
+unchanged for audit.
 
 `results_*` files are generated by `tools/render_experiment_figures.py` from
 the recorded snapshot and medians. Its generated JSON/CSV summaries retain
@@ -170,3 +318,23 @@ two cells with strided or in-place contracts. Missing cells remain blank
 and no surface interpolation is applied. Both figures are generated from the frozen
 `paper/evidence/current_snapshot.json`; the renderer defaults to that snapshot
 and only reads live acceptance input when `--refresh-snapshot` is explicit.
+
+## Archived FFT-L boundary figure (2026-11-04)
+
+This standalone figure is no longer included in the manuscript. FFT FP16/BF16
+now appear as precision columns in `current_refresh_operators.pdf`, with the
+one public FP16 winner replay and explicit pending BF16 coverage. Fixed controls
+are not substituted for automatic results. Profile observations remain in the
+common analysis prose. The source below is preserved for evidence auditing.
+
+`fft_l_boundary_20261104.pdf` is a 3.45 × 1.88 inch two-panel measured figure,
+rendered by `paper/tools/render_fft_l_boundary.py`. Panel (a) retains all six
+final-confirmed N4096 FP16/BF16 cases, including the BF16 B4 regression; the
+large-batch points combine ownership, grouping, and boundary implementation
+changes around fixed scalar radix-4 arithmetic. It is not an AUTO-library ratio.
+Panel (b) plots store sectors/request from separate A100 40GB kernel captures,
+with unchanged packed arithmetic counts. It is neither HBM bytes nor timing.
+The raw profile's increased shared-memory bank conflicts are retained in prose.
+Full sources, intermediate CSVs, exclusions, and build hashes are recorded in
+`generated/fft_l_20261104/`; `figure_manifest.json` binds the exact renderer,
+inputs, output dimensions, and files. No anticipated values are plotted.

@@ -75,6 +75,15 @@ class CalibrationTests(unittest.TestCase):
                 runner.main(["--library", "/not-built.so", "--output", str(output),
                              "--gpu-uuid", "GPU-test", "--dry-run"])
 
+    def test_dry_run_creates_missing_output_parent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "new" / "xd" / "result.json"
+            self.assertFalse(output.parent.exists())
+            self.assertEqual(runner.main(["--library", "/not-built.so", "--output", str(output),
+                                          "--gpu-uuid", "GPU-test", "--dry-run"]), 0)
+            self.assertTrue(output.parent.is_dir())
+            self.assertFalse(output.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

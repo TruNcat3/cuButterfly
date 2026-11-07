@@ -1,0 +1,20 @@
+{
+  "script_sha256": "5d0d70d45ecb3bd0be84002fc0334661318e7580e66eb1a522b3531ab6edfbbb",
+  "inputs": {
+    "paper/generated/fft_l_20261104/boundary_confirmed.csv": "46055b2d21a95307853a6a6a7bf58184002a24a0a5485472eabedd26490506b6",
+    "paper/generated/fft_l_20261104/profile_summary.json": "231a79e47ab594296acbf1cac5352cb6bbaa5bf323f5464ddd9a79ec41d7f5f0",
+    "paper/generated/fft_l_20261104/provenance.json": "a9cb2e4250936a6dd89bc8bc63f57581d7928cc9174c5244f7e35cab22420bf5"
+  },
+  "size_inches": [
+    3.45,
+    1.88
+  ],
+  "panel_a": "All six confirmed N4096 native FFT-L cases. Control/revised complete-Graph medians, B4 endpoint retains G1/C1; B64/256 revised G32/C8. Fixed scalar radix4, 256 threads. Different builds preserve byte equality. One process per endpoint; workload points are not uncertainty.",
+  "panel_b": "Separate A100 40GB FP16 N4096 B256 NCU kernel captures. Each stage store_sectors/store_requests. No aggregation of counter units, no NCU timings used as ordinary performance.",
+  "selection": "All final-confirmed boundary cases, including BF16 B4 regression. No external superiority claim; full cuFFT comparisons retained in CSV and prose.",
+  "outputs": {
+    "paper/figures/fft_l_boundary_20261104.png": "fa01ca53df37b6c702f2ad1a477f94cb173c39d6209b9dbaa7ad00c2b155e169",
+    "paper/figures/fft_l_boundary_20261104.svg": "17bf9ba41e4e52a0fdab39441f8ef7eea9cd75e73d394412e0773d423e8552b5",
+    "paper/figures/fft_l_boundary_20261104.pdf": "406c827b9387ebacd338adf5feb1f408ab7c59aca2f50b72b5f0c67a099b56e3"
+  }
+}

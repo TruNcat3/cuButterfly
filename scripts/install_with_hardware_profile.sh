@@ -338,6 +338,14 @@ if (( ! SKIP_TESTS )); then
 fi
 cmake --install "$BUILD_DIR" --prefix "$PREFIX"
 
+if [[ -d "$PREFIX/conda-meta" ]]; then
+    install -d "$PREFIX/etc/conda/activate.d" "$PREFIX/etc/conda/deactivate.d"
+    install -m 644 "$ROOT/scripts/conda_activate_profile.sh" \
+        "$PREFIX/etc/conda/activate.d/cubutterfly_profile.sh"
+    install -m 644 "$ROOT/scripts/conda_deactivate_profile.sh" \
+        "$PREFIX/etc/conda/deactivate.d/cubutterfly_profile.sh"
+fi
+
 echo "installed cuButterfly under $PREFIX"
 echo "profile artifacts: $PROFILE_DIR (action: $PROFILE_ACTION)"
 if [[ -f "$PROFILE_DIR/profile_environment.sh" ]]; then

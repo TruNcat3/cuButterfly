@@ -427,3 +427,58 @@ def test_validate_mapping_allows_decoder_defaults_but_rejects_axis_changes():
     changed_schema = {**resolved, "schema_version": 2}
     with pytest.raises(ValueError, match="differs"):
         calibration_seeds.validate_mapping(requested, changed_schema)
+
+
+@pytest.mark.parametrize("backend", ["temporal-tile", "online-reorder", "factor-streamed"])
+def test_cufftdx_provider_radix2_alias_matches_and_deduplicates(backend):
+    requested = dict(schema_version=1, kind="butterfly", backend=backend,
+                     fft_core="cufftdx-block", compute_unit="radix2",
+                     tile_threads=256, prefix_ept=16, stage_partition=[12])
+    resolved = dict(requested, compute_unit="auto", local_exchange="shared")
+    calibration_seeds.validate_mapping(requested, resolved)
+    assert requested["compute_unit"] == "radix2"  # Frozen inputs stay unchanged.
+    semantics = _semantics(precision="fp16", log_n=12, batch=256)
+    snapshot = {"seeds": [
+        {"semantics": semantics, "mapping": mapping,
+         "provenance": {"kind": "explicit", "source": name}}
+        for name, mapping in (("legacy", requested), ("resolved", dict(requested, compute_unit="auto")))]}
+    candidates = calibration_seeds.candidates_for_workload(snapshot, semantics)
+    assert len(candidates) == 1
+    assert len(candidates[0]["sources"]) == 2
+    assert _candidate_mapping(candidates[0])["compute_unit"] == "auto"
+    for key, changed in [("tile_threads", 128), ("prefix_ept", 8), ("stage_partition", [6, 6]),
+                         ("fft_core", "scalar"), ("compute_unit", "radix4")]:
+        with pytest.raises(ValueError, match="differs"):
+            calibration_seeds.validate_mapping(requested, dict(resolved, **{key: changed}))
+
+
+def test_cufftdx_factor_provider_alias_preserves_real_factor_axes():
+    requested = dict(schema_version=1, kind="butterfly", backend="factor-streamed",
+                     fft_core="cufftdx-block", compute_unit="radix2", stage_partition=[14],
+                     factor_partition=[7, 7], factor_columns=16, factor_ept=8,
+                     factor_io_policies=["dynamic", "static-unrolled"],
+                     data_tiles_per_cta=4, prefetch_depth=1, cross_twiddle="recurrence")
+    resolved = dict(requested, compute_unit="auto")
+    calibration_seeds.validate_mapping(requested, resolved)
+    for key, changed in [("factor_partition", [6, 8]), ("factor_columns", 8), ("factor_ept", 16),
+                         ("factor_io_policies", ["dynamic", "dynamic"]),
+                         ("data_tiles_per_cta", 1), ("prefetch_depth", 0), ("cross_twiddle", "table")]:
+        with pytest.raises(ValueError, match="differs"):
+            calibration_seeds.validate_mapping(requested, dict(resolved, **{key: changed}))
+
+
+@pytest.mark.parametrize("core", ["scalar", "register-tile", "unknown-provider"])
+def test_cufftdx_alias_does_not_mask_other_core_arithmetic(core):
+    requested = dict(backend="temporal-tile", fft_core=core, compute_unit="radix2")
+    assert calibration_seeds.canonical_mapping(requested) == requested
+    with pytest.raises(ValueError, match="differs"):
+        calibration_seeds.validate_mapping(requested, dict(requested, compute_unit="auto"))
+
+
+def test_cufftdx_invalid_radix_remains_visible_and_missing_axis_is_not_invented():
+    requested = dict(backend="temporal-tile", fft_core="cufftdx-block", compute_unit="radix4")
+    assert calibration_seeds.canonical_mapping(requested) == requested
+    with pytest.raises(ValueError, match="differs"):
+        calibration_seeds.validate_mapping(requested, dict(requested, compute_unit="auto"))
+    absent = dict(backend="temporal-tile", fft_core="cufftdx-block")
+    assert calibration_seeds.canonical_mapping(absent) == absent

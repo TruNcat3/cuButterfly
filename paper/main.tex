@@ -38,6 +38,7 @@
 
 \newcommand{\system}{\textsc{cuButterfly}}
 \newcommand{\pending}[1]{\textcolor{gray}{[Pending: #1]}}
+\input{generated/current_refresh/numbers}
 
 % Internal layout examples are excluded by the evidence-only wrapper.
 % Synthetic numbers must never become evidence by removing their watermark.
@@ -49,6 +50,7 @@
 \fi
 
 \newtheorem{proposition}{Proposition}
+\newcounter{boundaryalgorithm}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -64,14 +66,17 @@
 \pagestyle{plain}
 
 \input{sections/abstract}
+% Keep the abstract at the top of the first column; introductory figures may
+% float to the second column without overtaking the abstract.
+\suppressfloats[t]
 \input{sections/introduction}
 \input{sections/background}
-\input{sections/related}
 \input{sections/motivation}
 \input{sections/method}
 \input{sections/execution}
 \input{sections/search}
 \input{sections/evaluation}
+\input{sections/related}
 \input{sections/conclusion}
 
 % The reference list is dense; keep it one step below

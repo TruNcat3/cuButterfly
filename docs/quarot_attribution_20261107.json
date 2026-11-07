@@ -1,0 +1,472 @@
+{
+  "schema": "quarot-attribution-readonly-v1",
+  "date": "2026-11-07",
+  "measurements_new": false,
+  "application_runs": [
+    {
+      "report": "results/a100_closure_20261102/applications/quarot_b1_p128d8_process1/release/report.json",
+      "sha256": "cc16f005f784d3a781be909e7d10dedd23b5d26e1581dad36477782c9d0ce1c5",
+      "payload": {
+        "batch_size": 1,
+        "prefill": 128,
+        "decode": 8
+      },
+      "order": "baseline-first",
+      "wall_summary": {
+        "baseline_median_ms": 154.20012501999736,
+        "cubutterfly_median_ms": 159.22819901607,
+        "baseline_over_cubutterfly": 0.9684222139850669,
+        "baseline_sequences_per_second": 6.485079048219419,
+        "baseline_tokens_per_second": 881.970750557841,
+        "baseline_amortized_ms_per_sequence": 154.20012501999736,
+        "cubutterfly_sequences_per_second": 6.280294609744821,
+        "cubutterfly_tokens_per_second": 854.1200669252956,
+        "cubutterfly_amortized_ms_per_sequence": 159.22819901607
+      },
+      "event_medians_ms": {
+        "baseline": 154.12428283691406,
+        "cubutterfly": 159.1961669921875
+      },
+      "plans": [
+        {
+          "N": 32,
+          "batch": 16384,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix4",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.015206"
+        },
+        {
+          "N": 64,
+          "batch": 22016,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix4",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.019354"
+        },
+        {
+          "N": 32,
+          "batch": 128,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix4",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.005120"
+        },
+        {
+          "N": 64,
+          "batch": 172,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix8",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.003226"
+        }
+      ],
+      "wall_delta_ms": 5.028073996072635,
+      "event_delta_ms": 5.0718841552734375
+    },
+    {
+      "report": "results/a100_closure_20261102/applications/quarot_b1_p128d8_process2/release/report.json",
+      "sha256": "0f7f37f20b4713f91a0d33fea24f637270e43ba862c740c38a6d0b3c882f5f45",
+      "payload": {
+        "batch_size": 1,
+        "prefill": 128,
+        "decode": 8
+      },
+      "order": "treatment-first",
+      "wall_summary": {
+        "baseline_median_ms": 154.16758300852962,
+        "cubutterfly_median_ms": 159.19664001557976,
+        "baseline_over_cubutterfly": 0.9684097792104283,
+        "baseline_sequences_per_second": 6.486447932083576,
+        "baseline_tokens_per_second": 882.1569187633663,
+        "baseline_amortized_ms_per_sequence": 154.16758300852962,
+        "cubutterfly_sequences_per_second": 6.281539609768995,
+        "cubutterfly_tokens_per_second": 854.2893869285832,
+        "cubutterfly_amortized_ms_per_sequence": 159.19664001557976
+      },
+      "event_medians_ms": {
+        "baseline": 154.13043212890625,
+        "cubutterfly": 159.1664581298828
+      },
+      "plans": [
+        {
+          "N": 32,
+          "batch": 16384,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix4",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.015206"
+        },
+        {
+          "N": 64,
+          "batch": 22016,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix8",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.019354"
+        },
+        {
+          "N": 32,
+          "batch": 128,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix4",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.003226"
+        },
+        {
+          "N": 64,
+          "batch": 172,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix4",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.003277"
+        }
+      ],
+      "wall_delta_ms": 5.029057007050142,
+      "event_delta_ms": 5.0360260009765625
+    },
+    {
+      "report": "results/a100_closure_20261102/applications/quarot_b4_p128d8_process1/release/report.json",
+      "sha256": "d98181b36d82858d0e667e73f0d25a195c380cda0f9bdd778d9e21973a160484",
+      "payload": {
+        "batch_size": 4,
+        "prefill": 128,
+        "decode": 8
+      },
+      "order": "baseline-first",
+      "wall_summary": {
+        "baseline_median_ms": 177.16538900276646,
+        "cubutterfly_median_ms": 185.18676899839193,
+        "baseline_over_cubutterfly": 0.9566849184798125,
+        "baseline_sequences_per_second": 22.57777335920584,
+        "baseline_tokens_per_second": 3070.5771768519944,
+        "baseline_amortized_ms_per_sequence": 44.291347250691615,
+        "cubutterfly_sequences_per_second": 21.599815265607525,
+        "cubutterfly_tokens_per_second": 2937.574876122623,
+        "cubutterfly_amortized_ms_per_sequence": 46.29669224959798
+      },
+      "event_medians_ms": {
+        "baseline": 177.1356201171875,
+        "cubutterfly": 185.15660095214844
+      },
+      "plans": [
+        {
+          "N": 32,
+          "batch": 65536,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix4",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.051558"
+        },
+        {
+          "N": 64,
+          "batch": 88064,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix8",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.073267"
+        },
+        {
+          "N": 32,
+          "batch": 512,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix4",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.003482"
+        },
+        {
+          "N": 64,
+          "batch": 688,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix8",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.003635"
+        }
+      ],
+      "wall_delta_ms": 8.021379995625466,
+      "event_delta_ms": 8.020980834960938
+    },
+    {
+      "report": "results/a100_closure_20261102/applications/quarot_b4_p128d8_process2/release/report.json",
+      "sha256": "6632ee5ed84aa317480442ffe32d81e30ea36fd7d7d4d10f4aaa9354edd4e01b",
+      "payload": {
+        "batch_size": 4,
+        "prefill": 128,
+        "decode": 8
+      },
+      "order": "treatment-first",
+      "wall_summary": {
+        "baseline_median_ms": 177.59440300869755,
+        "cubutterfly_median_ms": 185.1479710021522,
+        "baseline_over_cubutterfly": 0.9592025343158266,
+        "baseline_sequences_per_second": 22.523232332969993,
+        "baseline_tokens_per_second": 3063.159597283919,
+        "baseline_amortized_ms_per_sequence": 44.39860075217439,
+        "cubutterfly_sequences_per_second": 21.604341534768984,
+        "cubutterfly_tokens_per_second": 2938.190448728582,
+        "cubutterfly_amortized_ms_per_sequence": 46.28699275053805
+      },
+      "event_medians_ms": {
+        "baseline": 177.5626220703125,
+        "cubutterfly": 185.11666870117188
+      },
+      "plans": [
+        {
+          "N": 32,
+          "batch": 65536,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix4",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.051507"
+        },
+        {
+          "N": 64,
+          "batch": 88064,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix8",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.073165"
+        },
+        {
+          "N": 32,
+          "batch": 512,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix8",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.003482"
+        },
+        {
+          "N": 64,
+          "batch": 688,
+          "storage": 2,
+          "compute": 1,
+          "algorithm": "temporal-tile-radix8",
+          "selection_source": "runtime_measured",
+          "selection_reason": "measured legal butterfly candidates on the current hardware; kernel_ms=0.003635"
+        }
+      ],
+      "wall_delta_ms": 7.553567993454635,
+      "event_delta_ms": 7.554046630859375
+    }
+  ],
+  "matched_trace_available": false,
+  "main_fwht_fp32_requests": [
+    {
+      "shape": [
+        256
+      ],
+      "batch": 1,
+      "direction": 0,
+      "dao_status": "accuracy-review-required",
+      "source": "results/full_current_20261025/measurement/rows/0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9.json"
+    },
+    {
+      "shape": [
+        256
+      ],
+      "batch": 1,
+      "direction": 1,
+      "dao_status": "accuracy-review-required",
+      "source": "results/full_current_20261025/measurement/rows/bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c.json"
+    },
+    {
+      "shape": [
+        4096
+      ],
+      "batch": 32,
+      "direction": 0,
+      "dao_status": "accuracy-review-required",
+      "source": "results/full_current_20261025/measurement/rows/3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485.json"
+    },
+    {
+      "shape": [
+        4096
+      ],
+      "batch": 32,
+      "direction": 1,
+      "dao_status": "accuracy-review-required",
+      "source": "results/full_current_20261025/measurement/rows/0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043.json"
+    },
+    {
+      "shape": [
+        32768
+      ],
+      "batch": 1,
+      "direction": 0,
+      "dao_status": "accuracy-review-required",
+      "source": "results/full_current_20261025/measurement/rows/dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51.json"
+    },
+    {
+      "shape": [
+        32768
+      ],
+      "batch": 1,
+      "direction": 1,
+      "dao_status": "accuracy-review-required",
+      "source": "results/full_current_20261025/measurement/rows/e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2.json"
+    },
+    {
+      "shape": [
+        128,
+        128
+      ],
+      "batch": 4,
+      "direction": 0,
+      "dao_status": "accuracy-review-required",
+      "source": "results/full_current_20261025/measurement/rows/f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d.json"
+    },
+    {
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "batch": 4,
+      "direction": 1,
+      "dao_status": "accuracy-review-required",
+      "source": "results/full_current_20261025/measurement/rows/eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a.json"
+    },
+    {
+      "shape": [
+        8,
+        8,
+        8,
+        8
+      ],
+      "batch": 4,
+      "direction": 0,
+      "dao_status": "accuracy-review-required",
+      "source": "results/full_current_20261025/measurement/rows/4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3.json"
+    },
+    {
+      "shape": [
+        65536
+      ],
+      "batch": 4,
+      "direction": 0,
+      "dao_status": "missing-baseline",
+      "source": "results/full_current_20261025/measurement/rows/5e296849a754f51f2c951977f778472f3047e3e65616086309f8d8c873078cb5.json"
+    },
+    {
+      "shape": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "batch": 16,
+      "direction": 1,
+      "dao_status": "accuracy-review-required",
+      "source": "results/full_current_20261025/measurement/rows/db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be.json"
+    }
+  ],
+  "derived_application_call_counts": {
+    "method": "static derivation:32 layers, one attention and one MLP call each forward; not traced",
+    "per_shape_prefill_calls": 32,
+    "per_shape_decode_calls": 256,
+    "B1": [
+      {
+        "N": 32,
+        "batch": 16384,
+        "phase": "prefill",
+        "scale": "1/sqrt(32)"
+      },
+      {
+        "N": 64,
+        "batch": 22016,
+        "phase": "prefill",
+        "scale": "1/sqrt(11008)"
+      },
+      {
+        "N": 32,
+        "batch": 128,
+        "phase": "decode",
+        "scale": "1/sqrt(32)"
+      },
+      {
+        "N": 64,
+        "batch": 172,
+        "phase": "decode",
+        "scale": "1/sqrt(11008)"
+      }
+    ],
+    "B4_batch_multiplier": 4
+  },
+  "source_sha256": {
+    "paper/experiments/e13/run_quarot_random_end_to_end.py": "0da3f8928bfe8d20202b3a69747a087d269608280289b1965c140cc43f6468d3",
+    "paper/experiments/e13/quarot_adapter.py": "71a6019f7c1b146eb6026a040f847fa70919f2027e7f8174a93f54203325b1ae",
+    "src/c_api.cpp": "7a7a0a8a21aff4d188001bdc0b181ae64a2ffc63d2958de9f4b4a90ca5e09694",
+    "scripts/semantic_gpu_pipeline.py": "b5432b702ec712308794e48fac78efdf88a27299b76b50b321ec2a6937b345a9",
+    "scripts/semantic_dao_baseline.py": "fc0e78c2e5655fdd4e4210f792e220af52b878fa7700d215f5b6265414ef845a",
+    "results/e13_assets/sources/QuaRot/quarot/functional/hadamard.py": "c93cce8a9c8403ed9ce8ae30b781500c93ddc8b36907889a7300c5f9e2a4b422",
+    "results/e13_assets/sources/QuaRot/e2e/quantized_llama/modeling_llama.py": "17f5e2a369f4aa0cfe491976271565ee904270ec1f0efb8bfb6f1a6ebc45c913",
+    "results/full_current_20261025/measurement/results.json": "ada9a9de24a5c506fab5653ce1844ca90d6fc50def926ab2c3e82495949e4824",
+    "results/a100_closure_20261102/applications/quarot_b1_p128d8_process1/release/report.json": "cc16f005f784d3a781be909e7d10dedd23b5d26e1581dad36477782c9d0ce1c5",
+    "results/a100_closure_20261102/applications/quarot_b1_p128d8_process2/release/report.json": "0f7f37f20b4713f91a0d33fea24f637270e43ba862c740c38a6d0b3c882f5f45",
+    "results/a100_closure_20261102/applications/quarot_b4_p128d8_process1/release/report.json": "d98181b36d82858d0e667e73f0d25a195c380cda0f9bdd778d9e21973a160484",
+    "results/a100_closure_20261102/applications/quarot_b4_p128d8_process2/release/report.json": "6632ee5ed84aa317480442ffe32d81e30ea36fd7d7d4d10f4aaa9354edd4e01b",
+    "results/full_current_20261025/measurement/rows/0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9.json": "25f73b03098c5debbbe5389755a669dd0be31ad6101f17752a4e97d4b65a3ed5",
+    "results/full_current_20261025/measurement/rows/bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c.json": "cc278f43a54cf5c21f8eb2a4da5133a450fa7ddfe3368ed1967fff9c0a7dfd53",
+    "results/full_current_20261025/measurement/rows/3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485.json": "443d99035908987d4027183ed1515c848a00014bee52d9781d838caf7feed93d",
+    "results/full_current_20261025/measurement/rows/0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043.json": "b476f2fe68c8ffcfae428f95c9de42056bbb1175a9c0536800bccd4bac9dcccf",
+    "results/full_current_20261025/measurement/rows/dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51.json": "3a6169ebd82f102bf8ebb29ebfc9831257f86d81d9217bb91f1716feb470423b",
+    "results/full_current_20261025/measurement/rows/e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2.json": "d0f5f921a7421fd8b03aa24f478ff38a97d5adb9324786539d4efb8a61708cbf",
+    "results/full_current_20261025/measurement/rows/f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d.json": "d2a44a1cd1a68fa746a4de7548e5e859e8b92698d1b8a9ef01e363be076f6094",
+    "results/full_current_20261025/measurement/rows/eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a.json": "acce64c448d14639ce3c501146aaab1d775a3cc2da62a4902abe251e1b850271",
+    "results/full_current_20261025/measurement/rows/4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3.json": "bf3dcc1a4be0fed96f2a704ce05630043aa7e99567847d44ab423936b6fada05",
+    "results/full_current_20261025/measurement/rows/5e296849a754f51f2c951977f778472f3047e3e65616086309f8d8c873078cb5.json": "d3360daf5fc92aecf53ab1b77a9bdd72925f7f4e80541182bc68c39dfa9d5a34",
+    "results/full_current_20261025/measurement/rows/db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be.json": "b1e511e9edb573d6a582de17750cff920ba5ac02512a8f8755b47639eaa0f84c"
+  },
+  "installed_eight_contract_attempt": {
+    "status": "expired_no_valid_release",
+    "status_file": "results/quarot_contracts_20261107_80g/status.json",
+    "deadline": "2026-11-07T11:13:58.520711+00:00",
+    "final_status_updated": "2026-11-07T19:14:12.494181+08:00",
+    "guard_exit_code": 2,
+    "attempt_start": "2026-11-07T19:08:26.212785+08:00",
+    "attempt_interrupted": "2026-11-07T19:09:24.788432+08:00",
+    "external_conflict_pids": [
+      3631472
+    ],
+    "accepted_measurements": false,
+    "interpretation": "No accepted eight-case timings, kernel counts, or numerical diagnostics. Interrupted attempt quarantined; not 7B E2E. Guard polling can report expiration after its absolute deadline.",
+    "environment_unset": [
+      "CUBUTTERFLY_HARDWARE_MODEL",
+      "CUBUTTERFLY_PROFILE_ROOT",
+      "CUBUTTERFLY_REGISTRY",
+      "CUBUTTERFLY_PLAN_CACHE",
+      "CUBUTTERFLY_PLATFORM_TUNING",
+      "CUBUTTERFLY_JIT_CACHE",
+      "CUBUTTERFLY_E13_ALGORITHM_POLICY"
+    ],
+    "environment_set": {
+      "CUBUTTERFLY_COMPILE_MODE": "research"
+    },
+    "files_sha256": {
+      "results/quarot_contracts_20261107_80g/status.json": "afc090f49e867ea9ba028b87943324573d13e6d547bd3993d7620457e751c110",
+      "results/quarot_contracts_20261107_80g/attempts/20261107_190826_210179/report.json": "1626408908188a907733c5df49d92099eb75badd105eea92c73f939b1670a29a",
+      "results/quarot_contracts_20261107_80g/attempts/20261107_190826_210179/runner.log": "ff5f81936f29eaf916731ce5862f1d2d2a54eb177973c31c9f2546d9f345dde3",
+      "scripts/benchmark_quarot_contracts.py": "2a883eebb694e9989cc1f65d420b236c7cd1a2596a50a056a337daae2a68c6fd",
+      "configs/experiments/quarot_contracts_20261107.json": "1a85cc6a4af6c37e4387477c03ee9b705b6dad2219544a2aa604a2dd2b098842"
+    }
+  }
+}

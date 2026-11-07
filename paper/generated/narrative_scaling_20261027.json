@@ -1,0 +1,1730 @@
+{
+  "source": "results/narrative_gap_20261027/m1_gpu40_cases/collection.json",
+  "source_sha256": "2d033a697c14308e8a052dbfee3e3035942e605728809bddeca919a512ef975f",
+  "script_sha256": "d9a56c413e16661500a6a74b746351137854a31293cd4e1f26101eed84211920",
+  "hardware": {
+    "compute_capability": "8.0",
+    "cuda_global_memory_bytes": 42285268992,
+    "driver": "550.127.05",
+    "global_memory_bytes": 42285268992,
+    "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+    "memory_total_mib": 40960,
+    "name": "NVIDIA A100-PCIE-40GB",
+    "nvml_memory_total_mib": 40960,
+    "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+    "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+  },
+  "case_releases": [
+    {
+      "case": "fft-fp64-n16-b1",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/000/guards/0000/release/timing.json",
+      "sha256": "ad67b1a1f923ebcc0c84cbb5606df52bcf565697e43801539f84af1e7075a9b9",
+      "identity": {
+        "binaries": {
+          "cubutterfly_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+            "sha256": "abeebc62cdbd4a8a34ff9f97d64bdce2000798d014870d81923912b787d4eb6e"
+          },
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/000/study.json",
+        "study_sha256": "448ff5975221bb7f488354f2a45eee6ff6432d09d8b3eac8bbb60eda261d6b5f"
+      }
+    },
+    {
+      "case": "fft-fp64-n16-b16",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/002/guards/0000/release/timing.json",
+      "sha256": "7322a3f16cd4ac231c8b233add691d94ff4351958461a939071f5495c2874627",
+      "identity": {
+        "binaries": {
+          "cubutterfly_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+            "sha256": "abeebc62cdbd4a8a34ff9f97d64bdce2000798d014870d81923912b787d4eb6e"
+          },
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/002/study.json",
+        "study_sha256": "148971929d2dec6b533a231672b4d113798af286ae188fe322ea08e58a0008ba"
+      }
+    },
+    {
+      "case": "fft-fp64-n16-b4",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/001/guards/0000/release/timing.json",
+      "sha256": "110701e683b02369e52cf89b365fda8a8b63128784c459827dd4f8e8f3df1685",
+      "identity": {
+        "binaries": {
+          "cubutterfly_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+            "sha256": "abeebc62cdbd4a8a34ff9f97d64bdce2000798d014870d81923912b787d4eb6e"
+          },
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/001/study.json",
+        "study_sha256": "cde0b2e793739ad59d859699f68649294ef8450a817322ea8734c4e85affa157"
+      }
+    },
+    {
+      "case": "fft-fp64-n20-b1",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/003/guards/0000/release/timing.json",
+      "sha256": "5c8a9f3117df06cff807868ab184e83ac111428678671d30c8dd7c371580ae0d",
+      "identity": {
+        "binaries": {
+          "cubutterfly_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+            "sha256": "abeebc62cdbd4a8a34ff9f97d64bdce2000798d014870d81923912b787d4eb6e"
+          },
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/003/study.json",
+        "study_sha256": "6d09ec62259def73fd26ac6a15cacb8dff4e4791d706462bda80fb9f4bf553a7"
+      }
+    },
+    {
+      "case": "fft-fp64-n20-b16",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/005/guards/0000/release/timing.json",
+      "sha256": "07722e41477320cf7980cb14fb7071ddd94d411e14c599b8b287ef63a5b7c7dc",
+      "identity": {
+        "binaries": {
+          "cubutterfly_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+            "sha256": "abeebc62cdbd4a8a34ff9f97d64bdce2000798d014870d81923912b787d4eb6e"
+          },
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/005/study.json",
+        "study_sha256": "6b52d425af6b0e1fe713dbf4a12c93f092ea092cadd0d555a5b98f7de0c514ed"
+      }
+    },
+    {
+      "case": "fft-fp64-n20-b4",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/004/guards/0000/release/timing.json",
+      "sha256": "ec726d3793573475b25a051298e17fd2eea892295b806ba7b4f8879102d7a84d",
+      "identity": {
+        "binaries": {
+          "cubutterfly_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+            "sha256": "abeebc62cdbd4a8a34ff9f97d64bdce2000798d014870d81923912b787d4eb6e"
+          },
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/004/study.json",
+        "study_sha256": "72bbd0d0682f45f2199d6dd9c2505c53f3cadcc230d50c0ab8c4cf7aeafaad63"
+      }
+    },
+    {
+      "case": "fwht-fp64-n16-b1",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/006/guards/0000/release/timing.json",
+      "sha256": "f157307f345ae9188b2fb29d2e833ad00cd744d03ce04e4f6a4e2f619968c112",
+      "identity": {
+        "binaries": {
+          "cubutterfly_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+            "sha256": "abeebc62cdbd4a8a34ff9f97d64bdce2000798d014870d81923912b787d4eb6e"
+          },
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/006/study.json",
+        "study_sha256": "f057d7d10f01dd7068c488f3660252225c98b0c3530c322c6bb3de41097a6f67"
+      }
+    },
+    {
+      "case": "fwht-fp64-n16-b16",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/008/guards/0000/release/timing.json",
+      "sha256": "0fa2c10c415e178c16a70c435a2172ca7040a799d29112423fa31f0c3f1e0ec6",
+      "identity": {
+        "binaries": {
+          "cubutterfly_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+            "sha256": "abeebc62cdbd4a8a34ff9f97d64bdce2000798d014870d81923912b787d4eb6e"
+          },
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/008/study.json",
+        "study_sha256": "8cea24f4cac799a49d9b6678ea9ddd9f86a1b00c80899ac71f44320cb85fc77a"
+      }
+    },
+    {
+      "case": "fwht-fp64-n16-b4",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/007/guards/0000/release/timing.json",
+      "sha256": "fb46b87822c5b4f39ead034bd305d14fdab3a399dbbccd07e322173a78bfd17d",
+      "identity": {
+        "binaries": {
+          "cubutterfly_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+            "sha256": "abeebc62cdbd4a8a34ff9f97d64bdce2000798d014870d81923912b787d4eb6e"
+          },
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/007/study.json",
+        "study_sha256": "fbb4b8a8664339944ad7db1b136862cbd5b876f983a6a7060a39f8005ccc4803"
+      }
+    },
+    {
+      "case": "fwht-fp64-n20-b1",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/009/guards/0000/release/timing.json",
+      "sha256": "4f86d24686f31f252512ef6066f90f2164a9994be603bd60f290d297712fff08",
+      "identity": {
+        "binaries": {
+          "cubutterfly_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+            "sha256": "abeebc62cdbd4a8a34ff9f97d64bdce2000798d014870d81923912b787d4eb6e"
+          },
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/009/study.json",
+        "study_sha256": "9f406012f691bc64afafd5c08c4c31143c81daa3c8f5e901bfe65adc2169279b"
+      }
+    },
+    {
+      "case": "fwht-fp64-n20-b16",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/011/guards/0000/release/timing.json",
+      "sha256": "6b9a68461d7b9132b100fdfa1baec9efae9da14185006c948cd5274eaec9160f",
+      "identity": {
+        "binaries": {
+          "cubutterfly_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+            "sha256": "abeebc62cdbd4a8a34ff9f97d64bdce2000798d014870d81923912b787d4eb6e"
+          },
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/011/study.json",
+        "study_sha256": "5c35f1614b5f8af480322de70006647ede72e00aa2b55643f79e3c4cb1bd65a5"
+      }
+    },
+    {
+      "case": "fwht-fp64-n20-b4",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/010/guards/0000/release/timing.json",
+      "sha256": "433fd2e40889e7c31f886918cd5abab209c9b137b2d56c27f729efaf45f93401",
+      "identity": {
+        "binaries": {
+          "cubutterfly_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+            "sha256": "abeebc62cdbd4a8a34ff9f97d64bdce2000798d014870d81923912b787d4eb6e"
+          },
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/010/study.json",
+        "study_sha256": "9f13077dac60f37a61b2ebcd50854f43de73cf108917d8602b696c354ae756ed"
+      }
+    },
+    {
+      "case": "ntt-word64-n16-b1",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/012/guards/0000/release/timing.json",
+      "sha256": "8c1c6898fd7048442524830fe91f1a9cd27879b61b5fd548c9de82a919bb3a56",
+      "identity": {
+        "binaries": {
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          },
+          "cuntt_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cuntt_bench",
+            "sha256": "93ca7db81fa80f3b8c1c2f724c064bf385abb7ddba1e4942059e9b27dbb3077f"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/012/study.json",
+        "study_sha256": "0008586f9060e199c55bf5b51b25f4a4a84a184bf0974b1b356df45c4da5c629"
+      }
+    },
+    {
+      "case": "ntt-word64-n16-b16",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/014/guards/0000/release/timing.json",
+      "sha256": "00ecc34afad2b6c1890ee183a1df867a7529bc7d777120021b16bbad2e426d3f",
+      "identity": {
+        "binaries": {
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          },
+          "cuntt_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cuntt_bench",
+            "sha256": "93ca7db81fa80f3b8c1c2f724c064bf385abb7ddba1e4942059e9b27dbb3077f"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/014/study.json",
+        "study_sha256": "4634f96bc9f6f98dd185eb34c66a0ef5c44bc5c09317b4e2c6f1bb4eb29d35eb"
+      }
+    },
+    {
+      "case": "ntt-word64-n16-b4",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/013/guards/0000/release/timing.json",
+      "sha256": "7a15d05fdaaefd1d9bd1fe37148d927dffe0cec97e41576cfedfe48a8205335c",
+      "identity": {
+        "binaries": {
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          },
+          "cuntt_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cuntt_bench",
+            "sha256": "93ca7db81fa80f3b8c1c2f724c064bf385abb7ddba1e4942059e9b27dbb3077f"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/013/study.json",
+        "study_sha256": "cefebfa34f50ef8c1402103aceb1eb1e35ee677854d0ae4115014be2e90ccc50"
+      }
+    },
+    {
+      "case": "ntt-word64-n20-b1",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/015/guards/0000/release/timing.json",
+      "sha256": "418f71573374ed551a5e0f217d5dd93f1f0c7383e25ed305e591d486d22e3869",
+      "identity": {
+        "binaries": {
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          },
+          "cuntt_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cuntt_bench",
+            "sha256": "93ca7db81fa80f3b8c1c2f724c064bf385abb7ddba1e4942059e9b27dbb3077f"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/015/study.json",
+        "study_sha256": "de01816d375712c48026bcacb91cb9e312d6e1a5e3d37a33ef240a387366474a"
+      }
+    },
+    {
+      "case": "ntt-word64-n20-b16",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/017/guards/0000/release/timing.json",
+      "sha256": "6047ffa17a41fa0013cf29a4e571de97f4b8425edd0dc6c21e9b3e6d1e85e5cc",
+      "identity": {
+        "binaries": {
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          },
+          "cuntt_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cuntt_bench",
+            "sha256": "93ca7db81fa80f3b8c1c2f724c064bf385abb7ddba1e4942059e9b27dbb3077f"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/017/study.json",
+        "study_sha256": "c810743a7ea78246ab4624ec5abe8fd119939130f9dcd10d1477e6e39701d0d6"
+      }
+    },
+    {
+      "case": "ntt-word64-n20-b4",
+      "path": "results/narrative_gap_20261027/m1_gpu40_cases/cases/016/guards/0000/release/timing.json",
+      "sha256": "58dcff458441124a484a3e0316b17263e8ed4ebee56831e0365375638c3b665a",
+      "identity": {
+        "binaries": {
+          "cubutterfly_stage_microbench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_stage_microbench",
+            "sha256": "f185991e2e9ef57475e591a880fc03c328c89907ed1b3dd3190351b590728715"
+          },
+          "cuntt_bench": {
+            "path": "/home/wt/git/cuButterfly/build-e13-cufftdx/cuntt_bench",
+            "sha256": "93ca7db81fa80f3b8c1c2f724c064bf385abb7ddba1e4942059e9b27dbb3077f"
+          }
+        },
+        "build_dir": "/home/wt/git/cuButterfly/build-e13-cufftdx",
+        "compile_mode": "research",
+        "device": {
+          "compute_capability": "8.0",
+          "cuda_global_memory_bytes": 42285268992,
+          "driver": "550.127.05",
+          "global_memory_bytes": 42285268992,
+          "identity_probe": "/home/wt/git/cuButterfly/build-e13-cufftdx/cubutterfly_bench",
+          "memory_total_mib": 40960,
+          "name": "NVIDIA A100-PCIE-40GB",
+          "nvml_memory_total_mib": 40960,
+          "uuid": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+          "visible_gpu": "GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e"
+        },
+        "executable_claim": true,
+        "gpu_queried": true,
+        "gpu_uuid": "gpu-2b759faa-3e58-7106-10aa-ea6e387c3f8e",
+        "protocol": {
+          "repeat": 20,
+          "trials": 3,
+          "verify_batches": 0,
+          "warmup": 10
+        },
+        "schema": "cubutterfly-controlled-experiment-v1",
+        "source_sha256": {
+          "calibration_space.py": "54af60c87ed5360d71e00fee86c1ea4eefb8213367bde18d31a022abfff9d4f0",
+          "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+          "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+          "run_controlled_experiment.py": "6fa72cbeb58bf279abdace807f858e1dc50d8eb1e2992c236a62df503db3918e"
+        },
+        "study_path": "/home/wt/git/cuButterfly/results/narrative_gap_20261027/m1_gpu40_cases/cases/016/study.json",
+        "study_sha256": "11433a10ddfa2381564f721e09dc25172e381ad92e21ba177b13b16ce7f25f83"
+      }
+    }
+  ],
+  "protocol": {
+    "repeat": 20,
+    "trials": 3,
+    "verify_batches": 0,
+    "warmup": 10
+  },
+  "rows": 162,
+  "cells": 54,
+  "statistic": "median and full range of three independent process trials; not a confidence interval",
+  "transformation": "B*N/(kernel_ms*1e6) gives billions of input values per second; no observations excluded",
+  "physical_groups": "8+8 for logN16, 10+10 for logN20; scalar radix2 primitive fixed",
+  "caveats": [
+    "Input values are complex for FFT and scalar for FWHT/NTT; this is not a common FLOP/s metric",
+    "Float timings are exploratory; preflight's rounded maximum error is not a complete error distribution",
+    "Changing local grouping also changes ownership, synchronization and resource use",
+    "Grouped bars show only observed batches; no interpolation or extrapolation is claimed",
+    "Fixed controls are not a tuned conventional baseline or full-HHD search"
+  ],
+  "alt_text": "A two-row, three-column grouped-bar figure shows throughput at batches 1,4,16 for FFT,FWHT,NTT at lengths 2^16 and 2^20. All 54 organization configurations show their median and full range of three trials; both timing rows share the same y limits within each operator. A bottom row shows registers per thread, active warp percentage, and barrier-stall percentage for the two main kernels in each of nine N2^20 B16 cells. Counter spans are kernel ranges, not trial uncertainty.",
+  "publisher_status": "Provisional single-column draft figure; final venue export requirements not certified",
+  "size_inches": [
+    3.45,
+    4.0
+  ],
+  "minimum_font_points": 6.5,
+  "profile_sources": [
+    {
+      "manifest": "results/narrative_gap_20261027/m1_profiles/fft/release/profile/manifest.json",
+      "sha256": "25893b6a160c0208684231f1d40ae923596ab5d387f8318631da2098432253db",
+      "ordinary_journal_sha256": "07722e41477320cf7980cb14fb7071ddd94d411e14c599b8b287ef63a5b7c7dc",
+      "csv": [
+        {
+          "path": "results/narrative_gap_20261027/m1_profiles/fft/release/profile/fft-fp64-n20-b16/local0/ncu.csv",
+          "sha256": "63f679d94cbe3e7e8e32b985943ca0abba82b9c77c5912fe29f7cd820a6e1833"
+        },
+        {
+          "path": "results/narrative_gap_20261027/m1_profiles/fft/release/profile/fft-fp64-n20-b16/local2/ncu.csv",
+          "sha256": "5c781a3b5fd897117770f99442b642c7fe6eb3b0b07d90140c78f787e6609672"
+        },
+        {
+          "path": "results/narrative_gap_20261027/m1_profiles/fft/release/profile/fft-fp64-n20-b16/local4/ncu.csv",
+          "sha256": "9e2ab7b52b4505a44fc21c88425fa6480762b5942e9bb54c1b731d49ea114533"
+        }
+      ]
+    },
+    {
+      "manifest": "results/narrative_gap_20261027/m1_profiles/fwht/release/profile/manifest.json",
+      "sha256": "d4221effbe2c42db5308dc5726510a942b48ff4f97fef44f7b355dbb87e7a13e",
+      "ordinary_journal_sha256": "6b9a68461d7b9132b100fdfa1baec9efae9da14185006c948cd5274eaec9160f",
+      "csv": [
+        {
+          "path": "results/narrative_gap_20261027/m1_profiles/fwht/release/profile/fwht-fp64-n20-b16/local0/ncu.csv",
+          "sha256": "1bcb0885714a21695f94cde20b8f8bf82fc5dc236da709c92f48e445e10d5500"
+        },
+        {
+          "path": "results/narrative_gap_20261027/m1_profiles/fwht/release/profile/fwht-fp64-n20-b16/local2/ncu.csv",
+          "sha256": "2499b2d960c19ab5df05762c4b8ed28218a74bdf2c0659aede58c0d7940c4129"
+        },
+        {
+          "path": "results/narrative_gap_20261027/m1_profiles/fwht/release/profile/fwht-fp64-n20-b16/local4/ncu.csv",
+          "sha256": "334fd02a7a1504d50ee305d36a32b3b77f0ebb1821ba7e60255d3c7f91a2450c"
+        }
+      ]
+    },
+    {
+      "manifest": "results/narrative_gap_20261027/m1_profiles/ntt/release/profile/manifest.json",
+      "sha256": "b2e0a4c1df619f10f8185e315dd84c5a90d8c8dc1a6e232dc790589b517a2cb4",
+      "ordinary_journal_sha256": "6047ffa17a41fa0013cf29a4e571de97f4b8425edd0dc6c21e9b3e6d1e85e5cc",
+      "csv": [
+        {
+          "path": "results/narrative_gap_20261027/m1_profiles/ntt/release/profile/ntt-word64-n20-b16/local0/ncu.csv",
+          "sha256": "7b208795cafb332a0fa785b04e6edac254ddaff018163ca430d40a4af47bc6fb"
+        },
+        {
+          "path": "results/narrative_gap_20261027/m1_profiles/ntt/release/profile/ntt-word64-n20-b16/local2/ncu.csv",
+          "sha256": "4a60e44c98d05f6acb3ec4b6d900035417e024da120482d319127799941180c4"
+        },
+        {
+          "path": "results/narrative_gap_20261027/m1_profiles/ntt/release/profile/ntt-word64-n20-b16/local4/ncu.csv",
+          "sha256": "93b76a0c8f495879be1aa5412aa3ae4bceef28fbe5ae4f14f42be1774f81f02b"
+        }
+      ]
+    }
+  ],
+  "profile_records": [
+    {
+      "operator": "fft",
+      "variant": "local0",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_iterative_kernel<cuntt::traits::FftOperator<cuntt::Complex64, double>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+      "metrics": {
+        "launch__registers_per_thread": 32.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 49.33,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 13.03
+      }
+    },
+    {
+      "operator": "fft",
+      "variant": "local0",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_iterative_kernel<cuntt::traits::FftOperator<cuntt::Complex64, double>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+      "metrics": {
+        "launch__registers_per_thread": 27.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 49.05,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 14.26
+      }
+    },
+    {
+      "operator": "fft",
+      "variant": "local2",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FftOperator<cuntt::Complex64, double>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 42.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 49.16,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 14.22
+      }
+    },
+    {
+      "operator": "fft",
+      "variant": "local2",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FftOperator<cuntt::Complex64, double>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 40.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 48.86,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 12.24
+      }
+    },
+    {
+      "operator": "fft",
+      "variant": "local4",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FftOperator<cuntt::Complex64, double>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)4, (unsigned int)4, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 106.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 24.46,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 42.72
+      }
+    },
+    {
+      "operator": "fft",
+      "variant": "local4",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FftOperator<cuntt::Complex64, double>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)4, (unsigned int)4, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 104.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 24.4,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 50.17
+      }
+    },
+    {
+      "operator": "fwht",
+      "variant": "local0",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_iterative_kernel<cuntt::traits::FwhtOperator<double>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+      "metrics": {
+        "launch__registers_per_thread": 20.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 97.22,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 18.55
+      }
+    },
+    {
+      "operator": "fwht",
+      "variant": "local0",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_iterative_kernel<cuntt::traits::FwhtOperator<double>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+      "metrics": {
+        "launch__registers_per_thread": 20.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 97.48,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 21.87
+      }
+    },
+    {
+      "operator": "fwht",
+      "variant": "local2",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FwhtOperator<double>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 26.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 96.67,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 16.51
+      }
+    },
+    {
+      "operator": "fwht",
+      "variant": "local2",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FwhtOperator<double>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 26.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 97.27,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 20.72
+      }
+    },
+    {
+      "operator": "fwht",
+      "variant": "local4",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FwhtOperator<double>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)4, (unsigned int)4, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 55.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 48.71,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 39.64
+      }
+    },
+    {
+      "operator": "fwht",
+      "variant": "local4",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FwhtOperator<double>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)4, (unsigned int)4, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 55.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 47.61,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 27.32
+      }
+    },
+    {
+      "operator": "ntt",
+      "variant": "local0",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_iterative_kernel<cuntt::traits::NttStageOperatorT<unsigned long>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+      "metrics": {
+        "launch__registers_per_thread": 28.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 98.0,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 11.52
+      }
+    },
+    {
+      "operator": "ntt",
+      "variant": "local0",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_iterative_kernel<cuntt::traits::NttStageOperatorT<unsigned long>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+      "metrics": {
+        "launch__registers_per_thread": 32.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 97.93,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 18.19
+      }
+    },
+    {
+      "operator": "ntt",
+      "variant": "local2",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::NttStageOperatorT<unsigned long>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 36.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 73.39,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 10.81
+      }
+    },
+    {
+      "operator": "ntt",
+      "variant": "local2",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::NttStageOperatorT<unsigned long>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 32.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 97.69,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 19.26
+      }
+    },
+    {
+      "operator": "ntt",
+      "variant": "local4",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::NttStageOperatorT<unsigned long>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)4, (unsigned int)4, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 124.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 24.5,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 52.94
+      }
+    },
+    {
+      "operator": "ntt",
+      "variant": "local4",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::NttStageOperatorT<unsigned long>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)4, (unsigned int)4, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 166.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 12.28,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 42.66
+      }
+    }
+  ],
+  "profile_scope": "Three N2^20 B16 workloads, nine organizations, 18 main kernel instances; one NCU capture each",
+  "profile_statistic": "Two individual main-kernel points joined by their observed range, not trial uncertainty; no profiler timing used",
+  "layout": "Two timing rows plus one three-metric profile row; grouped bars for three organizations at each measured batch; zero baseline and common per-operator y limits",
+  "matplotlib_version": "3.10.9",
+  "outputs": {
+    "paper/generated/narrative_scaling_20261027.csv": "d3024dac4ccfca549b8e47d57e488a25392dc00a7b33999b0bc2770d1d93eae7",
+    "paper/figures/narrative_scaling_20261027.pdf": "9ed557fbeefbeee9acfa487afd0604cb0ecf6f6ba17a61900ef7ec5481a0939c",
+    "paper/figures/narrative_scaling_20261027.png": "e87216d5eb3ab80699f128ee18b8a4aeae492013298a0776ab6a0231e523dd34"
+  },
+  "comparisons": [
+    {
+      "case": "fft-fp64-n16-b1",
+      "workload": {
+        "accumulation": "native",
+        "batch": 1,
+        "direction": "forward",
+        "logN": 16,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.024013,
+          "treatment_median_kernel_ms": 0.023603,
+          "median_treatment_over_baseline": 1.017370673219506
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.024013,
+          "treatment_median_kernel_ms": 0.027699,
+          "median_treatment_over_baseline": 0.8669266038485143
+        }
+      ]
+    },
+    {
+      "case": "fft-fp64-n16-b16",
+      "workload": {
+        "accumulation": "native",
+        "batch": 16,
+        "direction": "forward",
+        "logN": 16,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.210688,
+          "treatment_median_kernel_ms": 0.172288,
+          "median_treatment_over_baseline": 1.2228826151560177
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.210688,
+          "treatment_median_kernel_ms": 0.265933,
+          "median_treatment_over_baseline": 0.7922597045120388
+        }
+      ]
+    },
+    {
+      "case": "fft-fp64-n16-b4",
+      "workload": {
+        "accumulation": "native",
+        "batch": 4,
+        "direction": "forward",
+        "logN": 16,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.056269,
+          "treatment_median_kernel_ms": 0.048691,
+          "median_treatment_over_baseline": 1.1556345115113675
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.056269,
+          "treatment_median_kernel_ms": 0.077773,
+          "median_treatment_over_baseline": 0.7235030151852185
+        }
+      ]
+    },
+    {
+      "case": "fft-fp64-n20-b1",
+      "workload": {
+        "accumulation": "native",
+        "batch": 1,
+        "direction": "forward",
+        "logN": 20,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.260147,
+          "treatment_median_kernel_ms": 0.217344,
+          "median_treatment_over_baseline": 1.1969366534157833
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.260147,
+          "treatment_median_kernel_ms": 0.247654,
+          "median_treatment_over_baseline": 1.0504453794406712
+        }
+      ]
+    },
+    {
+      "case": "fft-fp64-n20-b16",
+      "workload": {
+        "accumulation": "native",
+        "batch": 16,
+        "direction": "forward",
+        "logN": 20,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 3.083827,
+          "treatment_median_kernel_ms": 2.254489,
+          "median_treatment_over_baseline": 1.3678607436097492
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 3.083827,
+          "treatment_median_kernel_ms": 2.396877,
+          "median_treatment_over_baseline": 1.2866021076592582
+        }
+      ]
+    },
+    {
+      "case": "fft-fp64-n20-b4",
+      "workload": {
+        "accumulation": "native",
+        "batch": 4,
+        "direction": "forward",
+        "logN": 20,
+        "normalization": "none",
+        "operator": "fft",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.842342,
+          "treatment_median_kernel_ms": 0.678195,
+          "median_treatment_over_baseline": 1.2420351078966965
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.842342,
+          "treatment_median_kernel_ms": 0.862618,
+          "median_treatment_over_baseline": 0.9764948099854165
+        }
+      ]
+    },
+    {
+      "case": "fwht-fp64-n16-b1",
+      "workload": {
+        "accumulation": "native",
+        "batch": 1,
+        "direction": "forward",
+        "logN": 16,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.017459,
+          "treatment_median_kernel_ms": 0.015821,
+          "median_treatment_over_baseline": 1.1035332785538208
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.017459,
+          "treatment_median_kernel_ms": 0.016947,
+          "median_treatment_over_baseline": 1.0302118369032867
+        }
+      ]
+    },
+    {
+      "case": "fwht-fp64-n16-b16",
+      "workload": {
+        "accumulation": "native",
+        "batch": 16,
+        "direction": "forward",
+        "logN": 16,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.084326,
+          "treatment_median_kernel_ms": 0.079462,
+          "median_treatment_over_baseline": 1.061211648335053
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.084326,
+          "treatment_median_kernel_ms": 0.09472,
+          "median_treatment_over_baseline": 0.8902660472972973
+        }
+      ]
+    },
+    {
+      "case": "fwht-fp64-n16-b4",
+      "workload": {
+        "accumulation": "native",
+        "batch": 4,
+        "direction": "forward",
+        "logN": 16,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.031744,
+          "treatment_median_kernel_ms": 0.02857,
+          "median_treatment_over_baseline": 1.1110955547777388
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.031744,
+          "treatment_median_kernel_ms": 0.021914,
+          "median_treatment_over_baseline": 1.4485716893310214
+        }
+      ]
+    },
+    {
+      "case": "fwht-fp64-n20-b1",
+      "workload": {
+        "accumulation": "native",
+        "batch": 1,
+        "direction": "forward",
+        "logN": 20,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.107213,
+          "treatment_median_kernel_ms": 0.08361,
+          "median_treatment_over_baseline": 1.2822987680899414
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.107213,
+          "treatment_median_kernel_ms": 0.091597,
+          "median_treatment_over_baseline": 1.1704859329454023
+        }
+      ]
+    },
+    {
+      "case": "fwht-fp64-n20-b16",
+      "workload": {
+        "accumulation": "native",
+        "batch": 16,
+        "direction": "forward",
+        "logN": 20,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 1.479475,
+          "treatment_median_kernel_ms": 1.551411,
+          "median_treatment_over_baseline": 0.9536318873593136
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 1.479475,
+          "treatment_median_kernel_ms": 1.426074,
+          "median_treatment_over_baseline": 1.0374461633828258
+        }
+      ]
+    },
+    {
+      "case": "fwht-fp64-n20-b4",
+      "workload": {
+        "accumulation": "native",
+        "batch": 4,
+        "direction": "forward",
+        "logN": 20,
+        "normalization": "none",
+        "operator": "fwht",
+        "placement": "out-of-place",
+        "precision": "fp64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.413389,
+          "treatment_median_kernel_ms": 0.360243,
+          "median_treatment_over_baseline": 1.1475281962453123
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.413389,
+          "treatment_median_kernel_ms": 0.369357,
+          "median_treatment_over_baseline": 1.1192125775333892
+        }
+      ]
+    },
+    {
+      "case": "ntt-word64-n16-b1",
+      "workload": {
+        "batch": 1,
+        "direction": "forward",
+        "input_order": "natural",
+        "logN": 16,
+        "modulus": 576460756061519873,
+        "normalization": "none",
+        "operator": "ntt",
+        "output_order": "natural",
+        "placement": "out-of-place",
+        "precision": "word64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.026726,
+          "treatment_median_kernel_ms": 0.024269,
+          "median_treatment_over_baseline": 1.1012402653591
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.026726,
+          "treatment_median_kernel_ms": 0.030976,
+          "median_treatment_over_baseline": 0.8627970041322314
+        }
+      ]
+    },
+    {
+      "case": "ntt-word64-n16-b16",
+      "workload": {
+        "batch": 16,
+        "direction": "forward",
+        "input_order": "natural",
+        "logN": 16,
+        "modulus": 576460756061519873,
+        "normalization": "none",
+        "operator": "ntt",
+        "output_order": "natural",
+        "placement": "out-of-place",
+        "precision": "word64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.163174,
+          "treatment_median_kernel_ms": 0.147814,
+          "median_treatment_over_baseline": 1.1039143788815675
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.163174,
+          "treatment_median_kernel_ms": 0.257485,
+          "median_treatment_over_baseline": 0.6337223527584132
+        }
+      ]
+    },
+    {
+      "case": "ntt-word64-n16-b4",
+      "workload": {
+        "batch": 4,
+        "direction": "forward",
+        "input_order": "natural",
+        "logN": 16,
+        "modulus": 576460756061519873,
+        "normalization": "none",
+        "operator": "ntt",
+        "output_order": "natural",
+        "placement": "out-of-place",
+        "precision": "word64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.055757,
+          "treatment_median_kernel_ms": 0.049562,
+          "median_treatment_over_baseline": 1.124994955812921
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.055757,
+          "treatment_median_kernel_ms": 0.083302,
+          "median_treatment_over_baseline": 0.6693356702119997
+        }
+      ]
+    },
+    {
+      "case": "ntt-word64-n20-b1",
+      "workload": {
+        "batch": 1,
+        "direction": "forward",
+        "input_order": "natural",
+        "logN": 20,
+        "modulus": 576460756061519873,
+        "normalization": "none",
+        "operator": "ntt",
+        "output_order": "natural",
+        "placement": "out-of-place",
+        "precision": "word64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 0.255539,
+          "treatment_median_kernel_ms": 0.212736,
+          "median_treatment_over_baseline": 1.2012024293020458
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 0.255539,
+          "treatment_median_kernel_ms": 0.286003,
+          "median_treatment_over_baseline": 0.8934836347870477
+        }
+      ]
+    },
+    {
+      "case": "ntt-word64-n20-b16",
+      "workload": {
+        "batch": 16,
+        "direction": "forward",
+        "input_order": "natural",
+        "logN": 20,
+        "modulus": 576460756061519873,
+        "normalization": "none",
+        "operator": "ntt",
+        "output_order": "natural",
+        "placement": "out-of-place",
+        "precision": "word64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 2.474086,
+          "treatment_median_kernel_ms": 2.007143,
+          "median_treatment_over_baseline": 1.2326406240113432
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 2.474086,
+          "treatment_median_kernel_ms": 2.747955,
+          "median_treatment_over_baseline": 0.9003371598152079
+        }
+      ]
+    },
+    {
+      "case": "ntt-word64-n20-b4",
+      "workload": {
+        "batch": 4,
+        "direction": "forward",
+        "input_order": "natural",
+        "logN": 20,
+        "modulus": 576460756061519873,
+        "normalization": "none",
+        "operator": "ntt",
+        "output_order": "natural",
+        "placement": "out-of-place",
+        "precision": "word64"
+      },
+      "comparisons": [
+        {
+          "baseline": "local0",
+          "treatment": "local2",
+          "baseline_median_kernel_ms": 1.033062,
+          "treatment_median_kernel_ms": 0.704768,
+          "median_treatment_over_baseline": 1.465818538866691
+        },
+        {
+          "baseline": "local0",
+          "treatment": "local4",
+          "baseline_median_kernel_ms": 1.033062,
+          "treatment_median_kernel_ms": 1.032858,
+          "median_treatment_over_baseline": 1.000197510209535
+        }
+      ]
+    }
+  ]
+}

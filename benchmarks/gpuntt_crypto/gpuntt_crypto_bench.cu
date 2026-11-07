@@ -34,7 +34,8 @@ using U64 = std::uint64_t;
 #endif
 
 constexpr U64 kMaxWord32Modulus = U64{1} << 30;
-constexpr U64 kMaxWord64Modulus = U64{1} << 62;
+// The pinned Data64 Barrett implementation is exact only below 2^61.
+constexpr U64 kMaxWord64Modulus = U64{1} << 61;
 constexpr std::size_t kMaxBatch = 65535;
 constexpr std::uint32_t kMinLogN = 1;
 constexpr std::uint32_t kMaxLogN = 28;
@@ -326,10 +327,11 @@ void validate_options(const Options& options) {
                 throw std::invalid_argument("RNS modulus channels must be pairwise distinct");
             }
         }
-        if (modulus <= 2 || modulus >= max_modulus) {
+        if (modulus <= 2 || modulus >= max_modulus ||
+            (options.word_bits == 64 && Modulus<U64>(modulus).bit > 61)) {
             std::ostringstream message;
             message << "modulus " << modulus << " is outside the supported "
-                    << (options.word_bits == 32 ? "prime > 2 and < 2^30" : "prime > 2 and < 2^62")
+                    << (options.word_bits == 32 ? "prime > 2 and < 2^30" : "prime > 2 and < 2^61")
                     << " arithmetic range";
             throw Unsupported(message.str());
         }

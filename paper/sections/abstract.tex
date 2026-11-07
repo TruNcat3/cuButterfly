@@ -1,22 +1,30 @@
 \begin{abstract}
 Butterfly computation underlies Fourier, number-theoretic, Hadamard, and zeta
-transforms. Their arithmetic differs, yet their implementations face a common
-problem of organizing staged dependencies under finite storage and parallel
-resources. We present \system{}, a dependency-derived execution framework for
-these computations. Ordered stage bits identify \emph{dependency-closed
-subgraphs} and their communication. \emph{Hierarchical hybrid dataflow}
-combines local residency with streamed execution across storage scopes, while
-\emph{successor-aligned writeback} constructs compatible boundary layouts.
-Operator semantics, workload domains, and hardware capabilities specialize
-this shared construction. Compatible arithmetic cores and measured services
-guide generation and bounded search.
+transforms. Their shared dependencies expose a common performance problem.
+Spatial expansion consumes execution resources and live storage, while
+temporal reuse requires state retention or repeated communication. Their
+balance depends on the arithmetic, workload, and hardware. We characterize
+these demands jointly so that organization can be optimized under a target's
+capacity, bandwidth, and execution constraints.
 
-A bounded A100 80GB operator screen observes geometric-mean latency ratios
-of 1.103$\times$ and 1.353$\times$ over cuFFT for its FP32 and FP64 requests.
-A separate exact-checked NTT batch study reaches 1.285$\times$ over GPU-NTT.
-Historical fixed-core controls improve both tested FFT cores by approximately
-1.22$\times$, with additional same-core organization gains for FWHT and NTT.
-These results support the organization method on the measured workloads.
-Floating numerical acceptance, broader cross-core coverage, and application
-speedups remain distinct evaluation requirements.
+We present \system{}, which derives dependency-closed local regions, their
+communication and readiness relations, and resource demands from butterfly
+dependencies. \emph{Hierarchical hybrid
+dataflow} combines spatial expansion and temporal reuse along stage and data
+dimensions, repeating the construction across storage scopes. The resulting organization method reuses these relations across arithmetic
+cores and workloads while evaluating demand against target hardware constraints.
+
+An A100 80GB evaluation observes geometric-mean latency ratios
+of \CurrentFFTSingle$\times$ and \CurrentFFTDouble$\times$ over cuFFT
+for its FP32 and FP64 FFT cohorts, including multidimensional requests.
+An independent cyclic NTT study reaches \CurrentCyclicNTT$\times$ over
+GPU-NTT across 54 matched 32/64-bit-word requests.
+Separate fixed-core controls improve complete-call performance by approximately
+1.22$\times$ with either FFT leaf, with local organization gains also observed for
+FWHT and NTT. These measurements support reusable organization on the tested
+workloads. Selected CKKS complete operations improve by \CurrentCKKSFast$\times$
+over the faster of two native execution choices across 36 short-chain requests.
+Fixed-core controls distinguish organization gains from core substitution,
+while FP16 and application losses expose limits. Floating-point errors are
+reported without a fixed acceptance threshold.
 \end{abstract}

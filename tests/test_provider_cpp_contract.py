@@ -64,6 +64,10 @@ def cpu_contract(tmpdir_factory):
 #include "cubutterfly/cubutterfly.h"
 #include "plan_registry.hpp"
 #include "cufftdx_provider.hpp"
+#include "fft_local_core_contract.hpp"
+#include "temporal_tile_contract.hpp"
+#include "online_reorder_contract.hpp"
+#include "shared_tile_contract.hpp"
 #include "fwht_contract.hpp"
 #include "partition_space.hpp"
 #include "shared_organization_candidates.hpp"
@@ -75,6 +79,22 @@ using Json = nlohmann::json;
 static unsigned test_sm = 800;
 static unsigned test_shared = 164*1024;
 namespace cuntt {
+DeviceInfo current_device_info() {
+    DeviceInfo info{};
+    info.compute_major=test_sm/100; info.compute_minor=(test_sm%100)/10;
+    return info;
+}
+const char* butterfly_precision_name(ButterflyPrecision precision) noexcept {
+    switch (precision) {
+    case ButterflyPrecision::Fp16: return "fp16";
+    case ButterflyPrecision::Bf16: return "bf16";
+    case ButterflyPrecision::Fp64: return "fp64";
+    default: return "fp32";
+    }
+}
+const char* butterfly_accumulation_name(ButterflyAccumulation accumulation) noexcept {
+    return accumulation==ButterflyAccumulation::Native ? "native" : "fp32";
+}
 HardwareResourceModel query_hardware_resource_model() {
     HardwareResourceModel h;
     h.compute_major=test_sm/100; h.compute_minor=(test_sm%100)/10;
@@ -172,12 +192,27 @@ int main(int argc, char** argv) {
                     "-I"+str(ROOT / "include"), "-I"+str(ROOT / "src"),
                     "-I"+str(cuda), "-I"+str(includes), str(cpp), "-o", str(executable)],
                    check=True, capture_output=True, text=True, timeout=120)
-    def run(*args, override=None):
+    # Compare unrelated inventory dimensions with the previous precision lookup.
+    # This isolates provider classification from changes to partition seeding.
+    legacy_start = translation_unit.index("        const auto arithmetic_bits = cufftdx_arithmetic_precision_bits(original);")
+    legacy_end = translation_unit.index("        const auto status = provider_table_matches", legacy_start)
+    legacy_source = (translation_unit[:legacy_start] +
+        "        const auto bits = original.precision == ButterflyPrecision::Fp64 ? 64U : "
+        "original.precision == ButterflyPrecision::Fp16 ? 16U : 32U;\n" +
+        translation_unit[legacy_end:])
+    legacy_cpp = work / "legacy_precision.cpp"
+    legacy_cpp.write_text(legacy_source)
+    legacy_executable = work / "legacy_precision"
+    subprocess.run([compiler, "-std=c++17", "-O0", "-I"+str(work),
+                    "-I"+str(ROOT / "include"), "-I"+str(ROOT / "src"),
+                    "-I"+str(cuda), "-I"+str(includes), str(legacy_cpp), "-o", str(legacy_executable)],
+                   check=True, capture_output=True, text=True, timeout=120)
+    def run(*args, override=None, legacy_precision=False):
         environment = dict(os.environ, CUBUTTERFLY_PARTITION_BUDGET="1")
         environment.pop("CUBUTTERFLY_MATHDX_ROOT", None)
         if override is not None:
             environment["CUBUTTERFLY_MATHDX_ROOT"] = str(override)
-        result = subprocess.run([str(executable), *map(str, args)], env=environment,
+        result = subprocess.run([str(legacy_executable if legacy_precision else executable), *map(str, args)], env=environment,
                                 check=True, capture_output=True, text=True, timeout=30)
         return json.loads(result.stdout)
     return run, mathdx, work, db.metadata()["fingerprint"]
@@ -246,8 +281,11 @@ def test_actual_fp64_register_candidates_exclude_missing_suffix(cpu_contract, lo
     result = run("candidates", log_n, "fp64", 800)
     assert result["bad_suffix"] == 0
     assert result["register_ept16"] > 0
-    assert result["factor_native"] > 0
-    assert result["factor_native"] == (105 if log_n == 16 else 48)
+    legacy = run("candidates", log_n, "fp64", 800, legacy_precision=True)
+    # Native factor availability depends on bounded partition seeds and their
+    # capacity envelope, independently of the cuFFTDx precision classifier.
+    assert result["factor_native"] == legacy["factor_native"]
+    assert result["factor_dx"] == legacy["factor_dx"]
     assert result["native_suffix"] == 0
     assert 2 in result["suffix_epts"]["1024"]
     assert set(result["suffix_epts"]["1024"]) == {2, 4, 8, 16}
@@ -273,14 +311,18 @@ def test_actual_candidates_keep_other_precision_ept32_and_unknown(cpu_contract):
     fp32 = run("candidates", 16, "fp32", 800)
     assert fp32["bad_suffix"] > 0
     assert fp32["native_suffix"] == 0
-    assert fp32["factor_native"] == 105
+    legacy = run("candidates", 16, "fp32", 800, legacy_precision=True)
+    assert fp32["factor_native"] > 0
+    assert fp32["factor_native"] == legacy["factor_native"]
+    assert fp32["factor_dx"] == legacy["factor_dx"]
     assert fp32["suffix_epts"]["1024"][:4] == [16, 32, 8, 4]
     assert 2 in fp32["suffix_epts"]["1024"]
     # FP64 N32/EPT32 is checked by require above. It cannot appear in the
     # register suffix inventory: <=4 columns gives <32 physical threads.
     unknown = run("candidates", 16, "fp64", 810)
     assert unknown["bad_suffix"] > 0
-    assert unknown["factor_native"] > 0
+    legacy_unknown = run("candidates", 16, "fp64", 810, legacy_precision=True)
+    assert unknown["factor_native"] == legacy_unknown["factor_native"]
     assert unknown["native_suffix"] == 0
     assert 2 in unknown["suffix_epts"]["1024"]
     assert 128 in unknown["suffix_epts"]["1024"]

@@ -133,6 +133,36 @@ def test_incumbent_confirmation_resumes_individual_trials(tmp_path,monkeypatch):
     assert confirmed["status"]=="measured" and confirmed["trials"]==3 and len(measured)==3
 
 
+def test_resume_retries_identity_rejected_incumbent(tmp_path, monkeypatch):
+    import calibrate_local_hardware as calibration
+    for name in ("cubutterfly_bench", "cuntt_bench"):
+        (tmp_path / name).write_bytes(b"unchanged-binary")
+    monkeypatch.setattr(calibration, "incumbent_commands", lambda args: iter([("incumbent", ["bench"])]))
+    monkeypatch.setattr(calibration, "run_compiled_search", lambda *args: [])
+    monkeypatch.setattr(calibration, "require_exclusive_gpu", lambda: None)
+    args = SimpleNamespace(build_dir=tmp_path, resume_search=False, search_only=True,
+                          operator_trials=1, operator_warmup=3, operator_repeat=5)
+    output = tmp_path / "operator_calibration.json"
+    calls = []
+
+    def run(command, check=True):
+        calls.append(command)
+        if len(calls) == 1:
+            return SimpleNamespace(returncode=1, stdout="", stderr="hardware identity mismatch: global_memory_bytes")
+        return SimpleNamespace(returncode=0, stderr="", stdout=
+            "operator,precision,logN,batch,backend,correct,kernel_ms,warmup,repeat,mapping_json,runtime_fingerprint\n"
+            "fft,fp32,12,2,shared-iterative,1,0.01,3,5,{},test\n")
+
+    monkeypatch.setattr(calibration, "run", run)
+    calibration.run_operator_calibration(args, output, True)
+    assert json.loads(output.read_text())[0]["status"] == "unavailable"
+    args.resume_search = True
+    calibration.run_operator_calibration(args, output, True)
+    confirmed = json.loads(output.read_text())[0]
+    assert confirmed["status"] == "measured" and confirmed["correct"]
+    assert confirmed["trials"] == 1 and len(calls) == 2
+
+
 def test_search_keeps_completed_screens_when_gpu_becomes_busy(tmp_path, monkeypatch):
     import calibrate_local_hardware as calibration
     for name in ("cubutterfly_bench","cuntt_bench"): (tmp_path/name).write_bytes(b"checkpoint-test")
@@ -787,3 +817,57 @@ def test_finalist_selection_keeps_incomplete_mappings_conservative(tmp_path, mon
     names, records = _run_finalist_selection(tmp_path, monkeypatch, candidates, search_finalists=2)
     measured = {row["name"] for row in records if row["status"] == "measured"}
     assert measured == {names["incomplete-a"], names["incomplete-b"]}
+
+
+def test_completed_search_retries_only_compilation_gaps_and_preserves_good_trials(tmp_path, monkeypatch):
+    import calibrate_local_hardware as calibration
+    for binary in ('cubutterfly_bench', 'cuntt_bench'):
+        (tmp_path / binary).write_bytes(b'fixed-build')
+    workload = dict(operator='fft', precision='fp32', logN=12, batch=2)
+    source = tmp_path / 'workloads.json'
+    source.write_text(json.dumps(dict(schema='cubutterfly-install-search-v1', scope='recovery', workloads=[workload])))
+    points = [dict(workload, backend='shared-iterative', tile_threads=t,
+                   mapping_json=json.dumps(dict(backend='shared-iterative', tile_threads=t))) for t in (64,128)]
+    ready, measured = set(), []
+    def run(command, check=True):
+        if '--list-processing-units' in command:
+            output = 'precision,logN,threads,ept\n'
+        elif '--list-register-tile-mappings' in command:
+            output = 'logN,local_stages\n'
+        else:
+            mapping = json.loads(command[command.index('--mapping-json')+1])
+            threads = mapping['tile_threads']
+            if threads == 128 and 128 not in ready:
+                return SimpleNamespace(returncode=1, stdout='', stderr='installation specialization compilation budget exhausted')
+            measured.append(threads)
+            sample = dict(workload, backend='shared-iterative', correct=1, kernel_ms=.1 if threads==64 else .05,
+                          mapping_json=json.dumps(mapping), tile_threads=threads,
+                          warmup=command[command.index('--warmup')+1], repeat=command[command.index('--repeat')+1])
+            stream=io.StringIO(); writer=csv.DictWriter(stream,fieldnames=list(sample));writer.writeheader();writer.writerow(sample)
+            output=stream.getvalue()
+        return SimpleNamespace(returncode=0,stdout=output,stderr='')
+    monkeypatch.setattr(calibration,'run',run)
+    monkeypatch.setattr(calibration,'runtime_candidates',lambda *unused:points)
+    monkeypatch.setattr(calibration,'require_exclusive_gpu',lambda:None)
+    args=SimpleNamespace(build_dir=tmp_path, search_workloads=source, resume_search=False,
+                         search_budget=2, search_finalists=1, search_seconds=0, compile_seconds=1200,
+                         operator_warmup=3, operator_repeat=5, operator_trials=2)
+    output=tmp_path/'coverage.json'
+    before=calibration.run_compiled_search(args,output)
+    assert {row['status'] for row in before} == {'measured','needs-compilation'}
+    good=next(row for row in before if row['correct'])
+    previous_samples=good['samples']
+    good_count=measured.count(64)
+    ready.add(128)
+    args.resume_search=True;args.retry_compilation_gaps=True;args.compile_seconds=0
+    monkeypatch.setattr(calibration,'runtime_candidates',lambda *unused:pytest.fail('completed inventory enumerated again'))
+    after=calibration.run_compiled_search(args,output)
+    assert all(row['correct'] for row in after)
+    assert measured.count(64)==good_count
+    assert next(row for row in after if row['name']==good['name'])['samples']==previous_samples
+    recovered=next(row for row in after if row['configuration']['tile_threads']==128)
+    assert recovered['status']=='measured' and recovered['trials']==2
+    assert recovered['prior_attempts'][0]['status']=='needs-compilation'
+    audit=json.loads(output.read_text())
+    assert audit['compilation_budget_revision']['current']==0
+    assert audit['workloads'][0]['measurement_coverage']['needs_compilation']==0

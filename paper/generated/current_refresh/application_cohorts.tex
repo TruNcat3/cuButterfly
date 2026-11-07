@@ -1,0 +1,13 @@
+\begin{tabular}{@{}llll@{}}
+\toprule
+Scenario & Type & Baseline & Ratio\\\midrule
+QuaRot, B1 & FWHT & QuaRot/Dao & 0.968\\
+QuaRot, B4 & FWHT & QuaRot/Dao & 0.957--0.959\\
+Filter $1024^2$, B16 & FFT & CuPy & 1.068--1.069\\
+Filter $2048^2$, B16 & FFT & CuPy & 1.048\\
+Bootstrap, B1 & NTT & HEonGPU & 1.033\\
+Bootstrap, B8 & NTT & HEonGPU & 1.032\\
+FNO $64^2$, B4 & FFT & Torch & 1.030\\
+FNO $128^2$, B4 & FFT & Torch & 1.056\\
+\bottomrule
+\end{tabular}

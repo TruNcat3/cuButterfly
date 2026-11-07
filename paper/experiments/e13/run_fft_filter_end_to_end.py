@@ -320,6 +320,11 @@ def require_valid_reports(rows):
         raise RuntimeError('invalid numerical results retained for: ' + ', '.join(failed))
 
 
+def performance_eligible(error, accepted, timing):
+    """Error-report-only is a valid policy, not an implicit tolerance failure."""
+    return error.get('finite') is True and accepted is not False and timing is not None
+
+
 def runtime_contract(prepared, shape, *, cached_filter, execution_mode):
     """Keep preparation provenance separate from the executed call boundary."""
     contract = {key: value for key, value in prepared.items()
@@ -351,6 +356,10 @@ def method_call_contract(shape, *, cached_filter, execution_mode):
 
 
 def run(args):
+    if getattr(args, 'prepared_binding', None):
+        sys.path.insert(0, str(ROOT / 'scripts'))
+        from prepare_filter_refresh import validate_runner_binding
+        validate_runner_binding(args)
     import torch
     import cupy as cp
     from cupyx.scipy import fft as cp_fft
@@ -366,6 +375,8 @@ def run(args):
         experiment_stream.wait_stream(torch.cuda.current_stream(device))
         torch.cuda.set_stream(experiment_stream)
     props = torch.cuda.get_device_properties(device)
+    if getattr(args, 'gpu_uuid', None) and ('GPU-' + str(props.uuid).removeprefix('GPU-')) != args.gpu_uuid:
+        raise RuntimeError('assigned GPU UUID differs from prepared invocation')
     if 'A100' not in props.name or props.total_memory < 70 * 1024**3:
         raise RuntimeError('primary experiment requires an assigned A100 80GB')
     identity = {'gpu_name': props.name, 'gpu_uuid': 'GPU-' + str(props.uuid).removeprefix('GPU-'), 'memory_bytes': props.total_memory,
@@ -396,6 +407,8 @@ def run(args):
         if args.padding_policy == 'fast':
             shape = tuple(cp_fft.next_fast_len(int(n + k - 1), real=True)
                           for n, k in zip(contract['image_shape'], contract['filter_shape']))
+        if getattr(args, 'prepared_binding', None) and list(shape) != contract['reference_padding']:
+            raise RuntimeError('runtime fast padding differs from persisted CPU reference')
         executed_contract = runtime_contract(contract, shape,
                                              cached_filter=args.cache_filter_spectrum,
                                              execution_mode=args.execution_mode)
@@ -413,14 +426,17 @@ def run(args):
             raise RuntimeError('prepared artifact hash mismatch')
         with np.load(artifact) as data:
             image_cpu, kernel_cpu = data['image'].copy(), data['kernel'].copy()
+            reference = data['reference_fp32'].copy() if 'reference_fp32' in data else None
+            changed_reference = data['changed_reference_fp32'].copy() if 'changed_reference_fp32' in data else None
             image = torch.from_numpy(image_cpu).to(device)
             kernel = torch.from_numpy(kernel_cpu).to(device)
         # Historical input archives retain their FP64 diagnostic arrays. New
         # validation uses a same-precision CPU result, outside GPU timing.
-        reference = cpu_fp32_convolve(image_cpu, kernel_cpu, shape)
+        if reference is None:
+            reference = cpu_fp32_convolve(image_cpu, kernel_cpu, shape)
         changed_cpu = np.roll(image_cpu, shift=(13, -7), axis=(-2, -1)).copy()
-        changed_reference = (cpu_fp32_convolve(changed_cpu, kernel_cpu, shape)
-                             if args.execution_mode == 'graph' else None)
+        if changed_reference is None and args.execution_mode == 'graph':
+            changed_reference = cpu_fp32_convolve(changed_cpu, kernel_cpu, shape)
         setup_start = time.perf_counter()
         batch = int(contract.get('batch', 1))
         reuse_fft_buffers = bool(args.cache_filter_spectrum)
@@ -572,10 +588,12 @@ def run(args):
                              'numerical_acceptance': ('unassessed_error_report_only' if accepted is None
                                                       else 'passed' if accepted else 'failed'),
                              'timing_status': 'measured_complete_call' if timing else 'not_measured',
-                             'formal_performance_eligible': accepted is True and timing is not None})
+                             'formal_performance_eligible': performance_eligible(error, accepted, timing)})
             report = {'schema': 'fft-filter-complete-call-v2',
                       'contract': executed_contract, 'preparation_contract': contract,
                       'identity': identity, 'complete_filter_call': True,
+                      'prepared_binding_sha256': (sha256(args.prepared_binding)
+                                                  if getattr(args, 'prepared_binding', None) else None),
                       'validation_reference': {'backend': 'torch.fft CPU', 'dtype': 'float32',
                                                'fft_dtype': 'complex64', 'padding': list(shape),
                                                'precision_promotion': False,
@@ -613,6 +631,9 @@ def main():
     mode.add_argument('--run', action='store_true')
     parser.add_argument('--output', type=Path, default=DEFAULT_OUT)
     parser.add_argument('--library', type=Path, default=LIBRARY)
+    parser.add_argument('--prepared-binding', type=Path,
+                        help='Strict CPU-prepared filter refresh binding; validated before CUDA')
+    parser.add_argument('--gpu-uuid', help='Require this GPU identity before creating plans')
     parser.add_argument('--calibration-identity', type=Path,
                         help='record host calibration provenance, not an input to public xD selector')
     parser.add_argument('--device', type=int, default=0, help='local index within assigned CUDA_VISIBLE_DEVICES')

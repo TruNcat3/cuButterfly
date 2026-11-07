@@ -1,6 +1,20 @@
 {
   "schema": "cubutterfly-refresh-followups-v1",
-  "scope": "Runnable followups after the frozen 66-request comparison. Not completion of unresolved composition/CKKS coverage.",
+  "scope": "Prepared finite followups after the frozen 66-request comparison. GPU validation is pending; crypto public-default is diagnostic, and missing calibrated mappings remain gaps.",
+  "include_prepared_plans": ["{output_dir}/ckks/normalized_followups.json", "{output_dir}/composed_138/normalized_followups.json"],
+  "input_paths": [
+    "results/mechanism_current_20261017_v2/study.json",
+    "configs/experiments/filter_refresh_20261025.json",
+    "paper/experiments/e13/run_fft_filter_end_to_end.py",
+    "results/e13_assets/cubutterfly_real_fft.py",
+    "{output_dir}/fft_filters/prepared.json",
+    "config/research_campaign/composed.json",
+    "scripts/run_crypto_composition.py",
+    "benchmarks/crypto_ntt/crypto_ntt_bench.cu",
+    "benchmarks/crypto_ntt/CMakeLists.txt",
+    "{output_dir}/composed_138/preparation.json",
+    "{output_dir}/composed_138/consumer-build/crypto_ntt_bench"
+  ],
   "jobs": [
     {
       "id": "mechanism-timing",
@@ -28,11 +42,21 @@
     },
     {
       "id": "mechanism-profile",
+      "depends_on": ["mechanism-timing"],
       "argv": ["scripts/profile_current_mechanism.py", "--journal", "{output_dir}/mechanism/timing.json", "--output-dir", "{output_dir}/mechanism/profile", "--gpu-uuid", "{gpu_uuid}", "--run"]
     },
     {
       "id": "poisson-adaptive-trace",
       "argv": ["paper/tools/run_periodic_poisson_graph_20261013.py", "--library", "{build_dir}/libcuntt.so", "--size", "2048", "--batch", "16", "--norm", "backward", "--calls", "20", "--warmup", "3", "--profile", "--output", "{output_dir}/poisson_adaptive_trace/report.json"]
+    },
+    {
+      "id": "fft-filters",
+      "depends_on": ["xd"],
+      "argv": ["scripts/prepare_filter_refresh.py", "--run-prepared", "--output-dir", "{output_dir}/fft_filters", "--library", "{build_dir}/libcuntt.so", "--gpu-uuid", "{gpu_uuid}"]
+    },
+    {
+      "id": "composed-138-public-default",
+      "argv": ["scripts/prepare_crypto_composition_refresh.py", "--run-prepared", "--output-dir", "{output_dir}/composed_138", "--gpu-uuid", "{gpu_uuid}"]
     }
   ]
 }

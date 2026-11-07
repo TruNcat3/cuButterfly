@@ -41,6 +41,15 @@ historical hardware rates. It does not claim current whole-plan model validation
 Existing local performance files are preserved when missing capacity files are
 supplied from that seed. Reinstalling also preserves refreshed local files.
 
+New rate profiles include exact CUDA memory capacity from
+`cubutterfly_bench --device-identity`. Explicit calibration also completes this
+field in older profiles after checking the device and existing capacity model.
+The verified profile is persisted beside `hardware_model.json`, even when stage
+and search results use a separate output directory, so runtime ranking consumes
+the same identity. Conflicting identities are rejected; capacity is not inferred
+from a GPU name or rounded `nvidia-smi` output. This metadata repair preserves
+existing rate observations and compatible stage/search checkpoints.
+
 Default reuse invokes no calibration or search. Build and requested correctness
 tests remain separate installation steps. To explicitly update a profile, add
 `--refresh-profile` to the install command. To continue an interrupted search,
@@ -496,6 +505,26 @@ without a seed policy preserves its original disabled-seed protocol.
 
 This provides a reproducible way to retain and revalidate known candidates;
 it does not establish that the cost model ranks unseen mappings correctly.
+
+For a finite incremental confirmation after stage calibration, the lower-level
+`calibrate_local_hardware.py` also accepts `--seed-only --seed-budget N`.
+It tests only matching proposals from the frozen seed snapshot, using the same
+resolution, screening and repeated finalist confirmation as ordinary tuning.
+It skips full-inventory enumeration, ordinary exploration and non-seed
+incumbents. A workload without a matching seed is an error; budget omissions
+remain explicit. This mode does not certify full-space search or replace
+hardware migration. The unified installer retains its ordinary search policy.
+Accepted provider aliases are normalized before seed comparison, while actual
+thread, tile, partition, I/O and arithmetic choices remain checked.
+
+Native low-precision FFT confirmation can explicitly request
+`--low-fft-error-report-only`. It records same-precision CPU-reference errors
+without applying a floating tolerance; only finite outputs qualify for timing
+promotion. Integer checks and other floating operators keep their existing
+contracts. This flag neither changes input scaling nor certifies numerical
+accuracy, and its identity is preserved across resume. Public Graph comparisons
+remain separate from the calibrator's direct-launch timings.
+
 The final fitted model and the smaller temporary model used during a workload
 search are distinct. Search records identify temporary-model updates and the
 candidate IDs that supplied their target-local training data.
@@ -694,10 +723,26 @@ checks can detect contention but do not reserve the device against arriving jobs
 
 [Independent CPU preparation](calibration_cpu_preparation.md) can export pending
 candidate inventories once, score them without a visible GPU, precompile priority
-modules, and persist exact score epochs. The GPU watcher accepts
-`--cpu-preparation-status OUTPUT/status.json` to wait for the initial scoring
-publication before checking GPU idleness. New adaptive feedback still requires
-new scoring; these preparations do not replace GPU calibration or verification.
+modules, and persist exact score epochs. For an interrupted refresh,
+`python scripts/prepare_refresh_calibration.py --campaign CAMPAIGN --output OUTPUT
+--jobs 4 --compile-top 32` restores the campaign environment and checks checkpoint
+identity after the owned measurement driver stops. It first compiles saved
+`needs-compilation` configurations, including those in completed cells, then
+captures full pending inventories and performs offline scoring and priority
+precompilation. Capture may query GPU properties; compilation and scoring hide
+CUDA devices and perform no timed measurements.
+
+The GPU watcher accepts `--cpu-preparation-status OUTPUT/prepared/status.json`
+and requires both `scoring_complete` and `compile_ready` before checking GPU
+idleness. For research recovery, `calibrate_local_hardware.py --resume-search
+--retry-compilation-gaps` retries selected, unmeasured gaps while retaining
+successful measurements and selection order. Pass the matching
+`--cpu-preparation-input OUTPUT/capture/input.json` and
+`--cpu-preparation-dir OUTPUT/prepared` to reuse preparation. The refresh driver
+exposes these as `--calibration-cpu-input` and `--calibration-cpu-dir` and enables
+gap retries with an unrestricted research compilation budget when supplied.
+Later adaptive feedback can still require CPU scoring and new compilation;
+these preparations do not replace GPU calibration or verification.
 
 For an explicitly requested automatic continuation of a finite campaign,
 `scripts/watch_idle_campaign.py` observes one GPU UUID every 10 seconds. It
@@ -792,6 +837,51 @@ That manifest is a selected historical workload set. The expanded FP32/FP64
 FFT acceptance matrix and its calibration-first procedure are documented in
 the [unified planner guide](unified_planner.md#method-alignment-and-acceptance).
 Full acceptance is a separate milestone from focused regression tests.
+
+## CPU preflight for runtime artifacts
+
+When the install prefix contains `conda-meta`, the installer also installs
+`etc/conda/activate.d/cubutterfly_profile.sh` and its matching `deactivate.d`
+hook. On the next Conda activation, an unset `CUBUTTERFLY_PROFILE_ROOT` defaults
+to `$CONDA_PREFIX/share/cuButterfly/hardware`. Explicit values, including an
+empty value, take precedence. Deactivation removes the automatic value only if
+it is still unchanged; a user override made during the session survives.
+These hooks select the profile root for an installed library without requiring
+a kernel rebuild. They do not publish, relabel or calibrate profile artifacts.
+When installed template and MathDx directories exist, the hooks also supply
+unset `CUBUTTERFLY_TEMPLATE_ROOT` and `CUBUTTERFLY_MATHDX_ROOT`, with the same
+override-preservation rule. CPU precompilation must invoke that template tree's
+`scripts/compile_module.py`; invoking the source-tree helper with an installed
+`--root` can produce a different cache identity. Prepared modules can be placed
+in the default `~/.cache/cubutterfly/modules` directory before GPU measurement.
+
+Before launching a runner that requires existing tuned mappings, check its
+explicit profile root, hardware identity and runtime fingerprint:
+
+```bash
+python scripts/static_hardware_profile.py preflight \
+  --profile-root PROFILES --expected-identity identity.json \
+  --registry registry.json --runtime-fingerprint BUILD_FINGERPRINT
+```
+
+`identity.json` supplies `device`, `compute_capability` and exact
+`global_memory_bytes`. The root must contain
+`<device>-sm<cc-without-dot>-<memory-bytes>B/hardware_model.json`, using the
+runtime's sanitized device tag. A legacy leaf calibration directory does not
+satisfy this layout. The check requires exact hardware capacity identity and at
+least one registry record with `status: measured` and the supplied fingerprint;
+an 80 GB target cannot stand in for a 40 GB target. Failures exit with code 1.
+Optional `--workload-keys keys.json` requires each semantic object in the JSON
+array to match a measured canonical registry key exactly. Without that option,
+success establishes no workload coverage beyond the matching record count.
+
+The importable interface is
+`preflight(profile_root, expected_identity, registry_path, runtime_fingerprint,
+workload_keys=None)` (the final argument is keyword-only). It reads JSON on CPU
+and does not initialize CUDA. A complete capacity file describes resource limits;
+compatible measured records establish only their recorded tuning scope. Neither
+file presence nor this preflight certifies completed performance calibration,
+stage validation, composition validation or comprehensive workload tuning.
 
 ## Updating A Profile
 

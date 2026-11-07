@@ -337,3 +337,39 @@ def test_parallel_frozen_scores_and_proposals_match_serial(monkeypatch):
     monkeypatch.setenv("CUBUTTERFLY_SEARCH_SCORE_WORKERS", "1")
     assert changed == _inventory_score_keys(points, score)
     assert changed != keys
+
+
+def test_scalar_online_group_axes_reach_adjacent_powers_and_keep_semantics():
+    mapping = {
+        "schema_version": 1, "kind": "butterfly", "backend": "online-reorder",
+        "fft_core": "scalar", "compute_unit": "radix4", "stage_partition": [5, 7],
+        "local_stages": 5, "tile_threads": 128, "data_tiles_per_cta": 32,
+        "reorder_columns": 8, "shared_layout": "linear", "cross_twiddle": "table",
+    }
+    for operator in ("fft", "fwht", "subset-zeta"):
+        point = _point(mapping, operator=operator, precision="bf16")
+        proposals = neighbors(point)
+        for field, target, bound in (("data_tiles_per_cta", 64, 128), ("reorder_columns", 16, 32)):
+            single_axis = []
+            for proposal in proposals:
+                candidate = json.loads(proposal["mapping_json"])
+                if all(candidate.get(key) == value for key, value in mapping.items() if key != field):
+                    value = candidate[field]
+                    if value != mapping[field]:
+                        single_axis.append(value)
+                        assert 1 <= value <= bound and value & (value - 1) == 0
+                        for key in ("operator", "precision", "direction", "normalization", "placement",
+                                    "logN", "batch", "element_stride", "batch_stride"):
+                            assert proposal[key] == point[key]
+            assert target in single_axis
+
+    # At the dimension endpoints the proposal must not advance beyond either axis.
+    mapping.update(data_tiles_per_cta=128, reorder_columns=32)
+    from evolutionary_search import _numeric_values
+    point = _point(mapping)
+    assert all(value <= 128 for value in _numeric_values("data_tiles_per_cta", 128, point, mapping))
+    assert all(value <= 32 for value in _numeric_values("reorder_columns", 32, point, mapping))
+    imported = dict(mapping, fft_core="register-tile")
+    assert _numeric_values("data_tiles_per_cta", 32, point, imported)[:3] == [1, 2, 4]
+    factor = dict(mapping, backend="factor-streamed")
+    assert _numeric_values("data_tiles_per_cta", 32, point, factor)[:3] == [1, 2, 4]

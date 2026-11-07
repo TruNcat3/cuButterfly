@@ -134,3 +134,28 @@ accepts later input for that older population; it is not an update switch
 for the current manuscript figures. `export_evidence.py` maintains the
 historical table. Missing results remain pending, never synthetic zero
 measurements. Figure lineage and scope are documented in `figures/README.md`.
+
+## FFT-L precision columns in the unified comparison
+
+The historical November 4 low-precision evidence has a separate frozen export and does not
+alter main66 or cyclic-NTT denominators. Its public-winner replay is loaded into
+the ordinary operator figure/table. The November 6 nine-request FP16 cohort
+subsequently replaced that replay. Further BF16 experiments are deferred by the
+user's FP16-only scope decision; cuFFT Xt supports BF16 storage. Fixed controls are retained separately and never used as AUTO results.
+
+```bash
+/home/wt/yes/envs/cubutterfly/bin/python paper/tools/load_fft_l_comparison.py
+/home/wt/yes/envs/cubutterfly/bin/python paper/tools/render_current_refresh.py
+make -C paper all evidence
+```
+
+These commands use frozen paper assets and need no live result directory or GPU.
+`generated/fft_l_20261104/generate.py` can separately re-audit the original local
+raw records; changes to frozen evidence require intentional loader/source review.
+The old `render_fft_l_boundary.py` figure is archived and excluded from the
+manuscript. Profile evidence now supports the common generated-kernel analysis.
+
+The [November 7 closeout](evidence/A100_CLOSEOUT_20261107.md) records the frozen
+A100 cohorts and the separate eleven-request 40GB installed-default supplement.
+The latter is excluded from all 80GB figure/table aggregates. PRO6000 Server
+96GB installation and matched comparison remain pending.

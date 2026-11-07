@@ -15,27 +15,54 @@ __device__ __forceinline__ std::uint32_t global_writer_aligned_index(std::uint32
     return (logical >> 1) | ((logical & 1U) << (log_n - 1));
 }
 
+// A group of independent subgraphs uses the same arithmetic tile. XOR within
+// each row keeps its capacity unchanged while spreading transposed writers over
+// shared-memory banks. The permutation is internal: global edge layouts do not
+// change. In particular this is independent of global_writer_aligned_index.
+template <typename Value, unsigned LogN>
+struct GroupedStageTile {
+    Value* data;
+    unsigned bank_shift;
+    __device__ __forceinline__ GroupedStageTile(Value* storage, unsigned group_log)
+        : data(storage) {
+        constexpr unsigned bank_values = sizeof(Value) >= 4 ? 32 / (sizeof(Value) / 4) : 32;
+        constexpr unsigned bank_log = bank_values == 32 ? 5 : bank_values == 16 ? 4 : 3;
+        bank_shift = group_log < bank_log ? bank_log - group_log : 0;
+    }
+    __device__ __forceinline__ Value& operator[](unsigned logical) const {
+        const unsigned group = logical >> LogN;
+        return data[logical ^ ((group << bank_shift) & ((1U << LogN) - 1))];
+    }
+};
+
 template <typename Operator, std::uint32_t LocalLogN, bool Radix4, bool ReorderOutput = false, bool Radix8 = false, bool FinalizeOutput = false>
 __global__ void hierarchical_prefix_kernel(const typename Operator::Value* input, typename Operator::Value* output, std::uint64_t total_transforms,
                                            std::uint32_t log_n, std::uint64_t batch_distance, std::uint64_t element_stride, Operator op,
-                                           bool writer_aligned = false) {
+                                           bool writer_aligned = false, std::uint32_t group_log = 0) {
     using Value = typename Operator::Value;
     extern __shared__ __align__(16) unsigned char storage[];
-    Value*                                        tile = reinterpret_cast<Value*>(storage);
+    // Non-online callers have a single tile. Keep that geometry constant so
+    // hierarchical prefixes and whole-tile radix-8 pay no grouping overhead.
+    if constexpr (!ReorderOutput) group_log = 0;
+    const GroupedStageTile<Value, LocalLogN> tile(reinterpret_cast<Value*>(storage), group_log);
 
     constexpr std::uint32_t local_n              = 1U << LocalLogN;
     const std::uint32_t     chunks_per_transform = 1U << (log_n - LocalLogN);
-    const std::uint64_t     tile_id              = blockIdx.x;
-    const std::uint64_t     transform            = tile_id / chunks_per_transform;
-    if (transform >= total_transforms)
-        return;
-    const std::uint32_t chunk = static_cast<std::uint32_t>(tile_id % chunks_per_transform);
-    const std::uint64_t base  = transform * batch_distance;
+    const std::uint32_t group_count = 1U << group_log;
+    const std::uint32_t group_mask = group_count - 1;
+    const std::uint32_t chunk_tiles_log = log_n - LocalLogN - group_log;
+    const std::uint64_t tile_id = blockIdx.x;
+    const std::uint64_t transform = tile_id >> chunk_tiles_log;
+    if (transform >= total_transforms) return;
+    const std::uint32_t chunk_base = (static_cast<std::uint32_t>(tile_id) & ((1U << chunk_tiles_log) - 1)) << group_log;
+    const std::uint64_t base = transform * batch_distance;
 
-    for (std::uint32_t index = threadIdx.x; index < local_n; index += blockDim.x) {
+    for (std::uint32_t work = threadIdx.x; work < group_count * local_n; work += blockDim.x) {
+        const std::uint32_t chunk = chunk_base + (work >> LocalLogN);
+        const std::uint32_t index = work & (local_n - 1);
         const std::uint32_t global_index = chunk * local_n + index;
-        const std::uint32_t input_index  = Operator::kBitReverseInput ? __brev(global_index) >> (32 - log_n) : global_index;
-        tile[index]                      = input[base + static_cast<std::uint64_t>(input_index) * element_stride];
+        const std::uint32_t input_index = Operator::kBitReverseInput ? __brev(global_index) >> (32 - log_n) : global_index;
+        tile[work] = input[base + static_cast<std::uint64_t>(input_index) * element_stride];
     }
     __syncthreads();
 
@@ -45,10 +72,12 @@ __global__ void hierarchical_prefix_kernel(const typename Operator::Value* input
 #pragma unroll
             for (std::uint32_t stage = 0; stage < fused_stages; stage += 3) {
                 const std::uint32_t eighth = 1U << stage;
-                for (std::uint32_t unit = threadIdx.x; unit < local_n / 8; unit += blockDim.x) {
+                for (std::uint32_t work = threadIdx.x; work < group_count * (local_n / 8); work += blockDim.x) {
+                    const std::uint32_t tile_base = (work / (local_n / 8)) * local_n;
+                    const std::uint32_t unit = work % (local_n / 8);
                     const std::uint32_t group  = unit / eighth;
                     const std::uint32_t offset = unit - group * eighth;
-                    const std::uint32_t i0     = group * (8 * eighth) + offset;
+                    const std::uint32_t i0     = tile_base + group * (8 * eighth) + offset;
                     const std::uint32_t i1     = i0 + eighth;
                     const std::uint32_t i2     = i1 + eighth;
                     const std::uint32_t i3     = i2 + eighth;
@@ -91,10 +120,12 @@ __global__ void hierarchical_prefix_kernel(const typename Operator::Value* input
 #pragma unroll
         for (std::uint32_t stage = fused_stages; stage < LocalLogN; ++stage) {
             const std::uint32_t half = 1U << stage;
-            for (std::uint32_t butterfly = threadIdx.x; butterfly < local_n / 2; butterfly += blockDim.x) {
+            for (std::uint32_t work = threadIdx.x; work < group_count * (local_n / 2); work += blockDim.x) {
+                const std::uint32_t tile_base = (work / (local_n / 2)) * local_n;
+                const std::uint32_t butterfly = work % (local_n / 2);
                 const std::uint32_t group       = butterfly / half;
                 const std::uint32_t offset      = butterfly - group * half;
-                const std::uint32_t left_index  = group * (2 * half) + offset;
+                const std::uint32_t left_index  = tile_base + group * (2 * half) + offset;
                 const std::uint32_t right_index = left_index + half;
                 Value               left        = tile[left_index];
                 Value               right       = tile[right_index];
@@ -109,10 +140,12 @@ __global__ void hierarchical_prefix_kernel(const typename Operator::Value* input
 #pragma unroll
         for (std::uint32_t stage = 0; stage < paired_stages; stage += 2) {
             const std::uint32_t quarter = 1U << stage;
-            for (std::uint32_t unit = threadIdx.x; unit < local_n / 4; unit += blockDim.x) {
+            for (std::uint32_t work = threadIdx.x; work < group_count * (local_n / 4); work += blockDim.x) {
+                const std::uint32_t tile_base = (work / (local_n / 4)) * local_n;
+                const std::uint32_t unit = work % (local_n / 4);
                 const std::uint32_t group  = unit / quarter;
                 const std::uint32_t offset = unit - group * quarter;
-                const std::uint32_t i0     = group * (4 * quarter) + offset;
+                const std::uint32_t i0     = tile_base + group * (4 * quarter) + offset;
                 const std::uint32_t i1     = i0 + quarter;
                 const std::uint32_t i2     = i1 + quarter;
                 const std::uint32_t i3     = i2 + quarter;
@@ -133,12 +166,14 @@ __global__ void hierarchical_prefix_kernel(const typename Operator::Value* input
         }
         if constexpr (paired_stages != LocalLogN) {
             constexpr std::uint32_t half = 1U << paired_stages;
-            for (std::uint32_t offset = threadIdx.x; offset < half; offset += blockDim.x) {
-                Value left  = tile[offset];
-                Value right = tile[offset + half];
+            for (std::uint32_t work = threadIdx.x; work < group_count * half; work += blockDim.x) {
+                const std::uint32_t tile_base = (work / half) * local_n;
+                const std::uint32_t offset = work % half;
+                Value left  = tile[tile_base + offset];
+                Value right = tile[tile_base + offset + half];
                 op.apply(paired_stages, offset, left, right);
-                tile[offset]        = left;
-                tile[offset + half] = right;
+                tile[tile_base + offset]        = left;
+                tile[tile_base + offset + half] = right;
             }
             __syncthreads();
         }
@@ -146,10 +181,12 @@ __global__ void hierarchical_prefix_kernel(const typename Operator::Value* input
 #pragma unroll
         for (std::uint32_t stage = 0; stage < LocalLogN; ++stage) {
             const std::uint32_t half = 1U << stage;
-            for (std::uint32_t butterfly = threadIdx.x; butterfly < local_n / 2; butterfly += blockDim.x) {
+            for (std::uint32_t work = threadIdx.x; work < group_count * (local_n / 2); work += blockDim.x) {
+                const std::uint32_t tile_base = (work / (local_n / 2)) * local_n;
+                const std::uint32_t butterfly = work % (local_n / 2);
                 const std::uint32_t group       = butterfly / half;
                 const std::uint32_t offset      = butterfly - group * half;
-                const std::uint32_t left_index  = group * (2 * half) + offset;
+                const std::uint32_t left_index  = tile_base + group * (2 * half) + offset;
                 const std::uint32_t right_index = left_index + half;
                 Value               left        = tile[left_index];
                 Value               right       = tile[right_index];
@@ -161,11 +198,16 @@ __global__ void hierarchical_prefix_kernel(const typename Operator::Value* input
         }
     }
 
-    for (std::uint32_t index = threadIdx.x; index < local_n; index += blockDim.x) {
+    // Adjacent lanes own adjacent subgraphs at writeback. This covers a
+    // contiguous packet of the next stage's input without an extra kernel.
+    for (std::uint32_t work = threadIdx.x; work < group_count * local_n; work += blockDim.x) {
+        const std::uint32_t slot = work & group_mask;
+        const std::uint32_t index = work >> group_log;
+        const std::uint32_t chunk = chunk_base + slot;
         const std::uint32_t global_index = chunk * local_n + index;
         const std::uint32_t reordered = index * chunks_per_transform + chunk;
         const std::uint32_t output_index = ReorderOutput ? (writer_aligned ? global_writer_aligned_index(reordered, log_n) : reordered) : global_index;
-        const Value         value        = FinalizeOutput ? op.finalize(tile[index], local_n) : tile[index];
+        const Value value = FinalizeOutput ? op.finalize(tile[slot * local_n + index], local_n) : tile[slot * local_n + index];
         output[base + static_cast<std::uint64_t>(output_index) * element_stride] = value;
     }
 }
@@ -173,21 +215,22 @@ __global__ void hierarchical_prefix_kernel(const typename Operator::Value* input
 template <typename Operator, std::uint32_t RemainingLogN, bool Radix4, bool Radix8 = false>
 __global__ void online_reorder_suffix_kernel(const typename Operator::Value* input, typename Operator::Value* output, std::uint64_t total_transforms,
                                              std::uint32_t log_n, std::uint32_t local_log_n, std::uint64_t batch_distance,
-                                             std::uint64_t element_stride, std::uint32_t columns_per_tile, Operator op,
+                                             std::uint64_t element_stride, std::uint32_t column_log, Operator op,
                                              bool writer_aligned = false) {
     using Value = typename Operator::Value;
     extern __shared__ __align__(16) unsigned char storage[];
-    Value*                                        tile = reinterpret_cast<Value*>(storage);
+    const GroupedStageTile<Value, RemainingLogN> tile(reinterpret_cast<Value*>(storage), column_log);
 
     constexpr std::uint32_t remaining_n  = 1U << RemainingLogN;
     const std::uint32_t     local_n      = 1U << local_log_n;
-    const std::uint32_t     column_tiles = (local_n + columns_per_tile - 1) / columns_per_tile;
+    const std::uint32_t columns_per_tile = 1U << column_log;
+    const std::uint32_t column_tiles_log = local_log_n - column_log;
     const std::uint64_t     tile_id      = blockIdx.x;
-    const std::uint64_t     transform    = tile_id / column_tiles;
+    const std::uint64_t     transform    = tile_id >> column_tiles_log;
     if (transform >= total_transforms)
         return;
-    const std::uint32_t column_base    = static_cast<std::uint32_t>(tile_id % column_tiles) * columns_per_tile;
-    const std::uint32_t active_columns = min(columns_per_tile, local_n - column_base);
+    const std::uint32_t column_base    = (static_cast<std::uint32_t>(tile_id) & ((1U << column_tiles_log) - 1)) << column_log;
+    const std::uint32_t active_columns = columns_per_tile;
     const std::uint64_t base           = transform * batch_distance;
 
     for (std::uint32_t work = threadIdx.x; work < active_columns * remaining_n; work += blockDim.x) {
@@ -352,11 +395,11 @@ __global__ void online_reorder_suffix_kernel(const typename Operator::Value* inp
 
     const std::uint32_t n = 1U << log_n;
     for (std::uint32_t work = threadIdx.x; work < active_columns * remaining_n; work += blockDim.x) {
-        const std::uint32_t column_slot               = work / remaining_n;
-        const std::uint32_t index                     = work - column_slot * remaining_n;
+        const std::uint32_t column_slot               = work & (columns_per_tile - 1);
+        const std::uint32_t index                     = work >> column_log;
         const std::uint32_t column                    = column_base + column_slot;
         const std::uint64_t logical_index             = static_cast<std::uint64_t>(index) * local_n + column;
-        output[base + logical_index * element_stride] = op.finalize(tile[work], n);
+        output[base + logical_index * element_stride] = op.finalize(tile[column_slot * remaining_n + index], n);
     }
 }
 

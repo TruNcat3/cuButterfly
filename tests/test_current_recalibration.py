@@ -279,3 +279,41 @@ def test_completed_phases_are_preserved_on_resume(tmp_path):
         assert runner.orchestrate(args, execute) == 0
         assert gate.call_count == 3
     execute.assert_not_called()
+
+
+@pytest.mark.parametrize('targets,sm', [('80', 80), ('120', 120),
+    ('120-real;120-virtual', 120), ('120;120-real', 120)])
+def test_validate_build_derives_unique_sm(tmp_path, targets, sm):
+    args = arguments(tmp_path)
+    cache = args.build_dir / 'CMakeCache.txt'
+    cache.write_text(cache.read_text().replace('STRING=80', 'STRING=' + targets))
+    assert runner.validate_build(args.build_dir) == sm
+
+
+@pytest.mark.parametrize('targets', ['', 'native', 'all', 'sm_120', '120a',
+    '80;120', '120-real;80-virtual', '120;', '0'])
+def test_validate_build_rejects_ambiguous_or_missing_architecture(tmp_path, targets):
+    args = arguments(tmp_path)
+    cache = args.build_dir / 'CMakeCache.txt'
+    cache.write_text(cache.read_text().replace('STRING=80', 'STRING=' + targets))
+    with pytest.raises(ValueError, match='CMAKE_CUDA_ARCHITECTURES'):
+        runner.validate_build(args.build_dir)
+    cache.write_text('\n'.join(line for line in cache.read_text().splitlines()
+                               if not line.startswith('CMAKE_CUDA_ARCHITECTURES')))
+    with pytest.raises(ValueError, match='CMAKE_CUDA_ARCHITECTURES'):
+        runner.validate_build(args.build_dir)
+
+
+def test_environment_uses_only_this_runs_post_calibration_model(tmp_path, monkeypatch):
+    args = arguments(tmp_path)
+    monkeypatch.setenv('CUBUTTERFLY_HARDWARE_MODEL', '/foreign/a100.json')
+    monkeypatch.setenv('CUBUTTERFLY_PROFILE_ROOT', '/foreign/profiles')
+    for finalized in (False, True):
+        env = runner.environment(args, finalized)
+        assert 'CUBUTTERFLY_HARDWARE_MODEL' not in env
+        assert 'CUBUTTERFLY_PROFILE_ROOT' not in env
+    hardware = args.output_dir / 'hardware/hardware_model.json'
+    hardware.parent.mkdir(parents=True)
+    hardware.write_text('{}')
+    assert 'CUBUTTERFLY_HARDWARE_MODEL' not in runner.environment(args)
+    assert runner.environment(args, True)['CUBUTTERFLY_HARDWARE_MODEL'] == str(hardware)

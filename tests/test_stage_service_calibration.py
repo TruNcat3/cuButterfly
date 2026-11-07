@@ -934,3 +934,83 @@ def test_online_service_reuse_requires_validated_source_and_matching_geometry():
     invalid_records.append(invalid)
     assert not calibration._reusable_shared_services(
         target, [source, target], invalid_records, max_points=33)
+
+
+class RuntimeProbe(FakeProbe):
+    def __init__(self, runtime, *, timed_runtime=None):
+        super().__init__()
+        self.runtime = runtime
+        self.timed_runtime = timed_runtime
+
+    def __call__(self, command):
+        raw = super().__call__(command)
+        raw['runtime_fingerprint'] = (self.timed_runtime
+            if '--describe-only' not in command and self.timed_runtime is not None else self.runtime)
+        return raw
+
+
+def test_stale_profile_fails_after_description_before_any_timing(tmpdir):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=8)
+    profile['runtime_fingerprint'] = 'old-runtime'
+    original_profile = json.dumps(profile, sort_keys=True)
+    runner = RuntimeProbe('current-runtime')
+    with pytest.raises(ValueError, match='untimed description: runtime_fingerprint'):
+        _calibrate(binary, checkpoint, profile, [point], runner)
+    assert runner.calls == [(8, True)]
+    assert json.dumps(profile, sort_keys=True) == original_profile
+
+
+def test_resume_checks_sample_runtime_before_any_gpu_call(tmpdir):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=8)
+    profile['runtime_fingerprint'] = 'old-profile-runtime'
+    _calibrate(binary, checkpoint, profile, [point], RuntimeProbe('old-profile-runtime'))
+    saved = json.loads(checkpoint.read_text())
+    for record in saved['records']:
+        record['sample']['runtime_fingerprint'] = 'actual-current-runtime'
+    checkpoint.write_text(json.dumps(saved))
+    original = checkpoint.read_bytes()
+    runner = RuntimeProbe('actual-current-runtime')
+    with pytest.raises(ValueError, match='checkpoint resume: runtime_fingerprint'):
+        _calibrate(binary, checkpoint, profile, [point], runner)
+    assert runner.calls == []
+    assert checkpoint.read_bytes() == original
+
+
+def test_runtime_change_during_measurement_fails_before_next_probe(tmpdir):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=8)
+    runner = RuntimeProbe('current-runtime', timed_runtime='changed-runtime')
+    with pytest.raises(ValueError, match='new measurement: runtime_fingerprint'):
+        _calibrate(binary, checkpoint, profile, [point], runner)
+    assert len(runner.calls) == 2
+    assert runner.calls[0] == (8, True)
+    assert runner.calls[1][1] is False
+
+
+def test_resume_rejects_disagreeing_samples_even_without_profile_runtime(tmpdir):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=8)
+    _calibrate(binary, checkpoint, profile, [point], RuntimeProbe('runtime-a'))
+    saved = json.loads(checkpoint.read_text())
+    saved['records'][-1]['sample']['runtime_fingerprint'] = 'runtime-b'
+    checkpoint.write_text(json.dumps(saved))
+    runner = RuntimeProbe('runtime-a')
+    with pytest.raises(ValueError, match='current samples=.*runtime-a'):
+        _calibrate(binary, checkpoint, profile, [point], runner)
+    assert runner.calls == []
+
+
+def test_build_prior_old_runtime_allowed_but_current_description_checked(tmpdir):
+    binary, checkpoint, profile, point = _inputs(tmpdir, batch=8)
+    profile['runtime_fingerprint'] = 'old-runtime'
+    _calibrate(binary, checkpoint, profile, [point], RuntimeProbe('old-runtime'))
+    binary.write_bytes(b'new-stage-probe')
+    profile['runtime_fingerprint'] = 'current-runtime'
+    bad = RuntimeProbe('wrong-current-runtime')
+    with pytest.raises(ValueError, match='untimed description: runtime_fingerprint'):
+        _calibrate(binary, checkpoint, profile, [point], bad, resume_build_priors=True)
+    assert bad.calls == [(8, True)]
+    good = RuntimeProbe('current-runtime')
+    result = _calibrate(binary, checkpoint, profile, [point], good, resume_build_priors=True)
+    assert result['curves']
+    saved = json.loads(checkpoint.read_text())
+    assert all(r['sample']['runtime_fingerprint'] == 'old-runtime'
+               for r in saved['build_prior_origins'][0]['records'])

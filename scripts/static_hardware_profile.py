@@ -61,6 +61,47 @@ def load(hardware_path, expected_identity=None):
     return validate(json.loads(Path(hardware_path).read_text()), expected_identity)
 
 
+def preflight(profile_root, expected_identity, registry_path, runtime_fingerprint,
+              *, workload_keys=None):
+    """Fail closed on runtime artifact routing; read JSON only, without CUDA.
+
+    workload_keys optionally requires exact canonical registry keys. Passing no
+    keys checks only that at least one compatible measured record exists.
+    This is artifact compatibility, not a calibration completion certificate.
+    """
+    from hardware_registry import SCHEMA as REGISTRY_SCHEMA, canonical_semantics
+
+    if not isinstance(runtime_fingerprint, str) or not runtime_fingerprint.strip():
+        raise ValueError("preflight requires a nonempty runtime_fingerprint")
+    root = Path(profile_root)
+    path = root / _tag(expected_identity) / FILENAME
+    if not path.is_file():
+        raise ValueError(f"profile_root must contain <hardware-tag>/{FILENAME}: missing {path}; "
+                         "a legacy leaf directory is not a profile root")
+    document = load(path, expected_identity)
+    registry = json.loads(Path(registry_path).read_text())
+    if (not isinstance(registry, dict) or registry.get("schema") != REGISTRY_SCHEMA
+            or not isinstance(registry.get("targets"), list)):
+        raise ValueError("unsupported hardware registry schema")
+    targets = [target for target in registry["targets"]
+               if isinstance(target, dict) and target.get("hardware") == identity(document)]
+    if not targets:
+        raise ValueError("registry hardware identity mismatch: no exact device/cc/memory target")
+    records = [record for target in targets for record in target.get("records", [])
+               if isinstance(record, dict) and record.get("status") == "measured"
+               and record.get("runtime_fingerprint") == runtime_fingerprint]
+    if not records:
+        raise ValueError("registry has no measured records for the requested runtime_fingerprint")
+    requested = [canonical_semantics(key) for key in (workload_keys or [])]
+    missing = [key for key in requested if not any(record.get("key") == key for record in records)]
+    if missing:
+        raise ValueError("registry lacks exact measured workload keys: " + json.dumps(missing, sort_keys=True))
+    return dict(hardware_path=str(path), registry_path=str(registry_path),
+                identity=identity(document), runtime_fingerprint=runtime_fingerprint,
+                measured_records=len(records), checked_workload_keys=requested,
+                hardware_complete=True, calibration_completion_checked=False)
+
+
 def _tag(expected_identity):
     device = re.sub(r"[^a-zA-Z0-9.-]+", "-", str(expected_identity["device"])).strip("-") or "unknown"
     capability = str(expected_identity["compute_capability"]).replace(".", "")
@@ -287,11 +328,23 @@ def main(argv=None):
     choose.add_argument("--explicit", type=Path)
     choose.add_argument("--local-dir", type=Path)
     choose.add_argument("--bundled-root", type=Path)
+    check = commands.add_parser("preflight", help="CPU-only strict runtime artifact compatibility")
+    check.add_argument("--profile-root", type=Path, required=True)
+    check.add_argument("--expected-identity", type=Path, required=True)
+    check.add_argument("--registry", type=Path, required=True)
+    check.add_argument("--runtime-fingerprint", required=True)
+    check.add_argument("--workload-keys", type=Path, help="JSON array of workload semantic objects")
     args = parser.parse_args(argv)
     try:
         expected = json.loads(args.expected_identity.read_text()) if getattr(args, "expected_identity", None) else None
         if args.command == "inspect":
             result = inspect(args.hardware_path, expected)
+        elif args.command == "preflight":
+            keys = json.loads(args.workload_keys.read_text()) if args.workload_keys else None
+            if keys is not None and (not isinstance(keys, list) or not all(isinstance(key, dict) for key in keys)):
+                raise ValueError("workload keys must be a JSON array of semantic objects")
+            result = preflight(args.profile_root, expected, args.registry, args.runtime_fingerprint,
+                               workload_keys=keys)
         elif args.command == "select":
             result = select(expected, explicit=args.explicit, local_dir=args.local_dir, bundled_root=args.bundled_root)
         else:

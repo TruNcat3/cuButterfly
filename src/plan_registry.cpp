@@ -1,5 +1,8 @@
 #include "plan_registry.hpp"
 #include "fwht_contract.hpp"
+#include "temporal_tile_contract.hpp"
+#include "online_reorder_contract.hpp"
+#include "shared_tile_contract.hpp"
 #include "fft_register_dispatch.hpp"
 #include "generated_unit_api.cuh"
 #include "jit_module.hpp"
@@ -11,6 +14,7 @@
 #include "ntt_template_candidates.hpp"
 #include "platform_tuning.hpp"
 #include "cufftdx_provider.hpp"
+#include "fft_local_core_contract.hpp"
 #include "hardware_model.hpp"
 #include "static_candidate_ranking.hpp"
 #include "stage_probe.hpp"
@@ -47,14 +51,13 @@ const char* runtime_fingerprint() noexcept {
 namespace {
 using Json = nlohmann::json;
 
-std::vector<std::vector<std::uint32_t>> capacity_partitions(unsigned log_n,unsigned value_bytes,
-                                                        bool balanced_first=false) {
+std::vector<std::vector<std::uint32_t>> capacity_partitions(unsigned log_n,unsigned value_bytes) {
     const auto hardware=query_hardware_resource_model();
     unsigned local=0;
     while(local<log_n && (2ULL<<(local+1))*value_bytes<=hardware.shared_bytes_per_block) ++local;
     const auto* value=std::getenv("CUBUTTERFLY_PARTITION_BUDGET");
     if(value && *value=='-') throw std::invalid_argument("CUBUTTERFLY_PARTITION_BUDGET must be nonnegative");
-    return shared_partitions(log_n,local,value ? std::stoull(value) : 128,1,balanced_first);
+    return shared_partitions(log_n,local,value ? std::stoull(value) : 128,1,true);
 }
 
 std::string string_value(const Json& j) { return j.is_string() ? j.get<std::string>() : j.dump(); }
@@ -244,6 +247,13 @@ std::string serialize_mapping(const ButterflyConfig& c) {
     j["register_threads"] = c.register_threads;
     j["prefix_codelet"] = c.prefix_codelet;
     j["prefix_shared_layout"] = c.prefix_shared_layout;
+    j["prefix_twiddle"] = c.prefix_twiddle;
+    if (fp16_local_block(c)) {
+        const auto shape = fp16_local_block_shape(c);
+        j["local_core_contract"] = {{"packing", "half2-transform-pair-v1"},
+            {"accumulation", "native"}, {"normalization", "final-store-fp16"},
+            {"logical_transforms_per_cta", shape.transforms_per_cta}};
+    }
     if (c.suffix_core != "cufftdx-block") j["suffix_core"] = c.suffix_core;
     auto factor_policies = c.factor_io_policies;
     if (c.backend == ButterflyBackend::FactorStreamed && factor_policies.empty() && !c.factor_partition.empty())
@@ -305,6 +315,12 @@ void apply_serialized_mapping(const std::string& value, ButterflyConfig& c) {
     c.exchange_chunks=exchange_chunks(j);
     c.prefix_codelet = field(j, "prefix_codelet", "native");
     c.prefix_shared_layout = field(j, "prefix_shared_layout", "linear");
+    c.prefix_twiddle = field(j, "prefix_twiddle", "runtime");
+    if (c.prefix_twiddle != "runtime" && c.prefix_twiddle != "table")
+        throw std::invalid_argument("prefix_twiddle must be runtime or table");
+    if (c.prefix_twiddle != "runtime" &&
+        !(c.op == ButterflyOperator::Fft && c.backend == ButterflyBackend::OnlineReorder && c.fft_core == FftCore::RegisterTile))
+        throw std::invalid_argument("prefix_twiddle applies only to online-reorder register-tile FFT");
     if (j.contains("factor_io_policies")) c.factor_io_policies = strings(j, "factor_io_policies");
     c.stage_overlap = boolean(j, "stage_overlap");
     c.factor_overlap = boolean(j, "factor_overlap");
@@ -523,7 +539,17 @@ std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig
     Json provider_checks = Json::object();
     const bool provider_table_matches = cufftdx_provider_matches_runtime();
     auto provider_available = [&](unsigned sm, unsigned size, unsigned ept) {
-        const auto bits = original.precision==ButterflyPrecision::Fp64 ? 64U : 32U;
+        const auto arithmetic_bits = cufftdx_arithmetic_precision_bits(original);
+        if (!arithmetic_bits) {
+            if (provider_audit_json)
+                provider_checks["arithmetic-contract"] = {
+                    {"provider", "cufftdx"}, {"precision", butterfly_precision_name(original.precision)},
+                    {"accumulation", butterfly_accumulation_name(original.accumulation)},
+                    {"classification", "local-arithmetic-not-implemented"},
+                    {"invalid_transform", false}, {"action", "exclude-provider-combination"}};
+            return false;
+        }
+        const auto bits = *arithmetic_bits;
         const auto status = provider_table_matches ? cufftdx_provider_support_both(sm, bits, size, ept)
                                                   : CufftDxSupport::Unknown;
         if (provider_audit_json && status != CufftDxSupport::Supported) {
@@ -590,6 +616,27 @@ std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig
         candidates.insert(candidates.begin(), std::move(c));
     }
     if (base.op == ButterflyOperator::Fft) {
+        if (base.precision == ButterflyPrecision::Fp16 &&
+            base.accumulation == ButterflyAccumulation::Native && base.log_n <= 20 &&
+            on_demand_compilation_enabled()) {
+            const auto device = current_device_info();
+            const auto sm = device.compute_major * 100 + device.compute_minor * 10;
+            const auto hardware = query_hardware_resource_model();
+            for (auto ept : {8U, 16U, 32U, 4U, 2U})
+                for (auto threads : {128U, 256U, 64U, 32U, 512U, 1024U}) {
+                    if (threads > hardware.max_threads_per_block) continue;
+                    auto c = base;
+                    c.backend = ButterflyBackend::TemporalTile;
+                    c.fft_core = FftCore::CufftDxBlock;
+                    c.compute_unit = ComputeUnit::Auto;
+                    c.tile_threads = threads;
+                    c.prefix_ept = ept;
+                    try { fp16_local_block_shape(c); }
+                    catch (const std::invalid_argument&) { continue; }
+                    if (provider_available(sm, 1U << c.log_n, ept))
+                        candidates.push_back(std::move(c));
+                }
+        }
         if (base.precision == ButterflyPrecision::Fp32) {
             for (const auto& m : register_tile_mappings()) {
                 if (m.log_n != base.log_n) continue;
@@ -602,6 +649,9 @@ std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig
                 // Preserve each prebuilt provider's identity and support domain.
                 // Only the native inventory seeds additional JIT strategies.
                 if (!on_demand_compilation_enabled() || m.prefix_codelet != "native") continue;
+                auto table_variant = m;
+                table_variant.prefix_twiddle = "table";
+                add_register_mapping(table_variant);
                 for (const auto& codelet : {std::string("native"), std::string("cufftdx-thread"), std::string("radix4")})
                     for (const auto& layout : {std::string("linear"), std::string("xor")}) {
                         if (codelet == m.prefix_codelet && layout == m.prefix_shared_layout) continue;
@@ -618,27 +668,32 @@ std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig
             }
         }
         if (on_demand_compilation_enabled() &&
-            (base.precision == ButterflyPrecision::Fp32 || base.precision == ButterflyPrecision::Fp64)) {
+            (base.precision == ButterflyPrecision::Fp32 || base.precision == ButterflyPrecision::Fp64 ||
+             (base.precision == ButterflyPrecision::Fp16 && base.accumulation == ButterflyAccumulation::Native &&
+              !(base.inverse && base.normalize_inverse)))) {
             const auto hardware = query_hardware_resource_model();
             const auto provider_sm = (hardware.compute_major*10+hardware.compute_minor)*10;
-            const auto width = base.precision == ButterflyPrecision::Fp64 ? 16ULL : 8ULL;
+            const bool half = base.precision == ButterflyPrecision::Fp16;
+            const auto width = half ? 4ULL : base.precision == ButterflyPrecision::Fp64 ? 16ULL : 8ULL;
             // Enumerate physical factor partitions independently of macro
             // grouping and per-CTA temporal data folding. No fixed group count.
             const auto* partition_budget=std::getenv("CUBUTTERFLY_PARTITION_BUDGET");
             if(partition_budget && *partition_budget=='-') throw std::invalid_argument("CUBUTTERFLY_PARTITION_BUDGET must be nonnegative");
             const auto budget=partition_budget ? std::stoull(partition_budget) : 128;
-            for(unsigned columns:{1U,2U,4U,8U}) for(unsigned ept:{8U,16U})
+            const auto column_values = half ? std::vector<unsigned>{2U,4U,8U,16U,32U} : std::vector<unsigned>{1U,2U,4U,8U};
+            for(unsigned columns:column_values) for(unsigned ept:{8U,16U})
                 for(unsigned depth:{0U,1U,2U}) {
                     if(depth && hardware.compute_major<8) continue;
+                    const auto physical_columns = columns / (half ? 2U : 1U);
                     unsigned min_local=0,max_local=0;
-                    while((1U<<min_local)<std::max(ept,32*ept/columns)) ++min_local;
+                    while((1U<<min_local)<std::max(ept,32*ept/physical_columns)) ++min_local;
                     // Keep the synchronous envelope for t=1.  A one-tile CTA
                     // has no successor to prefetch, so depth is lowered to
                     // zero for that schedule; the per-tile legality check
                     // below applies the buffered envelope to t>1.
                     while(max_local<14 && max_local<base.log_n &&
                           (1ULL<<(max_local+1))*columns*width<=hardware.shared_bytes_per_block &&
-                          (1ULL<<(max_local+1))/ept*columns<=hardware.max_threads_per_block) ++max_local;
+                          (1ULL<<(max_local+1))/ept*physical_columns<=hardware.max_threads_per_block) ++max_local;
                     for(const auto& partition:shared_partitions(base.log_n,max_local,budget,min_local,true))
                     for(unsigned tiles:{1U,4U,16U}) {
                         const auto effective_depth=tiles>1 ? depth : 0;
@@ -646,7 +701,7 @@ std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig
                         for(auto s:partition) {
                             if(s>14) { legal=false; break; }
                             const auto f=1U<<s;
-                            const auto threads=f/ept*columns;
+                            const auto threads=f/ept*physical_columns;
                             if(f<ept || threads<32 || threads>hardware.max_threads_per_block ||
                                threads%32 || columns>(1ULL<<(base.log_n-s)) || (done && columns>(1ULL<<done)) ||
                                f*columns*width*(effective_depth ? effective_depth+2 : 1)>hardware.shared_bytes_per_block) legal=false;
@@ -693,7 +748,7 @@ std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig
                             policy_candidate.factor_io_policies=policies;
                             add_factor_schedules(policy_candidate);
                         }
-                        if(std::all_of(partition.begin(),partition.end(),[&](unsigned s) { return !(s%2) && ept==(1U<<(s/2)); })) {
+                        if(!half && std::all_of(partition.begin(),partition.end(),[&](unsigned s) { return !(s%2) && ept==(1U<<(s/2)); })) {
                             c.fft_core=FftCore::RegisterTile;
                             for (const auto& policies : io_variants) {
                                 auto policy_candidate=c;
@@ -703,7 +758,7 @@ std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig
                         }
                     }
                 }
-            for (unsigned local=2; local<=12; ++local) {
+            if (!half) for (unsigned local=2; local<=12; ++local) {
                 if(base.log_n<=local || base.log_n-local<3 || base.log_n-local>14) continue;
                 const auto suffix=base.log_n-local,pn=1U<<local,sn=1U<<suffix;
                 // Preserve the historical priorities, then complete the local
@@ -759,6 +814,12 @@ std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig
                             c.shared_layout=SharedLayout::WriterAligned; c.cross_twiddle=CrossTwiddleMode::Recurrence;
                             c.reorder_columns=1;
                             specializations.push_back(c);
+                            // A small orthogonal basis exposes twiddle supply
+                            // for both precisions and rectangular factor shapes.
+                            if (codelet == "native" && layout == "linear" && !chunk && k == std::min(a,b)) {
+                                c.prefix_twiddle = "table";
+                                specializations.push_back(c);
+                            }
                             }
                         }
                     }
@@ -800,27 +861,56 @@ std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig
                     }
         }
     }
+    const auto temporal_hardware = query_hardware_resource_model();
+    const auto append_shared = [&](const ButterflyConfig& c) {
+        candidates.push_back(c);
+        if (!on_demand_compilation_enabled() || !c.boundaries.empty() ||
+            c.direct_boundary != DirectBoundary::Strided ||
+            resident_axes_requested(c.local_stage_partitions, c.exchange_chunks)) return;
+        auto groups = c.stage_partition;
+        if (groups.empty()) {
+            for (auto remaining = c.log_n; remaining;) {
+                const auto stages = std::min(remaining, c.local_stages);
+                groups.push_back(stages); remaining -= stages;
+            }
+        }
+        for (auto tiles : shared_tile_candidates(c.log_n, groups, online_reorder_value_bytes(c),
+                                                 temporal_hardware.shared_bytes_per_block)) {
+            if (tiles == 1) continue;
+            auto grouped = c; grouped.data_tiles_per_cta = tiles;
+            candidates.push_back(std::move(grouped));
+        }
+    };
     for (const auto threads : {128U, 256U, 64U, 32U}) {
-        if (base.log_n <= 10) {
+        if (scalar_temporal_tile_supported(base, temporal_hardware.shared_bytes_per_block)) {
             auto c = base; c.backend = ButterflyBackend::TemporalTile; c.tile_threads = threads;
             for(auto unit : {ComputeUnit::Radix4, ComputeUnit::Radix2, ComputeUnit::Radix8}) {
                 c.compute_unit=unit; candidates.push_back(c);
             }
-        } else {
+        }
+        // The larger single tile is another candidate, not a replacement for
+        // the already available multistage organizations.
+        if (base.log_n > 10) {
             for (std::uint32_t local = std::min(10U, base.log_n - 1); local >= 5; --local) {
                 auto c = base; c.backend = ButterflyBackend::Hierarchical; c.local_stages = local;
                 c.tile_threads = threads;
                 for(auto unit : {ComputeUnit::Radix4, ComputeUnit::Radix2, ComputeUnit::Radix8}) {
-                    c.compute_unit=unit; c.backend=ButterflyBackend::Hierarchical; candidates.push_back(c);
-                    c.backend=ButterflyBackend::OnlineReorder; c.reorder_columns=1; candidates.push_back(c);
+                    c.compute_unit=unit; c.backend=ButterflyBackend::Hierarchical;
+                    c.data_tiles_per_cta=1; c.reorder_columns=1; candidates.push_back(c);
+                    c.backend=ButterflyBackend::OnlineReorder;
+                    for (const auto& grouping : detail::online_reorder_group_candidates(base.log_n, local,
+                            detail::online_reorder_value_bytes(base), temporal_hardware.shared_bytes_per_block)) {
+                        c.data_tiles_per_cta=grouping.first; c.reorder_columns=grouping.second;
+                        candidates.push_back(c);
+                    }
                 }
             }
         }
         for (std::uint32_t local = std::min(12U, base.log_n); local >= 1; --local) {
             auto c = base; c.backend = ButterflyBackend::SharedIterative; c.local_stages = local;
             c.tile_threads = threads; c.compute_unit = ComputeUnit::Radix2; c.shared_layout = SharedLayout::WriterAligned;
-            candidates.push_back(c);
-            c.shared_layout=SharedLayout::Linear; candidates.push_back(c);
+            append_shared(c);
+            c.shared_layout=SharedLayout::Linear; append_shared(c);
         }
     }
     if(base.log_n==8) for(auto stages : {1U,2U,4U,8U}) {
@@ -840,6 +930,12 @@ std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig
         c.shared_layout=organization.writer_aligned ? SharedLayout::WriterAligned : SharedLayout::Linear;
         c.local_stage_partitions=organization.local_stage_partitions;
         c.batch_tile_count=organization.batch_tile_count;
+        c.execution_group_mappings.clear();
+        for(auto threads:organization.group_threads) {
+            FftSegmentMapping mapping;
+            mapping.core=FftCore::Scalar; mapping.ept=0; mapping.threads=threads;
+            c.execution_group_mappings.push_back(mapping);
+        }
         if (!organization.logical_stage_partition.empty()) {
             c.stage_partition=organization.logical_stage_partition;
             for (auto fused : organization.fused_edges) {
@@ -848,7 +944,7 @@ std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig
                 c.boundaries.push_back(boundary);
             }
         }
-        candidates.push_back(std::move(c));
+        append_shared(c);
     }
     candidates.insert(candidates.end(), specializations.begin(), specializations.end());
     const auto bulk_count=candidates.size();
@@ -905,7 +1001,7 @@ std::vector<PlanConfig> portable_ntt_candidates(const PlanConfig& original) {
     // deterministic fallback when no estimate is available.
     const auto shared_hardware=query_hardware_resource_model();
     for(const auto& organization : shared_organization_candidates(
-            capacity_partitions(base.log_n,base.word_bits/8,true),
+            capacity_partitions(base.log_n,base.word_bits/8),
             {{128U,256U,64U,32U,512U,1024U},shared_hardware.max_threads_per_block,
                 on_demand_compilation_enabled(),4,true},base.batch)) {
         auto c=base; c.backend=Backend::SharedIterative; c.stage_partition=organization.stage_partition;
@@ -914,6 +1010,11 @@ std::vector<PlanConfig> portable_ntt_candidates(const PlanConfig& original) {
         c.local_stage_partitions=organization.local_stage_partitions;
         c.subgraph_mappings.clear(); c.boundary_mappings.clear(); c.execution_group_mappings.clear();
         c.batch_tile_count=organization.batch_tile_count;
+        for(auto threads:organization.group_threads) {
+            NttSubgraphMapping mapping;
+            mapping.threads_per_block=threads;
+            c.execution_group_mappings.push_back(mapping);
+        }
         if (!organization.logical_stage_partition.empty()) {
             c.stage_partition=organization.logical_stage_partition;
             for (auto fused : organization.fused_edges) {

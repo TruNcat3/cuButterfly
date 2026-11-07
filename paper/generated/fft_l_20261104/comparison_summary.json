@@ -1,0 +1,161 @@
+{
+  "summary": [
+    {
+      "operator": "fft",
+      "precision": "fp16",
+      "baseline": "cufft",
+      "cohort": "fft_l_public_winner_replay",
+      "selection_kind": "public_winner_replay",
+      "pairs": 1,
+      "gm": 0.7118644235011958,
+      "wins": 0,
+      "min": 0.7118644235011958,
+      "max": 0.7118644235011958
+    },
+    {
+      "operator": "fft",
+      "precision": "bf16",
+      "baseline": "cufft",
+      "cohort": "fft_l_public_winner_replay",
+      "selection_kind": "public_winner_replay",
+      "pairs": 0,
+      "gm": null,
+      "wins": 0,
+      "min": null,
+      "max": null,
+      "status": "pending"
+    }
+  ],
+  "control_summary": [
+    {
+      "operator": "fft",
+      "precision": "fp16",
+      "baseline": "cufft",
+      "cohort": "fft_l_fixed_control22",
+      "selection_kind": "fixed-two-band-control",
+      "pairs": 11,
+      "gm": 0.350693109116211,
+      "wins": 0,
+      "min": 0.19226018348856014,
+      "max": 0.6666666666666666
+    },
+    {
+      "operator": "fft",
+      "precision": "bf16",
+      "baseline": "cufft",
+      "cohort": "fft_l_fixed_control22",
+      "selection_kind": "fixed-two-band-control",
+      "pairs": 11,
+      "gm": 0.3566958599285659,
+      "wins": 0,
+      "min": 0.2122370939030511,
+      "max": 0.5671641828864411
+    }
+  ],
+  "identity": {
+    "schema": "fft-l-comparison-v2",
+    "selection_kind": "public_winner_replay",
+    "variant": "public-replay",
+    "cohort": "fft_l_public_winner_replay",
+    "requests": 1,
+    "fixed_control_scope": {
+      "selection_kind": "fixed-two-band-control",
+      "cohort": "fft_l_fixed_control22",
+      "variant": "two-grouped",
+      "requests": 22
+    },
+    "source_requests": 22,
+    "timed_rows": 87,
+    "missing_rows": 24,
+    "frozen_rows": 111,
+    "csv_sha256": "3bfe5f7fb86e2da4da76429be1baa34803e3d8f6eb8defefc87d65d09804b93c",
+    "provenance_sha256": "a9cb2e4250936a6dd89bc8bc63f57581d7928cc9174c5244f7e35cab22420bf5",
+    "csv_hash_binding": "Pinned loader hash; original provenance hashes raw sources, not CSV",
+    "public_replay": {
+      "operator": "fft",
+      "precision": "fp16",
+      "case": "fp16-n8192-b32",
+      "cohort": "fft_l_public_winner_replay",
+      "selection_kind": "public_winner_replay",
+      "variant": "public-replay",
+      "status": "accuracy-review-required",
+      "source": "results/a100_fft_l_scale_selection_20261104/runs/fp16-n8192-b32/public-replay/result.json",
+      "source_sha256": "bb5df9f7d753e2789dbbc62bc57e6852bb77d9e4688ffa61016dafd3d538a314",
+      "baseline": "cufft",
+      "baseline_source": "results/a100_fft_l_scale_selection_20261104/runs/fp16-n8192-b32/cufft/result.json",
+      "baseline_source_sha256": "75f720906a4e4f27d8bf24e8daa7ec2183543b5a2a8516b8399878c12dedc16f",
+      "own_us": 18.12479943037033,
+      "baseline_us": 12.902399897575378,
+      "speedup": 0.7118644235011958,
+      "N": 8192,
+      "B": 32,
+      "actualN": 8192,
+      "actualB": 32,
+      "library_hash": "d5d83082b80839c2e8b8b065d52bcd96d0abb38c404850a2bb415b6a0b3c5888",
+      "mapping_json": "{\"backend\":\"hierarchical\",\"batch_tile_count\":1,\"boundaries\":[],\"complex_multiply\":\"four-mul\",\"compute_unit\":\"radix4\",\"contract\":{\"batch\":32,\"compute\":0,\"fft_output_scale\":1.0,\"fft_type\":0,\"input_batch_stride\":8192,\"input_orders\":[0],\"input_strides\":[1],\"inverse\":0,\"length_mode\":0,\"matrices\":[[]],\"modulus\":null,\"normalize_inverse\":false,\"ntt_input_layout\":0,\"ntt_output_layout\":0,\"operator\":0,\"output_batch_stride\":8192,\"output_orders\":[0],\"output_strides\":[1],\"placement\":0,\"schema\":\"cubutterfly-semantic-v1\",\"shape\":[8192],\"storage\":4,\"word_bits\":null},\"cross_twiddle\":\"table\",\"data_tiles_per_cta\":1,\"direct_boundary\":\"direct-strided\",\"exchange_chunks\":[],\"execution_group_mappings\":[],\"factor_columns\":8,\"factor_ept\":16,\"factor_io_policies\":[],\"factor_overlap\":false,\"factor_partition\":[],\"factor_slices\":1,\"fft_core\":\"scalar\",\"kind\":\"butterfly\",\"local_exchange\":\"shared\",\"local_stage_partitions\":[],\"local_stages\":10,\"pipeline_warps\":0,\"prefetch_depth\":0,\"prefix_codelet\":\"native\",\"prefix_codelet_lanes\":1,\"prefix_ept\":8,\"prefix_shared_layout\":\"linear\",\"prefix_threads\":0,\"prefix_twiddle\":\"runtime\",\"prefix_units_per_cta\":0,\"register_threads\":0,\"reorder_columns\":0,\"schema_version\":1,\"segment_mappings\":[],\"shared_layout\":\"linear\",\"stage_handoff\":\"named-barrier\",\"stage_overlap\":false,\"stage_partition\":[13],\"stage_space\":0,\"suffix_ept\":8,\"suffix_threads\":0,\"suffix_units_per_cta\":0,\"tile_threads\":128,\"warp_stages\":0}",
+      "semantics": {
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          8192
+        ],
+        "batch": 32,
+        "storage": 4,
+        "compute": 0,
+        "inverse": 0,
+        "normalize_inverse": false,
+        "fft_output_scale": 1.0,
+        "operator": 0,
+        "fft_type": 0,
+        "placement": 0,
+        "input_strides": [
+          1
+        ],
+        "output_strides": [
+          1
+        ],
+        "input_orders": [
+          0
+        ],
+        "output_orders": [
+          0
+        ],
+        "input_batch_stride": 8192,
+        "output_batch_stride": 8192,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "word_bits": null,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0
+      },
+      "gpu": {
+        "name": "NVIDIA A100 80GB PCIe",
+        "memory_bytes": 84974239744
+      },
+      "gpu_uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02",
+      "prepared_sha256": "75d60ff7a864440d4850b9eb7629035b437ee99849a7905d25a4719c1327adea",
+      "precision_contract": "native storage arithmetic; vendor internal arithmetic unspecified",
+      "native_l2": 0.0011488435026331533,
+      "mathematical_l2": 0.0010487145612213418,
+      "included_in_control_summary": false
+    },
+    "limitations": [
+      "Archived controls fix the variant across 22 requests; no per-request minimum selection",
+      "Not an AUTO matrix; repaired AUTO calibration is incomplete",
+      "Separate from main66; builds and selection protocols differ",
+      "Native storage arithmetic; vendor internal arithmetic unspecified",
+      "Finite outputs with reported errors; accuracy acceptance remains pending",
+      "Prepared inputs repeat one vector across batches; not independent random batches",
+      "Frozen evidence adaptation only; no new experiments"
+    ],
+    "default_selection_kind": "public_winner_replay",
+    "default_requests": 1,
+    "bf16_status": "pending; repaired AUTO calibration and 32-request remeasurement incomplete",
+    "evidence_classes": [
+      "public_winner_replay",
+      "fixed_control"
+    ]
+  }
+}

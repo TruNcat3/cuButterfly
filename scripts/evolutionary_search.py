@@ -108,6 +108,7 @@ _MAPPING_FIELDS = {
     "exchange_chunks",
     "prefix_codelet",
     "prefix_shared_layout",
+    "prefix_twiddle",
     "factor_io_policies",
     "units_per_cta",
     "coefficient_reuse_stages",
@@ -263,6 +264,7 @@ _ENUM_AXIS_ORDER = (
     "packet_compute_layout",
     "prefix_codelet",
     "prefix_shared_layout",
+    "prefix_twiddle",
 )
 
 _DERIVED_MAPPING_FIELDS = {
@@ -309,6 +311,7 @@ _DERIVED_SENSITIVE_AXES = {
     "prefix_codelet_lanes",
     "prefix_codelet",
     "prefix_shared_layout",
+    "prefix_twiddle",
     "local_stage_partitions",
     "exchange_chunks",
     "factor_io_policies",
@@ -648,6 +651,7 @@ def _append_candidate(out: list[dict[str, Any]], seen: set[str], point: Mapping[
         if stages and backend == "shared-iterative":
             resident_mapping.validate_resident_axes(mapping, stages,
                                                     backend=backend, operator=operator)
+            resident_mapping.shared_group_threads(mapping, stages, operator)
         elif (stages and backend == "online-reorder" and
               mapping.get("fft_core") == "register-tile"):
             merged = {**point, **mapping}
@@ -668,7 +672,29 @@ def _append_candidate(out: list[dict[str, Any]], seen: set[str], point: Mapping[
     out.append(candidate)
 
 
+def _scalar_online_group_values(field: str, current: int, point: Mapping[str, Any],
+                                mapping: Mapping[str, Any]) -> list[int] | None:
+    if (field not in {"data_tiles_per_cta", "reorder_columns"}
+            or mapping.get("backend") != "online-reorder"
+            or mapping.get("fft_core", "scalar") != "scalar"
+            or _operator(point, mapping) == "ntt"):
+        return None
+    stages = _stage_partition(point, mapping)
+    if not stages or len(stages) != 2:
+        return []
+    exponent = stages[1] if field == "data_tiles_per_cta" else stages[0]
+    choices = [current // 2, current * 2, *(1 << bit for bit in range(exponent + 1))]
+    values: list[int] = []
+    for value in choices:
+        if 1 <= value <= (1 << exponent) and not value & (value - 1) and value != current and value not in values:
+            values.append(value)
+    return values
+
+
 def _numeric_values(field: str, current: int, point: Mapping[str, Any], mapping: Mapping[str, Any]) -> list[int]:
+    grouped = _scalar_online_group_values(field, current, point, mapping)
+    if grouped is not None:
+        return grouped
     log_n = _log_n(point) or max(current, 1)
     if field in {"tile_threads", "threads_per_block", "prefix_threads", "suffix_threads"}:
         choices = (32, 64, 128, 256, 512, 1024)
@@ -723,11 +749,12 @@ def _axis_mapping(point: Mapping[str, Any], mapping: Mapping[str, Any], field: s
 
 
 def _enum_values(field: str, current: Any, backend: str, operator: str) -> list[Any]:
-    if field in {"prefix_codelet", "prefix_shared_layout"}:
+    if field in {"prefix_codelet", "prefix_shared_layout", "prefix_twiddle"}:
         # These choices describe only the online register-tile prefix.  Do
         # not propose them for imported or generic lowerings where the axes
         # are not consumed by the compiler.
         choices = (("native", "radix4", "cufftdx-thread") if field == "prefix_codelet"
+                   else ("runtime", "table") if field == "prefix_twiddle"
                    else ("linear", "xor"))
         if backend != "online-reorder" or operator != "fft" or current not in choices:
             return []
@@ -837,13 +864,16 @@ def _resident_axis_neighbors(point: Mapping[str, Any], mapping: Mapping[str, Any
         return
     if backend == "shared-iterative":
         try:
-            parts, chunks = resident_mapping.normalize_axes(mapping)
+            parts, chunks = resident_mapping.validate_resident_axes(
+                mapping, stages, backend=backend)
         except ValueError:
             return
         base_parts = ([list(entry) for entry in parts] if parts else
                       [[] for _ in stages])
         base_chunks = list(chunks) if chunks else [0] * len(stages)
-        seen: set[tuple[tuple[tuple[int, ...], ...], tuple[int, ...]]] = set()
+        seen: set[tuple[tuple[tuple[int, ...], ...], tuple[int, ...]]] = {
+            (tuple(tuple(entry) for entry in base_parts), tuple(base_chunks))
+        }
 
         def candidate(candidate_parts: Sequence[Sequence[int]],
                       candidate_chunks: Sequence[int] = base_chunks) -> dict[str, Any] | None:
@@ -856,7 +886,17 @@ def _resident_axis_neighbors(point: Mapping[str, Any], mapping: Mapping[str, Any
             mutated["exchange_chunks"] = list(candidate_chunks)
             return mutated
 
-        # An omitted or all-empty axis starts from the representative seed.
+        # Toggle each physical group before partition edits can exhaust the
+        # neighbourhood budget.  Every proposal keeps the other groups intact.
+        for index, entry in enumerate(base_parts):
+            variant = [list(item) for item in base_parts]
+            variant[index] = ([] if entry else
+                              resident_mapping.resident_partition_seed([stages[index]])[0])
+            toggled = candidate(variant)
+            if toggled is not None:
+                yield toggled
+
+        # An omitted or all-empty axis also keeps the representative seed.
         # Build local neighbours from that seed too, so a search can reach
         # mixed resident partitions without changing the global stage split.
         if not any(base_parts):
@@ -866,17 +906,10 @@ def _resident_axis_neighbors(point: Mapping[str, Any], mapping: Mapping[str, Any
                 yield seeded_candidate
             base_parts = seeded
 
-        # Enable one previously opaque physical group at a time.  This keeps
-        # the outer list explicit while avoiding a Cartesian product.
-        for index, entry in enumerate(base_parts):
-            if entry:
-                continue
-            seeded = resident_mapping.resident_partition_seed([stages[index]])[0]
-            variant = [list(item) for item in base_parts]
-            variant[index] = seeded
-            seeded_candidate = candidate(variant)
-            if seeded_candidate is not None:
-                yield seeded_candidate
+        if any(base_parts):
+            disabled = candidate([[] for _ in stages])
+            if disabled is not None:
+                yield disabled
 
         # Split/merge/move only one physical group in each proposal.
         for index, entry in enumerate(base_parts):
@@ -887,10 +920,6 @@ def _resident_axis_neighbors(point: Mapping[str, Any], mapping: Mapping[str, Any
                 if neighbour_candidate is not None:
                     yield neighbour_candidate
 
-        if any(base_parts):
-            disabled = candidate([[] for _ in stages])
-            if disabled is not None:
-                yield disabled
         return
     if backend != "online-reorder" or mapping.get("fft_core") != "register-tile" or len(stages) != 2:
         return
@@ -1122,6 +1151,33 @@ def _structural_candidates(point: Mapping[str, Any], mapping: Mapping[str, Any],
             yield from _factor_io_policy_neighbors(point, mapping, stages, factors)
 
 
+def _shared_thread_neighbors(point: Mapping[str, Any], mapping: Mapping[str, Any]) -> Iterable[dict[str, Any]]:
+    """Move one physical group's width to an adjacent legal launch width."""
+    stages = _physical_stage_partition(point, mapping)
+    if not stages:
+        return
+    operator = _operator(point, mapping)
+    try:
+        current = resident_mapping.shared_group_threads(mapping, stages, operator)
+    except (TypeError, ValueError):
+        return
+    choices = (32, 64, 128, 256, 512, 1024)
+    for index, threads in enumerate(current):
+        lower = [value for value in choices if value < threads]
+        upper = [value for value in choices if value > threads]
+        for value in ([max(lower)] if lower else []) + ([min(upper)] if upper else []):
+            widths = list(current)
+            widths[index] = value
+            mutated = copy.deepcopy(dict(mapping))
+            if operator == "ntt":
+                entries = [dict(core="radix2", threads_per_block=width) for width in widths]
+            else:
+                entries = [dict(core="scalar", exchange="shared", codelet="native",
+                                io_policy="dynamic", ept=0, threads=width) for width in widths]
+            mutated["execution_group_mappings"] = entries
+            yield mutated
+
+
 def _strategy_candidates(point: Mapping[str, Any], mapping: Mapping[str, Any]) -> Iterable[dict[str, Any]]:
     """Yield implementation-strategy mutations before structural neighbours.
 
@@ -1130,12 +1186,32 @@ def _strategy_candidates(point: Mapping[str, Any], mapping: Mapping[str, Any]) -
     physically distinct lowering at least once.
     """
     backend = str(mapping.get("backend", ""))
-    yield from _resident_axis_neighbors(point, mapping)
+    # Expose both grouped scalar axes before structural proposals can exhaust
+    # the bounded neighbourhood. Runtime remains the byte-capacity oracle.
+    for field in ("data_tiles_per_cta", "reorder_columns"):
+        current = _as_int(mapping.get(field, 1))
+        if current is not None:
+            values = _scalar_online_group_values(field, current, point, mapping)
+            for value in (values or [])[:3]:
+                yield _axis_mapping(point, mapping, field, value)
+    residents = iter(_resident_axis_neighbors(point, mapping))
+    if backend == "shared-iterative":
+        stages = _physical_stage_partition(point, mapping) or []
+        # Preserve the resident switch priority, then expose per-group launch
+        # widths before larger local-factor neighbourhoods fill the budget.
+        for _ in stages:
+            candidate = next(residents, None)
+            if candidate is not None:
+                yield candidate
+        yield from _shared_thread_neighbors(point, mapping)
+    yield from residents
     if (point.get("operator", "fft") == "fft" and backend == "online-reorder" and
             mapping.get("fft_core") == "register-tile"):
         yield from _prefix_lane_neighbors(point, mapping)
         codelet = mapping.get("prefix_codelet", "native")
         layout = mapping.get("prefix_shared_layout", "linear")
+        for value in _enum_values("prefix_twiddle", mapping.get("prefix_twiddle", "runtime"), backend, "fft"):
+            yield _axis_mapping(point, mapping, "prefix_twiddle", value)
         for value in _enum_values("prefix_codelet", codelet, backend, "fft"):
             if value == "cufftdx-thread" and point.get("precision") == "fp64":
                 continue
@@ -1217,7 +1293,7 @@ def neighbors(point: dict[str, Any]) -> list[dict[str, Any]]:
             continue
         for value in _enum_values(field, current, backend, operator):
             mutated = _axis_mapping(point, mapping, field, value)
-            if field in {"prefix_codelet", "prefix_shared_layout"}:
+            if field in {"prefix_codelet", "prefix_shared_layout", "prefix_twiddle"}:
                 if backend != "online-reorder" or mapping.get("fft_core") != "register-tile":
                     continue
                 if field == "prefix_codelet" and value == "cufftdx-thread" and point.get("precision") == "fp64":

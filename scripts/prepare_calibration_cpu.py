@@ -70,15 +70,78 @@ def ranking_profile(profile):
     return profile
 
 
-def training_rows(document):
+def measurement_rows(document):
     rows = document.get('rows', []) if isinstance(document, dict) else document
     if isinstance(rows, dict):
         rows = list(rows.values())
+    return rows
+
+
+def training_rows(document):
     return [{'sample': row['samples'][0], 'median_kernel_ms': row['median_kernel_ms']}
-            for row in rows if row.get('correct') and row.get('samples')]
+            for row in measurement_rows(document) if row.get('correct') and row.get('samples')]
 
 
-def prepare(input_path, output, broker, jobs=4, compile_top=32, skip_compile=False):
+def pending_compilation_points(document, cells):
+    for row in measurement_rows(document):
+        point = row.get('configuration')
+        if row.get('status') != 'needs-compilation' or not isinstance(point, dict):
+            continue
+        if any(all(point.get(key, 'fft' if key == 'operator' else None) == value
+                   for key, value in cell['workload'].items()) for cell in cells):
+            yield point
+
+
+def prepare_compilation(selected, output, broker, jobs, state, save):
+    config = json.loads((broker / 'config.json').read_text())['config']
+    state['existing_broker_queue'] = broker_api.status(broker)
+    save()
+    compilation = []
+    budget_names = ('CUBUTTERFLY_COMPILE_BUDGET_FILE', 'CUBUTTERFLY_COMPILE_BUDGET_SECONDS')
+    budget = {name: os.environ.pop(name) for name in budget_names if name in os.environ}
+    try:
+        for identifier, point in selected.items():
+            row = dict(candidate_id=identifier)
+            compilation.append(row)
+            try:
+                request = research_compile_requests.compile_request(point, policy='research')
+            except Exception as error:
+                row.update(status='cannot-project', error=str(error))
+                continue
+            if request is None:
+                row['status'] = 'no-jit'
+                continue
+            row['request'] = request
+            try:
+                row.update(status='ready', path=str(broker_api.runtime_request(
+                    broker, config, request, output / 'compile_events.jsonl', timeout=0)))
+            except RuntimeError as error:
+                row.update(status='queued-or-failed', error=str(error))
+            except Exception as error:
+                row.update(status='queue-failed', error=str(error))
+        write(output / 'compilation.json', compilation)
+        state['worker'] = broker_api.work(broker, jobs=jobs, retry_failed=False)
+        for row in compilation:
+            if 'request' not in row:
+                continue
+            try:
+                row.update(status='ready', path=str(broker_api.runtime_request(
+                    broker, config, row['request'], output / 'compile_events.jsonl', timeout=0)))
+                row.pop('error', None)
+            except Exception as error:
+                row.update(status='failed', error=str(error))
+        write(output / 'compilation.json', compilation)
+    finally:
+        for name in budget_names:
+            os.environ.pop(name, None)
+        os.environ.update(budget)
+    state['compile_ready'] = all(row['status'] in ('ready', 'no-jit') for row in compilation)
+    state['status'] = 'compile-ready' if state['compile_ready'] else 'failed'
+    save()
+    return state
+
+
+def prepare(input_path, output, broker, jobs=4, compile_top=32, skip_compile=False, compile_only=False):
     os.environ['CUDA_VISIBLE_DEVICES'] = ''
     input_path, output, broker = Path(input_path).resolve(), Path(output).resolve(), Path(broker).resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -87,7 +150,8 @@ def prepare(input_path, output, broker, jobs=4, compile_top=32, skip_compile=Fal
                  scored_candidates=0, total_candidates=0,
                  scoring_complete=False, compile_ready=False, gpu_verified=False,
                  input=str(input_path), input_sha256=hashlib.sha256(input_path.read_bytes()).hexdigest(),
-                 broker=str(broker), compile_top=compile_top, cells=[], started_unix=time.time(),
+                 broker=str(broker), compile_top=compile_top, compile_only=compile_only,
+                 cells=[], started_unix=time.time(),
                  policy='priority compilation only; full search inventory is retained')
     def save():
         state['updated_unix'] = time.time()
@@ -96,28 +160,33 @@ def prepare(input_path, output, broker, jobs=4, compile_top=32, skip_compile=Fal
     try:
         if jobs < 1 or compile_top < 0:
             raise ValueError('jobs must be positive and compile-top nonnegative')
+        if skip_compile and compile_only:
+            raise ValueError('skip-compile and compile-only are mutually exclusive')
         manifest = json.loads(input_path.read_text())
         if manifest.get('schema') != SCHEMA or not isinstance(manifest.get('context'), dict):
             raise ValueError('unsupported CPU input schema/context')
         root = input_path.parent
         paths = {name: verified_path(root, manifest[name]) for name in ('profile', 'training', 'descriptors')}
         inventories = [verified_path(root, cell['inventory']) for cell in manifest['cells']]
+        training_document = json.loads(paths['training'].read_text())
+        recovery = {candidate_id(point): point for point in pending_compilation_points(
+            training_document, manifest['cells'])}
+        state['needs_compilation_candidates'] = len(recovery)
+        if compile_only:
+            return prepare_compilation(recovery, output, broker, jobs, state, save)
         for cell, inventory in zip(manifest['cells'], inventories):
             if not cell['complete']:
                 with gzip.open(inventory, 'rt') as source:
                     state['total_candidates'] += sum(bool(line.strip()) for line in source)
         save()
         profile = json.loads(paths['profile'].read_text())
-        training = training_rows(json.loads(paths['training'].read_text()))
+        training = training_rows(training_document)
         descriptors = json.loads(paths['descriptors'].read_text())
         descriptors = descriptors.get('descriptors', descriptors)
         model = stage_cost_model.fit(training, ranking_profile(profile))
         write(output / 'model.json', model)
         write(output / 'context.json', manifest['context'])
-        predictions = _SearchPredictionCache(descriptors, lambda point: project_point(
-            point, descriptors, manifest.get('projection_scope', 'full')))
-        predictions.bind(model)
-        selected = {}
+        selected = dict(recovery)
         last_heartbeat = time.monotonic()
         with DiskScoreCache(output / 'score_cache', manifest['context']) as cache:
             state['model_epoch'] = cache.bind(model)
@@ -128,6 +197,11 @@ def prepare(input_path, output, broker, jobs=4, compile_top=32, skip_compile=Fal
                     receipt['status'] = 'skipped-complete'
                     continue
                 state.update(current_cell=cell['workload'], current_cell_index=index)
+                # Keep prepared features bounded to one workload, matching the
+                # online search. Scores survive across cells in the disk cache.
+                predictions = _SearchPredictionCache(descriptors, lambda point: project_point(
+                    point, descriptors, manifest.get('projection_scope', 'full')))
+                predictions.bind(model)
                 with gzip.open(inventory, 'rt') as source:
                     points = [json.loads(line) for line in source if line.strip()]
                 scores = []
@@ -181,45 +255,7 @@ def prepare(input_path, output, broker, jobs=4, compile_top=32, skip_compile=Fal
         save()
         if skip_compile:
             return state
-        config = json.loads((broker / 'config.json').read_text())['config']
-        state['existing_broker_queue'] = broker_api.status(broker)
-        save()
-        compilation = []
-        for identifier, point in selected.items():
-            row = dict(candidate_id=identifier)
-            compilation.append(row)
-            try:
-                request = research_compile_requests.compile_request(point, policy='research')
-            except Exception as error:
-                row.update(status='cannot-project', error=str(error))
-                continue
-            if request is None:
-                row['status'] = 'no-jit'
-                continue
-            row['request'] = request
-            try:
-                row.update(status='ready', path=str(broker_api.runtime_request(
-                    broker, config, request, output / 'compile_events.jsonl', timeout=0)))
-            except RuntimeError as error:
-                row.update(status='queued-or-failed', error=str(error))
-            except Exception as error:
-                row.update(status='queue-failed', error=str(error))
-        write(output / 'compilation.json', compilation)
-        state['worker'] = broker_api.work(broker, jobs=jobs, retry_failed=False)
-        for row in compilation:
-            if 'request' not in row:
-                continue
-            try:
-                row.update(status='ready', path=str(broker_api.runtime_request(
-                    broker, config, row['request'], output / 'compile_events.jsonl', timeout=0)))
-                row.pop('error', None)
-            except Exception as error:
-                row.update(status='failed', error=str(error))
-        write(output / 'compilation.json', compilation)
-        state['compile_ready'] = all(row['status'] in ('ready', 'no-jit') for row in compilation)
-        state['status'] = 'compile-ready' if state['compile_ready'] else 'failed'
-        save()
-        return state
+        return prepare_compilation(selected, output, broker, jobs, state, save)
     except BaseException as error:
         state.update(status='failed', error=repr(error))
         save()
@@ -234,8 +270,11 @@ def main(argv=None):
     parser.add_argument('--jobs', type=int, default=4)
     parser.add_argument('--compile-top', type=int, default=32)
     parser.add_argument('--skip-compile', action='store_true', help='Persist full scores without queueing or compiling')
+    parser.add_argument('--compile-only', action='store_true',
+                        help='Compile saved needs-compilation records without scoring inventories')
     args = parser.parse_args(argv)
-    state = prepare(args.input, args.output, args.broker, args.jobs, args.compile_top, args.skip_compile)
+    state = prepare(args.input, args.output, args.broker, args.jobs, args.compile_top,
+                    args.skip_compile, args.compile_only)
     return 0 if state['compile_ready'] or (args.skip_compile and state['scoring_complete']) else 1
 
 

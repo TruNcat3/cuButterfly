@@ -41,20 +41,24 @@ FactorTileRange factor_tile_range(const ButterflyConfig& c,unsigned group,unsign
 void normalize_factor_mapping(ButterflyConfig& c) {
     if (c.prefix_codelet != "native" || c.prefix_shared_layout != "linear")
         throw std::invalid_argument("prefix codelet/layout applies only to online register-tile FFTs");
+    const bool half = c.precision == ButterflyPrecision::Fp16;
+    if (half && (c.fft_core != FftCore::CufftDxBlock || (c.inverse && c.normalize_inverse)))
+        throw std::invalid_argument("FP16 factor-streamed requires cuFFTDx native arithmetic and rejects normalized inverse");
     if(c.log_n<1 || c.log_n>30 || !c.batch || c.op!=ButterflyOperator::Fft ||
-       (c.precision!=ButterflyPrecision::Fp32 && c.precision!=ButterflyPrecision::Fp64) ||
+       (!half && c.precision!=ButterflyPrecision::Fp32 && c.precision!=ButterflyPrecision::Fp64) ||
        (c.fft_core!=FftCore::CufftDxBlock && c.fft_core!=FftCore::RegisterTile) || c.complex_multiply!=ComplexMultiply::FourMul ||
        c.accumulation!=ButterflyAccumulation::Native || c.local_exchange!=LocalExchange::SharedMemory ||
        c.shared_layout!=SharedLayout::WriterAligned || c.cross_twiddle!=CrossTwiddleMode::Recurrence ||
        c.direct_boundary!=DirectBoundary::Strided || c.stage_overlap ||
        (c.compute_unit!=ComputeUnit::Auto && c.compute_unit!=ComputeUnit::Radix2))
-        throw std::invalid_argument("factor-streamed requires FP32/64 native FFT, cuFFTDx block or register-tile, writer-aligned shared, recurrence, direct boundary; batch stage-overlap is separate");
+        throw std::invalid_argument("factor-streamed requires FP16/32/64 native FFT, cuFFTDx block or register-tile, writer-aligned shared, recurrence, direct boundary; batch stage-overlap is separate");
     if(!c.data_tiles_per_cta || c.prefetch_depth>4 ||
        !c.factor_ept || (c.factor_ept&(c.factor_ept-1)) || c.factor_ept>32 ||
        !c.factor_columns || (c.factor_columns&(c.factor_columns-1)) ||
-       c.factor_columns>(c.precision==ButterflyPrecision::Fp64 ? 8U : 16U))
+       c.factor_columns>(half ? 32U : c.precision==ButterflyPrecision::Fp64 ? 8U : 16U) ||
+       (half && (c.factor_columns < 2 || c.factor_ept < 2)))
         throw std::invalid_argument("invalid factor EPT, columns, data tile count or prefetch depth");
-    if(c.data_tiles_per_cta>std::numeric_limits<std::uint32_t>::max()/std::max(1U,c.factor_ept/2))
+    if(c.data_tiles_per_cta>std::numeric_limits<std::uint32_t>::max()/std::max(1U,c.factor_ept/(half ? 1U : 2U)))
         throw std::invalid_argument("factor data-time fold overflows its IR field");
     if(c.stage_partition.empty()) c.stage_partition={c.log_n};
     if(c.factor_partition.empty()) c.factor_partition=c.stage_partition;
@@ -102,7 +106,7 @@ void normalize_factor_mapping(ButterflyConfig& c) {
         const auto independent=1ULL<<(c.log_n-s);
         if(n<c.factor_ept || independent<c.factor_columns || (done && (1ULL<<done)<c.factor_columns))
             throw std::invalid_argument("factor shape cannot supply the selected EPT/column grouping");
-        const auto threads=(n/c.factor_ept)*c.factor_columns;
+        const auto threads=(n/c.factor_ept)*(c.factor_columns/(half ? 2U : 1U));
         if(threads<32 || threads>1024 || threads%32)
             throw std::invalid_argument("factor thread count must be a warp multiple in [32,1024]");
         FftSegmentMapping mapping{c.fft_core,LocalExchange::SharedMemory,threads,c.factor_ept};
@@ -136,7 +140,7 @@ MixedDataflowPlan make_factor_dataflow_plan(const ButterflyConfig& input) {
     p.pipeline_buffers=effective_depth+1;
     p.cross_subgraph_dependencies=c.factor_partition.size()>1;
     p.boundary_policies.assign(c.stage_partition.size()-1,BoundaryPolicy::GlobalScratch);
-    const unsigned width=c.precision==ButterflyPrecision::Fp64 ? 16 : 8;
+    const unsigned width=c.precision==ButterflyPrecision::Fp16 ? 4 : c.precision==ButterflyPrecision::Fp64 ? 16 : 8;
     unsigned done=0,macro=0,macro_end=c.stage_partition.front();
     for(unsigned i=0;i<c.factor_partition.size();++i) {
         while(done>=macro_end) macro_end+=c.stage_partition[++macro];

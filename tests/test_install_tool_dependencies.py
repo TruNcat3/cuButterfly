@@ -22,14 +22,34 @@ def installed_scripts():
     return files
 
 
+def installed_package_files():
+    cmake = (ROOT / "CMakeLists.txt").read_text()
+    files = []
+    for block in re.findall(r"install\((?:FILES|PROGRAMS)\s+(.*?)\)", cmake, re.S):
+        destination = re.search(r'DESTINATION "\$\{CMAKE_INSTALL_BINDIR\}/([^"$]+)"', block)
+        if destination:
+            for source in re.findall(r"\b(benchmark/[\w]+\.py)\b", block):
+                files.append((source, pathlib.Path(destination.group(1)) / pathlib.Path(source).name))
+    return files
+
+
 def isolated_checks(bin_dir, templates):
     sys.path.insert(0, str(bin_dir.resolve()))
     for name in ("calibration_space", "evolutionary_search", "stage_service_calibration",
                  "calibrate_composition", "research_compile_requests", "jit_calibration_identity",
-                 "stage_schedule_native"):
+                 "stage_schedule_native", "calibrate_local_hardware", "calibration_cpu_cache",
+                 "run_comprehensive_suite"):
         module = importlib.import_module(name)
         if pathlib.Path(module.__file__).parent != bin_dir.resolve():
             raise AssertionError("import escaped installation: " + name)
+    registry = importlib.import_module("benchmark.runner_registry")
+    if pathlib.Path(registry.__file__).resolve() != bin_dir.resolve() / "benchmark/runner_registry.py":
+        raise AssertionError("runner registry import escaped installation")
+    suite = importlib.import_module("run_comprehensive_suite")
+    runners = dict(binaries={"butterfly": "cubutterfly_bench"}, cases=[dict(runner="butterfly")])
+    suite.validate_runner_references(runners)
+    if suite.resolve_runner(runners, "butterfly", bin_dir)["path"] != (bin_dir / "cubutterfly_bench").resolve():
+        raise AssertionError("installed suite failed to resolve its runner")
     native = importlib.import_module('stage_schedule_native')
     if not pathlib.Path(native.__file__).with_suffix('.cpp').is_file():
         raise AssertionError('native schedule simulator source missing from installation')
@@ -71,15 +91,23 @@ class InstallToolDependencies(unittest.TestCase):
     def test_install_manifest_covers_local_imports_including_lazy_paths(self):
         installed = set(installed_scripts())
         self.assertTrue(installed)
-        for name in sorted(installed):
-            tree = ast.parse((ROOT / "scripts" / name).read_text())
+        packages = {source for source, _ in installed_package_files()}
+        self.assertEqual(packages, {"benchmark/__init__.py", "benchmark/runner_registry.py"})
+        sources = [pathlib.Path("scripts") / name for name in sorted(installed)]
+        sources.extend(pathlib.Path(source) for source in sorted(packages))
+        for source in sources:
+            tree = ast.parse((ROOT / source).read_text())
             for node in ast.walk(tree):
                 modules = ([alias.name for alias in node.names] if isinstance(node, ast.Import)
                            else [node.module] if isinstance(node, ast.ImportFrom) and node.module else [])
                 for module in modules:
                     dependency = module.split(".")[0] + ".py"
                     if (ROOT / "scripts" / dependency).is_file():
-                        self.assertIn(dependency, installed, name + " imports uninstalled " + dependency)
+                        self.assertIn(dependency, installed, str(source) + " imports uninstalled " + dependency)
+                    package_dependency = "/".join(module.split(".")) + ".py"
+                    if (ROOT / package_dependency).is_file():
+                        self.assertIn(package_dependency, packages,
+                                      str(source) + " imports uninstalled " + package_dependency)
 
     def test_smoke_checks_in_isolated_staged_install(self):
         import shutil
@@ -90,6 +118,10 @@ class InstallToolDependencies(unittest.TestCase):
             bin_dir.mkdir()
             for name in installed_scripts():
                 shutil.copy2(ROOT / "scripts" / name, bin_dir / name)
+            for source, relative in installed_package_files():
+                target = bin_dir / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(ROOT / source, target)
             shutil.copy2(ROOT / 'scripts/stage_schedule_native.cpp', bin_dir / 'stage_schedule_native.cpp')
             for name in ("include", "src", "scripts"):
                 (templates / name).mkdir(parents=True)

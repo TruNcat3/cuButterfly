@@ -31,7 +31,7 @@ from typing import Any, Iterable
 
 from calibration_space import command_for
 from hardware_registry import canonical_semantics
-from run_comprehensive_suite import parse_csv_record, require_exclusive_gpu, visible_gpu
+from run_comprehensive_suite import is_prime, parse_csv_record, require_exclusive_gpu, visible_gpu
 
 
 SCHEMA = "cubutterfly-controlled-experiment-v1"
@@ -59,6 +59,7 @@ DERIVED_MAPPING_FIELDS = {
     "segment_ept", "group_threads", "group_ept", "runtime_fingerprint",
 }
 MAPPING_METADATA_FIELDS = {"schema_version", "kind"}
+NESTED_MAPPING_FIELDS = {"subgraph_mappings", "segment_mappings", "execution_group_mappings"}
 
 BENCHMARK_BY_OPERATOR = {
     "ntt": "cuntt_bench",
@@ -154,6 +155,18 @@ def _validate_workload(workload: Any, location: str) -> dict[str, Any]:
         raise StudyError(f"{location} must keep execution mapping under each variant.mapping")
     if operator == "ntt" and precision not in {"word32", "word64"}:
         raise StudyError(f"{location}: NTT precision must be word32 or word64")
+    if operator == "ntt":
+        # Match PlanConfig::modulus when the benchmark receives no --modulus.
+        modulus = workload.get("modulus", 1152921504606584833)
+        if not _is_int(modulus):
+            raise StudyError(f"{location}.modulus must be an exact integer")
+        limit = 1 << (31 if precision == "word32" else 63)
+        if not 3 <= modulus < limit:
+            raise StudyError(f"{location}.modulus must be in [3, {limit}) for {precision}")
+        if not is_prime(modulus):
+            raise StudyError(f"{location}.modulus must be prime")
+        if (modulus - 1) % (1 << workload["logN"]):
+            raise StudyError(f"{location}.modulus - 1 must be divisible by 2^logN")
     if operator != "ntt" and precision in {"word32", "word64"}:
         raise StudyError(f"{location}: word precision is only valid for NTT")
     if "stage_matrix" in workload:
@@ -201,7 +214,39 @@ def _axis_name(value: Any) -> str:
     return value.strip()
 
 
-def _mapping_diff(left: dict[str, Any], right: dict[str, Any], *, include_derived: bool = True) -> set[str]:
+def _mapping_leaves(value: Any, path: str) -> dict[str, Any]:
+    if isinstance(value, dict) and value:
+        return {leaf: item for key, child in value.items()
+                for leaf, item in _mapping_leaves(child, f"{path}.{key}").items()}
+    if isinstance(value, list) and value:
+        return {leaf: item for index, child in enumerate(value)
+                for leaf, item in _mapping_leaves(child, f"{path}.{index}").items()}
+    return {path: value}
+
+
+def _nested_control_roots(axes: Iterable[str]) -> set[str]:
+    # A declared leaf promotes its whole mapping array to audited controls.
+    # Otherwise these arrays retain the legacy generated/derived treatment.
+    roots = set()
+    for axis in axes:
+        if "." not in axis:
+            continue
+        parts = axis.split(".")
+        if (len(parts) != 3 or parts[0] not in NESTED_MAPPING_FIELDS or
+                not parts[1].isascii() or not parts[1].isdigit() or
+                str(int(parts[1])) != parts[1] or not parts[2].isidentifier()):
+            raise StudyError(f"invalid nested mapping axis: {axis}")
+        roots.add(parts[0])
+    return roots
+
+
+def _mapping_diff(left: dict[str, Any], right: dict[str, Any], *, include_derived: bool = True,
+                  nested_roots: Iterable[str] = ()) -> set[str]:
+    roots = set(nested_roots)
+    left = {leaf: item for key, value in left.items()
+            for leaf, item in (_mapping_leaves(value, key) if key in roots else {key: value}).items()}
+    right = {leaf: item for key, value in right.items()
+             for leaf, item in (_mapping_leaves(value, key) if key in roots else {key: value}).items()}
     keys = set(left) | set(right)
     if not include_derived:
         keys -= DERIVED_MAPPING_FIELDS
@@ -272,7 +317,22 @@ def _validate_study(study: Any) -> tuple[dict[str, Any], dict[str, int]]:
                 raise StudyError(f"{comparison_location}.changed_axes must be unique")
             baseline_mapping = next(v["mapping"] for v in normalized_variants if v["id"] == baseline)
             treatment_mapping = next(v["mapping"] for v in normalized_variants if v["id"] == treatment)
-            requested_diff = _mapping_diff(baseline_mapping, treatment_mapping, include_derived=False)
+            nested_roots = _nested_control_roots(axes)
+            for root in nested_roots:
+                for mapping in (baseline_mapping, treatment_mapping):
+                    values = mapping.get(root)
+                    if not isinstance(values, list) or not all(isinstance(item, dict) for item in values):
+                        raise StudyError(f"{comparison_location} nested control requires a mapping array: {root}")
+            for axis in axes:
+                if "." not in axis:
+                    continue
+                root = axis.split(".", 1)[0]
+                for mapping in (baseline_mapping, treatment_mapping):
+                    leaves = _mapping_leaves(mapping.get(root), root)
+                    if axis not in leaves or isinstance(leaves[axis], (dict, list)):
+                        raise StudyError(f"{comparison_location} nested axis must name a requested scalar: {axis}")
+            requested_diff = _mapping_diff(baseline_mapping, treatment_mapping, include_derived=False,
+                                           nested_roots=nested_roots)
             if not requested_diff:
                 raise StudyError(f"{comparison_location} treatment does not change the requested mapping")
             undeclared = requested_diff - set(axes)
@@ -575,7 +635,7 @@ def _runtime_identity(
     }
 
 
-def _prepared_compatible(existing: dict[str, Any], prepared: dict[str, Any]) -> None:
+def _prepared_compatible(existing: dict[str, Any], prepared: dict[str, Any], *, allow_source_rebind: bool = False) -> None:
     if existing.get("schema") != SCHEMA:
         raise RuntimeError("checkpoint schema does not match controlled study")
     old = existing.get("identity", {})
@@ -588,6 +648,8 @@ def _prepared_compatible(existing: dict[str, Any], prepared: dict[str, Any]) -> 
                 raise RuntimeError("checkpoint identity changed: binaries")
             continue
         if old.get(field) != new.get(field):
+            if field == "source_sha256" and allow_source_rebind:
+                continue
             raise RuntimeError(f"checkpoint identity changed: {field}")
     if existing.get("study") != prepared.get("study") or existing.get("cases") is None:
         raise RuntimeError("checkpoint study or generated commands changed")
@@ -610,6 +672,41 @@ def _prepared_compatible(existing: dict[str, Any], prepared: dict[str, Any]) -> 
         return signature
     if plan_signature(existing) != plan_signature(prepared):
         raise RuntimeError("checkpoint study or generated commands changed")
+
+
+def rebind_source_identity(output: Path, study_path: Path, build_dir: Path, *, reason: str) -> dict[str, Any]:
+    """Update only the controlled runner source digest, with an audit receipt.
+
+    A prepared journal contains a frozen study and lowered commands.  Source
+    edits to the validation runner can be made explicit after review, but
+    changing the study, protocol, binaries, or generated commands remains
+    rejected by ``_prepared_compatible``.
+    """
+    if not reason.strip():
+        raise StudyError("source rebind reason must be non-empty")
+    output = output.expanduser().resolve()
+    study_path = study_path.expanduser().resolve()
+    build_dir = build_dir.expanduser().resolve()
+    existing = _load_json(output)
+    if existing.get("status") != "prepared":
+        raise StudyError("source identity can only be rebound on a prepared journal")
+    prepared = prepare_document(_load_json(study_path), study_path, build_dir)
+    _prepared_compatible(existing, prepared, allow_source_rebind=True)
+    old_source = existing.get("identity", {}).get("source_sha256")
+    new_source = prepared["identity"]["source_sha256"]
+    if old_source == new_source:
+        return existing
+    document = dict(existing)
+    identity = dict(document["identity"])
+    identity["source_sha256"] = new_source
+    document["identity"] = identity
+    provenance = dict(document.get("provenance", {}))
+    history = list(provenance.get("source_rebindings", []))
+    history.append({"old": old_source, "new": new_source, "reason": reason})
+    provenance["source_rebindings"] = history
+    document["provenance"] = provenance
+    _atomic_write(output, document)
+    return document
 
 
 def _invoke(command: list[str]) -> tuple[dict[str, str] | None, str | None]:
@@ -681,6 +778,7 @@ def _preflight_variant(
     try:
         mapping, resources = _validate_sample(
             sample, case["workload"], expected, device, require_correctness=True)
+        _validate_nested_replay(case, variant, mapping)
         probe = _probe_resources(build_dir, case["workload"], mapping)
         if probe is not None:
             resources["stage_probe"] = probe
@@ -750,10 +848,30 @@ def _measure_trial(
     variant.setdefault("trials", []).append(result)
 
 
-def _control_mapping(mapping: dict[str, Any]) -> dict[str, Any]:
+def _validate_nested_replay(case: dict[str, Any], variant: dict[str, Any], resolved: dict[str, Any]) -> None:
+    roots = set()
+    for comparison in case["comparisons"]:
+        if variant["id"] in (comparison["baseline"], comparison["treatment"]):
+            roots.update(_nested_control_roots(comparison["changed_axes"]))
+    for root in sorted(roots):
+        values = resolved.get(root)
+        requested_values = variant["mapping"].get(root)
+        if (not isinstance(values, list) or len(values) != len(requested_values) or
+                not all(isinstance(item, dict) for item in values)):
+            raise RuntimeError("requested nested mapping array shape changed during replay: " + root)
+        requested = _mapping_leaves(variant["mapping"].get(root), root)
+        observed = _mapping_leaves(resolved.get(root), root)
+        mismatches = [path for path, value in requested.items()
+                      if path not in observed or observed[path] != value]
+        if mismatches:
+            raise RuntimeError("requested nested mapping changed during replay: " + ", ".join(sorted(mismatches)))
+
+
+def _control_mapping(mapping: dict[str, Any], nested_roots: Iterable[str] = ()) -> dict[str, Any]:
     control = {}
+    excluded = (DERIVED_MAPPING_FIELDS - set(nested_roots)) | MAPPING_METADATA_FIELDS
     for key, value in mapping.items():
-        if key in DERIVED_MAPPING_FIELDS | MAPPING_METADATA_FIELDS:
+        if key in excluded:
             continue
         if key in {"boundaries", "boundary_mappings"}:
             # A stage partition derives the number of boundary records.  Keep
@@ -786,7 +904,16 @@ def _comparison_result(case: dict[str, Any], comparison: dict[str, Any]) -> dict
     if not isinstance(baseline_mapping, dict) or not isinstance(treatment_mapping, dict):
         result["reason"] = "resolved mapping evidence is missing"
         return result
-    control_diff = _mapping_diff(_control_mapping(baseline_mapping), _control_mapping(treatment_mapping))
+    nested_roots = _nested_control_roots(comparison["changed_axes"])
+    try:
+        _validate_nested_replay(case, baseline, baseline_mapping)
+        _validate_nested_replay(case, treatment, treatment_mapping)
+    except RuntimeError as error:
+        result["reason"] = str(error)
+        return result
+    control_diff = _mapping_diff(_control_mapping(baseline_mapping, nested_roots),
+                                 _control_mapping(treatment_mapping, nested_roots),
+                                 nested_roots=nested_roots)
     if not control_diff:
         result["reason"] = "runtime mapping alias: treatment resolved to the baseline mapping"
         result["resolved_mapping_alias"] = True
@@ -812,8 +939,11 @@ def _comparison_result(case: dict[str, Any], comparison: dict[str, Any]) -> dict
             return result
         base_ms = float(base["kernel_ms"])
         treatment_ms = float(treat["kernel_ms"])
+        baseline_over_treatment = base_ms / treatment_ms
         pairs.append({"trial": trial, "baseline_kernel_ms": base_ms, "treatment_kernel_ms": treatment_ms,
-                      "treatment_over_baseline": base_ms / treatment_ms})
+                      "baseline_over_treatment": baseline_over_treatment,
+                      # Deprecated compatibility alias; the historical name reverses the ratio.
+                      "treatment_over_baseline": baseline_over_treatment})
     if not pairs:
         result["reason"] = "no paired timing trials"
         return result
@@ -825,8 +955,10 @@ def _comparison_result(case: dict[str, Any], comparison: dict[str, Any]) -> dict
         baseline_median_kernel_ms=statistics.median(row["baseline_kernel_ms"] for row in pairs),
         treatment_median_kernel_ms=statistics.median(row["treatment_kernel_ms"] for row in pairs),
     )
-    result["median_treatment_over_baseline"] = (
+    result["median_baseline_over_treatment"] = (
         result["baseline_median_kernel_ms"] / result["treatment_median_kernel_ms"])
+    # Deprecated compatibility alias; preserve its historical numeric meaning.
+    result["median_treatment_over_baseline"] = result["median_baseline_over_treatment"]
     return result
 
 
@@ -923,6 +1055,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, required=True, help="atomic JSON journal")
     parser.add_argument("--mode", choices=("prepare", "run"), default="prepare")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--rebind-source-identity", action="store_true",
+                        help="explicitly update only source hashes in a prepared journal")
+    parser.add_argument("--rebind-reason", default="",
+                        help="audit reason required with --rebind-source-identity")
     parser.add_argument("--gpu-uuid", help="explicit target UUID; required in run mode")
     args = parser.parse_args(argv)
     study_path = args.study.expanduser().resolve()
@@ -931,6 +1067,13 @@ def main(argv: list[str] | None = None) -> int:
     if output == study_path:
         raise StudyError("--output must not overwrite --study")
     study = _load_json(study_path)
+    if args.rebind_source_identity:
+        if args.mode != "prepare":
+            raise StudyError("--rebind-source-identity requires --mode prepare")
+        document = rebind_source_identity(output, study_path, build_dir, reason=args.rebind_reason)
+        print(json.dumps({"status": document["status"], "output": str(output),
+                          "source_rebound": True}, sort_keys=True))
+        return 0
     if args.mode == "prepare":
         document = prepare_document(study, study_path, build_dir)
         if output.exists():

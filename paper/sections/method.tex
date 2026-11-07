@@ -1,26 +1,27 @@
 \section{Hierarchical Hybrid Dataflow}
 \label{sec:method}
-The motivation leaves a central question unanswered. A useful local unit
-must contain enough dependent work to reuse values, yet remain small enough
-to admit a feasible mapping. Choosing a tile from its size alone does not
-establish that its inputs are available or that its outputs can feed the next
-tile. We therefore start with the dependencies and derive the execution units
-before assigning resources to them.
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/drawio/exports/overview.pdf}
+\caption{\system{} maps labeled dependencies through space--time choices to bounded
+tile execution while retaining specialized arithmetic cores.}
+\label{fig:overview}
+\end{figure*}
 
-The construction takes an \textbf{operator contract}
-covering arithmetic, coefficients, direction, normalization, and logical
-ordering, a \textbf{workload domain} covering shape, batch, placement, and
-strides, and \textbf{hardware capabilities} covering resources and cores.
-They specialize one construction rather than independent implementations.
-We first derive closed subgraphs, then compose them across storage scopes,
-and finally derive their communication and the conditions for reusing the
-construction across variants. The 16-point Hadamard example introduced in
-the motivation serves as a concrete instance throughout.
+The method connects \textbf{dependency structure, resource demand, and
+hardware constraints}. An \textbf{operator contract} specifies arithmetic,
+coefficients, direction, normalization, precision, and logical input/output order;
+a \textbf{workload domain} specifies shape, batch, placement, strides, and storage
+layout; \textbf{hardware capabilities}
+specify resources and compatible cores. These inputs jointly determine performance.
+Figure~\ref{fig:overview} traces the construction: derive dependency-closed
+regions and handoffs, characterize spatial/temporal demands, then bind selected
+tile subgraphs to cores and storage scopes under target capacities and service
+rates. We develop it through a 16-point Hadamard example.
 
-\subsection{Dependency-closed subgraphs}
-Local reuse is possible only when a chosen group contains the values needed
-by all of its internal operations. The stage-bit representation makes this
-condition constructive rather than a property checked after arbitrary tiling.
+\subsection{Dependency-closed regions}
+Local reuse requires a group containing all values needed by its operations.
+The stage-bit representation constructs such groups directly.
 \textbf{A stage band determines its local data domain.}
 For a radix-two transform, choose a consecutive stage band and let $Q$
 contain its pairing bits. Holding every other index bit fixed gives
@@ -29,13 +30,15 @@ contain its pairing bits. Holding every other index bit fixed gives
 \label{eq:component}
 \end{equation}
 Every pair update in the band changes only a bit in $Q$ and thus stays inside
-this component. Assignments to the fixed bits partition the array into
-independent components of $2^{|Q|}$ values. The band's computation on one
-component is a \textbf{dependency-closed subgraph}. Closure is local to the
-band, whose inputs and outputs still connect to other bands.
+this region. Assignments to the fixed bits partition the array into
+independent regions of $2^{|Q|}$ values. The band's computation on one region
+is a \textbf{dependency-closed region}. Closure is local to the band, whose
+inputs and outputs still connect to other bands.
 
-Any ordered stage partition defines such components. Band width controls local
-reuse, while the number of components assigned to a worker controls worker
+Any ordered stage partition defines such regions, including one band spanning
+the complete transform when capacity and core support permit. Spatial expansion
+factors may also be one. Band width controls local
+reuse, while the number of regions assigned to a worker controls worker
 reuse. Arithmetic labels remain attached to the operations. In particular,
 an FFT band may require global-index-dependent twiddles, so a standalone
 smaller FFT is not automatically a compatible core.
@@ -44,41 +47,65 @@ smaller FFT is not automatically a compatible core.
 For a 16-point unnormalized Hadamard transform with stage bits $(0,1,2,3)$,
 write $i=4r+c$. Two equal bands give four row subgraphs varying $c$, then
 four column subgraphs varying $r$. Each uses a four-point Hadamard core.
-This instantiates the two-band case in
-Figure~\ref{fig:organization-tradeoffs}. The component boundary follows
-which bits vary, not whether the values happen to be contiguous in the
-original array. The implementation can therefore choose a representation
-that matches its store and read constraints without changing the logical
-computation.
+Figure~\ref{fig:organization-tradeoffs} places this two-band partition beside
+stagewise and whole-transform partitions of the full graph.
+Region membership follows variable bits rather than original contiguity,
+allowing a representation chosen for physical stores and reads.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/drawio/exports/hierarchy.pdf}
-\caption{The 16-point Hadamard construction. Each column consumer needs one
-value from every row producer. Successor-aligned writeback makes a consumer's
-values contiguous. The lower panel shows refinement when local capacity limits
-band width. Sizes are illustrative.}
+\caption{The Hadamard example exposes dependency, capacity, and bank constraints.
+(a) Each column needs all row producers. (b) A separate four-bank swizzle
+distributes its reads; this map is not composed with (a). Counts are analytical.}
 \label{fig:hierarchy}
+\label{fig:banklayout}
 \end{figure}
 
-\subsection{Hierarchical spatial and temporal choices}
+\subsection{Space--time organization and resource demand}
 \label{sec:scaling}
-Closure provides an independent unit of work, but does not prescribe a
-thread block, kernel launch, or fixed number of pipeline stages. Keeping
-these choices open is necessary because the same subgraph can fit different
-storage scopes on different targets.
-\textbf{Hierarchical hybrid dataflow assigns spatial resources and temporal
-reuse to both stages and data.} Successive stages can reuse a worker or occupy
-different resources. Independent components can execute concurrently or stream
-through the same worker. A selected region retains intermediate values while
-its surrounding execution supplies independent work. The construction repeats
-inside that region and across storage scopes.
+Closure defines independent work without fixing an execution group, launch,
+or pipeline depth. \textbf{Hierarchical hybrid dataflow assigns spatial resources
+and temporal reuse to stages and data.} Successive stages can reuse a worker or
+occupy different resources; independent regions can execute concurrently or
+stream through that worker. This organization repeats within regions and
+across storage scopes.
 
-A thread can retain a small subgraph in registers, cooperating threads can use
-shared memory, and larger regions can use global handoffs. Refining a parent
+A worker can retain a small subgraph in local storage, compute groups can use
+an intermediate shared scope, and larger regions can use external storage handoffs. Refining a parent
 does not require its entire intermediate array to fit on chip. Hierarchical
 spatial and temporal mapping has precedents~\cite{timeloop2019}. Here,
 butterfly closure and intersections determine the legal regions and handoffs.
+
+\textbf{Characterization separates demand from capability.}
+At each scope, stage-space and data-space factors describe concurrent stage
+positions and independent pair work. Their temporal counterparts describe
+reuse of those resources. Table~\ref{tab:organization-demand} distinguishes
+their demands at the selected storage and execution scope, with the chosen
+core and layout. These are logical organization choices; a worker count or
+compiler unrolling alone does not establish spatial execution.
+
+\begin{table}[t]
+\centering\small
+\caption{Spatial and temporal choices impose different resource demands.}
+\label{tab:organization-demand}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{.25\columnwidth}>{\raggedright\arraybackslash}p{.68\columnwidth}@{}}
+\toprule
+Choice & Demand to characterize\\\midrule
+Stage in space & Concurrent cores, inter-stage transport, coefficients, and live pipeline state.\\
+Stage in time & Retained state or feedback transfers, synchronization, and reuse of execution resources.\\
+Data in space & Concurrent workers and state, input/output bandwidth, ports, and coefficient delivery.\\
+Data in time & Sequential tile service, state lifetime, buffer capacity, and fill/drain overhead.\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For example, an ideal fully supplied stage pipeline with $U_s$ stage
+positions and $U_d$ pair units per position has $U_sU_d$ arithmetic units
+and consumes $2U_d$ input values per service step. At fixed arithmetic
+capacity, shifting resources toward stages reduces boundary supply per unit
+of work while increasing internal transport and pipeline depth. Actual
+cores, layouts, and resource sharing determine the achievable service rate.
 
 At storage scope $h$, residency requires
 \begin{equation}
@@ -87,28 +114,58 @@ At storage scope $h$, residency requires
 \end{equation}
 where live values, coefficients, and buffers are counted in bytes. Compiled
 register allocation and storage granularity further constrain the mapping.
-A region that does not fit can be refined, rescheduled, or materialized at a
-larger scope. \textbf{Value residency differs from worker persistence.}
+A tile subgraph that does not fit can be refined, rescheduled, or materialized
+at a larger scope. \textbf{Value residency differs from worker persistence.}
 A finite kernel may keep intermediates local, whereas a persistent worker may
-exchange them through global buffers.
+exchange them through external storage buffers.
+
+Alongside peak live bytes, the characterization records boundary transfers,
+core work, and independent ready work. Capacity constrains feasibility;
+bandwidth, core service, and readiness constrain completion time. Feedback retained at an intermediate scope consumes its service rather than
+another external pass. Dependency analysis supplies exact logical sizes,
+intersections, and work; lowering and compilation determine physical ownership,
+allocation, and instructions; measurements supply service rates. Together they
+distinguish capacity exclusions from performance choices within the executable
+space. Logical traffic alone does not predict time.
+
+\noindent\textbf{From dependencies to an organization decision.}
+A band spanning $s$ distinct pairing bits has $BN/2^s$ independent
+regions. Retaining all values of one region at the chosen scope needs
+$e2^s$ bytes, before coefficients, buffering, and core scratch space.
+If $G$ bands each read and write their values once, they transfer $2eBNG$
+value bytes at that boundary. These counts connect a wider band to both
+greater retention and fewer independent regions. Actual transactions and
+cooperating threads refine these logical demands.
+
+In the 16-point example, a four-value budget after reserving auxiliary storage
+permits at most two stages per region retained in local storage. Two bands minimize
+materialized passes under this capacity-only criterion, transferring 64 values
+instead of 128 for stagewise execution. A sixteen-value budget permits one
+band and 32 transfers, but exposes only one region per transform;
+performance still depends on its core mapping. At the four-value budget,
+a 32-point transform needs at least three such bands. The construction thus
+extends beyond two bands without increasing local storage. Feasibility,
+communication, and parallel organization jointly inform the physical choice.
+
+The decision follows this order: dependencies determine legal bands and
+regions; capacity excludes mappings that do not fit; service rates and ready
+work rank the remaining retention choices. Producer--consumer intersections
+then determine handoff values and dependencies, while actual access groups
+and storage service constrain physical layout.
 
 \subsection{Communication and readiness}
-Local independence ends at a stage-band boundary, where pair partners change.
-The next step is therefore to recover the dependencies between the units just
-constructed. The same index sets that established closure also supply this
-information, so communication need not be specified separately for each
-operator and workload.
-Adjacent components communicate through their index-set intersections.
+At a band boundary, changing pair partners connect closed regions through
+their index-set intersections.
 A producer and consumer with variable-bit sets $P$ and $Q$ share values when
 they agree on all bits fixed by both. Their shared variable bits $P\cap Q$
 determine each nonempty intersection. Producers covering the remaining
 consumer bits $Q\setminus P$ form its predecessor set. This derives
 communication without enumerating scalar edges.
 
-Fixing the bits outside $P\cup Q$ groups connected components into a
+Fixing the bits outside $P\cup Q$ groups connected regions into a
 \textbf{boundary packet}. No edge crosses packets at that boundary. Within
 a packet, every producer and consumer intersect on the full pairing envelope.
-For complete-component publication, a consumer must therefore await every
+For complete-region publication, a consumer must therefore await every
 producer in its predecessor set. One-sided operators or finer publication
 units can expose finer dependencies.
 
@@ -116,19 +173,20 @@ In the example, a completed row cannot release a complete column. Independent
 transforms can nevertheless advance concurrently, and larger transforms may
 contain multiple packets within one transform. Packet membership is derived
 at each boundary, not assumed to form a fixed pipeline across the graph.
-A packet is a dependency domain, not an on-chip allocation or CUDA block.
-Its values can be distributed among workers and global buffers.
+A packet is a dependency domain, not a storage allocation or execution group.
+Its values can be distributed among workers and external storage buffers.
+This ownership description does not guarantee conflict-free service. Changing
+partners can concentrate successor reads on a few storage banks. Boundary
+placement must account for both producer and consumer access groups
+(Section~\ref{sec:boundary-conflicts}).
 
 \subsection{Reuse across variants and dimensions}
 \label{sec:equivalence}
-So far the construction has used one ordered stage sequence. To serve an
-operator library, it must also explain what can be reused when that sequence,
-its arithmetic, or its tensor interpretation changes. The reusable object is
-the labeled dependency relation, not the numerical output of a different
-transform.
+Reuse across stage orders, arithmetic, and tensor interpretations transports
+the labeled dependency relation, not another transform's numerical output.
 \textbf{Structural correspondence transports organizations.}
 Bit reversal maps an increasing-stride pairing envelope to a decreasing-stride
-one, preserving component and boundary relations. Physical layouts must still
+one, preserving region and boundary relations. Physical layouts must still
 be evaluated for the transported access pattern.
 
 Figure~\ref{fig:semantic-transport} shows this correspondence on eight indices.
@@ -140,12 +198,8 @@ labels to be exchanged arbitrarily.
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/drawio/exports/semantic_transport.pdf}
-\caption{Reusing the construction through explicit correspondences. Bit
-reversal maps the eight-index pairing envelope and its stage-bit sequence.
-Axis labels describe the same index domain for a $4\times2$ tensor.
-The core inset shows a CT pair and its local inverse GS form, requiring
-invertible $w$ and $2$. These are algebraic examples, not claims of identical
-floating rounding, arbitrary stage commutation, or equal execution cost.}
+\caption{Bit reversal maps adjacent pairs to strided pairs while preserving
+their arithmetic labels.}
 \label{fig:semantic-transport}
 \end{figure}
 
@@ -165,9 +219,8 @@ shared construction, not a claim that every multidimensional or arithmetic
 variant already has an efficient lowering.
 
 \subsection{Correct composition}
-The preceding rules separate the questions of what is computed, where each
-value is placed, and when its consumer may run. Their composition must still
-implement the requested complete operator.
+The arithmetic, placement, and scheduling rules must compose into the
+requested complete operator.
 A composed execution is correct when it covers each required operation once,
 each core implements its labels, every handoff preserves value identity, and
 every read occurs after production and before storage reuse. A topological
@@ -175,4 +228,4 @@ induction suffices. Correct predecessor values reach the next operation through
 consistent layouts and valid lifetimes, and its arithmetic produces the
 required outputs. Thus local arithmetic, boundary layout, and scheduling
 carry distinct correctness obligations. The next section realizes these
-obligations with block-level and resident subgraph execution.
+obligations with group-level and resident subgraph execution.

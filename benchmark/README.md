@@ -1,5 +1,7 @@
 # Benchmark contracts
 
+For a new RTX PRO 6000 Blackwell Server96 target, follow the [migration runbook](../docs/hardware/pro6000_server96.md) and [quick12/full66 contract](../config/paper_portability/README.md). `scripts/research_platform.py` runs this finite main comparison; full66 does not cover all paper tracks.
+
 `benchmark/` is the canonical index for benchmark scope. Existing workload
 JSON files and historical results remain in their original locations; this
 directory records which one is authoritative for each evidence track.
@@ -11,10 +13,24 @@ and validate it before starting or summarizing a run:
 python scripts/validate_benchmark_scope.py benchmark/scopes/a100_80gb_research_v1.json
 ```
 
-The current paper-oriented evidence boundary and remaining measurements are
-listed in [`research_evidence_gap_20261017.md`](research_evidence_gap_20261017.md).
-The current application-level positive, near-parity, and negative rows are
-summarized in [`application_gap_review_20261021.md`](application_gap_review_20261021.md).
+The current A100 completion ledger is
+[`results/a100_closure_20261102/README.md`](../results/a100_closure_20261102/README.md).
+It links the completed 66-request main comparison, 90 cyclic NTT requests,
+138 searched composition requests and 34 CPU comparisons. The nine application
+jobs, controlled studies, profiles and 32 FFT-L requests also finished execution.
+The [winner correction](../results/a100_closure_20261102/winner_correction_20261102/REPORT.md)
+fixes string ordering of CSV latencies; the changed FFT winner's full numerical
+replay is complete. The [negative-result diagnosis](../results/a100_closure_20261102/negative_trace_20261102/README.md)
+records bounded traces and single-axis interventions separately from the original comparisons. Negative results and
+FFT-L oracle/baseline gaps remain explicit.
+The [application progress table](../results/a100_closure_20261102/applications/progress_summary.md)
+keeps new repetitions and historical measurements separate, including losses.
+
+The earlier paper-oriented scope is recorded in
+[`research_evidence_gap_20261017.md`](research_evidence_gap_20261017.md).
+[`application_gap_review_20261021.md`](application_gap_review_20261021.md)
+records the application results available on October 21; use the current ledger
+for completion status and subsequent results.
 The [October 19 convergence record](research_convergence_20261019.md) fixes the
 remaining CKKS automatic-selection acceptance set and separates its completion
 from the outstanding paper and portability evidence.
@@ -124,10 +140,15 @@ support or measurement coverage.
 
 `fft-h` and `fft-l` classify benchmark requests and comparisons; both emit the
 same underlying `operator: "fft"` and reuse its kernels and search. FFT-H requires
-FP32/FP64 input storage and FP32/FP64 core arithmetic. FFT-L covers FP16/BF16
-input storage (including explicit FP32 arithmetic) and explicit low-precision
-multiplication with higher-precision accumulation. Output dtype alone does not
-determine the class. These groups never replace the full numerical contract.
+FP32/FP64 input storage and FP32/FP64 core arithmetic. FFT-L is the low-storage
+class. The current A100 external-comparison scope uses FP16 input storage; BF16
+remains a framework capability with retained measurements, but new BF16
+experiments are deferred by the agreed scope. cuFFT Xt supports BF16 storage;
+its internal mixed arithmetic differs from our native-BF16 arithmetic contract.
+FFT-L also covers explicit FP32 arithmetic and explicit
+low-precision multiplication with higher-precision accumulation. Output dtype
+alone does not determine the class. These groups never replace the full
+numerical contract.
 
 Use `--operator fft-h`, `--operator fft-l`, or `--compute-type fft-l` to select a
 group. Legacy `--operator fft` selects both groups at the requested precisions.

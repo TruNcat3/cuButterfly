@@ -15,7 +15,7 @@ bool compiled_mapping(const ButterflyConfig& c) {
     // radix-4 local provider. Layouts and cooperative providers remain JIT
     // identities and must never silently alias either prebuilt module.
     if ((c.prefix_codelet != "native" && c.prefix_codelet != "radix4") ||
-        c.prefix_shared_layout != "linear") return false;
+        c.prefix_shared_layout != "linear" || c.prefix_twiddle != "runtime") return false;
     if (c.prefix_codelet_lanes != 1) return false;
     if (resident_axes_requested(c.local_stage_partitions,c.exchange_chunks)) return false;
     if(c.precision!=ButterflyPrecision::Fp32) return false;
@@ -93,9 +93,11 @@ void validate_register_tile(const ButterflyConfig& c) {
         throw std::invalid_argument("register-tile prefix_codelet must be native, radix4 or cufftdx-thread");
     if (c.prefix_shared_layout != "linear" && c.prefix_shared_layout != "xor")
         throw std::invalid_argument("register-tile prefix_shared_layout must be linear or xor");
+    if (c.prefix_twiddle != "runtime" && c.prefix_twiddle != "table")
+        throw std::invalid_argument("register-tile prefix_twiddle must be runtime or table");
     if (c.precision == ButterflyPrecision::Fp64 && c.prefix_codelet == "cufftdx-thread")
         throw std::invalid_argument("cufftdx-thread prefix codelet is unavailable for FP64");
-    if ((c.prefix_codelet != "native" || c.prefix_shared_layout != "linear") &&
+    if ((c.prefix_codelet != "native" || c.prefix_shared_layout != "linear" || c.prefix_twiddle != "runtime") &&
         !compiled_mapping(c) && !on_demand_compilation_enabled())
         throw std::invalid_argument("non-default register prefix strategy requires CUBUTTERFLY_COMPILE_MODE=research or auto");
     const auto is_power_of_two = [](std::uint32_t value) {

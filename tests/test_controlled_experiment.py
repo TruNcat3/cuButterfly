@@ -76,11 +76,95 @@ def test_prepare_resume_requires_compatible_prepared_journal(tmpdir):
                      "--output", str(study_path), "--mode", "prepare"])
 
 
+def test_explicit_source_rebind_updates_only_source_digest(tmp_path):
+    study_path = tmp_path / "study.json"
+    study_path.write_text(json.dumps(study()))
+    output = tmp_path / "journal.json"
+    runner.main(["--study", str(study_path), "--build-dir", str(tmp_path / "build"),
+                 "--output", str(output), "--mode", "prepare"])
+    original = json.loads(output.read_text())
+    changed = json.loads(json.dumps(original))
+    changed["identity"]["source_sha256"]["calibration_space.py"] = "old-source"
+    runner._atomic_write(output, changed)
+
+    assert runner.main(["--study", str(study_path), "--build-dir", str(tmp_path / "build"),
+                        "--output", str(output), "--mode", "prepare",
+                        "--rebind-source-identity", "--rebind-reason", "reviewed runner fix"]) == 0
+    rebound = json.loads(output.read_text())
+    assert rebound["study"] == original["study"]
+    assert rebound["cases"] == original["cases"]
+    assert rebound["identity"]["source_sha256"] == original["identity"]["source_sha256"]
+    assert rebound["provenance"]["source_rebindings"][-1]["old"]["calibration_space.py"] == "old-source"
+
+
+def test_source_rebind_rejects_changed_generated_plan(tmp_path):
+    study_path = tmp_path / "study.json"
+    study_path.write_text(json.dumps(study()))
+    output = tmp_path / "journal.json"
+    runner.main(["--study", str(study_path), "--build-dir", str(tmp_path / "build"),
+                 "--output", str(output), "--mode", "prepare"])
+    changed = json.loads(output.read_text())
+    changed["cases"][0]["variants"][0]["mapping"]["shared_layout"] = "tampered"
+    runner._atomic_write(output, changed)
+    with pytest.raises(RuntimeError, match="generated commands changed"):
+        runner.main(["--study", str(study_path), "--build-dir", str(tmp_path / "build"),
+                     "--output", str(output), "--mode", "prepare",
+                     "--rebind-source-identity", "--rebind-reason", "reviewed runner fix"])
+
+
 def test_prepare_rejects_a_second_requested_axis():
     invalid = study()
     invalid["cases"][0]["variants"][1]["mapping"]["tile_threads"] = 256
     with pytest.raises(ValueError, match="undeclared mapping axes"):
         runner._validate_study(invalid)
+
+
+@pytest.mark.parametrize("modulus,match", [
+    (True, "exact integer"),
+    (998244353.0, "exact integer"),
+    ("998244353", "exact integer"),
+    (576460756061519900, "prime"),
+    (9, "prime"),
+    (19, "divisible"),
+    (2, "must be in"),
+    (1 << 63, "must be in"),
+])
+def test_prepare_rejects_invalid_ntt_domain_before_subprocess(tmp_path, monkeypatch, modulus, match):
+    value = study()
+    value["cases"][0]["workload"] = {
+        "operator": "ntt", "precision": "word64", "logN": 8, "batch": 2,
+        "modulus": modulus,
+    }
+    def no_subprocess(*args, **kwargs):
+        raise AssertionError("invalid NTT preparation must not execute a command")
+    monkeypatch.setattr(runner.subprocess, "run", no_subprocess)
+    with pytest.raises(runner.StudyError, match=match):
+        runner.prepare_document(value, tmp_path / "study.json", tmp_path / "build")
+
+
+@pytest.mark.parametrize("precision,modulus", [
+    ("word32", 998244353),
+    ("word64", 576460756061519873),
+])
+def test_ntt_validation_preserves_exact_supported_modulus(precision, modulus):
+    workload = {"operator": "ntt", "precision": precision, "logN": 20,
+                "batch": 4, "modulus": modulus}
+    assert runner._validate_workload(workload, "workload") == workload
+
+
+def test_ntt_validation_uses_unchanged_cli_default_when_omitted():
+    workload = {"operator": "ntt", "precision": "word64", "logN": 8, "batch": 2}
+    assert runner._validate_workload(workload, "workload") == workload
+    with pytest.raises(runner.StudyError, match="divisible"):
+        runner._validate_workload(dict(workload, logN=30), "workload")
+    with pytest.raises(runner.StudyError, match="must be in"):
+        runner._validate_workload(dict(workload, precision="word32"), "workload")
+
+
+def test_ntt_word32_rejects_modulus_outside_runtime_range():
+    with pytest.raises(runner.StudyError, match="must be in"):
+        runner._validate_workload({"operator": "ntt", "precision": "word32", "logN": 8,
+                                   "batch": 2, "modulus": 1 << 31}, "workload")
 
 
 def test_run_pairs_reverse_order_and_resume_without_reexecution(tmpdir, monkeypatch):
@@ -158,13 +242,38 @@ def test_run_pairs_reverse_order_and_resume_without_reexecution(tmpdir, monkeypa
     assert comparison["status"] == "measured"
     assert comparison["performance_accepted"] is True
     assert comparison["actual_changed_axes"] == ["shared_layout"]
-    assert comparison["median_treatment_over_baseline"] > 1.9
+    assert comparison["median_baseline_over_treatment"] > 1.9
+    assert comparison["median_treatment_over_baseline"] == comparison["median_baseline_over_treatment"]
     measured_calls = len([call for call in calls if "--csv" in call and "--device-identity" not in call])
 
     resumed = runner.run_document(
         {}, runner._load_json(study_path), study_path, build, output, "GPU-test", resume=True)
     assert resumed["status"] == "complete"
     assert len([call for call in calls if "--csv" in call and "--device-identity" not in call]) == measured_calls
+
+
+@pytest.mark.parametrize("baseline_times,treatment_times,expected_pairs,expected_median_ratio", [
+    ([12.0, 4.0, 8.0], [2.0, 4.0, 1.0], [6.0, 1.0, 8.0], 4.0),
+    ([2.0, 4.0, 1.0], [12.0, 4.0, 8.0], [1 / 6, 1.0, 0.125], 0.25),
+])
+def test_comparison_ratio_direction_and_deprecated_aliases(
+    baseline_times, treatment_times, expected_pairs, expected_median_ratio,
+):
+    case = study()["cases"][0]
+    for variant, times in zip(case["variants"], (baseline_times, treatment_times)):
+        variant["preflight"] = {"status": "accepted", "resolved_mapping": variant["mapping"]}
+        variant["trials"] = [
+            {"trial": index, "performance_accepted": True, "kernel_ms": str(value)}
+            for index, value in enumerate(times)
+        ]
+    comparison = runner._comparison_result(case, case["comparisons"][0])
+
+    assert comparison["status"] == "measured"
+    assert comparison["median_baseline_over_treatment"] == pytest.approx(expected_median_ratio)
+    assert comparison["median_treatment_over_baseline"] == comparison["median_baseline_over_treatment"]
+    assert [pair["baseline_over_treatment"] for pair in comparison["pairs"]] == pytest.approx(expected_pairs)
+    assert all(pair["treatment_over_baseline"] == pair["baseline_over_treatment"]
+               for pair in comparison["pairs"])
 
 
 def test_runtime_mapping_alias_is_blocked(tmpdir, monkeypatch):

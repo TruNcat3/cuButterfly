@@ -10,135 +10,135 @@
     "overview": {
       "source": {
         "path": "figures/drawio/overview.drawio",
-        "sha256": "1c8a2f45913ac60151a7d8e4549452056e89900d7907da084f2ddb6ccde553bf",
-        "bytes": 103472
+        "sha256": "76bc35f4fec895936d15b62311f6c7096dab7a8bc454317aea8e97af67ab456e",
+        "bytes": 70412
       },
-      "native_cells": 256,
+      "native_cells": 174,
       "page_width": "1000",
-      "page_height": "370",
+      "page_height": "310",
       "exports": {
         "pdf": {
           "path": "figures/drawio/exports/overview.pdf",
-          "sha256": "e3c684c8588efa86f23531597bb571446b7dc9676de69fc2a39c43eca5e6d0c4",
-          "bytes": 44198
+          "sha256": "4e4d21e69676c90f1e146a10a665871641739684cd35ee0a091bb70cc127e53d",
+          "bytes": 32575
         },
         "svg": {
           "path": "figures/drawio/exports/overview.svg",
-          "sha256": "a988b3d61a5897d05c6a413d7a1c6815a24f2235ccd681ec8665a27a00cbba32",
-          "bytes": 236999
+          "sha256": "008dcb0c4987950c306126af00605cadb60601d1eff9d5b1f58602d571de7b27",
+          "bytes": 174939
         },
         "png": {
           "path": "figures/drawio/exports/overview.png",
-          "sha256": "ca0565e7f4da95f8a8929b6854bef4c3b99759d22fad3e7b41b71f8705be4ff9",
-          "bytes": 440439
+          "sha256": "72649cbba972c59a8eeae737cb0e0cbda03b9b16109f99f13b6447a5bf43fbfe",
+          "bytes": 359317
         }
       }
     },
     "organization_tradeoffs": {
       "source": {
         "path": "figures/drawio/organization_tradeoffs.drawio",
-        "sha256": "b432406679a8bdd5573c35aba8b33b6b067402b6b98f43ad5199fe27394b10b4",
-        "bytes": 321479
+        "sha256": "a534de526abfb3594003df0ac0334cd245bb53cb5775d647982ef57cfdeb37c4",
+        "bytes": 107603
       },
-      "native_cells": 776,
-      "page_width": "1000",
-      "page_height": "340",
+      "native_cells": 263,
+      "page_width": "480",
+      "page_height": "414",
       "exports": {
         "pdf": {
           "path": "figures/drawio/exports/organization_tradeoffs.pdf",
-          "sha256": "108ac2102e683ed5473fd19bb2c6a6d3d7d9cf6cf666f767ca3588a5c81527f9",
-          "bytes": 80384
+          "sha256": "8698535a6919133efb429f7f420c1bc07c340f28ae82712b93a7871ad4735c1d",
+          "bytes": 37678
         },
         "svg": {
           "path": "figures/drawio/exports/organization_tradeoffs.svg",
-          "sha256": "748c3b760095cf7e4e73e39a1712a71a4e6ec5fe4710ba4c6e89b3ca8b8250d5",
-          "bytes": 647051
+          "sha256": "01dfe9f957c60fb4ace7707cba1995bd8d1c84959435a78bc206b76e1bad2c80",
+          "bytes": 233708
         },
         "png": {
           "path": "figures/drawio/exports/organization_tradeoffs.png",
-          "sha256": "7bc753b92deb3a47ffd97fc9b21c47dc264cb17cf80e0d8e89b21063f1e3b192",
-          "bytes": 511552
+          "sha256": "a7e637fd5c5e236360d6956d076992fc523e609ed54b21fcf6cd399a1365c379",
+          "bytes": 287459
         }
       }
     },
     "roofline": {
       "source": {
         "path": "figures/drawio/roofline.drawio",
-        "sha256": "31c858750d46d63233289b620c492a05d7bb83c5f0a9fff26d9728390997a927",
-        "bytes": 8400
+        "sha256": "005b9d99e0ab0b716a07b71d855df8e7f7c6944509a8ddb34fe70b9cc3b502a9",
+        "bytes": 20450
       },
-      "native_cells": 21,
+      "native_cells": 52,
       "page_width": "480",
-      "page_height": "350",
+      "page_height": "292",
       "exports": {
         "pdf": {
           "path": "figures/drawio/exports/roofline.pdf",
-          "sha256": "d52ca77468bd8a7a8a695f64c96840333f16d2369028291bc9c426d20c5108f4",
-          "bytes": 21028
+          "sha256": "10d020352c2c39ecf9d00832fa6366b8feec9072ba3d5b0a57adf7c0db1f64cf",
+          "bytes": 22047
         },
         "svg": {
           "path": "figures/drawio/exports/roofline.svg",
-          "sha256": "3d32eacdf2bafac0e77dc0eb3255669fbdde24f89acad828e2f5b8dfcad330fc",
-          "bytes": 27630
+          "sha256": "93a474f0e2c8fb2be1eafe736fa3b80de055783294a6ca388e55856d442d3d7b",
+          "bytes": 61694
         },
         "png": {
           "path": "figures/drawio/exports/roofline.png",
-          "sha256": "69ec3c6cb150bb87e4b70d76e89e44a67e9eb525033ad9cb6df894e14cead663",
-          "bytes": 161413
+          "sha256": "e39dddc63faaded2d33d17e1fcc9bbe0c3fdab1231e23df231474883f195a343",
+          "bytes": 143496
         }
       }
     },
     "hierarchy": {
       "source": {
         "path": "figures/drawio/hierarchy.drawio",
-        "sha256": "4641fda3f4069b9e8c4c4921f27060858a8603cda227b564eec3d7e7eff4e89a",
-        "bytes": 20097
+        "sha256": "b74d54e2704fd27d6557341d1fd1fddf2a4eb89d189f5212e38cdc9ea8e61127",
+        "bytes": 30990
       },
-      "native_cells": 52,
+      "native_cells": 81,
       "page_width": "480",
-      "page_height": "360",
+      "page_height": "436",
       "exports": {
         "pdf": {
           "path": "figures/drawio/exports/hierarchy.pdf",
-          "sha256": "7b5c7e348b48e7a57996759c46b1f32ed5ebdedbf90f9f4b108e776beb2839a2",
-          "bytes": 23228
+          "sha256": "5c89f6d83ca09396239a9d4c79642b34e1696438751b8bed92719825534d276d",
+          "bytes": 27934
         },
         "svg": {
           "path": "figures/drawio/exports/hierarchy.svg",
-          "sha256": "3a0cd0b7d0c32e30095188464d04897bc3237e2b66f28d69eaf612c48b8dacc4",
-          "bytes": 77933
+          "sha256": "3b520a3952c935ab4140b0e1f1a202cd741f65063bcf883fc472c3696e1c9b0d",
+          "bytes": 114322
         },
         "png": {
           "path": "figures/drawio/exports/hierarchy.png",
-          "sha256": "d6c1fb17fd8350131980538918d4b5b7e9f59f03138b7319dc9c3db3cbe0ae24",
-          "bytes": 189183
+          "sha256": "3e8d4c3e6dacd9a291f5012aea85781aeb72725f2fa2e027f4ae448a0ca80820",
+          "bytes": 255139
         }
       }
     },
     "semantic_transport": {
       "source": {
         "path": "figures/drawio/semantic_transport.drawio",
-        "sha256": "07148be843997f653abef43694e40b38d6912ba78e3349d6f10fef2af1666575",
-        "bytes": 18379
+        "sha256": "f18178c4b0d9d92c77beab4a34aef6667206d7513218acefcbc3dd3cc0bd8399",
+        "bytes": 42733
       },
-      "native_cells": 49,
+      "native_cells": 111,
       "page_width": "480",
-      "page_height": "380",
+      "page_height": "274",
       "exports": {
         "pdf": {
           "path": "figures/drawio/exports/semantic_transport.pdf",
-          "sha256": "bef4044d89e62fc66c29a9b00fc683a189cfe1c7f50997e6bafc10f40ad70953",
-          "bytes": 20606
+          "sha256": "7402dea1e3a12eb8722a258e7e871823f14513b8d2c314ffbcd6f2bf2908b36c",
+          "bytes": 34320
         },
         "svg": {
           "path": "figures/drawio/exports/semantic_transport.svg",
-          "sha256": "1039e532f1b76393ab32a4b7ca5e85811a2438b075f5e04031a541284a11017b",
-          "bytes": 61054
+          "sha256": "2ab4460b5b02ff3f70670d75ddd90ea3c67b89929ee6dd561d9f3aada6d3543c",
+          "bytes": 124597
         },
         "png": {
           "path": "figures/drawio/exports/semantic_transport.png",
-          "sha256": "769529597ad80596064c86c389325ac36d97e128f7f6ca0c0fb667547ea5018c",
-          "bytes": 194797
+          "sha256": "b77629d19c63e9e9efa3c69fb26084d9fce820501075dcc7579ec626ad5e9e36",
+          "bytes": 196846
         }
       }
     },
@@ -154,7 +154,7 @@
       "exports": {
         "pdf": {
           "path": "figures/drawio/exports/bank_layout.pdf",
-          "sha256": "1a68f9641b8b10fe26885826587807911456ea9e25715d10a8608427b424b2eb",
+          "sha256": "44697572eb7df77bd06c2720664c2b5d1793d5ecde430cf8b6c3ba811ba037aa",
           "bytes": 20850
         },
         "svg": {
@@ -172,54 +172,54 @@
     "pipeline": {
       "source": {
         "path": "figures/drawio/pipeline.drawio",
-        "sha256": "b235e1c53089e473003c07968849fed90d127b83522cdfc33b32d406d15345fc",
-        "bytes": 20514
+        "sha256": "807e4c025002b0eebc2699a68b63c60aa84ddf3e11515a3e6cbe024c64623bad",
+        "bytes": 27120
       },
-      "native_cells": 54,
+      "native_cells": 71,
       "page_width": "480",
-      "page_height": "366",
+      "page_height": "414",
       "exports": {
         "pdf": {
           "path": "figures/drawio/exports/pipeline.pdf",
-          "sha256": "0b8517ae5516c0ad5f206c08e28b299991ef7d23526393304d7156673ffa637e",
-          "bytes": 19640
+          "sha256": "f736d45a91e1fde83346e2db5dd401a01d5e291d3c298550ec0c77b29ada7261",
+          "bytes": 20070
         },
         "svg": {
           "path": "figures/drawio/exports/pipeline.svg",
-          "sha256": "9f212b1adae141f6cb3efec2d55abc80e817ab203619dc503965023418ab6626",
-          "bytes": 76880
+          "sha256": "6b759e2cc00f9dafcabb581a7f5760a61d3a3cf736ddcf8117af5c369f1c3026",
+          "bytes": 103024
         },
         "png": {
           "path": "figures/drawio/exports/pipeline.png",
-          "sha256": "b802cfba2727bb179d1f6b3c3778f06b06259724526f6f95acb8b9c9a9b1ffcf",
-          "bytes": 141269
+          "sha256": "e1504be48492d850ec8ee3e6601a5923d3fe8adf15c2259bd0b92b00b7c171ac",
+          "bytes": 187123
         }
       }
     },
     "system_architecture": {
       "source": {
         "path": "figures/drawio/system_architecture.drawio",
-        "sha256": "953a52596e721847ba0d25cfcf9f48a48bae158951e50ef7c6466098f756c2a3",
-        "bytes": 23499
+        "sha256": "f8c5cdad3509fbcfdaf013dfb4ae6a7fd9286408ec617258a614b080da5134e0",
+        "bytes": 14895
       },
-      "native_cells": 58,
-      "page_width": "1000",
-      "page_height": "390",
+      "native_cells": 38,
+      "page_width": "480",
+      "page_height": "292",
       "exports": {
         "pdf": {
           "path": "figures/drawio/exports/system_architecture.pdf",
-          "sha256": "216af71a097a67cfe767974d6894af9f3f66bd3af88be01c584252e81e8b6982",
-          "bytes": 27883
+          "sha256": "4aaa6edff540f6707c669e7b288467d8bf297f34ac0b954804520dfd6e3834d9",
+          "bytes": 20712
         },
         "svg": {
           "path": "figures/drawio/exports/system_architecture.svg",
-          "sha256": "ce245f42f7d006195441f69a69a87e40cd5f4ad826a33a4b3f166c8ea362b47a",
-          "bytes": 72559
+          "sha256": "03f1afc58b52124fe85a5fde6ed29ed8b3a0b8d12eb41a43d758ebd22e823f65",
+          "bytes": 51272
         },
         "png": {
           "path": "figures/drawio/exports/system_architecture.png",
-          "sha256": "4142ad0fd6e1272c7441bc0924a2712df0f09ab62d585f9f84b058c39a868f8a",
-          "bytes": 402500
+          "sha256": "79b53a236c6edc168a4d8f7896253e40439b34bcaafdd5c8ab178e1968b7c9d6",
+          "bytes": 176988
         }
       }
     }
@@ -227,7 +227,7 @@
   "renderer_version": "32.4.1",
   "bundle": {
     "path": "figures/drawio/cubutterfly-methods.drawio",
-    "sha256": "2e64ea6a41183c7c40e43a3809c2a511ef6c23aa484131ee33c28ed8b4078831",
-    "bytes": 537820
+    "sha256": "64fc65e92dbec01fa7574bfca8074966dcc26be57cd7092336ff16075c1bd0d7",
+    "bytes": 336183
   }
 }

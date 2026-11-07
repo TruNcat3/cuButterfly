@@ -153,10 +153,12 @@ def test_waits_for_cpu_publication_before_gpu_checks(tmp_path, monkeypatch):
     ticks = []
     def tick(duration):
         ticks.append(duration)
-        prepared.write_text('{"status":"scoring-complete","scoring_complete":true}')
+        ready = len(ticks) > 1
+        prepared.write_text(json.dumps(dict(status='compile-ready' if ready else 'scoring-complete',
+                                           scoring_complete=True, compile_ready=ready)))
     monkeypatch.setattr(M.time, 'sleep', tick)
     def query(uuid):
-        assert ticks
+        assert len(ticks) > 1
         return snapshot()
     monkeypatch.setattr(M, 'gpu_snapshot', query)
     command = [sys.executable, '-c',

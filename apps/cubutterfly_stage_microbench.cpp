@@ -2,6 +2,8 @@
 #include <cuda.h>
 #include <nlohmann/json.hpp>
 #include "stage_probe.hpp"
+#include "low_fft_reference.hpp"
+#include <cstring>
 #include <algorithm>
 #include <cmath>
 #include <functional>
@@ -154,6 +156,9 @@ template<> double distance(Complex32 a,Complex32 b) { return std::hypot(double(a
 template<> double distance(Complex64 a,Complex64 b) { return std::hypot(a.real-b.real,a.imag-b.imag); }
 template<> double distance(Fp16 a,Fp16 b) { return std::abs(double(__half2float(a))-__half2float(b)); }
 template<> double distance(Bf16 a,Bf16 b) { return std::abs(double(__bfloat162float(a))-__bfloat162float(b)); }
+template<> double distance(Complex16 a,Complex16 b) { return std::hypot(double(__half2float(a.real))-__half2float(b.real),double(__half2float(a.imag))-__half2float(b.imag)); }
+template<> double distance(ComplexBf16 a,ComplexBf16 b) { return std::hypot(double(__bfloat162float(a.real))-__bfloat162float(b.real),double(__bfloat162float(a.imag))-__bfloat162float(b.imag)); }
+template<class Value> constexpr bool low_complex = std::is_same_v<Value,Complex16> || std::is_same_v<Value,ComplexBf16>;
 template<class Value> constexpr bool low_real = std::is_same_v<Value,Fp16> || std::is_same_v<Value,Bf16>;
 template<class Value> Value narrow(float value) {
     if constexpr(std::is_same_v<Value,Fp16>) return __float2half_rn(value);
@@ -188,6 +193,10 @@ template<> Complex32 initial(std::size_t i) { return {initial<float>(i),initial<
 template<> Complex64 initial(std::size_t i) { return {initial<double>(i),initial<double>(i+7)}; }
 template<> Fp16 initial(std::size_t i) { return narrow<Fp16>(initial<float>(i)); }
 template<> Bf16 initial(std::size_t i) { return narrow<Bf16>(initial<float>(i)); }
+
+// Scale only input samples, preserving forward/inverse normalization semantics.
+template<> Complex16 initial(std::size_t i) { return {narrow<Fp16>(initial<float>(i)/64),narrow<Fp16>(initial<float>(i+7)/64)}; }
+template<> ComplexBf16 initial(std::size_t i) { return {narrow<Bf16>(initial<float>(i)/64),narrow<Bf16>(initial<float>(i+7)/64)}; }
 
 template<class PlanType,class Value,class Reference>
 Json execute_probe(PlanType& plan,Json point,const Protocol& p,Reference reference,
@@ -255,6 +264,11 @@ Json execute_probe(PlanType& plan,Json point,const Protocol& p,Reference referen
         {"reference","same-storage-per-butterfly-rounded-fwht"},
         {"input","deterministic-rational-101-quantized-to-storage"},
         {"comparison","exact-finite-values"}};
+    if constexpr(low_complex<Value>) result["verification"]={
+        {"reference","same-storage-declared-unfused-low-fft"},
+        {"input","deterministic-rational-101-input-scaled-1/64-quantized-to-storage"},
+        {"comparison","finite outputs plus byte-identical full-plan/group composition; CPU error report only"},
+        {"acceptance_threshold",nullptr},{"gpu_contraction_may_differ",true}};
     if(p.describe) return result;
     if(!all_independent) { result["status"]="unavailable"; result["correct"]=false; return result; }
     std::vector<Value> host(elements),expected(elements),actual(elements);
@@ -269,6 +283,10 @@ Json execute_probe(PlanType& plan,Json point,const Protocol& p,Reference referen
             }
         } else host[i]=initial<Value>(i);
     }
+    if constexpr(low_complex<Value>) {
+        check(cudaMemsetAsync(full_output.data,0,bytes,stream.value));
+        for(auto& endpoint:endpoints) check(cudaMemsetAsync(endpoint->data,0,bytes,stream.value));
+    }
     expected=host;
     for(std::size_t b=0;b<batch;++b) {
         std::vector<Value> values(n);
@@ -279,10 +297,12 @@ Json execute_probe(PlanType& plan,Json point,const Protocol& p,Reference referen
     check(cudaMemcpyAsync(input_seed.data,host.data(),bytes,cudaMemcpyHostToDevice,stream.value));
     auto reset_full=[&] { check(cudaMemcpyAsync(full_input.data,input_seed.data,bytes,cudaMemcpyDeviceToDevice,stream.value)); };
     auto full=[&] { adapter.launch_plan(full_input.data,inplace ? full_input.data : full_output.data,workspace.data,stream.value); };
+    std::vector<Value> direct_snapshot;
     auto verify=[&](void* output) {
         check(cudaMemcpyAsync(actual.data(),output,bytes,cudaMemcpyDeviceToHost,stream.value));
         check(cudaStreamSynchronize(stream.value));
-        double max_error=0,max_value=0;
+        double max_error=0,max_value=0,error_squared=0,reference_squared=0;
+        std::size_t exact_elements=0;
         for(std::size_t b=0;b<batch;++b) for(std::size_t i=0;i<n;++i) {
             const auto k=b*stride+i*element_stride;
             if constexpr(std::is_integral_v<Value>) {
@@ -292,12 +312,22 @@ Json execute_probe(PlanType& plan,Json point,const Protocol& p,Reference referen
             const auto error=distance(actual[k],expected[k]);
             if(!std::isfinite(error)) return false;
             max_error=std::max(max_error,error); max_value=std::max(max_value,distance(expected[k],Value{}));
+            error_squared+=error*error; const auto magnitude=distance(expected[k],Value{});
+            reference_squared+=magnitude*magnitude; exact_elements+=error==0;
         }
-        if constexpr(std::is_integral_v<Value> || low_real<Value>) return max_error==0;
+        if constexpr(low_complex<Value>) {
+            result["same_precision_cpu_error"]={{"elements",n*batch},{"max_abs",max_error},
+                {"rms_abs",std::sqrt(error_squared/(n*batch))},
+                {"relative_l2",reference_squared ? Json(std::sqrt(error_squared/reference_squared)) : Json(nullptr)},
+                {"exact_elements",exact_elements},{"acceptance_threshold",nullptr},{"verdict","error-report-only"}};
+            if(!direct_snapshot.empty()) return std::memcmp(actual.data(),direct_snapshot.data(),bytes)==0;
+            return true; // Finiteness established above; composition equality checked next.
+        } else if constexpr(std::is_integral_v<Value> || low_real<Value>) return max_error==0;
         else return max_error<= (sizeof(Value)==sizeof(float) || std::is_same_v<Value,Complex32> ? 5e-4 : 1e-9)*std::max(1.0,max_value);
     };
     reset_full(); full();
     if(!verify(inplace ? full_input.data : full_output.data)) throw std::runtime_error("complete-plan reference verification failed");
+    if constexpr(low_complex<Value>) direct_snapshot=actual;
     check(cudaMemcpyAsync(endpoints[0]->data,input_seed.data,bytes,cudaMemcpyDeviceToDevice,stream.value));
     for(std::size_t i=0;i<count;++i) {
         auto* destination=endpoints[i+1]->data;
@@ -335,6 +365,7 @@ Json execute_probe(PlanType& plan,Json point,const Protocol& p,Reference referen
     result["plan_trial_kernel_ms"]=measure(full,reset_full,stream.value,p,warmup_ms);
     result["plan_warmup_ms"]=warmup_ms;
     result["status"]="measured"; result["correct"]=true;
+    if constexpr(low_complex<Value>) result["correctness_basis"]="all finite and bitwise full-plan/independent-group equality; floating CPU acceptance undecided";
     return result;
 }
 
@@ -396,6 +427,10 @@ Json probe(Json point,const Protocol& p) {
         auto reference=[&](auto& v) { reference_fft(v,c.inverse,c.normalize_inverse); };
         if(c.precision==ButterflyPrecision::Fp32) return execute_probe<ButterflyPlan,Complex32>(plan,point,p,reference,n,c.batch,c.batch_stride,c.element_stride,inplace);
         if(c.precision==ButterflyPrecision::Fp64) return execute_probe<ButterflyPlan,Complex64>(plan,point,p,reference,n,c.batch,c.batch_stride,c.element_stride,inplace);
+        if(c.precision==ButterflyPrecision::Fp16) return execute_probe<ButterflyPlan,Complex16>(plan,point,p,
+            [&](auto& v) { detail::reference_low_fft(v,c.inverse,c.normalize_inverse,c.accumulation==ButterflyAccumulation::Native); },n,c.batch,c.batch_stride,c.element_stride,inplace);
+        if(c.precision==ButterflyPrecision::Bf16) return execute_probe<ButterflyPlan,ComplexBf16>(plan,point,p,
+            [&](auto& v) { detail::reference_low_fft(v,c.inverse,c.normalize_inverse,c.accumulation==ButterflyAccumulation::Native); },n,c.batch,c.batch_stride,c.element_stride,inplace);
     } else if(c.precision==ButterflyPrecision::Uint32) {
         return execute_probe<ButterflyPlan,std::uint32_t>(plan,point,p,[&](auto& v) {
             if(c.op==ButterflyOperator::SupersetZeta) reference_superset_zeta(v,c.inverse);

@@ -76,17 +76,20 @@ int main() try {
     fft.execution_group_mappings = fft.segment_mappings;
     fft.prefix_codelet = "cufftdx-thread";
     fft.prefix_shared_layout = "xor";
+    fft.prefix_twiddle = "table";
     fft.segment_mappings[0].codelet = fft.prefix_codelet;
     fft.execution_group_mappings[0].codelet = fft.prefix_codelet;
     fft.boundaries = {{CrossTwiddleMode::Recurrence, DirectBoundary::PrefixTiledTranspose, FftBoundaryResidency::GlobalScratch}};
     const auto mapping = cubutterfly::serialize_mapping(fft);
     ButterflyConfig replay;
+    replay.op = ButterflyOperator::Fft; // Mathematical semantics are supplied by the request.
     replay.log_n = 20; replay.inverse = true; replay.batch = 7; replay.element_stride = 2;
     cubutterfly::apply_serialized_mapping(mapping, replay);
     require(cubutterfly::serialize_mapping(replay) == mapping, "FFT mapping roundtrip lost execution axes");
     require(replay.inverse && replay.batch == 7 && replay.element_stride == 2, "mapping overwrote mathematical semantics");
     require(replay.execution_group_mappings.back().core == FftCore::CufftDxBlock, "mixed core was flattened");
     require(replay.prefix_codelet == "cufftdx-thread" && replay.prefix_shared_layout == "xor" &&
+            replay.prefix_twiddle == "table" &&
             replay.execution_group_mappings.front().codelet == "cufftdx-thread",
             "register prefix strategy was lost in mapping replay");
 
@@ -105,6 +108,7 @@ int main() try {
     require(cooperative_mapping.find("\"prefix_codelet_lanes\":2") != std::string::npos,
             "cooperative prefix lane axis was omitted from mapping JSON");
     ButterflyConfig cooperative_replay;
+    cooperative_replay.op = ButterflyOperator::Fft;
     cooperative_replay.prefix_codelet_lanes = 7;
     cubutterfly::apply_serialized_mapping(cooperative_mapping, cooperative_replay);
     require(cooperative_replay.prefix_codelet_lanes == 2 && cooperative_replay.prefix_ept == 8 &&

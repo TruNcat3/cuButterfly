@@ -126,6 +126,21 @@ def test_join_rejects_duplicate_cpu_backend_rows(tmp_path):
         runner.export_table(value, duplicate, tmp_path)
 
 
+def test_subset_join_preserves_full_manifest_and_excludes_unmeasured_requests(tmp_path):
+    value = manifest()
+    value['cases'].append(dict(value['cases'][0], id='case-b'))
+    measured = report(value)
+    measured['identity']['selected_case_ids'] = ['case-a']
+    runner.export_table(value, measured, tmp_path)
+    with (tmp_path / 'unified_comparison.csv').open() as stream:
+        rows = list(csv.DictReader(stream))
+    assert [row['case_id'] for row in rows] == ['case-a']
+    assert rows[0]['comparison_manifest_sha256'] == runner.semantic.digest(value)
+    measured['identity']['selected_case_ids'] = ['case-b']
+    with pytest.raises(ValueError, match='outside selected'):
+        runner.export_table(value, measured, tmp_path)
+
+
 def test_join_separates_cpu_gpu_timings_and_requires_gpu_manifest(tmp_path, monkeypatch):
     value = manifest()
     gpu = tmp_path / 'gpu.json'

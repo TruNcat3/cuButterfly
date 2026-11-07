@@ -63,7 +63,7 @@ def test_staged_entry_runs_schedule_probe_once_then_reuses_identity_cache(tmpdir
     build_dir.mkdir()
     schedule_binary = build_dir / "cubutterfly_schedule_microbench"
     schedule_binary.write_bytes(b"schedule-probe-test-binary-v1")
-    for name in ("cubutterfly_stage_microbench", "cubutterfly_pipeline_microbench"):
+    for name in ("cubutterfly_stage_microbench", "cubutterfly_pipeline_microbench", "cubutterfly_plan_probe"):
         (build_dir / name).write_bytes(name.encode())
     profile_dir = tmp_path / "profile"
     output_dir = tmp_path / "output"
@@ -98,8 +98,16 @@ def test_staged_entry_runs_schedule_probe_once_then_reuses_identity_cache(tmpdir
         if pathlib.Path(command[0]).name == schedule_binary.name:
             schedule_runs.append(command)
             return SimpleNamespace(returncode=0, stdout=json.dumps(raw_probe), stderr="")
-        if pathlib.Path(command[0]).name == "cubutterfly_plan_probe" and command[1:] == ["--hardware"]:
-            return SimpleNamespace(returncode=0, stdout=json.dumps(raw_probe["hardware"]), stderr="")
+        if pathlib.Path(command[0]).name == "cubutterfly_plan_probe" and command[1:] == ["--hardware-live"]:
+            hardware = {
+                "device": "Test GPU", "compute_capability": "8.0", "memory_bytes": 4096,
+                "sm_count": 20, "max_threads_per_block": 1024, "max_threads_per_sm": 2048,
+                "max_blocks_per_sm": 32, "registers_per_sm": 65536, "registers_per_block": 65536,
+                "shared_bytes_per_sm": 163840, "shared_bytes_per_block": 163840,
+                "cooperative_launch": True,
+                "resource_source": "live-cuda-properties:explicit-hardware-probe",
+            }
+            return SimpleNamespace(returncode=0, stdout=json.dumps(hardware), stderr="")
         if pathlib.Path(command[0]).name == "cubutterfly_bench" and command[1:] == ["--list-processing-units"]:
             return SimpleNamespace(returncode=0, stdout="", stderr="")
         if any(value.endswith("stage_cost_model.py") for value in command):

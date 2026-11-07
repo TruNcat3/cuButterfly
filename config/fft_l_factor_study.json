@@ -1,0 +1,20 @@
+{
+  "schema": "cubutterfly-fp16-factor-study-v1",
+  "gpu_uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02",
+  "cases": [
+    {"n": 16384, "batch": 64}, {"n": 16384, "batch": 512},
+    {"n": 32768, "batch": 32}, {"n": 32768, "batch": 256},
+    {"n": 262144, "batch": 4}, {"n": 262144, "batch": 32}
+  ],
+  "factor_partitions": {"14": [[7, 7]], "15": [[7, 8]], "18": [[9, 9], [6, 6, 6]]},
+  "columns": [8, 16],
+  "ept": 8,
+  "schedules": [
+    {"id": "t1d0", "tiles": 1, "depth": 0, "io": "dynamic"},
+    {"id": "t4d0", "tiles": 4, "depth": 0, "io": "dynamic"},
+    {"id": "t4d1", "tiles": 4, "depth": 1, "io": "dynamic"},
+    {"id": "t4d1-static", "tiles": 4, "depth": 1, "io": "static-unrolled"}
+  ],
+  "trace_cases": [{"n": 32768, "batch": 256}, {"n": 262144, "batch": 32}],
+  "scope": "Bounded native-FP16 factor integration and organization study; explicit mappings, not recalibrated AUTO or exhaustive optimum. Same inputs, full-call CUDA Graph timing; reference errors reported without thresholds."
+}

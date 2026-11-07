@@ -23,11 +23,11 @@ SCHEMA = "cubutterfly-research-source-package-v1"
 ARCHIVE_PREFIX = "cuButterfly/"
 WHITELIST_DIRS = (
     "src", "include", "apps", "examples", "scripts", "config", "configs", "benchmarks",
-    "tests", "cmake", "patches", "docs",
+    "tests", "cmake", "patches", "docs", "python", "benchmark", "adapters",
 )
 WHITELIST_FILES = (
     "CMakeLists.txt", "LICENSE", "LICENSE.txt", "README", "README.md", "AGENTS.md",
-    "CITATION.cff", "CHANGELOG.md",
+    "CITATION.cff", "CHANGELOG.md", "THIRD_PARTY_NOTICES.md",
 )
 LEGACY_BUILD_FILES = ("results/v100_scaling_full_summary.csv",)
 PRUNED_DIRS = {".git", ".gitmodules", ".cache", "__pycache__", ".pytest_cache",

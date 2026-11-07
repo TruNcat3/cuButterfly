@@ -19,7 +19,7 @@
     {
       "id": "fft-l-smoke", "scope": "operator", "modes": ["quick"],
       "operators": ["fft-l"], "sizes": [4096], "batches": [1],
-      "precisions": ["fp16", "bf16"], "accumulation": "native",
+      "precisions": ["fp16"], "accumulation": "native",
       "directions": ["forward"], "layouts": ["natural"],
       "targets": [{"backend": "cubutterfly", "provider": "cuda", "execution": {"gpu": true, "cpu": false}}],
       "runner": "operator"

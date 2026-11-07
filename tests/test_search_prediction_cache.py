@@ -54,6 +54,24 @@ def test_shortlist_keeps_stable_ties_and_scores_every_candidate():
     assert visited == list(range(len(points)))
 
 
+def test_memory_only_cache_observes_inplace_descriptor_updates(monkeypatch):
+    class Predictor:
+        def __init__(self, model): pass
+        def prepare(self, sample): return sample.copy()
+        def bind(self, model): return lambda sample: sample['value'] * model['factor']
+    monkeypatch.setattr(calibration.stage_cost_model, 'PreparedPredictor', Predictor)
+    point = dict(operator='fwht', logN=12)
+    key = calibration.candidate_id(point)
+    descriptors = {key: {'value': 3}}
+    cache = calibration._SearchPredictionCache(descriptors, lambda p: descriptors.get(key, {'value': 5}))
+    cache.bind({'factor': 2})
+    assert cache.score(point) == 6
+    descriptors[key]['value'] = 4
+    assert cache.score(point) == 8
+    descriptors.pop(key)
+    assert cache.score(point) == 10
+
+
 def test_empirical_ranking_requires_complete_scope_or_certified_curves():
     service = {'curves': {'good': {}, 'unvalidated': {}},
                'validated': False, 'calibration_status': 'incomplete-unsupported-adapter'}

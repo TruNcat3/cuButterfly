@@ -57,6 +57,92 @@ int main() try {
     hardware.registers_per_block = 65536;
     hardware.cooperative_launch = true;
 
+    // Shared arithmetic space/time is an envelope over the kernel's leaves,
+    // independent of operator arithmetic and external batch scheduling.
+    for (const auto threads : {128U, 1024U}) {
+        const auto check_shapes = [&](const MixedDataflowPlan& plain, const MixedDataflowPlan& mixed,
+                                      const MixedDataflowPlan& small, const MixedDataflowPlan& varied) {
+            require(plain.execution_groups[0].data_space == 128 && plain.execution_groups[0].data_time == 1,
+                    "plain shared arithmetic must expose 128 pair work items for a 256-point tile");
+            const auto& groups = mixed.execution_groups;
+            require(groups.size() == 3 && groups[0].data_space == 16 && groups[1].data_space == 128 &&
+                    groups[2].data_space == 4 && groups[0].data_time == 1 && groups[1].data_time == 1 &&
+                    groups[2].data_time == 1, "mixed resident/plain shared arithmetic envelope mismatch");
+            require(groups[0].codelet == "native-register-subgraph" && groups[1].codelet == "native" &&
+                    groups[2].codelet == "native-register-subgraph", "shared resident identity leaked between groups");
+            require(small.execution_groups[0].data_space == 4 && small.execution_groups[0].data_time == 1,
+                    "16-point resident tile must expose four two-stage leaf work items");
+            require(varied.execution_groups[0].data_space == 32 && varied.execution_groups[0].data_time == 4,
+                    "variable-width shared leaves must expose the maximum space/time envelope");
+        };
+        for (const auto op : {ButterflyOperator::Fft, ButterflyOperator::Fwht, ButterflyOperator::SubsetZeta,
+                              ButterflyOperator::SupersetZeta, ButterflyOperator::Structured2x2}) {
+            ButterflyConfig c;
+            c.backend = ButterflyBackend::SharedIterative; c.op = op; c.tile_threads = threads;
+            c.log_n = 8; c.stage_partition = {8};
+            const auto plain = make_dataflow_plan(c);
+            c.log_n = 20; c.stage_partition = {8, 8, 4}; c.local_stage_partitions = {{4, 4}, {}, {2, 2}};
+            const auto mixed = make_dataflow_plan(c);
+            c.log_n = 4; c.stage_partition = {4}; c.local_stage_partitions = {{2, 2}};
+            const auto small = make_dataflow_plan(c);
+            c.log_n = 8; c.stage_partition = {8}; c.local_stage_partitions = {{1, 2, 5}}; c.tile_threads = 32;
+            check_shapes(plain, mixed, small, make_dataflow_plan(c));
+        }
+        PlanConfig c;
+        c.backend = Backend::SharedIterative; c.threads_per_block = threads;
+        c.log_n = 8; c.stage_partition = {8};
+        const auto plain = make_dataflow_plan(c);
+        c.log_n = 20; c.stage_partition = {8, 8, 4}; c.local_stage_partitions = {{4, 4}, {}, {2, 2}};
+        const auto mixed = make_dataflow_plan(c);
+        c.log_n = 4; c.stage_partition = {4}; c.local_stage_partitions = {{2, 2}};
+        const auto small = make_dataflow_plan(c);
+        c.log_n = 8; c.stage_partition = {8}; c.local_stage_partitions = {{1, 2, 5}}; c.threads_per_block = 32;
+        check_shapes(plain, mixed, small, make_dataflow_plan(c));
+    }
+
+    // Thread ownership follows physical groups, including fused boundaries;
+    // all operator traits use the same launch geometry contract.
+    for (const auto op : {ButterflyOperator::Fft, ButterflyOperator::Fwht,
+                          ButterflyOperator::SubsetZeta, ButterflyOperator::SupersetZeta,
+                          ButterflyOperator::XorZeta, ButterflyOperator::Structured2x2}) {
+        ButterflyConfig c;
+        c.backend = ButterflyBackend::SharedIterative; c.op = op;
+        c.log_n = 12; c.stage_partition = {4,4,4};
+        FftSegmentMapping wide, narrow;
+        wide.core = narrow.core = FftCore::Scalar;
+        wide.ept = narrow.ept = 0;
+        wide.threads = 128; narrow.threads = 32;
+        c.boundaries.resize(2); c.boundaries[0].residency = FftBoundaryResidency::Fused;
+        c.execution_group_mappings = {wide,narrow};
+        c.local_stage_partitions = {{2,2,2,2},{}};
+        auto plan = make_dataflow_plan(c);
+        require(plan.execution_groups.size() == 2 && plan.execution_groups[0].threads == 128 &&
+                plan.execution_groups[1].threads == 32, "shared physical thread vector was flattened");
+        c.execution_group_mappings.push_back(wide);
+        rejects([&] { make_dataflow_plan(c); });
+        c.execution_group_mappings.pop_back();
+        c.execution_group_mappings[1].threads = 33;
+        rejects([&] { make_dataflow_plan(c); });
+        c.execution_group_mappings[1].threads = 32;
+        c.execution_group_mappings[1].ept = 8;
+        rejects([&] { make_dataflow_plan(c); });
+    }
+    {
+        PlanConfig c;
+        c.backend = Backend::SharedIterative; c.log_n = 12; c.stage_partition = {4,4,4};
+        c.boundary_mappings.resize(2); c.boundary_mappings[0].storage = BoundaryStorage::ResidentFused;
+        NttSubgraphMapping wide,narrow; wide.threads_per_block = 128; narrow.threads_per_block = 32;
+        c.execution_group_mappings = {wide,narrow}; c.local_stage_partitions = {{2,2,2,2},{}};
+        const auto plan = make_dataflow_plan(c);
+        require(plan.execution_groups[0].threads == 128 && plan.execution_groups[1].threads == 32,
+                "NTT shared physical thread vector was flattened");
+        c.execution_group_mappings[1].units_per_cta = 2;
+        rejects([&] { make_dataflow_plan(c); });
+        c.execution_group_mappings[1].units_per_cta = 1;
+        c.execution_group_mappings.pop_back();
+        rejects([&] { make_dataflow_plan(c); });
+    }
+
     for (const auto log_n : {12U, 16U}) {
         for (const auto op : {ButterflyOperator::Fft, ButterflyOperator::Fwht}) {
             ButterflyConfig defaults;
@@ -463,6 +549,22 @@ int main() try {
             generic_online_plan.execution_groups[1].data_space == 128 &&
             generic_online_plan.execution_groups[1].data_time == 1,
             "generic online suffix column/shared metadata disagrees with the typed kernel");
+
+    generic_online.data_tiles_per_cta = 4;
+    const auto grouped_online_plan = make_dataflow_plan(generic_online);
+    require(grouped_online_plan.execution_groups[0].grid_ctas == 24 &&
+            grouped_online_plan.execution_groups[0].live_shared_bytes == 512 &&
+            grouped_online_plan.execution_groups[0].data_space == 64 &&
+            grouped_online_plan.execution_groups[1].grid_ctas == 12 &&
+            grouped_online_plan.execution_groups[1].live_shared_bytes == 1024 &&
+            grouped_online_plan.shared_bytes_per_subgraph == 1024,
+            "grouped generic online metadata lost independent prefix and suffix axes");
+    generic_online.data_tiles_per_cta = 16;
+    const auto prefix_dominant_plan = make_dataflow_plan(generic_online);
+    require(prefix_dominant_plan.execution_groups[0].grid_ctas == 6 &&
+            prefix_dominant_plan.execution_groups[0].live_shared_bytes == 2048 &&
+            prefix_dominant_plan.shared_bytes_per_subgraph == 2048,
+            "generic online shared capacity ignored grouped prefix storage");
 
     ButterflyConfig scalar_fft_online;
     scalar_fft_online.op = ButterflyOperator::Fft;

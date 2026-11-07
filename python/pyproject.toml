@@ -11,3 +11,6 @@ requires-python = ">=3.9"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["cubutterfly*"]
+
+[tool.setuptools.package-data]
+cubutterfly = ["*.cu"]

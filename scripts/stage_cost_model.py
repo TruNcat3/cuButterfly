@@ -18,6 +18,7 @@ import statistics
 from functools import lru_cache
 from schedule_cost_model import costs as scheduling_costs
 from hardware_registry import canonical_semantics
+from shared_work_geometry import shared_work_geometry
 
 try:
     import resident_mapping
@@ -25,9 +26,9 @@ except ImportError:  # pragma: no cover - package import fallback
     from . import resident_mapping
 
 LEGACY_VERSION = "physical-stage-composition-v3"
-# Primitive identity now includes semantic and policy axes.  Do not allow a
-# serialized v6 coefficient table to be reused against the expanded key.
-VERSION = "physical-stage-composition-v7"
+# Shared priors now use an allocated-lane utilization heuristic per leaf. Coefficients
+# fitted to the earlier rate-only feature must be refitted.
+VERSION = "physical-stage-composition-v8"
 PARAMETERS = ("startup_and_tail", "service")
 
 _MODEL_SERVICE_INDEX_CACHE = collections.OrderedDict()
@@ -150,6 +151,12 @@ def primitive_key(sample, group, mapping=None, *, group_index=None):
         group.get("exchange", sample.get("exchange", "unknown")),
         ["exchange_chunk", exchange_chunk],
         ["local_stage_partition", local_partition]]
+    if mapping.get("backend", sample.get("backend")) == "shared-iterative":
+        threads = group.get("threads")
+        if threads in (None, ""):
+            threads = resident_mapping.group_axis(mapping, "threads", group_index,
+                                                  sample.get("tile_threads", 128))
+        key.append(["threads", int(threads)])
     # The legacy whole-plan fallback is also a ranking model.  Keep distinct
     # semantic contracts and physical policy axes from sharing one fitted
     # primitive merely because they have the same stage count.  The measured
@@ -182,10 +189,20 @@ def primitive_key(sample, group, mapping=None, *, group_index=None):
         for name in ("prefix_codelet", "prefix_shared_layout"):
             if name in sample or name in mapping:
                 key.append([name, sample.get(name, mapping.get(name))])
+        twiddle = mapping.get("prefix_twiddle", sample.get("prefix_twiddle", "runtime"))
+        if twiddle != "runtime":
+            key.append(["prefix_twiddle", twiddle])
     lanes = _prefix_codelet_lanes(sample, mapping, group, group_index)
     if lanes is not None:
         key.append(["prefix_codelet_lanes", lanes])
     return json.dumps(key, separators=(",", ":"))
+
+
+def _shared_data_tiles(group, mapping, sample):
+    # Physical groups may override the plan's independent tile-column count.
+    # External batch_tile_count is a separate sequential-work dimension.
+    return number(group, "data_tiles_per_cta",
+                  number(mapping, "data_tiles_per_cta", number(sample, "data_tiles_per_cta", 1)))
 
 
 def stage_terms(sample, profile, *, mapping=None):
@@ -217,7 +234,9 @@ def stage_terms(sample, profile, *, mapping=None):
         stages = max(1, number(group, "stage_count", 1))
         grid = max(1, number(group, "grid_ctas",
                              number(group, "work_blocks", number(group, "work", 1))))
-        threads = max(1, number(group, "threads", number(sample, "tile_threads", 128)))
+        fallback_threads = resident_mapping.group_axis(mapping, "threads", group_index,
+                                                       number(sample, "tile_threads", 128))
+        threads = max(1, number(group, "threads", fallback_threads))
         live = number(group, "live_shared_bytes")
         resident, resource_state = _resource_residency(dict(group, threads=threads), profile, group_index)
         memory = 1000 * 2 * points * width / number(caps, required[0])
@@ -227,6 +246,13 @@ def stage_terms(sample, profile, *, mapping=None):
         if local_partition in (None, ""):
             local_partition = resident_mapping.group_axis(
                 mapping, "local_stage_partition", group_index, [])
+        arithmetic_work = None
+        if mapping.get("backend", sample.get("backend")) == "shared-iterative":
+            arithmetic_work = shared_work_geometry(int(stages), int(threads), local_partition,
+                                                   _shared_data_tiles(group, mapping, sample))
+            # This heuristic scales a rate prior, not actual issued instructions
+            # or measured service. Without resident CTA limits it can overpenalize.
+            compute /= arithmetic_work["allocated_lane_utilization"]
         if (group.get("codelet") == "native-register-subgraph" and
                 isinstance(local_partition, (list, tuple)) and local_partition):
             # A resident leaf fuses its internal stages in registers.  Only
@@ -260,6 +286,7 @@ def stage_terms(sample, profile, *, mapping=None):
             stage_count=stages, grid_ctas=grid, points=points,
             interstage_boundaries=interstage_boundaries,
             exchange_barriers=extra_exchange_barriers,
+            arithmetic_work=arithmetic_work,
             resource_source="compiler" if group.get("compiler_resources_known") else "projected",
             **resource_state,
             descriptor_source=sample.get("descriptor_source", "measured-plan")))
@@ -494,15 +521,26 @@ def _minimal_terms(sample, profile, *, mapping=None):
     sm_count = max(1, number(profile, "sm_count", number(profile.get("hardware", {}), "sm_count", 1)))
     terms = []
     for group_index, group in enumerate(groups):
-        threads = max(1, number(group, "threads", number(sample, "tile_threads", 128)))
+        fallback_threads = resident_mapping.group_axis(mapping, "threads", group_index,
+                                                       number(sample, "tile_threads", 128))
+        threads = max(1, number(group, "threads", fallback_threads))
         _, resource_state = _resource_residency(dict(group, threads=threads), profile, group_index)
         grid = max(1, number(group, "grid_ctas",
                              number(group, "work_blocks", number(group, "work", 1))))
         launches = max(1, int(number(group, "launch_count",
                                       number(group, "kernel_launch_count", 1))))
         schedule = scheduling_costs(profile, threads, grid, sm_count)
+        arithmetic_work = None
+        if mapping.get("backend", sample.get("backend")) == "shared-iterative":
+            local_partition = group.get("local_stage_partition")
+            if local_partition in (None, ""):
+                local_partition = resident_mapping.group_axis(mapping, "local_stage_partition", group_index, [])
+            arithmetic_work = shared_work_geometry(
+                int(number(group, "stage_count", 1)), int(threads), local_partition,
+                _shared_data_tiles(group, mapping, sample))
         terms.append(dict(key=primitive_key(sample, group, mapping, group_index=group_index), startup_and_tail=schedule["startup_ms"],
             scheduling=schedule, service=1e-9, memory_ms=0.0, compute_ms=0.0,
+            arithmetic_work=arithmetic_work,
             occupancy=min(1.0, grid / sm_count), launch_count=launches,
             stage_count=max(1, number(group, "stage_count", 1)), grid_ctas=grid, points=0.0,
             resource_source="unknown" if not group.get("compiler_resources_known") else "compiler",
@@ -527,7 +565,8 @@ def _model_service_index(model, service_profile):
     return index
 
 
-def _predict_batch_composition(sample, model, projection, explain):
+def _predict_batch_composition(sample, model, projection, explain, *, prepared=None,
+                               composer=compose_stages):
     """Compose actual serial tile kernels while keeping runtime dependencies."""
     batch = max(1, int(number(sample, "batch", 1)))
     tile = min(batch, max(1, int(number(sample, "batch_tile_count", 1))))
@@ -536,14 +575,15 @@ def _predict_batch_composition(sample, model, projection, explain):
             or projection.get("tail_batch") != tail_batch or bool(projection.get("tail")) != bool(tail_batch)):
         raise ValueError("stale batch service projection geometry")
     results = []
-    for view in (projection["full"], projection.get("tail")):
+    for index, view in enumerate((projection["full"], projection.get("tail"))):
         if view is None:
             results.append(None)
             continue
         physical_sample = {**view["sample"], "execution_groups_json": view["groups"]}
         if number(physical_sample, "stage_overlap") or number(physical_sample, "factor_overlap"):
             raise ValueError("batch service projection must contain serial descriptors")
-        results.append(_predict_measured(physical_sample, model, explain=True))
+        results.append(_predict_measured(physical_sample, model, explain=True,
+            prepared=None if prepared is None else prepared[index], composer=composer))
     full, tail = results
     tiles = projection["tile_count"]
     stages = full["stages"]
@@ -553,7 +593,7 @@ def _predict_batch_composition(sample, model, projection, explain):
         estimate = sum(stage["overhead_ms"] + stage["body_ms"] for stage in stages) * (tiles - 1)
         estimate += sum(stage["overhead_ms"] + stage["body_ms"] for stage in (tail_stages or stages))
     else:
-        estimate = compose_stages(stages, tiles=tiles, overlap=True, tail_stages=tail_stages)
+        estimate = composer(stages, tiles=tiles, overlap=True, tail_stages=tail_stages)
     resource_estimate = estimate
     pipeline = {"covered": False, "reason": "pipeline-scheduling-unmeasured"}
     if model.get("profile", {}).get("pipeline_scheduling"):
@@ -579,14 +619,10 @@ def _predict_batch_composition(sample, model, projection, explain):
     return details if explain else estimate
 
 
-def _predict_measured(sample, model, explain=False):
+def _measured_components(sample, model):
     from stage_service_model import _mapping, _semantic_geometry, predict_group_resolved
 
     service_profile = model.get("stage_service") or model.get("profile", {}).get("stage_service")
-    projection = decoded(sample.get("stage_service_projection"), {})
-    if (number(sample, "stage_overlap") and sample.get("backend") != "factor-streamed"
-            and projection.get("status") == "resolved"):
-        return _predict_batch_composition(sample, model, projection, explain)
     groups = decoded(sample.get("execution_groups_json"), [])
     if not groups:
         raise ValueError("physical execution groups are required for staged costs")
@@ -599,7 +635,7 @@ def _predict_measured(sample, model, explain=False):
         raise
     except (ValueError, KeyError, TypeError, ZeroDivisionError):
         terms = _minimal_terms(sample, model["profile"], mapping=mapping)
-    stages, missing, outside, unmeasured = [], [], [], []
+    components = []
     for index, group in enumerate(groups):
         term = terms[index] if index < len(terms) else _minimal_terms(
             dict(sample, execution_groups_json=[group]), model["profile"], mapping=mapping)[0]
@@ -608,6 +644,32 @@ def _predict_measured(sample, model, explain=False):
             base=semantic_geometry)
         threads = max(1, number(resolved_group, "threads", number(sample, "tile_threads", 128)))
         _, resource_state = _resource_residency(dict(resolved_group, threads=threads), model["profile"], index)
+        components.append((term, measured, resource_state, resources_resolved))
+    return components
+
+
+def _prepare_measured(sample, model):
+    for index, group in enumerate(decoded(sample.get("execution_groups_json"), [])):
+        threads = max(1, number(group, "threads", number(sample, "tile_threads", 128)))
+        _resource_residency(dict(group, threads=threads), model["profile"], index)
+    projection = decoded(sample.get("stage_service_projection"), {})
+    if (number(sample, "stage_overlap") and sample.get("backend") != "factor-streamed"
+            and projection.get("status") == "resolved"):
+        return tuple(None if view is None else _prepare_measured(
+            {**view["sample"], "execution_groups_json": view["groups"]}, model)
+            for view in (projection["full"], projection.get("tail")))
+    return _measured_components(sample, model)
+
+
+def _predict_measured(sample, model, explain=False, *, prepared=None, composer=compose_stages):
+    projection = decoded(sample.get("stage_service_projection"), {})
+    if (number(sample, "stage_overlap") and sample.get("backend") != "factor-streamed"
+            and projection.get("status") == "resolved"):
+        return _predict_batch_composition(sample, model, projection, explain,
+            prepared=prepared, composer=composer)
+    components = _measured_components(sample, model) if prepared is None else prepared
+    stages, missing, outside, unmeasured = [], [], [], []
+    for index, (term, measured, resource_state, resources_resolved) in enumerate(components):
         if measured["covered"] and measured["kernel_ms"] is not None:
             # The probe duration already includes the physical launch.  Keep
             # overhead zero and launch_count one so schedule composition does
@@ -615,6 +677,7 @@ def _predict_measured(sample, model, explain=False):
             body = float(measured["kernel_ms"])
             stages.append(dict(overhead_ms=0.0, body_ms=body,
                 scheduling=term["scheduling"], sm_demand=max(term["occupancy"], 0.0),
+                arithmetic_work=term.get("arithmetic_work"),
                 hbm_demand=min(1.0, term["memory_ms"] / body) if body else 0.0,
                 launch_count=1, service_source=measured["source"],
                 curve_key=measured["curve_key"], measured_kernel_ms=body,
@@ -633,6 +696,7 @@ def _predict_measured(sample, model, explain=False):
         body = max(1e-9, term["service"] * factors.get("service", 1.0))
         stages.append(dict(overhead_ms=overhead, body_ms=body,
             scheduling=term["scheduling"],
+            arithmetic_work=term.get("arithmetic_work"),
             sm_demand=max(term["occupancy"], min(1.0, term["compute_ms"] / body)),
             hbm_demand=min(1.0, term["memory_ms"] / body), launch_count=term["launch_count"],
             service_source="legacy-whole-plan-fallback", curve_key=key, **resource_state))
@@ -654,7 +718,7 @@ def _predict_measured(sample, model, explain=False):
     if approximate:
         estimate = sum(s["overhead_ms"] * tiles + s["body_ms"] * (tiles - 1 + fraction) for s in stages)
     else:
-        estimate = compose_stages(stages, tiles, factor, overlap, fraction)
+        estimate = composer(stages, tiles, factor, overlap, fraction)
     details = dict(kernel_ms=estimate, stages=stages, schedule_tiles=tiles,
         missing_primitives=sorted(set(missing)), extrapolated_primitives=sorted(set(outside)),
         unmeasured_groups=unmeasured, service_model="measured-stage-curves",
@@ -701,6 +765,7 @@ def _predict_terms(sample, terms, model, explain=False, *, composer=compose_stag
         body = max(1e-9, term["service"] * factors.get("service", 1.0))
         stages.append(dict(overhead_ms=overhead, body_ms=body,
             scheduling=term["scheduling"],
+            arithmetic_work=term.get("arithmetic_work"),
             resource_feasibility=term["resource_feasibility"], unknown_resources=term["unknown_resources"],
             sm_demand=max(term["occupancy"], min(1.0, term["compute_ms"] / body)),
             hbm_demand=min(1.0, term["memory_ms"] / body)))
@@ -743,6 +808,7 @@ class PreparedPredictor:
         self._profile = copy.deepcopy(model["profile"])
         self._service = copy.deepcopy(model.get("stage_service"))
         self._mode = (model.get("version"), model.get("service_model"))
+        self._preparation_model = model
         self._schedules = collections.OrderedDict()
         self._measured = bool((model.get("stage_service") or
                                model["profile"].get("stage_service") or {}).get("curves")) and (
@@ -753,7 +819,8 @@ class PreparedPredictor:
     def prepare(self, sample):
         snapshot = copy.deepcopy(sample)
         try:
-            terms = None if self._measured else stage_terms(snapshot, self._profile)
+            terms = (_prepare_measured(snapshot, self._preparation_model) if self._measured
+                     else stage_terms(snapshot, self._profile))
         except ResourceInfeasibleError as error:
             terms = error
         return (self, snapshot, terms)
@@ -770,10 +837,11 @@ class PreparedPredictor:
         # the predictor and its cache are released at the workload boundary.
         schedules = self._schedules
 
-        def composer(stages, tiles=1, factor=False, overlap=False, last_fraction=1.0):
-            signature = (_schedule_signature(stages), tiles, factor, overlap, last_fraction)
+        def composer(stages, tiles=1, factor=False, overlap=False, last_fraction=1.0, tail_stages=None):
+            signature = (_schedule_signature(stages), tiles, factor, overlap, last_fraction,
+                         None if tail_stages is None else _schedule_signature(tail_stages))
             if signature not in schedules:
-                schedules[signature] = _compose_stages_cached(*signature, None)
+                schedules[signature] = _compose_stages_cached(*signature)
                 if len(schedules) > 65536:
                     schedules.popitem(last=False)
             else:
@@ -788,8 +856,8 @@ class PreparedPredictor:
             raise ValueError("prepared sample belongs to another predictor")
         if isinstance(terms, ResourceInfeasibleError):
             return _infeasible_prediction(terms, explain)
-        if terms is None:
-            return predict(sample, model, explain)
+        if self._measured:
+            return _predict_measured(sample, model, explain, prepared=terms, composer=composer)
         return _predict_terms(sample, terms, model, explain, composer=composer)
 
 

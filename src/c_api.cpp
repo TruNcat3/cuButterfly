@@ -83,6 +83,7 @@ struct cubutterflyPlan {
     std::size_t boundary_input_bytes = 0;
     std::size_t boundary_output_bytes = 0;
     std::string xd_mapping;
+    bool direct_input_boundary = false;
     bool direct_output_boundary = false;
     bool fused_input_boundary = false;
     cubutterflySelectionSource_t selection_source = CUBUTTERFLY_SELECTION_STATIC_MODEL;
@@ -185,7 +186,7 @@ std::size_t search_budget() {
 
 auto search_family_key(const cuntt::ButterflyConfig& candidate) {
     return std::make_tuple(candidate.backend, candidate.compute_unit,
-                           candidate.local_exchange, candidate.stage_overlap);
+                           candidate.local_exchange, candidate.stage_overlap, candidate.fft_core);
 }
 
 auto search_family_key(const cuntt::PlanConfig& candidate) {
@@ -194,11 +195,17 @@ auto search_family_key(const cuntt::PlanConfig& candidate) {
 }
 
 template <typename Candidate>
+auto search_organization_key(const Candidate& candidate) {
+    return std::make_tuple(candidate.backend, candidate.stage_overlap);
+}
+
+template <typename Candidate>
 std::vector<Candidate> bounded_search_inventory(const std::vector<Candidate>& inventory,
                                                 std::size_t budget) {
     if (!budget || inventory.size() <= budget) return inventory;
     const auto indices = cuntt::detail::bounded_candidate_indices(
-        inventory, budget, [](const Candidate& candidate) { return search_family_key(candidate); });
+        inventory, budget, [](const Candidate& candidate) { return search_family_key(candidate); },
+        [](const Candidate& candidate) { return search_organization_key(candidate); });
     std::vector<Candidate> selected;
     selected.reserve(indices.size());
     for (const auto index : indices) selected.push_back(inventory[index]);
@@ -1713,9 +1720,13 @@ std::string axis_algorithm(const cubutterflyDescriptor& descriptor,unsigned sour
 ButterflyAxisSelection select_butterfly_axis(cubutterflyHandle_t handle,
                                              const cubutterflyDescriptor& descriptor,
                                              std::uint32_t source_axis, std::size_t length,
-                                             std::size_t batch) {
+                                             std::size_t batch, bool direct_input = false) {
     auto config = make_axis_butterfly_config(descriptor, source_axis, length, batch);
-    const auto axis_descriptor = make_axis_descriptor(descriptor, source_axis, length, batch);
+    auto axis_descriptor = make_axis_descriptor(descriptor, source_axis, length, batch);
+    if (direct_input) {
+        config.placement = cuntt::ButterflyPlacement::OutOfPlace;
+        axis_descriptor.placement = CUBUTTERFLY_PLACEMENT_OUT_OF_PLACE;
+    }
     const bool rank2_fft_policy_applies =
         descriptor.rank == 2 && descriptor.op == CUBUTTERFLY_OPERATOR_FFT &&
         descriptor.algorithm_policy != CUBUTTERFLY_ALGORITHM_EXPLICIT;
@@ -4471,6 +4482,23 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
             return;
         }
         if (created->composite) {
+            // A packed rank-two input is already in the first consumer's
+            // layout. Let that axis read it directly and write into scratch.
+            // This is independent of the arithmetic core and preserves the
+            // caller's input. Explicit legacy mappings retain their pack node.
+            const bool direct_input_eligible = resolved.rank == 2 &&
+                resolved.length_mode == CUBUTTERFLY_LENGTH_STANDARD &&
+                packed_side(resolved, true, physical_extents);
+            created->direct_input_boundary = direct_input_eligible;
+            if (resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_EXPLICIT &&
+                !resolved.explicit_algorithm.empty() && resolved.explicit_algorithm.front() == '{') {
+                const auto replay = nlohmann::json::parse(resolved.explicit_algorithm);
+                if (replay.value("kind", "") == "composition") {
+                    created->direct_input_boundary = replay.value("direct_input_boundary", false);
+                    require(!created->direct_input_boundary || direct_input_eligible,
+                            "direct input boundary requires a packed standard rank-two input");
+                }
+            }
             std::size_t packed_points = resolved.batch;
             for (const auto extent : physical_extents) {
                 require(packed_points <= static_cast<std::size_t>(-1) / extent, "packed point count overflows size_t");
@@ -4491,7 +4519,8 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
                 created->ntt_axes.back()->set_stream(handle->stream);
             };
             auto add_butterfly_axis = [&](std::uint32_t source_axis, std::size_t length, std::size_t batch) {
-                auto selected = select_butterfly_axis(handle, resolved, source_axis, length, batch);
+                auto selected = select_butterfly_axis(handle, resolved, source_axis, length, batch,
+                    created->direct_input_boundary && created->butterfly_axes.empty());
                 created->selection_source = combined_source(created->selection_source, selected.source);
                 axis_algorithms.push_back(selected.algorithm);
                 axis_reasons.push_back(selected.reason);
@@ -4549,6 +4578,8 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
             for (std::size_t axis = 0; axis < axis_algorithms.size(); ++axis)
                 algorithm << (axis == 0 ? "" : ",") << axis_algorithms[axis];
             algorithm << ']';
+            if (created->direct_input_boundary)
+                algorithm << "+direct-input";
             if (created->direct_output_boundary)
                 algorithm << "+direct-output";
             if (created->fused_input_boundary)
@@ -4726,6 +4757,8 @@ cubutterflyStatus_t cubutterflyPlanGetMappingJson(cubutterflyPlan_t plan, char* 
                               {"execution_mode", static_cast<int>(plan->descriptor.execution_mode)},
                               {"nd_composite", plan->xd},
                               {"axes", nlohmann::json::array()}};
+        if (plan->direct_input_boundary)
+            mapping["direct_input_boundary"] = true;
         for (const auto& axis : plan->butterfly_axes)
             mapping["axes"].push_back(nlohmann::json::parse(cuntt::detail::serialize_mapping(axis->config())));
         for (const auto& axis : plan->ntt_axes)
@@ -5158,7 +5191,7 @@ cubutterflyStatus_t cubutterflyExecute(cubutterflyHandle_t handle, cubutterflyPl
             } else {
                 const std::size_t input_rows = inverse_embedding ? physical[0] : logical[0];
                 const std::size_t input_cols = inverse_embedding ? physical[1] : logical[1];
-                if (!input_is_first_workspace) {
+                if (!input_is_first_workspace && !plan->direct_input_boundary) {
                     cuntt::detail::launch_pack_2d(input, first, input_rows, input_cols, physical[0], physical[1],
                                                   plan->descriptor.batch, plan->descriptor.input_strides[0],
                                                   plan->descriptor.input_strides[1], plan->descriptor.input_batch_stride,
@@ -5170,45 +5203,53 @@ cubutterflyStatus_t cubutterflyExecute(cubutterflyHandle_t handle, cubutterflyPl
                 void* ntt_destination = plan->direct_output_boundary && plan->descriptor.rank == 1
                                             ? output
                                             : static_cast<void*>(second);
+                const void* ntt_input = plan->direct_input_boundary ? input : first;
+                if (plan->direct_input_boundary && ntt_input == ntt_destination)
+                    ntt_destination = first;
                 if (plan->descriptor.storage == CUBUTTERFLY_DATA_UINT32)
-                    plan->ntt_axes[0]->execute_async(reinterpret_cast<const std::uint32_t*>(first), reinterpret_cast<std::uint32_t*>(ntt_destination));
+                    plan->ntt_axes[0]->execute_async(reinterpret_cast<const std::uint32_t*>(ntt_input), reinterpret_cast<std::uint32_t*>(ntt_destination));
                 else
-                    plan->ntt_axes[0]->execute_async(reinterpret_cast<const std::uint64_t*>(first), reinterpret_cast<std::uint64_t*>(ntt_destination));
+                    plan->ntt_axes[0]->execute_async(reinterpret_cast<const std::uint64_t*>(ntt_input), reinterpret_cast<std::uint64_t*>(ntt_destination));
                 packed_result = ntt_destination;
                 if (plan->descriptor.rank == 2) {
-                    cuntt::detail::launch_transpose_2d(second, first, physical[0], physical[1],
+                    void* transposed = ntt_destination == second ? first : second;
+                    cuntt::detail::launch_transpose_2d(ntt_destination, transposed, physical[0], physical[1],
                                                        plan->descriptor.batch, plan->element_bytes, handle->stream);
                     if (plan->descriptor.storage == CUBUTTERFLY_DATA_UINT32)
-                        plan->ntt_axes[1]->execute_async(reinterpret_cast<const std::uint32_t*>(first), reinterpret_cast<std::uint32_t*>(second));
+                        plan->ntt_axes[1]->execute_async(reinterpret_cast<const std::uint32_t*>(transposed), reinterpret_cast<std::uint32_t*>(ntt_destination));
                     else
-                        plan->ntt_axes[1]->execute_async(reinterpret_cast<const std::uint64_t*>(first), reinterpret_cast<std::uint64_t*>(second));
+                        plan->ntt_axes[1]->execute_async(reinterpret_cast<const std::uint64_t*>(transposed), reinterpret_cast<std::uint64_t*>(ntt_destination));
                     void* final_destination = plan->direct_output_boundary
                                                   ? output
-                                                  : static_cast<void*>(first);
-                    cuntt::detail::launch_transpose_2d(second, final_destination, physical[1], physical[0],
+                                                  : transposed;
+                    cuntt::detail::launch_transpose_2d(ntt_destination, final_destination, physical[1], physical[0],
                                                        plan->descriptor.batch, plan->element_bytes, handle->stream);
                     packed_result = final_destination;
                 }
             } else {
                 void* butterfly_first = direct_butterfly_1d ? output : static_cast<void*>(first);
+                if (plan->direct_input_boundary && input == butterfly_first)
+                    butterfly_first = second;
                 if (plan->fused_input_boundary) {
                     plan->butterfly_axes[0]->execute_zero_extended_async(
                         static_cast<const float*>(input), static_cast<float*>(output),
                         logical[0], plan->descriptor.input_batch_stride,
                         plan->descriptor.input_strides[0]);
                 } else {
-                    execute_butterfly(*plan->butterfly_axes[0], butterfly_first, butterfly_first,
+                    execute_butterfly(*plan->butterfly_axes[0],
+                                      plan->direct_input_boundary ? input : butterfly_first, butterfly_first,
                                       plan->descriptor.storage);
                 }
                 packed_result = butterfly_first;
                 if (plan->descriptor.rank == 2) {
-                    cuntt::detail::launch_transpose_2d(first, second, physical[0], physical[1],
+                    void* transposed = butterfly_first == first ? second : first;
+                    cuntt::detail::launch_transpose_2d(butterfly_first, transposed, physical[0], physical[1],
                                                        plan->descriptor.batch, plan->element_bytes, handle->stream);
-                    execute_butterfly(*plan->butterfly_axes[1], second, second, plan->descriptor.storage);
+                    execute_butterfly(*plan->butterfly_axes[1], transposed, transposed, plan->descriptor.storage);
                     void* final_destination = plan->direct_output_boundary
                                                   ? output
-                                                  : static_cast<void*>(first);
-                    cuntt::detail::launch_transpose_2d(second, final_destination, physical[1], physical[0],
+                                                  : butterfly_first;
+                    cuntt::detail::launch_transpose_2d(transposed, final_destination, physical[1], physical[0],
                                                        plan->descriptor.batch, plan->element_bytes, handle->stream);
                     packed_result = final_destination;
                 }

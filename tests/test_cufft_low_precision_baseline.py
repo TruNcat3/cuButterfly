@@ -149,3 +149,56 @@ def test_build_manifest_is_cpu_only_and_pins_sources():
     assert manifest["binding_sha256"] == M.sha256(SCRIPT)
     assert set(manifest["vendor_header_sha256"]) == {"cufft.h", "cufftXt.h", "library_types.h", "cuda_runtime_api.h"}
     assert "--cudart=shared" in manifest["command"] and "-lcufft" in manifest["command"]
+
+
+@pytest.mark.parametrize("target", [80, 120, "120"])
+def test_build_explicit_architecture_and_compiler(tmp_path, monkeypatch, target):
+    nvcc = tmp_path / "cuda/bin/nvcc"
+    nvcc.parent.mkdir(parents=True)
+    nvcc.touch()
+    calls = []
+
+    def compile_bridge(command, check):
+        assert check is True
+        calls.append(command)
+        Path(command[command.index("-o") + 1]).write_bytes(b"mock compiled bridge")
+
+    monkeypatch.setattr(M.subprocess, "check_output", lambda command, text: "mock nvcc")
+    monkeypatch.setattr(M.subprocess, "run", compile_bridge)
+    monkeypatch.setattr(M, "sha256", lambda path: "mock-sha256")
+    library = M.build(tmp_path / "output", nvcc=nvcc, cuda_arch=target)
+    receipt = json.loads((library.parent / "build.json").read_text())
+    assert calls[0][0] == str(nvcc.resolve())
+    assert f"-arch=sm_{target}" in calls[0]
+    assert receipt["architecture"] == f"sm_{target}"
+
+
+@pytest.mark.parametrize("target", [True, 0, -80, 8.0, "sm_80", "80a", "", "８０"])
+def test_build_rejects_invalid_architecture_before_writing(tmp_path, target):
+    output = tmp_path / "output"
+    with pytest.raises(ValueError, match="numeric SM target"):
+        M.build(output, nvcc=tmp_path / "missing-nvcc", cuda_arch=target)
+    assert not output.exists()
+
+
+def test_cli_forwards_architecture_and_explicit_nvcc(tmp_path):
+    with mock.patch.object(M, "build", return_value=tmp_path / "lib.so") as build:
+        assert M.main(["--build", str(tmp_path), "--nvcc", "/explicit/cuda/bin/nvcc",
+                       "--cuda-arch", "120"]) == 0
+    build.assert_called_once_with(tmp_path, "/explicit/cuda/bin/nvcc", cuda_arch=120)
+    with mock.patch.object(M, "build", return_value=tmp_path / "lib.so") as build:
+        assert M.main(["--build", str(tmp_path)]) == 0
+    build.assert_called_once_with(tmp_path, "/usr/local/cuda-12.4/bin/nvcc", cuda_arch=80)
+
+
+def test_unsupported_architecture_compile_failure_is_not_retried(tmp_path, monkeypatch):
+    nvcc = tmp_path / "nvcc"
+    nvcc.touch()
+    monkeypatch.setattr(M.subprocess, "check_output", lambda command, text: "mock nvcc")
+    failure = subprocess.CalledProcessError(1, [str(nvcc), "-arch=sm_120"])
+    with mock.patch.object(M.subprocess, "run", side_effect=failure) as compile_bridge:
+        with pytest.raises(subprocess.CalledProcessError) as caught:
+            M.build(tmp_path / "output", nvcc=nvcc, cuda_arch=120)
+    assert caught.value is failure
+    assert compile_bridge.call_count == 1
+    assert not (tmp_path / "output/build.json").exists()

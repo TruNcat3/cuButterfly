@@ -1,39 +1,15 @@
-\subsection{The opportunity and cost of local reuse}
+\subsection{From a resource roof to an execution organization}
 \label{sec:motivation}
-The preceding approaches show that efficient local arithmetic and intelligent
-scheduling are both available. The remaining difficulty is choosing their
-boundary. How much dependent work should one local unit absorb, and how much
-independent work should remain available to other units?
-An \textbf{execution organization} determines which operations run together,
-where values live, how producers present them to successors, and when dependent
-work can begin. An arithmetic core implements a local function. Its
-organization determines the communication and resources needed to compose
-that function into a complete transform.
+Changing pair partners makes data retention and parallel execution
+interdependent. Roofline bounds their performance opportunity but does not
+map stages, data, and storage together. We examine the same arithmetic under
+different organizations to derive that mapping.
 
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{figures/drawio/exports/organization_tradeoffs.pdf}
-\caption{Three organizations of the same 16-point Hadamard graph. Boxes enclose
-closed components, not fixed CUDA blocks. Rows are reordered within each band
-to display closure, so equal row positions across a cut need not be the same
-logical value. All alternatives execute 32 pairs. Value-only reads and writes
-total 128, 64, and 32 transfers per transform. Deeper bands enlarge components
-and reduce their count. These analytical counts imply neither measured
-speedup nor a hardware occupancy guarantee.}
-\label{fig:organization-tradeoffs}
-\end{figure*}
-
-Figure~\ref{fig:organization-tradeoffs} makes the choice concrete using the
-same 16-point Hadamard graph. A stage-at-a-time organization exposes eight
-independent pairs but reads and writes all values at each stage. Grouping
-two stages retains four values per local subgraph and halves materialized
-value traffic. Retaining all four stages minimizes this traffic but leaves
-only one independent whole-transform component per batch instance.
-The arithmetic work is unchanged. These counts expose a trade-off rather
-than a winner, because a component may itself use multiple cooperating threads
-and its resource cost depends on the selected core.
-
-The roofline opportunity follows from this distinction. For $B$ transforms of
+\noindent\textbf{Reuse raises a resource ceiling.}
+Figure~\ref{fig:roofline} contrasts a symbolic resource roof with measured
+execution for FFT, FWHT, and NTT. The Roofline opportunity~\cite{roofline}
+comes from retaining values between dependent stages.
+For $B$ transforms of
 length $N=2^L$, let $e$ be bytes per value and $G$ the number of materialized
 stage groups. There are $BNL/2$ pair updates. If each group reads and writes
 the array once, ideal value-only intensity is
@@ -47,52 +23,74 @@ bandwidth times intensity. Coefficients, transactions, cache reuse, and spills
 change the traffic, while synchronization and execution efficiency determine
 the distance below this ceiling.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/drawio/exports/roofline.pdf}
-\caption{Schematic boundary roofline. Boundary intensity determines the
-bandwidth ceiling, while the arithmetic core determines the compute ceiling.
-Attaining either also requires sufficient ready subgraphs, resident resources,
-and valid synchronization. Axes are symbolic. The lower panel states
-attainment conditions, not a measured occupancy model.}
-\label{fig:roofline}
-\end{figure}
+Reducing $G$ raises ideal intensity while changing live state, ownership,
+communication, and synchronization. The trade-off in
+Figure~\ref{fig:organization-tradeoffs} therefore affects both the resource
+ceiling and the execution that approaches it.
+\textbf{The research question is how a parallel organization realizes the
+available hardware performance.}
 
-Reducing $G$ raises ideal intensity but enlarges live state, potentially reducing
-occupancy and independent work. A faster core raises the compute ceiling
-without removing a bandwidth limit. Conversely, enough arithmetic work per
-byte does not ensure enough ready work to fill the machine. The ordinary
-roofline identifies a resource ceiling, not a schedule that reaches it.
-\textbf{The mapping must jointly choose
-local reuse and enough parallel work to sustain it.}
+\noindent\textbf{Limiting cases expose different organization choices.}
+The H1/H16 points use FWHT FP64 at $N=2^{20}$ and $B=1/16$ with two
+materialized bands. Sixteen times as much independent work raises pair rate
+from 97.8 to 113.4~Gpairs/s at unchanged ideal intensity. Batch can amortize
+startup and fill idle slots, but cannot by itself resolve an inefficient
+organization. These timings show limited scaling; traffic and resource
+measurements are needed to establish its cause.
 
-A controlled historical V100 NTT pair illustrates the workload dependence.
-At $N=2^{20}$ and batch 16, assigning two four-warp row subgraphs per CTA
-instead of one improved throughput by approximately $1.154\times$ with the
-same register continuation. At batch four, the change slowed execution.
-The result motivates workload-dependent organization rather than a universal
-preference for more local work. In particular, batch and local component size
-cannot be tuned independently even when the arithmetic core is unchanged.
+At $N=2^{20}, B=16$, F0/F2/F4 use FFT FP64 with local groups of 0/2/4
+stages, and N2/N4 use word64 NTT with groups of 2/4. All retain two
+materialized bands. Pair rate is $BNL/(2T)$, and ideal intensity follows
+Eq.~\ref{eq:intensity}. FFT reaches 54.4, 74.4, and 70.0~Gpairs/s with the
+same arithmetic and outer boundary. Local reuse helps, but deeper retention
+does not continue the gain. NTT instead falls from 83.6 to 61.1~Gpairs/s.
+Thus equal ideal intensity permits different execution rates, and the preferred
+local organization depends on arithmetic service and resource use.
+
+Two analytical limits extend this reasoning. If a target doubles the applicable
+resource roof but a serialized exchange keeps throughput unchanged, efficiency
+relative to that roof halves. Doubling only arithmetic capacity need not raise
+a bandwidth-limited roof, so the applicable bound matters. Separately, a larger
+transform can outgrow local storage despite abundant parallel work, requiring
+smaller resident tile subgraphs and larger-scope exchanges. These are analytical
+hardware and capacity cases, not measured cross-GPU efficiency results.
+
+\noindent\textbf{The trade-off recurs across butterfly families.}
+The full controls in Figure~\ref{fig:local-organization-scaling} retain each
+request's scalar arithmetic primitive and external storage boundaries. Two-stage
+local grouping improves mean performance for FFT, FWHT, and NTT, while deeper
+grouping regresses FFT and NTT. Their shared dependencies therefore expose a
+common trade-off with different preferred choices.
+% Evidence: evidence/NARRATIVE_SCALING_RESULTS_20261027.md and
+% generated/motivation_organization_a100.json; all 18 requests are retained.
+
+Logical intensity is not measured traffic: grouping also changes exchange,
+synchronization, and ownership. Matched profiles show increased register use
+and reduced active warps with deeper grouping. Section~\ref{sec:evaluation}
+reports counters and timing ranges without assigning every change to one
+mechanism. The construction must expose these choices and constraints so that
+unfavorable allocations can be rejected for each family and workload.
 
 \subsection{Why a hierarchy and a common construction}
-This trade-off suggests retaining a bounded amount of dependent computation
-while exposing the remaining independent work. Stage and data positions
-provide two allocation axes. A worker may execute
-several stages over time, or distinct resources may serve successive stages.
-Independent components may occupy different workers or reuse a worker
-sequentially. Combining these choices retains a bounded region while streaming
-independent work through it. We call their combination \textbf{hybrid dataflow}.
-A stagewise schedule and a spatial stage pipeline are useful endpoints of
-these choices, not the only organizations the framework should express.
+The observations call for a \textbf{joint characterization of resource
+demand}. Spatial expansion needs concurrent execution, live state, and
+communication. Temporal reuse retains or moves values for later work at the
+chosen storage scope; it need not imply repeated external storage accesses.
 
-The choice recurs across registers, cooperating threads, and groups staged
-through global memory. \textbf{Hierarchy removes a fixed-capacity expression
-limit.}
-When a transform exceeds what a fixed number of bounded bands can express,
-additional bands or recursive refinement retain the same construction.
-Logical depth, materialized group count, and hardware storage levels are
-therefore distinct. More levels express larger workloads but create no
-additional bandwidth or storage.
+Stage and data positions provide two allocation axes. Distinct resources can
+serve successive stages or independent regions; the same resources can
+instead be reused over either dimension. Their combination forms
+\textbf{hybrid dataflow}. Characterizing the resulting state, traffic, and
+parallel work makes the trade-off evaluable under a target's constraints.
+Stagewise execution, a spatial stage pipeline, and a whole-transform local
+execution are endpoints of this space when their resource demands fit.
+
+Larger transforms can outgrow local storage or bounded compute groups.
+\textbf{Hierarchy repeats the construction under those limits.}
+Additional bands or recursive refinement preserve locality and handoff rules
+without fitting the complete intermediate array on chip. Logical depth and
+materialized groups remain distinct from physical storage levels; refinement
+adds no hardware capacity.
 
 More batch provides independent work to amortize startup and cover transfers.
 Realizing that slack still requires lookahead, finite buffers, and available
@@ -100,19 +98,8 @@ resources. A successor needs its actual predecessor set, not merely a
 contiguous prefix of producer output. The method must therefore derive both
 locality and readiness from the graph.
 
-Stage-bit dependencies provide that stable description. Changing arithmetic
-alters operation labels, changing length reinstantiates the dependency domain,
-and changing GPU alters feasible resources and service rates. This motivates
-separate \textbf{semantics, workload, and hardware} inputs without separating
-their performance effects. The separation answers a practical scaling problem.
-Increasing $N$ or batch should instantiate a new work domain rather than
-require a new operator implementation. Changing arithmetic should replace
-compatible local functions rather than rederive the surrounding dependencies.
-Changing GPU should alter feasible mappings and service costs rather than
-the mathematical request.
-
-These observations give the method three obligations. It must derive a legal
-local unit, connect such units without losing dependencies or value identity,
-and repeat the organization when a workload exceeds one storage scope.
-The next section develops those rules. Block-level and resident subgraph
-execution then provide their concrete GPU realization.
+Stage-bit dependencies separate \textbf{semantics, workload, and hardware}
+inputs: arithmetic supplies local functions and labels; length and batch
+instantiate work; hardware supplies resources and service rates. The next
+section derives legal local work, handoffs, and resource demands across bounded
+storage scopes. Block-level and resident subgraph execution realize them on GPUs.

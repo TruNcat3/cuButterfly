@@ -29,6 +29,8 @@ PIPELINE_SPACES = (1, 2, 4, 8)
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Calibrate the current GPU and generate a mapping model table.")
     parser.add_argument("--microbench", type=pathlib.Path, help="cuntt_hardware_microbench executable")
+    parser.add_argument("--device-bench", type=pathlib.Path,
+                        help="cubutterfly_bench for exact device identity (default: beside microbench)")
     parser.add_argument("--output-dir", type=pathlib.Path, default=pathlib.Path("results/local_hardware_profile"))
     parser.add_argument("--trials", type=int, default=5)
     parser.add_argument("--points", type=int, default=1 << 22)
@@ -93,9 +95,38 @@ def run_trials(args: argparse.Namespace, microbench: pathlib.Path, raw_path: pat
     return rows
 
 
+def bind_device_identity(profile: dict, identity: dict) -> dict:
+    """Complete legacy rate profiles without accepting conflicting identities."""
+    for key in ("device", "compute_capability"):
+        if not identity.get(key) or profile.get(key) != identity[key]:
+            raise ValueError(f"hardware probe and benchmark device identities disagree: {key}")
+    capacity = identity.get("global_memory_bytes")
+    if isinstance(capacity, str) and capacity.isdecimal():
+        capacity = int(capacity)
+    if type(capacity) is not int or capacity <= 0:
+        raise ValueError("device identity requires positive integer global_memory_bytes")
+    if "global_memory_bytes" in profile:
+        stored = profile["global_memory_bytes"]
+        if isinstance(stored, str) and stored.isdecimal():
+            stored = int(stored)
+        if type(stored) is not int or stored != capacity:
+            raise ValueError("cached hardware profile belongs to a different memory capacity; use a separate profile directory")
+    hardware = profile.get("hardware")
+    if hardware:
+        for key, expected in (("device", identity["device"]),
+                              ("compute_capability", identity["compute_capability"]),
+                              ("memory_bytes", capacity)):
+            if key in hardware and hardware[key] != expected:
+                raise ValueError(f"cached hardware identity mismatch: {key}")
+    return dict(profile, global_memory_bytes=capacity)
+
+
 def summarize(rows: list[dict[str, str]], args: argparse.Namespace, microbench: pathlib.Path) -> dict:
     if any(row.get("pipeline_correct") != "1" for row in rows):
         raise RuntimeError("hardware probe failed stage-pipeline correctness on at least one trial")
+    for row in rows[1:]:
+        if any(row.get(key) != rows[0].get(key) for key in ("device", "compute_capability", "sm_count")):
+            raise ValueError("hardware identity changed between rate-probe trials")
     return {
         "schema": "cubutterfly-hardware-profile-v1",
         "status": "calibrated-local",
@@ -192,9 +223,16 @@ def main() -> int:
     if profile_path.exists() and not args.force:
         raise SystemExit(f"profile exists: {profile_path}; pass --force to replace it")
     microbench = find_microbench(args.microbench)
+    device_bench = (args.device_bench or microbench.with_name("cubutterfly_bench")).resolve()
+    identity_command = [str(device_bench), "--device-identity"]
+    completed = subprocess.run(identity_command, check=True, capture_output=True, text=True)
+    identities = list(csv.DictReader(completed.stdout.splitlines()))
+    if len(identities) != 1:
+        raise ValueError("device benchmark must return exactly one identity row")
     raw_path = output_dir / "hardware_capabilities_raw.csv"
     rows = run_trials(args, microbench, raw_path)
-    profile = summarize(rows, args, microbench)
+    profile = bind_device_identity(summarize(rows, args, microbench), identities[0])
+    profile["provenance"]["device_identity_command"] = identity_command
     profile_path.write_text(json.dumps(profile, indent=2) + "\n")
     model_path = output_dir / "unfolding_model.csv"
     model_rows = build_model_table(profile, args, model_path)

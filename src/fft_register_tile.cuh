@@ -2,6 +2,7 @@
 
 #include "cuntt/butterfly.hpp"
 #include "fft_radix4_codelet.cuh"
+#include "fft_fixed_roots.cuh"
 #include <cuda_runtime.h>
 #include <type_traits>
 
@@ -22,30 +23,44 @@ __device__ __forceinline__ Complex root(decltype(Complex{}.real) turns) {
     return {c, s};
 }
 
+// Local coefficient supply is independent of the codelet and of the
+// recurrence at the global stage boundary. JIT modules may substitute an
+// immutable, precision-matched root table through this interface.
+struct RuntimeLocalRoots {
+    template<unsigned Log, bool Inverse, class Complex>
+    __device__ __forceinline__ static Complex get(unsigned exponent) {
+        using Real = decltype(Complex{}.real);
+        return root<Inverse, Complex>(Real(exponent) / Real(1U << Log));
+    }
+};
+
 // Small FFT with compile-time butterfly indices and immediate roots.  No
 // shared/global loads and no cross-thread synchronization inside this unit.
 template <unsigned Log, bool Inverse, class Complex>
 __device__ __forceinline__ void fft(Complex (&v)[1U << Log]) {
     using Real = decltype(Complex{}.real);
     constexpr unsigned N = 1U << Log;
-#pragma unroll
-    for (unsigned i = 0; i < N; ++i) {
+
+    static_for<N>([&](auto fixed_index) {
+        constexpr unsigned i = decltype(fixed_index)::value;
         const unsigned j = __brev(i) >> (32 - Log);
         if (i < j) { const auto t = v[i]; v[i] = v[j]; v[j] = t; }
-    }
-#pragma unroll
-    for (unsigned stage = 0; stage < Log; ++stage) {
+    });
+
+    static_for<Log>([&](auto fixed_index) {
+        constexpr unsigned stage = decltype(fixed_index)::value;
         const unsigned half = 1U << stage;
-#pragma unroll
-        for (unsigned p = 0; p < N / 2; ++p) {
+
+        static_for<N / 2>([&](auto fixed_index) {
+            constexpr unsigned p = decltype(fixed_index)::value;
             const unsigned j = p & (half - 1);
             const unsigned a = 2 * (p - j) + j;
             const auto x = v[a];
-            const auto y = multiply(v[a + half], root<Inverse, Complex>(Real(j) / (2 * half)));
+            const auto y = multiply(v[a + half], fixed_root<Log,j*N/(2*half),Inverse,Complex>());
             v[a] = {x.real + y.real, x.imag + y.imag};
             v[a + half] = {x.real - y.real, x.imag - y.imag};
-        }
-    }
+        });
+    });
 }
 
 // A prebuilt radix-4 local codelet.  NTT's local cores use the same
@@ -67,78 +82,87 @@ __device__ __forceinline__ void fft_radix4(Complex (&v)[1U << Log]) {
         // Binary reversal permits fusing pairs of DIT stages without a
         // non-involutive mixed-radix digit permutation. Logical radix-4
         // inputs occupy physical slots 0,2,1,3; phases follow logical slots.
-        #pragma unroll
-        for (unsigned i = 0; i < N; ++i) {
+
+        static_for<N>([&](auto fixed_index) {
+            constexpr unsigned i = decltype(fixed_index)::value;
             const unsigned j = __brev(i) >> (32 - Log);
             if (i < j) { const auto t = v[i]; v[i] = v[j]; v[j] = t; }
-        }
-        #pragma unroll
-        for (unsigned stage = 0; stage + 1 < Log; stage += 2) {
+        });
+
+        static_for<Log/2>([&](auto fixed_index) {
+            constexpr unsigned stage=2*decltype(fixed_index)::value;
             const unsigned quarter = 1U << stage, size = quarter * 4;
-            #pragma unroll
-            for (unsigned base = 0; base < N; base += size) {
-                #pragma unroll
-                for (unsigned j = 0; j < quarter; ++j) {
+
+            static_for<N/size>([&](auto fixed_index) {
+                constexpr unsigned base=size*decltype(fixed_index)::value;
+
+                static_for<quarter>([&](auto fixed_index) {
+                    constexpr unsigned j = decltype(fixed_index)::value;
                     const auto a = v[base+j];
-                    const auto b = multiply(v[base+2*quarter+j], root<Inverse,Complex>(Real(j)/Real(size)));
-                    const auto c = multiply(v[base+quarter+j], root<Inverse,Complex>(Real(2*j)/Real(size)));
-                    const auto d = multiply(v[base+3*quarter+j], root<Inverse,Complex>(Real(3*j)/Real(size)));
+                    const auto b = multiply(v[base+2*quarter+j], fixed_root<Log,j*N/size,Inverse,Complex>());
+                    const auto c = multiply(v[base+quarter+j], fixed_root<Log,2*j*N/size,Inverse,Complex>());
+                    const auto d = multiply(v[base+3*quarter+j], fixed_root<Log,3*j*N/size,Inverse,Complex>());
                     struct XY { Real x,y; };
                     XY x0{a.real,a.imag}, x1{b.real,b.imag}, x2{c.real,c.imag}, x3{d.real,d.imag};
                     cuntt::detail::fft_radix4<Inverse>(x0,x1,x2,x3);
                     v[base+j]={x0.x,x0.y}; v[base+quarter+j]={x1.x,x1.y};
                     v[base+2*quarter+j]={x2.x,x2.y}; v[base+3*quarter+j]={x3.x,x3.y};
-                }
-            }
-        }
-        #pragma unroll
-        for (unsigned j = 0; j < N/2; ++j) {
+                });
+            });
+        });
+
+        static_for<N/2>([&](auto fixed_index) {
+            constexpr unsigned j = decltype(fixed_index)::value;
             const auto a=v[j];
-            const auto b=multiply(v[j+N/2],root<Inverse,Complex>(Real(j)/Real(N)));
+            const auto b=multiply(v[j+N/2],fixed_root<Log,j,Inverse,Complex>());
             v[j]={a.real+b.real,a.imag+b.imag};
             v[j+N/2]={a.real-b.real,a.imag-b.imag};
-        }
+        });
         return;
     }
     constexpr unsigned DigitCount = Log / 2;
     // Base-4 digit reversal is the radix-4 analogue of the bit reversal in
     // fft().  It is compile-time sized and therefore becomes a short sequence
     // of integer operations in each prebuilt local module.
-#pragma unroll
-    for (unsigned i = 0; i < N; ++i) {
+
+    static_for<N>([&](auto fixed_index) {
+        constexpr unsigned i = decltype(fixed_index)::value;
         unsigned j = 0;
-#pragma unroll
+
         for (unsigned digit = 0; digit < DigitCount; ++digit)
             j |= ((i >> (2 * digit)) & 3U) << (Log - 2 - 2 * digit);
         if (i < j) { const auto t = v[i]; v[i] = v[j]; v[j] = t; }
-    }
-#pragma unroll
-    for (unsigned stage = 0; stage < DigitCount; ++stage) {
+    });
+
+    static_for<DigitCount>([&](auto fixed_index) {
+        constexpr unsigned stage = decltype(fixed_index)::value;
         const unsigned quarter = 1U << (2 * stage);
         const unsigned size = quarter * 4U;
-#pragma unroll
-        for (unsigned base = 0; base < N; base += size) {
-#pragma unroll
-            for (unsigned j = 0; j < quarter; ++j) {
+
+        static_for<N/size>([&](auto fixed_index) {
+            constexpr unsigned base=size*decltype(fixed_index)::value;
+
+            static_for<quarter>([&](auto fixed_index) {
+                constexpr unsigned j = decltype(fixed_index)::value;
                 const auto a = v[base + j];
                 const auto b = multiply(v[base + quarter + j],
-                                        root<Inverse, Complex>(Real(j) / Real(size)));
+                                        fixed_root<Log,j*N/size,Inverse,Complex>());
                 const auto c = multiply(v[base + 2 * quarter + j],
-                                        root<Inverse, Complex>(Real(2 * j) / Real(size)));
+                                        fixed_root<Log,2*j*N/size,Inverse,Complex>());
                 const auto d = multiply(v[base + 3 * quarter + j],
-                                        root<Inverse, Complex>(Real(3 * j) / Real(size)));
+                                        fixed_root<Log,3*j*N/size,Inverse,Complex>());
                 const Complex t0{a.real + c.real, a.imag + c.imag};
                 const Complex t1{a.real - c.real, a.imag - c.imag};
                 const Complex t2{b.real + d.real, b.imag + d.imag};
                 const Complex difference{b.real - d.real, b.imag - d.imag};
-                const auto rotated = multiply(difference, root<Inverse, Complex>(Real(1) / Real(4)));
+                const auto rotated = multiply(difference, fixed_root<2,1,Inverse,Complex>());
                 v[base + j] = {t0.real + t2.real, t0.imag + t2.imag};
                 v[base + quarter + j] = {t1.real + rotated.real, t1.imag + rotated.imag};
                 v[base + 2 * quarter + j] = {t0.real - t2.real, t0.imag - t2.imag};
                 v[base + 3 * quarter + j] = {t1.real - rotated.real, t1.imag - rotated.imag};
-            }
-        }
-    }
+            });
+        });
+    });
 }
 
 template <unsigned Log, bool Inverse>
@@ -192,17 +216,20 @@ __device__ __forceinline__ void cooperative_fft(Complex (&v)[(1U << Log) / Lanes
     }
     if constexpr (Lanes == 2 || Lanes == 4) {
         const unsigned mask = __activemask();
-#pragma unroll
-        for (unsigned k=0; k<K; ++k) {
+
+        static_for<K>([&](auto fixed_index) {
+            constexpr unsigned k = decltype(fixed_index)::value;
             auto value = v[k];
             if (k && lane) {
                 // Select a compile-time root, then issue one complex multiply.
                 // Multiplying separately under each lane predicate makes all
                 // three radix-4 phase branches consume warp issue bandwidth.
                 Complex phase{Real(1), Real(0)};
-#pragma unroll
-                for (unsigned p=1; p<Lanes; ++p)
-                    if (lane == p) phase = root<Inverse, Complex>(Real(p*k) / (1U << Log));
+
+                static_for<Lanes-1>([&](auto fixed_index) {
+                    constexpr unsigned p=decltype(fixed_index)::value+1;
+                    if (lane == p) phase = fixed_root<Log,p*k,Inverse,Complex>();
+                });
                 value = multiply(value, phase);
             }
             if constexpr (Lanes == 4) {
@@ -220,37 +247,43 @@ __device__ __forceinline__ void cooperative_fft(Complex (&v)[(1U << Log) / Lanes
             const bool upper = (lane & 1) != 0;
             v[k] = {(upper ? -value.real : value.real) + peer.real,
                     (upper ? -value.imag : value.imag) + peer.imag};
-        }
+        });
     } else if constexpr (Lanes > 1) {
         const unsigned mask = __activemask();
         const unsigned reversed = __brev(lane) >> (32-LaneLog);
         const unsigned source = (threadIdx.x & 31U) ^ ((lane ^ reversed) * Columns);
-#pragma unroll
-        for (unsigned k=0; k<K; ++k) {
+
+        static_for<K>([&](auto fixed_index) {
+            constexpr unsigned k = decltype(fixed_index)::value;
             auto value = v[k];
             // Both loop bounds are compile-time constants. Keep each phase
             // constant so an expensive runtime sincos is not introduced.
-#pragma unroll
-            for (unsigned p=1; p<Lanes; ++p)
-                if (lane == p) value = multiply(value, root<Inverse, Complex>(Real(p*k) / (1U << Log)));
+
+            static_for<Lanes-1>([&](auto fixed_index) {
+                constexpr unsigned p=decltype(fixed_index)::value+1;
+                if (lane == p) value = multiply(value, fixed_root<Log,p*k,Inverse,Complex>());
+            });
             value = {__shfl_sync(mask, value.real, source), __shfl_sync(mask, value.imag, source)};
-#pragma unroll
-            for (unsigned stage=0; stage<LaneLog; ++stage) {
+
+            static_for<LaneLog>([&](auto fixed_index) {
+                constexpr unsigned stage = decltype(fixed_index)::value;
                 const unsigned half=1U << stage;
                 const Complex peer{__shfl_xor_sync(mask, value.real, half*Columns),
                                    __shfl_xor_sync(mask, value.imag, half*Columns)};
                 const bool upper = (lane & half) != 0;
                 const auto x = upper ? peer : value;
                 auto y = upper ? value : peer;
-#pragma unroll
-                for (unsigned j=1; j<half; ++j)
+
+                static_for<half-1>([&](auto fixed_index) {
+                    constexpr unsigned j=decltype(fixed_index)::value+1;
                     if ((lane & (half-1)) == j)
-                        y = multiply(y, root<Inverse, Complex>(Real(j) / (2*half)));
+                        y = multiply(y, fixed_root<LaneLog,j*(1U<<LaneLog)/(2*half),Inverse,Complex>());
+                });
                 value = upper ? Complex{x.real-y.real, x.imag-y.imag} :
                                 Complex{x.real+y.real, x.imag+y.imag};
-            }
+            });
             v[k] = value;
-        }
+        });
     }
 }
 
@@ -289,7 +322,8 @@ __device__ __forceinline__ unsigned shared_row(unsigned a, unsigned b) {
 // The full long-FFT boundary remains global: this tile is not a whole-N CTA.
 template <unsigned LocalLog, unsigned Columns, bool Inverse,
           template <unsigned, bool> class Codelet = NativeCodelet, class Complex = Complex32,
-          bool XorSharedLayout = false, unsigned CodeletLanes = 1>
+          bool XorSharedLayout = false, unsigned CodeletLanes = 1,
+          class LocalRoots = RuntimeLocalRoots>
 __launch_bounds__((1U << (LocalLog / 2)) * Columns * CodeletLanes)
 __global__ void prefix(const Complex* input, Complex* scratch,
                        unsigned log_n, std::uint64_t batch_distance,
@@ -321,7 +355,7 @@ __global__ void prefix(const Complex* input, Complex* scratch,
     for (unsigned j = 0; j < K; ++j) {
         const unsigned k=j+K*frequency_lane;
         tile[(k * R + shared_row<R,Columns,CodeletLanes,Complex,XorSharedLayout>(k,row)) * Columns + col] =
-            multiply(v[j], root<Inverse, Complex>(Real(k * row) / LocalN));
+            multiply(v[j], LocalRoots::template get<LocalLog,Inverse,Complex>(k * row));
     }
     __syncthreads();
 #pragma unroll
@@ -362,7 +396,8 @@ __device__ __forceinline__ unsigned rectangular_row(unsigned a,unsigned b) {
     }
 }
 template<unsigned LogA,unsigned LogB,unsigned K,unsigned Columns,bool Inverse,
-         template<unsigned,bool> class Codelet=NativeCodelet,class Complex=Complex32,bool Xor=false>
+         template<unsigned,bool> class Codelet=NativeCodelet,class Complex=Complex32,bool Xor=false,
+         class LocalRoots=RuntimeLocalRoots>
 __launch_bounds__((1U<<(LogA+LogB))*Columns/K)
 __global__ void rectangular_prefix(const Complex* input,Complex* scratch,
                                   unsigned log_n,std::uint64_t distance,std::uint64_t stride) {
@@ -389,7 +424,7 @@ __global__ void rectangular_prefix(const Complex* input,Complex* scratch,
     for(unsigned j=0;j<K;++j) {
         const unsigned k_a=j+K*codelet_output_lane<GA>(lane_a);
         tile[(k_a*B+rectangular_row<LogA,LogB,K,Columns,Complex,Xor>(k_a,row_a))*Columns+col]=
-            multiply(v[j],root<Inverse,Complex>(Real(k_a*row_a)/LocalN));
+            multiply(v[j],LocalRoots::template get<LogA+LogB,Inverse,Complex>(k_a*row_a));
     }
     __syncthreads();
 #pragma unroll
@@ -409,32 +444,34 @@ __global__ void rectangular_prefix(const Complex* input,Complex* scratch,
     }
 }
 template<unsigned LogA,unsigned LogB,unsigned K,unsigned Columns,bool Inverse=false,
-         template<unsigned,bool> class Codelet=NativeCodelet,class Complex=Complex32,bool Xor=false>
+         template<unsigned,bool> class Codelet=NativeCodelet,class Complex=Complex32,bool Xor=false,
+         class LocalRoots=RuntimeLocalRoots>
 void launch_rectangular_prefix(const Complex* input,Complex* scratch,unsigned log_n,
                               std::uint64_t batch,std::uint64_t distance,
                               std::uint64_t stride=1,cudaStream_t stream=nullptr) {
     constexpr unsigned bytes=(1U<<(LogA+LogB))*Columns*sizeof(Complex);
     constexpr unsigned threads=(1U<<(LogA+LogB))*Columns/K;
     if constexpr(bytes>48U*1024U)
-        cudaFuncSetAttribute(rectangular_prefix<LogA,LogB,K,Columns,Inverse,Codelet,Complex,Xor>,
+        cudaFuncSetAttribute(rectangular_prefix<LogA,LogB,K,Columns,Inverse,Codelet,Complex,Xor,LocalRoots>,
                             cudaFuncAttributeMaxDynamicSharedMemorySize,bytes);
-    rectangular_prefix<LogA,LogB,K,Columns,Inverse,Codelet,Complex,Xor>
+    rectangular_prefix<LogA,LogB,K,Columns,Inverse,Codelet,Complex,Xor,LocalRoots>
         <<<static_cast<unsigned>((batch<<(log_n-LogA-LogB))/Columns),threads,bytes,stream>>>
         (input,scratch,log_n,distance,stride);
 }
 
 template <unsigned LocalLog, unsigned Columns, bool Inverse = false,
           template <unsigned, bool> class Codelet = NativeCodelet, class Complex = Complex32,
-          bool XorSharedLayout = false, unsigned CodeletLanes = 1>
+          bool XorSharedLayout = false, unsigned CodeletLanes = 1,
+          class LocalRoots = RuntimeLocalRoots>
 void launch_prefix(const Complex* input, Complex* scratch, unsigned log_n,
                    std::uint64_t batch, std::uint64_t batch_distance,
                    std::uint64_t element_stride = 1, cudaStream_t stream = nullptr) {
     constexpr unsigned threads = (1U << (LocalLog / 2)) * Columns * CodeletLanes;
     constexpr unsigned bytes = (1U << LocalLog) * Columns * sizeof(Complex);
     if constexpr (bytes > 48U * 1024U)
-        cudaFuncSetAttribute(prefix<LocalLog, Columns, Inverse, Codelet, Complex, XorSharedLayout,CodeletLanes>, cudaFuncAttributeMaxDynamicSharedMemorySize, bytes);
+        cudaFuncSetAttribute(prefix<LocalLog, Columns, Inverse, Codelet, Complex, XorSharedLayout,CodeletLanes,LocalRoots>, cudaFuncAttributeMaxDynamicSharedMemorySize, bytes);
     const auto blocks = static_cast<unsigned>((batch << (log_n - LocalLog)) / Columns);
-    prefix<LocalLog, Columns, Inverse, Codelet, Complex, XorSharedLayout,CodeletLanes><<<blocks, threads, bytes, stream>>>(
+    prefix<LocalLog, Columns, Inverse, Codelet, Complex, XorSharedLayout,CodeletLanes,LocalRoots><<<blocks, threads, bytes, stream>>>(
         input, scratch, log_n, batch_distance, element_stride);
 }
 } // namespace cuntt::detail::register_tile

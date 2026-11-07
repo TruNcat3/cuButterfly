@@ -1,105 +1,129 @@
 \section{Realizing the Method with Subgraph Execution}
 \label{sec:execution}
-The dependency construction specifies legal work and communication but leaves
-their physical implementation open. This distinction lets the same method
-use a register codelet, a cooperating warp, or a block-local core without
-making any one of them part of the mathematical definition. A realization
-binds each dependency-closed subgraph to a core, storage scope,
-and schedule. The core implements its stage bits, arithmetic, and coefficient
-rules while declaring value ownership and local synchronization. Register
-codelets, warp cooperation, block-local kernels, and imported components can
-satisfy this contract with different resource costs.
-
-The interface must describe more than the number of input values. A core
-also declares their logical roles, which threads own them, and the
-synchronization required before its outputs are visible. These requirements
-connect the core to the surrounding layout and schedule. Replacing a core
-can change the best organization even when the two compute the same function,
-because their registers, shared storage, and exchange patterns differ.
+Lowering binds closed regions and boundary dependencies to GPU cores,
+storage, and synchronization, then generates kernels and a submission graph.
+A core declares logical value roles, worker ownership, and output visibility,
+not only input size. Local codelets, compute groups, generated kernels, and
+imported cores can share the construction with different resource costs.
+For scalar radix-2 FFT, FWHT, and NTT, common execution templates implement
+indexing, traversal, publication, and buffer exchange. Arithmetic traits
+supply pair operations, coefficients, and scaling. Specialized cores retain
+their numerical restrictions and may require different boundary realizations.
 
 \subsection{Successor-aligned writeback}
-The first physical problem appears when a locally efficient producer leaves
-its outputs in an inconvenient representation for its consumer. An explicit
-permutation is always a possible implementation, but adds a pass over the
-boundary data. Instead, the producer can incorporate the required placement
-into its writeback when its ownership and store pattern permit it.
-A producer's output representation must agree with the successor's input
-representation for each logical value $i$,
+A locally efficient producer may leave outputs inconveniently arranged for its
+consumer. Rather than add a permutation pass, it can incorporate the next
+placement into writeback when ownership and stores permit. For each value $i$,
+the producer's output and successor's input representations must agree,
 \begin{equation}
 \lambda_{\mathrm{out}}(i)=\lambda_{\mathrm{in}}(i).
 \label{eq:handoff}
 \end{equation}
-Together with compatible ownership and publication, this is the
-\textbf{successor-aligned writeback} rule. It can remove a separate
-permutation by placing values for their next use.
+Together with compatible ownership and publication, this defines
+\textbf{successor-aligned writeback}.
 
 One construction moves the successor's variable stage bits into low-order
-address positions, placing its component in a contiguous range. In the
+address positions, placing its region in a contiguous range. In the
 Hadamard example, a producer can write logical index $4r+c$ at address
 $4c+r$, so the next band reads a column contiguously. Identity placement and
 explicit permutation remain alternatives. Consumer locality alone does not
 guarantee efficient stores, so the candidate cost includes both transactions
 and any staging.
 
-Shared storage adds a bank constraint. For an illustrative square tile with
-power-of-two side $P$, $P$ banks, and one word per value, consider
+\subsection{Resolving boundary bank conflicts}
+\label{sec:boundary-conflicts}
+\textbf{An aligned layout can still serialize its consumers.}
+Successor tiles gather different combinations than producers write.
+Distinct concurrent addresses can map to the same bank, whose limited ports
+serialize service even when values fit and successor reads are aligned.
+
+We address this boundary mismatch with a \textbf{successor-aware bank mapping}.
+The producer and consumer use the same physical placement for each value.
+Candidate maps combine stage-bit placement with bijective address remapping,
+including XOR-based \emph{swizzles}. Algorithm~\ref{alg:boundary-map}
+gives a bank/offset construction for an aligned contiguous write group and a
+strided read group. It expresses the mapping in storage-bank coordinates,
+so the physical address encoding remains specific to the storage scope.
+
+\par\smallskip
+\noindent\begin{minipage}{\columnwidth}
+\refstepcounter{boundaryalgorithm}\label{alg:boundary-map}
+\hrule\smallskip
+\textbf{Algorithm \theboundaryalgorithm. Map a producer--consumer boundary.}
+\par\smallskip
+\small
+\textbf{Given} $N$ words, $M=2^k$ banks, stride $S=2^s$,\par
+\hspace*{1em}$M\le S\le N$ and power-of-two $N$.\par
+\textbf{For each} logical word $i\in[0,N)$\par
+\hspace*{1em}$b\gets(i\mathbin{\oplus}(i\gg s))\mathbin{\&}(M-1)$\par
+\hspace*{1em}$o\gets i\gg k$\par
+\hspace*{1em}$\mathrm{placement}[i]\gets(b,o)$\par
+\textbf{Use} this placement for producer stores and consumer loads.\par
+\smallskip\hrule
+\end{minipage}
+\par\smallskip
+
+For an aligned write group $i=aM+u$, $0\le u<M$, the high-bit term is
+constant, so the bank is $u$ XOR a constant. For a read group
+$i=c+vS$, $0\le c<S$ and $0\le v<M$, the bank is
+$(c\bmod M)\mathbin{\oplus}v$. Both are permutations of the $M$ banks
+for full groups; valid tails remain distinct. Within each offset, the
+low-bit mapping is also a permutation, giving a bijection over the storage
+domain. This establishes conflict freedom for these single-word groups on
+single-ported banks, rather than for arbitrary concurrent accesses.
+
+For an illustrative square tile with
+power-of-two side $P$, $P$ single-ported banks, and one word per value, consider
 \begin{equation}
 \lambda(r,c)=P\,r+(c\mathbin{\oplus}r).
 \label{eq:swizzle}
 \end{equation}
-XOR by a fixed row is a permutation. Under the single-word access pattern in
-Figure~\ref{fig:banklayout}, both a row and a column reach distinct banks.
-Vector values and partial warps require their actual transaction analysis.
-Global layouts obey the same value-identity rule but are evaluated for
-alignment, transaction width, and coalescing.
+With bank index $\lambda\bmod P$, linear placement $Pr+c$ sends a whole
+column to one bank. XOR by a fixed row or column is a permutation, so the
+map above distributes either access across all $P$ banks. In
+Figure~\ref{fig:banklayout}b, consumer values $\{1,5,9,13\}$ move from bank
+indices $(1,1,1,1)$ to $(1,0,3,2)$ without a separate data-reordering pass.
+On GPUs, such address remapping is commonly called a shared-memory bank
+swizzle~\cite{cudaSwizzle}.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/drawio/exports/bank_layout.pdf}
-\caption{A four-bank layout witness. A row-dependent XOR offset distributes
-a logical column across banks for the stated single-word access pattern.}
-\label{fig:banklayout}
-\end{figure}
+Choose a common address map for the producer's write group and successor's
+read group. Conflict analysis uses actual transactions, value width, and bank
+capacity; vector values and broadcasts require separate checks. Outer-storage
+layouts instead require alignment, transaction-count, and coalescing checks.
+Thus layout and ownership are chosen jointly; one XOR formula need not suit
+every core or storage scope.
 
 \subsection{Residency, publication, and finite buffers}
-Correct placement alone does not make a value ready. The row/column example
-requires contributions from several producers, and reusing a buffer too early
-would overwrite data still needed by a consumer. Execution therefore tracks
-availability and lifetime at the same dependency granularity as the handoff.
-A resident group tracks its live values and unfinished consumers. A
-materialized boundary publishes a dependency unit, and the successor starts
-only when its predecessor set is ready. A buffer slot is acquired before
-writing, published after production, and released after the last required read.
-The slot count trades lookahead against live state and synchronization cost.
-Tail tiles retain their actual shape and release event.
+Correct placement still needs readiness and safe reuse. A resident tile
+subgraph tracks live values and unfinished consumers; an external handoff
+publishes a dependency unit. Successors start only after their predecessor sets
+are ready.
+A buffer slot is acquired before writing, published after production, and
+released after its final required read. More slots trade lookahead against
+live state and synchronization. Tail tiles retain their shape and release event.
 
-Figure~\ref{fig:pipeline} illustrates the distinction with independent
-Hadamard transforms. Completing one row leaves every column waiting for
-three other rows. After the full row band publishes, its column consumers
-can overlap the row work of another transform if resources permit. The
-buffer holding the first transform becomes reusable only after its final
-consumer read, not simply when its producer has finished.
-
-These rules support bulk execution and pipelines across storage scopes.
-Independent transforms may interleave, while a row-to-column boundary within
-one transform retains its fan-in constraint. Larger batch supplies scheduling
-opportunities, but legal overlap still depends on readiness, resource
-availability, and buffer lifetimes.
+\textbf{Within-band pipelining and cross-band overlap are separate choices.}
+Figure~\ref{fig:pipeline} shows cross-band readiness at the top: one completed
+Hadamard row leaves every column waiting for three others. After the full row
+band publishes, columns can overlap another transform's rows if resources
+permit; the buffer remains live through the final read. The bottom shows
+within-band load/compute/store overlap using two slots, which can operate
+despite a barrier before the next band. Cross-band overlap additionally needs
+ready predecessors and a free buffer. Batch supplies work for both, subject to
+lowering, sharing, and lifetime constraints.
 
 \subsection{Composing physical services}
-Once placement and lifetime are fixed, the remaining performance question is
-how the local work composes. Summing isolated core times misses startup and
-boundary work, while assuming ideal overlap ignores readiness and contention.
-We use the actual physical groups and release rules to distinguish these costs.
-For a selected physical group, a \textbf{service model} separates startup,
-repeated work, and the tail,
+Placement and lifetime translate resource demand into completion time.
+A \textbf{service model} separates the startup, repeated work, and tail of a
+stage band's execution, avoiding the missing boundary costs of a sum of
+isolated core times,
 \begin{equation}
 T_{\mathrm{group}}=T_{\mathrm{start}}+R\,T_{\mathrm{step}}+T_{\mathrm{tail}}.
 \label{eq:serial}
 \end{equation}
 The terms depend on the core, tile shape, layout, launch geometry, and storage
 scope. A complete-kernel measurement already includes its launch and tail.
-Bulk execution sums group services plus boundary costs not already included.
+Bulk execution sums stage-band services plus boundary costs not already included.
 
 For $K$ tiles in a repeatable pipeline, the corresponding view is
 \begin{equation}
@@ -117,10 +141,8 @@ optimality.
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/drawio/exports/pipeline.pdf}
-\caption{Readiness and lifetime for independent 16-point Hadamard transforms
-A, B, and C. Each column requires all four rows of its transform. Slot 0
-becomes reusable by C only after A's final column read. Equal operation
-durations are illustrative, not measured. Lanes denote logical work, and
-cross-transform overlap requires available resources.}
+\caption{Top: cross-band readiness for independent Hadamard transforms;
+C reuses slot 0 after A's final read. Bottom: within-band load/compute/store
+pipelining with two slots. Durations and lanes are illustrative.}
 \label{fig:pipeline}
 \end{figure}

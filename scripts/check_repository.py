@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import json
 import pathlib
 import py_compile
@@ -9,8 +10,28 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
-def check_markdown_links():
+def local_artifact_paths():
+    manifest = json.loads((ROOT / "config/repository_local_artifacts.json").read_text())
+    if manifest.get("schema") != "cubutterfly-repository-local-artifacts-v1":
+        raise ValueError("unsupported repository local-artifact manifest schema")
+    paths = manifest.get("artifacts")
+    if not isinstance(paths, list):
+        raise ValueError("local artifacts must be an explicit list of exact results/ paths")
+    for value in paths:
+        if (not isinstance(value, str) or not value.startswith("results/")
+                or any(char in value for char in "*?[]\\")
+                or any(part in ("", ".", "..") for part in value.split("/"))
+                or pathlib.PurePosixPath(value).as_posix() != value):
+            raise ValueError("local artifacts require normalized exact results/ paths: " + str(value))
+    if len(set(paths)) != len(paths):
+        raise ValueError("duplicate local artifact paths")
+    return set(paths)
+
+
+def check_markdown_links(strict_local_artifacts=False):
+    registered = local_artifact_paths()
     missing = []
+    unbundled = set()
     documents = [
         ROOT / "README.md",
         ROOT / "CONTRIBUTING.md",
@@ -24,11 +45,29 @@ def check_markdown_links():
             if target.startswith(("http://", "https://", "mailto:", "#")):
                 continue
             local = target.split("#", 1)[0]
-            if local and not (document.parent / local).resolve().exists():
-                missing.append(f"{document.relative_to(ROOT)}: missing {target}")
+            if not local:
+                continue
+            resolved = (document.parent / local).resolve()
+            if resolved.exists():
+                continue
+            try:
+                relative = resolved.relative_to(ROOT.resolve()).as_posix()
+            except ValueError:
+                relative = None
+            if relative in registered:
+                unbundled.add(relative)
+                if not strict_local_artifacts:
+                    continue
+            missing.append(f"{document.relative_to(ROOT)}: missing {target}")
     if missing:
         raise RuntimeError("\n".join(missing))
-    return len(documents)
+    if strict_local_artifacts:
+        # Strict mode checks the entire declared artifact inventory, even if a
+        # documentation link has since been removed. Directories do not cover children.
+        absent = [value for value in registered if not (ROOT / value).exists()]
+        if absent:
+            raise RuntimeError("registered raw artifacts absent:\n" + "\n".join(sorted(absent)))
+    return len(documents), sorted(unbundled)
 
 
 def check_json():
@@ -53,12 +92,18 @@ def check_citation():
         raise RuntimeError(f"CITATION.cff is missing required keys: {', '.join(missing)}")
 
 
-def main():
-    markdown = check_markdown_links()
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Check packaged source links and report explicitly unbundled raw artifacts")
+    parser.add_argument("--strict-local-artifacts", action="store_true",
+                        help="Require all registered historical raw artifacts to exist locally too")
+    args = parser.parse_args(argv)
+    markdown, unbundled = check_markdown_links(args.strict_local_artifacts)
     json_files = check_json()
     python_files = check_python()
     check_citation()
     print(f"repository checks passed: {markdown} Markdown, {json_files} JSON, {python_files} Python files")
+    print(f"unbundled historical raw artifacts: {len(unbundled)} exact linked paths "
+          "(explicit inventory; contents and experimental validity not checked)")
 
 
 if __name__ == "__main__":

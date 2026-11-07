@@ -156,12 +156,21 @@ def sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def build(output, nvcc="/usr/local/cuda-12.4/bin/nvcc"):
+def cuda_architecture(value):
+    """Accept a numeric SM target; nvcc validates actual toolkit support."""
+    if (type(value) not in (int, str) or not str(value).isascii() or
+            not str(value).isdigit() or int(value) <= 0):
+        raise ValueError("cuda_arch must be a positive numeric SM target, e.g. 80 or 120")
+    return int(value)
+
+
+def build(output, nvcc="/usr/local/cuda-12.4/bin/nvcc", cuda_arch=80):
+    architecture = f"sm_{cuda_architecture(cuda_arch)}"
     output, nvcc = Path(output).resolve(), Path(nvcc).resolve(strict=True)
     output.mkdir(parents=True, exist_ok=True)
     cuda = nvcc.parent.parent
     library = output / "libcufft_low_precision_baseline.so"
-    command = [str(nvcc), "-std=c++17", "-O3", "-arch=sm_80", "--shared", "--cudart=shared",
+    command = [str(nvcc), "-std=c++17", "-O3", f"-arch={architecture}", "--shared", "--cudart=shared",
                "-Xcompiler=-fPIC", str(SOURCE / "bridge.cu"), "-lcufft", "-L" + str(cuda / "lib64"),
                "-Xlinker=-rpath", "-Xlinker=" + str(cuda / "lib64"), "-o", str(library)]
     version = subprocess.check_output([str(nvcc), "--version"], text=True)
@@ -171,7 +180,7 @@ def build(output, nvcc="/usr/local/cuda-12.4/bin/nvcc"):
         binding_sha256=sha256(__file__),
         vendor_header_sha256={name: sha256(cuda / "include" / name) for name in
                               ("cufft.h", "cufftXt.h", "library_types.h", "cuda_runtime_api.h")},
-        library_sha256=sha256(library), nvcc=str(nvcc), architecture="sm_80",
+        library_sha256=sha256(library), nvcc=str(nvcc), architecture=architecture,
         documented_cuda_version="12.4.0", documentation=DOCS,
         input_output_execution_types=["CUDA_C_16F", "CUDA_C_16BF"],
         gpu_initialization=False, gpu_execution=False, graph_validation="pending",
@@ -187,6 +196,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build", type=Path)
     parser.add_argument("--nvcc", default="/usr/local/cuda-12.4/bin/nvcc")
+    parser.add_argument("--cuda-arch", type=cuda_architecture, default=80,
+                        help="numeric SM target (default: 80); nvcc rejects unsupported targets")
     parser.add_argument("--shape", type=int, nargs="+", default=[65536])
     parser.add_argument("--batch", type=int, default=16)
     parser.add_argument("--precision", choices=tuple(PRECISIONS), default="fp16")
@@ -195,7 +206,7 @@ def main(argv=None):
     parser.add_argument("--normalization", default="none")
     args = parser.parse_args(argv)
     if args.build:
-        print(build(args.build, args.nvcc))
+        print(build(args.build, args.nvcc, cuda_arch=args.cuda_arch))
         return 0
     capability = support(args.shape, args.batch, precision=args.precision, compute=args.compute,
                          direction=args.direction, normalization=args.normalization)

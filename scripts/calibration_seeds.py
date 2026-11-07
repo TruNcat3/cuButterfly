@@ -19,13 +19,22 @@ SCHEMA = "cubutterfly-mapping-seeds-v1"
 
 
 def canonical_mapping(mapping):
-    """Apply the public plan's legacy column alias normalization.
+    """Apply the public plan's provider label and column alias normalization.
 
     Imported online cores derive physical columns from threads and EPT.
-    ButterflyPlan therefore sets reorder_columns=1 for these cores. Preserve
-    every real mapping axis and leave scalar/factor columns untouched.
+    ButterflyPlan therefore sets reorder_columns=1 for these cores. Its
+    cufftdx-block provider also reports the accepted radix2 label as auto:
+    radix choice belongs to the provider. Preserve every physical mapping
+    axis and leave scalar arithmetic and scalar/factor columns untouched.
     """
     normalized = dict(mapping)
+    # ButterflyPlan::Impl normalizes imported FFT core compute_unit to Auto.
+    # Only fold the documented, accepted radix2 alias. Other requested radix
+    # values must remain visible to compiler validation and seed comparison.
+    if (normalized.get("backend") in {"temporal-tile", "online-reorder", "factor-streamed"}
+            and normalized.get("fft_core") == "cufftdx-block"
+            and normalized.get("compute_unit") == "radix2"):
+        normalized["compute_unit"] = "auto"
     if normalized.get("suffix_core") == "cufftdx-block":
         normalized.pop("suffix_core")
     if (normalized.get("backend") == "online-reorder"
@@ -41,6 +50,7 @@ def _validate_strategy_axes(mapping, semantics=None):
         raise ValueError("mapping seed mapping must be an object")
     backend = mapping.get("backend")
     resident_mapping.validate_suffix_core({**mapping, "operator": (semantics or {}).get("operator", mapping.get("operator", "fft"))})
+    resident_mapping.validate_prefix_twiddle({**mapping, "operator": (semantics or {}).get("operator", mapping.get("operator", "fft"))})
     core = mapping.get("fft_core")
     codelet = mapping.get("prefix_codelet", "native")
     layout = mapping.get("prefix_shared_layout", "linear")

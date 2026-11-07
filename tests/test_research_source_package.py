@@ -27,6 +27,10 @@ class ResearchSourcePackageTests(unittest.TestCase):
         (root / "benchmarks/crypto_ntt").mkdir(parents=True, exist_ok=True)
         (root / "benchmarks/crypto_ntt/CMakeLists.txt").write_text("project(test)\n")
         (root / "tests/untracked_test.py").write_text("assert True\n")
+        (root / "python/cubutterfly").mkdir()
+        (root / "python/cubutterfly/__init__.py").write_text("# API\n")
+        (root / "benchmark/manifest.py").write_text("# runner\n")
+        (root / "adapters/application.cu").write_text("// application adapter\n")
         for filename in packager.WHITELIST_FILES:
             if filename in {"LICENSE.txt", "README"}:
                 continue
@@ -44,6 +48,10 @@ class ResearchSourcePackageTests(unittest.TestCase):
                 "paper/historical.pdf": "pdf",
                 ".git/config": "credential-ish",
                 "cache/ignored.txt": "cache",
+                "python/__pycache__/api.pyc": "cache",
+                "benchmark/.pytest_cache/state": "cache",
+                "python/external/vendor.py": "third party",
+                "benchmark/results/old.json": "result",
             }.items():
                 path = root / relative
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -61,6 +69,12 @@ class ResearchSourcePackageTests(unittest.TestCase):
             with tarfile.open(output, "r:gz") as archive:
                 names = set(archive.getnames())
                 self.assertIn("cuButterfly/scripts/untracked_runner.py", names)
+                self.assertIn("cuButterfly/python/cubutterfly/__init__.py", names)
+                self.assertIn("cuButterfly/benchmark/manifest.py", names)
+                self.assertIn("cuButterfly/adapters/application.cu", names)
+                for excluded in ("python/__pycache__/api.pyc", "benchmark/.pytest_cache/state",
+                                 "python/external/vendor.py", "benchmark/results/old.json"):
+                    self.assertNotIn("cuButterfly/" + excluded, names)
                 self.assertIn("cuButterfly/examples/untracked_example.cpp", names)
                 self.assertIn("cuButterfly/config/research_campaign/composed.json", names)
                 self.assertIn("cuButterfly/results/v100_scaling_full_summary.csv", names)

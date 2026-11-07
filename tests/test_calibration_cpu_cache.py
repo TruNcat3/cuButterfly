@@ -101,7 +101,8 @@ def test_concurrent_reader_and_writers_see_only_committed_partial_results(tmp_pa
 def test_flush_batches_and_elapsed_time(tmp_path, monkeypatch):
     with DiskScoreCache(tmp_path, CONTEXT) as cache:
         cache.bind(MODEL)
-        for index in range(256):
+        monkeypatch.setattr(cache, "_BATCH_SIZE", 32)
+        for index in range(cache._BATCH_SIZE):
             cache.put(str(index), None, float(index))
         assert cache.stats["flushes"] == 1
         assert cache.stats["pending_scores"] == 0
@@ -109,6 +110,48 @@ def test_flush_batches_and_elapsed_time(tmp_path, monkeypatch):
         cache.put("timed", None, .5)
         assert cache.stats["flushes"] == 2
         assert cache.stats["pending_scores"] == 0
+
+
+def test_flush_inserts_in_primary_key_order(tmp_path):
+    with DiskScoreCache(tmp_path, CONTEXT) as cache:
+        cache.bind(MODEL)
+        cache._connection.executescript("""
+            CREATE TABLE insertion_order (epoch TEXT, candidate TEXT, descriptor TEXT);
+            CREATE TRIGGER record_order AFTER INSERT ON scores BEGIN
+                INSERT INTO insertion_order VALUES (NEW.epoch, NEW.candidate, NEW.descriptor);
+            END;
+        """)
+        for candidate, descriptor in (("z", None), ("b", {"registers": 32}),
+                                      ("a", None), ("b", {"registers": 16})):
+            cache.put(candidate, descriptor, .25)
+        expected = sorted(cache._pending)
+        cache.flush()
+        assert cache._connection.execute(
+            "SELECT epoch, candidate, descriptor FROM insertion_order ORDER BY rowid").fetchall() == expected
+        assert cache._connection.execute("PRAGMA synchronous").fetchone() == (2,)
+
+
+def test_interrupted_process_retains_complete_batch_for_exact_resume(tmp_path):
+    script = """
+import os
+import sys
+sys.path.insert(0, sys.argv[1])
+from calibration_cpu_cache import DiskScoreCache
+cache = DiskScoreCache(sys.argv[2], {'build': 'abc', 'feature_version': 'v1'})
+cache.bind({'profile': {'rate': 1}, 'stage_service': {'curves': {'a': [1, 2]}}, 'parameters': {}})
+cache._BATCH_SIZE = 32
+for index in range(cache._BATCH_SIZE):
+    cache.put(str(index), {'registers': index % 17}, index / 7)
+cache.put('uncommitted', None, .1)
+os._exit(0)
+"""
+    subprocess.run([sys.executable, "-c", script, str(SCRIPTS), str(tmp_path)], check=True)
+    with DiskScoreCache(tmp_path, CONTEXT) as cache:
+        cache.bind(MODEL)
+        for index in range(32):
+            found, score = cache.get(str(index), {"registers": index % 17})
+            assert found and score.hex() == (index / 7).hex()
+        assert cache.get("uncommitted", None) == (False, None)
 
 
 def test_corrupt_score_raises_instead_of_hit(tmp_path):

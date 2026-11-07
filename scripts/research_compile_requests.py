@@ -140,6 +140,7 @@ def _radix4_uses_linked_inventory(mapping, operator, precision, log_n):
             raise ValueError("rectangular XOR lane digits exceed the shared transaction rows")
     if (precision != "fp32" or stages[0] != 8 or stages[1] not in (10, 12) or
             mapping.get("prefix_shared_layout", "linear") != "linear" or
+            mapping.get("prefix_twiddle", "runtime") != "runtime" or
             mapping.get("prefix_codelet_lanes", 1) != 1 or
             mapping.get("suffix_core", "cufftdx-block") != "cufftdx-block" or
             resident_mapping.resident_requested(mapping)):
@@ -210,14 +211,52 @@ raise explicitly; guessing them would populate cache entries runtime never uses.
     operator = point.get("operator", "fft")
     precision = point.get("precision", "fp32")
     log_n = int(point["logN"])
+    if backend == "temporal-tile" and mapping.get("fft_core") == "cufftdx-block" and precision == "fp16":
+        inverse = point.get("inverse", point.get("direction") == "inverse")
+        normalize = point.get("normalize_inverse", point.get("normalization", "inverse") == "inverse")
+        if inverse and normalize:
+            raise ValueError("FP16 local cuFFTDx normalized inverse is not exposed by the public core contract")
+        if policy == "precompiled":
+            raise ValueError("FP16 local cuFFTDx requires the standalone module compiler")
+        try:
+            from cufftdx_low_module import validate_point
+        except ImportError:
+            from .cufftdx_low_module import validate_point
+        request = dict(backend=backend, fft_core="cufftdx-block", precision=precision,
+                       accumulation=point.get("accumulation", "native"), logN=log_n,
+                       tile_threads=_positive(mapping, "tile_threads"),
+                       prefix_ept=_positive(mapping, "prefix_ept"), packing="half2-transform-pair-v1")
+        validate_point(dict(mapping, **request, operator=operator,
+                            stage_partition=mapping.get("stage_partition") or [log_n]), 0)
+        return request
     suffix_core = resident_mapping.validate_suffix_core(mapping)
+    prefix_twiddle = resident_mapping.validate_prefix_twiddle({**mapping, "operator": operator})
+    if prefix_twiddle != "runtime" and policy == "precompiled":
+        raise ValueError("prefix_twiddle=table requires on-demand compilation")
+    shared_stages, group_threads = None, []
+    if backend == "shared-iterative" and mapping.get("execution_group_mappings", []) != []:
+        shared_stages = _shared_partition(mapping, operator, log_n)
+        group_threads = resident_mapping.shared_group_threads(mapping, shared_stages, operator=operator)
     if mapping.get("prefix_codelet") == "radix4":
         _register_prefix_axes(mapping, precision)
         if _radix4_uses_linked_inventory(mapping, operator, precision, log_n):
             return None
         if policy == "precompiled":
             raise ValueError("radix4 mapping is outside the prebuilt inventory and requires on-demand compilation")
+    if backend == "factor-streamed" and precision not in {"fp16", "fp32", "fp64"}:
+        raise ValueError("factor-streamed supports native FP16/32/64; BF16 has no cuFFTDx lowering")
+    if backend == "factor-streamed" and precision == "fp16":
+        inverse = point.get("inverse", point.get("direction") == "inverse")
+        normalize = point.get("normalize_inverse", point.get("normalization", "inverse") == "inverse")
+        if inverse and normalize:
+            raise ValueError("FP16 factor-streamed rejects normalized inverse")
+        if point.get("accumulation", "native") != "native" or mapping.get("fft_core") != "cufftdx-block":
+            raise ValueError("FP16 factor-streamed requires native accumulation and cuFFTDx block")
+        if policy == "precompiled":
+            raise ValueError("FP16 factor-streamed requires the standalone module compiler")
     if policy == "precompiled":
+        if backend == "shared-iterative" and mapping.get("data_tiles_per_cta", 1) != 1:
+            raise ValueError("shared multi-tile columns require on-demand compilation")
         if suffix_core != "cufftdx-block":
             raise ValueError("native suffix_core requires on-demand compilation")
         if resident_mapping.resident_requested(mapping):
@@ -230,9 +269,16 @@ raise explicitly; guessing them would populate cache entries runtime never uses.
     if raw_policies not in (None, "", []) and backend != "factor-streamed":
         raise ValueError("factor_io_policies are valid only for factor-streamed")
     if backend == "shared-iterative":
-        stages = _shared_partition(mapping, operator, log_n)
+        stages = shared_stages if shared_stages is not None else _shared_partition(mapping, operator, log_n)
         axes = _resident_request(mapping, stages, backend=backend, operator=operator)
-        if policy != "research" and not resident_mapping.resident_requested(mapping):
+        tiles = mapping.get("data_tiles_per_cta", 1)
+        if type(tiles) is not int or tiles < 1 or tiles & (tiles - 1):
+            raise ValueError("shared data_tiles_per_cta must be a positive power of two")
+        if any(tiles > 1 << (log_n - stage) for stage in stages):
+            raise ValueError("shared data tiles exceed the independent tiles in an execution group")
+        if tiles > 1 and (operator == "ntt" or resident_mapping.resident_requested(mapping)):
+            raise ValueError("multi-tile shared columns require the generic iterative mapping")
+        if policy != "research" and tiles == 1 and not resident_mapping.resident_requested(mapping) and not group_threads:
             return None
         batch_tile = 1 if mapping.get("stage_overlap", False) else int(mapping.get("batch_tile_count", 1))
         if not 1 <= batch_tile <= 4:
@@ -240,6 +286,8 @@ raise explicitly; guessing them would populate cache entries runtime never uses.
         request = dict(backend=backend, operator=operator, precision=precision,
                        logN=log_n, stage_partition=stages, batch_tile=batch_tile)
         request.update(axes)
+        if group_threads:
+            request["group_threads"] = group_threads
         if operator == "ntt":
             # Output layout belongs to the workload, never a donor mapping.
             order = point.get("output_order", point.get("placement", "natural"))
@@ -255,6 +303,8 @@ raise explicitly; guessing them would populate cache entries runtime never uses.
                            writer_aligned=mapping.get("shared_layout", "linear") == "writer-aligned",
                            accumulation=point.get("accumulation", "native"),
                            complex_multiply=mapping.get("complex_multiply", "four-mul"))
+            if tiles != 1:
+                request["data_tiles_per_cta"] = tiles
         return request
     if operator != "fft":
         return None
@@ -273,6 +323,10 @@ raise explicitly; guessing them would populate cache entries runtime never uses.
                        factor_columns=_positive(mapping, "factor_columns"),
                        data_tiles_per_cta=_positive(mapping, "data_tiles_per_cta"),
                        prefetch_depth=int(mapping.get("prefetch_depth", 0)))
+        if precision == "fp16":
+            if request["factor_columns"] < 2 or request["factor_columns"] > 32 or request["factor_columns"] & (request["factor_columns"] - 1):
+                raise ValueError("FP16 factor_columns must be an even power of two in [2,32]")
+            request.update(accumulation="native", packing="half2-transform-pair-v1")
         if policies:
             request["factor_io_policies"] = policies
         if mapping.get("fft_core") == "register-tile":
@@ -304,6 +358,8 @@ raise explicitly; guessing them would populate cache entries runtime never uses.
             request["prefix_codelet"] = codelet
         if layout != "linear":
             request["prefix_shared_layout"] = layout
+        if prefix_twiddle != "runtime":
+            request["prefix_twiddle"] = prefix_twiddle
         if lanes != 1:
             request["prefix_codelet_lanes"] = lanes
         return request

@@ -24,6 +24,58 @@ def write(path, value):
     return path
 
 
+def preflight_artifacts(tmp_path):
+    from hardware_registry import SCHEMA, canonical_semantics
+    document = model()
+    expected = static.identity(document)
+    root = tmp_path / "profiles"
+    hardware = write(root / static._tag(expected) / static.FILENAME, document)
+    key = canonical_semantics(dict(operator="fft", precision="fp32", logN=10,
+                                   batch=1, placement="out-of-place"))
+    registry = write(tmp_path / "registry.json", dict(schema=SCHEMA, targets=[dict(
+        hardware=expected, records=[dict(status="measured", runtime_fingerprint="build-test", key=key)])]))
+    return root, expected, hardware, registry, key
+
+
+def test_preflight_exact_artifacts_and_optional_workloads(tmp_path):
+    root, expected, hardware, registry, key = preflight_artifacts(tmp_path)
+    result = static.preflight(root, expected, registry, "build-test", workload_keys=[key])
+    assert result["hardware_path"] == str(hardware)
+    assert result["measured_records"] == 1
+    assert result["calibration_completion_checked"] is False
+    assert static.main(["preflight", "--profile-root", str(root), "--expected-identity",
+                        str(write(tmp_path / "identity.json", expected)), "--registry", str(registry),
+                        "--runtime-fingerprint", "build-test"]) == 0
+    with pytest.raises(ValueError, match="exact measured workload"):
+        static.preflight(root, expected, registry, "build-test", workload_keys=[dict(key, batch="2")])
+
+
+@pytest.mark.parametrize("failure", ["leaf", "hardware", "registry-hardware", "fingerprint", "unmeasured"])
+def test_preflight_rejects_incompatible_artifacts(tmp_path, failure):
+    root, expected, hardware, registry, _ = preflight_artifacts(tmp_path)
+    match = "identity mismatch"
+    if failure == "leaf":
+        root = hardware.parent
+        match = "legacy leaf"
+    elif failure == "hardware":
+        document = json.loads(hardware.read_text())
+        document["hardware"]["memory_bytes"] = 40 << 30
+        write(hardware, document)
+    elif failure in ("registry-hardware", "unmeasured"):
+        document = json.loads(registry.read_text())
+        target = document["targets"][0]
+        if failure == "registry-hardware":
+            target["hardware"]["global_memory_bytes"] = 40 << 30
+        else:
+            target["records"][0]["status"] = "needs-revalidation"
+            match = "runtime_fingerprint"
+        write(registry, document)
+    else:
+        match = "runtime_fingerprint"
+    with pytest.raises(ValueError, match=match):
+        static.preflight(root, expected, registry, "other-build" if failure == "fingerprint" else "build-test")
+
+
 @pytest.mark.parametrize("field,value", [("device", "A100"), ("compute_capability", "9.0"),
                                         ("global_memory_bytes", 40 << 30)])
 def test_identity_is_exact(field, value):

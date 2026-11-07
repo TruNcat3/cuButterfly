@@ -1,0 +1,22 @@
+{
+  "schema": "cubutterfly-paper-portability-scope-v1",
+  "scope_id": "paper-main66-portability-v1",
+  "source": "results/install_compare_20261013/campaign_config.json",
+  "source_sha256": "ba53eb9b6a814c86f4c51c44d3a430dba68c94f0201702caccfb8f48738e599f",
+  "source_role": "semantic requests only; no A100 mappings, timings or profiles imported",
+  "full_population_count": 66,
+  "quick_population_count": 12,
+  "quick_subset_of": "full",
+  "files": {
+    "quick.json": "d36b37c78e0ff61c30685e26db0f12804ce998130a144556d009ef480e409227",
+    "full.json": "ba53eb9b6a814c86f4c51c44d3a430dba68c94f0201702caccfb8f48738e599f"
+  },
+  "not_in_this_track": [
+    "cyclic90",
+    "fft-l-fp16-public9",
+    "fixed-core ablations",
+    "profiles",
+    "applications"
+  ],
+  "gpu_measurement_status": "not-started-on-PRO6000"
+}

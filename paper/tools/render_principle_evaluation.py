@@ -428,44 +428,41 @@ def poisson_endpoint_plot(report_path, metadata):
             r'Graph/cuB is a latency ratio, so values below one favor cuButterfly. Setup, search and capture are excluded.}',
             r'\endgroup']
     (GENERATED/'principle_application_poisson_endpoint.tex').write_text('\n'.join(tex)+'\n')
-    fig, ax = plt.subplots(figsize=(7, 2.8))
-    fig.subplots_adjust(left=.09, right=.99, bottom=.25, top=.79)
-    positions = []
-    labels = []
-    colors = {'eager': '#999999', 'graph': '#0072B2'}
-    for index, (method, _) in enumerate(methods):
-        for offset, mode in ((-.18, 'eager'), (.18, 'graph')):
-            samples = [r['wall_ms'] for r in rows if r['method'] == method and r['mode'] == mode]
-            position = index + offset
-            positions.append(position)
-            labels.append(f'{method}\n{mode}')
-            box = ax.boxplot([samples], positions=[position], widths=.28, patch_artist=True,
-                             showfliers=False, whis=(0, 100), manage_ticks=False,
-                             medianprops=dict(color='black', linewidth=.9),
-                             boxprops=dict(edgecolor=colors[mode], facecolor=colors[mode], alpha=.55, linewidth=.8),
-                             whiskerprops=dict(color=colors[mode], linewidth=.7),
-                             capprops=dict(color=colors[mode], linewidth=.7))
-            ax.scatter(np.full(len(samples), position) + np.linspace(-.045, .045, len(samples)), samples,
-                       s=6, color=colors[mode], alpha=.65, zorder=3)
-            median = statistics.median(samples)
-            ax.text(position, max(samples) + .03 * (max(samples) - min(samples)), f'{median:.3f}',
-                    ha='center', va='bottom', fontsize=6.2, rotation=90)
-    ax.set_xticks(positions, labels)
-    ax.set_ylabel('Complete-call wall latency (ms)')
-    ax.set_title('2-D periodic spectral Poisson solve | N=2048, B=16 | A100 80GB', fontsize=8.5, pad=8)
-    axis_style(ax)
-    ax.set_ylim(bottom=min(r['wall_ms'] for r in rows) * .98, top=max(r['wall_ms'] for r in rows) * 1.09)
-    legend_handles = [Line2D([], [], color=colors[m], marker='s', linestyle='none', markersize=5,
-                             label=m) for m in modes]
-    fig.legend(handles=legend_handles, loc='upper center', bbox_to_anchor=(.5, .99), ncol=2,
-               frameon=False, fontsize=7)
-    fig.text(.5, .055, '20 repeated steady-state calls in one process; boxes show min/max and median, not CI.',
-             ha='center', fontsize=6.6)
-    fig.text(.5, .015, 'Wall scope includes device input/output copies, complete solve, and synchronization; setup/search/capture excluded.',
-             ha='center', fontsize=6.2)
-    export(fig, 'application_poisson_endpoint',
-           'Measured 2-D periodic spectral Poisson endpoint at N=2048 and B=16; eager and CUDA Graph modes across three backends.',
-           [Path(report_path)], metadata, 2.8)
+    style = {'font.family': 'DejaVu Sans', 'font.size': 7.5, 'axes.labelsize': 7.5,
+             'xtick.labelsize': 7.5, 'ytick.labelsize': 7, 'pdf.fonttype': 42,
+             'ps.fonttype': 42, 'svg.fonttype': 'none', 'axes.linewidth': .6}
+    with plt.rc_context(style):
+        fig, ax = plt.subplots(figsize=(3.5, 1.75))
+        fig.subplots_adjust(left=.17, right=.985, bottom=.19, top=.82)
+        colors = {'eager': '#666666', 'graph': '#0072B2'}
+        markers = {'eager': 'o', 'graph': 's'}
+        for index, (method, _) in enumerate(methods):
+            for offset, mode in ((-.18, 'eager'), (.18, 'graph')):
+                samples = [r['wall_ms'] for r in rows if r['method'] == method and r['mode'] == mode]
+                position = index + offset
+                ax.boxplot([samples], positions=[position], widths=.28, patch_artist=True,
+                           showfliers=False, whis=(0, 100), manage_ticks=False,
+                           medianprops=dict(color='black', linewidth=.9),
+                           boxprops=dict(edgecolor=colors[mode], facecolor=colors[mode], alpha=.25, linewidth=.8),
+                           whiskerprops=dict(color=colors[mode], linewidth=.7),
+                           capprops=dict(color=colors[mode], linewidth=.7))
+                # Fixed offsets preserve all observations without random jitter.
+                ax.scatter(np.full(len(samples), position) + np.linspace(-.045, .045, len(samples)), samples,
+                           s=5, color=colors[mode], marker=markers[mode], alpha=.75, zorder=3)
+        ax.set_xticks(range(3), [method for method, _ in methods])
+        ax.set_ylabel('Wall latency (ms)')
+        axis_style(ax)
+        lower = math.floor(min(r['wall_ms'] for r in rows) * 4) / 4
+        upper = math.ceil(max(r['wall_ms'] for r in rows) * 4) / 4
+        ax.set(xlim=(-.55, 2.55), ylim=(lower, upper), yticks=np.arange(lower, upper + .125, .25))
+        legend_handles = [Line2D([], [], color=colors[m], marker=markers[m], linestyle='none',
+                                 markersize=3.5, label=('Eager' if m == 'eager' else 'CUDA Graph'))
+                          for m in modes]
+        fig.legend(handles=legend_handles, loc='upper center', bbox_to_anchor=(.57, .995), ncol=2,
+                   frameon=False, fontsize=7.5, handlelength=1, columnspacing=1.4)
+        export(fig, 'application_poisson_endpoint',
+               'Measured 2-D periodic spectral Poisson endpoint at N=2048 and B=16; eager and CUDA Graph modes across three backends. Boxes: quartiles and median; whiskers: min/max; all 20 individual wall samples per box shown.',
+               [Path(report_path)], metadata, 1.75, width=3.5)
     metadata['poisson_endpoint'] = dict(
         cohort='e2e-20261017-poisson-2048-b16', application=report['application'], size=report['size'], batch=report['batch'],
         hardware=dict(name=report['gpu_name'], uuid=report['gpu_uuid'], memory_bytes=report['gpu_memory_bytes']),

@@ -3,7 +3,7 @@
 The caller supplies algorithm/build identities in ``context`` and binds the
 complete scoring model. Candidates must be immutable under their candidate ID;
 descriptor contents are hashed on every access, including in-place updates.
-Writes stay in a small local buffer until a flush, 256 scores, or one second
+Writes stay in a bounded local buffer until a flush, 65536 scores, or one second
 of subsequent writes. SQLite transactions are held only during flushes so an
 independent preparation process can read committed partial results.
 """
@@ -35,6 +35,8 @@ class DiskScoreCache:
     call ``bind`` again after any in-place model mutation. Descriptor mutation
     is detected without rebinding. ``stats`` is a read-only snapshot.
     """
+
+    _BATCH_SIZE = 65536
 
     def __init__(self, directory, context):
         self._context = _serialized(context)
@@ -116,7 +118,7 @@ class DiskScoreCache:
             raise ValueError("NaN scores cannot be cached")
         self._pending[key] = value.hex()
         self._stats["puts"] += 1
-        if len(self._pending) >= 256 or time.monotonic() - self._last_flush >= 1.0:
+        if len(self._pending) >= self._BATCH_SIZE or time.monotonic() - self._last_flush >= 1.0:
             self.flush()
 
     def flush(self):
@@ -124,9 +126,11 @@ class DiskScoreCache:
         if self._pending:
             try:
                 self._connection.execute("BEGIN IMMEDIATE")
+                # Adjacent primary keys share B-tree pages; bounded sorted
+                # batches avoid rewriting random pages for every small commit.
                 self._connection.executemany(
                     "INSERT OR REPLACE INTO scores VALUES (?, ?, ?, ?)",
-                    ((*key, value) for key, value in self._pending.items()))
+                    ((*key, self._pending[key]) for key in sorted(self._pending)))
                 self._connection.execute("COMMIT")
             except BaseException:
                 if self._connection.in_transaction:

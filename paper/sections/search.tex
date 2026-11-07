@@ -1,81 +1,62 @@
 \section{Kernel Generation and Selection}
 \label{sec:search}
-The previous sections define what a valid realization is, but several valid
-choices can have different performance. More residency may reduce transfers
-yet increase register pressure. A consumer-friendly layout may require
-expensive stores, and a pipeline may expose overlap while adding launches.
-These interactions make a fixed choice of decomposition or core unsuitable
-across workloads and GPUs.
+The workload-dependent organization trade-off motivates selection even at fixed
+arithmetic. The inputs in Figure~\ref{fig:overview} feed the preparation and
+execution paths in Figure~\ref{fig:framework}, instantiating subgraphs and handoffs. Storage constraints prune infeasible realizations;
+services and readiness rank the remainder. Residency, layout, and concurrency
+are chosen jointly, including handoff costs. Preparation produces a reusable
+plan whose complete device path is the unit of warm execution.
 
-Figure~\ref{fig:framework} connects the construction to automatic generation
-and selection. The three input descriptions instantiate legal subgraphs and
-handoffs. Compatible cores and target measurements then guide lowering and
-search, producing a reusable execution plan. Preparation is amortized over
-repeated calls, while the complete selected device path remains the unit of
-warm execution.
-
-\begin{figure*}[t]
+\begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/drawio/exports/system_architecture.pdf}
-\caption{Automatic realization. Semantic, workload, and hardware contracts
-guide candidate construction. Compilation and validation precede measurement,
-whose feedback guides selection of a reusable plan. Failed lowerings remain explicit
-coverage gaps. Adaptation, resident subgraphs, streaming handoffs, and
-synchronization are part of the timed device path; compilation, calibration,
-search, and cache fill are preparation costs.}
+\includegraphics[width=\columnwidth]{figures/drawio/exports/system_architecture.pdf}
+\caption{Preparation constructs and checks subgraph plans, then the selected
+plan controls local execution and boundary exchange.}
 \label{fig:framework}
-\end{figure*}
+\end{figure}
 
 \subsection{Generate compatible realizations}
-Generation follows the structure of the method rather than a catalog of
-operator-size exceptions. A candidate first identifies stage bands and their
-components, then binds cores and storage, and finally specifies boundary
-representations and scheduling. Each choice narrows what can legally follow.
-Candidates vary stage partitions, local cores, storage scopes, boundary layouts,
-and bulk or pipelined schedules. The generator preserves the requested
-arithmetic, precision, direction, normalization, ordering, shape, and placement.
-An adapted path must include its conversions in the plan and its execution
-cost. A legal organization without a compatible lowering remains a coverage
-gap rather than a substitute computation.
+Generation combines stage bands and closed regions with compatible cores, storage,
+boundary layouts, and bulk or pipelined schedules. These coupled choices
+preserve the requested arithmetic, precision, direction,
+normalization, order, shape, and placement. Adapted plans include conversion
+costs. A legal organization without a compatible lowering remains a gap.
 
-Static checks enforce dependencies and capacity. Compilation exposes register,
-shared-memory, spill, and launch requirements. Numerical checks precede timing.
-Compilation, reusable planning, and service measurement are preparation costs.
-A cached plan remains valid only while its semantic, workload, hardware, and
-compilation assumptions match.
+Static checks enforce dependencies and capacity; compilation exposes local
+allocation, intermediate-capacity, temporary-storage, and launch requirements.
+Numerical checks precede timing.
+Cache reuse requires matching semantic, workload, hardware, and compilation
+assumptions.
 
 \subsection{Estimate local services and their composition}
-Measuring every complete realization would repeatedly pay for similar local
-work. The service model instead reuses measurements where the physical
-contract matches, then accounts for the dependencies and resource sharing
-introduced by composition. This reuse requires more than proximity in $N$.
-A physical service is keyed by arithmetic, core, tile shape, layout, and
-resource regime. Full and remainder tiles are distinct shapes when their work
-differs. Piecewise linear interpolation estimates nearby loads within a
-compatible measured regime. Missing coverage requires a local measurement or
-an explicit gap.
+To avoid remeasuring shared local work, services are keyed by arithmetic,
+core, tile shape, layout, and resource regime. Full and remainder tiles remain
+distinct when their work differs. Piecewise linear interpolation estimates
+nearby loads only within a compatible measured regime; missing coverage
+requires a local measurement or an explicit gap.
 
-The model composes these services using the actual graph. A group becomes
-eligible after its predecessors and buffer slot are ready. Concurrent groups
-share execution and memory capacity, potentially lengthening their effective
-interval. Submission costs are added only when absent from measured services.
-This separates reusable local measurements from contention and orchestration,
-while held-out plans test both relative ranking and absolute error.
+Composition follows the actual graph, admitting a group after predecessors
+and buffers are ready. Shared execution and memory capacity can lengthen
+concurrent service intervals. Submission costs are added only when absent
+from measured services, separating local work from contention and orchestration.
+These estimates guide preparation; the research contribution is the common
+organization characterization and its realization under hardware constraints.
+Search is the engineering mechanism that instantiates this space, not a claim
+of a new global optimization algorithm.
 
 \subsection{Bounded search and confirmation}
-The model is a way to prioritize measurements, not an oracle for the best
-kernel. Search must account for both model error and incomplete lowerings,
-and retain direct evidence for the candidate it ultimately selects.
-Search starts from supported compositions and explores neighborhoods by
-splitting or merging bands, moving stages across boundaries, replacing cores,
-or changing layouts and buffering. Broad candidates and local refinements
-share a finite budget. Unsupported lowerings and failed checks are recorded
-separately from measured candidates.
+Selection compares complete realizations under a finite measurement budget.
+Compatible cached plans and calibrated services avoid repeated preparation.
+Measurement modes use bounded enumeration or model-guided exploration;
+explicit evolutionary tuning adds multistart neighborhood mutation.
+Multidimensional selection measures complete candidates before refining axis
+choices. These strategies share semantic and resource constraints, while
+retaining the complete cost of each organization. Failed checks are excluded
+from timing and retained in the experiment record.
 
-A shortlist receives the more expensive composition checks and repeated
-complete-plan measurements. Selection returns the fastest confirmed candidate
-under the requested contract. The evidence must therefore distinguish the
-legal design space, executable lowerings, and measured pool. Pool-best
-selection is not a global-optimality claim. The evaluation next tests library
-performance, the organization effect at fixed core, and the limits of the
-resulting plans.
+Complete-plan timing is the unit of confirmation, and static rankings remain
+distinguishable from measured selection. Organization comparisons distinguish
+explicit interventions from searched plans and retain their actual mappings,
+tuning conditions, and confirmation protocol. Preparation is separate from
+warm execution. The evaluation tests resulting performance and organization
+effects; finite search does not establish global optimality.

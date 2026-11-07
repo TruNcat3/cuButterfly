@@ -25,8 +25,13 @@ std::uint64_t validate(unsigned log_n, std::size_t batch, unsigned bits,
     if (!batch || batch > 65535) throw std::invalid_argument("GPU-NTT full batch must be in [1,65535]");
     if (bits != 32 && bits != 64) throw std::invalid_argument("GPU-NTT word bits must be 32 or 64");
     if (inverse != 0 && inverse != 1) throw std::invalid_argument("inverse must be 0 or 1");
-    const auto limit = std::uint64_t{1} << (bits == 32 ? 30 : 62);
+    // The pinned GPU-NTT Barrett implementation is only exact for Data64
+    // moduli below 2^61.  At 62-bit moduli its correction path can return a
+    // value larger than q, so expose those cases as unsupported baselines.
+    const auto limit = std::uint64_t{1} << (bits == 32 ? 30 : 61);
     if (modulus <= 2 || modulus >= limit) throw std::invalid_argument("modulus outside GPU-NTT arithmetic range");
+    if (bits == 64 && Modulus<std::uint64_t>(modulus).bit > 61)
+        throw std::invalid_argument("GPU-NTT floating log2 modulus metadata exceeds exact Data64 shift range");
     // These are the exact frozen cuButterfly helpers used by the crypto adapter.
     return cuntt::find_primitive_power_of_two_root(log_n, modulus);
 }

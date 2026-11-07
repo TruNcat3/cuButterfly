@@ -34,6 +34,7 @@ from calibration_seeds import seed_snapshot, candidates_for_workload, validate_m
 from fit_local_cost_model import fit, predict, design_point_key, FEATURE_VERSION
 import stage_cost_model
 import static_hardware_profile
+from initialize_hardware_profile import bind_device_identity
 from schedule_cost_model import calibrate as calibrate_scheduling
 from pipeline_schedule_model import calibrate as calibrate_pipeline_scheduling
 from stage_service_calibration import calibrate as calibrate_stage_services
@@ -59,7 +60,7 @@ class _SearchPredictionCache:
     evolutionary proposal is a new object. Model fits create new model objects;
     binding one clears scores but keeps fixed features for the same profile.
     """
-    def __init__(self, descriptors, project, persistent=None):
+    def __init__(self, descriptors, project, persistent=None, *, persist_frontier=True):
         self.descriptors = descriptors
         self.project = project
         self.identities = {}
@@ -68,9 +69,11 @@ class _SearchPredictionCache:
         self.predictor = None
         self.model = None
         self.persistent = persistent
+        self.persist_frontier = persist_frontier
         self.descriptor_versions = {}
         self.stats = dict(score_requests=0, score_cache_hits=0, feature_preparations=0,
-                          feature_seconds=0.0, prediction_seconds=0.0, disk_score_hits=0)
+                          feature_seconds=0.0, prediction_seconds=0.0, disk_score_hits=0,
+                          persisted_scores=0)
 
     def identity(self, point):
         item = self.identities.get(id(point))
@@ -94,16 +97,34 @@ class _SearchPredictionCache:
         if self.persistent is not None:
             self.persistent.flush()
 
+    def persist(self, points):
+        """Checkpoint useful scores without writing each transient frontier.
+
+        Every candidate is still evaluated exactly. Unpersisted scores can be
+        recomputed after interruption; measurement journals remain independent.
+        """
+        if self.persistent is not None:
+            for point in points:
+                score = self.score(point)
+                key = self.identity(point)
+                self.persistent.put(key, self.descriptors.get(key), score)
+                self.stats['persisted_scores'] += 1
+            self.persistent.flush()
+
     def score(self, point):
         self.stats['score_requests'] += 1
         key = self.identity(point)
         descriptor = self.descriptors.get(key)
-        if self.persistent is not None:
-            # Content, not process-local object identity, governs persisted data.
-            version = json.dumps(descriptor, sort_keys=True, separators=(",", ":"), allow_nan=False)
-            if self.descriptor_versions.get(key) != version:
-                self.prepared.pop(key, None)
-                self.scores.pop(key, None)
+        # In-place descriptor updates invalidate features in both disk-backed
+        # and memory-only searches. Missing descriptors need no stored token.
+        version = (json.dumps(descriptor, sort_keys=True, separators=(",", ":"), allow_nan=False)
+                   if descriptor is not None else None)
+        if self.descriptor_versions.get(key) != version:
+            self.prepared.pop(key, None)
+            self.scores.pop(key, None)
+            if version is None:
+                self.descriptor_versions.pop(key, None)
+            else:
                 self.descriptor_versions[key] = version
         previous = self.prepared.get(key)
         if previous is not None and previous[0] is not descriptor:
@@ -136,8 +157,9 @@ class _SearchPredictionCache:
             except (TypeError, ValueError, KeyError, ZeroDivisionError, OverflowError, IndexError):
                 result = float('inf')
         self.scores[key] = (descriptor, result)
-        if self.persistent is not None:
+        if self.persistent is not None and self.persist_frontier:
             self.persistent.put(key, descriptor, result)
+            self.stats['persisted_scores'] += 1
         return result
 
 
@@ -147,7 +169,7 @@ def cpu_preparation_context(args, measurement):
              'stage_service_model.py', 'stage_composition.py', 'fit_local_cost_model.py',
              'schedule_cost_model.py', 'pipeline_schedule_model.py', 'stage_schedule_native.py',
              'stage_schedule_native.cpp', 'calibration_cpu_cache.py', 'hardware_registry.py',
-             'resident_mapping.py', 'benchmark_semantics.py')
+             'resident_mapping.py', 'benchmark_semantics.py', 'shared_work_geometry.py')
     return dict(schema='cubutterfly-calibration-cpu-context-v1', measurement=measurement,
                 partition_budget=int(os.environ.get('CUBUTTERFLY_PARTITION_BUDGET', '128')),
                 projection_scope=getattr(args, 'search_stage_projection', 'full'),
@@ -163,6 +185,10 @@ def load_cpu_preparation(args, measurement):
     if (manifest.get('schema') != 'cubutterfly-calibration-cpu-input-v1'
             or manifest.get('context') != cpu_preparation_context(args, measurement)):
         raise ValueError('CPU preparation build, sources or projection identity changed')
+    if getattr(args, 'cpu_preparation_inventory_only', False):
+        # Captured inventories remain useful when feedback or CPU source
+        # changes invalidate score epochs. Inventory hashes are still checked.
+        return source.parent, manifest
     status_path = pathlib.Path(args.cpu_preparation_dir) / 'status.json'
     status = json.loads(status_path.read_text()) if status_path.exists() else {}
     if (not status.get('scoring_complete')
@@ -221,25 +247,43 @@ def parse_args() -> argparse.Namespace:
                         help="fixed registry source for mapping seeds; independent of the output registry during recovery")
     parser.add_argument("--seed-budget", type=int, default=8,
                         help="historical mappings revalidated per workload before the exploration budget; 0 disables seeds")
+    parser.add_argument("--seed-only", action="store_true",
+                        help="revalidate only matching mapping seeds within seed-budget; omit runtime inventory and exploration")
+    parser.add_argument('--low-fft-error-report-only', action='store_true',
+                        help='report low-precision FFT error against the same-precision CPU reference without the legacy threshold')
     parser.add_argument("--search-seconds", type=float,
                         help="total search wall-time budget; 0 for unrestricted research")
     parser.add_argument("--compile-seconds", type=float,
                         help="additional specialization compilation budget, independent of search (0 = unrestricted)")
     parser.add_argument("--resume-search", action="store_true",
                         help="reuse matching search measurements only when the benchmark binary hash is unchanged")
+    parser.add_argument("--retry-compilation-gaps", action="store_true",
+                        help="on resume, retry unmeasured compilation gaps, retaining successful screens and selection order")
     parser.add_argument("--resume-build-priors", action="store_true",
                         help="development resume: preserve older-build screens as labeled priors; confirm finalists on current build")
     parser.add_argument('--cpu-preparation-input', type=pathlib.Path,
                         help='Frozen candidate inventory from capture_calibration_cpu_inputs.py')
     parser.add_argument('--cpu-preparation-dir', type=pathlib.Path,
                         help='Independent CPU preparation output, including persistent exact scores')
+    parser.add_argument('--cpu-preparation-inventory-only', action='store_true',
+                        help='Reuse frozen candidates and compiled modules; recompute scores in memory without a disk score cache')
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--embed-legacy-selector", action="store_true",
                         help="also generate the legacy build-time header; the dynamic registry needs no rebuild")
     args = parser.parse_args()
+    if args.seed_only:
+        if args.seed_budget <= 0:
+            parser.error('--seed-only requires a positive --seed-budget; 0 disables seeds')
+        if args.skip_operator_calibration:
+            parser.error('--seed-only conflicts with --skip-operator-calibration')
+        if args.cpu_preparation_input or args.cpu_preparation_dir or args.cpu_preparation_inventory_only:
+            parser.error('--seed-only conflicts with CPU preparation inventory options')
     if args.resume_build_priors and not args.resume_search:
         parser.error("--resume-build-priors requires --resume-search")
-    if bool(args.cpu_preparation_input) != bool(args.cpu_preparation_dir):
+    if args.cpu_preparation_inventory_only:
+        if not args.cpu_preparation_input or args.cpu_preparation_dir:
+            parser.error('inventory-only requires --cpu-preparation-input without --cpu-preparation-dir')
+    elif bool(args.cpu_preparation_input) != bool(args.cpu_preparation_dir):
         parser.error('--cpu-preparation-input and --cpu-preparation-dir must be provided together')
     if args.search_seconds is None:
         args.search_seconds = 0 if args.stage_calibration == "full" else 300
@@ -267,12 +311,18 @@ def run(command: list[str], *, check: bool = True) -> subprocess.CompletedProces
 
 def write_checkpoint(path, value):
     temporary=path.with_suffix(path.suffix+".tmp")
-    temporary.write_text(json.dumps(value,indent=2)+"\n")
+    # Full coverage remains a standalone JSON document with every candidate,
+    # model update and selection. Whitespace alone added hundreds of MB to
+    # each atomic rewrite of a large search checkpoint.
+    compact = isinstance(value, dict) and value.get('schema') == 'cubutterfly-search-coverage-v1'
+    temporary.write_text(json.dumps(value, separators=(',', ':'))+'\n' if compact
+                         else json.dumps(value,indent=2)+'\n')
     temporary.replace(path)
 
 
 def ensure_static_hardware_model(profile, identity, build_dir, profile_dir, output_dir, *, refresh=False):
     """Persist current caps independently of optional performance calibration."""
+    bound_profile = bind_device_identity(profile, identity)
     expected = {"device": identity["device"], "compute_capability": identity["compute_capability"],
                 "global_memory_bytes": int(identity["global_memory_bytes"])}
     artifact = profile_dir / static_hardware_profile.FILENAME
@@ -293,7 +343,8 @@ def ensure_static_hardware_model(profile, identity, build_dir, profile_dir, outp
                                                       hardware=hardware, provenance=capture), expected)
         snapshot = profile_dir / "hardware_probe.json"
         write_checkpoint(snapshot, dict(hardware=hardware, provenance=capture))
-        profile["provenance"] = {**profile.get("provenance", {}), "hardware_capture": capture}
+        bound_profile["provenance"] = {**profile.get("provenance", {}), "hardware_capture": capture}
+    profile.update(bound_profile)
     profile["hardware"] = model["hardware"]
     write_checkpoint(output_dir / "calibration_device.json", profile)
     if capture is not None:
@@ -303,6 +354,10 @@ def ensure_static_hardware_model(profile, identity, build_dir, profile_dir, outp
             dict(hardware=model["hardware"], provenance=dict(verified=True,
                 sources=[str(snapshot)], **capture)), refresh=refresh)
         static_hardware_profile.validate(model, expected)
+    # The runtime ranker resolves profiles beside hardware_model.json, which
+    # need not be output_dir. Persist the same verified identity there before
+    # any benchmark can start automatic candidate selection.
+    write_checkpoint(profile_dir / "hardware_profile.json", profile)
     return model
 
 
@@ -362,6 +417,10 @@ def measurement_identity(args, library_guard: _SharedLibraryGuard | None = None)
                     for name in ("cubutterfly_bench","cuntt_bench")},
                     compile_mode=effective_compile_mode(args.build_dir),
                     verify_batches=getattr(args,"verify_batches",0))
+    if getattr(args, 'seed_only', False):
+        identity['seed_only'] = True
+    if getattr(args, 'low_fft_error_report_only', False):
+        identity['low_fft_error_report_only'] = True
     platform_rules = os.environ.get("CUBUTTERFLY_PLATFORM_TUNING")
     if platform_rules:
         identity["platform_tuning_sha256"] = hashlib.sha256(pathlib.Path(platform_rules).read_bytes()).hexdigest()
@@ -550,6 +609,8 @@ def _stage_template_key(point: dict[str, Any]) -> tuple[Any, ...]:
     axes = {**point, **mapping}
     if axes.get("suffix_core") == "cufftdx-block":
         axes.pop("suffix_core")
+    if axes.get("prefix_twiddle") == "runtime":
+        axes.pop("prefix_twiddle")
     shared = axes.get("backend") == "shared-iterative"
     if shared:
         from research_compile_requests import _shared_partition
@@ -580,7 +641,7 @@ def _stage_template_key(point: dict[str, Any]) -> tuple[Any, ...]:
     physical = tuple((name, frozen(value(name))) for name in (
         "backend", "fft_core", "compute_unit", "local_exchange", "shared_layout",
         "cross_twiddle", "direct_boundary", "reorder_columns", "prefix_codelet",
-        "prefix_shared_layout", "prefix_codelet_lanes", "factor_io_policies",
+        "prefix_shared_layout", "prefix_twiddle", "prefix_codelet_lanes", "factor_io_policies",
         "suffix_core",
         "factor_ept", "factor_columns", "data_tiles_per_cta", "prefetch_depth",
         "factor_partition", "exchange_chunks",
@@ -743,6 +804,32 @@ def _resume_selection_prefix(cell: dict[str, Any], retained: dict[str, dict[str,
     return prefix
 
 
+def low_fft_numeric_policy(args, point, command):
+    """Keep the low-FFT reporting switch off unrelated benchmark requests."""
+    requested = getattr(args, 'low_fft_error_report_only', False)
+    applicable = (point.get('operator', 'fft') == 'fft' and
+                  point.get('precision', 'fp32') in {'fp16', 'bf16', 'fp16-fp32'})
+    flag = '--low-fft-error-report-only'
+    if flag in command and not applicable:
+        raise ValueError('low-FFT error reporting applies only to FP16/BF16 FFT requests')
+    if requested and applicable:
+        return [*command, *([] if flag in command else [flag])], 'same-precision-cpu-reference-error-report-only'
+    return command, 'default-verification; low-fft-error-report-only-not-applicable' if requested else 'default-verification'
+
+
+def workload_search_inputs(args, snapshot, workload, candidate_binary, cpu_preparation=None):
+    """Choose the existing search inputs without enumerating a seed-only frontier."""
+    seeds = candidates_for_workload(snapshot, workload)
+    if getattr(args, 'seed_only', False):
+        budget = getattr(args, 'seed_budget', 0)
+        if budget <= 0 or not seeds:
+            raise ValueError(f"seed-only has no usable mapping seeds for {workload}; seed-budget must be positive")
+        return [seed['point'] for seed in seeds[:budget]], seeds
+    points = (prepared_inventory(cpu_preparation, workload) if cpu_preparation is not None
+              else runtime_candidates(candidate_binary, workload, run))
+    return points, seeds
+
+
 def run_compiled_search(args, output):
     binary = args.build_dir / "cubutterfly_bench"
     library_guard = _SharedLibraryGuard(args.build_dir)
@@ -767,6 +854,7 @@ def run_compiled_search(args, output):
     if specification.get("schema") != "cubutterfly-install-search-v1":
         raise ValueError("unsupported install search workload schema")
     seed_budget = getattr(args, "seed_budget", 0)
+    seed_only = getattr(args, 'seed_only', False)
     snapshot = getattr(args, "_prepared_seed_snapshot", None)
     if snapshot is None:
         snapshot = seed_snapshot(args, output.with_name("mapping_seed_snapshot.json")) if seed_budget else {"seeds": []}
@@ -778,7 +866,7 @@ def run_compiled_search(args, output):
     measurement = measurement_identity(args, library_guard)
     cpu_preparation = load_cpu_preparation(args, measurement)
     disk_scores = None
-    if cpu_preparation is not None:
+    if cpu_preparation is not None and not getattr(args, 'cpu_preparation_inventory_only', False):
         from calibration_cpu_cache import DiskScoreCache
         disk_scores = DiskScoreCache(args.cpu_preparation_dir / 'score_cache', cpu_preparation[1]['context'])
     audit = {"schema": "cubutterfly-search-coverage-v1", "scope": specification["scope"],
@@ -794,6 +882,14 @@ def run_compiled_search(args, output):
              "optimality": "best confirmed measured candidate; no global-optimum claim",
              "workloads": []}
     audit["search_protocol"]["seed_budget"] = seed_budget
+    if getattr(args, 'low_fft_error_report_only', False):
+        audit['search_protocol']['low_fft_error_report_only'] = True
+        audit['numeric_policy'] = 'same-precision CPU error report only for low FFT; default verification for other requests'
+    if seed_only:
+        audit.update(search_scope='seed-only', inventory_complete=False,
+                     optimality='best confirmed measured mapping seed; full library search not performed')
+        audit['partition_projection'] = 'seed-only; runtime inventory not enumerated'
+        audit['search_protocol']['seed_only'] = True
     audit["search_protocol"]["cost_feature_version"] = FEATURE_VERSION
     audit["search_protocol"]["cost_projection_version"] = PROJECTION_VERSION
     audit["search_protocol"]["model_update_policy_version"] = MODEL_UPDATE_POLICY_VERSION
@@ -882,7 +978,18 @@ def run_compiled_search(args, output):
                     build_priors[row["name"]] = row
                 else:
                     cached[row["name"]] = row
-        if not changed_build and previous.get("search_protocol")==audit["search_protocol"]:
+        previous_protocol = previous.get("search_protocol", {})
+        if previous.get('compilation_budget_revision'):
+            audit['compilation_budget_revision'] = previous['compilation_budget_revision']
+        same_protocol = previous_protocol == audit["search_protocol"]
+        if (getattr(args, 'retry_compilation_gaps', False) and not same_protocol
+                and {k:v for k,v in previous_protocol.items() if k != 'compile_seconds'} ==
+                    {k:v for k,v in audit['search_protocol'].items() if k != 'compile_seconds'}):
+            same_protocol = True
+            audit['compilation_budget_revision'] = dict(
+                previous=previous_protocol.get('compile_seconds'), current=args.compile_seconds,
+                reason='explicit compilation-gap recovery; measurement and selection protocol unchanged')
+        if not changed_build and same_protocol:
             previous_cells = previous.get("workloads", [])
             completed_cells={_search_workload_key(cell["workload"]):cell for cell in previous_cells
                              if isinstance(cell, dict) and cell.get("workload") is not None and cell.get("complete")}
@@ -970,6 +1077,7 @@ def run_compiled_search(args, output):
         candidate_binary = args.build_dir / ("cuntt_bench" if point.get("operator") == "ntt" else "cubutterfly_bench")
         try:
             command = command_for(candidate_binary, point)
+            command, numeric_policy = low_fft_numeric_policy(args, point, command)
         except (TypeError, ValueError, KeyError) as error:
             # A runtime inventory or imported seed is executable input, not a
             # guarantee that every public axis is still legal for this build.
@@ -1021,6 +1129,8 @@ def run_compiled_search(args, output):
         record = {"name": candidate_id(point), "command": command, "configuration": point,
                   "samples": copy.deepcopy(old["samples"]) if reusable else [],
                   "errors": [], "correct": False, "status": "unavailable"}
+        if getattr(args, 'low_fft_error_report_only', False):
+            record['numeric_policy'] = numeric_policy
         for _ in range(len(record["samples"]),trials):
             require_exclusive_gpu()
             verification = ["--verify-batches",str(args.verify_batches)] if getattr(args,"verify_batches",0) else []
@@ -1101,6 +1211,71 @@ def run_compiled_search(args, output):
                       median_kernel_ms=statistics.median(float(s["kernel_ms"]) for s in record["samples"]))
         return record
 
+    def retry_compilation_rows(rows, by_id):
+        if not getattr(args, 'retry_compilation_gaps', False):
+            return rows
+        updated = list(rows)
+        for index, previous in enumerate(rows):
+            if previous.get('status') != 'needs-compilation':
+                continue
+            point = previous['configuration']
+            print('retry compilation gap ' + previous['name'], flush=True)
+            if staged:
+                resolve(point)
+            row = measure(point, 1, max(3, min(args.operator_warmup, 10)),
+                          max(5, min(args.operator_repeat, 10)), seed=bool(previous.get('seed_sources')))
+            row['prior_attempts'] = [*previous.get('prior_attempts', []),
+                dict(status=previous['status'], errors=previous.get('errors', []),
+                     trials=previous.get('trials', 0))]
+            if previous.get('seed_sources'):
+                row['seed_sources'] = previous['seed_sources']
+            if row['correct']:
+                row['status'] = 'screened'
+            updated[index] = row
+            by_id[row['name']].update(status=row['status'], errors=row.get('errors', []),
+                                      median_kernel_ms=row.get('median_kernel_ms'))
+            save_measurements([row])
+        return updated
+
+    def confirm_finalists(screened, cell, by_id, chosen_ids):
+        valid = sorted((r for r in screened if r['correct']), key=lambda r:r['median_kernel_ms'])
+        finalist_keys, finalists = set(), set()
+        for row in valid:
+            samples = row.get('samples')
+            key = (design_point_key({'name':row.get('name', ''), 'sample':samples[0]})
+                   if isinstance(samples, list) and samples and isinstance(samples[0], dict)
+                   else ('incomplete-screen', row.get('name', '')))
+            if key in finalist_keys:
+                continue
+            finalist_keys.add(key)
+            finalists.add(row['name'])
+            if len(finalists) >= args.search_finalists:
+                break
+        confirmed = []
+        for index, row in enumerate(screened):
+            if row['name'] in finalists:
+                previous_attempts = row.get('prior_attempts')
+                row = measure(row['configuration'], args.operator_trials,
+                              args.operator_warmup, args.operator_repeat,
+                              seed=row['name'] in chosen_ids, confirm=True)
+                if previous_attempts:
+                    row['prior_attempts'] = previous_attempts
+            elif row['correct']:
+                row['status'] = 'screened'
+            by_id[row['name']].update(status=row['status'], errors=row.get('errors', []),
+                                     median_kernel_ms=row.get('median_kernel_ms'))
+            if row['name'] in chosen_ids:
+                row['seed_sources'] = by_id[row['name']]['seed_sources']
+            confirmed.append(row)
+            save_measurements(confirmed + screened[index+1:])
+        cell['seed_coverage']['confirmed'] = sum(
+            r['name'] in chosen_ids and r['correct'] and r['status'] == 'measured' for r in confirmed)
+        cell['measurement_coverage'] = dict(
+            selected=len(confirmed), correct=sum(bool(r['correct']) for r in confirmed),
+            confirmed=sum(r['status'] == 'measured' for r in confirmed),
+            needs_compilation=sum(r['status'] == 'needs-compilation' for r in confirmed))
+        return confirmed
+
     for workload_index, workload in enumerate(specification["workloads"]):
         remaining_cells=len(specification["workloads"])-workload_index
         cell_start=search_elapsed()
@@ -1110,13 +1285,23 @@ def run_compiled_search(args, output):
         if completed:
             library_guard.assert_matches(expected_library, "reuse")
             audit["workloads"].append(completed)
-            result.extend(retained[p["id"]] for p in completed["candidates"] if p["id"] in retained)
+            previous_rows = [retained[p['id']] for p in completed['candidates'] if p['id'] in retained]
+            if getattr(args, 'retry_compilation_gaps', False) and any(
+                    r.get('status') == 'needs-compilation' for r in previous_rows):
+                # Revisit only selected, unmeasured points. Completed cells need
+                # neither full inventory enumeration nor a different search path.
+                by_id = {p['id']:p for p in completed['candidates']}
+                previous_rows.sort(key=lambda r:by_id[r['name']].get('selection_index', 0))
+                previous_rows = retry_compilation_rows(previous_rows, by_id)
+                chosen_ids = {r['name'] for r in previous_rows if r.get('seed_sources')}
+                previous_rows = confirm_finalists(previous_rows, completed, by_id, chosen_ids)
+                completed['compilation_gaps_retried'] = True
+                write_checkpoint(output, audit)
+            result.extend(previous_rows)
             print(f"resume completed {workload['operator']} {workload['precision']} logN={workload['logN']} batch={workload['batch']}",flush=True)
             continue
         candidate_binary = args.build_dir / ("cuntt_bench" if workload.get("operator") == "ntt" else "cubutterfly_bench")
-        points = (prepared_inventory(cpu_preparation, workload) if cpu_preparation is not None
-                  else runtime_candidates(candidate_binary, workload, run))
-        seeds = candidates_for_workload(snapshot, workload)
+        points, seeds = workload_search_inputs(args, snapshot, workload, candidate_binary, cpu_preparation)
         chosen_seeds = seeds[:seed_budget]
         prior_screened = []
         for point in points:
@@ -1140,7 +1325,8 @@ def run_compiled_search(args, output):
         remaining = stratified_candidates([p for p in points if candidate_id(p) not in chosen_ids | prior_ids], 0)
         if prior_inventory_ids:
             remaining.sort(key=lambda point: candidate_id(point) in prior_inventory_ids)
-        exploration_budget = (args.search_budget or len(remaining)) if evolutionary else min(args.search_budget or len(remaining), len(remaining))
+        exploration_budget = (0 if seed_only else
+            (args.search_budget or len(remaining)) if evolutionary else min(args.search_budget or len(remaining), len(remaining)))
         budget = len(chosen_seeds) + exploration_budget + len(prior_screened)
         if resume_fast:
             previous_budget = resume_cell.get("requested_screened_count")
@@ -1167,6 +1353,8 @@ def run_compiled_search(args, output):
                 # selected candidates need their configuration serialized.
                 "candidates": [{"id": candidate_id(p), "status": "budget-omitted"} for p in points],
                 "candidate_audit": "compact-id-only-v1"}
+        if seed_only:
+            fresh_cell.update(candidate_source='mapping-seeds-only', search_scope='seed-only', inventory_complete=False)
         if resume_fast:
             cell = copy.deepcopy(resume_cell)
             cell["workload"] = workload
@@ -1195,6 +1383,8 @@ def run_compiled_search(args, output):
             by_id[seed_id]["configuration"] = seed["point"]
             by_id[candidate_id(seed["point"])]["seed_sources"] = seed["sources"]
         screened = [row for _, row in resume_prefix] if resume_fast else list(prior_screened)
+        if resume_fast:
+            screened = retry_compilation_rows(screened, by_id)
         if prior_screened and not resume_fast:
             cell["development_prior_screened"] = len(prior_screened)
             cell["screened"] = len(prior_screened)
@@ -1220,7 +1410,9 @@ def run_compiled_search(args, output):
             ranking_profile.pop("stage_service", None)
         model = stage_cost_model.fit([], ranking_profile) if staged else None
         model_training_ids = None
-        prediction_cache = _SearchPredictionCache(descriptors, projected, disk_scores) if staged else None
+        prediction_cache = (_SearchPredictionCache(descriptors, projected, disk_scores,
+                            persist_frontier=False) if staged else None)
+        cell['score_persistence'] = 'shortlist-and-selected-only; exact full-frontier scores remain in memory'
         for i in range(len(screened), budget):
             iteration_started = time.perf_counter()
             if args.search_seconds and search_elapsed()-cell_start >= cell_budget:
@@ -1285,7 +1477,7 @@ def run_compiled_search(args, output):
                 # entire frontier. Every candidate still receives its score.
                 shortlist = heapq.nsmallest(4, choices, key=score) if staged else choices
                 if staged:
-                    prediction_cache.flush()
+                    prediction_cache.persist(shortlist)
                     for proposed in shortlist:
                         resolve(proposed)
                     # Retain unavailable proposals as explicit failures; don't
@@ -1293,7 +1485,9 @@ def run_compiled_search(args, output):
                 point = min(shortlist, key=score)
             else:
                 point = choices[0]
-            remaining = [p for p in remaining if candidate_id(p) != candidate_id(point)]
+            point_identity = prediction_cache.identity if staged else candidate_id
+            selected_id = point_identity(point)
+            remaining = [p for p in remaining if point_identity(p) != selected_id]
             if candidate_id(point) not in by_id:
                 record = dict(id=candidate_id(point), configuration=point, status="budget-omitted", source="evolutionary-neighbor")
                 cell["candidates"].append(record); by_id[record["id"]] = record
@@ -1315,7 +1509,7 @@ def run_compiled_search(args, output):
                     selection["cost_breakdown"] = dict(status="unestimated", reason=str(error))
             print(f"search {workload['operator']} {workload['precision']} logN={workload['logN']} batch={workload['batch']} {i + 1}/{budget}", flush=True)
             if staged:
-                prediction_cache.flush()
+                prediction_cache.persist([point])
             row = measure(point, 1, max(3, min(args.operator_warmup, 10)), max(5, min(args.operator_repeat, 10)), seed=is_seed)
             if is_seed:
                 cell["seed_coverage"]["attempted"] += 1
@@ -1327,46 +1521,14 @@ def run_compiled_search(args, output):
             cell["budget_omitted"] = len(points)-len(screened)
             if staged:
                 cell['cpu_scoring'] = dict(prediction_cache.stats)
+                if disk_scores is not None:
+                    cell['disk_scoring'] = dict(disk_scores.stats)
                 cell['last_iteration_seconds'] = time.perf_counter() - iteration_started
             write_checkpoint(output,audit)
             # Persist completed screens immediately. An unrelated GPU job may
             # arrive before this cell reaches finalist confirmation.
             save_measurements(result+[dict(r,status="screened") if r["correct"] else r for r in screened])
-        valid = sorted((r for r in screened if r["correct"]), key=lambda r: r["median_kernel_ms"])
-        # A candidate name is provenance, not a resolved design identity. Seed
-        # aliases and library aliases can resolve to the same mapping. Use the
-        # first correct screen sample so its complete mapping, workload
-        # semantics, and hardware context participate in finalist selection.
-        # design_point_key deliberately falls back to conservative name/axis
-        # identity when a resolved mapping envelope is incomplete.
-        finalist_keys = set()
-        finalists = set()
-        for row in valid:
-            samples = row.get("samples")
-            if isinstance(samples, list) and samples and isinstance(samples[0], dict):
-                key = design_point_key({"name": row.get("name", ""), "sample": samples[0]})
-            else:
-                key = ("incomplete-screen", row.get("name", ""))
-            if key in finalist_keys:
-                continue
-            finalist_keys.add(key)
-            finalists.add(row["name"])
-            if len(finalists) >= args.search_finalists:
-                break
-        for screened_index, row in enumerate(screened):
-            if row["name"] in finalists:
-                row = measure(row["configuration"], args.operator_trials, args.operator_warmup, args.operator_repeat,
-                              seed=row["name"] in chosen_ids, confirm=True)
-            elif row["correct"]:
-                row["status"] = "screened"
-            by_id[row["name"]].update(status=row["status"], errors=row.get("errors", []),
-                                     median_kernel_ms=row.get("median_kernel_ms"))
-            if row["name"] in chosen_ids:
-                row["seed_sources"] = by_id[row["name"]]["seed_sources"]
-                if row["correct"] and row["status"] == "measured":
-                    cell["seed_coverage"]["confirmed"] += 1
-            result.append(row)
-            save_measurements(result+screened[screened_index+1:])
+        result.extend(confirm_finalists(screened, cell, by_id, chosen_ids))
         # Preserve completed cells if calibration is interrupted later.
         save_measurements(result)
         cell["complete"]=True
@@ -1416,10 +1578,16 @@ def run_operator_calibration(args: argparse.Namespace, output: pathlib.Path, cuf
     def save_incumbents():
         retained.update((row["name"],row) for row in raw)
         write_checkpoint(output,list(retained.values()))
-    commands = list(incumbent_commands(args))
-    if not args.search_only:
+    commands = [] if getattr(args, 'seed_only', False) else list(incumbent_commands(args))
+    if not args.search_only and not getattr(args, 'seed_only', False):
         commands = candidate_commands(args.build_dir, cufftdx) + ntt_candidate_commands(args.build_dir) + commands
     for name, command in commands:
+        if getattr(args, 'low_fft_error_report_only', False):
+            def option(key, default):
+                return command[command.index(key) + 1] if key in command else default
+            command, numeric_policy = low_fft_numeric_policy(args, dict(
+                operator=option('--operator', 'ntt' if pathlib.Path(command[0]).name == 'cuntt_bench' else 'fft'),
+                precision=option('--precision', 'fp32')), command)
         print(f"incumbent {name}",flush=True)
         previous=cached.get(name)
         reusable=bool(previous and previous.get("correct") and previous.get("samples") and all(
@@ -1433,6 +1601,8 @@ def run_operator_calibration(args: argparse.Namespace, output: pathlib.Path, cuf
         errors: list[str] = []
         record={"name":name,"command":command,"samples":samples,"errors":errors,
                 "correct":False,"status":"unavailable","trials":0}
+        if getattr(args, 'low_fft_error_report_only', False):
+            record['numeric_policy'] = numeric_policy
         raw.append(record)
         for trial in range(len(samples),args.operator_trials):
             require_exclusive_gpu()
@@ -1678,6 +1848,10 @@ def main() -> int:
     # same snapshot after calibration instead of rereading a mutable registry.
     if not args.skip_operator_calibration and args.seed_budget:
         args._prepared_seed_snapshot = seed_snapshot(args, output_dir / "mapping_seed_snapshot.json")
+    if args.seed_only:
+        specification = json.loads(args.search_workloads.read_text())
+        for workload in specification['workloads']:
+            workload_search_inputs(args, args._prepared_seed_snapshot, {'operator': 'fft', **workload}, None)
     compile_budget = tempfile.TemporaryDirectory(prefix="cubutterfly-install-budget-")
     os.environ["CUBUTTERFLY_COMPILE_BUDGET_FILE"] = str(pathlib.Path(compile_budget.name)/"seconds")
     os.environ["CUBUTTERFLY_COMPILE_BUDGET_SECONDS"] = str(args.compile_seconds)
@@ -1691,11 +1865,7 @@ def main() -> int:
     run([python, str(CHECK_SCRIPT), str(profile_dir / "hardware_profile.json")])
     profile = json.loads((profile_dir / "hardware_profile.json").read_text())
     identity = next(csv.DictReader(io.StringIO(run([str(build_dir / "cubutterfly_bench"), "--device-identity"]).stdout)))
-    if identity["device"] != profile["device"] or identity["compute_capability"] != profile["compute_capability"]:
-        raise ValueError("hardware probe and benchmark device identities disagree")
-    if "global_memory_bytes" in profile and int(profile["global_memory_bytes"]) != int(identity["global_memory_bytes"]):
-        raise ValueError("cached hardware profile belongs to a different memory capacity; use a separate profile directory")
-    profile["global_memory_bytes"] = int(identity["global_memory_bytes"])
+    profile = bind_device_identity(profile, identity)
     identity_path = output_dir / "calibration_device.json"
     if args.resume_search and identity_path.exists():
         old = json.loads(identity_path.read_text())
@@ -1735,9 +1905,15 @@ def main() -> int:
             for workload in specification["workloads"]:
                 workload = {"operator": "fft", **workload}
                 candidate_binary = build_dir / ("cuntt_bench" if workload["operator"] == "ntt" else "cubutterfly_bench")
-                stage_points.extend(runtime_candidates(candidate_binary, workload, run))
+                if args.seed_only:
+                    points, _ = workload_search_inputs(args, args._prepared_seed_snapshot, workload, candidate_binary)
+                    stage_points.extend(points)
+                else:
+                    stage_points.extend(runtime_candidates(candidate_binary, workload, run))
             stage_points, stage_sampling = _bound_stage_points(stage_points, args.stage_point_budget)
             stage_sampling = _stage_sampling_scope(stage_sampling)
+            if args.seed_only:
+                stage_sampling.update(scope='seed-only', inventory_complete=False)
             (output_dir / "stage_point_sampling.json").write_text(
                 json.dumps({"schema": "cubutterfly-stage-point-sampling-v1", **stage_sampling}, indent=2) + "\n")
             profile["stage_service"] = calibrate_stage_services(stage_probe, output_dir / "stage_calibration.json",

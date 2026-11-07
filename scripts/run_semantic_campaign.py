@@ -494,6 +494,14 @@ def check_padding(s, actual, initial, side='output'):
 
 
 def time_execute(torch, stream, execute, reset, in_place, verify, poison_output=None):
+    # Graph replay uses the current stream, unlike events recorded explicitly on
+    # `stream`. Keep both on the supplied stream even for external callers.
+    with torch.cuda.stream(stream):
+        return _time_execute_current_stream(torch, stream, execute, reset, in_place,
+                                            verify, poison_output)
+
+
+def _time_execute_current_stream(torch, stream, execute, reset, in_place, verify, poison_output=None):
     for _ in range(10):
         if in_place:
             reset()
@@ -588,8 +596,10 @@ def run_case(case, library, torch, stream, timing=False, reference_max_elements=
         def reset():
             gpu_input.copy_(gpu_saved)
 
-        def verify():
+        def verify(raw_reference=None):
             raw = gpu_output.cpu().numpy()
+            if raw_reference is not None and not np.array_equal(raw, raw_reference):
+                raise AssertionError('timed execution raw output differs from the same plan direct execution')
             actual = output_from_bytes(s, raw)
             first = 'correctness' not in row
             if s['storage'] not in (8, 9) and (first or not np.all(np.isfinite(actual))):
@@ -605,6 +615,7 @@ def run_case(case, library, torch, stream, timing=False, reference_max_elements=
         plan.execute(gpu_input, gpu_output)
         stream.synchronize()
         row['correctness'] = verify()
+        direct_output_raw = gpu_output.cpu().numpy().copy() if timing else None
         replay_desc = selection_descriptor(descriptor, mapping=row['mapping'])
         with cb.Descriptor.from_json(library, replay_desc) as imported:
             replay = cb.Plan(library, imported, stream=stream.cuda_stream)
@@ -622,7 +633,8 @@ def run_case(case, library, torch, stream, timing=False, reference_max_elements=
         row['mapping_replay_correctness'] = verify()
         if timing:
             row['timing'] = time_execute(torch, stream, lambda: plan.execute(gpu_input, gpu_output),
-                                         reset, in_place, verify, lambda: gpu_output.fill_(0xA5))
+                                         reset, in_place, lambda: verify(direct_output_raw),
+                                         lambda: gpu_output.fill_(0xA5))
         row['baselines'] = run_baselines(case, torch, stream, source, expected, gpu_saved,
                                          output_initial, timing, vkfft_library, float_verdict, error_dir, gpuntt_library)
         row['status'] = 'accuracy-review-required' if s['storage'] not in (8, 9) and float_verdict == 'error-report' else 'pass'

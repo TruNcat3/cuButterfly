@@ -216,7 +216,7 @@ def _selected_mapping_state(mapping: dict[str, Any], sample: dict[str, Any] | No
         merged.update({name: sample[name] for name in names if name in sample})
         # Strategy axes are intentionally handled below per physical group,
         # but legacy probe samples may carry them only at top level.
-        for name in ("prefix_codelet", "prefix_shared_layout", "suffix_core", "factor_io_policies"):
+        for name in ("prefix_codelet", "prefix_shared_layout", "prefix_twiddle", "suffix_core", "factor_io_policies"):
             if name in sample and name not in merged:
                 merged[name] = sample[name]
     # A serialized, resolved mapping owns its implementation axes. NTT CSV
@@ -238,6 +238,8 @@ def _selected_mapping_state(mapping: dict[str, Any], sample: dict[str, Any] | No
         state["prefix_codelet"] = _canonical(merged.get("prefix_codelet", "native"))
         state["prefix_shared_layout"] = _canonical(
             merged.get("prefix_shared_layout", "linear"))
+        if merged.get("prefix_twiddle", "runtime") != "runtime":
+            state["prefix_twiddle"] = _canonical(merged["prefix_twiddle"])
         # Cooperative prefix lanes are a group-local implementation choice.
         # Keep the historical key spelling for G=1 so omitted and explicit
         # defaults reuse existing curves; only true cooperative groups split
@@ -356,6 +358,8 @@ def _group_shape(group: dict[str, Any], sample: dict[str, Any] | None = None,
             index = _stage_index(group) or 0
             if field == "exchange_chunk":
                 value = resident_mapping.group_axis(mapping, "exchange_chunk", index, 0)
+            elif field == "threads":
+                value = resident_mapping.group_axis(mapping, "threads", index, None)
             elif field == "local_stage_partition":
                 value = resident_mapping.group_axis(mapping, "local_stage_partition", index, [])
             elif field == "batch_space":
@@ -525,7 +529,7 @@ _KEY_SAMPLE_FIELDS = (
     "output_order", "address_layout", "layout", "dimension_order", "remaining_bits",
     "local_logN", "local_log_n", "backend", "core", "fft_core", "compute_unit",
     "exchange", "local_exchange", "shared_layout", "prefix_codelet", "prefix_codelet_lanes",
-    "suffix_core",
+    "suffix_core", "prefix_twiddle",
     "factor_io_policies", "dispatch", "cross_twiddle", "twiddle", "twiddle_mode",
     "fused_twiddle", "needed_twiddle", "neededtwiddle", "twiddle_count", "twiddle_stride",
     "direct_boundary", "boundary_layout", "boundary_storage", "reorder_columns",

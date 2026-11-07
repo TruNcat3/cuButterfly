@@ -16,9 +16,11 @@ import json
 import multiprocessing
 import os
 from pathlib import Path
+import re
 import signal
 import sys
 import time
+import uuid
 from types import SimpleNamespace
 
 import numpy as np
@@ -34,6 +36,37 @@ import semantic_preparation_queue as preparation
 
 REVISION = '0.9.3.4-async-experiments.4'
 HERE = Path(__file__).resolve().parent
+GPU_BUSY_EXIT = 76
+
+
+class ForeignGPUWork(RuntimeError):
+    """An explicit exclusive-GPU guard rejection, never a measurement error."""
+
+
+class CampaignInterrupted(Exception):
+    pass
+
+
+def exclusive_gpu(uuid):
+    try:
+        old.exclusive_gpu(uuid)
+    except RuntimeError as exc:
+        pattern = (r'GPU ' + re.escape(uuid) +
+                   r' has foreign compute processes: \[[1-9][0-9]*(?:, [1-9][0-9]*)*\]; stopping without killing')
+        if type(exc) is RuntimeError and re.fullmatch(pattern, str(exc)):
+            raise ForeignGPUWork(str(exc)) from exc
+        raise
+
+
+def record_gpu_interruption(args, exc):
+    receipt = dict(status='interrupted-by-foreign-gpu-work', gpu_uuid=args.gpu_uuid,
+                   pid=os.getpid(), observed_unix=time.time(), reason=str(exc))
+    args.output.mkdir(parents=True, exist_ok=True)
+    path = args.output / 'gpu_interruption.json'
+    temporary = path.with_suffix('.tmp')
+    temporary.write_text(json.dumps(receipt, indent=2) + '\n')
+    temporary.replace(path)
+    return receipt
 
 
 def cpu_only():
@@ -102,6 +135,47 @@ def gap_row(case, record):
             'capabilities': case.get('capabilities', {}), 'baselines': []}
 
 
+def ranking_cancellation_receipt(row, item):
+    """Only a fresh, signalled ranking attempt explains this one C API error."""
+    if (not item or row.get('status') != 'runtime-error' or row.get('runtime_status') != 6
+            or row.get('error') != 'backend error: static ranking helper failed; inspect its diagnostic above'):
+        return None
+    try:
+        records = [json.loads(line) for line in item['events'].read_text().splitlines() if line.strip()]
+    except (OSError, ValueError, KeyError):
+        return None
+    if any(record.get('kind') in ('compile_failed', 'broker_error', 'broker_runtime_error')
+           or record.get('status') in ('failed', 'error') for record in records):
+        return None
+    helpers = [record for record in records if record.get('kind', '').startswith('cpu_helper_')]
+    failures = [record for record in helpers if record.get('kind') == 'cpu_helper_finished'
+                and record.get('returncode') != 0]
+    if len(failures) != 1:
+        return None
+    receipt = failures[0]
+    signum = receipt.get('termination_signal')
+    if (receipt.get('attempt_token') != item['attempt_token']
+            or receipt.get('worker_pid') != os.getpid()
+            or receipt.get('script') != str(HERE / 'rank_static_candidates.py')
+            or signum not in (signal.SIGTERM, signal.SIGINT)
+            or receipt.get('returncode') != -signum):
+        return None
+    started, ended = receipt.get('started_unix'), receipt.get('ended_unix')
+    if (not isinstance(started, (int, float)) or not isinstance(ended, (int, float))
+            or not item['attempt_started_unix'] <= started <= ended <= time.time()
+            or not any(entry.get('signal') == signum and
+                       started <= entry.get('received_unix', 0) <= ended
+                       for entry in receipt.get('received_signals', []))):
+        return None
+    identity = ('worker_pid', 'proxy_pid', 'helper_pid', 'script', 'started_unix', 'attempt_token')
+    starts = [record for record in helpers if record.get('kind') == 'cpu_helper_started'
+              and all(record.get(key) == receipt.get(key) for key in identity)]
+    if (len(starts) != 1 or any(not isinstance(receipt.get(key), int) or receipt[key] <= 0
+                               for key in ('proxy_pid', 'helper_pid'))):
+        return None
+    return receipt
+
+
 def drive(cases, report, args, library, torch, stream, executor):
     """Bounded cooperative scheduler. Only this process submits CUDA work."""
     output = args.output / 'results.json'
@@ -110,10 +184,12 @@ def drive(cases, report, args, library, torch, stream, executor):
     active, blocked = {}, {}
     attempts = dict(report.get('preparation_attempts', {}))
     stopping = False
+    stopping_signals = set()
     last_checkpoint = 0.0
     previous_signals = {}
     initial_completed = len(report['rows'])
     worker_attempts = 0
+    report.pop('interruption_diagnostics', None)
     budget = getattr(args, 'resource_budget', resources.limits())
 
     def resource_guard():
@@ -130,6 +206,7 @@ def drive(cases, report, args, library, torch, stream, executor):
     def stop(signum, frame):
         nonlocal stopping
         stopping = True
+        stopping_signals.add(signum)
 
     def checkpoint():
         nonlocal last_checkpoint
@@ -140,11 +217,47 @@ def drive(cases, report, args, library, torch, stream, executor):
         old.write_report(output, report)
         last_checkpoint = time.monotonic()
 
+    def interrupted(status):
+        diagnostics = report.setdefault('interruption_diagnostics', {})
+        diagnostics['validation_results'] = {key: item['validation_result']
+            for key, item in active.items() if 'validation_result' in item}
+
+        def failed(value):
+            if isinstance(value, dict):
+                return (value.get('status') in ('baseline-error', 'runtime-error', 'runner-error', 'correctness-failure')
+                        or any(failed(item) for item in value.values()))
+            return isinstance(value, list) and any(failed(item) for item in value)
+
+        if failed(diagnostics):
+            reason = 'investigation required for unaccepted errors during interruption'
+            report.update(status='stopped-investigation-required', stop_reason=reason)
+            raise RuntimeError(reason)
+        report['status'] = status
+
     def commit(case, row):
-        old.exclusive_gpu(args.gpu_uuid)
+        if stopping:
+            receipt = ranking_cancellation_receipt(row, active.get(case['id']))
+            if receipt and receipt['termination_signal'] not in stopping_signals:
+                receipt = None
+            if receipt:
+                row = dict(row, status='interrupted-helper-cancellation')
+            report['interruption_diagnostics'] = {'unaccepted_row': row}
+            if receipt:
+                report['interruption_diagnostics']['ranking_helper_cancellation'] = receipt
+            raise CampaignInterrupted()
         if any(b.get('status') in ('baseline-error', 'runtime-error', 'runner-error', 'correctness-failure')
                for b in row.get('baselines', [])) and row['status'] in ('pass', 'accuracy-review-required'):
             row.update(status='runner-error', error='baseline investigation required')
+        try:
+            exclusive_gpu(args.gpu_uuid)
+        except ForeignGPUWork:
+            report['interruption_diagnostics'] = {'unaccepted_row': row}
+            if row['status'] in ('correctness-failure', 'runtime-error', 'runner-error'):
+                raise RuntimeError('investigation required for unaccepted error row during GPU interruption')
+            raise
+        if stopping:
+            report['interruption_diagnostics'] = {'unaccepted_row': row}
+            raise CampaignInterrupted()
         report['rows'].append(old.write_case_checkpoint(args.output, row))
         report['remaining_case_ids'].remove(case['id'])
         checkpoint()
@@ -163,7 +276,7 @@ def drive(cases, report, args, library, torch, stream, executor):
         while pending or active or blocked:
             resource_guard()
             if stopping:
-                report['status'] = 'interrupted'
+                interrupted('interrupted')
                 break
             progress = False
             # A ready compile never grants acceptance to the previous selection.
@@ -192,6 +305,7 @@ def drive(cases, report, args, library, torch, stream, executor):
                     progress = True
                     continue
                 active[case['id']] = {'case': case, 'phase': 'load',
+                    'attempt_token': uuid.uuid4().hex, 'attempt_started_unix': time.time(),
                     'future': executor.submit(preparation.load_case, args.preparation, case)}
                 progress = True
             for identifier, item in list(active.items()):
@@ -200,6 +314,10 @@ def drive(cases, report, args, library, torch, stream, executor):
                 if not future.done():
                     continue
                 value = future.result()
+                if item['phase'] == 'verify':
+                    item['validation_result'] = value
+                if stopping:
+                    raise CampaignInterrupted()
                 case = item['case']
                 if item['phase'] == 'load':
                     resource_guard()
@@ -218,8 +336,8 @@ def drive(cases, report, args, library, torch, stream, executor):
                     item['generator'] = execution_steps(case, value, library, torch, stream, options)
                     checkpoint()  # Persist the attempt number before a subprocess can create its event file.
                 os.environ['CUBUTTERFLY_PREPARE_EVENTS'] = str(item['events'])
-                if item['phase'] == 'load':
-                    old.exclusive_gpu(args.gpu_uuid)
+                os.environ['CUBUTTERFLY_HELPER_ATTEMPT'] = item['attempt_token']
+                exclusive_gpu(args.gpu_uuid)
                 try:
                     with torch.cuda.stream(stream):
                         snapshot = (next(item['generator']) if item['phase'] == 'load'
@@ -240,6 +358,11 @@ def drive(cases, report, args, library, torch, stream, executor):
                 time.sleep(.05)
         else:
             report['status'] = old.completion_status(report)
+    except CampaignInterrupted:
+        interrupted('interrupted')
+    except ForeignGPUWork as exc:
+        report.update(stop_reason=str(exc), gpu_interruption=record_gpu_interruption(args, exc))
+        interrupted('interrupted-by-foreign-gpu-work')
     except WorkerRecycle as exc:
         report.update(status='worker-recycle-required', recycle_reason=exc.reason,
                       recycle_resources=exc.snapshot)
@@ -325,7 +448,12 @@ def main(argv=None):
         CUBUTTERFLY_JIT_CACHE=config['config']['cache'])
     os.environ['PATH'] = str(Path(sys.executable).parent) + os.pathsep + os.environ.get('PATH', '')
     os.environ.pop('CUBUTTERFLY_PREPARE_EVENTS', None)
-    old.exclusive_gpu(args.gpu_uuid)
+    try:
+        exclusive_gpu(args.gpu_uuid)
+    except ForeignGPUWork as exc:
+        record_gpu_interruption(args, exc)
+        print(str(exc), file=sys.stderr, flush=True)
+        return GPU_BUSY_EXIT
     import torch
     import cubutterfly as cb
     properties = torch.cuda.get_device_properties(0)
@@ -382,6 +510,8 @@ def main(argv=None):
     with ProcessPoolExecutor(max_workers=args.cpu_workers,
             mp_context=multiprocessing.get_context('spawn'), initializer=cpu_only) as executor:
         drive(cases, report, args, library, torch, stream, executor)
+    if report['status'] == 'interrupted-by-foreign-gpu-work':
+        return GPU_BUSY_EXIT
     return 75 if report['status'] == 'worker-recycle-required' else (0 if report['status'].startswith('complete') else 2)
 
 

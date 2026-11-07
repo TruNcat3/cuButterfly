@@ -3,15 +3,13 @@ from __future__ import annotations
 
 import copy
 import ctypes as ct
-from functools import lru_cache
 import hashlib
+import json
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_LIBRARY = ROOT / "build-e13-cufftdx/libgpuntt_semantic_bridge.so"
-VENDOR_SOURCE = Path("/tmp/cubutterfly-gpuntt-crypto-20260929")
-VENDOR_ARCHIVE = Path("/tmp/cubutterfly-gpuntt-crypto-build-20260929/libgpuntt_crypto_vendor.a")
+DEFAULT_LIBRARY = ROOT / "build-gpuntt-semantic/libgpuntt_semantic_bridge_guarded_20261102.so"
 SOURCE_REVISION = "d03c5eaeadaa780d153496afcb3b6a9b79a13a63"
 
 
@@ -74,17 +72,23 @@ class Bridge:
         return root.value
 
 
-@lru_cache(maxsize=4)
 def _identity(library_path):
-    bridge = Bridge(library_path)
-    fingerprints = {"binary": _fingerprint(library_path), "vendor_archive": _fingerprint(VENDOR_ARCHIVE),
-                    "root_helper_library": _fingerprint(ROOT / "build-e13-cufftdx/libcuntt.so"),
-                    "sources": [_fingerprint(path) for path in (
-                        ROOT / "benchmarks/gpuntt_crypto/semantic_bridge.cu", Path(__file__),
-                        ROOT / "src/reference.cpp", VENDOR_SOURCE / "src/lib/ntt_merge/ntt.cu",
-                        VENDOR_SOURCE / "src/include/gpuntt/ntt_merge/ntt.cuh")],
-                    "vendor_revision": SOURCE_REVISION, "architecture": "sm80 + compute80 PTX"}
-    return bridge, fingerprints
+    library = Path(library_path).resolve(strict=True)
+    manifest_path = Path(str(library) + ".manifest.json")
+    manifest = json.loads(manifest_path.read_text())
+    if (manifest.get("schema") != "cubutterfly-gpuntt-build-v1"
+            or manifest.get("vendor_revision") != SOURCE_REVISION):
+        raise ValueError("GPU-NTT build manifest schema or pinned revision differs")
+    if Path(manifest["binary"]["path"]) != library:
+        raise ValueError("GPU-NTT build manifest is bound to a different binary path")
+    for record in [manifest["binary"], manifest["vendor_archive"],
+                   manifest["root_helper_library"], *manifest["sources"]]:
+        if _fingerprint(record["path"]) != record:
+            raise ValueError(f"GPU-NTT build input/output fingerprint differs: {record['path']}")
+    if not manifest["sources"]:
+        raise ValueError("GPU-NTT build manifest has no source evidence")
+    # Check on every inventory/support call, including after a file is replaced.
+    return Bridge(library), {**manifest, "build_manifest": _fingerprint(manifest_path)}
 
 
 def _report(supported, status, reason, **details):
@@ -96,8 +100,9 @@ def backend_inventory(librarypath=DEFAULT_LIBRARY):
     try:
         _, identity = _identity(str(Path(librarypath).resolve()))
         return {"available": True, **copy.deepcopy(identity)}
-    except (OSError, AttributeError, ValueError) as error:
-        return {"available": False, "reason": f"GPU-NTT native bridge unavailable or incompatible: {error}"}
+    except (OSError, AttributeError, ValueError, KeyError, TypeError) as error:
+        return {"available": False, "status": "missing-external-binding",
+                "reason": f"GPU-NTT native bridge unavailable or incompatible: {error}"}
 
 
 def support(s, librarypath=DEFAULT_LIBRARY):
@@ -121,7 +126,9 @@ def support(s, librarypath=DEFAULT_LIBRARY):
     if type(s.get("word_bits")) is not int or s["word_bits"] != bits or type(s.get("compute")) is not int or s["compute"] != compute:
         return _report(False, "unsupported-semantic", "GPU-NTT storage, word_bits and canonical compute must match exactly")
     q = s.get("modulus")
-    if type(q) is not int or not 2 < q < (1 << (30 if bits == 32 else 62)):
+    # The pinned GPU-NTT Data64 Barrett path is exact only below 2^61.
+    # Reject 62-bit moduli instead of publishing an invalid comparison.
+    if type(q) is not int or not 2 < q < (1 << (30 if bits == 32 else 61)):
         return _report(False, "unsupported-semantic", "GPU-NTT modulus outside declared word arithmetic range")
     if type(s.get("inverse")) is not int or s["inverse"] not in (0, 1) or type(s.get("normalize_inverse")) is not bool:
         return _report(False, "unsupported-semantic", "canonical inverse enum and boolean normalize_inverse required")
@@ -134,7 +141,7 @@ def support(s, librarypath=DEFAULT_LIBRARY):
         root = bridge.validate(s)
     except BridgeError as error:
         return _report(False, "unsupported-semantic" if error.status == 1 else "external-binding-error", str(error))
-    except (OSError, AttributeError, ValueError) as error:
+    except (OSError, AttributeError, ValueError, KeyError, TypeError) as error:
         return _report(False, "missing-external-binding", f"GPU-NTT native bridge is unavailable or incompatible: {error}")
     return _report(True, "supported", "exact cyclic prime/root contract validated with the frozen cuButterfly helper",
                    logical_shape=list(shape), batch=s["batch"], modulus=q, word_bits=bits, root=root,

@@ -24,12 +24,20 @@ inline std::vector<std::vector<std::uint32_t>> shared_partitions(unsigned stages
     }
     std::vector<Partition> out;
     std::set<Partition> seen;
-    // One balanced representative of every feasible group count before
-    // lexicographic exploration. This is a budget ordering, not a shape limit.
+    // Cover group counts and regular tile widths before lexicographic
+    // exploration. These are budget priorities, not restrictions on shape.
     if(balanced_first) for(const auto& cursor:cursors) {
         Partition p(cursor.size(),stages/cursor.size());
         for(unsigned i=0;i<stages%cursor.size();++i) ++p[i];
         seen.insert(p); out.push_back(std::move(p));
+        if(budget && out.size()==budget) return out;
+    }
+    if(balanced_first) for(unsigned width=std::min(stages,max_local);width>=min_local;--width) {
+        Partition p(stages/width,width);
+        const auto tail=stages%width;
+        if(tail && tail<min_local) continue;
+        if(tail) p.push_back(tail);
+        if(seen.insert(p).second) out.push_back(std::move(p));
         if(budget && out.size()==budget) return out;
     }
     bool active=true;

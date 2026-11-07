@@ -1,4 +1,5 @@
 #include "shared_organization_candidates.hpp"
+#include "partition_space.hpp"
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
@@ -40,7 +41,9 @@ int main() try {
     }
     require(saw_wide && saw_single_stage_units && saw_uneven,"missing thread/resident basis");
     require(saw_bulk_two && saw_bulk_four && saw_fused,"missing bulk/fusion basis");
-    require(points.size()<=partitions.size()*(capabilities.thread_options.size()*10+5),"seed inventory exploded");
+    std::size_t mask_bound=0;
+    for(const auto& partition:partitions) mask_bound+=8*partition.size()+2;
+    require(points.size()<=partitions.size()*(capabilities.thread_options.size()*10+5)+mask_bound,"seed inventory exploded");
     for (auto threads : {128U,256U,64U}) for (bool aligned : {true,false})
         for (unsigned width : {0U,2U,3U,4U,5U}) {
             const auto parts=width ? resident_partition_seed(partitions[0],width) : LocalPartitions{};
@@ -50,6 +53,33 @@ int main() try {
                     point.batch_tile_count==1 && point.logical_stage_partition.empty();
             }),"lost previous shared candidate");
         }
+    const auto seeds=shared_partitions(20,12,128,1,true);
+    for(const auto& partition:std::vector<std::vector<std::uint32_t>>{{10,10},{7,7,6},{8,8,4}})
+        require(std::find(seeds.begin(),seeds.end(),partition)!=seeds.end(),"finite partition budget misses balanced/regular basis");
+    require(seeds.size()==128,"partition seed coverage bypassed budget");
+    const std::vector<std::uint32_t> groups{8,8,4};
+    const auto mixed=shared_organization_candidates({groups},capabilities,16);
+    const auto all=resident_partition_seed(groups,2);
+    require(std::any_of(mixed.begin(),mixed.end(),[](const auto& point){
+        return point.group_threads==std::vector<std::uint32_t>{128,128,32};
+    }),"missing shape-derived launch widths");
+    const auto unequal=shared_organization_candidates({{8,8,7}},capabilities,1);
+    require(std::any_of(unequal.begin(),unequal.end(),[](const auto& point){
+        return point.group_threads==std::vector<std::uint32_t>{128,128,64};
+    }),"missing independently narrowed physical group");
+    for(std::size_t group=0;group<groups.size();++group) {
+        auto only=LocalPartitions(groups.size()); only[group]=all[group];
+        auto except=all; except[group].clear();
+        for(const auto& parts:{only,except}) for(bool aligned:{true,false})
+            require(std::any_of(mixed.begin(),mixed.end(),[&](const auto& point){
+                return point.threads==128 && point.local_stage_partitions==parts && point.writer_aligned==aligned &&
+                    point.stage_partition==groups && point.batch_tile_count==1 && point.logical_stage_partition.empty();
+            }),"missing per-group resident on/off seed");
+    }
+    const auto narrow=shared_organization_candidates({groups},{{64,32},64,true},16);
+    require(std::any_of(narrow.begin(),narrow.end(),[&](const auto& point){
+        return point.threads==64 && point.local_stage_partitions==LocalPartitions{{2,2,2,2},{2,2,2,2},{}};
+    }),"resident mask seeds require a hardcoded launch width");
     capabilities.max_threads=64;
     capabilities.resident_available=false;
     capabilities.max_bulk_batch_tiles=1;

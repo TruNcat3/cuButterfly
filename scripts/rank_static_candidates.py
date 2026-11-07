@@ -79,6 +79,29 @@ def _sample(value):
     return sample
 
 
+def _single_chunk_service_view(sample):
+    """Use the shared runtime's serial fast path without changing its mapping.
+
+    With one scheduler chunk, overlap kernels launch sequentially and each CTA
+    consumes one batch item. Their services are the same as bulk batch_tile=1.
+    This private cost view does not rewrite the user's executable mapping.
+    """
+    if (sample.get("backend") != "shared-iterative"
+            or not costs.number(sample, "stage_overlap") or costs.number(sample, "factor_overlap")):
+        return sample, False
+    batch = int(costs.number(sample, "batch", 1))
+    tile = int(costs.number(sample, "batch_tile_count", 1))
+    if batch < 1 or tile < batch:
+        return sample, False
+    serial = copy.deepcopy(sample)
+    serial.update(stage_overlap=False, batch_tile_count=1)
+    mapping = costs.decoded(serial.get("mapping_json"), {})
+    mapping.update(stage_overlap=False, batch_tile_count=1)
+    serial["mapping_json"] = mapping
+    serial.pop("stage_service_projection", None)
+    return serial, True
+
+
 def _rank(request):
     if not isinstance(request, dict) or request.get("schema") != REQUEST_SCHEMA:
         raise ValueError("unsupported static-ranking request schema")
@@ -108,6 +131,8 @@ def _rank(request):
                 result["reason"] = "no compatible validated cost model"
                 break
         model_file = directory / "cost_model.json"
+        if not model_file.exists() and profile is not None:
+            result["reason"] = f"static cost model file is absent: {model_file}"
         if model_file.exists():
             candidate_model = _read(model_file)
             reason = _model_reason(candidate_model, request)
@@ -150,6 +175,7 @@ def _rank(request):
             sample = _sample(value)
             for position, group in enumerate(sample["execution_groups_json"]):
                 costs._resource_residency(group, {"hardware": hardware}, position)
+            sample, serial_single_chunk = _single_chunk_service_view(sample)
             details, confidence, reason = None, "hardware-rate-prior", result["reason"]
             overlap = bool(costs.number(sample, "stage_overlap") or costs.number(sample, "factor_overlap"))
             if predictor is not None and (not overlap or
@@ -175,8 +201,11 @@ def _rank(request):
             estimate = details["kernel_ms"]
             if not isinstance(estimate, (int, float)) or not math.isfinite(estimate) or estimate <= 0:
                 raise ValueError("stage model produced a nonpositive or nonfinite estimate")
-            result["ranked"].append(dict(index=index, predicted_kernel_ms=estimate,
-                confidence=confidence, reason=reason))
+            row = dict(index=index, predicted_kernel_ms=estimate, confidence=confidence, reason=reason)
+            if serial_single_chunk:
+                row["service_view"] = "equivalent-serial-single-chunk"
+                row["stage_overlap_effective"] = False
+            result["ranked"].append(row)
         except costs.ResourceInfeasibleError as error:
             result["rejected"].append(dict(index=index, reason=str(error)))
         except (KeyError, ValueError, TypeError, ZeroDivisionError, OverflowError) as error:

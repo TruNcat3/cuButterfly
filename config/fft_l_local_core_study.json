@@ -1,0 +1,24 @@
+{
+  "schema": "cubutterfly-fp16-local-core-study-v1",
+  "gpu_uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02",
+  "hardware_model": "config/hardware/NVIDIA-A100-80GB-PCIe-sm80-84974239744B/hardware_model.json",
+  "sm": 80,
+  "threads": [32, 64, 128, 256, 512, 1024],
+  "ept": [2, 4, 8, 16, 32],
+  "cases": [
+    {"n": 4096, "batch": 5},
+    {"n": 4096, "batch": 256},
+    {"n": 4096, "batch": 2048},
+    {"n": 8192, "batch": 32},
+    {"n": 8192, "batch": 256},
+    {"n": 16384, "batch": 64},
+    {"n": 16384, "batch": 512},
+    {"n": 32768, "batch": 32},
+    {"n": 32768, "batch": 256}
+  ],
+  "seed": 20261105,
+  "input_range": [-0.25, 0.25],
+  "cpu_jobs": 2,
+  "trace_cases": [{"n": 4096, "batch": 2048}, {"n": 8192, "batch": 256}],
+  "scope": "Forward native FP16 local-core geometry diagnosis; explicit endpoints, not full AUTO or fixed-core organization evidence. Keep unsupported/resource-limited points."
+}

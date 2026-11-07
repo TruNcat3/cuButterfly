@@ -13,6 +13,16 @@ def point(mapping, **semantics):
                 mapping_json=json.dumps(mapping), **semantics)
 
 
+@pytest.mark.parametrize("policy", ["research", "auto", "on-demand"])
+def test_shared_columns_are_prepared_before_gpu_execution(policy):
+    mapping = dict(backend="shared-iterative", stage_partition=[6,6], tile_threads=128,
+                   data_tiles_per_cta=4)
+    request = compile_request(point(mapping), policy)
+    assert request["data_tiles_per_cta"] == 4
+    with pytest.raises(ValueError, match="on-demand"):
+        compile_request(point(mapping), "precompiled")
+
+
 def radix4_point(**changes):
     mapping = dict(backend="online-reorder", fft_core="register-tile", local_stages=8,
                    stage_partition=[8, 10], prefix_codelet="radix4", prefix_threads=64,
@@ -126,6 +136,79 @@ def test_shared_butterfly_and_ntt_have_distinct_runtime_request_fields():
                                        logN=12, stage_partition=[6, 6], threads=256, writer_aligned=False,
                                        output_order="natural", batch_tile=1)
     assert compile_request(point(mapping), "auto") is None
+
+
+def shared_physical_point(operator="fft", threads=(64, 256)):
+    entries = ([dict(core="radix2", threads_per_block=t, units_per_cta=1)
+                for t in threads] if operator == "ntt" else
+               [dict(core="scalar", exchange="shared", threads=t, ept=0,
+                     codelet="native", io_policy="dynamic") for t in threads])
+    mapping = dict(backend="shared-iterative", stage_partition=[3, 3, 6],
+                   tile_threads=128, threads_per_block=128,
+                   execution_group_mappings=entries)
+    if operator == "ntt":
+        mapping["boundary_mappings"] = [dict(storage="resident-fused"), dict(storage="full-scratch")]
+    else:
+        mapping["boundaries"] = [dict(residency="fused"), dict(residency="global-scratch")]
+    p = point(mapping)
+    p.update(operator=operator, precision="word32" if operator == "ntt" else "fp32")
+    return p
+
+
+@pytest.mark.parametrize("operator", ["fft", "fwht", "ntt"])
+@pytest.mark.parametrize("policy", ["research", "auto", "on-demand"])
+def test_shared_physical_mapping_projects_threads_after_fused_boundaries(operator, policy):
+    request = compile_request(shared_physical_point(operator), policy)
+    assert request["stage_partition"] == [6, 6]
+    assert request["group_threads"] == [64, 256]
+    assert request["threads"] == 128
+
+
+@pytest.mark.parametrize("operator", ["fft", "ntt"])
+def test_shared_empty_physical_mapping_keeps_default_request(operator):
+    p = shared_physical_point(operator, threads=())
+    request = compile_request(p)
+    assert "group_threads" not in request
+    mapping = json.loads(p["mapping_json"])
+    mapping.pop("execution_group_mappings")
+    assert compile_request(dict(p, mapping_json=mapping)) == request
+    assert compile_request(shared_physical_point(operator), "precompiled") is None
+
+
+@pytest.mark.parametrize("operator", ["fft", "ntt"])
+@pytest.mark.parametrize("policy", ["research", "auto", "on-demand", "precompiled"])
+@pytest.mark.parametrize("threads", [(64,), (64, 128, 256), (0, 128), (33, 128),
+                                     (1056, 128), (True, 128), (64.0, 128), ("64", 128)])
+def test_shared_physical_mapping_rejects_bad_thread_counts_and_values(operator, policy, threads):
+    with pytest.raises(ValueError):
+        compile_request(shared_physical_point(operator, threads), policy)
+
+
+@pytest.mark.parametrize("operator,changes", [
+    ("fft", {"core": "register-tile"}), ("fft", {"exchange": "shuffle"}),
+    ("fft", {"ept": 4}), ("fft", {"codelet": "radix4"}),
+    ("fft", {"io_policy": "static-unrolled"}),
+    ("ntt", {"core": "radix4-shoup"}), ("ntt", {"core": "radix2-shoup"}),
+    ("ntt", {"units_per_cta": 2}),
+    ("ntt", {"data_space": 2}), ("ntt", {"data_time": 2}),
+    ("ntt", {"role_stages": 2}), ("ntt", {"token_interleave": 2}),
+    ("ntt", {"coefficient_reuse_stages": 1}), ("ntt", {"cta_weight": 1}),
+])
+def test_shared_physical_mapping_rejects_unconsumed_implementation_axes(operator, changes):
+    p = shared_physical_point(operator)
+    mapping = json.loads(p["mapping_json"])
+    mapping["execution_group_mappings"][0].update(changes)
+    with pytest.raises(ValueError):
+        compile_request(dict(p, mapping_json=mapping))
+
+
+@pytest.mark.parametrize("entries", [None, "64x256", [{}, None]])
+def test_shared_physical_mapping_rejects_malformed_descriptors(entries):
+    p = shared_physical_point()
+    mapping = json.loads(p["mapping_json"])
+    mapping["execution_group_mappings"] = entries
+    with pytest.raises(ValueError):
+        compile_request(dict(p, mapping_json=mapping))
 
 
 def test_ntt_preparation_preserves_target_output_semantics_not_donor_mapping():

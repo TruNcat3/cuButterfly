@@ -9,6 +9,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import calibrate_local_hardware as calibration
 import static_hardware_profile as static
+import rank_static_candidates as ranking
 
 
 @pytest.fixture
@@ -55,6 +56,41 @@ def test_initialization_exports_normalized_caps_and_hashed_live_evidence(setup):
     assert provenance["supplemental_provenance"]["resource_source"] == setup.raw["resource_source"]
     assert provenance["calibration_provenance"]["microbench"] == "existing"
     assert json.loads((setup.output / "calibration_device.json").read_text())["hardware"] == setup.hardware
+
+
+@pytest.mark.parametrize("existing_model", [False, True])
+def test_legacy_profile_is_completed_where_runtime_ranker_reads_it(setup, existing_model):
+    if existing_model:
+        collect(setup)
+        setup.calls.clear()
+    setup.profile.pop("global_memory_bytes")
+    source = setup.directory / "hardware_profile.json"
+    source.write_text(json.dumps(setup.profile))
+    previous = json.loads(source.read_text())
+    collect(setup)
+    stored = json.loads(source.read_text())
+    assert stored["global_memory_bytes"] == setup.hardware["memory_bytes"]
+    assert stored["device"] == previous["device"]
+    assert stored["provenance"]["microbench"] == previous["provenance"]["microbench"]
+    result = ranking.rank(dict(schema=ranking.REQUEST_SCHEMA, hardware=setup.hardware,
+        runtime_fingerprint="fixture", profile_dir=str(setup.directory), candidates=[]))
+    assert result["profile_source"] == str(source)
+    assert stored == json.loads((setup.output / "calibration_device.json").read_text())
+    assert len(setup.calls) == (0 if existing_model else 1)
+
+
+@pytest.mark.parametrize("change", [dict(device="another GPU"),
+    dict(compute_capability="9.0"), dict(global_memory_bytes=1234),
+    dict(hardware={"memory_bytes": 1234})])
+def test_conflicting_rate_identity_is_never_overwritten(setup, change):
+    collect(setup)
+    setup.profile.update(change)
+    source = setup.directory / "hardware_profile.json"
+    source.write_text(json.dumps(setup.profile))
+    before = source.read_bytes()
+    with pytest.raises(ValueError):
+        collect(setup)
+    assert source.read_bytes() == before
 
 
 def test_default_reuse_preserves_artifact_and_snapshot_without_probe(setup):

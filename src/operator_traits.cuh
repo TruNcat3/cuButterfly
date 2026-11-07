@@ -33,11 +33,13 @@ struct LowStorage<Bf16> {
     }
     __host__ __device__ static float widen(Bf16 value) { return __bfloat162float(value); }
     __host__ __device__ static Bf16 narrow(float value) { return __float2bfloat16_rn(value); }
-    // V100 has no native BF16 arithmetic. Explicit narrowing makes the
-    // emulated-native contract deterministic and visible to the experiment.
-    __device__ static Bf16 add(Bf16 left, Bf16 right) { return narrow(widen(left) + widen(right)); }
-    __device__ static Bf16 sub(Bf16 left, Bf16 right) { return narrow(widen(left) - widen(right)); }
-    __device__ static Bf16 mul(Bf16 left, Bf16 right) { return narrow(widen(left) * widen(right)); }
+    // Explicit round-to-nearest intrinsics preserve each primitive's storage
+    // rounding boundary and prevent contraction across successive operations.
+    // CUDA supplies native BF16 instructions where available and its portable
+    // fallback on older targets; no GPU-model policy belongs in this trait.
+    __device__ static Bf16 add(Bf16 left, Bf16 right) { return __hadd_rn(left, right); }
+    __device__ static Bf16 sub(Bf16 left, Bf16 right) { return __hsub_rn(left, right); }
+    __device__ static Bf16 mul(Bf16 left, Bf16 right) { return __hmul_rn(left, right); }
     __device__ static Bf16 shuffle(Bf16 value, std::uint32_t mask) {
         __nv_bfloat16_raw raw = static_cast<__nv_bfloat16_raw>(value);
         raw.x = static_cast<unsigned short>(
@@ -280,7 +282,12 @@ struct FftOperator {
     }
 };
 
-template <typename Storage, bool Native>
+// Forward and unnormalized inverse share identical butterfly arithmetic;
+// direction is already encoded in the host-built twiddle table.
+enum class LowFftNormalization { Dynamic, Unscaled, Normalized };
+
+template <typename Storage, bool Native,
+          LowFftNormalization Normalization = LowFftNormalization::Dynamic>
 struct LowFftOperator {
     using Value                            = typename LowComplexType<Storage>::type;
     static constexpr bool kBitReverseInput = true;
@@ -310,7 +317,12 @@ struct LowFftOperator {
         // tiny operands before they can add. Rounded unit twiddle components
         // have magnitude <= 1, so max()/4 bounds the product-plus-sum by
         // 3*max()/4. Real adapters and stage splits use the same policy.
-        const bool normalize = inverse && normalize_inverse;
+        const bool normalize = [this] {
+            if constexpr (Normalization == LowFftNormalization::Dynamic)
+                return inverse && normalize_inverse;
+            else
+                return Normalization == LowFftNormalization::Normalized;
+        }();
         const bool normalize_after = normalize &&
             LowMath<Storage, Native>::safe_unscaled_butterfly(left.real) &&
             LowMath<Storage, Native>::safe_unscaled_butterfly(left.imag) &&

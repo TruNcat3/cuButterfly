@@ -578,6 +578,26 @@ def _model_module() -> Any:
         raise RuntimeError("stage_service_model.py is required for stage calibration") from error
 
 
+def _check_sample_identity(sample: dict[str, Any], profile: dict[str, Any],
+                           observed: dict[str, Any], *, context: str,
+                           historical_runtime: bool = False) -> None:
+    """Reject contradictory known identities before further GPU acquisition."""
+    model = _model_module()
+    expected = model._flatten_identity(_profile_identity(profile))
+    actual = model._identity_from_sample(sample)
+    for field, value in actual.items():
+        if historical_runtime and field == "runtime_fingerprint":
+            continue
+        for source, identity in (("profile", expected), ("current samples", observed)):
+            if field in identity and str(identity[field]) != str(value):
+                raise ValueError(
+                    f"stage calibration identity mismatch at {context}: {field}; "
+                    f"{source}={identity[field]!r}, observed={value!r}. "
+                    "Use an audited target-bound profile for current runtime metadata; "
+                    "hardware-rate provenance does not certify stage runtime compatibility.")
+        observed[field] = value
+
+
 def _build_model(records: list[dict[str, Any]], profile: dict[str, Any]) -> dict[str, Any]:
     model = _model_module()
     identity = _profile_identity(profile)
@@ -2047,6 +2067,7 @@ def calibrate(binary: pathlib.Path | str, path: pathlib.Path | str, profile: dic
         import_stage_checkpoints(path, import_paths, binary=binary, profile=profile,
                                  protocol=protocol)
     checkpoint = _load_checkpoint(path)
+    observed_identity: dict[str, Any] = {}
     if checkpoint is not None:
         old_identity = checkpoint.get("identity", {})
         if old_identity != identity:
@@ -2060,6 +2081,21 @@ def calibrate(binary: pathlib.Path | str, path: pathlib.Path | str, profile: dic
         else:
             _refresh_curve_model_state(checkpoint, profile)
         records = list(checkpoint.get("records", []))
+        # Only samples explicitly archived as build priors may retain an old
+        # runtime. Newly acquired/current samples must still match the profile.
+        prior_samples = {_json_key(record.get("sample", {}))
+                         for origin in checkpoint.get("build_prior_origins", [])
+                         for record in origin.get("records", [])
+                         if record.get("status") == "measured" and _truthy(record.get("correct"))}
+        for record in records:
+            if record.get("status") == "measured" and _truthy(record.get("correct")):
+                sample = record.get("sample", {})
+                _check_sample_identity(sample, profile, observed_identity, context="checkpoint resume",
+                                       historical_runtime=_json_key(sample) in prior_samples)
+        for description in checkpoint.get("descriptions", {}).values():
+            if description.get("status") == "resolved":
+                _check_sample_identity(description.get("sample", {}), profile, observed_identity,
+                                       context="cached description")
         descriptions = dict(checkpoint.get("descriptions", {}))
         candidates = list(checkpoint.get("candidates", []))
         composition_requests = list(checkpoint.get("composition_requests", []))
@@ -2204,7 +2240,11 @@ def calibrate(binary: pathlib.Path | str, path: pathlib.Path | str, profile: dic
                     batch=int(point["batch"]), measurement_exclusive=False,
                     warmup=warmup, repeat=repeat, trials=trials))
                 raise InterruptedError("contaminated stage describe")
-            descriptions[static_key] = _normalize_description(point, raw, profile)
+            description = _normalize_description(point, raw, profile)
+            if description.get("status") == "resolved":
+                _check_sample_identity(description["sample"], profile, observed_identity,
+                                       context="untimed description")
+            descriptions[static_key] = description
             incoming = _candidate_from_description(static_key, descriptions[static_key], profile)
             existing = by_actual.get(incoming["actual_key"])
             if existing is None:
@@ -2308,6 +2348,9 @@ def calibrate(binary: pathlib.Path | str, path: pathlib.Path | str, profile: dic
                                                 candidate_key=candidate["key"], batch=int(batch),
                                                 measurement_exclusive=measured_exclusive,
                                                 warmup=warmup, repeat=repeat, trials=trials)
+                if record.get("status") == "measured" and record.get("correct"):
+                    _check_sample_identity(record["sample"], profile, observed_identity,
+                                           context="new measurement")
                 records.append(record)
                 if record.get("status") != "contaminated":
                     seen_batches.add(int(batch))
@@ -2367,6 +2410,9 @@ def calibrate(binary: pathlib.Path | str, path: pathlib.Path | str, profile: dic
                                                 candidate_key=candidate["key"], batch=int(midpoint),
                                                 measurement_exclusive=str(raw.get("status", "")).lower() == "measured",
                                                 warmup=warmup, repeat=repeat, trials=trials)
+                if record.get("status") == "measured" and record.get("correct"):
+                    _check_sample_identity(record["sample"], profile, observed_identity,
+                                           context="new measurement")
                 records.append(record)
                 if record.get("status") != "contaminated":
                     seen_batches.add(int(midpoint))

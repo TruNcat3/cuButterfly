@@ -20,7 +20,8 @@ set(CUBUTTERFLY_BUILD_DIR "${CUBUTTERFLY_SOURCE_DIR}/build-a100-cufftdx" CACHE P
 
 find_package(CUDAToolkit REQUIRED)
 
-set(CUBUTTERFLY_ARCHIVE "${CUBUTTERFLY_BUILD_DIR}/libcuntt.a")
+set(CUBUTTERFLY_ARCHIVE "${CUBUTTERFLY_BUILD_DIR}/libcuntt.so" CACHE FILEPATH
+    "Existing cuButterfly shared library; this consumer never rebuilds it")
 set(CUBUTTERFLY_PUBLIC_INCLUDE "${CUBUTTERFLY_SOURCE_DIR}/include")
 set(CUBUTTERFLY_GENERATED_INCLUDE "${CUBUTTERFLY_BUILD_DIR}/generated")
 set(CUBUTTERFLY_NLOHMANN_INCLUDE "${CUBUTTERFLY_BUILD_DIR}/_deps/nlohmann_json-src/include" CACHE PATH
@@ -46,6 +47,7 @@ target_link_libraries(crypto_ntt_bench PRIVATE
     CUDA::cufft
     ${CMAKE_DL_LIBS})
 set_target_properties(crypto_ntt_bench PROPERTIES
+    BUILD_RPATH "${CUBUTTERFLY_BUILD_DIR}"
     CUDA_SEPARABLE_COMPILATION OFF
     CUDA_RESOLVE_DEVICE_SYMBOLS OFF)
 target_compile_options(crypto_ntt_bench PRIVATE

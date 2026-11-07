@@ -8169,6 +8169,7 @@ class Plan::Impl {
             }
         }
         if(config_.backend==Backend::SharedIterative && (detail::specialize_shared_templates() ||
+           (!config_.execution_group_mappings.empty() && detail::on_demand_compilation_enabled()) ||
            detail::resident_axes_requested(config_.local_stage_partitions,config_.exchange_chunks))) {
             shared_module_=detail::prepare_shared_module(config_);
             shared_group_launch_=detail::prepared_group_launcher(shared_module_);
@@ -9217,8 +9218,6 @@ class Plan::Impl {
                 total+=stages;
             }
             if (total!=config_.log_n) throw std::invalid_argument("shared-iterative NTT partition does not cover logN");
-            if (!config_.subgraph_mappings.empty() || !config_.execution_group_mappings.empty())
-                throw std::invalid_argument("shared-iterative NTT uses its partition, thread and layout axes; specialized streaming mappings are separate");
             if (!config_.boundary_mappings.empty() && config_.boundary_mappings.size() + 1 != config_.stage_partition.size())
                 throw std::invalid_argument("shared-iterative NTT requires one boundary per logical edge");
             for (const auto& boundary : config_.boundary_mappings)
@@ -9894,7 +9893,7 @@ class Plan::Impl {
                         const auto stages=config_.stage_partition[group];
                         const auto first=dataflow_plan_.execution_groups[group].first_stage;
                         detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1><<<static_cast<unsigned>(count<<(config_.log_n-stages)),
-                            config_.threads_per_block,2ULL*(1ULL<<stages)*sizeof(Word),stream>>>(source,destination,
+                            dataflow_plan_.execution_groups[group].threads,2ULL*(1ULL<<stages)*sizeof(Word),stream>>>(source,destination,
                                 config_.log_n,first,stages,n_,1,config_.dataflow_layout==DataflowLayout::HermesXor,count,1,op,
                                 config_.output_order==OutputOrder::BitReversed);
                     }
@@ -9913,7 +9912,7 @@ class Plan::Impl {
             if (shared>48*1024) CUNTT_CUDA_CHECK(cudaFuncSetAttribute(detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1>,
                 cudaFuncAttributeMaxDynamicSharedMemorySize,static_cast<int>(shared)));
             detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1><<<static_cast<unsigned>(batch_groups<<(config_.log_n-stages)),
-                config_.threads_per_block,shared,stream_>>>(source,destination,config_.log_n,first,stages,n_,1,
+                dataflow_plan_.execution_groups[group].threads,shared,stream_>>>(source,destination,config_.log_n,first,stages,n_,1,
                     config_.dataflow_layout==DataflowLayout::HermesXor,config_.batch,batch_space,op,
                     config_.output_order==OutputOrder::BitReversed);
             CUNTT_CUDA_CHECK(cudaGetLastError()); source=destination; first+=stages;
@@ -10461,7 +10460,7 @@ StageProbeAdapter::StageProbeAdapter(Plan& plan) {
                         static_cast<Word>(impl->inverse_n_),
                         static_cast<Word>(impl->inverse_n_shoup_)};
                     detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1>
-                        <<<blocks, impl->config_.threads_per_block, shared, stream>>>(
+                        <<<blocks, impl->dataflow_plan_.execution_groups[group].threads, shared, stream>>>(
                             static_cast<const Word*>(input), static_cast<Word*>(output),
                             impl->config_.log_n, first, stages, impl->n_, 1,
                             writer_aligned, impl->config_.batch, batch_space, op,
@@ -10483,7 +10482,7 @@ StageProbeAdapter::StageProbeAdapter(Plan& plan) {
                         static_cast<Word>(impl->inverse_n_),
                         static_cast<Word>(impl->inverse_n_shoup_)};
                     detail::shared_iterative_kernel<NttStageOperatorT<Word>,-1,-1,-1,-1,-1>
-                        <<<blocks, impl->config_.threads_per_block, shared, stream>>>(
+                        <<<blocks, impl->dataflow_plan_.execution_groups[group].threads, shared, stream>>>(
                             static_cast<const Word*>(input), static_cast<Word*>(output),
                             impl->config_.log_n, first, stages, impl->n_, 1,
                             writer_aligned, impl->config_.batch, batch_space, op,

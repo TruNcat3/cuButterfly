@@ -109,5 +109,29 @@ def test_shared_prior_reduces_exchange_without_deleting_arithmetic():
     unfused = stage_cost_model.stage_terms(old,profile)
     assert fused[0]["points"] == unfused[0]["points"]
     assert fused[0]["stage_count"] == unfused[0]["stage_count"]
-    assert fused[0]["compute_ms"] <= unfused[0]["compute_ms"]
+    resident_work = fused[0]["arithmetic_work"]
+    plain_work = unfused[0]["arithmetic_work"]
+    expected_butterflies = 6 * (64 // 2)
+    for work in (resident_work, plain_work):
+        assert work["useful_butterflies"] == expected_butterflies
+        assert sum(leaf["work_items"] * leaf["butterflies_per_work_item"]
+                   for leaf in work["leaves"]) == expected_butterflies
+
+    # Register leaves retain all butterflies but leave more allocated lanes idle.
+    # The rate prior charges those unused lanes, so lower exchange need not mean
+    # lower compute_ms (which also includes shared-memory and barrier costs).
+    assert [leaf["active_threads"] for leaf in resident_work["leaves"]] == [16,4]
+    assert [leaf["active_threads"] for leaf in plain_work["leaves"]] == [32] * 6
+    assert resident_work["allocated_lane_utilization"] == pytest.approx(1 / 24)
+    assert plain_work["allocated_lane_utilization"] == pytest.approx(1 / 4)
+    useful_compute_ms = (1000 * fused[0]["points"] * fused[0]["stage_count"] / 2
+                         / profile["capabilities"]["equivalent_butterflies_per_second"])
+    for term, work in ((fused[0], resident_work), (unfused[0], plain_work)):
+        assert term["compute_ms"] * work["allocated_lane_utilization"] == pytest.approx(useful_compute_ms)
+
+    # Each inter-leaf boundary exchanges the same points and adds one barrier.
+    assert fused[0]["interstage_boundaries"] == 1
+    assert unfused[0]["interstage_boundaries"] == 5
+    assert fused[0]["exchange_barriers"] == unfused[0]["exchange_barriers"] == 0
+    assert fused[0]["grid_ctas"] == unfused[0]["grid_ctas"]
     assert fused[0]["key"] != unfused[0]["key"]

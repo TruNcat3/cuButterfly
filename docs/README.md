@@ -1,5 +1,14 @@
 # Documentation Index
 
+The [November 7 GitHub handoff](pro6000_handoff_20261107.md) identifies the target entry, frozen paper inputs and validation boundary for work on the PRO6000 server.
+
+The [PRO6000 Blackwell Server96 runbook](hardware/pro6000_server96.md) covers separate CUDA/MathDx installation, CPU preparation, target-local calibration and quick12/full66 comparison through `scripts/research_platform.py`. Its [population contract](../config/paper_portability/README.md) keeps later paper tracks separate.
+
+The [November 7 A100 status and FFT-L scope update](research_status_20261107.md)
+is the current summary. The [November 4 research and paper status](research_status_20261104.md)
+retains the earlier scope and evidence; older campaign notes below retain their
+original scope.
+
 The [October 25 full benchmark refresh](full_benchmark_refresh_20261025.md)
 defines the frozen seven-track rerun, prepared operator inputs, guarded execution
 and outstanding application bindings. Its pending state must not be confused
@@ -138,6 +147,10 @@ The [FP64 factor-graph exploration](factor_graph_exploration_20261025.md) report
 the follow-up CTA tile-group scan on the existing cuFFTDx block core, including
 forward/inverse, B=4/16/64, neighboring factor points, and the remaining gap to
 cuFFT. It is an explicit mapping experiment and does not certify AUTO selection.
+
+The [cuFFT Xt strategy audit](cufft_xt_strategy_audit.md) separates Xt's
+observable plan, layout and workspace controls from its opaque provider core,
+and records the BF16 adapter boundary for future measured experiments.
 
 The [fixed-core organization controls](factor_core_organization_experiment_20261025.md)
 separate native/cuFFTDx core identity from tile scheduling and prefetch depth.

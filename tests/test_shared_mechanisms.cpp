@@ -155,6 +155,7 @@ struct Organization {
     bool overlap = false;
     bool fusion = false;
     bool leaves = false;
+    int plain_group = -1;
 
     std::vector<unsigned> logical_partition() const {
         if (leaves) return {2, 3, 5};
@@ -166,8 +167,10 @@ struct Organization {
     }
 
     std::vector<std::vector<unsigned>> local_partition() const {
-        return leaves ? std::vector<std::vector<unsigned>>{{2, 3}, {3, 2}}
-                      : std::vector<std::vector<unsigned>>{};
+        if (!leaves) return {};
+        std::vector<std::vector<unsigned>> parts{{2, 3}, {3, 2}};
+        if (plain_group >= 0) parts.at(plain_group).clear();
+        return parts;
     }
 };
 
@@ -221,10 +224,12 @@ void check_flow(const cuntt::MixedDataflowPlan& flow, const Organization& organi
                 "shared writer layout was ignored");
         require(group.live_shared_bytes == 2 * (std::size_t{1} << physical[index]) * value_bytes,
                 "serial CTA batches changed the shared live state");
-        if (organization.leaves)
+        if (organization.leaves && !organization.local_partition()[index].empty())
             require(group.local_stage_partition == organization.local_partition()[index] &&
                     group.codelet == "native-register-subgraph" && group.compiler_resources_known,
                     "resident leaf was not compiled or projected");
+        else
+            require(group.local_stage_partition.empty(), "plain group unexpectedly acquired resident leaves");
         first += physical[index];
     }
     const auto boundary = organization.overlap ? cuntt::BoundaryPolicy::RingBuffer : cuntt::BoundaryPolicy::GlobalScratch;
@@ -535,7 +540,11 @@ int main(int argc, char** argv) {
             organization.batch_tile = 3;
             organization.overlap = true;
             run_all(organization, "resident-leaves-fused-overlap");
-            std::cout << "shared resident contract cases passed: 12\n";
+            for (int group : {0, 1}) {
+                organization.plain_group = group;
+                run_all(organization, "resident-mixed-plain-group" + std::to_string(group));
+            }
+            std::cout << "shared resident contract cases passed: 24\n";
         } else {
             for (unsigned tile : {1U, 2U, 3U, 4U}) {
                 Organization organization;

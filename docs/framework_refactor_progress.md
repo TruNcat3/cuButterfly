@@ -1,5 +1,452 @@
 # Unified framework implementation
 
+> Native FP16 local-core and factor integration, 2026-11-05
+
+The [integration report](fft_l_local_core_20261105.md) now includes completed
+local-core geometry, packed I/O and multi-stage factor studies. Native FP16
+cuFFTDx half2 execution reuses the shared factor layout, tile loop, prefetch and
+slice scheduler, with separate logical-transform and physical-thread counts.
+Forward and unnormalized inverse are supported. Normalized inverse, native
+BF16 and explicit FP32 accumulation remain unsupported by this factor provider.
+
+The bounded large-N campaign completed 76 measurements and four NCU captures
+on A100 80GB; all outputs were finite, with CPU errors reported without a new
+threshold. Best explicit factor points range from 0.754x to 1.070x cuFFT and
+1.740x to 3.732x the original scalar path. N262144/B32 reaches 145.459 us versus
+155.597 us for cuFFT. Holding the local core and factor geometry fixed, the
+three large-batch cases improve 1.325--1.523x over one-tile/no-prefetch execution.
+These are bounded measured candidates, not a newly calibrated AUTO result.
+
+Validation completed 56 FP16 factor cases, 288 old/new local-I/O checks at each
+of two lengths, and 16 FP32/FP64 factor regressions. A separate six-task public
+I/O confirmation and four NCU captures also completed. CPU compilation and
+reference preparation preceded GPU measurement; the GPU phase used cache-only
+module loading. The finite monitors have exited successfully. Evidence lives in
+`results/a100_fp16_factor_20261105/`; its diagnostic library receipt is in
+`build/receipt.json`. That diagnostic stage did not replace the shared conda installation.
+The subsequent bounded stage calibration is complete in
+`results/a100_fp16_acceptance_20261105/stage/checkpoint.json`: all 16 configurations
+are described, with 334 records and 330 measured points. Coverage and validation
+are complete, with no adapter gaps, omitted configurations or pending descriptions.
+The acceptance library SHA256 is
+`775a85c8f76e44bbfee886fd90489e7c309bd097b60e968183e446aa006177b2`,
+with research runtime identity
+`3f24ebf748992e13153782f818b5503a1438510555609a1b5291af913edb3de5:research`.
+Earlier diagnostic timings retain their original build identities.
+
+`stage/model-receipt.json` reports a usable `calibrated-local-serial` model for
+the explicit current native FFT-L mappings and validated measured intervals.
+Across 72 valid multi-candidate holdout workloads, top-1 accuracy is 94.444%,
+whole-plan relative error is 0.712% median / 6.993% P90, and mean latency regret
+is 1.00683. Independent stage-service holdout error is 0.938% median / 6.986% P90.
+The finite acceptance completed on November 6: production seed-only confirmation
+covered 12 workloads / 32 mappings and promoted 32 records. All nine public
+DEFAULT, nine MEASURE and nine installed DEFAULT calls resolved identical mappings.
+Four installed semantic controls and three legacy-installed FP64/FWHT continuity
+cells also completed; the shared conda installation is `installed-validated`.
+`status.json` is `complete` with no remaining tasks; `summary.json` retains
+`complete-error-report-only` rather than introducing a floating threshold.
+
+The nine DEFAULT/cuFFT ratios have GM 0.853583x, range 0.733471--1.066737x,
+with 1/9 nominal wins. Separate MEASURE and installed DEFAULT GMs are
+0.853388x and 0.855909x; no minimum is taken across paths. The
+[public acceptance evidence](../paper/evidence/FP16_PUBLIC_ACCEPTANCE_20261105.md)
+lists all nine latency pairs, resolved designs and source hashes.
+
+Two repairs addressed false seed rejection of the provider's radix2-to-auto alias
+and an eager source-frontend import during CPU error-metric loading. Frontend
+access is now lazy; the CPU reference regression suite passed 12 tests.
+BF16 has semantic smoke coverage here, while its full automatic external comparison
+remains pending. These nine requests do not close the full A100 matrix, change the
+original 66-request means or relabel historical diagnostics as this build.
+
+> FFT-L opt-in capacity and calibration adapter completion, 2026-11-04
+
+The current [FFT-L completion campaign](../results/a100_fft_l_completion_20261104/README.md)
+uses frozen library `79d9b09abdf4ba24b4501af0a71941944732e7a6bb5861800e84560e716f7976`.
+Scalar temporal R2/R4/R8 now opts into the hardware's dynamic shared-memory
+capacity and compiles through log16. A100 native low FFT N16384/N32768 can use
+64/128 KiB single-stage points; N65536 still exceeds that hardware capacity.
+This supersedes the previous implementation's 48 KiB temporal launch limit,
+without changing online-reorder's separate grouped-tile contract. Candidate
+selection and explicit execution share the same capacity predicate.
+
+The stage microbenchmark now accepts Complex16/ComplexBf16 FFT with native or
+explicit FP32 arithmetic. Same-precision CPU reference errors are report-only;
+its `correct` field certifies finite output and byte-identical whole-plan versus
+independent-group composition, not an agreed floating error threshold. Twelve
+CPU reference tests match the existing Python oracle at three sizes each.
+Forty-eight affected CPU tests and 144 GPU impulse/guard cases pass, including
+first-use capture for 64/128 KiB FFT/FWHT kernels across supported precisions.
+
+Calibration has begun for 34 native FFT-L mapping configurations. Existing
+hardware rates retain their provenance; physical group timings are reacquired.
+Completed clean rows survive foreign GPU interruptions. Validation is not yet
+complete, and no installation or usable-model promotion is claimed. The queued
+order is stage acquisition, model evaluation, the 22-request scale matrix and
+the original 32-request 1D/2D precision/direction cohort. Full raw outputs and
+same-precision CPU references are retained; measured timings exclude planning
+and compilation. See campaign-status.json in the completion directory for the
+current queue phase. A negative validation result is reported, never rewritten.
+
+
+> FFT-L single-stage endpoints and bounded scale check, 2026-11-04
+
+The [scale and selection report](../results/a100_fft_l_scale_selection_20261104/REPORT.md)
+separates fixed organization controls from public selection. Single-stage execution
+and expansion factors of one remain legal mixed-dataflow endpoints. Public
+MEASURE chooses a scalar single-stage radix-2 point for native FP16 N4096 B256;
+a larger batch does not make the measured two-stage point universally better.
+For N8192 B32, grouped two-stage radix-4 beats the same-core single-stage control,
+while replaying the public hierarchical winner is slightly faster still.
+The report records the complete bounded matrix and actual mappings as it fills.
+
+Scalar temporal log13 was missing from compiled dispatch despite fitting 32 KiB
+for native low-precision FFT. Dispatch and the common capacity check now include
+it; 45 exact-impulse GPU cases cover relevant FFT/FWHT precisions, radices and
+forward/inverse normalization. The unchanged non-opt-in 48 KiB limit remains a
+lowering limit, not a theoretical restriction on larger single-stage transforms.
+
+The shared campaign Graph timer now binds replay and events to the supplied
+stream. Timed output must match the same plan's direct output bytes before
+reference error reporting. Two temporary probes run outside the required caller
+stream context had invalid timings and are explicitly excluded. Properly scoped
+previous controls remain separate evidence. Thirty-six affected CPU tests pass.
+
+Static ranking in this experiment uses hardware-rate priors: the selected A100
+profile directory has no cost_model.json. Existing refit/tuning models cannot be
+promoted for native FFT-L because of runtime identity, validation status and/or
+precision coverage. Public MEASURE is independent measured selection. Neither
+full native FFT-L calibration nor installation of this build is claimed complete.
+
+
+> Scalar online boundary grouping, 2026-11-04
+
+The [bounded implementation report](../results/a100_fft_l_boundary_20261104/REPORT.md)
+adds independent prefix `data_tiles_per_cta` and suffix `reorder_columns` to the
+shared scalar online lowering. Adjacent output lanes now own adjacent subgraphs;
+an internal XOR shared-memory permutation supports that ownership exchange.
+Power-of-two geometry uses shifts/masks instead of runtime integer division.
+Arithmetic traits and per-primitive low-precision rounding are unchanged.
+
+Execution, resource projection and public candidates use a common capacity
+contract. The former 1024-value group cap is replaced by actual byte capacity
+within the executor's 48 KiB non-opt-in limit, independently of compiled local
+stage sizes. The contract accounts for normalized integer-zeta storage widths.
+The tuner can grow or shrink either grouping axis; this is a generic scalar
+mechanism, not an FFT/GPU-name rule. Imported FFT cores and the separate NTT
+executor retain their existing paths.
+
+On A100 80GB, all 24 new fixed controls match old-library output bitwise. At
+N4096 B256, FP16 changes from 125.901 to 40.755 us and BF16 from 128.000 to
+43.110 us when selecting the measured grouped configuration. These are controlled
+two-stage results, not AUTO selections or improvements over the overall best
+known implementation. Keeping G1/C1 at large batch regresses about 4--5%; small
+batch does not benefit from grouping. A matched 40GB one-stage control remains faster
+than its measured two-stage point.
+
+A separate A100 40GB mechanism check uses the grouped implementation. FP16 N4096 B256 drops
+from 126.259 to 43.162 us with the same scalar radix-4 arithmetic. Paired NCU
+captures show both stages' store sectors/request fall from 32 to 4, while total
+warp instructions fall from 34.316M to 11.477M; arithmetic instruction counts
+remain equal. Shared-bank conflicts are not eliminated and cuFFT remains faster.
+Do not combine 40GB timing with the 80GB comparison matrix. The final CTest passes
+80 bitwise pairs plus four invalid-configuration checks; 23 affected Python tests
+and the mixed-dataflow resource test also pass. Twenty-four affected non-online
+controls pass after keeping their single-tile geometry compile-time constant.
+A100 80GB resumed after a busy interval; all 18 larger-group controls and six
+final-build confirmations are complete. Public retuning and a new comprehensive
+matrix remain pending. Eighteen proposals across six requests, including
+one-stage rivals, are CPU-prepared; no installed-cache calibration claim is made.
+
+> FFT-L instruction and boundary attribution, 2026-11-04
+
+The [focused trace report](../results/a100_fft_l_trace_20261103/README.md)
+contains 14 guarded NCU captures and 30 ordinary Graph controls with the same
+production build. The native low-precision scalar online path is not equivalent
+to the high-precision register core: its prefix/suffix writebacks use about 32
+sectors per warp request versus cuFFT's four, and its named writer-aligned option
+only permutes the intermediate address bits. It does not remap final-store thread
+ownership or remove the observed transaction fragmentation. Native FFT-L still
+lacks the register-tile and imported block adapters used by FP32/FP64 paths.
+
+At FP16 N4096 B256, the frozen two-stage point takes 124.877 us, versus 11.213 us
+for cuFFT. This is a fixed-organization diagnostic, not re-searched large-batch
+library performance. Keeping the scalar radix-4 core and T256 but selecting one
+stage reduces it to 34.202 us; changing only the two-stage thread count to T64
+reduces it to 78.438 us. At this batch, the original two stages have 85–86%
+active-warp occupancy, so their slowdown cannot be explained by too little
+independent work alone. Dynamic warp instructions remain about 29 times the
+external implementation. Two-dimensional execution separately retains two
+explicit transpose kernels. These results qualify the earlier broad statement
+that only a core gap remained: lowering coverage, boundary layout, geometry and
+selection all matter. No production code or selection cache was changed during
+this diagnosis, and no claim of complete theoretical optimality is made.
+
+> A100 weak-path closure and FFT-L cache confirmation, 2026-11-03
+
+The final A100 80GB build now contains compile-time FFT-H codelet coefficients,
+the generic rank-2 direct-input boundary, the shared scalar temporal-tile capacity
+contract, and explicit round-to-nearest BF16 primitive traits. The attempted FWHT
+writeback interleaving was correct but neutral in three-process timing and was
+reverted. The affected controls pass on the final build: 15 temporal-domain
+capacity/direction cases, six mixed input/output order rank-2 cases, 60 fixed
+register-tile cases, and the BF16 primitive bit-pattern study.
+
+The low-precision public selector initially exposed a real engineering issue:
+the static rate prior ranked a newly legal one-stage point above the measured
+two-stage point. Official `Plan(MEASURE)` then measured a bounded 32-candidate
+cohort per FP16/BF16 request and wrote the shared cache. `Plan(DEFAULT)` replayed
+the same mappings, and the installed conda library reproduced them in three
+independent processes without changing the cache. The selected point is two
+stages `[5,7]`, tiles 32/128, T256, scalar radix-4, direct-strided boundaries.
+Installed medians are 9.677 us (FP16) and 9.728 us (BF16) for N=4096, B=4.
+This is a measured-cache confirmation for two requests; it is not a full model
+refit or a proof of global search optimality. The public MEASURE timer and final
+Graph timer are recorded separately, and the existing low-precision internal
+relative-error screening remains distinct from the report-only CPU error policy.
+
+The remaining FFT-L gap is therefore localized to the scalar low-precision core,
+stage synchronization, and two-dimensional transpose path. The current controls
+show that removing one rank-2 input copy improves 2-D execution, while the
+one-dimensional path remains slower than cuFFT. This is an engineering/core
+coverage gap for the finite requests, not evidence against the hierarchical
+hybrid dataflow method. Full A100 cross-operator acceptance and PRO 6000
+migration remain separate milestones.
+
+> Focused remaining-gap diagnosis, 2026-11-03 evening
+
+The [current instruction-level trace](../results/a100_closure_20261103/final_acceptance/trace/README.md)
+adds four guarded NCU captures without changing the accepted performance records
+or production code. FFT's fixed local phases still execute FP64 polynomial
+arithmetic; a CPU-only same-radix compiler probe reduces FFT16 static instructions
+from 504 to 256 and registers from 96 to 76 with literal coefficients. This is
+code-generation evidence, not a measured full-transform speedup. The prior
+diagonal-table fix did not cover these codelet/lane sites. FWHT's PC samples
+localize most LG-throttle symptoms to concentrated vector output stores; Dao
+interleaves those stores with later butterfly arithmetic. Aligned I/O widths and
+counts match, so scalarization does not explain that case. FFT-L's separate CPU
+audit identifies small-tile geometry and axis-boundary work but has no dedicated
+low-precision NCU attribution yet. No new migration or unbounded sweep started.
+
+> A100 affected-request closure, 2026-11-03
+
+The [acceptance report](../results/a100_closure_20261103/final_acceptance/README.md)
+closes the new strategy calibration and public-call checks. The finite competing
+cohort has 34 certified physical service keys and 68 independent group holdouts.
+All 15 complete-plan holdouts are covered and configuration ranking matches the
+measured winner in all three request cells. The refitted model is validated for
+this serial/direct-launch scope; uncovered requests and other timing protocols
+retain the existing compatibility guards. Public DEFAULT uses current confirmed
+records, and public MEASURE accepts all 24 scheduled candidates. The shared conda
+library, templates, profile and registry are updated; installed default execution
+also completes full CPU-reference checks. The two external weak points remain
+0.838x cuFFT and 0.939x DaoFHT under matched complete Graph timing.
+
+FFT-L now has declared same-precision CPU references for all 32 saved requests and
+48 output comparisons. The regular runner invokes this CPU sidecar finalization
+and supports `--finalize-cpu` without CUDA. No float threshold or vendor arithmetic
+contract is invented. Calibration checks contradictory known runtime identities
+before further GPU acquisition; 49 targeted tests pass, alongside 30 FFT-L tests.
+The frozen main/application evidence remains associated with its original builds.
+PRO 6000 migration has not started. Remaining kernel optimizations are research
+extensions, not silently added acceptance gates for this finite cohort.
+
+> Shared per-group thread geometry, 2026-11-03 afternoon
+
+The [stage-thread report](../results/a100_closure_20261103/stage_threads/README.md)
+closes the shared per-group launch gap described below. Physical group mappings
+now reach dynamic/JIT launches, probes, batch overlap, common candidates, GA and
+service identities for Butterfly and NTT. Forty-four cross-operator GPU checks
+completed, with exact integer validation and floating error reports. On A100
+80GB, fixed-scalar FFT FP64 N=2^20 B=16 with `[8,8,4]` stages improves from
+3.852206 ms at threads `[128,128,128]` to 2.834104 ms at `[128,128,64]`, a 1.359x
+gain. This also improves the preceding uniform-64 result by 1.110x. NCU confirms
+the first two stages retain their 128-thread performance while the tail improves.
+These are controlled explicit mappings, not a new external-library comparison
+or evidence that automatic selection already picks the winner. Internal multi-tile
+packing, service calibration, prior refit and FWHT scheduling remain open.
+
+> Local FFT coefficients and shared thread geometry, 2026-11-03
+
+The [bounded optimization report](../results/a100_closure_20261103/optimization/README.md)
+records a completed A100 80GB intervention after the negative-result trace.
+Register FFT prefixes now expose independent runtime/table local diagonal-root
+supply through mapping, compilation, inventory, GA and stage service identities.
+The table keeps the requested FP32/FP64 arithmetic and is prepared before timing.
+For FP64 N=2^20 B=16, three-process complete Graph medians improve 1.150628 to
+1.077156 ms (1.0682x); cuFFT remains faster at 0.900680 ms. Twenty-four small
+same-precision CPU error reports cover both directions and three prefix shapes.
+Public inventory contains the table geometry; automatic selection is unconfirmed.
+
+The independent fixed-scalar-core `[8,8,4]` selective-resident experiment improves
+3.851684 to 3.146066 ms by changing all groups from 128 to 64 threads. NCU shows
+the 16-point tail improves while the first two groups regress. Per-group shared
+thread geometry and internal multi-tile packing remain lowering/interface gaps;
+neither is implemented by this thread-count intervention. Shared v8 prior refit,
+new prefix service coverage and FWHT scheduling remain open. Earlier three-process
+80GB regression and all 24 cross-operator execution checks also completed; the
+expired-wait notes below describe their earlier state, not the current status.
+
+> Shared organization repair, 2026-11-02 night
+
+The user renewed the wait for performance verification. A detached UUID guard
+now waits until 2026-11-03 09:00 Asia/Shanghai, then expires if the target remains
+busy. Its [live status](../results/a100_closure_20261102/framework_repair_20261102/validation_until_20261103_0900/status.json)
+and eventual comparison summary belong to the fixed two-request regression below.
+
+The [implementation and validation ledger](../results/a100_closure_20261102/framework_repair_20261102/README.md)
+records the common partition priorities, per-group resident candidate basis and
+GA toggles, corrected leaf geometry, and the serial service view for a one-chunk
+shared pipeline. The library rebuild and affected CPU checks pass, including
+isolated installation dependencies. The v8 hardware-rate prior remains a heuristic:
+it identifies the excessive FWHT thread allocation but does not recover the
+observed FFT plain-tail ordering. Refitting/validation and current-build A100 80GB
+performance confirmation remain open; the finite wait expired with a foreign job
+on the target GPU. A separate A100 40GB run completed 24 shared/resident execution
+cases across all six operators, with exact integer checks and same-precision float
+error reports. Public inventory export also contains the selective FFT resident
+mapping and both FWHT thread configurations. Actual finite-budget selection and
+new 80GB timings remain unconfirmed. Historical intervention timings remain
+historical evidence.
+
+> A100 negative-result diagnosis, 2026-11-02 evening
+
+The [diagnostic report](../results/a100_closure_20261102/negative_trace_20261102/README.md)
+records six NCU captures and three bounded, single-axis comparisons on the original
+A100 80GB. Reducing FWHT threads from 1024 to 128 at the same 256-point tiles improves
+108.022 us to 49.992 us. FFT resident leaves help its first two 256-point groups but
+hurt the 16-point tail; retaining the plain tail improves 4.347832 ms to 3.852124 ms
+with the same scalar core, partition, layout and threads. Execution supports this
+per-group choice, but public enumeration and default GA resident neighbors omit it.
+The finite random screen also heavily sampled leading one-stage groups, while the
+FWHT overlap-labelled winner actually executes one batch chunk sequentially.
+These are diagnosed coverage/mapping issues; production selector repairs remain
+outstanding. Original negative measurements are retained. The corrected FFT
+winner's separate full numerical replay also finished, without changing timings
+or introducing a float threshold.
+
+> A100 winner-statistics correction, 2026-11-02
+
+The finite measurement queues finished, including all 32 FFT-L requests and
+the repaired three-request fixed-core study. Review found that final float
+winner selection compared CSV latency strings: 12.470016 sorted before
+4.344893. Selection now parses finite positive numbers before both median and
+minimum. Recorded timings and the numeric shortlist selection were unaffected.
+The corrected FFT conventional winner's new full error report is complete; the
+other three float reports are reusable and NTT retains full-batch exact checks.
+See the [correction ledger](../results/a100_closure_20261102/winner_correction_20261102/REPORT.md).
+The limited fixed-core conventional/hybrid ratios are 0.425384x FFT, 0.480422x
+FWHT and 1.773924x NTT. These are internal organization comparisons, not external
+library speedups. The controlled runner also adds clearly directed ratio fields
+while preserving the historical aliases and numeric values.
+
+> A100 finite completion and execution preflight, 2026-11-02
+
+The [current completion ledger](../results/a100_closure_20261102/README.md)
+separates finished measurements from the remaining application, mechanism and
+FFT-L jobs. All 138 searched composition requests completed 552 exact checks.
+Their 1.691x geometric mean compares searched cyclic mappings with the internal
+default composition, not an external library or a fixed-core ablation. The
+34 CPU external comparisons also finished, with two independent processes and
+two additional instability checks. CPU/GPU and GPU/GPU ratios remain separate.
+
+An A100 40GB execution smoke found a profile-script error that passed NTT-only
+modulus parameters to floating transforms. The script now applies those fields
+only to NTT; actual FFT/cuFFT, FWHT/Dao and NTT/GPU-NTT calls pass their numerical
+checks. These small diagnostic requests do not enter the A100 80GB comparison.
+FFT-L CPU preflight validates all 32 public descriptors and the 16 compatible
+cuFFT storage contracts; GPU execution and the same-precision CPU oracle gap
+remain distinct. The [application progress table](../results/a100_closure_20261102/applications/progress_summary.md)
+records new measurements, including QuaRot losses, without attributing steady
+Graph time to the excluded planning cost.
+
+All nine application repetitions now completed. QuaRot B1/B4 remain slower
+(0.968x/0.958x descriptive process means), while the new FP32 filtering pairs
+reach 1.068x/1.048x at 1024²/2048², B16. The small bootstrap repeat reaches
+1.033x/1.032x at B1/B8 with exact ciphertexts and the original `sec_level=none`
+restriction. Its missing temporary NTL dependency is now recoverable through
+[`prepare_heongpu_dependencies.py`](../scripts/prepare_heongpu_dependencies.py)
+into persistent local storage; the restored ABI matches, but the historical
+package identity is unproven. The remaining mechanism/profile and FFT-L jobs
+continue under the finite GPU guard. A separately queued C0 recovery handles
+equivalent empty default fields in public mapping exports, retaining original
+candidates, selection budgets and conversion audits.
+
+> Cyclic NTT completion and persistent baseline recovery, 2026-11-02
+
+All 90 cyclic NTT cuButterfly requests completed exact verification. The
+[baseline recovery report](../results/full_current_20261025/recovery_gpuntt_baseline_20261102/REPORT.md)
+separates 18 existing GPU-NTT comparisons, 36 arithmetic-domain exclusions and
+36 bindings lost after the reboot cleared temporary vendor files. GPU-NTT now
+has a persistent, configurable build with binary-bound source evidence. A finite
+baseline-only supplement completed all 36 missing bindings on the original A100
+80GB, reusing the inputs, exact verification and Graph timing without repeating
+cuButterfly search or modifying accepted rows. The combined 54 valid pairs have
+1.308x geometric mean speedup and 51 measured wins; three 64-bit B=1 cases range
+from 0.972x to 0.999x. The 36 true arithmetic exclusions remain unpaired. CPU
+verification covers 40 bridge checks and 62 supplement/timing/monitor checks.
+The idle monitor exited normally after completion. These results concern this
+cyclic NTT population; other operator and application scopes remain separate.
+
+> Follow-up repair and retest, 2026-10-28
+
+The [repair report](../results/full_current_20261025/recovery_followups_20261028/REPORT.md)
+records completed mechanism timing and profiler captures after repairing stale
+preparation identities. The crypto stop was a pinned GPU-NTT 62-bit arithmetic
+defect; cuButterfly was exact on the failed request. Adapter guards now check
+both modulus range and vendor bit metadata. Four supported forward/inverse GPU
+regressions pass, and the two unsupported boundary requests are rejected.
+The idle queue retains all 66 main comparison rows, 46 public composition cells
+and two cyclic rows while continuing the unfinished follow-ups. Their full
+performance conclusions remain pending.
+
+> First-run event-log recovery, 2026-10-28 morning
+
+The [recovery record](../results/full_current_20261025/recovery_event_log_20261028/REPORT.md)
+documents a regression in the preceding proxy change: a fresh comparison could
+start ranking before its event-log directory existed. The proxy now opens that
+log before spawning and reaps its child on receipt-write failure. All 97 affected
+CPU tests pass, including the first-run condition omitted by the earlier fixture.
+The failed attempt produced zero usable comparisons and remains archived. CPU
+preparation reached 5,823 ready modules with no pending or failed requests. The
+original finite comparison resumes with completed calibration preserved; module
+counts remain separate from measured rows in the live campaign ledger.
+
+> Ranking signal receipts and independent CPU preparation, 2026-10-27 evening
+
+The [follow-up recovery](../results/full_current_20261025/recovery_signal_20261027/REPORT.md)
+reproduces the worker/proxy/helper cancellation chain and records exact per-attempt
+signal evidence. Only verified cancellation recovers the generic ranking error;
+ordinary runtime, compiler and numerical errors remain investigation-required.
+The full refresh can attach to an independent CPU producer, so GPU occupation no
+longer terminates that producer's compilers. Completed comparison phases do not
+require a live producer on resume. The affected 171 CPU tests pass, including real
+process-group cancellation and ownership/liveness tests.
+
+All 24 reviewed compiler failures contained `nvcc: Terminated`; their logs and
+requests were archived before requeueing. The same A100 manifest and follow-up
+queue are restored under the idle monitor, preserving completed calibration and
+all numerical/timing policies. Live measurement progress remains separate from
+CPU module readiness and is recorded in the campaign ledger.
+
+> A100 comparison recovery and research scope, 2026-10-27
+
+The [recovery record](../results/full_current_20261025/recovery_interruption_20261027/REPORT.md)
+documents the foreign-GPU interruption fix and guarded restart of the existing
+66-request comparison. Both runner files and their 87 CPU tests distinguish
+retryable GPU occupation from numerical/runtime failures. Completed calibration,
+finalization and xD preparation remain intact; the original zero-row interrupted
+attempt and diagnostics are archived. Only the reviewed runner identities changed,
+with no kernel, semantic, budget or timing-policy change. The idle monitor resumed
+the comparison on the same A100 80GB UUID; live progress is in the campaign ledger.
+
+The [research principles](research_principles.md) and paper now emphasize resource
+characterization under hardware constraints. Search is engineering, and ranking
+competitions are no longer mandatory research evidence. Finish the defined A100
+experiment list before the planned PRO6000 migration. Internal mechanism losses
+and external library comparisons retain separate scopes.
+
 > Radix-4 precision, compact-real and long-1D completion, 2026-10-24
 
 The [completion report](radix4_completion_20261024.md) records 24 public xD

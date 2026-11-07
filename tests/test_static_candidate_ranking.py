@@ -78,6 +78,8 @@ def test_prior_matches_existing_predictor_and_orders_stably(tmp_path, compiled):
         assert item["predicted_kernel_ms"] == expected[item["index"]]
         assert item["confidence"] == "hardware-rate-prior"
     assert result["mode"] == "hardware-rate-prior"
+    assert "static cost model file is absent:" in result["reason"]
+    assert str(tmp_path / "cost_model.json") in result["reason"]
     assert not result["rejected"] and not result["unranked"]
 
 
@@ -153,6 +155,137 @@ def test_outside_model_coverage_uses_uncalibrated_prior(tmp_path):
     result = ranking.rank(req)
     assert result["mode"] == "hardware-rate-prior"
     assert "coverage" in result["ranked"][0]["reason"]
+
+
+@pytest.mark.parametrize("operator", ["fft", "ntt", "fwht", "subset-zeta", "superset-zeta", "structured-2x2"])
+def test_one_chunk_reuses_serial_cost_without_requiring_concurrency_validation(tmp_path, operator):
+    serial = sample((4, 8))
+    serial["operator"] = operator
+    serial["precision"] = "word64" if operator == "ntt" else "fp32"
+    serial["mapping_json"] = dict(backend="shared-iterative", stage_overlap=False, batch_tile_count=1)
+    overlapped = copy.deepcopy(serial)
+    overlapped["mapping_json"].update(stage_overlap=True, batch_tile_count=4)
+    req = request(tmp_path, [serial, overlapped])
+    req["timing_protocol"] = "direct-launch"
+    fitted = model_fixture(serial)
+    fitted.pop("composition_validation", None)
+    write(tmp_path / "cost_model.json", fitted)
+    frozen = copy.deepcopy(req)
+    result = ranking.rank(req)
+    assert req == frozen
+    assert not result["rejected"] and not result["unranked"]
+    rows = {row["index"]: row for row in result["ranked"]}
+    assert rows[0]["confidence"] == rows[1]["confidence"] == "validated-static-model"
+    assert rows[1]["predicted_kernel_ms"] == rows[0]["predicted_kernel_ms"]
+    assert rows[1]["service_view"] == "equivalent-serial-single-chunk"
+    assert rows[1]["stage_overlap_effective"] is False
+
+
+def test_multiple_chunks_still_require_concurrency_validation(tmp_path):
+    serial = sample((4, 8))
+    req = request(tmp_path, [dict(serial, stage_overlap=True, batch_tile_count=2)])
+    req["timing_protocol"] = "direct-launch"
+    fitted = model_fixture(serial)
+    fitted.pop("composition_validation", None)
+    write(tmp_path / "cost_model.json", fitted)
+    result = ranking.rank(req)
+    row = result["ranked"][0]
+    assert row["confidence"] == "hardware-rate-prior"
+    assert "overlap composition is unvalidated" in row["reason"]
+    assert "service_view" not in row
+
+
+def test_single_chunk_service_view_preserves_group_local_resident_identity():
+    original = ranking._sample(dict(sample((8, 8, 4)), batch=16,
+        mapping_json=dict(backend="shared-iterative", stage_overlap=True, batch_tile_count=16,
+                          local_stage_partitions=[[2, 2, 2, 2], [2, 2, 2, 2], []], tile_threads=128)))
+    view, serial = ranking._single_chunk_service_view(original)
+    assert serial
+    assert view["execution_groups_json"] == original["execution_groups_json"]
+    assert view["mapping_json"]["local_stage_partitions"] == original["mapping_json"]["local_stage_partitions"]
+    assert view["mapping_json"]["tile_threads"] == 128
+    assert original["stage_overlap"] is True and original["batch_tile_count"] == 16
+
+
+@pytest.fixture
+def measured_shared_service_model():
+    from calibration_space import predicted_sample
+    import stage_service_model as service
+
+    serial = predicted_sample(dict(operator="fwht", precision="fp32", logN=20, batch=16,
+        runtime_fingerprint="fixture-build:research", mapping_json=dict(
+            backend="shared-iterative", stage_partition=[8, 8, 4], tile_threads=128,
+            stage_overlap=False, batch_tile_count=1, local_stage_partitions=[[4, 4], [], [2, 2]])))
+    first_stage = 0
+    for index, group in enumerate(serial["execution_groups_json"]):
+        group.update(first_stage=first_stage, compiler_resources_known=True,
+                     compiler_registers_per_thread=32)
+        first_stage += group["stage_count"]
+    durations = [.003, .007, .002]
+    records = [dict(schema=service.SCHEMA, status="measured", correct=True, sample=serial,
+        groups=[dict(group, independent=True, role=role, trial_kernel_ms=[duration, duration])
+                for group, duration in zip(serial["execution_groups_json"], durations)])
+        for role in ("train", "validation")]
+    measured = service.build_profile(records)
+    assert measured["validation"]["passed"]
+    measured.update(validated=True, calibration_status="complete-bounded")
+    model = costs.fit([], dict(PROFILE, hardware=HARDWARE, stage_service=measured))
+    model.update(status="calibrated-local-serial", usable_for_unmeasured_ranking=True,
+        validation={"scope": "independent-stage-holdout-plus-serial-ranking"},
+        whole_plan_validation={"status": "passed"}, runtime_fingerprint="fixture-build:research",
+        protocol={"timing": "direct-launch"})
+    return serial, measured, model, sum(durations)
+
+
+def test_single_chunk_ranker_reuses_measured_curves_with_mixed_resident_groups(
+        tmp_path, measured_shared_service_model):
+    import stage_service_model as service
+
+    serial, measured, model, expected = measured_shared_service_model
+    overlapped = copy.deepcopy(serial)
+    overlapped.update(stage_overlap=True, batch_tile_count=16)
+    overlapped["mapping_json"].update(stage_overlap=True, batch_tile_count=16)
+    multiple = copy.deepcopy(overlapped)
+    multiple.update(batch_tile_count=8)
+    multiple["mapping_json"].update(batch_tile_count=8)
+    req = request(tmp_path, [serial, overlapped, multiple])
+    req["timing_protocol"] = "direct-launch"
+    write(tmp_path / "cost_model.json", model)
+    frozen = copy.deepcopy(req)
+
+    view, converted = ranking._single_chunk_service_view(ranking._sample(overlapped))
+    assert converted
+    assert view["mapping_json"]["local_stage_partitions"] == [[4, 4], [], [2, 2]]
+    assert view["execution_groups_json"] == serial["execution_groups_json"]
+    serial_predictions = costs.predict(ranking._sample(serial), model, explain=True)
+    overlap_predictions = costs.predict(view, model, explain=True)
+    serial_keys = [stage["curve_key"] for stage in serial_predictions["stages"]]
+    assert serial_keys == [stage["curve_key"] for stage in overlap_predictions["stages"]]
+    assert len(set(serial_keys)) == 3
+    assert set(serial_keys) == set(measured["curves"])
+    shapes = [json.loads(key)["group_shape"] for key in serial_keys]
+    assert [shape["local_stage_partition"] for shape in shapes] == [[4, 4], [], [2, 2]]
+    assert [shape["codelet"] for shape in shapes] == [
+        "native-register-subgraph", "native", "native-register-subgraph"]
+    for sample_view in (ranking._sample(serial), view):
+        for group, key in zip(sample_view["execution_groups_json"], serial_keys):
+            prediction = service.predict_group(sample_view, group, measured)
+            assert prediction["covered"] and prediction["source"] == "measured-exact"
+            assert prediction["curve_key"] == key
+    assert not serial_predictions["whole_plan_fallback_used"]
+    assert not overlap_predictions["whole_plan_fallback_used"]
+    assert serial_predictions["kernel_ms"] == overlap_predictions["kernel_ms"] == expected
+
+    result = ranking.rank(req)
+    rows = {row["index"]: row for row in result["ranked"]}
+    assert rows[0]["confidence"] == rows[1]["confidence"] == "validated-static-model"
+    assert rows[0]["predicted_kernel_ms"] == rows[1]["predicted_kernel_ms"] == expected
+    assert rows[1]["service_view"] == "equivalent-serial-single-chunk"
+    assert rows[2]["confidence"] == "hardware-rate-prior"
+    assert "overlap composition is unvalidated" in rows[2]["reason"]
+    assert "service_view" not in rows[2]
+    assert not result["unranked"] and not result["rejected"]
+    assert req == frozen
 
 
 def test_bad_rates_and_sample_are_unranked(tmp_path):

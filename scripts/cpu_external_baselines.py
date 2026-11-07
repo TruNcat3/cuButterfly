@@ -186,6 +186,13 @@ def export_table(manifest, report, output, gpu_path=None, source_manifest=None):
             if case is None or observation.get('semantics') != case['descriptor']['semantics']:
                 raise ValueError('CPU row semantic identity mismatch')
     names = sorted({r['backend'] for r in report['rows']})
+    selected = report['identity'].get('selected_case_ids')
+    if selected is not None:
+        known = {case['id'] for case in manifest['cases']}
+        if len(selected) != len(set(selected)) or not set(selected) <= known:
+            raise ValueError('invalid CPU request selection')
+        if any(row['case_id'] not in selected for row in report['rows']):
+            raise ValueError('CPU row outside selected requests')
     gpu = {}
     if gpu_path and Path(gpu_path).exists():
         from summarize_semantic_campaign import load_checkpoint
@@ -196,6 +203,8 @@ def export_table(manifest, report, output, gpu_path=None, source_manifest=None):
     gpu_names = ['cubutterfly', 'cufft', 'vkfft', 'daofht', 'gpu-ntt']
     table = []
     for case in manifest['cases']:
+        if selected is not None and case['id'] not in selected:
+            continue
         s = case['descriptor']['semantics']
         row = dict(case_id=case['id'], population=';'.join(case['populations']), operator=NAMES[s['operator']],
                    precision=STORAGE.get(s['storage'], str(s['storage'])), shape='x'.join(map(str, s['shape'])),
@@ -236,7 +245,7 @@ def export_table(manifest, report, output, gpu_path=None, source_manifest=None):
         'gpu_manifest_sha256': semantic.digest(manifest) if gpu else None})
 
 
-def runtime_identity(args, manifest):
+def runtime_identity(args, manifest, cases=None):
     """Bind actual libraries and prepared input bytes before resuming rows."""
     import ctypes
     import ctypes.util
@@ -259,7 +268,7 @@ def runtime_identity(args, manifest):
                     if path.is_file():
                         artifacts[str(path.resolve())] = semantic.sha256_file(path)
     inputs = {}
-    for case in manifest['cases']:
+    for case in manifest['cases'] if cases is None else cases:
         prepared = preparation.load_case(args.preparation, case)
         inputs[case['id']] = hashlib.sha256(prepared['source'].tobytes() + prepared['expected'].tobytes()).hexdigest()
     return {'artifacts': artifacts, 'scipy': scipy.__version__, 'prepared_arrays': inputs}
@@ -282,12 +291,18 @@ def main(argv=None):
     parser.add_argument('--cpu-source-manifest', type=Path)
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--join-only', action='store_true')
+    parser.add_argument('--case-id', action='append', help='Measure only these exact IDs; retain the full manifest identity')
     args = parser.parse_args(argv)
     if args.warmup < 0 or min(args.trials, args.calls) < 1 or any(t not in (1, 8) for t in args.fftw_threads) or len(set(args.fftw_threads)) != len(args.fftw_threads):
         parser.error('invalid timing/thread protocol')
     manifest = json.loads(args.manifest.read_text())
     if not validate_manifest_hash(manifest):
         raise ValueError('semantic manifest checksum mismatch')
+    selected = set(args.case_id or [])
+    if args.case_id and (len(selected) != len(args.case_id) or
+                         not selected <= {case['id'] for case in manifest['cases']}):
+        parser.error('--case-id must name unique requests in the manifest')
+    cases = [case for case in manifest['cases'] if not selected or case['id'] in selected]
     args.output.mkdir(parents=True, exist_ok=True)
     report_path = args.output / 'results.json'
     if args.join_only:
@@ -319,9 +334,11 @@ def main(argv=None):
                             if Path(__file__).with_name(name).exists()},
                 'fxt_library': str(args.fxt_library),
                 'fxt_sha256': semantic.sha256_file(args.fxt_library) if args.fxt_library else None,
-                'runtime': runtime_identity(args, manifest)}
+                'runtime': runtime_identity(args, manifest, cases)}
+    if selected:
+        identity['selected_case_ids'] = sorted(selected)
     report = {'schema': 'cubutterfly-cpu-external-v2', 'identity': identity, 'status': 'running', 'rows': [],
-              'expected_rows': sum(len(backend_specs(c['descriptor']['semantics'], args.fftw_threads)) for c in manifest['cases'])}
+              'expected_rows': sum(len(backend_specs(c['descriptor']['semantics'], args.fftw_threads)) for c in cases)}
     if report_path.exists():
         previous = json.loads(report_path.read_text())
         if not args.resume or previous['identity'] != identity:
@@ -329,7 +346,7 @@ def main(argv=None):
         report = previous
     completed = {(r['case_id'], r['backend']) for r in report['rows']}
     write(report_path, report)
-    for case in manifest['cases']:
+    for case in cases:
         s = case['descriptor']['semantics']
         todo = [spec for spec in backend_specs(s, args.fftw_threads) if (case['id'], spec[0]) not in completed]
         if not todo:

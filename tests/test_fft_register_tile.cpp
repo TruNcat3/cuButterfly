@@ -23,7 +23,15 @@ void verify(cuntt::ButterflyConfig c, unsigned pattern) {
     c.placement=pattern==1 ? cuntt::ButterflyPlacement::InPlace : cuntt::ButterflyPlacement::OutOfPlace;
     c.auto_allocate_workspace=false;
     cuntt::ButterflyPlan plan(c);
-    auto reference_config=c;
+    // Transfer the request semantics, not the tested provider's private
+    // codelet/layout fields, into the independent cuFFT reference plan.
+    cuntt::ButterflyConfig reference_config;
+    reference_config.op=c.op; reference_config.precision=c.precision;
+    reference_config.log_n=c.log_n; reference_config.batch=c.batch;
+    reference_config.element_stride=c.element_stride;
+    reference_config.batch_stride=c.batch_stride;
+    reference_config.inverse=c.inverse;
+    reference_config.normalize_inverse=c.normalize_inverse;
     reference_config.backend=cuntt::ButterflyBackend::CuFft;
     reference_config.fft_core=cuntt::FftCore::Scalar;
     reference_config.stage_partition.clear(); reference_config.boundaries.clear();

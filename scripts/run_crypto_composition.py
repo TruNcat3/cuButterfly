@@ -24,6 +24,7 @@ from pathlib import Path
 import platform
 import re
 import socket
+import statistics
 import subprocess
 import sys
 import time
@@ -199,13 +200,17 @@ def binary_fingerprint(binary: Path, build_dir: Path) -> dict[str, Any]:
 
 
 def _protocol(args: argparse.Namespace) -> dict[str, Any]:
-    return {
+    protocol = {
         "trials": int(args.trials),
         "warmup": int(args.warmup),
         "repeat": int(args.repeat),
         "patterns": list(args.patterns),
         "seed": int(args.seed),
     }
+    if getattr(args, "timing_mode", "event") == "graph":
+        protocol.update(timing_mode="graph", graph_replays=args.graph_replays,
+                        calls_per_graph=args.calls_per_graph)
+    return protocol
 
 
 def _mapping_source_fingerprint(paths: Iterable[Path]) -> list[dict[str, str]]:
@@ -379,11 +384,60 @@ def _source_build_matches(document: Mapping[str, Any], fingerprint: Mapping[str,
     return compared > 0
 
 
+def prepare_mapping_context(build_dir: Path, sources: Iterable[Path], gpu_uuid: str) -> dict[str, Any]:
+    build_dir = Path(build_dir)
+    fingerprint = build_fingerprint(build_dir)
+    documents = []
+    tracked = {build_dir / record["path"] for record in fingerprint["files"]}
+    for source in sources:
+        path = Path(source)
+        document = read_json(path)
+        tracked.add(path)
+        if document.get("schema") == "cubutterfly-semantic-cyclic-mapping-source-v1":
+            from crypto_semantic_mapping_refresh import validate_source
+            validate_source(document, build_dir / "libcuntt.so", gpu_uuid)
+            report_path = Path(document["source"]["report_path"])
+            tracked.update((report_path, Path(document["source"]["manifest_path"])))
+            report = read_json(report_path)
+            tracked.update(report_path.parent / row["path"] for row in report["rows"])
+        documents.append((path, document, sha256(path)))
+    snapshots = []
+    for path in sorted(tracked):
+        stat = path.stat()
+        snapshots.append(dict(path=path, sha256=sha256(path),
+            stat=(stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)))
+    cell_indices = {str(path): {cell["id"]: cell for cell in document.get("cells", [])}
+                    for path, document, _ in documents}
+    return dict(build_dir=build_dir, build=fingerprint, sources=documents, cell_indices=cell_indices,
+                snapshots=snapshots, gpu_uuid=gpu_uuid)
+
+
+def validate_mapping_context(context: Mapping[str, Any], full_digest: bool = False) -> None:
+    for record in context["snapshots"]:
+        stat = record["path"].stat()
+        if (stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns) != record["stat"]:
+            raise ValueError("mapping source/build changed during composition: " + str(record["path"]))
+        if full_digest and sha256(record["path"]) != record["sha256"]:
+            raise ValueError("mapping source/build digest changed: " + str(record["path"]))
+    if full_digest and build_fingerprint(context["build_dir"]) != context["build"]:
+        raise ValueError("mapping build changed during composition")
+
+
 def mapping_portfolios(workload: Mapping[str, Any], gpu_uuid: str, protocol: Mapping[str, Any],
                        build_dir: Path, sources: Iterable[Path],
-                       compile_mode: str = DEFAULT_COMPILE_MODE) -> list[dict[str, Any]]:
+                       compile_mode: str = DEFAULT_COMPILE_MODE,
+                       context: Mapping[str, Any] | None = None) -> list[dict[str, Any]]:
     sources = [Path(source) for source in sources]
-    local_build = build_fingerprint(build_dir)
+    if context is None:
+        context = prepare_mapping_context(build_dir, sources, gpu_uuid)
+    if context["gpu_uuid"] != gpu_uuid or Path(context["build_dir"]).resolve() != Path(build_dir).resolve():
+        raise ValueError("mapping context build/GPU differs")
+    validate_mapping_context(context)
+    semantic_sources = []
+    for source_path, document, source_hash in context["sources"]:
+        if document.get("schema") == "cubutterfly-semantic-cyclic-mapping-source-v1":
+            semantic_sources.append((source_path, document, source_hash))
+    local_build = context["build"]
     # Reconstruct channel order from provenance.  A source may cover only a
     # subset, so search every source independently rather than consuming the
     # first source's channel list.
@@ -393,12 +447,24 @@ def mapping_portfolios(workload: Mapping[str, Any], gpu_uuid: str, protocol: Map
         mapping = None
         evidence = None
         key = cyclic_cell_key(workload, modulus)
-        for source_path in sources:
-            try:
-                document = read_json(source_path)
-                source_hash = sha256(source_path)
-            except (OSError, ValueError, json.JSONDecodeError):
-                continue
+        for source_path, document, source_hash in semantic_sources:
+            cell = context["cell_indices"][str(source_path)].get(key)
+            if cell is None or cell.get("workload") != _cyclic_workload(workload, modulus):
+                raise ValueError("semantic mapping source lacks an exact cyclic channel")
+            selected = _selected_sample(cell)
+            if cell.get("status") != "complete" or selected is None or selected.get("correct") is not True:
+                raise ValueError("semantic mapping source contains an unverified cyclic channel")
+            mapping = _mapping_value(selected)
+            if not isinstance(mapping, Mapping) or mapping.get("kind") != "ntt":
+                raise ValueError("semantic mapping source selected mapping is not native NTT")
+            evidence = {"kind": "exact-contract-public-MEASURE", "cell_id": key,
+                        "source": source_path.name, "source_sha256": source_hash,
+                        "source_report_sha256": document["source"]["report_sha256"],
+                        "source_selection_protocol": document["source"]["search_protocol"]}
+            break
+        for source_path, document, source_hash in context["sources"]:
+            if mapping is not None:
+                break
             if _source_uuid(document) != gpu_uuid:
                 continue
             identity = document.get("identity")
@@ -406,6 +472,12 @@ def mapping_portfolios(workload: Mapping[str, Any], gpu_uuid: str, protocol: Map
                 continue
             source_protocol = _source_protocol(document)
             if any(source_protocol.get(field) != protocol.get(field) for field in ("trials", "warmup", "repeat")):
+                continue
+            if source_protocol.get("timing_mode", "event") != protocol.get("timing_mode", "event"):
+                continue
+            if protocol.get("timing_mode") == "graph" and any(
+                    source_protocol.get(field) != protocol.get(field)
+                    for field in ("graph_replays", "calls_per_graph")):
                 continue
             if not _source_build_matches(document, {"build": local_build}, build_dir):
                 continue
@@ -471,6 +543,9 @@ def _command(binary: Path, workload: Mapping[str, Any], pattern: str, trial: int
                "--seed", str(int(protocol["seed"]) + trial), "--input-pattern", pattern, "--json"]
     if workload["mode"] == "coset":
         command += ["--coset-generator", str(workload.get("coset_generator", 7))]
+    if protocol.get("timing_mode") == "graph":
+        command += ["--timing-mode", "graph", "--graph-replays", str(protocol["graph_replays"]),
+                    "--calls-per-graph", str(protocol["calls_per_graph"])]
     if mapping is not None:
         command += ["--mapping-json", json.dumps(mapping, separators=(",", ":"))]
     return command
@@ -512,6 +587,19 @@ def validate_sample(sample: Mapping[str, Any], workload: Mapping[str, Any], gpu_
         raise CompositionError("composition sample coset differs")
     if not _same_json(sample.get("mapping_request"), mapping):
         raise CompositionError("composition sample mapping request differs")
+    if protocol.get("timing_mode") == "graph":
+        for field in ("timing_mode", "graph_replays", "calls_per_graph"):
+            if sample.get(field) != protocol[field]:
+                raise CompositionError(f"composition graph protocol {field} differs")
+        replay = sample.get("graph_replay_call_ms", [])
+        if (len(replay) != protocol["graph_replays"] or
+                any(not math.isfinite(float(value)) or float(value) <= 0 for value in replay) or
+                sample.get("graph_input_restore_verified") is not True):
+            raise CompositionError("composition graph replay/input verification is invalid")
+        if float(sample.get("kernel_ms", 0)) != statistics.median(float(value) for value in replay):
+            raise CompositionError("composition graph timing does not match replay median")
+    elif sample.get("timing_mode", "event") != "event":
+        raise CompositionError("event cohort received a non-event sample")
     try:
         kernel_ms = float(sample.get("kernel_ms"))
     except (TypeError, ValueError):
@@ -754,10 +842,11 @@ def run(args: argparse.Namespace) -> int:
     env = {**os.environ, "CUDA_VISIBLE_DEVICES": args.gpu_uuid,
            "CUBUTTERFLY_COMPILE_MODE": args.compile_mode,
            "CUBUTTERFLY_TEMPLATE_ROOT": str(Path(args.template_root).resolve())}
+    mapping_context = prepare_mapping_context(Path(args.build_dir), args.mapping_sources, args.gpu_uuid)
     for workload in workloads:
         cell = next((row for row in document["cells"] if row.get("id") == workload["id"]), None)
         expected_portfolios = mapping_portfolios(workload, args.gpu_uuid, protocol, Path(args.build_dir),
-                                                 args.mapping_sources, manifest["compile_mode"])
+                                                 args.mapping_sources, manifest["compile_mode"], context=mapping_context)
         if cell is None:
             cell = {"id": workload["id"], "workload": workload, "status": "pending",
                     "portfolios": expected_portfolios, "measurements": []}
@@ -799,6 +888,7 @@ def run(args: argparse.Namespace) -> int:
                     write_json(result_path, document)
         cell["status"] = "complete"
         write_json(result_path, document)
+    validate_mapping_context(mapping_context, full_digest=True)
     document["status"] = "complete"
     write_json(result_path, document)
     write_json(args.output_dir / "summary.json", _summary(document, workloads, protocol))
@@ -818,6 +908,9 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--trials", type=int, default=DEFAULT_TRIALS)
     result.add_argument("--warmup", type=int, default=DEFAULT_WARMUP)
     result.add_argument("--repeat", type=int, default=DEFAULT_REPEAT)
+    result.add_argument("--timing-mode", choices=("event", "graph"), default="event")
+    result.add_argument("--graph-replays", type=int, default=7)
+    result.add_argument("--calls-per-graph", type=int, default=20)
     result.add_argument("--patterns", default=",".join(DEFAULT_PATTERNS),
                         help="comma-separated input patterns")
     result.add_argument("--seed", type=int, default=DEFAULT_SEED)
@@ -834,7 +927,7 @@ def main(argv: list[str] | None = None) -> int:
     args.patterns = tuple(pattern.strip() for pattern in args.patterns.split(",") if pattern.strip())
     if not args.patterns or any(pattern not in {"random", "boundary"} for pattern in args.patterns):
         parser().error("--patterns must contain random and/or boundary")
-    if args.trials < 1 or args.warmup < 0 or args.repeat < 1:
+    if args.trials < 1 or args.warmup < 0 or args.repeat < 1 or args.graph_replays < 1 or args.calls_per_graph < 1:
         parser().error("trials/repeat must be positive and warmup must be non-negative")
     try:
         return run(args)

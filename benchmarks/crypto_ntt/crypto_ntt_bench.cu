@@ -34,6 +34,13 @@ namespace {
 using Json = nlohmann::json;
 using Clock = std::chrono::steady_clock;
 
+double median(std::vector<double> samples) {
+    if (samples.empty()) throw std::invalid_argument("median requires nonempty samples");
+    std::sort(samples.begin(), samples.end());
+    const auto middle = samples.size() / 2;
+    return samples.size() % 2 ? samples[middle] : (samples[middle - 1] + samples[middle]) / 2.0;
+}
+
 void check_cuda(cudaError_t status, const char* context) {
     if (status != cudaSuccess) {
         throw std::runtime_error(std::string(context) + ": " + cudaGetErrorString(status));
@@ -122,6 +129,9 @@ struct Options {
     std::uint64_t coset_generator = 7;
     std::uint32_t warmup = 5;
     std::uint32_t repeat = 20;
+    bool graph = false;
+    std::uint32_t graph_replays = 7;
+    std::uint32_t calls_per_graph = 20;
     std::uint64_t seed = 1;
     InputPattern input_pattern = InputPattern::Random;
     std::string mapping_json;
@@ -318,6 +328,9 @@ void validate_options(const Options& options) {
     if (options.warmup > 100000 || options.repeat == 0 || options.repeat > 100000) {
         throw std::invalid_argument("warmup/repeat are outside the supported finite range");
     }
+    if (options.graph_replays == 0 || options.graph_replays > 100000 ||
+        options.calls_per_graph == 0 || options.calls_per_graph > 100000)
+        throw std::invalid_argument("graph replays/calls outside supported finite range");
     if (options.moduli.empty()) throw std::invalid_argument("at least one modulus is required");
     if (options.auto_select && !options.mapping_json.empty()) {
         throw std::invalid_argument("--auto-select cannot be combined with --mapping-json; provide either a mapping or a search request");
@@ -357,6 +370,7 @@ Options parse_options(int argc, char** argv) {
                          "  [--coset-generator g] [--mapping-json JSON-or-file-or-array]\n"
                          "  [--auto-select]\n"
                          "  [--warmup K] [--repeat K] [--seed K] [--input-pattern random|boundary]\n"
+                         "  [--timing-mode event|graph] [--graph-replays K] [--calls-per-graph K]\n"
                          "  [--self-test-host] [--json]\n";
             std::exit(0);
         } else if (arg == "--log-n") {
@@ -384,6 +398,14 @@ Options parse_options(int argc, char** argv) {
             options.mapping_json = read_mapping(take_arg(index, argc, argv));
         } else if (arg == "--auto-select") {
             options.auto_select = true;
+        } else if (arg == "--timing-mode") {
+            const auto value = take_arg(index, argc, argv);
+            if (value != "graph" && value != "event") throw std::invalid_argument("invalid timing mode");
+            options.graph = value == "graph";
+        } else if (arg == "--graph-replays") {
+            options.graph_replays = static_cast<std::uint32_t>(parse_u64(take_arg(index, argc, argv), "--graph-replays"));
+        } else if (arg == "--calls-per-graph") {
+            options.calls_per_graph = static_cast<std::uint32_t>(parse_u64(take_arg(index, argc, argv), "--calls-per-graph"));
         } else if (arg == "--warmup") {
             options.warmup = static_cast<std::uint32_t>(parse_u64(take_arg(index, argc, argv), "--warmup"));
         } else if (arg == "--repeat") {
@@ -730,6 +752,7 @@ struct CompositionResult {
     std::size_t working_set_bytes = 0;
     std::size_t allocation_delta_bytes = 0;
     std::vector<Json> records;
+    std::vector<double> replay_ms;
 };
 
 struct DeviceInfo {
@@ -784,13 +807,63 @@ CompositionResult<Word> run_composition(const Options& options, const std::vecto
     }
     result.working_set_bytes = working_bytes;
     result.allocation_delta_bytes = allocation_delta;
-    for (std::uint32_t warmup = 0; warmup < options.warmup; ++warmup) {
+    // One eager call materializes lazy runtime/JIT state before capture.
+    const auto eager_warmups = options.graph ? 1U : options.warmup;
+    for (std::uint32_t warmup = 0; warmup < eager_warmups; ++warmup) {
         for (std::size_t index = 0; index < runs.size(); ++index)
             launch_channel(options, channels[index], runs[index], count, n, stream, device.max_grid_x);
     }
     check_cuda(cudaStreamSynchronize(stream), "synchronize composition warmup");
     Event start;
     Event stop;
+    if (options.graph) {
+        cudaGraph_t graph = nullptr;
+        cudaGraphExec_t executable = nullptr;
+        try {
+            check_cuda(cudaStreamBeginCapture(stream, cudaStreamCaptureModeThreadLocal), "begin composition capture");
+            for (std::uint32_t call = 0; call < options.calls_per_graph; ++call)
+                for (std::size_t index = 0; index < runs.size(); ++index)
+                    launch_channel(options, channels[index], runs[index], count, n, stream, device.max_grid_x);
+            check_cuda(cudaStreamEndCapture(stream, &graph), "end composition capture");
+            check_cuda(cudaGraphInstantiate(&executable, graph, nullptr, nullptr, 0), "instantiate composition graph");
+            for (std::uint32_t warmup = 0; warmup < options.warmup; ++warmup)
+                check_cuda(cudaGraphLaunch(executable, stream), "warmup composition graph");
+            check_cuda(cudaStreamSynchronize(stream), "synchronize graph warmup");
+            // Validate changed input and restored input through the captured call.
+            // Outputs are copied to independently owned host vectors by verify_channel.
+            for (unsigned pass = 0; pass < 2; ++pass) {
+                for (std::size_t index = 0; index < runs.size(); ++index) {
+                    auto& run = runs[index];
+                    run.host_values = make_input(options.log_n, options.batch, channels[index].modulus,
+                                                 options.seed + (pass == 0 ? 1 : 0), options.input_pattern, index);
+                    if (pass == 0) run.host_values[0] = (run.host_values[0] + 1) % channels[index].modulus;
+                    std::vector<Word> input(run.host_values.begin(), run.host_values.end());
+                    check_cuda(cudaMemcpyAsync(run.source.get(), input.data(), count * sizeof(Word),
+                                               cudaMemcpyHostToDevice, stream), "refresh graph input");
+                    check_cuda(cudaStreamSynchronize(stream), "synchronize graph input");
+                }
+                check_cuda(cudaGraphLaunch(executable, stream), "validate composition graph");
+                for (std::size_t index = 0; index < runs.size(); ++index)
+                    verify_channel(options, channels[index], runs[index], index, stream, count);
+            }
+            for (std::uint32_t replay = 0; replay < options.graph_replays; ++replay) {
+                check_cuda(cudaEventRecord(start.get(), stream), "record graph start");
+                check_cuda(cudaGraphLaunch(executable, stream), "launch composition graph");
+                check_cuda(cudaEventRecord(stop.get(), stream), "record graph stop");
+                check_cuda(cudaEventSynchronize(stop.get()), "synchronize graph stop");
+                float elapsed = 0.0F;
+                check_cuda(cudaEventElapsedTime(&elapsed, start.get(), stop.get()), "graph elapsed time");
+                result.replay_ms.push_back(static_cast<double>(elapsed) / options.calls_per_graph);
+            }
+            result.kernel_ms = median(result.replay_ms);
+        } catch (...) {
+            if (executable) cudaGraphExecDestroy(executable);
+            if (graph) cudaGraphDestroy(graph);
+            throw;
+        }
+        cudaGraphExecDestroy(executable);
+        cudaGraphDestroy(graph);
+    } else {
     check_cuda(cudaEventRecord(start.get(), stream), "record composition start event");
     for (std::uint32_t repeat = 0; repeat < options.repeat; ++repeat) {
         for (std::size_t index = 0; index < runs.size(); ++index)
@@ -801,6 +874,7 @@ CompositionResult<Word> run_composition(const Options& options, const std::vecto
     float elapsed_ms = 0.0F;
     check_cuda(cudaEventElapsedTime(&elapsed_ms, start.get(), stop.get()), "elapsed composition event");
     result.kernel_ms = static_cast<double>(elapsed_ms) / options.repeat;
+    }
     for (std::size_t index = 0; index < runs.size(); ++index) {
         verify_channel(options, channels[index], runs[index], index, stream, count);
         result.records.push_back(Json{{"channel", index}, {"modulus", channels[index].modulus},
@@ -836,6 +910,8 @@ DeviceInfo device_info() {
 }
 
 void run_host_self_test(const Options& options, const std::vector<ChannelInfo>& channels) {
+    if (median({3.0, 1.0}) != 2.0 || median({3.0, 1.0, 2.0}) != 2.0)
+        throw std::logic_error("Graph sample median host self-test failed");
     const auto n = std::size_t{1} << options.log_n;
     const auto per_channel = checked_mul(options.batch, n, "host self-test size");
     const auto total = checked_mul(per_channel, channels.size(), "host self-test channel size");
@@ -874,6 +950,12 @@ Json output_base(const Options& options, const DeviceInfo* device, bool correct,
     output["verified_channels"] = options.moduli.size();
     output["warmup"] = options.warmup;
     output["repeat"] = options.repeat;
+    output["timing_mode"] = options.graph ? "graph" : "event";
+    output["graph_replays"] = options.graph ? options.graph_replays : 0;
+    output["calls_per_graph"] = options.graph ? options.calls_per_graph : 0;
+    output["warmup_unit"] = options.graph ? "graph-replay" : "complete-call";
+    output["capture_preparation_eager_calls"] = options.graph ? 1 : 0;
+    output["timing_boundary"] = "device-resident full composition including twists and all channels; setup, input refresh and output checking excluded";
     output["kernel_ms"] = kernel_ms;
     output["plan_ms"] = plan_ms;
     output["workspace_bytes"] = workspace_bytes;
@@ -919,6 +1001,7 @@ int execute(const Options& options) {
     std::size_t working_set_bytes = 0;
     std::size_t allocation_delta_bytes = 0;
     std::vector<Json> records;
+    std::vector<double> replay_ms;
     if (options.word_bits == 32) {
         auto result = run_composition<std::uint32_t>(options, channels, mapping_specs, device, stream.get());
         plan_ms = result.plan_ms;
@@ -927,6 +1010,7 @@ int execute(const Options& options) {
         working_set_bytes = result.working_set_bytes;
         allocation_delta_bytes = result.allocation_delta_bytes;
         records = std::move(result.records);
+        replay_ms = std::move(result.replay_ms);
     } else {
         auto result = run_composition<std::uint64_t>(options, channels, mapping_specs, device, stream.get());
         plan_ms = result.plan_ms;
@@ -935,9 +1019,12 @@ int execute(const Options& options) {
         working_set_bytes = result.working_set_bytes;
         allocation_delta_bytes = result.allocation_delta_bytes;
         records = std::move(result.records);
+        replay_ms = std::move(result.replay_ms);
     }
-    const auto result = output_base(options, &device, true, plan_ms, kernel_ms, workspace_bytes,
+    auto result = output_base(options, &device, true, plan_ms, kernel_ms, workspace_bytes,
                                     working_set_bytes, allocation_delta_bytes, records);
+    result["graph_replay_call_ms"] = replay_ms;
+    result["graph_input_restore_verified"] = options.graph;
     std::cout << result.dump() << '\n';
     return 0;
 }

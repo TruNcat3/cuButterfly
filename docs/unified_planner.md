@@ -21,6 +21,14 @@ See the [static profile policy](hardware_profile_install.md#static-profile-polic
 for compatibility and exploration-budget controls; a missing physical cost
 descriptor is a modeling gap, not an unsupported operator.
 
+The [A100 acceptance](../results/a100_closure_20261103/final_acceptance/README.md)
+now confirms this path for the new local-root and per-group thread options.
+Current measured records are consumed by public DEFAULT and seeded into public
+MEASURE; the independently validated serial service model covers the finite
+competing cohort. Registry selection, model prediction and direct measurement
+remain distinct evidence. The fit does not imply coverage outside its primitive
+keys, load range or direct-launch protocol.
+
 Dynamic cuFFTDx candidates additionally share an installed-provider capability
 contract across enumeration, explicit mapping validation and JIT. A missing
 local core implementation does not invalidate the user's transform; unknown
@@ -37,6 +45,38 @@ provider implementations never silently change an explicitly requested core.
 The [reuse policy](provider_reuse_20261014.md) explains the search correction;
 the [native suffix contract](native_suffix_core_20261014.md) preserves its measured
 geometry, shared-memory requirement and bounded validation.
+
+Register FFT prefixes expose `prefix_twiddle="runtime"` (default) or `"table"`
+independently of the local codelet and layout. This controls only the diagonal
+coefficients between the prefix's two local factors; `cross_twiddle` continues
+to describe the global boundary. The table policy requires research/auto
+compilation. It embeds read-only roots computed before compilation at 80 decimal
+digits and rounded to the requested FP32/FP64 storage; inverse transforms use
+their conjugates. It adds neither a per-call upload nor a precision conversion
+of the transform. Square, rectangular and cooperative prefixes use the same
+coefficient-provider interface. Public candidates contain a bounded table basis,
+and evolutionary neighbors can vary the policy independently. Compilation and
+prefix service identities distinguish the policies; suffix service identities
+remain reusable. Candidate availability does not imply a measured winner or a
+calibrated service curve for the new policy.
+
+Shared-iterative mappings accept `execution_group_mappings` with one entry per
+physical group after fused boundaries. Butterfly entries use
+`{"core":"scalar","exchange":"shared","threads":64,"ept":0}`; NTT entries use
+`{"core":"radix2","threads_per_block":64}` with default scheduler fields.
+Threads must be warp multiples in `[32,1024]` and satisfy device resource limits.
+Logical `segment_mappings`/`subgraph_mappings` are not substitutes for this physical
+axis. Fields that the shared lowering does not consume are rejected.
+
+With no explicit group entries, the existing global thread field applies to all
+groups. Precompiled ordinary shared kernels consume the vector dynamically;
+research/auto specialization records `group_threads` in its module request and
+cache identity. Resident leaves retain their existing compilation requirement.
+Probes, batch overlap, cost projection and service keys use the same group widths.
+Public enumeration supplies a bounded basis and GA changes one group at a time.
+This enables mixed widths without exhaustively enumerating their Cartesian product.
+The [A100 validation](../results/a100_closure_20261103/stage_threads/README.md)
+reports the measured scope and remaining internal tile-packing gap.
 
 ```cpp
 #include <cubutterfly/plan.hpp>
@@ -67,6 +107,27 @@ selector. `COMPOSITE` forces the legacy per-axis composition and its generic
 rank-N layout boundary. The selector compares complete executable candidates
 when the device-memory budget permits it. It is a finite candidate search, not
 an exhaustive xD-space calibration or a global-optimality claim.
+
+The rank-two composite path consumes a packed, standard-length input directly
+in its first axis, without an initial full-array copy. The first butterfly axis
+is out-of-place internally, including when the public request is in-place; the
+user buffer is not overwritten before its input is consumed. The physical
+composition mapping records `direct_input_boundary=true`. Explicit older
+composition mappings without this field retain their pack operation. Requesting
+the direct boundary for a strided or embedded input is rejected; those requests
+continue to use the generic adaptation path. The first axis's placement also
+participates in its registry and cache key. This boundary choice is shared by
+FFT, NTT and the other rank-two butterfly operators.
+
+Scalar temporal tiles use one compiled-domain and byte-capacity predicate in
+both candidate enumeration and plan validation. The currently generated domain
+ends at logN=12, with shared storage bounded by both the hardware profile and the
+48 KiB default launch contract. A larger legal tile is added alongside existing
+multi-stage candidates, not selected unconditionally. New legal candidates need
+measurement before treating their static prior as a confirmed performance rank.
+BF16 native primitives use CUDA's explicit round-to-nearest intrinsics, including
+the CUDA-provided fallback on targets without native BF16 arithmetic. Explicit
+FP32 accumulation retains its separate arithmetic contract.
 
 The candidate inventory includes the legacy composite path, exact flattening
 only for FWHT, subset zeta, superset zeta, and structured 2x2 tensor products,
@@ -575,7 +636,7 @@ The `factor-streamed` lowering separates these mapping axes:
 | `fft_core` | Imported `cufftdx-block` or local `register-tile` processing core |
 | `factor_ept`, `factor_columns` | Local core shape and independent FFTs per CTA |
 | `data_tiles_per_cta` | Consecutive independent data tiles processed by one CTA, including at batch=1 |
-| `prefetch_depth` | Number of input **groups** in the shared ring; a group contains `factor_columns` complete local FFTs; zero selects synchronous loading |
+| `prefetch_depth` | Number of future input **groups** to prefetch; a group contains `factor_columns` complete local FFTs; zero selects synchronous loading |
 | `factor_slices`, `factor_overlap` | Power-of-two dependency-closed slices of the unprocessed digit; optional cross-factor streams |
 
 For example, one logical macro stage can contain three physical factors:
@@ -610,11 +671,14 @@ using the same partial ranges. The existing batch-level `stage_overlap` schedule
 is a separate lowering and cannot be combined with this mapping.
 
 The ring unit is currently coupled to the core group, not an independent
-transfer chunk. For local size `F`, columns `C`, value bytes `W` and depth `D`,
-the dynamic allocation is `D*F*C*W + max(F*C*W, core_shared_bytes)`.
-The second term is reused for the core and output layout. Thus depth one
-already overlaps a future input group with the current group's computation;
-depth two adds two input groups, not just two buffers in total. Neither `N`
+transfer chunk. For local size `F`, logical columns `C`, value bytes `W` and
+depth `D`, let `Q=F*C*W`. Effective depth `E` is zero when
+`data_tiles_per_cta=1`, and otherwise equals `D`. At `E=0`, the dynamic shared
+allocation is `max(Q, core_shared_bytes)`. At positive depth it is
+`(E+1)*Q + max(Q, core_shared_bytes)`: the ring holds the current input group
+and `E` future groups, while the separate workspace serves the core and output
+layout. Thus depth one overlaps a future input group with the current group's
+computation; it does not mean two shared buffers in total. Neither `N`
 nor batch multiplies this per-CTA allocation when the local geometry is fixed.
 Search must constrain the complete shape/buffer combination. A rejected large
 group does not invalidate smaller groups with the same prefetch mechanism.
@@ -636,7 +700,18 @@ not a count of dynamic spill transactions or HBM bytes; those require profiling.
 Resource estimates use the physical groups even when the macro count is one.
 
 The current template supports native FP32/FP64 complex FFT, both directions,
-in-place/out-of-place execution and positive nonoverlapping strides. Factor
+in-place/out-of-place execution and positive nonoverlapping strides. The imported
+cuFFTDx core also supports native FP16 forward and unnormalized inverse. Its
+`half2` lanes represent two independent complex transforms: `factor_columns`
+counts logical transforms, while physical `blockDim.y` is `factor_columns/2`
+and total threads are `(F/factor_ept)*(factor_columns/2)`. Logical columns must
+be an even power of two from 2 through 32 and fit the independent digit domain
+at every factor. Shared-memory accounting uses four bytes per logical complex
+value, not eight bytes per packed pair multiplied by the logical column count.
+FP16 normalized inverse, BF16-native and explicit FP32 accumulation are not
+implemented by this factor provider; requests are rejected rather than silently
+changing arithmetic. The register-tile provider remains FP32/FP64.
+Factor
 sizes are powers of two, bounded by the imported core and device resources.
 Search enumerates resource-feasible factor counts independently of data folding
 and prefetch. It visits balanced representatives before other compositions;
@@ -662,6 +737,12 @@ exploration while legacy prefix/suffix variants consume the remaining budget.
 `scripts/benchmark_factor_streamed.py` journals a controlled factor/prefetch
 ablation against cuFFT. These explicit-mapping experiments are separate from
 recalibration and the full automatic-selector acceptance matrix.
+Native FP16 coverage is checked by `tests/check_fp16_factor.py`; the bounded
+study in `config/fft_l_factor_study.json` is prepared by
+`scripts/prepare_fp16_factor_study.py` and executed by
+`scripts/run_fp16_local_core_study.py`. Its CPU preparation and cache-only GPU
+execution remain separate. See [the dated integration report](fft_l_local_core_20261105.md)
+for measured configurations and the outstanding calibration scope.
 
 ## Installation and calibration
 
@@ -902,3 +983,31 @@ independent threads per pass. For example, a 5+9 split with 16/1 rows represents
 search subset, not the full Cartesian product of independently legal mappings.
 Explicit mappings can replay additional combinations. Changing the C++ mapping
 structure requires rebuilding consumers against the matching header and library.
+
+
+### Scalar online subgraph grouping
+
+For the typed scalar `online-reorder` lowering, `data_tiles_per_cta` groups
+independent prefix subgraphs and `reorder_columns` groups independent suffix
+columns. The axes are independent; changing one does not silently change the
+other or the arithmetic core. The complete descriptor and mapping retain both
+values for replay and stage-service keys. The generic mechanism applies to FFT,
+FWHT, zeta and structured operators supported by these traits; it does not add a
+new grouping API to the separate NTT executor.
+
+`online_reorder_contract.hpp` separates each local tile's compiled exponent range
+from the grouped live-state byte requirement. Both counts are powers of two
+bounded by their graph dimensions, with shared memory no greater than the
+hardware budget or the current 48 KiB non-opt-in limit. Integer zeta uses its
+normalized UINT32/UINT64 storage width for this check. Resource projection uses
+the actual grouped CTA grids and per-stage shared bytes. Public candidates expose
+single-axis and coupled representatives; local tuning proposes adjacent powers
+of two and leaves byte-capacity decisions to the runtime contract.
+
+Grouped writers directly materialize the existing edge layout with contiguous
+lane ownership. The shared XOR permutation is internal and distinct from the
+`writer-aligned` global address permutation. Grouping does not itself enable
+asynchronous prefetch or stage overlap. Calibration must measure the resulting
+core/geometry/service keys before claiming that automatic selection benefits.
+See the [bounded evidence](../results/a100_fft_l_boundary_20261104/REPORT.md),
+including the retained single-group regressions and small-batch limits.

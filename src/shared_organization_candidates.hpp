@@ -14,6 +14,7 @@ struct SharedOrganization {
     std::uint32_t batch_tile_count = 1;
     std::vector<std::uint32_t> logical_stage_partition;
     std::vector<bool> fused_edges;
+    std::vector<std::uint32_t> group_threads;
 };
 
 struct SharedOrganizationCapabilities {
@@ -54,6 +55,65 @@ inline std::vector<SharedOrganization> shared_organization_candidates(
                     destination.push_back(point);
                 }
             }
+        }
+        // Linear-size mask basis: each physical group can be the only
+        // resident group or the only plain group. GA can then combine these
+        // choices without requiring an exponential seed inventory. Use one
+        // available launch-width representative and keep both layout choices.
+        auto representative=std::find(capabilities.thread_options.begin(),capabilities.thread_options.end(),128U);
+        if (representative==capabilities.thread_options.end() || *representative>capabilities.max_threads)
+            representative=std::find_if(capabilities.thread_options.begin(),capabilities.thread_options.end(),
+                [&](auto threads){return threads>=32 && threads%32==0 && threads<=capabilities.max_threads;});
+        // A linear basis explores independent physical-group launch widths.
+        // The shape prior caps the width at the group's butterfly count;
+        // single-group edits allow search to combine widths independently.
+        if (partition.size()>1 && representative!=capabilities.thread_options.end()) {
+            std::vector<std::uint32_t> widths;
+            for (auto threads:capabilities.thread_options)
+                if (threads>=32 && threads%32==0 && threads<=capabilities.max_threads)
+                    widths.push_back(threads);
+            std::sort(widths.begin(),widths.end());
+            widths.erase(std::unique(widths.begin(),widths.end()),widths.end());
+            std::vector<std::vector<std::uint32_t>> shapes;
+            auto adaptive=std::vector<std::uint32_t>(partition.size(),*representative);
+            for (std::size_t group=0;group<partition.size();++group) {
+                adaptive[group]=widths.front();
+                const auto work=std::uint64_t{1} << std::min(31U,partition[group]-1);
+                for (auto width:widths)
+                    if (width<=*representative && width<=work) adaptive[group]=width;
+            }
+            shapes.push_back(adaptive);
+            const auto position=std::find(widths.begin(),widths.end(),*representative);
+            for (std::size_t group=0;group<partition.size();++group)
+                for (int direction:{-1,1}) {
+                    const auto index=std::distance(widths.begin(),position)+direction;
+                    if(index<0 || static_cast<std::size_t>(index)>=widths.size()) continue;
+                    auto shape=std::vector<std::uint32_t>(partition.size(),*representative);
+                    shape[group]=widths[index];
+                    if(std::find(shapes.begin(),shapes.end(),shape)==shapes.end()) shapes.push_back(shape);
+                }
+            for(const auto& shape:shapes) {
+                if(std::all_of(shape.begin(),shape.end(),[&](auto value){return value==*representative;})) continue;
+                for(bool aligned:{true,false}) {
+                    SharedOrganization point{partition,*representative,aligned,{}};
+                    point.group_threads=shape;
+                    additional.push_back(std::move(point));
+                }
+            }
+        }
+        if (capabilities.resident_available && partition.size()>1 && representative!=capabilities.thread_options.end()) {
+            const auto all=resident_partition_seed(partition,2);
+            std::vector<LocalPartitions> masks;
+            for(std::size_t group=0;group<partition.size();++group) {
+                auto only=LocalPartitions(partition.size());
+                only[group]=all[group];
+                auto except=all;
+                except[group].clear();
+                for(auto& parts : {only,except})
+                    if(std::find(masks.begin(),masks.end(),parts)==masks.end()) masks.push_back(std::move(parts));
+            }
+            for(const auto& parts:masks) for(bool aligned:{true,false})
+                additional.push_back({partition,*representative,aligned,parts});
         }
         const auto anchor = std::find(capabilities.thread_options.begin(), capabilities.thread_options.end(), 128U);
         if (anchor == capabilities.thread_options.end() || capabilities.max_threads < 128) continue;
