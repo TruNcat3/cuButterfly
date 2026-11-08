@@ -109,6 +109,11 @@ P-S NSYS验证5/4个kernel，P-P验证两个kernel、一次cudaGraphLaunch；全
   记录8模块32个正逆kernel的编译信息；本实验只测正向16个factor kernel。
 - [图](../figures/representative_profiles_20261108.pdf)复用论文现有机制图位置，
   [绘图脚本](../tools/render_representative_profiles.py)默认消费冻结JSON。
+- 统计图按“性能—通信/供数—资源代价”重排；性能柱为中位数之比，点/范围为
+  三进程内配对比值。DRAM/L2分别归一到同核心逐步执行，绝对GiB保留在
+  [图数据CSV](../generated/representative_profiles_chart_data_20261108.csv)。
+  [设计说明](../literature/mechanism_figure_design_20261108.md)记录Welder/ROLLER的参考位置、
+  分母、各面板的捕获范围以及绘图工具来源。新增寄存器与活跃warp面板，不改变原始测量。
 
 ```bash
 python scripts/summarize_representative_profiles.py \

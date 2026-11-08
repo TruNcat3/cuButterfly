@@ -234,11 +234,12 @@ separate subgraph organization from core substitution.
 \begin{figure*}[t]
 \centering
 \includegraphics[width=.98\textwidth]{figures/representative_profiles_20261108.pdf}
-\caption{Matched profiles connect organization gains to communication and supply costs.
-Latency panels show three independent processes and their median and range.
-Traffic sums cover one complete profiled call; stall points retain separate factor kernels.
-Here $t$ counts consecutive tile groups and $d$ the prefetched future groups.
-Allocated shared storage includes hardware allocation overhead.}
+\caption{Organization gains coexist with local resource costs.
+(a--c) Resident prefixes versus external steps; (d--f) tile supply with the stronger 1/0 reference.
+Speedup bars are ratios of three-process medians; points and ranges retain paired process ratios.
+Traffic uses the same-core external-step reference; factor points represent separate kernels.
+$t/d$ denotes consecutive tile groups/prefetch depth; (f) shows allocated shared storage
+per compute group and active-warp fractions.}
 \label{fig:core-organization}
 \label{fig:factor-organization}
 \end{figure*}
@@ -352,7 +353,7 @@ NCU counters and NSYS timelines compare matched internal controls, not
 different external-library implementations.
 
 \textbf{Subgraph execution removes a measured exchange.}
-Figure~\ref{fig:core-organization} profiles the complete FP32 call at
+Figure~\ref{fig:core-organization}(a--c) profiles the complete FP32 call at
 $N=65536,B=256$ with both fixed leaves. The resident prefix removes one
 external exchange and reduces kernel count from five to four, including
 the common input permutation. Ordinary latency falls from 1.414/1.431 to
@@ -367,7 +368,8 @@ wrapper, or launch effects. CPU FP32 relative $L_2$ error is below
 $4.0\times10^{-7}$ for all four implementations.
 
 \textbf{Tile prefetch changes supply rather than the stage boundary.}
-All eight FP64 variants retain two factor kernels. At fixed four-tile
+Figure~\ref{fig:core-organization}(d--f) aligns complete-call performance
+with supply and resource costs. All eight FP64 variants retain two factor kernels. At fixed four-tile
 traversal, emitted asynchronous copies accompany a reduction in per-kernel
 long-scoreboard stalls from 63.3--72.4\% to 13.8--20.6\%, and increased
 issue activity, while active-warp fractions remain only 6.7--7.1\%.

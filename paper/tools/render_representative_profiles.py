@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
-"""Render frozen representative profiles; ordinary timing and NCU diagnostics stay separate."""
+"""Render fixed-core mechanism evidence from frozen observations, without a GPU.
+
+Bars for performance use ratios of process medians. Points retain all three
+within-process ratios. Profile percentages remain separate for each kernel.
+"""
 import argparse
+import csv
 import hashlib
 import json
 from pathlib import Path
 from statistics import median
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -13,9 +19,12 @@ from matplotlib.patches import Patch
 
 PAPER = Path(__file__).resolve().parents[1]
 COLORS = ['#0072B2', '#D55E00']
+HATCHES = ['', '///']
 CONFIGS = ['t1-d0', 't4-d0', 't4-d1', 't4-d2']
 STALL = 'smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct'
 SHARED = 'launch__shared_mem_per_block_allocated'
+ACTIVE = 'sm__warps_active.avg.pct_of_peak_sustained_active'
+REGISTERS = 'launch__registers_per_thread'
 
 
 def main():
@@ -26,117 +35,191 @@ def main():
     data = json.loads(raw)
     assert len(data['tasks']) == 30
     assert all(t['status'] == 'complete' for t in data['tasks'] if t['kind'] in ('ordinary', 'ncu'))
-    plotted = []
+    plotted, export = {}, []
 
-    def samples(variant, scale=1):
+    def samples(variant):
         rows = sorted([r for r in data['ordinary_samples'] if r['variant'] == variant], key=lambda r: r['process'])
-        assert len(rows) == 3 and len({r['process'] for r in rows}) == 3
-        plotted.extend(dict(panel_source='ordinary', **r) for r in rows)
-        return [r['time_ms'] * scale for r in rows]
+        assert len(rows) == 3 and [r['process'] for r in rows] == [0, 1, 2]
+        for r in rows:
+            plotted['ordinary/' + r['task_id'] + '/' + variant] = dict(panel_source='ordinary', **r)
+        return [r['time_ms'] for r in rows]
 
-    def metrics(task, metric):
-        rows = [r for r in data['ncu_kernel_metrics'] if r['task_id'] == task and r['metric'] == metric]
+    def metrics(task, name):
+        rows = sorted([r for r in data['ncu_kernel_metrics'] if r['task_id'] == task and r['metric'] == name], key=lambda r: int(r['kernel_id']))
         assert rows and all(r['value'] is not None for r in rows)
-        plotted.extend(dict(panel_source='NCU diagnostic', **r) for r in rows)
-        return sorted(rows, key=lambda r: int(r['kernel_id']))
+        for r in rows:
+            plotted['ncu/' + task + '/' + r['kernel_id'] + '/' + name] = dict(panel_source='NCU diagnostic', **r)
+        return rows
 
-    def total(task, names, factor):
-        return sum(r['value'] for name in names for r in metrics(task, name)) * factor
+    def total(task, names):
+        return sum(r['value'] for name in names for r in metrics(task, name))
 
-    def timing(ax, x, vals, core, width):
-        m = median(vals)
-        ax.bar(x, m, width, color=COLORS[core], alpha=.78, edgecolor='black', linewidth=.45, hatch=['', '///'][core], zorder=2)
-        ax.errorbar(x, m, yerr=[[m-min(vals)], [max(vals)-m]], color='black', capsize=2, lw=.65, zorder=4)
-        ax.scatter([x-.065, x, x+.065], vals, s=10, marker=['o', 's'][core], facecolor='white', edgecolor='black', linewidth=.5, zorder=5)
+    def ratio_bar(ax, x, baseline, variant, core, panel, width=.30):
+        a, b = samples(baseline), samples(variant)
+        value = median(a) / median(b)
+        ratios = [first / second for first, second in zip(a, b)]
+        ax.bar(x, value, width, color=COLORS[core], edgecolor='black', linewidth=.45, hatch=HATCHES[core], zorder=2)
+        ax.vlines(x, min(ratios), max(ratios), color='black', linewidth=.65, zorder=4)
+        ax.hlines([min(ratios), max(ratios)], x-.035, x+.035, color='black', linewidth=.65, zorder=4)
+        ax.scatter([x-.055, x, x+.055], ratios, s=8, marker=['o', 's'][core], facecolor='white', edgecolor='black', linewidth=.45, zorder=5)
+        ax.text(x, max(value, max(ratios)) + .045,
+                f'{value:.2f}' if panel == 'd' else f'{value:.3f}',
+                ha='center', va='bottom', fontsize=6.1,
+                rotation=90 if panel == 'd' else 0)
+        for process, (aa, bb, rr) in enumerate(zip(a, b, ratios)):
+            export.append(dict(panel=panel, kind='ordinary', core=core, baseline=baseline, variant=variant, process=process,
+                               baseline_ms=aa, variant_ms=bb, value=rr, unit='speedup', estimator='within-process ratio'))
+        export.append(dict(panel=panel, kind='ordinary_summary', core=core, baseline=baseline, variant=variant,
+                           value=value, minimum=min(ratios), maximum=max(ratios), unit='speedup', estimator='ratio of process medians'))
+        return value
 
-    style = {'font.size': 7, 'axes.labelsize': 7, 'axes.titlesize': 8, 'xtick.labelsize': 7, 'ytick.labelsize': 7, 'legend.fontsize': 7, 'pdf.fonttype': 42, 'axes.spines.top': False, 'axes.spines.right': False, 'axes.linewidth': .6, 'hatch.linewidth': .45}
-    with plt.rc_context(style):
-        fig, axes = plt.subplots(2, 3, figsize=(7.05, 3.6))
-        fig.subplots_adjust(left=.075, right=.985, bottom=.15, top=.82, wspace=.40, hspace=.95)
-        titles = ['(a) Ordinary latency', '(b) Complete DRAM traffic', '(c) Complete L2 traffic', '(d) Ordinary latency', '(e) Long-scoreboard stall', '(f) Allocated shared memory']
-        for ax, title in zip(axes.flat, titles):
-            ax.set_title(title, loc='left', pad=5)
-            ax.set_axisbelow(True)
-            ax.grid(axis='y', color='.88', lw=.5)
-            ax.set_ylim(bottom=0)
-            ax.tick_params(length=2, pad=2)
-        orgs = ['stagewise-hbm', 'resident-prefix-2']
-        for core, name in enumerate(['native', 'cufftdx-thread']):
-            for org, organization in enumerate(orgs):
-                x = org + (core-.5)*.34
-                variant = name+'/'+organization
-                task = 'subgraph-'+name+'-'+organization+'-ncu'
-                timing(axes[0, 0], x, samples(variant), core, .30)
-                for ax, names, factor in [(axes[0, 1], ['dram__bytes_read.sum', 'dram__bytes_write.sum'], 1/2**30), (axes[0, 2], ['lts__t_sectors_op_read.sum', 'lts__t_sectors_op_write.sum'], 32/2**30)]:
-                    value = total(task, names, factor)
-                    ax.bar(x, value, .30, color=COLORS[core], alpha=.78, edgecolor='black', linewidth=.45, hatch=['', '///'][core])
-        for ax in axes[0]:
-            ax.set_xticks([0,1])
-            ax.set_xticklabels(['External\nsteps', 'Resident\nprefix'])
-            ax.set_xlim(-.6, 1.6)
-            ax.set_ylim(0, max(p.get_height() for p in ax.patches)*1.18)
-        axes[0,0].set_ylabel('Latency (ms)')
-        axes[0,1].set_ylabel('Read + write (GiB)')
-        axes[0,2].set_ylabel('Read + write (GiB)')
-        shared_by_config = []
+    def kernel_points(ax, metric, panel):
         for i, config in enumerate(CONFIGS):
-            shared = []
             for core, name in enumerate(['native', 'cufftdx']):
-                variant = name+'-'+config
-                task = 'factor-'+variant+'-ncu'
-                timing(axes[1,0], i+(core-.5)*.34, samples(variant, 1000), core, .30)
-                rows = metrics(task, STALL)
-                assert len(rows) == 2 and {r['kernel_id'] for r in rows} == {'0', '1'}
+                task = 'factor-' + name + '-' + config + '-ncu'
+                rows = metrics(task, metric)
+                assert len(rows) == 2 and [r['kernel_id'] for r in rows] == ['0', '1']
                 for stage, row in enumerate(rows):
-                    axes[1,1].scatter(i+(core-.5)*.32+(stage-.5)*.10, row['value'], marker=['o','^'][stage], s=21, color=COLORS[core], edgecolors='black', linewidth=.45, zorder=3)
-                sm = metrics(task, SHARED)
-                assert len(sm) == 2
-                shared.extend(r['value']/1024 for r in sm)
-            assert len(set(shared)) == 1, 'Do not collapse unequal allocations'
-            shared_by_config.append(shared[0])
-        axes[1,2].bar(range(4), shared_by_config, width=.55, color='.7', edgecolor='black', linewidth=.5, hatch='..')
-        for i, v in enumerate(shared_by_config):
-            axes[1,2].text(i, v+1.5, f'{v:g}', ha='center', fontsize=7)
-        for ax in axes[1]:
-            ax.set_xticks(range(4))
-            ax.set_xticklabels(['1/0','4/0','4/1','4/2'])
-            ax.set_xlabel('Configuration t / d', labelpad=2)
-            ax.set_xlim(-.6,3.6)
-        axes[1,0].set_ylabel('Latency (µs)')
-        axes[1,0].set_ylim(0,155)
-        axes[1,1].set_ylabel('Per-kernel stall (%)')
-        axes[1,1].set_ylim(0,100)
-        axes[1,2].set_ylabel('KiB / compute group')
-        axes[1,2].set_ylim(0,84)
-        axes[1,2].text(.5,.96,'Both cores; both stages', transform=axes[1,2].transAxes, ha='center', va='top', fontsize=6.5)
-        axes[1,1].legend(handles=[Line2D([],[],marker=m, linestyle='', color='black', markersize=4,label=f'Stage {i+1}') for i,m in enumerate(['o','^'])], loc='upper right', frameon=False, fontsize=6, handletextpad=.3, borderpad=.1)
-        fig.text(.075,.965,'FP32  •  N = 65,536, B = 256', weight='bold', fontsize=8)
-        fig.text(.075,.458,'FP64  •  N = 65,536, B = 16', weight='bold', fontsize=8)
-        fig.legend(handles=[Patch(facecolor=c, edgecolor='black', hatch=h, label=n) for c,h,n in zip(COLORS,['','///'],['Native core','cuFFTDx core'])], loc='upper right', bbox_to_anchor=(.99,1), frameon=False, ncol=2, handlelength=1.3, columnspacing=1)
-        fig.text(.075,.035,'Latency: median bar, 3 process points, min–max whisker.   NCU panels: diagnostics from complete captures.',fontsize=7)
-        out = PAPER/'figures/representative_profiles_20261108'
+                    ax.scatter(i+(core-.5)*.34+(stage-.5)*.10, row['value'], marker=['o', '^'][stage], s=19,
+                               color=COLORS[core], edgecolors='black', linewidth=.45, zorder=3)
+                    export.append(dict(panel=panel, kind='profile', core=core, variant=config, kernel_id=stage,
+                                       metric=metric, value=row['value'], unit=row['unit'], estimator='single capture, per kernel'))
+
+    def base_axis(ax, title=None, top=None):
+        if title:
+            ax.set_title(title, loc='left', pad=6, fontsize=7.6)
+        ax.set_axisbelow(True)
+        ax.grid(axis='y', color='.89', linewidth=.5)
+        ax.tick_params(length=2, pad=2)
+        if top is not None:
+            ax.set_ylim(0, top)
+
+    style = {'font.size': 7, 'axes.labelsize': 7, 'xtick.labelsize': 7, 'ytick.labelsize': 7,
+             'legend.fontsize': 6.4, 'pdf.fonttype': 42, 'svg.fonttype': 'none',
+             'axes.spines.top': False, 'axes.spines.right': False, 'axes.linewidth': .6, 'hatch.linewidth': .45}
+    with plt.rc_context(style):
+        fig = plt.figure(figsize=(7.05, 4.10))
+        # Matched columns: performance, communication/supply, resource cost.
+        columns = [(.080, .245), (.407, .245), (.744, .238)]
+        axes = [fig.add_axes([left, .640, width, .215]) for left, width in columns]
+        axes += [fig.add_axes([left, .165, width, .260]) for left, width in columns[:2]]
+        shared_ax = fig.add_axes([columns[2][0], .330, columns[2][1], .095])
+        active_ax = fig.add_axes([columns[2][0], .165, columns[2][1], .115])
+        a, b, c, d, e = axes
+        base_axis(a, '(a) Same-core performance', 1.65)
+        a.axhline(1, color='.3', ls='--', lw=.75, zorder=1)
+        a.set_ylabel('Speedup (×)')
+        ps_speedups=[]
+        for core, name in enumerate(['native', 'cufftdx-thread']):
+            ps_speedups.append(ratio_bar(a, core, name+'/stagewise-hbm', name+'/resident-prefix-2', core, 'a', .48))
+        a.set_xticks([0, 1]); a.set_xticklabels(['Native', 'cuFFTDx'])
+        a.set_xlim(-.65, 1.65); a.set_yticks([0, .5, 1, 1.5])
+        a.text(.5, .91, 'vs. external steps; 5 → 4 kernels', transform=a.transAxes, ha='center', fontsize=6.0)
+
+        base_axis(b, '(b) Communication retained', 120)
+        b.set_ylabel('Traffic retained (%)')
+        b.axhline(100, color='.3', ls='--', lw=.75)
+        traffic=[]
+        for i, (layer, names, scale) in enumerate([
+                ('DRAM', ['dram__bytes_read.sum', 'dram__bytes_write.sum'], 1/2**30),
+                ('L2', ['lts__t_sectors_op_read.sum', 'lts__t_sectors_op_write.sum'], 32/2**30)]):
+            for core, name in enumerate(['native', 'cufftdx-thread']):
+                old=total('subgraph-'+name+'-stagewise-hbm-ncu', names)*scale
+                new=total('subgraph-'+name+'-resident-prefix-2-ncu', names)*scale
+                value=100*new/old; x=i+(core-.5)*.34
+                b.bar(x, value, .30, color=COLORS[core], edgecolor='black', linewidth=.45, hatch=HATCHES[core])
+                b.text(x, value+3, f'{value:.1f}', fontsize=6.1, ha='center')
+                traffic.append(dict(panel='b', kind='profile_summary', core=core, metric=layer, baseline_GiB=old,
+                                    variant_GiB=new, value=value, unit='percent', estimator='ratio of full-call count sums'))
+        export.extend(traffic)
+        b.set_xticks([0,1]);b.set_xticklabels(['DRAM', 'L2 sectors']);b.set_xlim(-.6,1.6);b.set_yticks([0,50,100])
+        b.text(.5, .96, 'Read + write; separate levels', transform=b.transAxes, ha='center', va='top', fontsize=6.2)
+
+        base_axis(c, '(c) Local resource demand', 110)
+        c.set_ylabel('Registers / thread')
+        for core, name in enumerate(['native', 'cufftdx-thread']):
+            old=metrics('subgraph-'+name+'-stagewise-hbm-ncu', REGISTERS)
+            new=metrics('subgraph-'+name+'-resident-prefix-2-ncu', REGISTERS)
+            for i,row in enumerate([old[1],old[2],new[1]]):
+                x=i+(core-.5)*.34
+                c.bar(x,row['value'],.30,color=COLORS[core],edgecolor='black',linewidth=.45,hatch=HATCHES[core])
+                c.text(x,row['value']+3,f"{row['value']:.0f}",ha='center',fontsize=6.2)
+                export.append(dict(panel='c',kind='profile',core=core,variant=['external step 1','external step 2','resident prefix'][i],
+                                   kernel_id=row['kernel_id'],metric=REGISTERS,value=row['value'],unit=row['unit'],estimator='single capture, per kernel'))
+        c.set_xticks([0,1,2]);c.set_xticklabels(['Step 1','Step 2','Resident\nprefix']);c.set_yticks([0,50,100]);c.set_xlim(-.65,2.65)
+        c.text(.04,.96,'Only the replaced prefix',transform=c.transAxes,va='top',fontsize=6.2)
+
+        base_axis(d, '(d) Speedup over same-core 1/0', 1.55)
+        d.set_ylabel('Speedup (×)')
+        d.axhline(1,color='.3',ls='--',lw=.75)
+        for i, config in enumerate(CONFIGS):
+            for core,name in enumerate(['native','cufftdx']):
+                ratio_bar(d,i+(core-.5)*.34,name+'-t1-d0',name+'-'+config,core,'d')
+        d.set_yticks([0,.5,1,1.5])
+        base_axis(e,'(e) Memory dependency waits',100)
+        e.set_ylabel('Long-scoreboard stall (%)')
+        kernel_points(e,STALL,'e')
+        e.set_yticks([0,25,50,75,100])
+        e.legend(handles=[Line2D([],[],marker=m,linestyle='',color='black',markersize=3.5,label=f'Factor {i+1}') for i,m in enumerate(['o','^'])],
+                 loc='upper right',frameon=False,handletextpad=.25,borderpad=.1)
+
+        base_axis(shared_ax,'(f) Buffer and concurrency cost',85)
+        base_axis(active_ax,top=22)
+        shared=[]
+        for i, config in enumerate(CONFIGS):
+            rows=[r for core in ['native','cufftdx'] for r in metrics('factor-'+core+'-'+config+'-ncu',SHARED)]
+            values=[r['value']/1024 for r in rows]
+            assert len(values)==4 and len(set(values))==1
+            shared.append(values[0]);shared_ax.bar(i,values[0],.5,color='.75',edgecolor='black',linewidth=.45)
+            shared_ax.text(i,values[0]+3,f'{values[0]:g}',ha='center',fontsize=6.2)
+            export.append(dict(panel='f-top',kind='profile',variant=config,metric=SHARED,value=values[0],unit='KiB/block',
+                               estimator='identical across both cores and both factor kernels'))
+        shared_ax.set_ylabel('Shared KiB',labelpad=1,fontsize=6.2);shared_ax.set_yticks([0,40,80]);shared_ax.tick_params(axis='x',bottom=False,labelbottom=False)
+        kernel_points(active_ax,ACTIVE,'f-bottom')
+        active_ax.set_ylabel('Warps (%)',labelpad=1,fontsize=6.2);active_ax.set_yticks([0,10,20])
+        for ax in [d,e,shared_ax,active_ax]:
+            ax.set_xlim(-.6,3.6);ax.set_xticks(range(4))
+            if ax is not shared_ax:
+                ax.set_xticklabels(['1/0','4/0','4/1','4/2']);ax.set_xlabel('Tiles t / prefetch depth d',labelpad=2)
+        # Discrete configuration categories: no interpolation curves.
+        fig.text(.08,.962,'Resident subgraphs  |  FFT FP32, N = 65,536, B = 256',weight='bold',fontsize=8)
+        fig.legend(handles=[Patch(facecolor=col,edgecolor='black',hatch=h,label=name) for col,h,name in zip(COLORS,HATCHES,['Native core','cuFFTDx core'])],
+                   loc='upper left',bbox_to_anchor=(.074,.945),frameon=False,ncol=2,handlelength=1.4,columnspacing=1.4)
+        fig.text(.08,.540,'Tile supply  |  FFT FP64, N = 65,536, B = 16',weight='bold',fontsize=8)
+        prefetch = [median(samples(core+'-t4-d0')) / median(samples(core+'-t4-d1'))
+                    for core in ['native', 'cufftdx']]
+        endpoint = [median(samples(core+'-t1-d0')) / median(samples(core+'-t4-d1'))
+                    for core in ['native', 'cufftdx']]
+        fig.text(.08,.496,f'Fixed 4-tile prefetch control: {prefetch[0]:.3f}× / {prefetch[1]:.3f}×; '
+                 f'strong-endpoint gain: {endpoint[0]:.3f}× / {endpoint[1]:.3f}×.',fontsize=6.9)
+        fig.text(.08,.056,'Performance: ratio of medians; 3 paired process points and min–max. Dashed line: unchanged baseline.',fontsize=6.5)
+        fig.text(.08,.022,'Profiles: one complete capture per configuration; factor markers are kernels, not statistical error bars.',fontsize=6.5)
+        out=PAPER/'figures/representative_profiles_20261108'
         out.parent.mkdir(parents=True,exist_ok=True)
-        fig.savefig(out.with_suffix('.pdf'), facecolor='white')
-        fig.savefig(out.with_suffix('.png'), dpi=300, facecolor='white')
+        for extension in ['pdf','png','svg']:
+            fig.savefig(out.with_suffix('.'+extension),dpi=300,facecolor='white')
         plt.close(fig)
-    metadata = {
-        'input_status': data['status'], 'unused_nsys_tasks': [t for t in data['tasks'] if t['kind'] == 'nsys'],
-        'input': str(args.input.resolve()), 'input_sha256': hashlib.sha256(raw).hexdigest(),
-        'dimensions_inches': [7.05,3.6], 'png_dpi':300, 'matplotlib_version':matplotlib.__version__,
-        'destination':'Provisional manuscript figure; venue requirements not specified',
-        'ordinary_latency': 'Median of three independent process timing samples; all three points and min/max shown; no confidence intervals. ms to microseconds: multiply by 1000.',
-        'diagnostics':'NCU counters are separate from ordinary performance. Complete capture sums read and write counters across all 5 stagewise / 4 resident kernels. No profiler durations plotted.',
-        'dram_conversion':'sum(dram__bytes_read.sum + dram__bytes_write.sum) / 2**30 GiB',
-        'l2_conversion':'sum(lts__t_sectors_op_read.sum + lts__t_sectors_op_write.sum) * 32 bytes/sector / 2**30 GiB; full 32-byte sector conversion, not useful payload',
-        'stall':'smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct; each kernel separately, never averaged; stages 1/2 correspond to capture kernel IDs 0/1',
-        'shared':'launch__shared_mem_per_block_allocated in byte/block /1024. One bar per configuration only after verifying equality across both cores and both stages; block is compute group.',
-        'shared_KiB':shared_by_config,
-        'exclusions':'None among requested variants; all 36 ordinary observations and all requested NCU metric rows retained.',
-        'source_hashes': data['provenance_sha256'], 'plotted_source_rows': plotted,
-        'alt_text':'Two rows compare both cores. P–S resident prefix reduces ordinary latency and total memory traffic. P–P t4/d0 is slower than t1/d0; d1 reduces latency and long-scoreboard stall, while d2 raises allocation and latency relative to d1. All stages and process samples are shown.'}
-    meta = PAPER/'generated/representative_profiles_figure_metadata.json'
-    meta.write_text(json.dumps(metadata,indent=2)+'\n')
+    csv_path=PAPER/'generated/representative_profiles_chart_data_20261108.csv'
+    with csv_path.open('w',newline='') as handle:
+        fields=sorted({k for row in export for k in row})
+        writer=csv.DictWriter(handle,fields);writer.writeheader();writer.writerows(export)
+    metadata={
+        'input_status':data['status'],'input':str(args.input.resolve()),'input_sha256':hashlib.sha256(raw).hexdigest(),
+        'dimensions_inches':[7.05,4.10],'png_dpi':300,'matplotlib_version':matplotlib.__version__,
+        'destination':'Internal IEEE two-column systems/architecture manuscript; no venue-compliance claim',
+        'ordinary_latency':'Bars: median(baseline process times)/median(variant process times). Points and min/max: three within-process baseline/variant ratios. Repeated replays inside a process are not independent samples. No CI or significance claim.',
+        'traffic':'Each resident complete-call sum is normalized to the same core external-step sum; DRAM and L2 stay separate. Only absolute counts summed across kernels. L2 sectors *32 bytes; GiB=bytes/2**30. Absolute values in companion CSV.',
+        'resources':'Registers for the replaced prefix only. Factor shared allocation includes allocation overhead (17/49/65 KiB versus 16/48/64 requested); points show each factor kernel separately. No percentage averaging.',
+        'diagnostics':'NCU replay caches/clocks uncontrolled; no profiler durations or uncertainty distributions plotted. Counter association is not an additive causal decomposition.',
+        'exclusions':'None among 12 declared ordinary variants. Prefix register panel shows replaced steps only, with common permutation and unchanged suffix intentionally outside that local-resource comparison; traffic remains full-call.',
+        'plotted_source_rows':list(plotted.values()),'source_hashes':data['provenance_sha256'],
+        'chart_csv':str(csv_path.relative_to(PAPER)),'chart_csv_sha256':hashlib.sha256(csv_path.read_bytes()).hexdigest(),
+        'design_references':[{'title':'Welder','venue':'OSDI 2023','figures':[13], 'url':'https://www.usenix.org/system/files/osdi23-shi.pdf'},
+                             {'title':'ROLLER','venue':'OSDI 2022','figures':[17,18], 'url':'https://www.usenix.org/system/files/osdi22-zhu.pdf'}],
+        'alt_text':'Two rows align performance with communication or supply and resource cost. FP32 resident prefixes improve both fixed cores by about 1.19x while retaining 77% DRAM and 87% L2 traffic, despite more registers. FP64 depth-one prefetch is 1.12–1.15x faster than the stronger single-tile endpoint; depth two further lowers long-scoreboard stalls but uses 65 versus 49 KiB and has lower active-warp fractions and slower full execution.'}
+    (PAPER/'generated/representative_profiles_figure_metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
     print(out)
 
-if __name__ == '__main__':
+
+if __name__=='__main__':
     main()
