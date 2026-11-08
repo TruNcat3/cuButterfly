@@ -5880,7 +5880,7 @@
     "/home/wt/git/cuButterfly/results/representative_profiles_20261108/nsys_node_repair/jobs/factor-cufftdx-t4-d2-nsys/release/capture.nsys-rep": "80855c1a32f5e61a28b8b156d06af5a54e28f7560b3d81d6f164e47d223a7892"
   },
   "chart_csv": "generated/representative_profiles_chart_data_20261108.csv",
-  "chart_csv_sha256": "71a3ebf59fdb60d461c4779a2e217d2faa68aa289d7c8b83b554e1598ac8ee30",
+  "chart_csv_sha256": "e4b66c9a2795a6d1565728b83b12467db8e31d0cc0d57ac840d587f552a633df",
   "design_references": [
     {
       "title": "Welder",

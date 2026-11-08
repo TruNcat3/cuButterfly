@@ -198,11 +198,13 @@ def main():
         out.parent.mkdir(parents=True,exist_ok=True)
         for extension in ['pdf','png','svg']:
             fig.savefig(out.with_suffix('.'+extension),dpi=300,facecolor='white')
+        svg_path = out.with_suffix('.svg')
+        svg_path.write_text('\n'.join(line.rstrip() for line in svg_path.read_text().splitlines())+'\n')
         plt.close(fig)
     csv_path=PAPER/'generated/representative_profiles_chart_data_20261108.csv'
     with csv_path.open('w',newline='') as handle:
         fields=sorted({k for row in export for k in row})
-        writer=csv.DictWriter(handle,fields);writer.writeheader();writer.writerows(export)
+        writer=csv.DictWriter(handle,fields,lineterminator='\n');writer.writeheader();writer.writerows(export)
     metadata={
         'input_status':data['status'],'input':str(args.input.resolve()),'input_sha256':hashlib.sha256(raw).hexdigest(),
         'dimensions_inches':[7.05,4.10],'png_dpi':300,'matplotlib_version':matplotlib.__version__,
