@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 
 #include <cuda_runtime.h>
+#include <cuda_profiler_api.h>
 
 #include <algorithm>
 #include <cmath>
@@ -62,7 +63,7 @@ float measure_replays(cudaStream_t stream, std::uint32_t warmup, std::uint32_t r
 
 // Explicit mapping comparisons use the public plan/lowering and graph capture.
 // They are distinct from AUTO selection; preparation and references are untimed.
-int mapping_suite(const char* path, bool prepare_reference=false) {
+int mapping_suite(const char* path, bool prepare_reference=false, const std::string& profile_case="", unsigned trial_offset=0) {
     using Json=nlohmann::json;
     std::ifstream file(path);
     if (!file) throw std::invalid_argument("cannot read graph suite configuration");
@@ -80,6 +81,12 @@ int mapping_suite(const char* path, bool prepare_reference=false) {
     const std::size_t n=std::size_t{1}<<log_n, count=n*batch;
     if(count/n!=batch) throw std::invalid_argument("graph suite extent overflow");
     const auto cases=suite.at("cases").size();
+    if(!profile_case.empty()) {
+        unsigned matches=0;
+        for(const auto& item:suite.at("cases")) matches+=item.at("id")==profile_case;
+        if(matches!=1 || !suite.contains("reference_file"))
+            throw std::invalid_argument("profile requires one prepared case and reference");
+    }
     if(!cases || cases>64 || count>(std::size_t{1}<<28))
         throw std::invalid_argument("graph suite exceeds bounded host reference size");
     std::vector<cuntt::Complex64> host(count), expected(count), actual(count);
@@ -106,7 +113,7 @@ int mapping_suite(const char* path, bool prepare_reference=false) {
         return 0;
     }
     const auto hardware=cuntt::query_hardware_resource_model();
-    if(count>hardware.memory_bytes/sizeof(cuntt::Complex64)/(4+2*cases))
+    if(count>hardware.memory_bytes/sizeof(cuntt::Complex64)/(4+2*(profile_case.empty()?cases:1)))
         throw std::invalid_argument("graph suite exceeds conservative workspace budget");
     CudaStream stream;
     DeviceBuffer input(count), output(count);
@@ -122,6 +129,7 @@ int mapping_suite(const char* path, bool prepare_reference=false) {
     for(const auto& requested:suite.at("cases")) {
         const auto id=requested.at("id").get<std::string>();
         if(!identifiers.insert(id).second) throw std::invalid_argument("duplicate graph suite id");
+        if(!profile_case.empty() && id!=profile_case) continue;
         auto entry=std::make_unique<Entry>();
         cuntt::ButterflyConfig config;
         config.op=cuntt::ButterflyOperator::Fft;
@@ -131,6 +139,12 @@ int mapping_suite(const char* path, bool prepare_reference=false) {
         cubutterfly::apply_serialized_mapping(requested.at("mapping").dump(),config);
         entry->plan=std::make_unique<cuntt::ButterflyPlan>(config);
         entry->plan->set_stream(stream.value);
+        const auto actual_mapping=Json::parse(cubutterfly::serialize_mapping(entry->plan->config()));
+        for(auto it=requested.at("mapping").begin();it!=requested.at("mapping").end();++it) {
+            if(it.key()=="compute_unit" && it.value()=="auto") continue;
+            if(!actual_mapping.contains(it.key()) || actual_mapping.at(it.key())!=it.value())
+                throw std::runtime_error("actual mapping differs from request: "+id+"/"+it.key());
+        }
         // Any lazy provider work precedes graph capture and all timing.
         entry->plan->execute_async(input.value,output.value);
         check(cudaStreamSynchronize(stream.value),"suite initialization");
@@ -143,8 +157,8 @@ int mapping_suite(const char* path, bool prepare_reference=false) {
         entries.push_back(std::move(entry));
         std::cerr << "prepared " << id << '\n';
     }
-    for(unsigned t=0;t<trials;++t) for(std::size_t offset=0;offset<entries.size();++offset) {
-        auto& entry=*entries[(offset+t)%entries.size()];
+    for(unsigned t=0;t<(profile_case.empty()?trials:0);++t) for(std::size_t offset=0;offset<entries.size();++offset) {
+        auto& entry=*entries[(offset+t+trial_offset)%entries.size()];
         entry.samples.push_back(measure_replays(stream.value,warmup,repeat,[&]{entry.graph.launch(stream.value);}));
     }
     Json rows=Json::array();
@@ -164,25 +178,54 @@ int mapping_suite(const char* path, bool prepare_reference=false) {
             reference2+=static_cast<long double>(r.real)*r.real+static_cast<long double>(r.imag)*r.imag;
         }
         finite &= nonfinite==0;
-        auto sorted=entry.samples; std::sort(sorted.begin(),sorted.end());
-        entry.result["trial_ms"]=entry.samples;
-        entry.result["median_ms"]=(sorted[(sorted.size()-1)/2]+sorted[sorted.size()/2])/2;
-        entry.result["min_ms"]=sorted.front(); entry.result["max_ms"]=sorted.back();
+        if(profile_case.empty()) {
+            auto sorted=entry.samples; std::sort(sorted.begin(),sorted.end());
+            entry.result["trial_ms"]=entry.samples;
+            entry.result["median_ms"]=(sorted[(sorted.size()-1)/2]+sorted[sorted.size()/2])/2;
+            entry.result["min_ms"]=sorted.front(); entry.result["max_ms"]=sorted.back();
+        }
         entry.result["max_abs_cpu"]=maximum;
         entry.result["relative_l2_cpu"]=std::sqrt(error2/std::max(reference2,1e-300L));
         entry.result["nonfinite"]=nonfinite; entry.result["verified_batches"]=batch;
         rows.push_back(entry.result);
     }
+    if(!profile_case.empty()) {
+        if(!finite) throw std::runtime_error("nonfinite profile verification");
+        auto& entry=*entries.front();
+        for(unsigned i=0;i<100;++i) entry.graph.launch(stream.value);
+        check(cudaStreamSynchronize(stream.value),"profile warmup synchronize");
+        check(cudaProfilerStart(),"cudaProfilerStart");
+        try {
+            entry.graph.launch(stream.value);
+            check(cudaStreamSynchronize(stream.value),"profile replay synchronize");
+        } catch(...) { cudaProfilerStop(); throw; }
+        check(cudaProfilerStop(),"cudaProfilerStop");
+        auto result=rows.front();
+        result["schema"]="cubutterfly-factor-graph-profile-v1";
+        result["status"]="ok"; result["profile_case"]=profile_case;
+        result["logical_calls"]=1; result["warmup"]=100;
+        result["actual_mapping"]=result.at("mapping");
+        result["normal_timing_accepted"]=false;
+        result["runtime_fingerprint"]=cubutterfly::runtime_fingerprint();
+        std::cout << result.dump(2) << '\n';
+        return 0;
+    }
     std::cout << Json({{"schema","cubutterfly-explicit-graph-suite-v1"},{"config",suite},
         {"runtime_fingerprint",cubutterfly::runtime_fingerprint()},
         {"verification","same-precision CPU reference, report errors without a new tolerance"},
-        {"all_outputs_finite",finite},{"results",rows}}).dump(2) << '\n';
+        {"trial_offset",trial_offset},{"all_outputs_finite",finite},{"results",rows}}).dump(2) << '\n';
     return finite ? 0 : 2;
 }
 }
 
 int main(int argc, char** argv) {
     try {
+        if(argc==5 && std::string(argv[1])=="--profile-suite" && std::string(argv[3])=="--case") {
+            if(!*argv[4]) throw std::invalid_argument("empty profile case");
+            return mapping_suite(argv[2],false,argv[4]);
+        }
+        if(argc==5 && std::string(argv[1])=="--suite" && std::string(argv[3])=="--trial-offset")
+            return mapping_suite(argv[2],false,"",std::stoul(argv[4]));
         if(argc==3 && std::string(argv[1])=="--suite") return mapping_suite(argv[2]);
         if(argc==3 && std::string(argv[1])=="--prepare-reference") return mapping_suite(argv[2],true);
         const std::uint32_t log_n = argc > 1 ? std::stoul(argv[1]) : 20;
@@ -274,6 +317,9 @@ int main(int argc, char** argv) {
                   << ",max_error=" << max_error << ",correct=" << (correct ? 1 : 0) << '\n';
         return correct ? 0 : 1;
     } catch (const std::exception& error) {
+        if(argc>1 && std::string(argv[1])=="--profile-suite")
+            std::cout << nlohmann::json({{"status","error"},{"error",error.what()},
+                {"normal_timing_accepted",false}}).dump() << '\n';
         std::cerr << error.what() << '\n';
         return 1;
     }

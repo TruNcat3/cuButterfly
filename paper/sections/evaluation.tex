@@ -226,22 +226,22 @@ This is an integration control, not fixed-core attribution.
 \label{sec:core-organization}
 We test subgraph execution (Section~\ref{sec:subgraph-execution}) with fixed
 leaves, stronger endpoints, and other arithmetic families.
-Figure~\ref{fig:core-organization}a crosses register and cuFFTDx Thread
-16-point FFT leaves with external exchange between radix-16 steps and a
+We cross register and cuFFTDx Thread 16-point FFT leaves with external exchange between radix-16 steps and a
 resident 256-value prefix spanning two such steps (eight radix-2 stages).
 Intermediate storage is shared; later steps are unchanged. These four cells
 separate subgraph organization from core substitution.
 
-\begin{figure}[!hbp]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/core_organization_compact.pdf}
-\caption{Fixed-core controls distinguish organization gains from core replacement.
-(a) Thirty-six paired FP32 ratios come from 72 timings.
-(b) Points show 56 local-core timings; the cuFFT line and band summarize
-seven full-library rounds.}
+\includegraphics[width=.98\textwidth]{figures/representative_profiles_20261108.pdf}
+\caption{Matched profiles connect organization gains to communication and supply costs.
+Latency panels show three independent processes and their median and range.
+Traffic sums cover one complete profiled call; stall points retain separate factor kernels.
+Here $t$ counts consecutive tile groups and $d$ the prefetched future groups.
+Allocated shared storage includes hardware allocation overhead.}
 \label{fig:core-organization}
 \label{fig:factor-organization}
-\end{figure}
+\end{figure*}
 
 Six FP32 workloads, four cells, and three trials produce 72 checked rows,
 with 10,000 warmups and 100 repetitions. The resident organization improves all six workloads
@@ -257,14 +257,15 @@ alone or internal overlap.
 The FP64 control at $N=65536,B=16$ fixes two 256-point factors, four local
 transforms per compute group, and 16 elements per thread. Both cores share
 the factor template and writer-aligned handoff.
-At four tile groups per compute group, one-step prefetch reduces latency
-from 138.377 to 79.974~$\mu$s for the register core and from 138.684 to
-73.762~$\mu$s for cuFFTDx Block, or 1.730/1.880$\times$.
-Against the faster one-tile synchronous alternatives (82.671/80.657~$\mu$s),
-the gains are 1.034/1.093$\times$. Depth two regresses for both cores;
-cuFFT remains faster at 48.503~$\mu$s. Relative $L_2$ error against CPU
-FP64 is below $7.4\times10^{-16}$. Thus organization helps either core,
-and a stronger measured reference substantially reduces the gain.
+Three fresh processes on a second A100 80GB device accompany the matched
+profiles in Figure~\ref{fig:factor-organization}. At four tile groups per
+compute group, one-step prefetch reduces register/cuFFTDx Block latency
+from 125.901/134.554 to 65.403/71.987~$\mu$s, or 1.925/1.869$\times$.
+Against the stronger one-tile synchronous endpoints (75.325/80.404~$\mu$s),
+the gains are 1.152/1.117$\times$. Depth two regresses to
+80.118/93.143~$\mu$s. Relative $L_2$ error against CPU FP64 is below
+$7.3\times10^{-16}$. These are same-device internal controls, kept separate
+from the earlier trials and external-library comparisons.
 
 \textbf{Reuse across arithmetic families.}
 Figure~\ref{fig:local-organization-scaling} fixes scalar radix-2 FFT/FWHT
@@ -349,6 +350,35 @@ process trials.
 We connect dependency-derived demand, compiled resources, and execution.
 NCU counters and NSYS timelines compare matched internal controls, not
 different external-library implementations.
+
+\textbf{Subgraph execution removes a measured exchange.}
+Figure~\ref{fig:core-organization} profiles the complete FP32 call at
+$N=65536,B=256$ with both fixed leaves. The resident prefix removes one
+external exchange and reduces kernel count from five to four, including
+the common input permutation. Ordinary latency falls from 1.414/1.431 to
+1.194/1.203\,ms, or 1.184/1.190$\times$.
+Measured DRAM read-plus-write volume falls by 22.9/23.1\%, while L2 sector
+volume falls by 13.1/13.2\%. These distinct reductions show why logical
+boundaries, cache traffic, and external-memory traffic cannot be equated.
+The resident kernel uses 80/83 registers per thread versus 46--54 for the
+separate steps. Thus reduced communication wins despite greater local
+resource demand; the joint change does not isolate residency from ownership,
+wrapper, or launch effects. CPU FP32 relative $L_2$ error is below
+$4.0\times10^{-7}$ for all four implementations.
+
+\textbf{Tile prefetch changes supply rather than the stage boundary.}
+All eight FP64 variants retain two factor kernels. At fixed four-tile
+traversal, emitted asynchronous copies accompany a reduction in per-kernel
+long-scoreboard stalls from 63.3--72.4\% to 13.8--20.6\%, and increased
+issue activity, while active-warp fractions remain only 6.7--7.1\%.
+Depth two lowers these stalls further but increases allocated shared storage
+from 49 to 65\,KiB per compute group and reduces active-warp fractions to
+5.6--5.8\%; the complete call becomes slower. Neither lower waiting nor
+higher local reuse alone determines performance. Each profile captures one
+complete call after preparation and warmup. NCU replay uses uncontrolled
+caches and clocks; its counters are diagnostic observations, and only
+unprofiled timings supply speedups. NSYS confirms launch scope, not
+overlap inside a kernel.
 
 \textbf{From resource demand to complete-plan service.}
 Dependency analysis supplies region counts and logical interface traffic;

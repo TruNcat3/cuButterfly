@@ -7,6 +7,7 @@
 // of the production search path.
 
 #include <cuda_runtime.h>
+#include <cuda_profiler_api.h>
 #include <cufft.h>
 
 #include "cuntt/butterfly.hpp"
@@ -18,6 +19,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <iomanip>
+#include <fstream>
 #include <iostream>
 #include <limits>
 #include <random>
@@ -106,6 +108,11 @@ struct Options {
     std::string organization = "both";
     bool csv = false;
     bool verify_only = false;
+    bool profile_one_call = false;
+    bool report_errors_only = false;
+    std::uint64_t trial_offset = 0;
+    std::string prepare_input_reference;
+    std::string input_reference;
 };
 
 std::uint64_t parse_u64(const char* argument, const char* name) {
@@ -135,13 +142,25 @@ Options parse_options(int argc, char** argv) {
         else if (argument == "--repeat") options.repeat = static_cast<unsigned>(parse_u64(require_value("--repeat"), "--repeat"));
         else if (argument == "--core") options.core = require_value("--core");
         else if (argument == "--organization") options.organization = require_value("--organization");
+        else if (argument == "--profile-one-call") options.profile_one_call = true;
+        else if (argument == "--report-errors-only") options.report_errors_only = true;
+        else if (argument == "--prepare-input-reference") options.prepare_input_reference = require_value("--prepare-input-reference");
+        else if (argument == "--input-reference") options.input_reference = require_value("--input-reference");
+        else if (argument == "--trial-offset") {
+            const std::string value(require_value("--trial-offset"));
+            if (value.empty() || value.find_first_not_of("0123456789") != std::string::npos)
+                throw std::invalid_argument("--trial-offset must be a nonnegative integer");
+            options.trial_offset = std::stoull(value);
+        }
         else if (argument == "--csv") options.csv = true;
         else if (argument == "--verify-only") options.verify_only = true;
         else if (argument == "--help" || argument == "-h") {
             std::cout << "usage: cubutterfly_core_dataflow_ablation --logN {8|12|16} --batch N\n"
                       << "       [--core native|cufftdx-thread|both]\n"
                       << "       [--organization stagewise-hbm|resident-prefix-2|both]\n"
-                      << "       [--trials N] [--warmup N] [--repeat N] [--csv] [--verify-only]\n";
+                      << "       [--trials N] [--warmup N] [--repeat N] [--csv] [--verify-only]\n"
+                      << "       [--profile-one-call] [--report-errors-only] [--trial-offset N]\n"
+                      << "       [--prepare-input-reference PREFIX | --input-reference PREFIX]\n";
             std::exit(0);
         } else {
             throw std::invalid_argument("unknown argument: " + argument);
@@ -157,7 +176,77 @@ Options parse_options(int argc, char** argv) {
         options.organization != "both") {
         throw std::invalid_argument("--organization must be stagewise-hbm, resident-prefix-2, or both");
     }
+    if (!options.prepare_input_reference.empty() && !options.input_reference.empty())
+        throw std::invalid_argument("reference preparation and loading are mutually exclusive");
+    if (options.profile_one_call && (options.core == "both" || options.organization == "both" || options.verify_only))
+        throw std::invalid_argument("--profile-one-call requires one core and organization and excludes --verify-only");
+    if (options.report_errors_only && options.input_reference.empty() && options.prepare_input_reference.empty())
+        throw std::invalid_argument("--report-errors-only requires an FP32 CPU --input-reference");
     return options;
+}
+
+// Auditable forward, unnormalized radix-2 DIT CPU reference. All butterfly,
+// twiddle and intermediate storage arithmetic is FP32; errors accumulate in FP64.
+void cpu_reference(std::vector<Complex>& data, std::size_t n) {
+    const float pi = 3.14159265358979323846F;
+    std::vector<Complex> twiddles(n / 2);
+    for (std::size_t k = 0; k < n / 2; ++k) {
+        const float angle = -2.0F * pi * static_cast<float>(k) / static_cast<float>(n);
+        twiddles[k] = {std::cos(angle), std::sin(angle)};
+    }
+    for (std::size_t base = 0; base < data.size(); base += n) {
+        for (std::size_t i = 1, j = 0; i < n; ++i) {
+            std::size_t bit = n >> 1;
+            for (; j & bit; bit >>= 1) j ^= bit;
+            j ^= bit;
+            if (i < j) std::swap(data[base + i], data[base + j]);
+        }
+        for (std::size_t length = 2; length <= n; length <<= 1) {
+            for (std::size_t start = 0; start < n; start += length) {
+                for (std::size_t k = 0; k < length / 2; ++k) {
+                    const Complex w = twiddles[k * (n / length)];
+                    const Complex v = data[base + start + k + length / 2];
+                    const Complex u = data[base + start + k];
+                    const float re = w.real * v.real - w.imag * v.imag;
+                    const float im = w.real * v.imag + w.imag * v.real;
+                    data[base + start + k] = {u.real + re, u.imag + im};
+                    data[base + start + k + length / 2] = {u.real - re, u.imag - im};
+                }
+            }
+        }
+    }
+}
+
+// Versioned native-endian file: five uint64 words followed by input then reference
+// complex pairs, each serialized as two float32 values (no struct padding).
+void reference_file(const std::string& prefix, bool write, const Options& options,
+                    std::vector<Complex>& values, std::vector<Complex>& expected) {
+    const std::string path = prefix + ".fp32-reference.bin";
+    std::fstream file(path, std::ios::binary | (write ? std::ios::out | std::ios::trunc : std::ios::in));
+    if (!file) throw std::runtime_error("cannot open reference file: " + path);
+    std::uint64_t header[] = {0x4355424650333201ULL, options.log_n, options.batch, values.size(), sizeof(float)};
+    if (write) file.write(reinterpret_cast<const char*>(header), sizeof(header));
+    else {
+        std::uint64_t read_header[5]{};
+        file.read(reinterpret_cast<char*>(read_header), sizeof(read_header));
+        if (!file || !std::equal(header, header + 5, read_header))
+            throw std::runtime_error("invalid reference header or request mismatch");
+    }
+    for (auto* data : {&values, &expected}) {
+        for (auto& value : *data) {
+            float pair[] = {value.real, value.imag};
+            if (write) file.write(reinterpret_cast<const char*>(pair), sizeof(pair));
+            else {
+                file.read(reinterpret_cast<char*>(pair), sizeof(pair));
+                value = {pair[0], pair[1]};
+            }
+            if (!file || !std::isfinite(pair[0]) || !std::isfinite(pair[1]))
+                throw std::runtime_error("truncated, nonfinite or unwritable reference content");
+        }
+    }
+    if (!write && file.peek() != std::char_traits<char>::eof())
+        throw std::runtime_error("trailing reference content");
+    if (write) { file.flush(); if (!file) throw std::runtime_error("reference flush failed"); }
 }
 
 template <unsigned LogN>
@@ -426,13 +515,14 @@ Verification verify_output(const std::vector<Complex>& expected, const std::vect
 template <class Core>
 Verification verify_variant(unsigned log_n, Organization organization, const Complex* input, Complex* output,
                             Complex* ping, Complex* pong, std::uint64_t batch,
-                            const std::vector<Complex>& expected, std::vector<Complex>& actual) {
+                            const std::vector<Complex>& expected, std::vector<Complex>& actual, bool report_errors_only) {
     enqueue_runtime<Core>(log_n, input, output, ping, pong, batch, organization);
     check_cuda(cudaGetLastError(), "verification enqueue");
     check_cuda(cudaMemcpy(actual.data(), output, actual.size() * sizeof(Complex), cudaMemcpyDeviceToHost),
                "copy verification output");
     const Verification result = verify_output(expected, actual, actual.size() / static_cast<std::size_t>(batch));
-    if (!result.correct) {
+    if (!std::isfinite(result.max_error) || !std::isfinite(result.l2_error) ||
+        (!report_errors_only && !result.correct)) {
         throw std::runtime_error(std::string("correctness failed for ") + organization_name(organization) +
                                  ": relative error " + std::to_string(result.max_error / result.max_reference));
     }
@@ -469,7 +559,7 @@ void measure_variants(unsigned log_n, std::uint64_t batch, const Options& option
     // the same process and see the same clock/thermal epoch.
     for (unsigned trial = 0; trial < options.trials; ++trial) {
         for (std::size_t offset = 0; offset < variants.size(); ++offset) {
-            const std::size_t index = (static_cast<std::size_t>(trial) + offset) % variants.size();
+            const std::size_t index = ((options.trial_offset % variants.size()) + trial + offset) % variants.size();
             auto& variant = variants[index];
             check_cuda(cudaEventRecord(start.value), "record start event");
             for (unsigned repeat = 0; repeat < options.repeat; ++repeat) {
@@ -499,7 +589,7 @@ void measure_variants(unsigned log_n, std::uint64_t batch, const Options& option
                 std::cout << "logN=" << log_n << " batch=" << batch << " core=" << core_name(variant.core)
                           << " organization=" << organization_name(variant.organization) << " trial=" << trial
                           << " kernel_ms=" << std::setprecision(9) << kernel_ms
-                          << " correct=" << (variant.verification.correct ? "yes" : "no")
+                          << (options.report_errors_only ? " legacy_correct=" : " correct=") << (variant.verification.correct ? "yes" : "no")
                           << " relative_max_error=" << relative_error << " relative_l2_error=" << relative_l2 << '\n';
             }
         }
@@ -521,29 +611,39 @@ void append_organization(const std::string& selection, std::vector<Organization>
 int main(int argc, char** argv) {
     try {
         const Options options = parse_options(argc, argv);
-        int device = 0;
-        check_cuda(cudaGetDevice(&device), "cudaGetDevice");
-        cudaDeviceProp properties{};
-        check_cuda(cudaGetDeviceProperties(&properties, device), "cudaGetDeviceProperties");
         const std::size_t n = std::size_t{1} << options.log_n;
         if (options.batch > std::numeric_limits<std::size_t>::max() / n) {
             throw std::invalid_argument("batch and N overflow host size");
         }
         const std::size_t count = n * static_cast<std::size_t>(options.batch);
-        DeviceBuffer input(count), output(count), ping(count), pong(count);
         std::vector<Complex> values(count), expected(count), actual(count);
         std::mt19937 generator(127);
         std::uniform_real_distribution<float> distribution(-1.0F, 1.0F);
         for (auto& value : values) value = {distribution(generator), distribution(generator)};
+        if (!options.prepare_input_reference.empty()) {
+            expected = values;
+            cpu_reference(expected, n);
+            reference_file(options.prepare_input_reference, true, options, values, expected);
+            std::cout << "reference=cpu_radix2_fp32 forward=1 normalized=0 points=" << count << '\n';
+            return 0; // No CUDA API has been called in preparation mode.
+        }
+        if (!options.input_reference.empty()) reference_file(options.input_reference, false, options, values, expected);
+        int device = 0;
+        check_cuda(cudaGetDevice(&device), "cudaGetDevice");
+        cudaDeviceProp properties{};
+        check_cuda(cudaGetDeviceProperties(&properties, device), "cudaGetDeviceProperties");
+        DeviceBuffer input(count), output(count), ping(count), pong(count);
         check_cuda(cudaMemcpy(input.value, values.data(), count * sizeof(Complex), cudaMemcpyHostToDevice),
                    "copy input");
 
+        if (options.input_reference.empty()) {
         CufftPlan reference(options.log_n, options.batch);
         check_cufft(cufftExecC2C(reference.value, reinterpret_cast<cufftComplex*>(input.value),
                                  reinterpret_cast<cufftComplex*>(output.value), CUFFT_FORWARD),
                     "cufftExecC2C");
         check_cuda(cudaMemcpy(expected.data(), output.value, count * sizeof(Complex), cudaMemcpyDeviceToHost),
                    "copy cuFFT reference");
+        }
 
         std::vector<CoreKind> cores;
         std::vector<Organization> organizations;
@@ -555,23 +655,44 @@ int main(int argc, char** argv) {
                 Verification verification;
                 if (core == CoreKind::Native) {
                     verification = verify_variant<NativeLeaf>(options.log_n, organization, input.value, output.value,
-                                                              ping.value, pong.value, options.batch, expected, actual);
+                                                              ping.value, pong.value, options.batch, expected, actual, options.report_errors_only);
                 } else {
                     verification = verify_variant<CufftDxThreadLeaf>(options.log_n, organization, input.value, output.value,
-                                                                      ping.value, pong.value, options.batch, expected, actual);
+                                                                      ping.value, pong.value, options.batch, expected, actual, options.report_errors_only);
                 }
                 variants.push_back(Variant{core, organization, verification});
-                std::cerr << "verified core=" << core_name(core)
+                std::cerr << std::setprecision(17) << "verified core=" << core_name(core)
                           << " organization=" << organization_name(organization)
+                          << " reference=" << (options.input_reference.empty() ? "cufft_fp32" : "cpu_radix2_fp32")
+                          << " legacy_correct=" << verification.correct
+                          << " max_error=" << verification.max_error << " max_reference=" << verification.max_reference
+                          << " l2_error=" << verification.l2_error << " l2_reference=" << verification.l2_reference
                           << " relative_max_error=" << (verification.max_reference == 0.0
                               ? verification.max_error : verification.max_error / verification.max_reference)
                           << " relative_l2_error=" << (verification.l2_reference == 0.0
                               ? verification.l2_error : verification.l2_error / verification.l2_reference) << '\n';
             }
         }
+        if (options.report_errors_only)
+            std::cerr << "validation=report_errors_only finite_output_required=1 legacy_relative_max_tolerance=0.0002 legacy_absolute_tolerance="
+                      << 2e-4 * std::sqrt(static_cast<double>(n) / 1024.0) << '\n';
         if (options.verify_only) return 0;
+        if (options.profile_one_call) {
+            const auto& variant = variants.front();
+            for (unsigned i = 0; i < options.warmup; ++i)
+                enqueue_variant(variant, options.log_n, input.value, output.value, ping.value, pong.value, options.batch);
+            check_cuda(cudaDeviceSynchronize(), "profile warmup synchronize");
+            check_cuda(cudaProfilerStart(), "cudaProfilerStart");
+            enqueue_variant(variant, options.log_n, input.value, output.value, ping.value, pong.value, options.batch);
+            check_cuda(cudaDeviceSynchronize(), "profile call synchronize");
+            check_cuda(cudaProfilerStop(), "cudaProfilerStop");
+            std::cout << "profile_time_not_performance=1 logical_calls=1 core=" << core_name(variant.core)
+                      << " organization=" << organization_name(variant.organization) << '\n';
+            return 0;
+        }
         if (options.csv) {
-            std::cout << "device,device_name,compute_capability,logN,batch,core,organization,trial,kernel_ms,correct,"
+            std::cout << "device,device_name,compute_capability,logN,batch,core,organization,trial,kernel_ms,"
+                      << (options.report_errors_only ? "legacy_correct," : "correct,") <<
                          "max_error,max_reference,relative_error,l2_error,l2_reference,relative_l2_error,points\n";
         } else {
             std::cout << "device=" << device << " device_name=" << properties.name

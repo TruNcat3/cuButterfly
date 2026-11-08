@@ -132,7 +132,9 @@ def measurement_environment(manifest, manifest_path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("phase", choices=["prepare", "measure"])
+    parser.add_argument("phase", choices=["prepare", "measure", "profile"])
+    parser.add_argument("--case", help="prepared case ID, required for profile")
+    parser.add_argument("--trial-offset", type=int, default=0)
     parser.add_argument("--config", type=Path)
     parser.add_argument("--prepared", type=Path, required=True)
     parser.add_argument("--binary", type=Path, required=True)
@@ -141,7 +143,7 @@ def main():
     parser.add_argument("--jobs", type=int, default=2)
     parser.add_argument("--batch", type=int, help="explicit preparation-only workload override")
     parser.add_argument("--direction", choices=["forward", "inverse"], help="explicit preparation-only override")
-    parser.add_argument("--output", type=Path, default=os.environ.get("XD_REPORT_DIR"))
+    parser.add_argument("--output", type=Path, default=os.environ.get("CUBUTTERFLY_REPORT_DIR", os.environ.get("XD_REPORT_DIR")))
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     binary = args.binary.resolve()
@@ -202,6 +204,12 @@ def main():
         manifest["complete"] = True
         manifest_path.write_text(json.dumps(manifest, indent=2)+"\n")
         return
+    if args.phase == "profile" and not args.case:
+        parser.error("profile requires --case")
+    if args.phase != "profile" and args.case:
+        parser.error("--case requires profile")
+    if args.trial_offset < 0:
+        parser.error("trial-offset must be nonnegative")
     if args.output is None:
         parser.error("measure needs --output or XD_REPORT_DIR from the GPU guard")
     if args.batch is not None or args.direction is not None:
@@ -213,6 +221,8 @@ def main():
         raise RuntimeError("preparation incomplete or build/config identity changed")
     if sha(suite["reference_file"]) != manifest["reference_sha256"]:
         raise RuntimeError("prepared reference identity changed")
+    if args.config is not None and sha(args.config) != manifest["config_sha256"]:
+        raise RuntimeError("original config identity changed")
     check_control_groups(suite)
     entries = {entry["id"]: entry for entry in manifest["modules"]}
     if len(entries) != len(suite["cases"]) or entries.keys() != {case["id"] for case in suite["cases"]}:
@@ -224,11 +234,16 @@ def main():
     for entry in manifest["modules"]:
         if "module" in entry and sha(entry["module"]) != entry["sha256"]:
             raise RuntimeError("prepared module identity changed")
+    if args.phase == "profile" and args.case not in entries:
+        parser.error("profile case is not in the prepared manifest")
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output/"preparation.json").write_text(json.dumps(manifest, indent=2)+"\n")
     (args.output/"gpu.txt").write_text(subprocess.check_output(
         ["nvidia-smi", "--query-gpu=uuid,name,memory.total,driver_version", "--format=csv,noheader"], text=True))
-    completed = subprocess.run([str(binary), "--suite", str(prepared)], capture_output=True, text=True,
+    command = ([str(binary), "--profile-suite", str(prepared), "--case", args.case]
+               if args.phase == "profile" else
+               [str(binary), "--suite", str(prepared), "--trial-offset", str(args.trial_offset)])
+    completed = subprocess.run(command, capture_output=True, text=True,
                                env=env, timeout=600)
     (args.output/"results.json").write_text(completed.stdout)
     (args.output/"stderr.log").write_text(completed.stderr)
@@ -238,6 +253,17 @@ def main():
     if expected_source not in completed.stderr:
         raise RuntimeError("runtime did not confirm the prepared hardware model")
     observed = json.loads(completed.stdout)
+    if args.phase == "profile":
+        requested = next(case["mapping"] for case in suite["cases"] if case["id"] == args.case)
+        actual = observed.get("actual_mapping", {})
+        if (observed.get("status") != "ok" or observed.get("profile_case") != args.case or
+                observed.get("logical_calls") != 1 or observed.get("normal_timing_accepted") is not False or
+                observed.get("nonfinite") != 0 or observed.get("kernel_nodes", 0) < 1 or
+                any(actual.get(key) != value for key, value in requested.items()
+                    if not (key == "compute_unit" and value == "auto"))):
+            raise RuntimeError("profile identity, mapping or single-call contract mismatch")
+        print(json.dumps(observed), flush=True)
+        return
     if not observed["all_outputs_finite"] or len(observed["results"]) != len(suite["cases"]):
         raise RuntimeError("incomplete or nonfinite graph suite")
     controls = check_control_groups(suite, observed["results"])

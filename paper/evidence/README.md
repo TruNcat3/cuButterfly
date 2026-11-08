@@ -1,5 +1,18 @@
 # Frozen Paper Evidence
 
+## November 8 representative profiles
+
+The [bounded profile report](REPRESENTATIVE_PROFILES_20261108.md) connects
+fixed-core subgraph execution and tile prefetch to ordinary timing, traffic,
+resource use, and stalls. Twelve variants have three-process timing and one
+complete-call NCU/NSYS capture each, on an independently identified A100 80GB.
+Eight initial graph-level NSYS captures were superseded by explicit node
+captures; the original timings and NCU results were retained. Frozen data and
+instruction audits are in `../generated/representative_profiles_20261108.json`
+and `../generated/representative_profiles_instruction_audit_20261108.json`.
+The figure reuses the fixed-core control's manuscript position. No new
+external-library or cross-architecture comparison is implied.
+
 ## November 7 resource and interface follow-up
 
 The [bounded follow-up report](../../docs/a100_evidence_followup_20261107.md)
