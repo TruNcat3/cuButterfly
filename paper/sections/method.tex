@@ -147,11 +147,13 @@ a 32-point transform needs at least three such bands. The construction thus
 extends beyond two bands without increasing local storage. Feasibility,
 communication, and parallel organization jointly inform the physical choice.
 
-The decision follows this order: dependencies determine legal bands and
-regions; capacity excludes mappings that do not fit; service rates and ready
-work rank the remaining retention choices. Producer--consumer intersections
-then determine handoff values and dependencies, while actual access groups
-and storage service constrain physical layout.
+The construction repeats within regions at successive storage scopes, without
+requiring every scope or expansion dimension to be active. We first derive
+regions and boundary relations, then resolve core, layout, and storage demands
+against capacity. Services and ready work distinguish the feasible choices.
+The next subsection supplies the boundary rule;
+Section~\ref{sec:decision-walkthrough} follows this construction through measured
+FWHT and NTT decisions.
 
 \subsection{Communication and readiness}
 At a band boundary, changing pair partners connect closed regions through

@@ -143,7 +143,7 @@ prospective resource→candidate→screen→confirmation sequence; it does not t
 screen times into independent performance evidence or numeric forecasts.
 
 The source-derived resource expectations were frozen with the candidate pool.
-FWHT FP32 [65536]/B16 uses two logical regions with 16MiB logical value-path
+FWHT FP32 [65536]/B16 uses two stage bands with 16MiB logical value-path
 traffic, two launches and column grouping 1/2/4. The prefix has 4096 CTAs and the
 suffix 4096/2048/1024; source shared-memory allocation lower bounds are
 1/2/4KiB. Each radix2/radix4 leaf has two thread settings 128/256, yielding six
@@ -152,7 +152,7 @@ extended includes the same endpoints and all six. These are shared pools,
 not six independent attempts per side or a claim of globally equal search spaces.
 
 NTT word64 [1048576]/B16, q=576460756061519873, natural forward/unnormalized,
-uses two logical regions with 512MiB logical value-path traffic and one
+uses two stage bands with 512MiB logical value-path traffic and one
 cooperative persistent producer/consumer launch. Both leaves retain data_time
 1/2/4 at 256 threads, three accepted candidates each; the conventional side
 has dt1 and the extended side includes it. The radix4 shared lower bound is
@@ -161,6 +161,15 @@ zero total compiler storage. Occupancy and target_ctas_per_sm cap launch grids:
 `batch/data_time` is not a valid grid formula. These are lower bounds and logical
 counts, not full compiler legality proofs, measured shared residency or HBM
 bytes. Accepted execution and correctness records supply separate checks.
+
+Terminology correction (November 8): the frozen `logical_regions=2` field counts
+stage bands, not dependency-closed regions. Each FWHT band contains 4096
+256-value regions; each NTT band contains 16384 1024-value regions. In these
+two-band factorizations, one transform is one dependency boundary packet.
+NTT `data_time` groups independent transforms for traversal and does not
+merge their dependency packets or imply simultaneous residency. The frozen
+source fields and measurements remain unchanged. See the
+[dependency-to-decision walkthrough](DECISION_WALKTHROUGH_20261108.md).
 
 The compact [new table](../generated/resource_measured_selection_20261107.tex)
 uses only independent holdouts. Values below are medians of three process

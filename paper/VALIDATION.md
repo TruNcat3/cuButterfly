@@ -1,5 +1,31 @@
 # Working-draft validation
 
+## Dependency-to-decision walkthrough — 2026-11-08
+
+The method now derives boundary relations before resolving physical resources
+and evaluating service. Its capacity example points to a worked FWHT/NTT chain
+in the ablations. The walkthrough separates closed regions, physical grouping,
+logical traffic, candidate feasibility, and measured choice. The legacy
+`logical_regions=2` field means two stage bands; the frozen data stays intact.
+An NTT traversal group can visit independent boundary packets without merging
+their dependencies or implying simultaneous on-chip residency.
+
+CPU recomputation from frozen records checked both workloads' region counts,
+value footprints, intersection sizes, predecessor counts, logical traffic,
+accepted pools, selected mappings, and all four paired-median outcomes.
+Within-transform intersections are distinguished from empty cross-transform
+intersections. No performance snapshot, generated table, figure, model, or
+numerical acceptance policy changed. This is a manuscript/evidence clarification,
+not additional hardware validation or a new NTT numerical prediction.
+
+Both PDF entries remain 14 pages at the original font sizes and geometry.
+The TeX logs contain no undefined references/citations, missing characters,
+or overfull boxes; existing underfull and input-PDF-version advisories remain.
+Changed pages were rendered and checked, including the method, endpoint table,
+analysis, and final-page flow. Local links in the five changed Markdown documents
+were checked. The [walkthrough record](evidence/DECISION_WALKTHROUGH_20261108.md)
+retains the exact scope; PRO 6000 experiments are the user's independent work.
+
 ## Evidence consolidation — 2026-11-08
 
 Both manuscript entries compile to 14 pages, down from 15, with the original

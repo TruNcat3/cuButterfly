@@ -266,35 +266,48 @@ for FFT/FWHT/NTT; groups of up to four stages give
 0.932/1.103/0.816$\times$. The shared trade-off admits different preferred
 organizations rather than a universally beneficial mechanism.
 
-\textbf{Retaining and tuning conventional endpoints.}
-A stronger non-FFT control fixes each of two leaves at FWHT FP32
-$N=2^{16},B=16$ and word64 NTT $N=2^{20},B=16$.
-FWHT's conventional domain tunes 128/256 threads with one suffix column
-per compute group; the extended domain also permits two/four columns.
-NTT's extended domain adds two/four transforms per packet to the original
-one-transform endpoint at 256 threads. Both domains use a six-candidate
-budget ceiling; legal pools contain 2/6 FWHT and 1/3 NTT candidates.
-Resources and candidates are frozen before screening, and three new processes
-confirm the selected mappings with the second process reversing order.
+\textbf{One construction, different organization choices.}
+\label{sec:decision-walkthrough}
+The same dependency rule yields 4096 regions per eight-stage band for
+FWHT FP32 at $N=2^{16},B=16$, and 16,384 per ten-stage band for word64
+NTT at $N=2^{20},B=16$. FWHT regions contain 256 values (1\,KiB),
+and NTT regions contain 1024 (8\,KiB).
+Each uses two bands with disjoint pairing bits. Within a transform, each
+producer--consumer pair shares one value, so every consumer needs all
+producers of that transform. This common structure admits different mappings.
+
+FWHT groups one/two/four suffix regions per compute group. Suffix group
+counts fall from 4096 to 2048/1024, while source-derived shared-storage
+lower bounds rise from 1 to 2/4\,KiB. NTT instead traverses one/two/four
+independent transforms per group, using one cooperative launch and external
+handoffs. Traversal grouping does not merge dependency packets. Logical
+value traffic stays at 16/512\,MiB for FWHT/NTT across these choices;
+neither quantity is measured traffic or simultaneous on-chip storage.
+
+Each fixed leaf retains its conventional endpoint. FWHT tunes 128/256
+threads in both domains; NTT fixes 256. Conventional/extended pools contain
+2/6 and 1/3 candidates, respectively, under a six-candidate ceiling.
+All execute successfully, so capacity alone does not choose among them.
+Resource expectations and candidates are frozen before screening; three new
+processes confirm the selected mappings, with the second reversing order.
 
 \begin{table}[t]
 \centering\small
-\caption{Tuned organization domains retain their original endpoints.
-Times and paired ratios are three-process medians.}
+\caption{The common construction admits different measured choices.
+Times and paired ratios are three-process medians; ``same'' reuses one mapping.}
 \label{tab:nonfft-endpoints}
 \input{generated/resource_measured_selection_20261107}
 \end{table}
 
-FWHT selects 256 threads/four columns over 128 threads/one column, giving
-1.315--1.318$\times$ and 1.365--1.367$\times$ for its two leaves.
-Both NTT domains select the identical original mapping, measured once per
-process; unity denotes identity. All NTT candidates pass full-batch exact
-checks, and all twelve FWHT candidates match the CPU FP32 reference over
-$2^{20}$ outputs. The FWHT leaves are internal codelets. Fixing a leaf does
-not fix its wrapper or execution geometry, so the gains are not due to column
-count alone. Earlier fixed mappings that widened FWHT columns or NTT packet
-traversal lost at both $B=4,16$ (0.872--0.937/0.797--0.911$\times$).
-Tuning both domains, including the original endpoint, is therefore essential.
+FWHT selects 256 threads/four columns over 128 threads/one column,
+giving 1.315--1.318$\times$ and 1.365--1.367$\times$ across processes.
+Both NTT domains retain the original mapping, timed once per process;
+unity denotes identity (Table~\ref{tab:nonfft-endpoints}). NTT checks are
+full-batch exact; all twelve FWHT candidates match CPU FP32 over $2^{20}$ outputs.
+Fixing an internal leaf does not fix execution geometry: FWHT changes threads
+and columns, and NTT's shared-radix4 traversals use different wrappers.
+These are complete-organization outcomes, not isolated grouping effects.
+The construction retains original endpoints and uses measured NTT selection.
 
 \textbf{Optional mechanisms have costs.}
 \label{sec:component-ablation}
@@ -347,12 +360,10 @@ G counts execution groups; shared storage is in KiB and times are in ms.}
 \input{generated/resource_decisions_20261107}
 \end{table}
 
-The endpoint study in Table~\ref{tab:nonfft-endpoints} instead freezes
-resource expectations and candidate domains before screening and selected
-mappings before independent confirmation. It validates prospective measured
-selection for FWHT/NTT, not an NTT service-time prediction or unseen-hardware
-prediction. These studies connect characterization to executable decisions
-within their stated coverage.
+Unlike the prospective measured choices in
+Table~\ref{tab:nonfft-endpoints}, these estimates test composition from
+independent local services. The two studies test distinct links of the
+construction-to-execution chain; neither establishes unseen-hardware prediction.
 
 \begin{figure}[!hbp]
 \centering
@@ -410,13 +421,10 @@ passes at $N=2^{18},B=32$. Organization benefits and provider limitations
 can coexist.
 
 \textbf{Preparation remains a separate cost.}
-A ten-request public DEFAULT FWHT check takes 43.2 minutes to prepare its
-plans, outside steady-state timing. A subsequent CPU optimization preserves
-all scores and complete rankings across 30,146 and 371,848 candidates while
-reducing request parsing/ranking/output time from 20.0 to 17.6 seconds and
-375.2 to 321.4 seconds. Three public requests retain their selected mappings
-and outputs; historical/current preparation totals are 17.7/14.8 minutes.
-These shared-host measurements are not interleaved trials or a full installation
-benchmark. Reuse amortizes preparation, but the first-call path is not yet
-lightweight. This engineering cost is distinct from the organization gains
-measured during warm execution.
+A ten-request public DEFAULT FWHT check takes 43.2 minutes to prepare plans.
+CPU preparation optimizations preserve all scores and rankings across 30,146
+and 371,848 candidates. Three public requests retain their mappings and
+outputs while preparation falls from 17.7 to 14.8 minutes. These shared-host
+measurements are not interleaved trials or an installation benchmark.
+Reuse amortizes preparation; the first-call path remains costly and is
+excluded from warm execution.

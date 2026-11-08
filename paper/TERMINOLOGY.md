@@ -14,6 +14,7 @@ should not be substituted for one another.
 | **Resident tile subgraph** | A tile subgraph whose intermediate values remain at a selected storage scope during its local execution. | A persistent worker or a permanently resident kernel |
 | **Handoff** | The producer-to-consumer transfer at a stage-band boundary, including readiness and value representation. | An unrelated input/output copy |
 | **Boundary packet** | A dependency domain whose producer and consumer relations do not cross its fixed outside bits. | A physical buffer or a scheduling queue |
+| **Traversal group** | Independent transforms visited by the same scheduling group. In the NTT endpoint study, `data_time` controls this grouping. | A boundary packet, a larger dependency-closed region, or proof of simultaneous value residency |
 | **Successor-aligned writeback** | Writing a producer value in the representation expected by the next consumer, avoiding a separate permutation when legal. | A claim that every layout is coalesced |
 | **Bank conflict** | Contention when concurrent accesses map to the same limited storage bank. | General external storage noncoalescing |
 | **Swizzle** | An address remapping used to distribute a specified access group across storage banks. | A universal conflict-free layout |
@@ -41,3 +42,11 @@ The evidence vocabulary is also fixed. **External comparisons** use a named
 library or application baseline. **Controlled organization experiments** hold
 the arithmetic core or workload fixed to isolate an organization change.
 Neither category is silently presented as the other.
+
+For two disjoint stage bands covering all index bits, each transform is one
+boundary packet. A traversal group may visit several such packets without
+creating dependencies between them. Logical regions, physical compute groups,
+and launches are separate counts. The legacy `logical_regions=2` field in the
+November 7 endpoint evidence counts stage bands, not closed regions; frozen
+records retain that field for provenance, while manuscript counts use the
+dependency formula. See the [worked evidence chain](evidence/DECISION_WALKTHROUGH_20261108.md).
