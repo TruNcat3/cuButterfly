@@ -1,5 +1,24 @@
 # Working-draft validation
 
+## Subgraph execution argument — 2026-11-08
+
+Execution now explicitly connects dependency closure to a bounded local schedule,
+boundary publication, and tile reuse. The fixed-core FFT control is identified
+as a 256-value prefix spanning two radix-16 steps, equivalent to eight radix-2
+stages. Its organization gains are not attributed to residency or overlap alone.
+The [evidence mapping](evidence/SUBGRAPH_EXECUTION_20261108.md) separates that
+control from factor-prefetch endpoints and the independent cross-arithmetic
+local-exchange cohort. A read-only implementation/evidence review found no
+material mismatch. No measurements, plots, thresholds, or code changed.
+
+Both PDF entries remain 14 pages with unchanged geometry and type sizes after
+removing repeated execution explanations. The final logs have no undefined
+references/citations, overfull boxes, or missing characters. Pages 6, 7, 11,
+and 14 were rendered and visually checked. Changed-document local links and
+diff whitespace passed. A100 claims remain bounded; this clarification does
+not establish separate residency/launch/overlap effects or cross-architecture
+validation.
+
 ## Argument and numerical evidence refinement — 2026-11-08
 
 The abstract leads with the organization effect before external-library gains.

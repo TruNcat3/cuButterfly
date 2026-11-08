@@ -1,14 +1,29 @@
 \section{Realizing the Method with Subgraph Execution}
 \label{sec:execution}
-Lowering binds closed regions and boundary dependencies to GPU cores,
-storage, and synchronization, then generates kernels and a submission graph.
-A core declares logical value roles, worker ownership, and output visibility,
-not only input size. Local codelets, compute groups, generated kernels, and
-imported cores can share the construction with different resource costs.
-For scalar radix-2 FFT, FWHT, and NTT, common execution templates implement
-indexing, traversal, publication, and buffer exchange. Arithmetic traits
-supply pair operations, coefficients, and scaling. Specialized cores retain
-their numerical restrictions and may require different boundary realizations.
+A \textbf{tile subgraph} binds closed regions to a core, ownership, storage,
+and handoffs. Common templates supply traversal and exchange for scalar
+radix-2 FFT, FWHT, and NTT; arithmetic traits supply operations, coefficients,
+and scaling. Specialized cores may require different boundary realizations.
+
+\subsection{Executing a bounded subgraph}
+\label{sec:subgraph-execution}
+Once inputs are ready, a compute group loads a tile, executes its operations
+in dependency order, and publishes its boundary values. Closure permits local
+execution because no internal operation needs an intermediate producer outside
+the region. For example, both pair stages of a four-value Hadamard row can
+execute locally before publication; columns still require all their input rows.
+Placement and lifetime must satisfy Section~\ref{sec:method}'s composition rules.
+
+The subgraph becomes the \textbf{unit of execution and communication}.
+Retaining its intermediates can remove outer-storage transfers and separate
+submissions, at the cost of local capacity, ports, and synchronization.
+Section~\ref{sec:scaling}'s resource trade-off determines the expected benefit.
+
+A compute group may process several tiles within one kernel, reusing storage
+after final reads. Only selected tiles and lookahead buffers occupy local
+storage, not the whole transform. Value residency and worker persistence are
+independent choices. A submission graph orders kernels; it does not itself
+retain their intermediates, and subgraph execution does not require one.
 
 \subsection{Successor-aligned writeback}
 A locally efficient producer may leave outputs inconveniently arranged for its
@@ -86,44 +101,35 @@ indices $(1,1,1,1)$ to $(1,0,3,2)$ without a separate data-reordering pass.
 On GPUs, such address remapping is commonly called a shared-memory bank
 swizzle~\cite{cudaSwizzle}.
 
-Choose a common address map for the producer's write group and successor's
-read group. Conflict analysis uses actual transactions, value width, and bank
-capacity; vector values and broadcasts require separate checks. Outer-storage
-layouts instead require alignment, transaction-count, and coalescing checks.
-Thus layout and ownership are chosen jointly; one XOR formula need not suit
-every core or storage scope.
+Conflict analysis uses actual transactions, value width, and bank capacity;
+vectors and broadcasts require separate checks. Outer-storage layouts require
+alignment, transaction-count, and coalescing checks. Thus one XOR formula
+need not suit every core or scope.
 
 \subsection{Residency, publication, and finite buffers}
-Correct placement still needs readiness and safe reuse. A resident tile
-subgraph tracks live values and unfinished consumers; an external handoff
-publishes a dependency unit. Successors start only after their predecessor sets
-are ready.
-A buffer slot is acquired before writing, published after production, and
-released after its final required read. More slots trade lookahead against
-live state and synchronization. Tail tiles retain their shape and release event.
+Correct placement still needs readiness and safe reuse. A buffer slot is
+acquired before writing, published after its values become visible, and
+released after its final required read. Tail tiles preserve this lifecycle.
+More slots trade lookahead against live state and synchronization.
 
 \textbf{Within-band pipelining and cross-band overlap are separate choices.}
-Figure~\ref{fig:pipeline} shows cross-band readiness at the top: one completed
-Hadamard row leaves every column waiting for three others. After the full row
-band publishes, columns can overlap another transform's rows if resources
-permit; the buffer remains live through the final read. The bottom shows
-within-band load/compute/store overlap using two slots, which can operate
-despite a barrier before the next band. Cross-band overlap additionally needs
-ready predecessors and a free buffer. Batch supplies work for both, subject to
-lowering, sharing, and lifetime constraints.
+Figure~\ref{fig:pipeline} contrasts cross-band readiness with two-slot
+load/compute/store overlap within a band. The latter can operate despite a
+barrier before the next band. Cross-band overlap additionally requires complete
+predecessor sets, free buffers, and execution resources. Once all Hadamard rows
+publish, their columns may overlap another transform's rows. Batch supplies
+independent work, but neither guarantees nor requires cross-band overlap.
 
 \subsection{Composing physical services}
-Placement and lifetime translate resource demand into completion time.
-A \textbf{service model} separates the startup, repeated work, and tail of a
-stage band's execution, avoiding the missing boundary costs of a sum of
-isolated core times,
+A \textbf{service model} translates placement and lifetime into startup,
+repeated work, and tail costs for each stage band,
 \begin{equation}
 T_{\mathrm{group}}=T_{\mathrm{start}}+R\,T_{\mathrm{step}}+T_{\mathrm{tail}}.
 \label{eq:serial}
 \end{equation}
-The terms depend on the core, tile shape, layout, launch geometry, and storage
-scope. A complete-kernel measurement already includes its launch and tail.
-Bulk execution sums stage-band services plus boundary costs not already included.
+Terms depend on core, tile, layout, launch geometry, and storage scope.
+Bulk execution sums band services and boundary costs, without recounting
+launches or tails already included in measured services.
 
 For $K$ tiles in a repeatable pipeline, the corresponding view is
 \begin{equation}
@@ -131,12 +137,10 @@ T_{\mathrm{pipe}}\mathrel{\approx}T_{\mathrm{fill}}+(K-1)\,\mathrm{interval}
                   +T_{\mathrm{drain}}.
 \label{eq:pipeline}
 \end{equation}
-Ready dependencies, finite-buffer reuse, and shared execution or memory
-resources limit the interval. Overlapped groups need not retain their isolated
-service rates. More independent work amortizes fill and drain and can cover
-transfer latency, but cannot exceed a saturated resource's throughput.
-The model ranks realizations under these assumptions rather than proving
-optimality.
+Dependencies, buffer reuse, and shared resources limit the interval;
+overlapped groups may lose their isolated service rates. Independent work
+amortizes fill/drain and can cover latency, but cannot exceed resource
+throughput. This model ranks realizations, without proving optimality.
 
 \begin{figure}[t]
 \centering

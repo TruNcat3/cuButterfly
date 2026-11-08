@@ -63,7 +63,9 @@ feasibility, while service rates distinguish promising organizations.
 
 We use this characterization to construct \textbf{hierarchical hybrid
 dataflow}. Repeating local retention and boundary exchange across storage
-scopes handles workloads beyond one local capacity. Boundary layouts account
+scopes handles workloads beyond one local capacity. Tile subgraphs realize
+these choices by executing dependent operations within a bounded local domain
+and publishing its boundary values. Boundary layouts account
 for producer writes and changing successor reads to control contention.
 Arithmetic, workload, and hardware remain separate inputs whose performance
 effects are evaluated jointly.

@@ -12,6 +12,11 @@ CPU比较。独立FWHT已用实际FP32参考核对，原FP64记录另保留。�
 
 以下按日期保留历史状态；旧负结果和当时缺测不代表当前修复版状态。
 
+**子图执行论证补充（同日）**：[执行与证据对应](evidence/SUBGRAPH_EXECUTION_20261108.md)
+连接依赖闭包、局部运行、边界发布及固定核心控制。A100既有数据支持具体子图组织
+的完整收益，不能单独分解为驻留、减少launch或流水的因果收益。方法与执行之间的
+这段论述此前不够明确；补齐不代表新增GPU测量或一般子图最优性的证明。
+
 2026-11-07 修复前后续[三项补证](../docs/a100_evidence_followup_20261107.md)完成：同十请求FWHT原生返回GM为0.936–0.938×；固定leaf强端点下FWHT两种核心为1.318/1.365×，NTT两种核心均保留原配置；[资源链](evidence/RESOURCE_DECISIONS_20261107.md)分别标明后验服务组合验证与前瞻实测选择。NTT数值服务预测及PRO6000跨架构证据未被本轮结果代替。
 
 随后[FWHT布局修复](../docs/fwht_native_repair_20261107.md)在三新进程、相同旧AUTO映射的显式重放上，将原生返回Dao/cu GM从0.941–0.955提高为1.013–1.031，指定输出从1.226–1.229提高为1.320–1.330。相同mapping新旧60对输出逐byte一致。旧十请求的CPU reference实际为FP64，已更正标注并补同精度FP32误差，最大绝对误差0.00048828125、L2相对误差1.503e-7，无新阈值。该新结果不改写前轮快照或冒充所有构建/所有接口均领先。
@@ -52,6 +57,7 @@ FFT-L 作为精度维度进入统一横评，只有公共已选点重放进入�
 | M3 | 正逆可复用组织方法，但须替换局部逆并反转顺序 | Method 局部 CT/GS、zeta/structured 说明；METHOD_BLUEPRINT.md 逆矩阵 | 24 次浮点正逆检查、20 次精确 NTT、96 个局部逆、12 个 zeta roundtrip | 小规模 CPU 不是所有 GPU 变体的支持证明；低精度另有舍入契约 |
 | M4 | 合法块级组合保持语义 | Method 的 Preserving the requested computation 拓扑归纳 | 明确四类前提；与实际边界/事件语义核对 | 条件性正确性论证，不是形式化验证整个 C++/CUDA 工程 |
 | M5 | 驻留收益须满足依赖和容量 | Method 活跃集；Execution 有限缓冲生命周期 | 单个大 FFT 的字节计数；buffer 语义核对 | 编译寄存器和真实 spills 仍需测量；不能汇总所有 SM SRAM 当单 CTA 容量 |
+| M5a | 闭合子图可作为有界执行与通信单位，局部核心不必改变 | Execution 的 Executing a bounded subgraph；Evaluation 固定核心四格；[证据映射](evidence/SUBGRAPH_EXECUTION_20261108.md) | 两radix16步形成256值驻留prefix，内部shared交换，后续外部边界不变；两leaf组织GM 1.217/1.221× | 固定的是leaf与目标变换，所有权、线程、wrapper和launch可变；证明联合组织收益，不单独证明驻留、少launch、内部流水各自的收益；submission graph不等于子图内驻留 |
 | M6 | 写回可对齐后继读取 | Execution layout 契约及单词 XOR 例子 | 5 种 bank 数的双射、行/列访问；非 swizzle 反例 | 不推广为任意多字节/向量访存无冲突；global 合并另测 |
 | M7 | 增加独立数据可扩大 overlap 机会，但收益取决于资源、依赖和编排成本 | Execution 稳态 II、资源/依赖下界；Evaluation mechanism controls | 解析条件成立；历史 A100 80GB pipeline/bulk 27 对中 pipeline 全部落后，N4096 B64 为45.636/29.266 µs；factor-streamed FFT 两核心开启 slice overlap 均退化 | 不保证更多 batch、更多缓冲或观察到 overlap 就有收益；历史27点 cohort 的 FWHT 最大40.287%误差保留其原始合同，不代表当前主横评全部FWHT的误差或验收状态 |
 | S1 | 已实现语义—映射—lowering—生成—重放链路 | Search；`docs/unified_planner.md` | 代码/文档接口对应 | 特定 abstract schedule 仍可能 needs-lowering；不声称通用任意 CUDA 程序生成 |

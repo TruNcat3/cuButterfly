@@ -12,6 +12,7 @@ should not be substituted for one another.
 | **Dependency-closed region** | The values and operations reachable within a stage band while all other index bits are fixed. It is the logical unit derived from dependencies. | A worker block or a compiled kernel |
 | **Tile subgraph** | The executable lowering of one or more dependency-closed regions, including its arithmetic core, ownership, storage, and handoffs. | Every arbitrary rectangular tile |
 | **Resident tile subgraph** | A tile subgraph whose intermediate values remain at a selected storage scope during its local execution. | A persistent worker or a permanently resident kernel |
+| **Subgraph execution** | Executing a tile's dependent operations with explicit local value lifetimes and boundary publication. A compute group may process several tiles in one kernel. | Merely capturing kernel launches in a submission graph, or claiming all transform intermediates reside locally |
 | **Handoff** | The producer-to-consumer transfer at a stage-band boundary, including readiness and value representation. | An unrelated input/output copy |
 | **Boundary packet** | A dependency domain whose producer and consumer relations do not cross its fixed outside bits. | A physical buffer or a scheduling queue |
 | **Traversal group** | Independent transforms visited by the same scheduling group. In the NTT endpoint study, `data_time` controls this grouping. | A boundary packet, a larger dependency-closed region, or proof of simultaneous value residency |

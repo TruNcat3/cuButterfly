@@ -224,12 +224,13 @@ This is an integration control, not fixed-core attribution.
 \subsection{Ablations}
 \textbf{Question 3: What does organization contribute with a fixed core?}
 \label{sec:core-organization}
-We first hold the arithmetic leaf fixed and vary execution organization,
-then test whether gains survive stronger conventional endpoints.
+We test subgraph execution (Section~\ref{sec:subgraph-execution}) with fixed
+leaves, stronger endpoints, and other arithmetic families.
 Figure~\ref{fig:core-organization}a crosses register and cuFFTDx Thread
-16-point FFT leaves with stagewise exchange and a resident two-stage prefix,
-sharing later stages. The four cells separate organization changes from
-core substitution.
+16-point FFT leaves with external exchange between radix-16 steps and a
+resident 256-value prefix spanning two such steps (eight radix-2 stages).
+Intermediate storage is shared; later steps are unchanged. These four cells
+separate subgraph organization from core substitution.
 
 \begin{figure}[!hbp]
 \centering
@@ -243,12 +244,14 @@ seven full-library rounds.}
 \end{figure}
 
 Six FP32 workloads, four cells, and three trials produce 72 checked rows,
-with 10,000 warmups and 100 repetitions. Residency improves all six workloads
+with 10,000 warmups and 100 repetitions. The resident organization improves all six workloads
 for both leaves, giving GM 1.217/1.221$\times$, versus 1.042/1.046$\times$
 from core substitution at fixed organization. Independent replication gives
 organization gains of 1.226/1.231$\times$.
-The intervention changes ownership, storage, and launches, not arithmetic;
-for example, the $N=256,B=1$ organizations launch 16 and 256 threads.
+Ownership, storage, launches, and wrappers change while the leaf and requested
+transform stay fixed. At $N=256,B=1$, the organizations launch 16 and 256
+threads. This measures complete subgraph-organization gains, not residency
+alone or internal overlap.
 
 \textbf{A stronger endpoint bounds the organization gain.}
 The FP64 control at $N=65536,B=16$ fixes two 256-point factors, four local
@@ -269,8 +272,9 @@ FP64 and word64 NTT while varying local stage grouping. It covers 18 workloads
 at $N=2^{16},2^{20}$ and $B=1,4,16$, three organizations, and three process
 trials, for 162 observations. Two-stage groups give GM 1.196/1.106/1.199$\times$
 for FFT/FWHT/NTT; groups of up to four stages give
-0.932/1.103/0.816$\times$. The shared trade-off admits different preferred
-organizations rather than a universally beneficial mechanism.
+0.932/1.103/0.816$\times$. Here the two outer bands remain fixed; local grouping
+changes exchanges within them. This complements the FFT external-boundary
+control and shows that subgraph organization also matters within a storage scope.
 
 \textbf{One construction, different organization choices.}
 \label{sec:decision-walkthrough}
