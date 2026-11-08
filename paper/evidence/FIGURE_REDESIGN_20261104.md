@@ -92,8 +92,9 @@ wide architecture content with a compact single-column realization.
 ## Scope expansion after visual review (2026-11-05)
 
 The next visual pass expands the displayed evidence without adding synthetic
-values. Figure 10 now exposes all 72 FP32 trial ratios and 63 FP64 Graph timing
-rounds behind the fixed-core summaries. Figure 11 uses the audited
+values. Counting correction (2026-11-08): Figure 10 exposes 36 paired FP32
+ratios from 72 timing rows and 56 FP64 local-core timings; the cuFFT line/band
+summarize seven further timing rounds. Original values and estimators are unchanged. Figure 11 uses the audited
 `motivation_organization_a100.csv` cohort directly: 18 workloads, 54 cells,
 and 162 observations across FFT, FWHT, and NTT. Figure 9 remains a single
 axis without a schematic inset and adds four separately shaded historical

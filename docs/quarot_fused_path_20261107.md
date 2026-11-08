@@ -57,8 +57,14 @@ CKKS and bootstrap use device-event sample means; FNO/QuaRot use wall medians,
 and filtering/Poisson use event medians. There is no pooled application mean.
 The main operator table now counts native, adapted and axis-composed comparisons.
 Main FWHT's 1.474x includes copying Dao's returned tensor into a caller-supplied
-output; it does not establish a bare-core gain. A returned-tensor comparison
-for those same ten requests remains unmeasured. The matched QuaRot subrequest
+output; it does not establish a bare-core gain. At this November 7 audit checkpoint, a returned-tensor comparison
+for those same ten requests was unmeasured. The subsequent
+[FWHT native-return repair and public DEFAULT check](fwht_native_repair_20261107.md)
+closes that gap: three-process matched replay gives native-return GM
+1.013–1.031x and supplied-output GM 1.320–1.330x; the separate single-process
+public DEFAULT check gives 1.009x/1.324x. These later FP32 ten-request results
+retain their own build and contract and do not replace the FP16-storage QuaRot
+subrequests or full-model measurements. The matched QuaRot subrequest
 diagnostic above already consumes Dao's returned tensor directly.
 
 ## Relation to the full model

@@ -1,9 +1,7 @@
 \section{Conclusion}
-\system{} derives local regions, communication and readiness relations, and
-resource demands from butterfly dependencies. Hierarchical hybrid organization
-reuses this construction across arithmetic cores and workloads while evaluating
-its demands under target hardware constraints. Fixed-core experiments isolate
-organization gains; library and application comparisons expose both benefits
-and losses. The evidence supports a reusable organization method on the tested
-A100 workloads and numerical contracts, rather than a universal mapping or
-hardware optimum.
+\system{} derives resource demands and executable handoffs from butterfly
+dependencies. Hierarchical hybrid dataflow uses this construction to organize
+compatible cores and workloads under hardware constraints. Fixed-core controls
+establish conditional organization gains, while library and application
+comparisons measure practical benefits and losses on the tested A100 workloads
+and numerical contracts. Cross-architecture performance remains unvalidated.

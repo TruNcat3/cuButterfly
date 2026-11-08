@@ -24,7 +24,7 @@ should not be substituted for one another.
 | **Compute group** | Cooperating execution resources assigned to execute tile subgraphs at a selected scope. | A stage band or a sequence of launches |
 | **Arithmetic core** | A compatible local arithmetic implementation with explicit numerical semantics, value roles, and resource requirements. | The complete execution organization |
 | **Hierarchy** | Repeating the same dependency, handoff, and resource construction across bounded storage scopes. | Assuming that a larger logical region creates more hardware capacity |
-| **Performance characterization** | The demand record for a legal organization: live state, boundary traffic, arithmetic work, ready work, storage needs, and service assumptions. | The search algorithm or a measured latency by itself |
+| **Performance characterization** | The demand record for a legal organization: live state, boundary traffic, arithmetic work, ready work, storage needs, and service assumptions. The introduction calls its dependency-derived construction **dependency-driven resource characterization**; this is the same demand description, not a second model. | The search algorithm or a measured latency by itself |
 | **Operator contract** | Arithmetic semantics and observable numerical requirements: coefficients, direction, normalization, precision, and logical input/output order. | A storage layout or an implementation configuration |
 | **Workload domain** | The instantiated sizes, batch, placement, strides, and storage layout for one request. | Arithmetic semantics or a hardware capability |
 | **Hardware capability** | Target capacities, storage services, execution services, compatible cores, and measured rates. | A workload-specific plan |

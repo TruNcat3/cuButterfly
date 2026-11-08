@@ -1,5 +1,35 @@
 # Working-draft validation
 
+## Evidence consolidation — 2026-11-08
+
+Both manuscript entries compile to 14 pages, down from 15, with the original
+IEEEtran font sizes and geometry. The evaluation source has 2,838 whitespace
+words versus 3,323 before revision (including captions and LaTeX commands).
+Two core contributions lead the argument; evaluation keeps setup, comparisons,
+ablations, and analysis. Repeated application rows remain in their frozen table,
+and the 18-workload organization cohort is shown once with its resource counters.
+
+The separate FWHT table reports three-process native/supplied-output GM ranges
+and the distinct public DEFAULT check. Each range was recomputed from the
+frozen per-process ratios. No main66, cyclic, FP16, application or timing CSV
+was modified, and no GPU experiment or benchmark queue was started.
+The preparation-cost paragraph records the CPU optimization's actual limits.
+
+The fixed-core figure's label formerly confused 72 FP32 timing rows with
+36 paired ratios. Both the figure and metadata now distinguish those counts.
+The FP64 panel shows 56 local-core timing points and summarizes seven cuFFT
+rounds with a line/band. Re-rendering validates historical input hashes and
+all original estimators; its three CSVs remain byte-identical. This is a
+count-label correction, not additional measurements or changed speedups.
+
+Both TeX logs have no undefined references/citations, missing characters, or
+overfull boxes. Existing underfull-box and input-PDF-version advisories remain.
+Rendered pages were reviewed at manuscript size, including the updated interface
+table, fixed-core caption, resource analysis, related work, and references.
+Repository checks and changed-document link checks passed. These checks establish
+manuscript consistency, not new hardware validation or submission readiness.
+See [the evidence record](evidence/PAPER_CONSOLIDATION_20261108.md).
+
 ## Public FP16 cohort update — 2026-11-06
 
 The operator plot and table now show nine completed public DEFAULT FP16

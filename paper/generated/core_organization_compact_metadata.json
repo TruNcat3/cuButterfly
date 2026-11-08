@@ -7,7 +7,7 @@
   "png_dpi": 600,
   "matplotlib": "3.10.9",
   "python": "3.10.6",
-  "renderer_sha256": "aeb7ed45277255537c877aca27d6fc01450a9922b96a33d84a314fff8ca23482",
+  "renderer_sha256": "d2df86abcc63164d79634f4bf2333feb9a7619f8b1b9f437b110c65c2b42a0fa",
   "source_hashes": {
     "results/paper_completion_20260917/core_dataflow_ablation/summary.json": "cee2270fb7a747f532557b58ecb34d99c8a46128ece787b33cf78a7267b41e56",
     "results/paper_completion_20260917/core_dataflow_ablation/measurements.csv": "a151dde5e839b09ff62e40519628cbe0b88bbc1fdd8838f68fe61c1d0e71d5e8",
@@ -55,26 +55,29 @@
   },
   "panel_a": {
     "estimator": "stagewise cell median / resident cell median",
-    "range": "min/max of 3 trial-paired ratios; markers show all 72 raw trial ratios",
+    "range": "min/max of 3 trial-paired ratios; markers show all 36 paired ratios from 72 raw timing rows",
     "cells": 12,
     "trial_rows": 72,
+    "paired_ratios": 36,
     "scope": "historical Sep17 matched-core FP32 control; A100 80GB"
   },
   "panel_b": {
     "estimator": "median of 7 Graph timing rounds, ms * 1000",
-    "range": "min/max of 7 timing rounds; markers show all 63 timing rounds",
+    "range": "min/max of 7 timing rounds; markers show 56 local-core timings; cuFFT line/band summarize 7 rounds",
     "cells": 9,
     "timing_rows": 63,
+    "point_markers": 56,
+    "baseline_rounds": 7,
     "scope": "Explicit matched-organization mechanism diagnostic; not AUTO selection or an external provider's native organization. NativeFactor is the auditable repository register-tile implementation, not a VkFFT core transplant. cuFFT is a complete-library comparator."
   },
   "cohorts": "Independent experiments; no pooled statistics or cross-panel numerical comparisons",
   "exclusions": [],
-  "validation": "All 12 FP32 cells and 72 trial ratios plus all 9 FP64 cells and 63 timings match original figure CSVs at 1e-12 tolerance",
+  "validation": "All 12 FP32 cells and 36 paired ratios from 72 timings plus all 9 FP64 cells and 63 timings match original figure CSVs at 1e-12 tolerance",
   "publisher_status": "General manuscript figure; no venue compliance claim",
   "outputs": {
-    "paper/figures/core_organization_compact.pdf": "699e930b5fcdacc2af8053c1010f7ca159a89dfd96abf2a56e41bcab836388ec",
-    "paper/figures/core_organization_compact.png": "fa0b8f634a74ecf09bfcac38b3e2871cd182754c79067be0581db5d045ba13fc",
-    "paper/figures/core_organization_compact.svg": "7fc7b89ed4ebf57666c32679d012e87623209ca481371d032c9b59effa8826ba",
+    "paper/figures/core_organization_compact.pdf": "13adc5e1de62a8627eb10843e3cfd8699cf04bf109790b0cec6151083676dca5",
+    "paper/figures/core_organization_compact.png": "3f309b22f72705a5316d91ac09691d58cf72c742306ea605055b8ec57bf0388e",
+    "paper/figures/core_organization_compact.svg": "b417eff520172ebc1029ea4c93cff78bc6e8c9e6944b39cf7a09004943235d3f",
     "paper/generated/core_organization_compact_fp32_points.csv": "ae2f8bd834689b06628499dcb489a68aceb8aa650e569f7a9a6d388d170f3fce",
     "paper/generated/core_organization_compact_fp32_measurements.csv": "7063e3dce946ab8a5e5d01ab83a8f49e51e894d79bc2502b9d60fb83a3488fd0",
     "paper/generated/core_organization_compact_fp64_latency.csv": "ce86af367d203f49983d8a282096e789120e7c222cd01d26f89338f159b64fec"

@@ -1,8 +1,9 @@
 \section{Related Work}
 \label{sec:related}
 \input{generated/related_work_table}
-Related systems optimize transform formulas, arithmetic cores, tensor programs,
-and hardware mappings.
+Prior work provides transform generation, specialized execution, and reusable
+hardware mapping abstractions. We build on these foundations to connect
+butterfly dependencies to resource demand and executable handoffs.
 
 \noindent\textbf{Transform generation and specialized execution.}
 FFTW combines codelets with empirical planning; SPIRAL/FFTX generates
@@ -16,13 +17,10 @@ and memory-aware fusion~\cite{flashfftconv2024}. HadaCore maps FWHT chunks
 to warps and vectors to threadblocks with shared-memory transposes
 \cite{hadacore2024}. These systems optimize both arithmetic and organization.
 
-Table~\ref{tab:related-work} separates their representative operators, units,
-stage decompositions, independent-work mappings, and boundary mechanisms.
-A GPU kernel is a launched program; a tile subgraph groups computation and
-values for scheduling and residency. Kernels can execute tile subgraphs, and
-larger subgraphs can span kernels. Stage fusion can retain intermediates while
-reusing execution resources over time, so it does not alone establish a
-spatial pipeline.
+Table~\ref{tab:related-work} compares representative execution and placement
+mechanisms. These precedents make specialized organization a starting point
+for our study: we ask which construction and selection rules can be shared
+while retaining their arithmetic specialization.
 
 \noindent\textbf{Tensor compilation and tile scheduling.}
 TVM separates computation from scheduling~\cite{tvm2018}; Ansor searches
@@ -31,7 +29,7 @@ hardware-aligned tiles~\cite{roller2022}. TensorIR provides block signatures,
 outer transformations, and tensorization~\cite{tensorir2023}. Welder connects
 producer/consumer tiles and schedules reuse through traffic and footprint
 estimates~\cite{welder2023}. These establish tiling and reusable compute
-interfaces. Their generality alone does not verify transform-specific support.
+interfaces.
 For butterflies, the changing pair relation identifies the values needed by
 a stage group and the producers that a successor must await, before choosing
 a physical tile or arithmetic core. This separates dependency construction
@@ -46,17 +44,15 @@ requires legal resident tile subgraphs and their remaining communication. GPU
 blocks also share resources, precluding an assumption of dedicated pipeline
 hardware.
 
-Our distinction concerns the common dependency interface. SPIRAL/FFTX derives
-implementations from algebraic transform decompositions, including surrounding
-computation~\cite{spiral2005,fftx2018}. Timeloop evaluates hierarchical mappings
-from workload and architecture descriptions~\cite{timeloop2019}. These precedents
-motivate separating arithmetic from organization; that separation alone is not
-our novelty. We derive the butterfly-specific link between dependencies and
-resource demand: stage-bit sets construct dependency-closed regions, and their
-intersections derive communication and readiness
-(Section~\ref{sec:method}). Spatial and temporal organization then determines
-the demands evaluated against hardware constraints. The contribution is this butterfly-specific construction, not the general
-idea of spatial/temporal dataflow or a claim that prior systems cannot express
-equivalent programs. It retains specialized arithmetic across workloads and
-hardware constraints. The fixed-core experiments in Section~\ref{sec:core-organization} isolate this organization
-effect from arithmetic substitution.
+Our distinction is the butterfly-specific connection between dependencies
+and resource demand. Stage-bit sets construct dependency-closed regions;
+their intersections derive communication and readiness
+(Section~\ref{sec:method}). Spatial and temporal choices then characterize
+live state, transfers, core work, and ready work at each storage scope.
+Hierarchical hybrid dataflow uses this characterization to construct residency
+and handoffs while retaining compatible specialized cores. The general ideas
+of transform generation, arithmetic/schedule separation, and hierarchical
+dataflow have the precedents above; we do not claim that prior systems cannot
+express equivalent programs. Fixed-core experiments
+(Section~\ref{sec:core-organization}) test whether the resulting organization
+choices improve performance independently of arithmetic substitution.

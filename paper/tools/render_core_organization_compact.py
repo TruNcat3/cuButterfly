@@ -132,7 +132,7 @@ def main():
             selected = [r for r in a if r["core"] == core]
             med = [r["ratio"] for r in selected]
             # Show every paired trial behind the cell summary.  This exposes
-            # the 36 observations per core without changing the estimator.
+            # the 18 paired observations per core without changing the estimator.
             for i, row in enumerate(selected):
                 trials = json.loads(row["trial_ratios"])
                 jitter = np.linspace(-.026, .026, len(trials))
@@ -189,13 +189,15 @@ def main():
         fig.text(.105, .92, "FP32 · 16-point leaves", fontsize=6, va="top")
         fig.text(.595, .975, "(b) Tile supply", fontsize=7, va="top", weight="bold")
         fig.text(.595, .92, "FP64 · 256-point factors", fontsize=6, va="top")
-        fig.text(.5, .045, "Markers show every paired trial (72 FP32, 63 FP64); bars/lines are cell summaries.\nPanels use independent FFT workloads; not a cross-precision comparison.",
+        fig.text(.5, .045, "Points: 36 paired FP32 ratios; 56 FP64 core timings.\ncuFFT line/band: 7 rounds. Panels use independent workloads.",
                  ha="center",fontsize=6,linespacing=1.2)
         outputs = []
         for ext in ("pdf", "png", "svg"):
             path = FIGURES / f"{STEM}.{ext}"
             extra = {"metadata": {"CreationDate": None, "ModDate": None}} if ext == "pdf" else {}
             fig.savefig(path, dpi=600, facecolor="white", transparent=False, **extra)
+            if ext == "svg":
+                path.write_text("\n".join(line.rstrip() for line in path.read_text().splitlines()) + "\n")
             if ext == "png":
                 with Image.open(path) as image:
                     rgb = image.convert("RGB")
@@ -216,19 +218,19 @@ def main():
                     frozen_sources={k: {"path": v["path"], "sha256": v["sha256"]}
                                     for k, v in snapshot["sources"].items()},
                     panel_a={"estimator": "stagewise cell median / resident cell median",
-                             "range": "min/max of 3 trial-paired ratios; markers show all 72 raw trial ratios",
-                             "cells": 12, "trial_rows": 72,
+                             "range": "min/max of 3 trial-paired ratios; markers show all 36 paired ratios from 72 raw timing rows",
+                             "cells": 12, "trial_rows": 72, "paired_ratios": 36,
                              "scope": "historical Sep17 matched-core FP32 control; A100 80GB"},
                     panel_b={"estimator": "median of 7 Graph timing rounds, ms * 1000",
-                             "range": "min/max of 7 timing rounds; markers show all 63 timing rounds",
-                             "cells": 9, "timing_rows": 63,
+                             "range": "min/max of 7 timing rounds; markers show 56 local-core timings; cuFFT line/band summarize 7 rounds",
+                             "cells": 9, "timing_rows": 63, "point_markers": 56, "baseline_rounds": 7,
                              "scope": snapshot["scope"]},
                     cohorts="Independent experiments; no pooled statistics or cross-panel numerical comparisons",
-                    exclusions=[], validation="All 12 FP32 cells and 72 trial ratios plus all 9 FP64 cells and 63 timings match original figure CSVs at 1e-12 tolerance",
+                    exclusions=[], validation="All 12 FP32 cells and 36 paired ratios from 72 timings plus all 9 FP64 cells and 63 timings match original figure CSVs at 1e-12 tolerance",
                     publisher_status="General manuscript figure; no venue compliance claim",
                     outputs={str(p.relative_to(ROOT)): sha(p) for p in outputs})
     (GENERATED / f"{STEM}_metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
-    print("Rendered 3.45 x 2.50 inches; 12 FP32 cells/72 trials and 9 FP64 cells/63 timings match original CSVs")
+    print("Rendered 3.45 x 2.50 inches; 12 FP32 cells/36 paired ratios/72 timings and 9 FP64 cells/63 timings match original CSVs")
 
 
 if __name__ == "__main__":
