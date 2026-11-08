@@ -65,12 +65,15 @@ def _positive_rates(profile):
 
 
 def _sample(value):
-    sample = copy.deepcopy(value)
+    # Normalization only changes top-level fields. PreparedPredictor owns the
+    # independent snapshot used for scoring; nested descriptors stay read-only.
+    sample = dict(value)
     mapping = costs.decoded(sample.get("mapping_json"), {})
     if not isinstance(mapping, dict):
         raise ValueError("mapping_json must encode an object")
     for key, item in mapping.items():
         sample.setdefault(key, item)
+    sample["mapping_json"] = mapping
     groups = costs.decoded(sample.get("execution_groups_json"), [])
     if not isinstance(groups, list) or not groups or not all(isinstance(g, dict) for g in groups):
         raise ValueError("physical execution groups must be a nonempty array of objects")
@@ -93,9 +96,9 @@ def _single_chunk_service_view(sample):
     tile = int(costs.number(sample, "batch_tile_count", 1))
     if batch < 1 or tile < batch:
         return sample, False
-    serial = copy.deepcopy(sample)
+    serial = dict(sample)
     serial.update(stage_overlap=False, batch_tile_count=1)
-    mapping = costs.decoded(serial.get("mapping_json"), {})
+    mapping = dict(costs.decoded(serial.get("mapping_json"), {}))
     mapping.update(stage_overlap=False, batch_tile_count=1)
     serial["mapping_json"] = mapping
     serial.pop("stage_service_projection", None)

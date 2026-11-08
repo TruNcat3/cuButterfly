@@ -205,7 +205,7 @@ def _shared_data_tiles(group, mapping, sample):
                   number(mapping, "data_tiles_per_cta", number(sample, "data_tiles_per_cta", 1)))
 
 
-def stage_terms(sample, profile, *, mapping=None):
+def stage_terms(sample, profile, *, mapping=None, _prior_cache=None):
     """Return hardware-rate priors in ms per physical launch, plus provenance."""
     groups = decoded(sample.get("execution_groups_json"), [])
     if not groups:
@@ -248,8 +248,9 @@ def stage_terms(sample, profile, *, mapping=None):
                 mapping, "local_stage_partition", group_index, [])
         arithmetic_work = None
         if mapping.get("backend", sample.get("backend")) == "shared-iterative":
-            arithmetic_work = shared_work_geometry(int(stages), int(threads), local_partition,
-                                                   _shared_data_tiles(group, mapping, sample))
+            geometry = shared_work_geometry if _prior_cache is None else _prior_cache.geometry
+            arithmetic_work = geometry(int(stages), int(threads), local_partition,
+                                       _shared_data_tiles(group, mapping, sample))
             # This heuristic scales a rate prior, not actual issued instructions
             # or measured service. Without resident CTA limits it can overpenalize.
             compute /= arithmetic_work["allocated_lane_utilization"]
@@ -277,7 +278,8 @@ def stage_terms(sample, profile, *, mapping=None):
         barriers = (1000 * grid * barrier_count / number(caps, required[3])) if live else 0
         # Independent launch/CTA probes supply this shared hardware term. Old
         # capability files retain explicitly marked priors until upgraded.
-        schedule = scheduling_costs(profile, threads, grid, sm_count)
+        schedule = (scheduling_costs(profile, threads, grid, sm_count) if _prior_cache is None
+                    else _prior_cache.schedule(threads, grid, sm_count))
         dispatch = schedule["dispatch_ms"]
         body = max(memory, compute, shared, barriers, dispatch, 1e-9)
         terms.append(dict(key=primitive_key(sample, group, mapping, group_index=group_index), startup_and_tail=schedule["startup_ms"], scheduling=schedule,
@@ -793,6 +795,36 @@ def _predict_terms(sample, terms, model, explain=False, *, composer=compose_stag
     return details if explain else estimate
 
 
+class _StagePriorCache:
+    """Pure subexpressions under one private, fixed hardware profile."""
+
+    def __init__(self, profile):
+        self._profile = profile
+        self._schedules = {}
+        self._geometries = {}
+
+    def schedule(self, threads, grid, sm_count):
+        key = (threads, grid, sm_count)
+        if key not in self._schedules:
+            self._schedules[key] = scheduling_costs(self._profile, *key)
+        return dict(self._schedules[key])
+
+    def geometry(self, stages, threads, partition, tiles):
+        # Do not normalize malformed inputs into valid cache hits: the public
+        # function owns their validation and exception semantics.
+        if (not isinstance(partition, (list, tuple)) or
+                any(type(extent) is not int for extent in partition) or
+                type(tiles) not in (int, float) or
+                (type(tiles) is float and not math.isfinite(tiles))):
+            return shared_work_geometry(stages, threads, partition, tiles)
+        key = (stages, threads, tuple(partition), tiles)
+        if key not in self._geometries:
+            self._geometries[key] = shared_work_geometry(stages, threads, partition, tiles)
+        value = self._geometries[key]
+        # Every prepared sample owns its exposed mutable dictionaries.
+        return dict(value, leaves=[dict(leaf) for leaf in value["leaves"]])
+
+
 class PreparedPredictor:
     """Prepare fixed candidate features once, then bind each fitted model.
 
@@ -806,6 +838,7 @@ class PreparedPredictor:
 
     def __init__(self, model):
         self._profile = copy.deepcopy(model["profile"])
+        self._prior_cache = _StagePriorCache(self._profile)
         self._service = copy.deepcopy(model.get("stage_service"))
         self._mode = (model.get("version"), model.get("service_model"))
         self._preparation_model = model
@@ -820,7 +853,7 @@ class PreparedPredictor:
         snapshot = copy.deepcopy(sample)
         try:
             terms = (_prepare_measured(snapshot, self._preparation_model) if self._measured
-                     else stage_terms(snapshot, self._profile))
+                     else stage_terms(snapshot, self._profile, _prior_cache=self._prior_cache))
         except ResourceInfeasibleError as error:
             terms = error
         return (self, snapshot, terms)

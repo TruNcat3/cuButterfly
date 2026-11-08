@@ -1068,13 +1068,16 @@ Json ranking_hardware(const HardwareResourceModel& h) {
         {"cooperative_launch",h.cooperative_launch}};
 }
 Json ranking_sample(const ButterflyConfig& c, const MixedDataflowPlan& plan) {
-    auto sample=Json::parse(serialize_mapping(c));
+    // Keep the complete mapping once. The shared ranker merges its fields into
+    // the private cost view; duplicating it at the top level and as an escaped
+    // string multiplies serialization and parsing costs for large inventories.
+    Json sample={{"mapping_json",Json::parse(serialize_mapping(c))}};
     sample.update({{"operator",butterfly_operator_name(c.op)},{"precision",butterfly_precision_name(c.precision)},
         {"accumulation",butterfly_accumulation_name(c.accumulation)},{"placement",butterfly_placement_name(c.placement)},
         {"logN",c.log_n},{"batch",c.batch},{"direction",c.inverse ? "inverse":"forward"},
         {"normalization",c.normalize_inverse ? "inverse":"none"},
         {"element_stride",c.element_stride},{"batch_stride",c.batch_stride},
-        {"mapping_json",serialize_mapping(c)},{"execution_groups_json",cubutterfly::execution_groups_json(plan)}});
+        {"execution_groups_json",cubutterfly::execution_groups_json(plan)}});
     if (!c.stage_matrices.empty()) {
         // Match the benchmark/calibration semantic encoding exactly.
         std::ostringstream matrices;
@@ -1089,12 +1092,12 @@ Json ranking_sample(const ButterflyConfig& c, const MixedDataflowPlan& plan) {
     return sample;
 }
 Json ranking_sample(const PlanConfig& c, const MixedDataflowPlan& plan) {
-    auto sample=Json::parse(serialize_mapping(c));
+    Json sample={{"mapping_json",Json::parse(serialize_mapping(c))}};
     sample.update({{"operator","ntt"},{"precision","word"+std::to_string(c.word_bits)},
         {"logN",c.log_n},{"batch",c.batch},{"modulus",c.modulus},
         {"direction",c.inverse ? "inverse":"forward"},{"normalization",c.inverse ? "inverse":"none"},
         {"input_order",input_order_name(c.input_order)},{"output_order",output_order_name(c.output_order)},
-        {"mapping_json",serialize_mapping(c)},{"execution_groups_json",cubutterfly::execution_groups_json(plan)}});
+        {"execution_groups_json",cubutterfly::execution_groups_json(plan)}});
     if (c.backend != Backend::SharedIterative) {
         // Legacy logical groups do not necessarily describe physical launches:
         // copy/scale and cooperative multi-role kernels need their own contract.

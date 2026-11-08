@@ -505,3 +505,79 @@ def test_full_workload_holdout_does_not_leak_coefficients():
     assert result["validation"]["holdout_valid_multi_candidate_workloads"] == 3
     assert result["status"] == "calibrated-local-warning"
     assert not result["usable_for_unmeasured_ranking"]
+
+
+@pytest.mark.parametrize('operator,precision', [('fft', 'fp16'), ('fft', 'fp64'),
+                                               ('fwht', 'fp32'), ('ntt', 'word64')])
+@pytest.mark.parametrize('overlap', [0, 1])
+def test_prepared_prior_cache_exact_and_independent(operator, precision, overlap, monkeypatch):
+    profile = copy.deepcopy(PROFILE)
+    profile['scheduling'] = dict(shapes=[dict(threads=64, dispatch_identified=True,
+        startup_ms=.004, dispatch_ms_per_cta=.000001, measured_grid_range=[1, 4096])])
+    fitted = model.fit([], profile)
+    value = dict(sample((4, 8), batch=3), operator=operator, precision=precision,
+                 backend='shared-iterative', stage_overlap=overlap, batch_tile_count=2,
+                 mapping_json=dict(backend='shared-iterative',
+                                   local_stage_partitions=[[2, 2], [4, 4]]))
+    for group in value['execution_groups_json']:
+        group.update(codelet='native-register-subgraph', exchange_chunk=2,
+                     elements_per_thread=8, compiler_resources_known=True,
+                     compiler_registers_per_thread=16)
+    expected = model.predict(value, fitted, True)
+    predictor = model.PreparedPredictor(fitted)
+    calls = dict(schedule=0, geometry=0)
+    original_schedule, original_geometry = model.scheduling_costs, model.shared_work_geometry
+    def schedule(*args):
+        calls['schedule'] += 1
+        return original_schedule(*args)
+    def geometry(*args):
+        calls['geometry'] += 1
+        return original_geometry(*args)
+    monkeypatch.setattr(model, 'scheduling_costs', schedule)
+    monkeypatch.setattr(model, 'shared_work_geometry', geometry)
+    first, second = predictor.prepare(value), predictor.prepare(value)
+    assert calls == dict(schedule=2, geometry=2)
+    score = predictor.bind(fitted)
+    assert score(first, True) == expected == score(second, True)
+    value['execution_groups_json'][0]['threads'] = 128
+    first_output = score(first, True)
+    first_output['stages'][0]['scheduling']['startup_ms'] = 999
+    first_output['stages'][0]['arithmetic_work']['leaves'][0]['rounds'] = 999
+    first_output['stages'][0]['unknown_resources'].append('mutated')
+    assert score(second, True) == expected
+    third = predictor.prepare(second[1])
+    assert score(third, True) == expected
+    changed = copy.deepcopy(fitted)
+    changed['profile']['scheduling']['shapes'][0]['startup_ms'] *= 2
+    with pytest.raises(ValueError, match='profile or mode changed'):
+        predictor.bind(changed)
+    other = model.PreparedPredictor(changed)
+    assert other.bind(changed)(other.prepare(second[1]), True) == model.predict(second[1], changed, True)
+
+
+@pytest.mark.parametrize('partition,tiles', [([True, 3], 1), ([2, 2], 2), ([1], 1),
+                                            ([4], 3), ([4], float('nan'))])
+def test_prepared_geometry_cache_preserves_invalid_inputs(partition, tiles):
+    cache = model._StagePriorCache(PROFILE)
+    cache.geometry(4, 64, [1, 3], 1)
+    with pytest.raises((ValueError, TypeError, OverflowError)) as expected:
+        model.shared_work_geometry(4, 64, partition, tiles)
+    with pytest.raises(type(expected.value), match=__import__('re').escape(str(expected.value))):
+        cache.geometry(4, 64, partition, tiles)
+
+
+@pytest.mark.parametrize('hardware', [dict(max_threads_per_block=32),
+                                        dict(shared_bytes_per_block=128),
+                                        dict(registers_per_block=128),
+                                        dict(max_threads_per_block=1024, shared_bytes_per_block=65536)])
+def test_prepared_prior_cache_preserves_resource_predictions(hardware):
+    fitted = model.fit([], dict(PROFILE, hardware=hardware))
+    value = dict(sample((4, 8)), backend='shared-iterative')
+    value['execution_groups_json'][0].update(compiler_resources_known=True,
+                                           compiler_registers_per_thread=16)
+    predictor = model.PreparedPredictor(fitted)
+    expected = model.predict(value, fitted, True)
+    for _ in range(2):
+        prepared = predictor.prepare(value)
+        assert predictor.bind(fitted)(prepared, True) == expected
+        assert predictor.bind(fitted)(prepared) == model.predict(value, fitted)

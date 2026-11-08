@@ -21,6 +21,16 @@ See the [static profile policy](hardware_profile_install.md#static-profile-polic
 for compatibility and exploration-budget controls; a missing physical cost
 descriptor is a modeling gap, not an unsupported operator.
 
+The ranking bridge sends a complete mapping object once, alongside semantic
+overrides and physical groups. Its existing normalization restores the same
+cost view and still accepts historical string mappings and flattened fields.
+Each predictor owns a fixed hardware profile and reuses scheduling and shared
+arithmetic geometry only for identical complete inputs. Prepared samples and
+their exposed mutable outputs remain independent. These preparation changes
+preserve the candidate inventory, rejection rules, prediction values and stable
+tie order; they do not constitute a new search algorithm or fitted cost model.
+See the [preparation measurements](static_planning_preparation_20261108.md).
+
 The [A100 acceptance](../results/a100_closure_20261103/final_acceptance/README.md)
 now confirms this path for the new local-root and per-group thread options.
 Current measured records are consumed by public DEFAULT and seeded into public

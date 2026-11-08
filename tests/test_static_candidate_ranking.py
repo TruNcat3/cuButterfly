@@ -207,6 +207,136 @@ def test_single_chunk_service_view_preserves_group_local_resident_identity():
     assert original["stage_overlap"] is True and original["batch_tile_count"] == 16
 
 
+@pytest.mark.parametrize("parsed_mapping", [False, True])
+@pytest.mark.parametrize("parsed_groups", [False, True])
+@pytest.mark.parametrize("single_chunk", [False, True])
+def test_normalization_matches_legacy_without_mutating_nested_request(
+        tmp_path, monkeypatch, parsed_mapping, parsed_groups, single_chunk):
+    value = sample((4, 8))
+    mapping = dict(backend="shared-iterative", stage_overlap=single_chunk,
+                   batch_tile_count=4 if single_chunk else 1,
+                   local_stage_partitions=[[2, 2], [4, 4]])
+    groups = json.loads(value["execution_groups_json"])
+    groups[0]["actual_kernels"] = [dict(threads=64, local_stage_partition=[2, 2])]
+    value["mapping_json"] = mapping if parsed_mapping else json.dumps(mapping)
+    value["execution_groups_json"] = groups if parsed_groups else json.dumps(groups)
+    value["stage_service_projection"] = dict(status="unavailable", nested=[dict(value=[1, 2])])
+    req = request(tmp_path, [value, copy.deepcopy(value)])
+    frozen = copy.deepcopy(req)
+    actual = ranking.rank(req)
+    assert req == frozen
+    assert [row["index"] for row in actual["ranked"]] == [0, 1]
+
+    def legacy_sample(raw):
+        normalized = copy.deepcopy(raw)
+        decoded_mapping = costs.decoded(normalized.get("mapping_json"), {})
+        for key, item in decoded_mapping.items():
+            normalized.setdefault(key, item)
+        normalized["execution_groups_json"] = costs.decoded(
+            normalized.get("execution_groups_json"), [])
+        normalized.setdefault("descriptor_source", "runtime-static-projection")
+        return normalized
+
+    monkeypatch.setattr(ranking, "_sample", legacy_sample)
+    assert ranking.rank(req) == actual
+    assert req == frozen
+    canonical = copy.deepcopy(req)
+    for candidate in canonical["candidates"]:
+        candidate["sample"]["mapping_json"] = copy.deepcopy(mapping)
+        candidate["sample"]["execution_groups_json"] = copy.deepcopy(groups)
+    assert ranking.rank(canonical) == actual
+
+
+def test_single_chunk_copies_mapping_before_updating_it():
+    raw = dict(sample(), mapping_json=dict(backend="shared-iterative",
+        stage_overlap=True, batch_tile_count=4, local_stage_partitions=[[2, 2]]),
+        stage_service_projection=dict(status="unavailable", nested=[dict(value=[1, 2])]))
+    frozen = copy.deepcopy(raw)
+    normalized = ranking._sample(raw)
+    normalized_frozen = copy.deepcopy(normalized)
+    view, serial = ranking._single_chunk_service_view(normalized)
+    assert serial
+    assert raw == frozen
+    assert normalized == normalized_frozen
+    assert view["mapping_json"] is not normalized["mapping_json"]
+    assert view["mapping_json"]["stage_overlap"] is False
+    assert view["mapping_json"]["batch_tile_count"] == 1
+    assert "stage_service_projection" not in view
+    assert "stage_service_projection" in normalized
+
+
+@pytest.mark.parametrize("operator", ["fwht", "fft", "ntt", "subset-zeta",
+                                      "superset-zeta", "structured-2x2"])
+@pytest.mark.parametrize("model_state", ["prior", "validated", "partial", "unavailable"])
+def test_compact_mapping_request_matches_flat_string_contract(tmp_path, operator, model_state):
+    base = sample()
+    base.update(operator=operator, precision="word32" if operator == "ntt" else "fp32",
+                placement="natural" if operator == "ntt" else "out-of-place",
+                modulus=2013265921 if operator == "ntt" else 0,
+                element_stride=1, batch_stride=4096,
+                input_order="natural", output_order="natural",
+                stage_matrices="1:2:3:4" if operator == "structured-2x2" else "")
+    # Semantic values explicitly supplied by the caller own the flat view,
+    # even when a nested mapping also contains those names.
+    mapping = dict(backend="shared-iterative", stage_overlap=False,
+                   batch_tile_count=1, tile_threads=64, stage_partition=[4],
+                   local_stage_partitions=[[2, 2]], batch=999,
+                   direction="inverse", normalization="unitary")
+    for key, value in mapping.items():
+        base.setdefault(key, value)
+    base["mapping_json"] = json.dumps(mapping)
+    base["physical_descriptor_status"] = "projected"
+    values = [base, copy.deepcopy(base), copy.deepcopy(base), copy.deepcopy(base)]
+    values[1]["physical_descriptor_status"] = "resolved"
+    bad_groups = json.loads(values[2]["execution_groups_json"])
+    bad_groups[0]["threads"] = HARDWARE["max_threads_per_block"] + 1
+    values[2]["execution_groups_json"] = json.dumps(bad_groups)
+    values[3].update(physical_descriptor_status="unavailable",
+                     physical_descriptor_reason="synthetic unsupported lowering",
+                     execution_groups_json="[]")
+    old_request = request(tmp_path, values)
+    old_request["timing_protocol"] = "direct-launch"
+    if model_state in {"validated", "partial"}:
+        fitted = model_fixture(base)
+        if model_state == "partial":
+            # Keep a valid model but put this candidate outside measured
+            # coverage, exercising the hardware-prior fallback contract.
+            for coverage in fitted["primitive_coverage"].values():
+                coverage["grids"] = [1, 2]
+        write(tmp_path / "cost_model.json", fitted)
+    elif model_state == "unavailable":
+        (tmp_path / "hardware_profile.json").unlink()
+    compact_request = copy.deepcopy(old_request)
+    for candidate in compact_request["candidates"]:
+        value = candidate["sample"]
+        value["mapping_json"] = copy.deepcopy(mapping)
+        # The compact bridge retains workload semantics and removes only
+        # duplicated implementation fields from the sample's top level.
+        for key in ("backend", "stage_overlap", "batch_tile_count", "tile_threads",
+                    "stage_partition", "local_stage_partitions"):
+            value.pop(key)
+        value["execution_groups_json"] = json.loads(value["execution_groups_json"])
+        normalized = ranking._sample(value) if candidate["index"] != 3 else None
+        if normalized is not None:
+            assert normalized["batch"] == 4
+            assert normalized["direction"] == "forward"
+            assert normalized["normalization"] == "none"
+    frozen = copy.deepcopy(compact_request)
+    actual = ranking.rank(compact_request)
+    assert actual == ranking.rank(old_request)
+    assert compact_request == frozen
+    assert [row["index"] for row in actual["rejected"]] == [2]
+    assert any(row["index"] == 3 for row in actual["unranked"])
+    if model_state == "unavailable":
+        assert not actual["ranked"]
+    else:
+        assert [row["index"] for row in actual["ranked"]] == [0, 1]
+        expected = "validated-static-model" if model_state == "validated" else "hardware-rate-prior"
+        assert all(row["confidence"] == expected for row in actual["ranked"])
+        if model_state == "partial":
+            assert all("coverage" in row["reason"] for row in actual["ranked"])
+
+
 @pytest.fixture
 def measured_shared_service_model():
     from calibration_space import predicted_sample

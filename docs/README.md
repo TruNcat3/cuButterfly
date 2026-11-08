@@ -1,5 +1,9 @@
 # Documentation Index
 
+The [static planning preparation repair](static_planning_preparation_20261108.md)
+records lossless request compaction and exact feature reuse, with full-inventory
+CPU comparisons and separate public DEFAULT checks.
+
 The [FWHT layout repair](fwht_native_repair_20261107.md) records the subsequent
 same-mapping improvement, both return contracts, matched NCU counters, and the
 correction from a mislabeled FP32 reference to separately reported FP32/FP64 references.
