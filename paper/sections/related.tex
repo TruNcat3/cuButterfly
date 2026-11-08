@@ -1,9 +1,10 @@
 \section{Related Work}
 \label{sec:related}
 \input{generated/related_work_table}
-Prior work provides transform generation, specialized execution, and reusable
-hardware mapping abstractions. We build on these foundations to connect
-butterfly dependencies to resource demand and executable handoffs.
+Prior work establishes algebraic generation, specialized execution, and
+hardware mapping abstractions. Our contribution connects these concerns
+through a common construction from butterfly dependencies to resource demand
+and executable handoffs.
 
 \noindent\textbf{Transform generation and specialized execution.}
 FFTW combines codelets with empirical planning; SPIRAL/FFTX generates
@@ -18,9 +19,10 @@ to warps and vectors to threadblocks with shared-memory transposes
 \cite{hadacore2024}. These systems optimize both arithmetic and organization.
 
 Table~\ref{tab:related-work} compares representative execution and placement
-mechanisms. These precedents make specialized organization a starting point
-for our study: we ask which construction and selection rules can be shared
-while retaining their arithmetic specialization.
+mechanisms. We start from a labeled butterfly factorization and derive local
+domains, boundary relations, and their resource demands. This construction
+allows compatible arithmetic implementations to retain their specialization
+while their surrounding organizations are compared on a common basis.
 
 \noindent\textbf{Tensor compilation and tile scheduling.}
 TVM separates computation from scheduling~\cite{tvm2018}; Ansor searches
@@ -28,13 +30,12 @@ hierarchical schedule sketches~\cite{ansor2020}; ROLLER constructs
 hardware-aligned tiles~\cite{roller2022}. TensorIR provides block signatures,
 outer transformations, and tensorization~\cite{tensorir2023}. Welder connects
 producer/consumer tiles and schedules reuse through traffic and footprint
-estimates~\cite{welder2023}. These establish tiling and reusable compute
-interfaces.
-For butterflies, the changing pair relation identifies the values needed by
-a stage group and the producers that a successor must await, before choosing
-a physical tile or arithmetic core. This separates dependency construction
-from a particular kernel implementation while preserving the operator's
-arithmetic, direction, ordering, and precision contract.
+estimates~\cite{welder2023}. Our butterfly-specific construction derives the
+region for an ordered stage band from its varying index bits. Intersections
+then give the values exchanged and predecessor regions at each boundary.
+These relations can be recomputed as the stage partition changes and carried
+into different core and layout realizations. Arithmetic labels preserve the
+numerical contract.
 
 \noindent\textbf{Hierarchical dataflow and positioning.}
 Eyeriss analyzes data movement under controlled resources; Timeloop separates
@@ -44,15 +45,9 @@ requires legal resident tile subgraphs and their remaining communication. GPU
 blocks also share resources, precluding an assumption of dedicated pipeline
 hardware.
 
-Our distinction is the butterfly-specific connection between dependencies
-and resource demand. Stage-bit sets construct dependency-closed regions;
-their intersections derive communication and readiness
-(Section~\ref{sec:method}). Spatial and temporal choices then characterize
-live state, transfers, core work, and ready work at each storage scope.
-Hierarchical hybrid dataflow uses this characterization to construct residency
-and handoffs while retaining compatible specialized cores. The general ideas
-of transform generation, arithmetic/schedule separation, and hierarchical
-dataflow have the precedents above; we do not claim that prior systems cannot
-express equivalent programs. Fixed-core experiments
-(Section~\ref{sec:core-organization}) test whether the resulting organization
-choices improve performance independently of arithmetic substitution.
+\system{} connects these mapping principles to the region and boundary
+construction in Section~\ref{sec:method}. Fixed-core controls and the
+FWHT/NTT walkthrough test reuse and conditional performance effects
+(Section~\ref{sec:decision-walkthrough}). The evaluated claim concerns the
+implemented butterfly space, without asserting greater expressiveness or
+better optimization than general-purpose compilers.

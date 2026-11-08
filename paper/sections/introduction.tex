@@ -15,18 +15,18 @@ and long-sequence models~\cite{cooley1965,fftw2005,flashfftconv2024}.
 Number-theoretic transforms provide exact polynomial arithmetic
 ~\cite{gpuntt2023,gpuntt2025}, while Hadamard transforms support low-bit
 model quantization~\cite{quipsharp2024}. Learned butterfly factorizations
-also expose structured linear layers~\cite{dao2019}. Despite different numerical contracts, these computations repeatedly combine
-value pairs along logarithmic stage sequences. Which execution principles
-carry across their arithmetic and applications?
+also expose structured linear layers~\cite{dao2019}. Their numerical contracts
+differ, but shared staged pair dependencies motivate a common study of
+efficient execution.
 
 Mature GPU libraries already optimize both arithmetic and data movement
 ~\cite{cufft,vkfft,gpuntt,daofht}. Transform generators such as SPIRAL and FFTX
 also reuse mathematical descriptions to generate implementations
-~\cite{spiral2005,fftx2018}. The opportunity is to make their \emph{organization choices} reusable:
-how should a compatible arithmetic core retain values, communicate changing
-pair groups, and share finite resources as the workload or target changes?
-A common method must characterize these tradeoffs while retaining competitive
-specialized cores.
+~\cite{spiral2005,fftx2018}. The recurring performance problem is how a
+compatible core retains values, communicates changing pair groups, and shares
+finite resources as the workload or target changes. A useful common method
+must preserve arithmetic specialization while making these organization
+choices derivable and comparable under the target's constraints.
 
 Arithmetic intensity and Roofline~\cite{roofline} provide a starting point
 for understanding this variation. Yet matched organizations with the same
@@ -47,48 +47,41 @@ FFT, FWHT, and NTT controls show that deeper retention can help or hurt
 communication, and parallel execution across different arithmetic cores,
 workloads, and hardware.}
 
+The key difficulty is that a local grouping changes both the values that can
+remain resident and the predecessors needed by the next group. A tile size
+alone leaves its communication and readiness unresolved. These relationships
+follow the changing pair structure and can be constructed before choosing a
+physical layout or core. This provides a shared basis for organization
+decisions while allowing arithmetic and resource costs to differ.
+
 \system{} connects these choices through a \textbf{dependency-driven
 resource characterization}. Stage dependencies determine
-\textbf{dependency-closed regions}; intersections between regions determine
-communication and readiness. Spatial expansion and temporal reuse along the
-stage and data dimensions then determine live state, communication, core
-work, and available ready work. Hardware capacities constrain feasibility,
-and service rates inform which feasible organizations are promising.
-The shared structure thus yields workload- and core-specific resource demands.
+\textbf{dependency-closed regions}; their intersections determine communication
+and readiness. Spatial expansion and temporal reuse then characterize live
+state, transfers, core work, and ready work. Hardware capacities constrain
+feasibility, while service rates distinguish promising organizations.
 
 We use this characterization to construct \textbf{hierarchical hybrid
-dataflow}. Local regions retain values at a selected storage scope and
-exchange them through explicit handoffs; repeating the construction across
+dataflow}. Repeating local retention and boundary exchange across storage
 scopes handles workloads beyond one local capacity. Boundary layouts account
-for both producer writes and successor reads, whose changing access groups
-can otherwise turn reuse into bank contention. Arithmetic, workload, and
-hardware remain separate inputs, but their performance effects are evaluated
-jointly. Compatible specialized cores remain part of each realization.
+for producer writes and changing successor reads to control contention.
+Arithmetic, workload, and hardware remain separate inputs whose performance
+effects are evaluated jointly.
 
 Our two contributions are:
 \begin{enumerate}
-\item A \textbf{dependency-driven resource characterization} that derives
-local regions, communication, and readiness from butterfly dependencies,
-then connects space--time organization to storage, service demand, and
-available parallel work.
-\item \textbf{Hierarchical hybrid dataflow}, which uses these relations to
-construct local residency and inter-region handoffs under hardware
-constraints, reusing the construction across compatible arithmetic cores
-and workload domains.
+\item A \textbf{dependency-driven resource characterization}. Stage-bit
+closure constructs local regions, and region intersections derive handoff
+values and predecessor sets. Together with space--time choices, these
+relations describe storage, communication, core work, and ready work.
+\item \textbf{Hierarchical hybrid dataflow}. The same construction composes
+local residency and inter-region handoffs across bounded storage scopes,
+retaining compatible specialized cores and allowing workload-dependent
+organizations, including single-band and unit-expansion endpoints.
 \end{enumerate}
-Subgraph generation realizes these contributions. Library comparisons test
-competitiveness, fixed-core controls isolate organization effects, and
-resource measurements test their explanations. Search and calibration support
-selection within the executable space; they do not guarantee an optimal mapping.
-
-The A100 80GB evaluation reports FFT geometric-mean speedups of
-\CurrentFFTSingle$\times$ and \CurrentFFTDouble$\times$ over cuFFT for
-its FP32 and FP64 complete-call cohorts, including adaptation and
-multidimensional requests. An independent cyclic NTT comparison reaches
-\CurrentCyclicNTT$\times$ over GPU-NTT on 54 matched cases.
-An independent FWHT comparison gives
-1.013--1.031$\times$ over DaoFHT with native returns and
-1.320--1.330$\times$ with supplied-output adaptation.
-The two output contracts and the fixed-core attribution experiments are
-reported separately. Section~\ref{sec:evaluation} details their cohorts, complete
-applications, and remaining gaps; cross-architecture validation remains open.
+Subgraph generation realizes these contributions, with search and calibration
+supporting bounded selection. The A100 evaluation separates fixed-core
+organization effects from complete-library and application gains. It shows
+benefits across several arithmetic families, alongside losses and sensitivity
+to precision and output interfaces. Section~\ref{sec:evaluation} reports these
+conditions explicitly; cross-architecture validation remains open.

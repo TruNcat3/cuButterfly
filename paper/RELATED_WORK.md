@@ -1,16 +1,21 @@
 # 相关工作对位与论证边界
 
-本轮核验日期：2026-10-09（复用 2026-09-17 来源审计）。正文统一使用 `\cite{key}`，条目集中保存在
+当前定位更新：2026-11-08，复用 2026-10-09 与 2026-10-29 来源审计。正文统一使用 `\cite{key}`，条目集中保存在
 [`references.bib`](references.bib)，由 IEEEtran BibTeX 样式生成编号。
 本表说明论文应如何使用来源；文献中的性能数字不并入 cuButterfly 的实验结果。
 
-本轮正文按变换生成/专用执行、tensor 编译/tile 调度、层级数据流三类重写，
-并在 [generated/related_work_table.tex](generated/related_work_table.tex) 加入
-8 行、4 列的方法比较。各行写已报道的优化对象与组织方法，最后一列写本文具体研究
-的构造，不使用支持/不支持勾叉，也不将软件与同名论文算作两种新算法。
-VkFFT 表中仅写已核验的 runtime generation，详细内部调度的核验限制留在来源记录。
-逐项来源及可访问性见
-[本轮记录](literature/review_20261009/related_work_sources.md)。
+正文按变换生成/专用执行、tensor 编译/tile 调度、层级数据流三类组织。
+[对位表](generated/related_work_table.tex) 有七个工作行、六列，分别列系统、
+代表算术、工作单元、阶段划分、数据划分及值放置方式。各单元格只描述已报道的
+机制，不把未知项写成不支持，也不将软件与同名论文算作两种新算法。
+VkFFT 的 Four-Step、邻近变换分组和布局依据 October 29 的官方文档复核。
+逐项来源及抽象层差异见 [维度审计](evidence/RELATED_WORK_DIMENSIONS_20261029.md)，
+更早来源见 [October 9 记录](literature/review_20261009/related_work_sources.md)。
+
+当前贡献定位是：给定带算术标签的蝶形分解，用共同规则构造区域、交接、
+就绪关系和资源需求，再实例化不同组织。已有工作已提供变换生成、调度分离、
+分层映射及局部复用思想；本文的证据支持这一蝶形构造的可复用性和条件性收益，
+没有直接测量证明表达能力或搜索质量全面优于通用编译器。
 
 创新性集中于从 labeled butterfly dependencies 得到 dependency-closed subgraphs，
 由相邻 index sets 的交集推导通信及就绪，再用 successor-aligned writeback 衔接子图。
@@ -35,11 +40,12 @@ execution。语义、负载与硬件的分离指输入及构造分离，核心�
 
 1. **组织与核心的联合优化已有先例。** 不能把已有研究概括为“只优化算术核心”。
    本文要说明如何将这些选择纳入多个蝶形算子共用、可实际 lowering 的空间。
-2. **统一表示本身不足以证明创新。** 必须交代表示中的 stage/data、核心归属、
-   边界布局和生命周期如何改变可生成的候选、搜索质量及迁移代价。
+2. **统一表示本身不足以证明创新。** 必须交代 stage-bit 闭包、边界交集及
+   就绪规则如何构造同一组织空间，以及其资源需求为何随核心、负载和映射变化。
 3. **阶段性性能已有具体支持。** 历史中已有保持局部核心的组织配对和核心替换
-   观察，见 [HISTORICAL_EVIDENCE.md](HISTORICAL_EVIDENCE.md)。统一交叉消融、
-   未见配置排序和匹配版本跨架构实验进一步确定交互与泛化范围。
+   观察，见 [HISTORICAL_EVIDENCE.md](HISTORICAL_EVIDENCE.md)。当前固定核心、强端点
+   与跨算术证据见 [贯穿实例](evidence/DECISION_WALKTHROUGH_20261108.md)。跨架构由
+   用户独立推进 PRO 6000 实验；搜索排序竞赛不属于论文贡献或新增验收门槛。
 
 ## 文献对位
 
@@ -57,7 +63,7 @@ execution。语义、负载与硬件的分离指输入及构造分离，核心�
 | `tvm2018`, `triton2019` | 通用 tensor 编译及 tiled computation；TVM 包含计算/调度分离和图级、算子级优化 | 不声称通用编译器不能表达蝶形；本文应具体说明 stage 依赖及核心/边界契约给生成过程带来的约束和收益 |
 | `tensorir2023` | 核心 block 签名与外层变换分离，tensorization 匹配硬件 intrinsic | 是核心可替换性的重要先例；本文要说明 stage-bit 闭合子图、边界布局及物理服务怎样形成蝶形候选，而不能只强调接口解耦 |
 | `eyeriss2016` | 数据流分类、原语到物理映射，以及统一资源条件下的层次搬运/能耗比较 | 借鉴资源公平与机制分析；不将 ASIC 能耗结论等同于 GPU 吞吐 |
-| `ansor2020` | 分层 sketch、evolutionary search 与学习型 cost model | 搜索策略本身不是新颖性依据；评估独立物理服务组合的样本复用、未见配置 regret 和调优成本 |
+| `ansor2020` | 分层 sketch、evolutionary search 与学习型 cost model | 搜索策略本身不是新颖性依据；本文将选择作为构造空间的实例化手段，准备成本与稳态时间分开报告 |
 | `roller2022` | 硬件对齐的 tile 构造和 micro-performance model，考虑事务和 bank 等约束 | 层次、布局和快速建模均有先例；本文应给出蝶形跨阶段驻留和实测服务的适用范围 |
 | `welder2023` | tile-graph 表达不同存储层的复用，graph connecting/subgraph tiling 使用流量和容量估计；生成时处理布局及 liveness | 是组织抽象的直接近邻；不能声称首创 tile dataflow 或中间量复用，需展示精确蝶形依赖、可替换核心和校准服务的共同作用 |
 | `timeloop2019` | §IV–VI 将工作负载、体系结构和映射分开，以层次分块和时空映射评估数据流 | 层次数据流思想有先例；本文需处理蝶形阶段依赖、实际 GPU lowering 及编译/实测资源，不能仅将术语改名 |
@@ -98,7 +104,8 @@ execution。语义、负载与硬件的分离指输入及构造分离，核心�
 
 - E2/E3 的核心 × 组织交叉消融检验组织收益及其跨算术复现，不把核心加速归给组织。
 - E4/E5 的布局、驻留和 batch 实验解释何时应减少物化、何时应分段，包含资源饱和反例。
-- E6/E7 以未见组合排序和匹配版本跨 GPU 测试评价服务复用与迁移成本。
+- 独立服务组合记录与实测选择记录分别解释时间与决策，不合并为未见配置预测证明。
+  匹配版本的跨架构实验另检验共同规则面对硬件约束变化时的组织选择。
 - 文献对位不自动启动新 GPU 矩阵。FFTX/通用编译器的可比 workload 应先确认生成
   能力和语义；FlashFFTConv/HadaCore 若进入计时对比，先建立与其应用/精度一致的合同。
   对位表中的能力描述不是已完成的外部库适配或测量。

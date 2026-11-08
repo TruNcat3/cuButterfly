@@ -1,11 +1,8 @@
 \section{Evaluation}
 \label{sec:evaluation}
-We ask whether the common construction produces competitive operators and
-useful application gains, whether organization contributes with a fixed
-arithmetic core, and which resource costs explain its benefits and limits.
-External comparisons establish practical performance; controlled experiments
-isolate organization choices. Their populations and timing boundaries remain
-separate.
+We evaluate complete-call competitiveness, fixed-core organization effects,
+and their resource explanations. External comparisons and controlled
+experiments retain separate populations and timing boundaries.
 
 \begin{figure*}[t]
 \centering
@@ -38,13 +35,15 @@ A100. Cross-architecture evaluation on PRO 6000 remains unmeasured.
 
 \textbf{Numerical and timing contracts.}
 All 29 main-study integer and 90 cyclic NTT requests agree exactly with their
-references. The 37 main-study floating requests have finite outputs and
-recorded errors without a fixed acceptance threshold; their performance
-results are exploratory. Floating controls retain their stated reference
-precision and errors. FP16 scale controls repeat one seeded transform,
-scaled by $2^{-6}$, across batches and backends rather than providing
-independent numerical samples. Random weights and short-chain cryptography
-establish neither task quality nor production security.
+references. The 37 floating requests have finite outputs and retained error
+distributions. Their CPU references use FP64, including for FP32 outputs;
+these historical diagnostics are distinct from the same-precision FWHT and
+explicitly rounded FP16 controls below. We report floating errors without a
+fixed acceptance threshold, so their performance results remain exploratory.
+Relative $L_2$ error divides the difference norm by the reference norm.
+FP16 scale controls repeat one seeded transform scaled by $2^{-6}$ across
+batches and backends. Random weights and short-chain cryptography establish
+neither task quality nor production security.
 
 Operator timing includes required conversions and output materialization.
 After ten warmups, each applicable baseline captures twenty calls per CUDA
@@ -82,6 +81,10 @@ and 1.225$\times$ over three FP64 pairs; adapted subsets give
 1.290$\times$ over four FP32 pairs and 1.524$\times$ over three FP64 pairs.
 Independent rank-4/8 axis-composition replays retain 1.925/2.748$\times$.
 The gains therefore combine local execution and organization around the cores.
+For the eleven FP32 requests, relative $L_2$ error against the common CPU FP64
+reference ranges from $7.90\times10^{-8}$ to $2.98\times10^{-7}$ for
+\system{} and to $2.94\times10^{-7}$ for cuFFT, with the same minimum.
+These are per-request error ranges, not acceptance bounds or confidence intervals.
 
 \textbf{Output contracts affect the FWHT comparison.}
 The main-study 1.474$\times$ against DaoFHT includes copying its returned
@@ -109,8 +112,10 @@ Supplied buffer & 1.320--1.330$\times$ & 1.324$\times$\\
 \end{table}
 
 The public DEFAULT check selects the same ten mappings. All sixty paired
-outputs before and after specialization are byte-identical; independent CPU
-FP32 errors and historical FP64-reference diagnostics are retained separately.
+outputs before and after specialization are byte-identical. A separate CPU
+FP32 audit gives maximum absolute error $4.88\times10^{-4}$ and relative
+$L_2$ error $1.50\times10^{-7}$ for both backends on these inputs;
+historical FP64-reference diagnostics remain separate.
 Native-return results are near parity, with individual losses, while the
 supplied-output interface benefits more. FP64 FWHT, zeta, and structured
 butterflies lack matched GPU baselines. Their separate 34-request CPU study
@@ -134,21 +139,22 @@ on their recorded builds. The nine-request FP16 cohort yields 0.854$\times$
 against cuFFT, ranging from 0.733 to 1.067$\times$. Only
 $N=2^{18},B=32$ wins, at 146.53 versus 156.31~$\mu$s. DEFAULT and bounded
 measured selection choose the same mappings in all nine requests.
-An independent eleven-request 40GB FP16 cohort gives installed-default GM
-0.858$\times$ (0.739--1.088$\times$), outside the 80GB aggregate. Its
-missing independent stage calibration leaves unseen-request ranking
-unvalidated. These losses coexist with aggregate gains and limit claims of
-uniform superiority. cuFFT exposes matching storage semantics, not its
-internal arithmetic.
+Against the same explicitly rounded CPU FP16 reference, relative $L_2$ errors
+span 0.00193--0.00260 for \system{} and 0.00173--0.00198 for cuFFT.
+Maximum pointwise relative errors on nonzero references reach 16.54/7.43,
+respectively; small normwise errors do not bound these tails.
+Both produce finite outputs; matching storage does not equate internal arithmetic.
+An independent eleven-request 40GB cohort gives GM 0.858$\times$
+(0.739--1.088$\times$), outside the 80GB aggregate, with unseen-request
+ranking unvalidated because independent stage calibration is missing.
 
 \input{generated/current_refresh/quarot_fused_numbers}
 \textbf{Question 2: Do operator gains reach complete applications?}
 \label{sec:application-evaluation}
-Applications share inputs, precision, keys, and weights as applicable.
-Complete Graph calls include surrounding computation, packing, conversions,
-and required copies; reusable setup stays outside timing~\cite{heongpucode}.
-Figure~\ref{fig:application-batch} retains independent and historical cohorts
-separately, including losses.
+Matched application calls share inputs, precision, keys, and weights.
+Complete Graph timing includes surrounding work and required copies,
+with reusable setup excluded~\cite{heongpucode}.
+Figure~\ref{fig:application-batch} separates cohorts and retains losses.
 
 \begin{figure}[t]
 \centering
@@ -336,10 +342,9 @@ process trials.
 
 \subsection{Analysis}
 \textbf{Question 4: Which resource costs explain organization choices?}
-The preceding controls show conditional gains. We now connect dependency-derived
-demand, compiled resources, and measured execution. NCU counters and NSYS
-timelines characterize matched internal controls; they do not independently
-explain gains over a different external-library implementation.
+We connect dependency-derived demand, compiled resources, and execution.
+NCU counters and NSYS timelines compare matched internal controls, not
+different external-library implementations.
 
 \textbf{From resource demand to complete-plan service.}
 Dependency analysis supplies region counts and logical interface traffic;

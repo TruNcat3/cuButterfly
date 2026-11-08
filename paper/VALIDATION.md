@@ -1,5 +1,31 @@
 # Working-draft validation
 
+## Argument and numerical evidence refinement — 2026-11-08
+
+The abstract leads with the organization effect before external-library gains.
+The introduction explains why grouping must determine both local data and
+successor dependencies; related work distinguishes this butterfly construction
+from existing algebraic generation, tiling, and hierarchical mapping. The four
+evaluation subsections and all original performance populations remain intact.
+
+The [numerical audit](evidence/NUMERICAL_SCOPE_20261108.md) verifies all 66
+main-study payload/envelope identities and summarizes existing error metrics.
+Main-study FP32 references are FP64 diagnostics. The separate FWHT study uses
+actual FP32 reference computation, and the FP16 study uses explicit primitive
+rounding. Reported L2 errors and maximum pointwise relative errors are kept
+distinct, including the FP16 tails. No new reference computation, floating
+threshold, GPU measurement, model fitting, or baseline filtering occurred.
+The [provenance manifest](generated/numerical_scope_20261108.json) uses
+repository-relative paths and marks historical raw data as local artifacts.
+
+Both PDF entries compile to 14 pages at unchanged geometry and type sizes.
+Their logs contain no undefined references/citations, overfull boxes, or missing
+characters; existing underfull and input-PDF-version advisories remain.
+Changed pages were rendered and inspected for text flow and legibility.
+Changed-document local links, source hashes, and diff whitespace were checked.
+The sources and reader PDFs are synchronized with the research checkout.
+PRO 6000 evidence remains the user's independent pending contribution.
+
 ## Dependency-to-decision walkthrough — 2026-11-08
 
 The method now derives boundary relations before resolving physical resources
