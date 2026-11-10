@@ -178,6 +178,7 @@ def operator_plot(data, output, manifest):
         fft_l_public_replays=0 if public_default else low_count,
         fft_l_public_defaults=low_count if public_default else 0,
         cyclic_requests=len(cyclic_requests), cyclic_matched_pairs=len(cyclic_pairs),
+        axis_scale="linear", parity_reference=1.0,
         fft_l_bf16_status="deferred", fixed_controls_included=0,
         displayed_groups=[list(group) for group in GROUPS])
 
