@@ -121,7 +121,7 @@ def main():
     ax.axhline(1,color='#333333',linestyle='--',linewidth=1)
     ax.set_yscale('log'); ax.set_ylim(min(all_values)/1.35,max(all_values)*1.5)
     ax.set_xlim(-.55,len(shown_groups)-.45)
-    ax.set_ylabel('CPU time / backend time (log scale)', fontsize=7.5)
+    ax.set_ylabel('CPU-relative speedup (CPU time / backend time; log scale)', fontsize=7.5)
     ax.set_xticks(range(len(shown_groups)))
     ax.set_xticklabels([f'{GROUP_LABELS[g]}\n(n={len(by_group[g].get("cuButterfly",{}))})' for g in shown_groups], fontsize=6.5)
     ax.grid(axis='y',which='both',alpha=.25); ax.set_axisbelow(True)
@@ -155,6 +155,7 @@ def main():
               'input_sha256':hashlib.sha256(args.input.read_bytes()).hexdigest(),
               'fftw_threads':args.fftw_threads,
               'qualification':'shared-host provisional CPU timings; CPU/GPU timing boundaries are separate',
+              'axis_scale':'log',
               'cpu_denominators':{'fft':'fftw-cpu-t8','fwht':'fxt-cpu-t1','ntt':'hexl-cpu-t1',
                                   'subset-zeta':'fxt-cpu-t1','superset-zeta':'fxt-cpu-t1',
                                   'structured-2x2':'butterfly-author-cpu-t1'},
