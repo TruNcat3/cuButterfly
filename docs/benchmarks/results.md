@@ -37,6 +37,46 @@ stage-service calibration and leaves model ranking on unseen requests unvalidate
 It is not pooled into the 80GB headline population. Existing BF16 records retain
 their scope; FP16 acceptance does not establish full BF16 comparison.
 
+### Reading performance distributions
+
+The [README overview](../../figures/readme_performance.svg) uses a paired
+speedup for each complete request: external-library latency divided by
+cuButterfly latency. Length, batch, rank, modulus, direction and layout remain
+matched before aggregation. Each dot is one request; boxes show workload IQR
+and whiskers span min/max, not confidence intervals. A geometric mean above
+one does not imply every request is faster. The [plotted data](../../figures/readme_performance.csv)
+and [provenance](../../figures/readme_performance.json) retain the separate studies.
+Regenerate this view without a GPU with `python scripts/render_readme_performance.py`.
+
+Absolute latency distributions answer a different question: how long the
+represented requests take. They cannot establish relative performance across
+different populations. For example, the earlier coverage figure includes nine
+cuButterfly word64 NTT requests but only five GPU-NTT matches. Its four unmatched
+multidimensional requests extend the cuButterfly range to 61.696 microseconds;
+the five matched requests reach only 23.501 microseconds, against 26.419 for
+GPU-NTT. Those unmatched requests must not enter a paired performance distribution.
+
+GPU-NTT comparisons cover both 32-bit and 64-bit storage. The
+[pinned arithmetic contract](../../benchmarks/gpuntt_crypto/README.md) requires
+`2 < q < 2^30` for Data32 and `2 < q < 2^61` for Data64, with a prime modulus
+supporting the transform order. Storage width is distinct from modulus width.
+The four main word32 requests use `q = 2013265921`, outside the pinned Data32
+range. Their missing comparisons do not mean that GPU-NTT has no 32-bit path.
+The independent cyclic study includes compatible moduli and supplies these results:
+
+| Study | Storage | Matched requests | Geometric mean | Ratios above 1 | Min–max |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Main comparison | word64 | 5 | 1.188× | 4/5 | 0.976–1.516× |
+| Cyclic extension | word32 | 18 | 1.400× | 18/18 | 1.196–1.990× |
+| Cyclic extension | word64 | 36 | 1.265× | 33/36 | 0.972–1.593× |
+
+The cyclic study retains 36 requests outside the pinned baseline's modulus
+range as missing comparisons. Its 54 valid pairs contain 18 original pairs
+and 36 separately supplemented GPU-NTT measurements using the original
+cuButterfly timings; this is not a fresh interleaved rerun. The main comparison
+and cyclic extension keep independent denominators. Observed ratios close to
+one are not claims of statistically significant wins or losses.
+
 ## Fixed-core organization and resource attribution
 
 [November 8 subgraph execution](../../paper/evidence/SUBGRAPH_EXECUTION_20261108.md)

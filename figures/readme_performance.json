@@ -1,0 +1,293 @@
+{
+  "schema": "readme-paired-performance-v1",
+  "hardware": "NVIDIA A100 80GB PCIe",
+  "snapshot_campaign": "full_current_20261025",
+  "cohort_dates": {
+    "main66": "campaign 2026-10-25; frozen evidence",
+    "cyclic90": "2026-10-29 recovery + 2026-11-02 baseline supplement",
+    "fp16_public_default9_20261105": "2026-11-05"
+  },
+  "sources": {
+    "paper/generated/current_refresh/snapshot.json": "8af841214c03793fc9455c512517341151337b3c4f9c61f16241a8d1c9051e91",
+    "paper/generated/current_refresh/fp16_comparison.json": "d8afb30a01ff81099bbe4255ac0fa1ccfa8829d77663ff06b9439424b1768a05"
+  },
+  "generator": {
+    "path": "scripts/render_readme_performance.py",
+    "sha256": "0cb05b5293aef27c36fb5a9a94cdeb25bd7e95cef1292a0510911de1efd5b707"
+  },
+  "versions": {
+    "matplotlib": "3.10.9",
+    "numpy": "1.26.4"
+  },
+  "pixels": [
+    1150,
+    880
+  ],
+  "axis": {
+    "scale": "log",
+    "limits": [
+      0.65,
+      3.05
+    ]
+  },
+  "ratio": "baseline_us / own_us; verified against stored speedup (rtol=atol=1e-12)",
+  "aggregation": "One vote per matched request within each cohort/operator/precision/baseline; no pooled GM",
+  "interpretation": "Nominal faster counts, not statistical significance; float error-report-only",
+  "box": "IQR; median line; whiskers min/max; points all requests; not confidence intervals",
+  "summary": [
+    {
+      "cohort": "main66",
+      "operator": "fft",
+      "precision": "fp32",
+      "baseline": "cufft",
+      "label": "FFT FP32 / cuFFT",
+      "candidates": 11,
+      "paired": 11,
+      "unpaired": 0,
+      "gm": 1.2979131637566619,
+      "faster": 9,
+      "equal": 0,
+      "slower": 2,
+      "minimum": 0.9378531254596288,
+      "q1": 1.0087325818225614,
+      "median": 1.3129771653778595,
+      "q3": 1.3377583133547715,
+      "maximum": 2.7772926574466408
+    },
+    {
+      "cohort": "main66",
+      "operator": "fft",
+      "precision": "fp32",
+      "baseline": "vkfft",
+      "label": "FFT FP32 / VkFFT",
+      "candidates": 11,
+      "paired": 11,
+      "unpaired": 0,
+      "gm": 1.1902901987740082,
+      "faster": 5,
+      "equal": 0,
+      "slower": 6,
+      "minimum": 0.7681159213977262,
+      "q1": 0.9027654114724628,
+      "median": 0.9837397734349712,
+      "q3": 1.488684398058313,
+      "maximum": 2.694323100816178
+    },
+    {
+      "cohort": "main66",
+      "operator": "fft",
+      "precision": "fp64",
+      "baseline": "cufft",
+      "label": "FFT FP64 / cuFFT",
+      "candidates": 6,
+      "paired": 6,
+      "unpaired": 0,
+      "gm": 1.3662182270479908,
+      "faster": 5,
+      "equal": 0,
+      "slower": 1,
+      "minimum": 0.9760348662618762,
+      "q1": 1.2248129399113517,
+      "median": 1.3810964796747733,
+      "q3": 1.5387903893693566,
+      "maximum": 1.8719999627470987
+    },
+    {
+      "cohort": "main66",
+      "operator": "fft",
+      "precision": "fp64",
+      "baseline": "vkfft",
+      "label": "FFT FP64 / VkFFT",
+      "candidates": 6,
+      "paired": 6,
+      "unpaired": 0,
+      "gm": 1.353940859449353,
+      "faster": 6,
+      "equal": 0,
+      "slower": 0,
+      "minimum": 1.0153508661357218,
+      "q1": 1.1482843215639522,
+      "median": 1.5315465300422808,
+      "q3": 1.5570967822077015,
+      "maximum": 1.6159998882412963
+    },
+    {
+      "cohort": "main66",
+      "operator": "fwht",
+      "precision": "fp32",
+      "baseline": "daofht",
+      "label": "FWHT FP32 / DaoFHT\n(supplied-output)",
+      "candidates": 11,
+      "paired": 10,
+      "unpaired": 1,
+      "gm": 1.4743320301965002,
+      "faster": 9,
+      "equal": 0,
+      "slower": 1,
+      "minimum": 0.9954128091297381,
+      "q1": 1.2030153933132903,
+      "median": 1.3929765544380746,
+      "q3": 1.5239361688786268,
+      "maximum": 2.6742424818688098
+    },
+    {
+      "cohort": "main66",
+      "operator": "ntt",
+      "precision": "word64",
+      "baseline": "gpu-ntt",
+      "label": "NTT word64 / GPU-NTT",
+      "candidates": 9,
+      "paired": 5,
+      "unpaired": 4,
+      "gm": 1.188155690798691,
+      "faster": 4,
+      "equal": 0,
+      "slower": 1,
+      "minimum": 0.9755244922475433,
+      "q1": 1.1241829369125338,
+      "median": 1.1328671293090333,
+      "q3": 1.2569443707585337,
+      "maximum": 1.516339898498014
+    },
+    {
+      "cohort": "cyclic90",
+      "operator": "ntt",
+      "precision": "word32",
+      "baseline": "gpu-ntt",
+      "label": "NTT word32 / GPU-NTT",
+      "candidates": 42,
+      "paired": 18,
+      "unpaired": 24,
+      "gm": 1.4001898156058665,
+      "faster": 18,
+      "equal": 0,
+      "slower": 0,
+      "minimum": 1.1956521567203273,
+      "q1": 1.3059251372634728,
+      "median": 1.399933456215718,
+      "q3": 1.414252476141059,
+      "maximum": 1.9896756090405943
+    },
+    {
+      "cohort": "cyclic90",
+      "operator": "ntt",
+      "precision": "word64",
+      "baseline": "gpu-ntt",
+      "label": "NTT word64 / GPU-NTT",
+      "candidates": 48,
+      "paired": 36,
+      "unpaired": 12,
+      "gm": 1.26479352371338,
+      "faster": 33,
+      "equal": 0,
+      "slower": 3,
+      "minimum": 0.9721254263533662,
+      "q1": 1.1719598764234276,
+      "median": 1.2280500824363552,
+      "q3": 1.4663561746885128,
+      "maximum": 1.5931705825215938
+    },
+    {
+      "cohort": "fp16_public_default9_20261105",
+      "operator": "fft",
+      "precision": "fp16",
+      "baseline": "cufft",
+      "label": "FFT FP16 / cuFFT",
+      "candidates": 9,
+      "paired": 9,
+      "unpaired": 0,
+      "gm": 0.8535832448099131,
+      "faster": 1,
+      "equal": 0,
+      "slower": 8,
+      "minimum": 0.7334710834496434,
+      "q1": 0.7841328599539773,
+      "median": 0.80898881265826,
+      "q3": 0.9042876435692405,
+      "maximum": 1.0667365700969949
+    }
+  ],
+  "matched_pairs": 112,
+  "candidate_pair_records": 153,
+  "unpaired_in_displayed_groups": 41,
+  "full_main66_pair_status_counts": {
+    "accuracy-review-required": 44,
+    "not-applicable": 204,
+    "missing-baseline": 11,
+    "pass": 5
+  },
+  "displayed_unpaired_status_counts": {
+    "missing-baseline": 41
+  },
+  "displayed_unpaired_reasons": {
+    "missing-baseline": 5,
+    "GPU-NTT modulus outside declared word arithmetic range": 36
+  },
+  "main66_requests_without_external_comparison": 34,
+  "omitted_main66_operator_precisions": [
+    {
+      "operator": "fwht",
+      "precision": "fp64",
+      "requests": 2,
+      "reason": "No matched external baseline in main66"
+    },
+    {
+      "operator": "ntt",
+      "precision": "word32",
+      "requests": 4,
+      "reason": "No matched external baseline in main66"
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp32",
+      "requests": 2,
+      "reason": "No matched external baseline in main66"
+    },
+    {
+      "operator": "structured-2x2",
+      "precision": "fp64",
+      "requests": 5,
+      "reason": "No matched external baseline in main66"
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "uint32",
+      "requests": 3,
+      "reason": "No matched external baseline in main66"
+    },
+    {
+      "operator": "subset-zeta",
+      "precision": "word64",
+      "requests": 5,
+      "reason": "No matched external baseline in main66"
+    },
+    {
+      "operator": "superset-zeta",
+      "precision": "uint32",
+      "requests": 3,
+      "reason": "No matched external baseline in main66"
+    },
+    {
+      "operator": "superset-zeta",
+      "precision": "word64",
+      "requests": 5,
+      "reason": "No matched external baseline in main66"
+    }
+  ],
+  "omitted_other_cohorts": {
+    "fft_grouped2": 8,
+    "ntt5": 5
+  },
+  "exclusions": [
+    "ntt5 replay and fft_grouped2 remeasurements excluded to preserve main66 denominator",
+    "Cyclic90 is independent; its 36 unmatched requests are not plotted",
+    "BF16 experiments deferred; no imputed comparisons",
+    "Later FWHT native-return repair and A100 40GB FP16 supplement are separate",
+    "No PRO6000 or application performance included"
+  ],
+  "outputs": {
+    "figures/readme_performance.csv": "7e0b65c26955da8e3bd59d3fc792d9762a5218e9070b43c4d2e2a4cfa29fa069",
+    "figures/readme_performance.svg": "1949111e597e334d98e4b68e74c8d9cb9c2b67d1cea701ef4dc605d7b909b260",
+    "figures/readme_performance.png": "08951f09d23fdfc864e602aefc2289f3927861e2e7bbfad79d17a666e7542bba"
+  }
+}

@@ -73,19 +73,21 @@ inside the complete-call timing boundary.
 
 ## Performance overview
 
-The A100 80GB PCIe comparison below covers FFT, NTT, FWHT, subset/superset zeta
-and structured 2×2 transforms. It shows the frozen 66-request main comparison
-and an independent nine-request FP16 comparison from November 2026.
+The A100 80GB PCIe results below compare each request with the same request
+in a specialized library. The main comparison, cyclic NTT extension and FP16
+comparison remain separate studies from the November 2026 evidence snapshot.
 
-[![Complete-call latency by operator and precision on A100 80GB. Paired geometric-mean speedups range from 0.85× for FP16 FFT versus cuFFT to 1.47× for FP32 FWHT versus DaoFHT; missing external results are marked explicitly.](paper/figures/current_refresh_operators.svg)](paper/figures/current_refresh_operators.pdf)
+[![Paired complete-call speedups on A100 80GB. Each point compares the same workload in cuButterfly and an external library. Separate panels show the main comparison, 32-bit and 64-bit cyclic NTT, and FP16 FFT, including ratios below one.](figures/readme_performance.svg)](figures/readme_performance.png)
 
-Lower latency is better. The annotations give the geometric mean of matched
-baseline/cuButterfly latency ratios and the number of pairs; values above 1×
-favor cuButterfly. Boxes show workload variation, not statistical uncertainty.
+Speedup is baseline latency divided by cuButterfly latency; values above 1×
+favor cuButterfly. Each dot is a matched request, boxes show workload IQR and
+whiskers span the full range. The geometric mean and nominal faster count
+summarize each row, not statistical confidence. Unmatched requests have no ratio.
 FWHT uses the supplied-output interface; [native-return comparisons](docs/fwht_native_repair_20261107.md)
-are reported separately. See the [data table](paper/generated/current_refresh/operator_summary.csv)
-and [results guide](docs/benchmarks/results.md) for protocols, numerical reports,
-coverage gaps and follow-up comparisons.
+are reported separately. The [paired data](figures/readme_performance.csv) and
+[results guide](docs/benchmarks/results.md#reading-performance-distributions)
+describe coverage, modulus limits and numerical reports. FWHT FP64, zeta and
+structured 2×2 have library measurements but no matched GPU comparison in these studies.
 
 ## Installation and first checks
 
