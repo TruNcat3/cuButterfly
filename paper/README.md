@@ -1,6 +1,6 @@
 # cuButterfly 论文工作稿
 
-**cuButterfly: Unleashing Performance of Butterfly Computation with Hierarchical Hybrid Dataflow**
+**cuButterfly: Unleashing Performance of Butterfly Computation with Hybrid Tile Dataflow Graph**
 
 本目录是基于 APPT26 内部原稿重新组织的英文工作稿，采用用户提供的
 ISCA2026 IEEE 模板。APPT 原稿尚未发表且未在审；未修改原稿，也未将其写成

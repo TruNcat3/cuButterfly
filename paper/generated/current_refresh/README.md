@@ -25,6 +25,7 @@ acceptance directory is an error, not a reason to substitute fixed controls.
 | `operator_table.tex` | Main comparison, nine-request FP16 DEFAULT cohort, and separate cyclic NTT extension; further BF16 experiments deferred; PRO 6000 pending |
 | `ckks_table.tex` | CKKS by batch, preserving both native controls and the faster native choice per request |
 | `numbers.tex` | Generated headline operator and CKKS numbers used by the manuscript |
+| `cpu_normalized.json` | Exact main66 joins to the provisional 83-measurement CPU campaign; no cyclic/FP16 imputation |
 | `figure_manifest.json` | Snapshot/renderer hashes, physical sizes, data descriptions and vector/raster output hashes |
 
 The paired speedup figure includes all `main66` requests plus nine separately

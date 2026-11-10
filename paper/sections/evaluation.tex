@@ -68,6 +68,25 @@ report matched baseline/\system{} latency ratios. The 66 requests yield
 49 external pairs; some have multiple competitors, others no matched baseline. Boxes span workloads, not uncertainty. Missing pairs
 are not counted as wins.
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=.98\textwidth]{figures/cpu_normalized_performance.pdf}
+\caption{The complementary CPU-normalized view uses exact main-study requests.
+Each value is CPU time divided by backend complete-call time; the dashed line is
+CPU parity. The shared panel uses the common request intersection, while the
+right panel retains \system{} requests without a complete external GPU pair.}
+\label{fig:cpu-normalized-performance}
+\end{figure*}
+
+Figure~\ref{fig:cpu-normalized-performance} adds a different reference frame
+without changing the GPU/GPU claims. It joins all 66 main-study requests to 83
+CPU measurements from a shared AMD EPYC host: eight-thread FFTW for FFT, FXT for
+FWHT and zeta, HEXL for NTT, and the author CPU implementation for structured
+2x2. The 49 available GPU pairs and all 66 cuButterfly rows are joined by exact
+case semantics. CPU wall-clock and resident-device timings have different
+boundaries, so these ratios are provisional and no cross-family CPU geometric
+mean is reported.
+
 \begin{table}[t]
 \centering\small
 \caption{Operator ratios retain their matched populations.

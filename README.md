@@ -89,6 +89,11 @@ are reported separately. The [paired data](figures/readme_performance.csv) and
 describe coverage, modulus limits and numerical reports. FWHT FP64, zeta and
 structured 2×2 have library measurements but no matched GPU comparison in these studies.
 
+For the same main66 requests, the [CPU-normalized distribution](paper/figures/cpu_normalized_performance.svg)
+uses CPU time divided by backend time. It is a complementary view with
+operator-specific CPU references and a provisional shared-host qualification;
+it is kept separate from GPU/GPU ratios.
+
 ## Installation and first checks
 
 Use a CUDA toolkit and compiler compatible with the target GPU. Follow

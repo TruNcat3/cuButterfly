@@ -1,0 +1,276 @@
+{
+  "cpu_denominators": {
+    "fft": "fftw-cpu-t8",
+    "fwht": "fxt-cpu-t1",
+    "ntt": "hexl-cpu-t1",
+    "structured-2x2": "butterfly-author-cpu-t1",
+    "subset-zeta": "fxt-cpu-t1",
+    "superset-zeta": "fxt-cpu-t1"
+  },
+  "fftw_threads": 8,
+  "groups": [
+    {
+      "backends": [
+        "cuButterfly",
+        "cufft",
+        "vkfft"
+      ],
+      "case_ids": [
+        "1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963",
+        "2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9",
+        "44b2de6f8d8235eec266bf422af3826442f8250366e2b9fad29ac0576dbce3e3",
+        "b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40",
+        "ba087fb33968396226e0479b872103d845d72ef4d9acbcd3a1d3a5cc191effa7",
+        "c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16",
+        "c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7",
+        "ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86",
+        "ee8b034b194dda38fb15fb59cbc30b48f3ecda99d875b90dcee2ec12956795dc",
+        "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac",
+        "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548"
+      ],
+      "group": [
+        "fft",
+        "fp32"
+      ],
+      "panel": "common"
+    },
+    {
+      "backends": [
+        "cuButterfly",
+        "cufft",
+        "vkfft"
+      ],
+      "case_ids": [
+        "31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a",
+        "5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb",
+        "6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f",
+        "99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0",
+        "cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0",
+        "fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d"
+      ],
+      "group": [
+        "fft",
+        "fp64"
+      ],
+      "panel": "common"
+    },
+    {
+      "backends": [
+        "cuButterfly",
+        "daofht"
+      ],
+      "case_ids": [
+        "0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9",
+        "0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043",
+        "3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485",
+        "4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3",
+        "bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c",
+        "db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be",
+        "dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51",
+        "e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2",
+        "eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a",
+        "f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d"
+      ],
+      "group": [
+        "fwht",
+        "fp32"
+      ],
+      "panel": "common"
+    },
+    {
+      "backends": [
+        "cuButterfly"
+      ],
+      "case_ids": [
+        "5e296849a754f51f2c951977f778472f3047e3e65616086309f8d8c873078cb5"
+      ],
+      "group": [
+        "fwht",
+        "fp32"
+      ],
+      "panel": "cuButterfly-only"
+    },
+    {
+      "backends": [
+        "cuButterfly"
+      ],
+      "case_ids": [
+        "c669da86891cf10a56120b86d30dd00dd4277774d8da49ce61673f73d6416d32",
+        "d65c1cc9eb23f8609e815cb74f2318e0b8127870aa4b601b61b45ccebcb03a58"
+      ],
+      "group": [
+        "fwht",
+        "fp64"
+      ],
+      "panel": "cuButterfly-only"
+    },
+    {
+      "backends": [
+        "cuButterfly"
+      ],
+      "case_ids": [
+        "16a35eaba8877d371a495169cf5b3493aa69dc97b9acc64616838e7b850a2bec",
+        "474bd15c6b8f88b7d6ccdae7409b0ca2344280481464fd3ac6d1990cd14b3700",
+        "7e8759ca9ea1f2afd2253a35da5a0849774510385e164faa1db09709e43a0dc8",
+        "e1b431aba007644d4adf24c062c794d8b59d7145e0a5c0181ad787c39f2ab7e1"
+      ],
+      "group": [
+        "ntt",
+        "word32"
+      ],
+      "panel": "cuButterfly-only"
+    },
+    {
+      "backends": [
+        "cuButterfly",
+        "gpu-ntt"
+      ],
+      "case_ids": [
+        "38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e",
+        "5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e",
+        "65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f",
+        "83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b",
+        "eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa"
+      ],
+      "group": [
+        "ntt",
+        "word64"
+      ],
+      "panel": "common"
+    },
+    {
+      "backends": [
+        "cuButterfly"
+      ],
+      "case_ids": [
+        "168d2b19ad493d5c6927f65758a4aec025a0c7990dfd5e1bbb340d4d0d96e415",
+        "a2464b5b52504a97b847b7b8ce5f640a1159307524a148bf594b1bec0b1dc69a",
+        "bc18c585abdad31d5b0fac1ff526b32008cf34009b687e5d9252a0c2e953ccc6",
+        "f203848e8822bfdc470ef962d01148ef86b65bf6bbfb3d4c67a348c96a340f94"
+      ],
+      "group": [
+        "ntt",
+        "word64"
+      ],
+      "panel": "cuButterfly-only"
+    },
+    {
+      "backends": [
+        "cuButterfly"
+      ],
+      "case_ids": [
+        "53572661c2e954a03ba494ef94872a0ec67581e4305b1ce4f2f1a5f64625c9d9",
+        "fe45e67fcef5f2c4d8817a5347219cadc6bc82e0f18d492e11449ae72f5161ef"
+      ],
+      "group": [
+        "structured-2x2",
+        "fp32"
+      ],
+      "panel": "cuButterfly-only"
+    },
+    {
+      "backends": [
+        "cuButterfly"
+      ],
+      "case_ids": [
+        "124c1b27b0816609f759c112e1d7c83e7fbf56a2c927c8f2ccf93dfdf5b58e0c",
+        "3042bd7fb43640f328d3b7231edf653e123ef3be26cbac58fc499098d05cdba7",
+        "570cbfc0749bcc7cf88d8699299c9697956d1a36d1687848d234d12a24f0100c",
+        "c54a46f5fa929a3834ef13db0389e4b21ac80ecdd5aabdbdb6f7f99b18dc313a",
+        "e57159fa02783b0d266ebcc670ae9bc4f600ceffc25aab82ecb3ce5469ccec66"
+      ],
+      "group": [
+        "structured-2x2",
+        "fp64"
+      ],
+      "panel": "cuButterfly-only"
+    },
+    {
+      "backends": [
+        "cuButterfly"
+      ],
+      "case_ids": [
+        "2b9e64d11619319d00c7ae7ce3d2b6df2004af6e068c5f00dd082311a7342d53",
+        "4265f98bd655de47a813b28de672bc4aff8faf03e830f164b24ddbef42c783a9",
+        "98f376d818554db22ad6c24414dd94814ab09083d7841f3bcbbd7f8c89353dcf"
+      ],
+      "group": [
+        "subset-zeta",
+        "uint32"
+      ],
+      "panel": "cuButterfly-only"
+    },
+    {
+      "backends": [
+        "cuButterfly"
+      ],
+      "case_ids": [
+        "07404144bfa36ce114dc64679c9d5e9381e13967443ea4f841ccdf761df90910",
+        "1321f6f841e2dd85f4881bb95f251a165a2439ba76d9cb05293936ae04a7e54e",
+        "8871006ffb75b4c1ad431cac7d57bf43ac4ae7dbab01f020cf81aa00911b3cfe",
+        "e27f514c699063a6e614453b996470f8cb43b80a3ba78aa5ed04ec5e6f939de0",
+        "f117ce29c648bf2fdc20b14c8eafeb512f561f55f88702be024d6ec94c9016a3"
+      ],
+      "group": [
+        "subset-zeta",
+        "word64"
+      ],
+      "panel": "cuButterfly-only"
+    },
+    {
+      "backends": [
+        "cuButterfly"
+      ],
+      "case_ids": [
+        "34d94ef04b5155f2b7ab7ffccc60d6f19dee261754ffa8699c250637c2e09c7b",
+        "6ff0996fdc68791dfac7a07d04200cb7ebbd235012b4224f2d4947614ca865a8",
+        "e268b6b96b5f514d676e324f5e2c5b152b7e491a9e6c1edbd58674974ba02e71"
+      ],
+      "group": [
+        "superset-zeta",
+        "uint32"
+      ],
+      "panel": "cuButterfly-only"
+    },
+    {
+      "backends": [
+        "cuButterfly"
+      ],
+      "case_ids": [
+        "2b06fa7d9ff2c791936f527661f7032b765e34899140f405f1cdff1b703a9baa",
+        "5afa13b20affe0fe852a5bc6c90745381da9d3a297b1cc86a51b1a9c0931bb87",
+        "749708f24939c6d2b1f191c4c527944e6fb0caa1329430f45938be05ecbbbb30",
+        "9527a8c264ca4a519acc9c5df23642952f7b72c6ac9de8fced7d4ea253842225",
+        "c5950c9acb8c519ffcb9127e8f9bef0e450b5998833448f14df8ac80d89c7938"
+      ],
+      "group": [
+        "superset-zeta",
+        "word64"
+      ],
+      "panel": "cuButterfly-only"
+    }
+  ],
+  "input": "paper/generated/current_refresh/cpu_normalized.json",
+  "input_sha256": "b87bc7f85d0fd7f7e9c10eb8aa2f86a567fd65143a603f13efc4c38374e8ff34",
+  "outputs": {
+    "csv": {
+      "path": "paper/figures/cpu_normalized_performance.csv",
+      "sha256": "521a59caf018426b52141d0e524542c322b522661a01783b67757e643e89caac"
+    },
+    "pdf": {
+      "path": "paper/figures/cpu_normalized_performance.pdf",
+      "sha256": "1deab6957d82d478f52b6b215ff0bd01f398bbdf951e5c94d714a7d2ba861c59"
+    },
+    "png": {
+      "path": "paper/figures/cpu_normalized_performance.png",
+      "sha256": "112a57d3dc8c88d510eccb38f4be87f3734409eb9be39eaa1ed0c6138f29ef6e"
+    },
+    "svg": {
+      "path": "paper/figures/cpu_normalized_performance.svg",
+      "sha256": "d71d16e74c1d1b6d14b3fc7daee9125987b562da87bb5f0b14eb1c4ed6bf331f"
+    }
+  },
+  "qualification": "shared-host provisional CPU timings; CPU/GPU timing boundaries are separate",
+  "records": 115,
+  "schema": "cpu-normalized-performance-render-v1"
+}

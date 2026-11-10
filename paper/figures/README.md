@@ -133,6 +133,17 @@ means are not confidence intervals. Source/output hashes, data units,
 aggregation rules, and descriptions are recorded in the snapshot and
 `../generated/current_refresh/figure_manifest.json`.
 
+The complementary `cpu_normalized_performance` figure uses the same main66
+semantic requests and divides each backend's complete-call time by an
+operator-specific CPU reference. FFT uses eight-thread FFTW; FWHT and zeta use
+FXT; NTT uses HEXL; structured 2x2 uses the author CPU implementation. The
+shared-request panel contains only exact intersections across cuButterfly and
+available GPU baselines. The second panel retains cuButterfly requests without
+a complete external GPU pair. CPU timings are a shared-host provisional
+baseline and are not pooled with GPU/GPU ratios. Regenerate it with
+`python paper/tools/export_cpu_normalized.py --cpu-results <cpu-results.json>`
+followed by `python scripts/render_cpu_normalized_performance.py`.
+
 Run `make -C paper refresh-data PYTHON=/home/wt/yes/envs/cubutterfly/bin/python`
 from the repository root. This is CPU-only. The earlier `principle_e1_latency`,
 filter-batch, and Poisson endpoint figures remain historical assets and no

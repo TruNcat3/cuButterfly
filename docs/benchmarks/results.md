@@ -48,6 +48,18 @@ one does not imply every request is faster. The [plotted data](../../figures/rea
 and [provenance](../../figures/readme_performance.json) retain the separate studies.
 Regenerate this view without a GPU with `python scripts/render_readme_performance.py`.
 
+The complementary [CPU-normalized figure](../../paper/figures/cpu_normalized_performance.svg)
+uses the same 66 main requests and plots CPU time divided by each backend's
+complete-call time. The CPU denominator is explicit per operator family:
+eight-thread FFTW for FFT, FXT for FWHT/zeta, HEXL for NTT, and the author CPU
+implementation for structured 2x2. The shared panel uses only exact request
+intersections across cuButterfly and the available GPU baselines; the second
+panel keeps cuButterfly-only requests whose external GPU comparator is missing.
+The 83 CPU measurements come from a shared AMD EPYC host with seven samples of
+twenty calls after ten warmups. CPU wall-clock timing and resident GPU timing
+have different boundaries, so this view is a complementary, provisional
+baseline and does not replace the GPU/GPU comparison.
+
 Absolute latency distributions answer a different question: how long the
 represented requests take. They cannot establish relative performance across
 different populations. For example, the earlier coverage figure includes nine
