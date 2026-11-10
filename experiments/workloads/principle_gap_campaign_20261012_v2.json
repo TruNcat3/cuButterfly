@@ -1,0 +1,13 @@
+{
+  "schema": "cubutterfly-principle-gap-repair-v2",
+  "extends": "experiments/workloads/principle_gap_campaign_20261012.json",
+  "v1_output": "results/paper_targeted_20261012/principle_gap_attempt_safe",
+  "cases": ["fwht-n12-b1-layout", "fwht-n12-b16-layout", "ntt-n12-b1-layout"],
+  "retained_v1_case": "ntt-n12-b16-layout",
+  "output": "results/paper_targeted_20261012/principle_gap_v2",
+  "numeric_policy": {
+    "fwht": "Existing bench --verify is internal sanity only; user numerical acceptance unassessed; error distribution missing; performance exploratory. No new threshold.",
+    "ntt": "Exact full-batch internal reference equality required."
+  },
+  "reason": "Three linear preflights encountered two unique pending broker requests. Both modules are now ready. Retry only the three incomplete pairs in a fresh attempt; preserve v1."
+}

@@ -1,0 +1,80 @@
+{
+  "schema": "cubutterfly-principle-gap-campaign-v1",
+  "id": "principle-gap-20261012",
+  "principles": "docs/research_principles.md",
+  "target": {
+    "gpu_uuid": "GPU-00000000-0000-0000-0000-000000000002",
+    "model": "NVIDIA A100 80GB PCIe",
+    "compute_capability": "8.0",
+    "python": "python",
+    "build_dir": "build-e13-cufftdx",
+    "library": "results/search_budget_20261011/frozen_runtime/libcuntt.so",
+    "library_sha256": "24486975585fa2ab6399a0cfeae4b9449c398490cb76c5ea5a73a3560abe8c66",
+    "calibration": "results/plan_batch_trace_20261010/recalibration_gpu2_finalized_bound_20261011/calibration_manifest.json",
+    "compile_socket": "/tmp/cubutterfly-gpu2-20261011-r3.sock",
+    "deadline": "2026-10-12T16:30:00+08:00",
+    "protected_gpu": "GPU-00000000-0000-0000-0000-000000000001"
+  },
+  "protocol": {"trials": 3, "warmup": 100, "repeat": 100, "verify_batches": 0},
+  "tasks": [
+    {
+      "id": "reuse-fft-leaf-factorial",
+      "status": "reuse_evidence",
+      "depends_on": [],
+      "evidence": "results/paper_completion_20260917/core_dataflow_ablation/runtime_manifest.json",
+      "replication": "results/paper_completion_20260917/core_dataflow_ablation/a100-40gb/runtime_manifest.json",
+      "core_identity": ["NativeCodelet<4,false>", "DxCodelet<4,false>"],
+      "changed_axes": ["stagewise-hbm versus resident-prefix-2"],
+      "budget": {"new_gpu_cells": 0},
+      "claim": "Historical standalone FP32 radix16 mechanism evidence; not current public planner performance. Reuse accepted rows, retain old build and hardware identity."
+    },
+    {
+      "id": "reuse-fwht-ntt-residency",
+      "status": "reuse_evidence",
+      "depends_on": [],
+      "evidence": "results/paper_completion_20260918/e3_cross_operator/summary.json",
+      "timing": "results/paper_completion_20260918/e3_cross_operator/a100-80gb/journal.json",
+      "core_identity": ["FwhtOperator<float>::apply radix2", "NttStageOperatorT<uint64_t>::apply radix2 Shoup"],
+      "changed_axes": ["local_stage_partitions"],
+      "budget": {"new_gpu_cells": 0},
+      "claim": "Reuse accepted historical E3 organization evidence: N4096 B1/B1024, fixed [8,4] physical groups, leaf0 versus leaf2 local partitions, 24 accepted units. Keep historical runtime and hardware identity separate from current-build timing."
+    },
+    {
+      "id": "layout-fixed-core",
+      "status": "ready_cpu_preparation",
+      "depends_on": ["frozen-runtime-identity", "gpu2-exclusive-window", "full-batch-preflight"],
+      "operators": ["fwht", "ntt"],
+      "logN": 12,
+      "batches": [1, 16],
+      "stage_partition": [6, 6],
+      "threads": 32,
+      "changed_axes": {"fwht": ["shared_layout"], "ntt": ["dataflow_layout"]},
+      "core_identity": {"fwht": "FwhtOperator<float>::apply/radix2/native", "ntt": "NttStageOperatorT<uint64_t>::apply/radix2/Shoup/table"},
+      "core_sources": ["src/operator_traits.cuh", "src/ntt_traits.cuh", "src/shared_iterative.cuh"],
+      "ntt_modulus": 576460756061519873,
+      "baseline": "linear shared-iterative parallel tiles; 64 tiles per transform and 32 butterflies per tile; one fully active warp per tile",
+      "treatment": "Same partition, primitives and parallel shape with writer-aligned shared placement (NTT spelling hermes-xor)",
+      "accuracy": {"fwht": "Existing full-batch FP32 absolute max-error <= 1e-4, no threshold relaxation", "ntt": "Full-batch exact elementwise modular reference"},
+      "budget": {"cases": 4, "variants_per_case": 2, "timed_processes": 24, "preflight_processes": 8, "max_batch_elements": 65536, "search_candidates": 0},
+      "claim": "Mechanism ablation one: fixed-core address organization. Explicit public mapping replay through operator benchmarks; kernel launch-sequence timing. Not full C API end-to-end timing, automatic search, or the complete core-transfer ablation."
+    },
+    {
+      "id": "component-disabled-research",
+      "status": "blocked_implementation",
+      "depends_on": ["search-constraint-api", "candidate-provenance-audit", "independent-selected-replay"],
+      "operators": ["fft", "ntt", "fwht", "subset-zeta", "superset-zeta", "structured-2x2"],
+      "budget": {"new_gpu_cells": 0, "planned_candidates_per_space": 8, "planned_selection_trials": 1, "planned_independent_replay_trials": 3},
+      "required_interface": "Public search accepts immutable component exclusions and fixed arithmetic core identity; enumerate/filter every candidate before measurement, preserve equal candidate/timing budget and independent selected replay. Existing PlanOptions mapping is explicit replay, not a constraint on adaptive search.",
+      "claim": "No component-disabled search is queued until the runtime enforces the contract. Manually comparing explicit mappings cannot stand in for re-search."
+    },
+    {
+      "id": "all-butterfly-core-transfer",
+      "status": "blocked_implementation",
+      "depends_on": ["portable-leaf-contract", "second-leaf-adapters", "fixed-core-search-constraint"],
+      "operators": ["fft", "ntt", "fwht", "subset-zeta", "superset-zeta", "structured-2x2"],
+      "budget": {"new_gpu_cells": 0, "planned_sizes": [4096], "planned_batches": [1, 16], "planned_cores": 2, "planned_candidates_per_organization": 8},
+      "required_interface": "Expose verifiable leaf/subgraph arithmetic and coefficient identities in conventional parallel and mixed organizations. FWHT/zeta/structured shared-iterative admits only scalar radix2; radix4/8 elsewhere are equivalent implementations with changed local grouping, not demonstrated portable second leaves. NTT has multiple generic subgraph cores but no matched conventional-vs-mixed fixed-leaf contract with constrained search. FFT standalone leaves already work; public factor-overlap and black-box external libraries do not fill this gap.",
+      "claim": "Retain missing cells per operator; full external libraries remain external baselines. This task is not satisfied by the layout task or by candidate count."
+    }
+  ]
+}

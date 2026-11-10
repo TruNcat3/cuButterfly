@@ -1,0 +1,108 @@
+--- a/gemm.cu
++++ b/gemm.cu
+@@ -1,5 +1,6 @@
+ #include <cutlass/gemm/device/gemm.h>
+ #include <gemm.h>
++#include <ATen/cuda/CUDAContext.h>
+ 
+ 
+ 
+@@ -38,7 +39,7 @@
+             {1,                                0}
+     };
+ 
+-    auto status = gemmOp(arguments);
++    auto status = gemmOp(arguments, nullptr, at::cuda::getCurrentCUDAStream());
+ 
+     ensure(status == cutlass::Status::kSuccess,
+            cutlassGetStatusString(status));
+--- a/quant.cu
++++ b/quant.cu
+@@ -1,4 +1,5 @@
+ #include <quant.h>
++#include <ATen/cuda/CUDAContext.h>
+ 
+ 
+ template<typename T>
+@@ -57,7 +58,7 @@
+ 
+     dim3 block{std::min<uint32_t>(colsDst, 32), std::min<uint32_t>(rows, 16)};
+     dim3 grid{cdiv(colsDst, block.x), cdiv(rows, block.y)};
+-    sym_quantize_f16_i4_kernel<<<grid, block>>>(x, scale, rows, colsSrc, colsDst, q);
++    sym_quantize_f16_i4_kernel<<<grid, block, 0, at::cuda::getCurrentCUDAStream()>>>(x, scale, rows, colsSrc, colsDst, q);
+ }
+ 
+ 
+@@ -90,7 +91,7 @@
+ {
+     dim3 block{std::min<uint32_t>(cols, 16), std::min<uint32_t>(rows, 16)};
+     dim3 grid{cdiv(cols, block.x), cdiv(rows, block.y)};
+-    sym_dequantize_i32_f16_kernel<<<grid, block>>>(
++    sym_dequantize_i32_f16_kernel<<<grid, block, 0, at::cuda::getCurrentCUDAStream()>>>(
+             q,
+             scale_row, scale_col,
+             rows, cols, x);
+--- a/flashinfer.cu
++++ b/flashinfer.cu
+@@ -1,6 +1,7 @@
+ #pragma once
+ #include <algorithm>
+ #include <cmath>
++#include <ATen/cuda/CUDAContext.h>
+ 
+ #include <flashinfer/decode.cuh>
+ #include <flashinfer/page.cuh>
+@@ -41,7 +42,7 @@
+ 
+   flashinfer::BatchDecodeWithPagedKVCacheKernel<
+       rotary_mode, norm_on_the_fly, vec_size, bdx, bdy, FoldFactor, DTypeInQ,
+-      DTypeIn, DTypeOut, int32_t><<<nblks, nthrs>>>(
++      DTypeIn, DTypeOut, int32_t><<<nblks, nthrs, 0, at::cuda::getCurrentCUDAStream()>>>(
+       q, paged_kv, o, sm_scale, rope_inv_scale, rope_inv_theta);
+ }
+ 
+@@ -66,7 +67,7 @@
+   dim3 nblks(paged_kv.batch_size * ((paged_kv.num_heads + bdy - 1) / bdy));
+   dim3 nthrs(bdx, bdy);
+   flashinfer::AppendPagedKVCachePrefillKernel<head_dim, vec_size, bdx, bdy, T,
+-                                              int32_t><<<nblks, nthrs>>>(
++                                              int32_t><<<nblks, nthrs, 0, at::cuda::getCurrentCUDAStream()>>>(
+       paged_kv, (T*)key, (T*)value, key_param, value_param, seqlen_indptr);
+ }
+ 
+@@ -92,7 +93,7 @@
+   dim3 nthrs(bdx, bdy);
+   flashinfer::AppendPagedKVCacheDecodeKernel<head_dim, vec_size, bdx, bdy, T,
+                                              int32_t>
+-      <<<nblks, nthrs>>>(paged_kv, (T*)key, (T*)value, key_param, value_param);
++      <<<nblks, nthrs, 0, at::cuda::getCurrentCUDAStream()>>>(paged_kv, (T*)key, (T*)value, key_param, value_param);
+ }
+ 
+ 
+@@ -131,7 +132,7 @@
+ 
+   flashinfer::BatchDecodeWithPagedKVCacheKernel<
+       rotary_mode, norm_on_the_fly, vec_size, bdx, bdy, FoldFactor, DTypeInQ,
+-      DTypeIn, DTypeOut, int32_t><<<nblks, nthrs>>>(
++      DTypeIn, DTypeOut, int32_t><<<nblks, nthrs, 0, at::cuda::getCurrentCUDAStream()>>>(
+       q, paged_kv, o, sm_scale, rope_inv_scale, rope_inv_theta);
+ }
+ 
+@@ -156,7 +157,7 @@
+   dim3 nblks(paged_kv.batch_size * ((paged_kv.num_heads + bdy - 1) / bdy));
+   dim3 nthrs(bdx, bdy);
+   flashinfer::AppendPagedKVCachePrefillKernel<head_dim, vec_size, bdx, bdy, T,
+-                                              int32_t><<<nblks, nthrs>>>(
++                                              int32_t><<<nblks, nthrs, 0, at::cuda::getCurrentCUDAStream()>>>(
+       paged_kv, (T*)key, (T*)value, key_param, value_param, seqlen_indptr);
+ }
+ 
+@@ -182,7 +183,7 @@
+   dim3 nthrs(bdx, bdy);
+   flashinfer::AppendPagedKVCacheDecodeKernel<head_dim, vec_size, bdx, bdy, T,
+                                              int32_t>
+-      <<<nblks, nthrs>>>(paged_kv, (T*)key, (T*)value, key_param, value_param);
++      <<<nblks, nthrs, 0, at::cuda::getCurrentCUDAStream()>>>(paged_kv, (T*)key, (T*)value, key_param, value_param);
+ }
+ 
+ 

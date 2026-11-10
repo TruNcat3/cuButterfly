@@ -1,0 +1,1697 @@
+{
+  "cases": [
+    {
+      "baseline_over_treatment_median": 1.0088080421254186,
+      "id": "fwht-n12-b1-layout",
+      "mapping_audit": {
+        "actual_changed_axes": [
+          "shared_layout"
+        ],
+        "baseline_resolved_mapping": {
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "table"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_io_policies": [],
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stage_partitions": [],
+          "local_stages": 10,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_codelet": "native",
+          "prefix_codelet_lanes": 1,
+          "prefix_ept": 8,
+          "prefix_shared_layout": "linear",
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 32,
+          "warp_stages": 0
+        },
+        "case": "fwht-n12-b1-layout",
+        "declared_changed_axes": [
+          "shared_layout"
+        ],
+        "numerical_gate": "unassessed-user-acceptance",
+        "reasons": [],
+        "status": "accepted",
+        "treatment_resolved_mapping": {
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "table"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_io_policies": [],
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stage_partitions": [],
+          "local_stages": 10,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_codelet": "native",
+          "prefix_codelet_lanes": 1,
+          "prefix_ept": 8,
+          "prefix_shared_layout": "linear",
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "writer-aligned",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 32,
+          "warp_stages": 0
+        }
+      },
+      "numerical_gate": "unassessed-user-acceptance",
+      "source": "v2",
+      "variants": [
+        {
+          "correct": "1",
+          "id": "linear",
+          "median_us": 10.536999999999999,
+          "preflight_status": "accepted",
+          "trial_us": [
+            10.536999999999999,
+            10.199,
+            10.536999999999999
+          ],
+          "verified_batches": "1"
+        },
+        {
+          "correct": "1",
+          "id": "writer-aligned",
+          "median_us": 10.445,
+          "preflight_status": "accepted",
+          "trial_us": [
+            10.557,
+            7.854,
+            10.445
+          ],
+          "verified_batches": "1"
+        }
+      ]
+    },
+    {
+      "baseline_over_treatment_median": 0.9382650345928687,
+      "id": "fwht-n12-b16-layout",
+      "mapping_audit": {
+        "actual_changed_axes": [
+          "shared_layout"
+        ],
+        "baseline_resolved_mapping": {
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "table"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_io_policies": [],
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stage_partitions": [],
+          "local_stages": 10,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_codelet": "native",
+          "prefix_codelet_lanes": 1,
+          "prefix_ept": 8,
+          "prefix_shared_layout": "linear",
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 32,
+          "warp_stages": 0
+        },
+        "case": "fwht-n12-b16-layout",
+        "declared_changed_axes": [
+          "shared_layout"
+        ],
+        "numerical_gate": "unassessed-user-acceptance",
+        "reasons": [],
+        "status": "accepted",
+        "treatment_resolved_mapping": {
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "table"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_io_policies": [],
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stage_partitions": [],
+          "local_stages": 10,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_codelet": "native",
+          "prefix_codelet_lanes": 1,
+          "prefix_ept": 8,
+          "prefix_shared_layout": "linear",
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "writer-aligned",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 32,
+          "warp_stages": 0
+        }
+      },
+      "numerical_gate": "unassessed-user-acceptance",
+      "source": "v2",
+      "variants": [
+        {
+          "correct": "1",
+          "id": "linear",
+          "median_us": 10.578000000000001,
+          "preflight_status": "accepted",
+          "trial_us": [
+            10.578000000000001,
+            10.578000000000001,
+            10.619
+          ],
+          "verified_batches": "16"
+        },
+        {
+          "correct": "1",
+          "id": "writer-aligned",
+          "median_us": 11.274,
+          "preflight_status": "accepted",
+          "trial_us": [
+            11.315000000000001,
+            11.254,
+            11.274
+          ],
+          "verified_batches": "16"
+        }
+      ]
+    },
+    {
+      "baseline_over_treatment_median": 0.9744087213599409,
+      "id": "ntt-n12-b1-layout",
+      "mapping_audit": {
+        "actual_changed_axes": [
+          "dataflow_layout"
+        ],
+        "baseline_resolved_mapping": {
+          "appt_role_mapping": {
+            "data_time_role_mask": 7,
+            "fragment_width": 0,
+            "producer_weight": 0,
+            "tail_weight": 0,
+            "writer_tiles_per_cta": 0,
+            "writer_weight": 0
+          },
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundary_mappings": [],
+          "compute_unit": "radix2",
+          "cross_twiddle_placement": "fused",
+          "data_space": 0,
+          "data_time": 0,
+          "dataflow_layout": "linear",
+          "dataflow_state_mode": "inplace",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "flow_tile_log_n": 0,
+          "hierarchical_core": "dataflow-radix4",
+          "kind": "ntt",
+          "local_stage_partitions": [],
+          "modular_multiply": "shoup",
+          "n1_log": 0,
+          "packet_compute_layout": "interleaved-rows",
+          "packet_fold_wave_barriers": false,
+          "packet_readiness_mode": "per-packet",
+          "pipeline_buffers": 0,
+          "profile_appt_roles": false,
+          "ready_window": 0,
+          "role_stages": 0,
+          "rows_per_block": 0,
+          "schema_version": 1,
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "subgraph_mappings": [],
+          "target_ctas_per_sm": 0,
+          "threads_per_block": 32,
+          "token_interleave": 0
+        },
+        "case": "ntt-n12-b1-layout",
+        "declared_changed_axes": [
+          "dataflow_layout"
+        ],
+        "numerical_gate": "exact-full-batch",
+        "reasons": [],
+        "status": "accepted",
+        "treatment_resolved_mapping": {
+          "appt_role_mapping": {
+            "data_time_role_mask": 7,
+            "fragment_width": 0,
+            "producer_weight": 0,
+            "tail_weight": 0,
+            "writer_tiles_per_cta": 0,
+            "writer_weight": 0
+          },
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundary_mappings": [],
+          "compute_unit": "radix2",
+          "cross_twiddle_placement": "fused",
+          "data_space": 0,
+          "data_time": 0,
+          "dataflow_layout": "hermes-xor",
+          "dataflow_state_mode": "inplace",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "flow_tile_log_n": 0,
+          "hierarchical_core": "dataflow-radix4",
+          "kind": "ntt",
+          "local_stage_partitions": [],
+          "modular_multiply": "shoup",
+          "n1_log": 0,
+          "packet_compute_layout": "interleaved-rows",
+          "packet_fold_wave_barriers": false,
+          "packet_readiness_mode": "per-packet",
+          "pipeline_buffers": 0,
+          "profile_appt_roles": false,
+          "ready_window": 0,
+          "role_stages": 0,
+          "rows_per_block": 0,
+          "schema_version": 1,
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "subgraph_mappings": [],
+          "target_ctas_per_sm": 0,
+          "threads_per_block": 32,
+          "token_interleave": 0
+        }
+      },
+      "numerical_gate": "exact-full-batch",
+      "source": "v2",
+      "variants": [
+        {
+          "correct": "1",
+          "id": "linear",
+          "median_us": 10.547,
+          "preflight_status": "accepted",
+          "trial_us": [
+            10.322,
+            10.547,
+            10.721
+          ],
+          "verified_batches": "1"
+        },
+        {
+          "correct": "1",
+          "id": "writer-aligned",
+          "median_us": 10.824,
+          "preflight_status": "accepted",
+          "trial_us": [
+            10.824,
+            10.824,
+            10.844
+          ],
+          "verified_batches": "1"
+        }
+      ]
+    },
+    {
+      "baseline_over_treatment_median": 0.9535634467345419,
+      "id": "ntt-n12-b16-layout",
+      "mapping_audit": {
+        "actual_changed_axes": [
+          "dataflow_layout"
+        ],
+        "baseline_resolved_mapping": {
+          "appt_role_mapping": {
+            "data_time_role_mask": 7,
+            "fragment_width": 0,
+            "producer_weight": 0,
+            "tail_weight": 0,
+            "writer_tiles_per_cta": 0,
+            "writer_weight": 0
+          },
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundary_mappings": [],
+          "compute_unit": "radix2",
+          "cross_twiddle_placement": "fused",
+          "data_space": 0,
+          "data_time": 0,
+          "dataflow_layout": "linear",
+          "dataflow_state_mode": "inplace",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "flow_tile_log_n": 0,
+          "hierarchical_core": "dataflow-radix4",
+          "kind": "ntt",
+          "local_stage_partitions": [],
+          "modular_multiply": "shoup",
+          "n1_log": 0,
+          "packet_compute_layout": "interleaved-rows",
+          "packet_fold_wave_barriers": false,
+          "packet_readiness_mode": "per-packet",
+          "pipeline_buffers": 0,
+          "profile_appt_roles": false,
+          "ready_window": 0,
+          "role_stages": 0,
+          "rows_per_block": 0,
+          "schema_version": 1,
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "subgraph_mappings": [],
+          "target_ctas_per_sm": 0,
+          "threads_per_block": 32,
+          "token_interleave": 0
+        },
+        "case": "ntt-n12-b16-layout",
+        "declared_changed_axes": [
+          "dataflow_layout"
+        ],
+        "reasons": [],
+        "status": "accepted",
+        "treatment_resolved_mapping": {
+          "appt_role_mapping": {
+            "data_time_role_mask": 7,
+            "fragment_width": 0,
+            "producer_weight": 0,
+            "tail_weight": 0,
+            "writer_tiles_per_cta": 0,
+            "writer_weight": 0
+          },
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundary_mappings": [],
+          "compute_unit": "radix2",
+          "cross_twiddle_placement": "fused",
+          "data_space": 0,
+          "data_time": 0,
+          "dataflow_layout": "hermes-xor",
+          "dataflow_state_mode": "inplace",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "flow_tile_log_n": 0,
+          "hierarchical_core": "dataflow-radix4",
+          "kind": "ntt",
+          "local_stage_partitions": [],
+          "modular_multiply": "shoup",
+          "n1_log": 0,
+          "packet_compute_layout": "interleaved-rows",
+          "packet_fold_wave_barriers": false,
+          "packet_readiness_mode": "per-packet",
+          "pipeline_buffers": 0,
+          "profile_appt_roles": false,
+          "ready_window": 0,
+          "role_stages": 0,
+          "rows_per_block": 0,
+          "schema_version": 1,
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "subgraph_mappings": [],
+          "target_ctas_per_sm": 0,
+          "threads_per_block": 32,
+          "token_interleave": 0
+        }
+      },
+      "numerical_gate": "exact-full-batch",
+      "source": "v1-conditional-subset",
+      "variants": [
+        {
+          "correct": "1",
+          "failure": null,
+          "id": "linear",
+          "median_us": 15.360000000000001,
+          "preflight_status": "accepted",
+          "trial_us": [
+            15.34,
+            15.360000000000001,
+            15.37
+          ],
+          "verified_batches": "16"
+        },
+        {
+          "correct": "1",
+          "failure": null,
+          "id": "writer-aligned",
+          "median_us": 16.108,
+          "preflight_status": "accepted",
+          "trial_us": [
+            16.137999999999998,
+            16.108,
+            16.097
+          ],
+          "verified_batches": "16"
+        }
+      ]
+    }
+  ],
+  "execution_gate": {
+    "guard": "complete",
+    "returncode": 0,
+    "telemetry_scope": "child lifetime; not exact CUDA-event interval",
+    "telemetry_status": "completed",
+    "thermal_samples": 226,
+    "thermal_slowdown_observed": false
+  },
+  "limitations": [
+    "Three trials do not establish significance.",
+    "Kernel launch sequence, not full C API end-to-end.",
+    "Layout-only mechanism ablation I, not fixed-core organization transfer (ablation II).",
+    "FWHT performance is exploratory; internal sanity is not user numerical acceptance."
+  ],
+  "missing_dependency": {
+    "completion": "Expose full-batch error distribution for the same resolved fixed mapping/input/reference; report errors without inventing a user threshold.",
+    "id": "fwht-fixed-mapping-full-error-report",
+    "status": "blocked_implementation"
+  },
+  "preparation_gate": {
+    "event_file_present": false,
+    "events": [],
+    "status": "clean"
+  },
+  "schema": "cubutterfly-principle-gap-run-audit-v2",
+  "sources": {
+    "owned_processes.json": {
+      "path": "/workspace/cuButterfly/results/paper_targeted_20261012/principle_gap_v2/guard/release/owned_processes.json",
+      "sha256": "cbab9e86e082a967060a4f0c4c266055131ec0705465115008aa0ff4a1973166"
+    },
+    "telemetry.telemetry.json": {
+      "path": "/workspace/cuButterfly/results/paper_targeted_20261012/principle_gap_v2/guard/release/telemetry.telemetry.json",
+      "sha256": "59bfd0012af6d99a9b70a4c7d84fc914c94a13ee9fe159216fb1a8846f73542a"
+    },
+    "timing.json": {
+      "path": "/workspace/cuButterfly/results/paper_targeted_20261012/principle_gap_v2/guard/release/timing.json",
+      "sha256": "66f437a59e1264521d4e3d2993d44dc2ec9c459008989659a6e4e5e6da78730b"
+    }
+  },
+  "status": "performance-recorded-floating-numerical-acceptance-unassessed",
+  "v1": {
+    "cases": [
+      {
+        "id": "fwht-n12-b1-layout",
+        "mapping_audit": {
+          "actual_changed_axes": [
+            "backend",
+            "batch_tile_count",
+            "boundaries",
+            "complex_multiply",
+            "compute_unit",
+            "cross_twiddle",
+            "data_tiles_per_cta",
+            "direct_boundary",
+            "exchange_chunks",
+            "execution_group_mappings",
+            "factor_columns",
+            "factor_ept",
+            "factor_io_policies",
+            "factor_overlap",
+            "factor_partition",
+            "factor_slices",
+            "fft_core",
+            "kind",
+            "local_exchange",
+            "local_stage_partitions",
+            "local_stages",
+            "pipeline_warps",
+            "prefetch_depth",
+            "prefix_codelet",
+            "prefix_codelet_lanes",
+            "prefix_ept",
+            "prefix_shared_layout",
+            "prefix_threads",
+            "prefix_units_per_cta",
+            "reorder_columns",
+            "schema_version",
+            "segment_mappings",
+            "shared_layout",
+            "stage_handoff",
+            "stage_overlap",
+            "stage_partition",
+            "stage_space",
+            "suffix_ept",
+            "suffix_threads",
+            "suffix_units_per_cta",
+            "tile_threads",
+            "warp_stages"
+          ],
+          "baseline_resolved_mapping": {},
+          "case": "fwht-n12-b1-layout",
+          "declared_changed_axes": [
+            "shared_layout"
+          ],
+          "reasons": [
+            "linear: missing accepted full-batch preflight",
+            "linear: incomplete correctness count",
+            "linear: missing runtime identity or correctness verdict",
+            "linear: resolved control mismatch backend",
+            "linear: resolved control mismatch batch_tile_count",
+            "linear: resolved control mismatch compute_unit",
+            "linear: resolved control mismatch fft_core",
+            "linear: resolved control mismatch local_exchange",
+            "linear: resolved control mismatch shared_layout",
+            "linear: resolved control mismatch stage_overlap",
+            "linear: resolved control mismatch stage_partition",
+            "linear: resolved control mismatch tile_threads",
+            "linear: missing accepted timing trials",
+            "linear: trial identity changed",
+            "actual mapping difference is not exactly the declared layout axis"
+          ],
+          "status": "rejected",
+          "treatment_resolved_mapping": {
+            "backend": "shared-iterative",
+            "batch_tile_count": 1,
+            "boundaries": [
+              {
+                "layout": "direct-strided",
+                "residency": "global-scratch",
+                "twiddle": "table"
+              }
+            ],
+            "complex_multiply": "four-mul",
+            "compute_unit": "radix2",
+            "cross_twiddle": "table",
+            "data_tiles_per_cta": 1,
+            "direct_boundary": "direct-strided",
+            "exchange_chunks": [],
+            "execution_group_mappings": [],
+            "factor_columns": 8,
+            "factor_ept": 16,
+            "factor_io_policies": [],
+            "factor_overlap": false,
+            "factor_partition": [],
+            "factor_slices": 1,
+            "fft_core": "scalar",
+            "kind": "butterfly",
+            "local_exchange": "shared",
+            "local_stage_partitions": [],
+            "local_stages": 10,
+            "pipeline_warps": 0,
+            "prefetch_depth": 0,
+            "prefix_codelet": "native",
+            "prefix_codelet_lanes": 1,
+            "prefix_ept": 8,
+            "prefix_shared_layout": "linear",
+            "prefix_threads": 0,
+            "prefix_units_per_cta": 0,
+            "reorder_columns": 0,
+            "schema_version": 1,
+            "segment_mappings": [],
+            "shared_layout": "writer-aligned",
+            "stage_handoff": "named-barrier",
+            "stage_overlap": false,
+            "stage_partition": [
+              6,
+              6
+            ],
+            "stage_space": 0,
+            "suffix_ept": 8,
+            "suffix_threads": 0,
+            "suffix_units_per_cta": 0,
+            "tile_threads": 32,
+            "warp_stages": 0
+          }
+        },
+        "numerical_gate": "unassessed-user-acceptance; internal sanity only where executed; error distribution missing",
+        "variants": [
+          {
+            "correct": null,
+            "failure": "command failed with exit code 1: /workspace/cuButterfly/build-e13-cufftdx/cubutterfly_bench --batch 1 --logN 12 --normalization none --operator fwht --placement out-of-place --precision fp32 --mapping-json '{\"backend\":\"shared-iterative\",\"batch_tile_count\":1,\"compute_unit\":\"radix2\",\"fft_core\":\"scalar\",\"kind\":\"butterfly\",\"local_exchange\":\"shared\",\"schema_version\":1,\"shared_layout\":\"linear\",\"stage_overlap\":false,\"stage_partition\":[6,6],\"tile_threads\":32}' --warmup 0 --repeat 1 --verify --verify-batches 0 --csv\nstdout:\ncubutterfly_bench [--operator fwht|fft|subset-zeta|superset-zeta|structured-2x2|xor-zeta] [--backend temporal-tile|hierarchical|online-reorder|shared-iterative|warp-hybrid|stage-pipeline|cufft]\n                    [--logN 8] [--batch 16384] [--inverse]\n                    [--stage-partition 9,9]\n                    [--stage-matrix m00,m01,m10,m11; repeat once per stage or broadcast one]\n                    [--segment-threads 256,256,256] [--segment-ept 8,8,8]\n                    [--boundary-twiddle table,recurrence] [--boundary-layout direct-strided,direct-strided]\n                    [--boundary-residency fused,global-scratch]\n                    [--group-threads 512,512] [--group-ept 8,8]\n                    [--normalization none|inverse]\n                    [--auto-select]\n                    [--stage-overlap --batch-tile-count N]\n                    [--placement in-place|out-of-place]\n                    [--batch-stride N]\n                    [--element-stride N]\n                    [--stage-space 1|2|4|8]\n                    [--stage-handoff atomic|named-barrier]\n                    [--tile-threads 32|64|128|256; resident also 512|1024] [--local-stages 5..10; cuFFTDx online 5..12] [--reorder-columns power-of-two]\n                    [--prefix-threads 128|256|512|1024] [--suffix-threads 128|256|512|1024]\n                    [--prefix-ept N] [--suffix-ept N]\n                    [--warp-stages 0..5]\n                    [--pipeline-warps 4|8]\n                    [--compute-unit auto|radix2|radix4|radix8]\n                    [--complex-multiply four-mul|gauss3]\n                    [--cross-twiddle table|recurrence]\n                    [--direct-boundary direct-strided|tiled-transpose|prefix-tiled-transpose]\n                    [--local-exchange shared|warp-register]\n                    [--shared-layout linear|xor-swizzle]\n                    [--fft-core scalar|thread-dft8|cta-dft8|wmma-dft8|cufftdx-block|cufftdx-direct|cufftdx-resident|turbofft-generated|register-tile]\n                    [--precision fp16|bf16|fp32|fp64|fp16-fp32|uint32|uint64]\n                    [--accumulation native|fp32]\n                    [--warmup 20] [--repeat 100] [--verify] [--verify-batches 0] [--csv]\n                    [--mapping-json JSON] [--list-design-points]\n                    [--list-capabilities] [--list-processing-units] [--list-register-tile-mappings] [--device-identity]\n\nstderr:\nerror: module compilation failed: semantic compile broker: compile broker request 8e4cef433105ee43585397cc0d767512797a4f8ba14c64d6612dad93faebea93 is pending\n\n",
+            "id": "linear",
+            "median_us": null,
+            "preflight_status": "error",
+            "trial_us": [],
+            "verified_batches": null
+          },
+          {
+            "correct": "1",
+            "failure": null,
+            "id": "writer-aligned",
+            "median_us": 10.342,
+            "preflight_status": "accepted",
+            "trial_us": [
+              10.557,
+              10.342,
+              10.107
+            ],
+            "verified_batches": "1"
+          }
+        ]
+      },
+      {
+        "id": "fwht-n12-b16-layout",
+        "mapping_audit": {
+          "actual_changed_axes": [
+            "backend",
+            "batch_tile_count",
+            "boundaries",
+            "complex_multiply",
+            "compute_unit",
+            "cross_twiddle",
+            "data_tiles_per_cta",
+            "direct_boundary",
+            "exchange_chunks",
+            "execution_group_mappings",
+            "factor_columns",
+            "factor_ept",
+            "factor_io_policies",
+            "factor_overlap",
+            "factor_partition",
+            "factor_slices",
+            "fft_core",
+            "kind",
+            "local_exchange",
+            "local_stage_partitions",
+            "local_stages",
+            "pipeline_warps",
+            "prefetch_depth",
+            "prefix_codelet",
+            "prefix_codelet_lanes",
+            "prefix_ept",
+            "prefix_shared_layout",
+            "prefix_threads",
+            "prefix_units_per_cta",
+            "reorder_columns",
+            "schema_version",
+            "segment_mappings",
+            "shared_layout",
+            "stage_handoff",
+            "stage_overlap",
+            "stage_partition",
+            "stage_space",
+            "suffix_ept",
+            "suffix_threads",
+            "suffix_units_per_cta",
+            "tile_threads",
+            "warp_stages"
+          ],
+          "baseline_resolved_mapping": {},
+          "case": "fwht-n12-b16-layout",
+          "declared_changed_axes": [
+            "shared_layout"
+          ],
+          "reasons": [
+            "linear: missing accepted full-batch preflight",
+            "linear: incomplete correctness count",
+            "linear: missing runtime identity or correctness verdict",
+            "linear: resolved control mismatch backend",
+            "linear: resolved control mismatch batch_tile_count",
+            "linear: resolved control mismatch compute_unit",
+            "linear: resolved control mismatch fft_core",
+            "linear: resolved control mismatch local_exchange",
+            "linear: resolved control mismatch shared_layout",
+            "linear: resolved control mismatch stage_overlap",
+            "linear: resolved control mismatch stage_partition",
+            "linear: resolved control mismatch tile_threads",
+            "linear: missing accepted timing trials",
+            "linear: trial identity changed",
+            "actual mapping difference is not exactly the declared layout axis"
+          ],
+          "status": "rejected",
+          "treatment_resolved_mapping": {
+            "backend": "shared-iterative",
+            "batch_tile_count": 1,
+            "boundaries": [
+              {
+                "layout": "direct-strided",
+                "residency": "global-scratch",
+                "twiddle": "table"
+              }
+            ],
+            "complex_multiply": "four-mul",
+            "compute_unit": "radix2",
+            "cross_twiddle": "table",
+            "data_tiles_per_cta": 1,
+            "direct_boundary": "direct-strided",
+            "exchange_chunks": [],
+            "execution_group_mappings": [],
+            "factor_columns": 8,
+            "factor_ept": 16,
+            "factor_io_policies": [],
+            "factor_overlap": false,
+            "factor_partition": [],
+            "factor_slices": 1,
+            "fft_core": "scalar",
+            "kind": "butterfly",
+            "local_exchange": "shared",
+            "local_stage_partitions": [],
+            "local_stages": 10,
+            "pipeline_warps": 0,
+            "prefetch_depth": 0,
+            "prefix_codelet": "native",
+            "prefix_codelet_lanes": 1,
+            "prefix_ept": 8,
+            "prefix_shared_layout": "linear",
+            "prefix_threads": 0,
+            "prefix_units_per_cta": 0,
+            "reorder_columns": 0,
+            "schema_version": 1,
+            "segment_mappings": [],
+            "shared_layout": "writer-aligned",
+            "stage_handoff": "named-barrier",
+            "stage_overlap": false,
+            "stage_partition": [
+              6,
+              6
+            ],
+            "stage_space": 0,
+            "suffix_ept": 8,
+            "suffix_threads": 0,
+            "suffix_units_per_cta": 0,
+            "tile_threads": 32,
+            "warp_stages": 0
+          }
+        },
+        "numerical_gate": "unassessed-user-acceptance; internal sanity only where executed; error distribution missing",
+        "variants": [
+          {
+            "correct": null,
+            "failure": "command failed with exit code 1: /workspace/cuButterfly/build-e13-cufftdx/cubutterfly_bench --batch 16 --logN 12 --normalization none --operator fwht --placement out-of-place --precision fp32 --mapping-json '{\"backend\":\"shared-iterative\",\"batch_tile_count\":1,\"compute_unit\":\"radix2\",\"fft_core\":\"scalar\",\"kind\":\"butterfly\",\"local_exchange\":\"shared\",\"schema_version\":1,\"shared_layout\":\"linear\",\"stage_overlap\":false,\"stage_partition\":[6,6],\"tile_threads\":32}' --warmup 0 --repeat 1 --verify --verify-batches 0 --csv\nstdout:\ncubutterfly_bench [--operator fwht|fft|subset-zeta|superset-zeta|structured-2x2|xor-zeta] [--backend temporal-tile|hierarchical|online-reorder|shared-iterative|warp-hybrid|stage-pipeline|cufft]\n                    [--logN 8] [--batch 16384] [--inverse]\n                    [--stage-partition 9,9]\n                    [--stage-matrix m00,m01,m10,m11; repeat once per stage or broadcast one]\n                    [--segment-threads 256,256,256] [--segment-ept 8,8,8]\n                    [--boundary-twiddle table,recurrence] [--boundary-layout direct-strided,direct-strided]\n                    [--boundary-residency fused,global-scratch]\n                    [--group-threads 512,512] [--group-ept 8,8]\n                    [--normalization none|inverse]\n                    [--auto-select]\n                    [--stage-overlap --batch-tile-count N]\n                    [--placement in-place|out-of-place]\n                    [--batch-stride N]\n                    [--element-stride N]\n                    [--stage-space 1|2|4|8]\n                    [--stage-handoff atomic|named-barrier]\n                    [--tile-threads 32|64|128|256; resident also 512|1024] [--local-stages 5..10; cuFFTDx online 5..12] [--reorder-columns power-of-two]\n                    [--prefix-threads 128|256|512|1024] [--suffix-threads 128|256|512|1024]\n                    [--prefix-ept N] [--suffix-ept N]\n                    [--warp-stages 0..5]\n                    [--pipeline-warps 4|8]\n                    [--compute-unit auto|radix2|radix4|radix8]\n                    [--complex-multiply four-mul|gauss3]\n                    [--cross-twiddle table|recurrence]\n                    [--direct-boundary direct-strided|tiled-transpose|prefix-tiled-transpose]\n                    [--local-exchange shared|warp-register]\n                    [--shared-layout linear|xor-swizzle]\n                    [--fft-core scalar|thread-dft8|cta-dft8|wmma-dft8|cufftdx-block|cufftdx-direct|cufftdx-resident|turbofft-generated|register-tile]\n                    [--precision fp16|bf16|fp32|fp64|fp16-fp32|uint32|uint64]\n                    [--accumulation native|fp32]\n                    [--warmup 20] [--repeat 100] [--verify] [--verify-batches 0] [--csv]\n                    [--mapping-json JSON] [--list-design-points]\n                    [--list-capabilities] [--list-processing-units] [--list-register-tile-mappings] [--device-identity]\n\nstderr:\nerror: module compilation failed: semantic compile broker: compile broker request 8e4cef433105ee43585397cc0d767512797a4f8ba14c64d6612dad93faebea93 is pending\n\n",
+            "id": "linear",
+            "median_us": null,
+            "preflight_status": "error",
+            "trial_us": [],
+            "verified_batches": null
+          },
+          {
+            "correct": "1",
+            "failure": null,
+            "id": "writer-aligned",
+            "median_us": 11.284,
+            "preflight_status": "accepted",
+            "trial_us": [
+              11.295,
+              11.284,
+              11.284
+            ],
+            "verified_batches": "16"
+          }
+        ]
+      },
+      {
+        "id": "ntt-n12-b1-layout",
+        "mapping_audit": {
+          "actual_changed_axes": [
+            "appt_role_mapping",
+            "backend",
+            "batch_tile_count",
+            "boundary_mappings",
+            "compute_unit",
+            "cross_twiddle_placement",
+            "data_space",
+            "data_time",
+            "dataflow_layout",
+            "dataflow_state_mode",
+            "exchange_chunks",
+            "execution_group_mappings",
+            "flow_tile_log_n",
+            "hierarchical_core",
+            "kind",
+            "local_stage_partitions",
+            "modular_multiply",
+            "n1_log",
+            "packet_compute_layout",
+            "packet_fold_wave_barriers",
+            "packet_readiness_mode",
+            "pipeline_buffers",
+            "profile_appt_roles",
+            "ready_window",
+            "role_stages",
+            "rows_per_block",
+            "schema_version",
+            "stage_handoff",
+            "stage_overlap",
+            "stage_partition",
+            "stage_space",
+            "subgraph_mappings",
+            "target_ctas_per_sm",
+            "threads_per_block",
+            "token_interleave"
+          ],
+          "baseline_resolved_mapping": {},
+          "case": "ntt-n12-b1-layout",
+          "declared_changed_axes": [
+            "dataflow_layout"
+          ],
+          "reasons": [
+            "linear: missing accepted full-batch preflight",
+            "linear: incomplete correctness count",
+            "linear: missing runtime identity or correctness verdict",
+            "linear: resolved control mismatch backend",
+            "linear: resolved control mismatch batch_tile_count",
+            "linear: resolved control mismatch compute_unit",
+            "linear: resolved control mismatch dataflow_layout",
+            "linear: resolved control mismatch modular_multiply",
+            "linear: resolved control mismatch stage_overlap",
+            "linear: resolved control mismatch stage_partition",
+            "linear: resolved control mismatch threads_per_block",
+            "linear: missing accepted timing trials",
+            "linear: trial identity changed",
+            "actual mapping difference is not exactly the declared layout axis"
+          ],
+          "status": "rejected",
+          "treatment_resolved_mapping": {
+            "appt_role_mapping": {
+              "data_time_role_mask": 7,
+              "fragment_width": 0,
+              "producer_weight": 0,
+              "tail_weight": 0,
+              "writer_tiles_per_cta": 0,
+              "writer_weight": 0
+            },
+            "backend": "shared-iterative",
+            "batch_tile_count": 1,
+            "boundary_mappings": [],
+            "compute_unit": "radix2",
+            "cross_twiddle_placement": "fused",
+            "data_space": 0,
+            "data_time": 0,
+            "dataflow_layout": "hermes-xor",
+            "dataflow_state_mode": "inplace",
+            "exchange_chunks": [],
+            "execution_group_mappings": [],
+            "flow_tile_log_n": 0,
+            "hierarchical_core": "dataflow-radix4",
+            "kind": "ntt",
+            "local_stage_partitions": [],
+            "modular_multiply": "shoup",
+            "n1_log": 0,
+            "packet_compute_layout": "interleaved-rows",
+            "packet_fold_wave_barriers": false,
+            "packet_readiness_mode": "per-packet",
+            "pipeline_buffers": 0,
+            "profile_appt_roles": false,
+            "ready_window": 0,
+            "role_stages": 0,
+            "rows_per_block": 0,
+            "schema_version": 1,
+            "stage_handoff": "named-barrier",
+            "stage_overlap": false,
+            "stage_partition": [
+              6,
+              6
+            ],
+            "stage_space": 0,
+            "subgraph_mappings": [],
+            "target_ctas_per_sm": 0,
+            "threads_per_block": 32,
+            "token_interleave": 0
+          }
+        },
+        "numerical_gate": "incomplete-pair",
+        "variants": [
+          {
+            "correct": null,
+            "failure": "command failed with exit code 1: /workspace/cuButterfly/build-e13-cufftdx/cuntt_bench --batch 1 --input-order natural --logN 12 --modulus 576460756061519873 --output-order natural --output-order natural --word-bits 64 --mapping-json '{\"backend\":\"shared-iterative\",\"batch_tile_count\":1,\"compute_unit\":\"radix2\",\"dataflow_layout\":\"linear\",\"kind\":\"ntt\",\"modular_multiply\":\"shoup\",\"schema_version\":1,\"stage_overlap\":false,\"stage_partition\":[6,6],\"threads_per_block\":32}' --warmup 0 --repeat 1 --verify --verify-batches 0 --csv\nstdout:\ncuntt_bench [--logN 16] [--batch 1] [--backend baseline|tile256|hybrid2d|compact-stage|stage-pipeline|hybrid-dataflow|hierarchical-barrier|hierarchical-dataflow]\n            [--stage-space K]\n            [--stage-handoff atomic|named-barrier]\n            [--flow-tile-log 5|6|7|8] [--data-space 8|16|32] [--role-stages K]\n            [--target-ctas-per-sm K]\n            [--data-time K] [--token-interleave 1|2]\n            [--pipeline-buffers 1|2|3]\n            [--dataflow-layout hermes-xor|linear] [--dataflow-state inplace|ping-pong]\n            [--n1-log 8] [--rows-per-block 4] [--threads-per-block 256]\n            [--compute-unit auto|radix2|radix4|radix8]\n            [--hierarchical-core dataflow-radix4|hybrid2d-radix4]\n            [--stage-partition 8,8,4] [--segment-cores dataflow-radix4|homogeneous-radix4|homogeneous-warp-radix2|homogeneous-warp256-radix2|homogeneous-warp256-static-radix2|homogeneous-warp256-static-io-radix2|homogeneous-warp256-coefficient-reuse-static-io-radix2|homogeneous-warp128-static-io-radix2|homogeneous-warp128-coefficient-reuse-static-io-radix2|homogeneous-warp128-vector-radix4-static-io|homogeneous-warp128-vector-radix4-packed-stage6-static-io|homogeneous-warp128-vector-radix4-packed-stage6-distributed-static-io|homogeneous-warp128-packet-shared-radix4-static-io|homogeneous-warp64-static-io-radix2|homogeneous-warp128-pipeline-static-io-radix2|homogeneous-warp128-cooperative-static-io-radix2|appt-pipeline|appt-online|appt-online-radix4|appt-online-fused-tail|appt-online-split-tail|appt-online-register-tail|appt-online-register-tail-warp|appt-online-register-tail-column-warp|appt-online-register-tail-radix8|appt-online-register-tail-grouped|appt-online-register-tail-grouped-writer-final|appt-online-register-tail-grouped-writer-final-data-time|appt-online-register-tail-grouped-writer-final-resident|appt-online-register-tail-grouped-writer-final-resident-quarter]\n            [--segment-threads 256] [--segment-units 8|16|32]\n            [--segment-data-space K] [--segment-data-time K]\n            [--segment-role-stages K] [--segment-token-interleave 1|2]\n            [--segment-coefficient-reuse-stages 0|1|2|3|4|5|6|7]\n            [--segment-cta-weights 7,7,6]\n            [--execution-group-cores radix2|radix4|radix8]\n            [--execution-group-threads K] [--execution-group-units K]\n            [--execution-group-data-space K] [--execution-group-data-time K]\n            [--execution-group-cta-weights K,...]\n            [--appt-role-weights producer,tail,writer]\n            [--appt-fragment-width 8|16|32] [--appt-writer-tiles 1|2|4]\n            [--appt-data-time-roles MASK] (producer=1, tail=2, writer=4)\n            [--boundary-storage full-scratch|ring|resident-fused] [--boundary-buffers 1] [--ready-window K]\n            [--packet-readiness per-packet|wave-bitmap]\n            [--packet-compute-layout interleaved-rows|warp-rows]\n            [--packet-fold-wave-barriers]\n            [--cross-twiddle first|second|fused|fused-barrett]\n            [--mod-multiply shoup|barrett]\n            [--word-bits 32|64]\n            [--input-order natural|appt-static]\n            [--output-order natural|bit-reversed|appt-static]\n            [--auto-select] [--trace-pipeline] [--profile-appt-roles] [--warmup 5] [--repeat 20] [--modulus Q] [--inverse] [--verify] [--verify-batches 0] [--csv]\n            [--stage-overlap] [--batch-tile-count 1] [--mapping-json JSON] [--list-design-points]\n\nstderr:\nerror: module compilation failed: semantic compile broker: compile broker request f7e9a834026e1bd24dc93fadc9d07e0a379e37aa68c98df61a8e3ee5737ef6e4 is pending\n\n",
+            "id": "linear",
+            "median_us": null,
+            "preflight_status": "error",
+            "trial_us": [],
+            "verified_batches": null
+          },
+          {
+            "correct": "1",
+            "failure": null,
+            "id": "writer-aligned",
+            "median_us": 10.854000000000001,
+            "preflight_status": "accepted",
+            "trial_us": [
+              10.854000000000001,
+              10.812999999999999,
+              10.988
+            ],
+            "verified_batches": "1"
+          }
+        ]
+      },
+      {
+        "baseline_over_treatment_median": 0.9535634467345419,
+        "id": "ntt-n12-b16-layout",
+        "mapping_audit": {
+          "actual_changed_axes": [
+            "dataflow_layout"
+          ],
+          "baseline_resolved_mapping": {
+            "appt_role_mapping": {
+              "data_time_role_mask": 7,
+              "fragment_width": 0,
+              "producer_weight": 0,
+              "tail_weight": 0,
+              "writer_tiles_per_cta": 0,
+              "writer_weight": 0
+            },
+            "backend": "shared-iterative",
+            "batch_tile_count": 1,
+            "boundary_mappings": [],
+            "compute_unit": "radix2",
+            "cross_twiddle_placement": "fused",
+            "data_space": 0,
+            "data_time": 0,
+            "dataflow_layout": "linear",
+            "dataflow_state_mode": "inplace",
+            "exchange_chunks": [],
+            "execution_group_mappings": [],
+            "flow_tile_log_n": 0,
+            "hierarchical_core": "dataflow-radix4",
+            "kind": "ntt",
+            "local_stage_partitions": [],
+            "modular_multiply": "shoup",
+            "n1_log": 0,
+            "packet_compute_layout": "interleaved-rows",
+            "packet_fold_wave_barriers": false,
+            "packet_readiness_mode": "per-packet",
+            "pipeline_buffers": 0,
+            "profile_appt_roles": false,
+            "ready_window": 0,
+            "role_stages": 0,
+            "rows_per_block": 0,
+            "schema_version": 1,
+            "stage_handoff": "named-barrier",
+            "stage_overlap": false,
+            "stage_partition": [
+              6,
+              6
+            ],
+            "stage_space": 0,
+            "subgraph_mappings": [],
+            "target_ctas_per_sm": 0,
+            "threads_per_block": 32,
+            "token_interleave": 0
+          },
+          "case": "ntt-n12-b16-layout",
+          "declared_changed_axes": [
+            "dataflow_layout"
+          ],
+          "reasons": [],
+          "status": "accepted",
+          "treatment_resolved_mapping": {
+            "appt_role_mapping": {
+              "data_time_role_mask": 7,
+              "fragment_width": 0,
+              "producer_weight": 0,
+              "tail_weight": 0,
+              "writer_tiles_per_cta": 0,
+              "writer_weight": 0
+            },
+            "backend": "shared-iterative",
+            "batch_tile_count": 1,
+            "boundary_mappings": [],
+            "compute_unit": "radix2",
+            "cross_twiddle_placement": "fused",
+            "data_space": 0,
+            "data_time": 0,
+            "dataflow_layout": "hermes-xor",
+            "dataflow_state_mode": "inplace",
+            "exchange_chunks": [],
+            "execution_group_mappings": [],
+            "flow_tile_log_n": 0,
+            "hierarchical_core": "dataflow-radix4",
+            "kind": "ntt",
+            "local_stage_partitions": [],
+            "modular_multiply": "shoup",
+            "n1_log": 0,
+            "packet_compute_layout": "interleaved-rows",
+            "packet_fold_wave_barriers": false,
+            "packet_readiness_mode": "per-packet",
+            "pipeline_buffers": 0,
+            "profile_appt_roles": false,
+            "ready_window": 0,
+            "role_stages": 0,
+            "rows_per_block": 0,
+            "schema_version": 1,
+            "stage_handoff": "named-barrier",
+            "stage_overlap": false,
+            "stage_partition": [
+              6,
+              6
+            ],
+            "stage_space": 0,
+            "subgraph_mappings": [],
+            "target_ctas_per_sm": 0,
+            "threads_per_block": 32,
+            "token_interleave": 0
+          }
+        },
+        "numerical_gate": "exact-full-batch",
+        "variants": [
+          {
+            "correct": "1",
+            "failure": null,
+            "id": "linear",
+            "median_us": 15.360000000000001,
+            "preflight_status": "accepted",
+            "trial_us": [
+              15.34,
+              15.360000000000001,
+              15.37
+            ],
+            "verified_batches": "16"
+          },
+          {
+            "correct": "1",
+            "failure": null,
+            "id": "writer-aligned",
+            "median_us": 16.108,
+            "preflight_status": "accepted",
+            "trial_us": [
+              16.137999999999998,
+              16.108,
+              16.097
+            ],
+            "verified_batches": "16"
+          }
+        ]
+      }
+    ],
+    "execution_gate": {
+      "guard": "complete",
+      "returncode": 0,
+      "telemetry_scope": "child lifetime; not exact CUDA-event interval",
+      "telemetry_status": "completed"
+    },
+    "limitations": [
+      "Three trials do not establish significance.",
+      "Kernel launch sequence, not full C API end-to-end.",
+      "Layout-only mechanism ablation I, not fixed-core organization transfer (ablation II).",
+      "NTT B1 treatment has three trials but its linear baseline is missing; no pair ratio."
+    ],
+    "preparation_gate": {
+      "events": [
+        {
+          "broker_id": "ad2c440301ba920c1ad05b12194ecb1fc034d66b88dafd1cb7bf77a6e166578c",
+          "error": "module is not ready",
+          "kind": "compile_pending",
+          "mapping": {
+            "accumulation": "native",
+            "backend": "shared-iterative",
+            "batch_tile": 1,
+            "complex_multiply": "four-mul",
+            "exchange_chunks": [],
+            "local_stage_partitions": [],
+            "logN": 12,
+            "operator": "fwht",
+            "precision": "fp32",
+            "stage_partition": [
+              6,
+              6
+            ],
+            "threads": 32,
+            "writer_aligned": false
+          },
+          "request_id": "8e4cef433105ee43585397cc0d767512797a4f8ba14c64d6612dad93faebea93",
+          "time_ns": 1791783362519958034
+        },
+        {
+          "broker_id": "ad2c440301ba920c1ad05b12194ecb1fc034d66b88dafd1cb7bf77a6e166578c",
+          "error": "module is not ready",
+          "kind": "compile_pending",
+          "mapping": {
+            "accumulation": "native",
+            "backend": "shared-iterative",
+            "batch_tile": 1,
+            "complex_multiply": "four-mul",
+            "exchange_chunks": [],
+            "local_stage_partitions": [],
+            "logN": 12,
+            "operator": "fwht",
+            "precision": "fp32",
+            "stage_partition": [
+              6,
+              6
+            ],
+            "threads": 32,
+            "writer_aligned": false
+          },
+          "request_id": "8e4cef433105ee43585397cc0d767512797a4f8ba14c64d6612dad93faebea93",
+          "time_ns": 1791783366817433830
+        },
+        {
+          "broker_id": "ad2c440301ba920c1ad05b12194ecb1fc034d66b88dafd1cb7bf77a6e166578c",
+          "error": "module is not ready",
+          "kind": "compile_pending",
+          "mapping": {
+            "backend": "shared-iterative",
+            "exchange_chunks": [],
+            "local_stage_partitions": [],
+            "logN": 12,
+            "operator": "ntt",
+            "output_order": "natural",
+            "precision": "word64",
+            "stage_partition": [
+              6,
+              6
+            ],
+            "threads": 32,
+            "writer_aligned": false
+          },
+          "request_id": "f7e9a834026e1bd24dc93fadc9d07e0a379e37aa68c98df61a8e3ee5737ef6e4",
+          "time_ns": 1791783371123661039
+        }
+      ],
+      "note": "Later ready modules do not retroactively clean this attempt. NTT B16 is archived as a complete conditional subset, not whole-run acceptance.",
+      "status": "pending-events-recorded"
+    },
+    "ready_now": [
+      {
+        "broker_id": "ad2c440301ba920c1ad05b12194ecb1fc034d66b88dafd1cb7bf77a6e166578c",
+        "finished_ns": 1791783369502176169,
+        "id": "8e4cef433105ee43585397cc0d767512797a4f8ba14c64d6612dad93faebea93",
+        "module_sha256": "59bb99ea6a2d82830c3b55ba21e468dd8f62484958df02c53c8079d50188d5e1",
+        "module_stat": {
+          "mtime_ns": 1791783369471927936,
+          "size": 34576
+        },
+        "path": "/workspace/cuButterfly/results/plan_batch_trace_20261010/shared_modules/806c58db1acc2946eb33b0cb8920df466596e037a9dc4149ef120074cf92cc0c/module.so",
+        "record_path": "/workspace/cuButterfly/results/plan_batch_trace_20261010/shared_compile/records/8e4cef433105ee43585397cc0d767512797a4f8ba14c64d6612dad93faebea93.json",
+        "record_sha256": "465c20c5503b3c2b7d2836ed52d89096fce370b392d6d6143c96db543f18690f",
+        "started_ns": 1791783366825736211,
+        "status": "ready"
+      },
+      {
+        "broker_id": "ad2c440301ba920c1ad05b12194ecb1fc034d66b88dafd1cb7bf77a6e166578c",
+        "finished_ns": 1791783374734424473,
+        "id": "f7e9a834026e1bd24dc93fadc9d07e0a379e37aa68c98df61a8e3ee5737ef6e4",
+        "module_sha256": "aafd61754eba09ceb50e3ef082dcb602f8f7be83600dd5c83bb8193a107739af",
+        "module_stat": {
+          "mtime_ns": 1791783374704084184,
+          "size": 46872
+        },
+        "path": "/workspace/cuButterfly/results/plan_batch_trace_20261010/shared_modules/3b0ca84294f6226bada5f66d969dad6a48284236b67d88a961b1cd0c7aa4c070/module.so",
+        "record_path": "/workspace/cuButterfly/results/plan_batch_trace_20261010/shared_compile/records/f7e9a834026e1bd24dc93fadc9d07e0a379e37aa68c98df61a8e3ee5737ef6e4.json",
+        "record_sha256": "990f481e0d3ffc569ab9243eadf32777c3d07cc67da4abe097d2d2aa19ba1b25",
+        "started_ns": 1791783372031364650,
+        "status": "ready"
+      }
+    ],
+    "retained_subset": "ntt-n12-b16-layout",
+    "schema": "cubutterfly-principle-gap-run-audit-v1",
+    "sources": {
+      "owned_processes.json": {
+        "path": "/workspace/cuButterfly/results/paper_targeted_20261012/principle_gap_attempt_safe/guard/release/owned_processes.json",
+        "sha256": "328f44254fad92c2db8bb085408451bcdf4355872a2fffb7e07b6c65d7a462e4"
+      },
+      "preparation_events.jsonl": {
+        "path": "/workspace/cuButterfly/results/paper_targeted_20261012/principle_gap_attempt_safe/guard/release/preparation_events.jsonl",
+        "sha256": "1b1acb140072ea9b92db814bb83aff894ad24156edf040d364f121b4d8d5adea"
+      },
+      "telemetry.telemetry.json": {
+        "path": "/workspace/cuButterfly/results/paper_targeted_20261012/principle_gap_attempt_safe/guard/release/telemetry.telemetry.json",
+        "sha256": "97ae2943f72af2e7a95b6b8acbca94240e9572078cfb2292cea62cb3a67399a7"
+      },
+      "timing.json": {
+        "path": "/workspace/cuButterfly/results/paper_targeted_20261012/principle_gap_attempt_safe/guard/release/timing.json",
+        "sha256": "aab027f90bda7ec3882e96a809670022b159c2c07e3abbe344afb4f514b99614"
+      }
+    },
+    "status": "partial-not-whole-run-accepted"
+  },
+  "v2_mapping_audit": {
+    "cases": [
+      {
+        "actual_changed_axes": [
+          "shared_layout"
+        ],
+        "baseline_resolved_mapping": {
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "table"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_io_policies": [],
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stage_partitions": [],
+          "local_stages": 10,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_codelet": "native",
+          "prefix_codelet_lanes": 1,
+          "prefix_ept": 8,
+          "prefix_shared_layout": "linear",
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 32,
+          "warp_stages": 0
+        },
+        "case": "fwht-n12-b1-layout",
+        "declared_changed_axes": [
+          "shared_layout"
+        ],
+        "numerical_gate": "unassessed-user-acceptance",
+        "reasons": [],
+        "status": "accepted",
+        "treatment_resolved_mapping": {
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "table"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_io_policies": [],
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stage_partitions": [],
+          "local_stages": 10,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_codelet": "native",
+          "prefix_codelet_lanes": 1,
+          "prefix_ept": 8,
+          "prefix_shared_layout": "linear",
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "writer-aligned",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 32,
+          "warp_stages": 0
+        }
+      },
+      {
+        "actual_changed_axes": [
+          "shared_layout"
+        ],
+        "baseline_resolved_mapping": {
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "table"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_io_policies": [],
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stage_partitions": [],
+          "local_stages": 10,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_codelet": "native",
+          "prefix_codelet_lanes": 1,
+          "prefix_ept": 8,
+          "prefix_shared_layout": "linear",
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 32,
+          "warp_stages": 0
+        },
+        "case": "fwht-n12-b16-layout",
+        "declared_changed_axes": [
+          "shared_layout"
+        ],
+        "numerical_gate": "unassessed-user-acceptance",
+        "reasons": [],
+        "status": "accepted",
+        "treatment_resolved_mapping": {
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "table"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_io_policies": [],
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stage_partitions": [],
+          "local_stages": 10,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_codelet": "native",
+          "prefix_codelet_lanes": 1,
+          "prefix_ept": 8,
+          "prefix_shared_layout": "linear",
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "writer-aligned",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 32,
+          "warp_stages": 0
+        }
+      },
+      {
+        "actual_changed_axes": [
+          "dataflow_layout"
+        ],
+        "baseline_resolved_mapping": {
+          "appt_role_mapping": {
+            "data_time_role_mask": 7,
+            "fragment_width": 0,
+            "producer_weight": 0,
+            "tail_weight": 0,
+            "writer_tiles_per_cta": 0,
+            "writer_weight": 0
+          },
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundary_mappings": [],
+          "compute_unit": "radix2",
+          "cross_twiddle_placement": "fused",
+          "data_space": 0,
+          "data_time": 0,
+          "dataflow_layout": "linear",
+          "dataflow_state_mode": "inplace",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "flow_tile_log_n": 0,
+          "hierarchical_core": "dataflow-radix4",
+          "kind": "ntt",
+          "local_stage_partitions": [],
+          "modular_multiply": "shoup",
+          "n1_log": 0,
+          "packet_compute_layout": "interleaved-rows",
+          "packet_fold_wave_barriers": false,
+          "packet_readiness_mode": "per-packet",
+          "pipeline_buffers": 0,
+          "profile_appt_roles": false,
+          "ready_window": 0,
+          "role_stages": 0,
+          "rows_per_block": 0,
+          "schema_version": 1,
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "subgraph_mappings": [],
+          "target_ctas_per_sm": 0,
+          "threads_per_block": 32,
+          "token_interleave": 0
+        },
+        "case": "ntt-n12-b1-layout",
+        "declared_changed_axes": [
+          "dataflow_layout"
+        ],
+        "numerical_gate": "exact-full-batch",
+        "reasons": [],
+        "status": "accepted",
+        "treatment_resolved_mapping": {
+          "appt_role_mapping": {
+            "data_time_role_mask": 7,
+            "fragment_width": 0,
+            "producer_weight": 0,
+            "tail_weight": 0,
+            "writer_tiles_per_cta": 0,
+            "writer_weight": 0
+          },
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundary_mappings": [],
+          "compute_unit": "radix2",
+          "cross_twiddle_placement": "fused",
+          "data_space": 0,
+          "data_time": 0,
+          "dataflow_layout": "hermes-xor",
+          "dataflow_state_mode": "inplace",
+          "exchange_chunks": [],
+          "execution_group_mappings": [],
+          "flow_tile_log_n": 0,
+          "hierarchical_core": "dataflow-radix4",
+          "kind": "ntt",
+          "local_stage_partitions": [],
+          "modular_multiply": "shoup",
+          "n1_log": 0,
+          "packet_compute_layout": "interleaved-rows",
+          "packet_fold_wave_barriers": false,
+          "packet_readiness_mode": "per-packet",
+          "pipeline_buffers": 0,
+          "profile_appt_roles": false,
+          "ready_window": 0,
+          "role_stages": 0,
+          "rows_per_block": 0,
+          "schema_version": 1,
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "subgraph_mappings": [],
+          "target_ctas_per_sm": 0,
+          "threads_per_block": 32,
+          "token_interleave": 0
+        }
+      }
+    ],
+    "limitations": [
+      "Acceptance also requires the exclusive guard release and clean telemetry.",
+      "Kernel launch-sequence timings are not full C API end-to-end timings."
+    ],
+    "numeric_policy": {
+      "fwht": "Existing bench --verify is internal sanity only; user numerical acceptance unassessed; error distribution missing; performance exploratory. No new threshold.",
+      "ntt": "Exact full-batch internal reference equality required."
+    },
+    "schema": "cubutterfly-principle-gap-audit-v1",
+    "status": "accepted",
+    "status_meaning": "mapping and internal sanity only; not whole-run or user floating numerical acceptance"
+  }
+}

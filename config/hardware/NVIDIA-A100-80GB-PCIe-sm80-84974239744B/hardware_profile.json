@@ -1,0 +1,40 @@
+{
+  "schema": "cubutterfly-hardware-profile-v1",
+  "status": "calibrated-local",
+  "device": "NVIDIA A100 80GB PCIe",
+  "compute_capability": "8.0",
+  "global_memory_bytes": 84974239744,
+  "sm_count": 108,
+  "trials": 3,
+  "conditions": {
+    "points": 4194304,
+    "blocks": 640,
+    "threads": 256,
+    "iterations": 64,
+    "warmup": 5,
+    "repeat": 20
+  },
+  "capabilities": {
+    "global_feedback_bytes_per_second": 1487763880000.0,
+    "equivalent_butterflies_per_second": 356028784000.0,
+    "interstage_shared_bytes_per_second": 13540496576000.0,
+    "cta_barriers_per_second": 5333333000.0
+  },
+  "measured_stage_pipeline": {
+    "Us1_butterflies_per_second": 45663323000.0,
+    "Us2_butterflies_per_second": 54924572000.0,
+    "Us4_butterflies_per_second": 38668870000.0,
+    "Us8_butterflies_per_second": 27880541000.0
+  },
+  "provenance": {
+    "origin": "existing-local-microbench-snapshot",
+    "source": "results/local_hardware_profile_a100_gpu1_current_20261006/hardware_profile.json",
+    "source_sha256": "7e990d766654eda9357a5eb019d8fac6ee3799fe7230999a985d01420e87b0a9",
+    "microbench": "build-e13-cufftdx/cuntt_hardware_microbench",
+    "cuda_visible_devices": "GPU-00000000-0000-0000-0000-000000000001",
+    "host": "anonymous-host-Super-Server",
+    "platform": "Linux-5.15.0-139-generic-x86_64-with-glibc2.31",
+    "new_gpu_measurement": false,
+    "scope": "Historical hardware-rate priors. Not current-build stage services or a validated whole-plan ranking model."
+  }
+}

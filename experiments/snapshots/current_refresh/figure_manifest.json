@@ -1,0 +1,299 @@
+{
+  "schema": "current-paper-refresh-figures-v1",
+  "snapshot": "paper/generated/current_refresh/snapshot.json",
+  "snapshot_sha256": "8af841214c03793fc9455c512517341151337b3c4f9c61f16241a8d1c9051e91",
+  "renderer_sha256": "71da82823ae653fa6bf0bcedeeea51500b31b161bb79695d1b9e833f89805363",
+  "matplotlib": "3.10.9",
+  "figures": {
+    "operators": {
+      "description": "Unified matched speedup view: main66 and 9 FP16 DEFAULT requests, kept as separate cohorts. Each box and point uses only a request with the same semantic case in cuButterfly and the named baseline. Further BF16 experiments are deferred. No fixed-control mappings enter the library comparison. Boxes span workloads, not uncertainty; missing results have no ratio.",
+      "width_inches": 7.0,
+      "height_inches": 2.55,
+      "files": {
+        "paper/figures/current_refresh_operators.pdf": "606400495dbd6bf66afb8963fc378f488006933ab7ebb89fb1b5989aed54f35f",
+        "paper/figures/current_refresh_operators.svg": "05294510b72ae3fbd408fe1894e6c6769e95354a91bd15d97a412a8704634cad",
+        "paper/figures/current_refresh_operators.png": "b2ea098fa805cd5714e2920192cef6d6a8e0c8b5d219f67711b56decba3cd2df"
+      },
+      "main_requests": 66,
+      "fft_l_public_replays": 0,
+      "fft_l_public_defaults": 9,
+      "fft_l_bf16_status": "deferred",
+      "fixed_controls_included": 0,
+      "displayed_groups": [
+        [
+          "fft",
+          "fp16"
+        ],
+        [
+          "fft",
+          "bf16"
+        ],
+        [
+          "fft",
+          "fp32"
+        ],
+        [
+          "fft",
+          "fp64"
+        ],
+        [
+          "fwht",
+          "fp32"
+        ],
+        [
+          "fwht",
+          "fp64"
+        ],
+        [
+          "ntt",
+          "word32"
+        ],
+        [
+          "ntt",
+          "word64"
+        ],
+        [
+          "subset-zeta",
+          "uint32"
+        ],
+        [
+          "subset-zeta",
+          "word64"
+        ],
+        [
+          "superset-zeta",
+          "uint32"
+        ],
+        [
+          "superset-zeta",
+          "word64"
+        ],
+        [
+          "structured-2x2",
+          "fp32"
+        ],
+        [
+          "structured-2x2",
+          "fp64"
+        ]
+      ]
+    },
+    "applications": {
+      "description": "Top: snapshot comparisons and two numerically checked historical FNO points. Two earlier QuaRot records are archived but excluded for invalid random-state preparation and absent output checks. Bottom: all 14 audited closure ratios (four QuaRot losses, four CuPy filter repeats, four separately marked same-padding filter diagnostics, two bootstrap repeats) and two historical FNO hotpath Graph aggregate ratios, plus separately marked fused QuaRot follow-up processes when available. FNO eager rows remain separate in frozen data/table. Panels use different labeled ratio ranges; no cohorts or builds are pooled.",
+      "width_inches": 3.45,
+      "height_inches": 4.65,
+      "files": {
+        "paper/figures/current_refresh_applications.pdf": "690fdd0c86c0a783b24d02232673bb17c8348ddba5b749e8a3b6b568dca28277",
+        "paper/figures/current_refresh_applications.svg": "6cc02639e3497a4c9c1eb68eb853100a8022c5c9c05861848187909eee3f1916",
+        "paper/figures/current_refresh_applications.png": "74decbe709229171edaf29f1f92ed461ad015bcaea7d53bea364bd96e39b056c"
+      },
+      "pair_count": 46,
+      "ckks_pairs": 36,
+      "ckks_requests_per_control": 36,
+      "historical_records": 2,
+      "historical_source": "paper/generated/application_historical_complete_call.json",
+      "historical_archived_records": 4,
+      "historical_exclusions": [
+        {
+          "workload": "QuaRot 512 / 32",
+          "reason": "Pre-repair random state and cache-position path was invalidated by project repair record; raw has no finite/output validation or state hashes. Per-output NaN status is unknown.",
+          "source": "results/paper_profile_rc2/end_to_end/quarot_random_prefill512_decode32_sdpa.json",
+          "source_sha256": "b739603dd20b2e10a56ea6db163362edbb7142f718b9896142b494d042392f45"
+        },
+        {
+          "workload": "QuaRot 2048 / 128",
+          "reason": "Pre-repair random state and cache-position path was invalidated by project repair record; raw has no finite/output validation or state hashes. Per-output NaN status is unknown.",
+          "source": "results/paper_profile_rc2/end_to_end/quarot_random_prefill2048_decode128_sdpa.json",
+          "source_sha256": "21c561ccca1247b6b4063ee3dd9c20db0bc8e15e95ed68c050b2e79487581827"
+        }
+      ],
+      "historical_source_sha256": "c4f5d2f74474e7698b10cbac8e85bf9a6878460f47befe18c680600a60b8c81a",
+      "matched_integration_pairs_in_controlled_table": 36,
+      "supplemental_graph_rows": 16,
+      "supplemental_eager_rows_in_table": 2,
+      "fused_quarot_processes": 4,
+      "supplement_source": "paper/generated/current_refresh/application_closeout.json",
+      "supplement_sources": {
+        "results/a100_e2e_closure_20261107/audit.json": "2489bb43bf8eb0c969b5cb68028ec755362d6e97e5890eb4b5b52107193028de",
+        "results/e2e_unified_20261013/fno_hotpath_summary.json": "597aedcc465871ecd51407d5d6f180b7656593c454c2cffa87531188d81729fe",
+        "results/a100_closure_20261102/applications/quarot_b1_p128d8_process1/release/report.json": "cc16f005f784d3a781be909e7d10dedd23b5d26e1581dad36477782c9d0ce1c5",
+        "results/a100_closure_20261102/applications/quarot_b1_p128d8_process2/release/report.json": "0f7f37f20b4713f91a0d33fea24f637270e43ba862c740c38a6d0b3c882f5f45",
+        "results/a100_closure_20261102/applications/quarot_b4_p128d8_process1/release/report.json": "d98181b36d82858d0e667e73f0d25a195c380cda0f9bdd778d9e21973a160484",
+        "results/a100_closure_20261102/applications/quarot_b4_p128d8_process2/release/report.json": "6632ee5ed84aa317480442ffe32d81e30ea36fd7d7d4d10f4aaa9354edd4e01b",
+        "results/a100_closure_20261102/applications/filter1024_process2/release/image1024_filter31_batch16.filter1024_process2.json": "c30ca39f80a1db770f8effe23a8dc763b87fd23f30285ba9b79701bf3a1e79f9",
+        "results/a100_closure_20261102/applications/filter2048_process2/release/image2048_filter31_batch16.filter2048_process2.json": "2ea3e4a976529947d27dd09d6c9c90cfce0d0aab268fb0020e95f8c5a2698d26",
+        "results/a100_closure_20261102/applications/filter1024_process3/release/image1024_filter31_batch16.filter1024_process3.json": "25b3011817a21b6899f825f9ae3215b6dba3785bceb1619479ca6984e50bc9f9",
+        "results/a100_closure_20261102/applications/filter2048_process3/release/image2048_filter31_batch16.filter2048_process3.json": "d148587ca287912167e750f5498ddbcdab56187e1ba2c31206f2a715d49a2404",
+        "results/a100_closure_20261102/applications/bootstrap_small_process2/release/report.csv": "d3421fb8284e5c1900bcadec3aa1785dbf41bd5d011ab2366a998eb10a1bc0d8"
+      },
+      "statistic": "Snapshot CKKS diamonds are GMs of 12 ratios. Supplemental closure dots retain every process; FNO dots are medians of two process medians. No confidence intervals or cross-cohort means.",
+      "layout": "Two panels with separately labeled ratio ranges; historical and build-prior cohorts remain distinct."
+    },
+    "organization": {
+      "description": "Cross-operator fixed-core stage-grouping controls from the audited A100-40GB M1 cohort. Six operator/length groups show all nine batch/trial ratios for each of two grouped organizations; ratios are local0 divided by the grouped variant, so values above one indicate an improvement over stagewise exchange.",
+      "width_inches": 3.45,
+      "height_inches": 2.55,
+      "files": {
+        "paper/figures/current_refresh_organization.pdf": "ebacdc2efad0b4255675c5502c9af738a8c0dafa19548e60ade3add37fab64b1",
+        "paper/figures/current_refresh_organization.svg": "ebd0fc6968b4a736ef6f71a9979392d7bc9e2776bb486336d7c3fe02f426c273",
+        "paper/figures/current_refresh_organization.png": "7a2ad6c71c7bd81fc740e1d7a564dbbea91984cf45715417992dfed631a4bdb5"
+      },
+      "source": "paper/generated/motivation_organization_a100.csv",
+      "source_sha256": "55f90d495c54968a0df940e526e6d32c5ae2cc42e32c9df8c6c99854fb12b66e",
+      "workloads": 18,
+      "cells": 54,
+      "trial_rows": 162,
+      "batches": [
+        1,
+        4,
+        16
+      ],
+      "statistic": "local0/variant ratio; box min/max across 9 batch/trial observations; points are individual trials",
+      "variants": [
+        "local2",
+        "local4"
+      ],
+      "hardware": "NVIDIA A100 PCIe 40GB",
+      "resource_counters": "Not plotted in this mechanism figure; matched NCU records appear in the scaling analysis figure"
+    }
+  },
+  "missing": "Absent measurements are not imputed; PRO 6000 and unfinished cohorts remain pending.",
+  "fft_l_evidence": {
+    "schema": "fp16-public-acceptance-comparison-v1",
+    "cohort": "fp16_public_default9_20261105",
+    "selection_kind": "public_DEFAULT",
+    "requests": 9,
+    "default_requests": 9,
+    "source_sha256": {
+      "summary.json": "de7455ff4499dd7fe45fe77205490026ee48792f9c6384a870f213ba7b73825a",
+      "status.json": "7a2eab6c2d01977121488bf388cfbc6268119c9bc43d402a838eda9fa7d99f90",
+      "installation.json": "00d6b77e9ab50231261a48aff9e14df543f7c5ee778fdd32e88914ae7070791d",
+      "stage/model-receipt.json": "ab33efdf1fd7806f40e20d5c51ba49d37fb02d9179f0610e0b5caf10b6d9a8a9",
+      "tuning/receipt.json": "9e5fb3967a1fe5b3560fd4d2d4866593b89bb750702d2945372f03870f6cc7ca",
+      "post_completed/tuning.json": "8e7c5b123f6abf30ea5d0951c5f3915e94a4e0a4fdcbebfe0aa663ada19882b9",
+      "build/identity_receipt.json": "338adc46cddaf59604138fc2b4a2b9718ba4a08ff54629a0764efbaa7775be4b",
+      "stage/calibration_device.json": "57c96da5be2868c20cbc6adb9adcde893eaaf5a3fa37721aaed1dbf61b9b5863",
+      "public/manifest.json": "9a2d519bc7d9da4c718d7fc788e7baa63bb0c64cdea972b24225ba790d845c6c",
+      "installed_public/manifest.json": "d11a41450521a1cbcfff1e7cf7dd3e367e29984107415afa2fba2362b1216d27",
+      "external/manifest.json": "2ec2035dce96e8cdec064a484a9538769c20b4e948ec514cde684c8fcf6b51c5",
+      "external/n4096-b256-cufft/result.json": "87a5764a78850bc2362d07909b336ef8980eb8ce51d51acd189506043d901e1f",
+      "post_completed/n4096-b256-cufft.json": "73a0afa24502108d9447df6761be2bfec9dac6cd058fc41c58e7c7a2c858af57",
+      "public/runs/n4096-b256/default/result.json": "aefa54b94cd4212a44e8f2b01e56c82dbe51313a3555c0f448e9249199abb9e4",
+      "post_completed/public-default-n4096-b256.json": "3fa08aca8cf5f9a6de0696b63284933760f3f2cb9a94c998cab25d23df2f7f9e",
+      "public/runs/n4096-b256/measure/result.json": "ea67e40680b916be8f67569f533d5d2d87b98eb5464c4a4c08a90963a867b162",
+      "post_completed/public-measure-n4096-b256.json": "a382d845c5975a16e6443a0c91a380324e08c888d97c301bdd4d5576531c9fac",
+      "installed_public/runs/n4096-b256/default/result.json": "e7c1ff0906a3f29eda0b809003b5c22736fceb18c1445ac9d3006224a2c7cf2d",
+      "post_completed/installed_public-default-n4096-b256.json": "c8b5937563f9717b03fd9f9fc1552f74c081efb6d2d59b981ff18ebd3772d8bb",
+      "external/n4096-b2048-cufft/result.json": "cb16210922db7c27b78c170d98e97b95f5e54962634372f59361f46a10704f54",
+      "post_completed/n4096-b2048-cufft.json": "6d8d65046b67125e591579d9de6814f23323df910b8a08e1ee1668b7adbe46e3",
+      "public/runs/n4096-b2048/default/result.json": "d392bf0bc4ee30c5063a324188e8722362d7e50f6ec20e8e4d8e06b977050b4e",
+      "post_completed/public-default-n4096-b2048.json": "06a9e7d02351f70968e63db6f0577b24a9cc3ca25a63f79f4fa1cdb1167de177",
+      "public/runs/n4096-b2048/measure/result.json": "8f34c0f8cb840fc0c55505739a272136a28e32894ef6b4882d152a2d17628538",
+      "post_completed/public-measure-n4096-b2048.json": "0adc64494f904d2c86235e7c210cdd700a55869fd092b104a825adebe8bc25e5",
+      "installed_public/runs/n4096-b2048/default/result.json": "82aea1568de4b2cfc18008958534a8bc479b89428aed0dea23e577c33d7e1dd6",
+      "post_completed/installed_public-default-n4096-b2048.json": "ac2334732f99c5494fe1eefa7c23480d0a9fe39fef23b644efb662b07fa05ddc",
+      "external/n8192-b256-cufft/result.json": "6dd16a946b3737c09ea696482bf8eb9b7c8f5e0d034e461001ef901a1c8f61b4",
+      "post_completed/n8192-b256-cufft.json": "de101188c4d9818c46aaaf9603050528fddae4434b7d34e67a753219d9e3b927",
+      "public/runs/n8192-b256/default/result.json": "7428af24ef5fc3e40e41ad0be93a6b41ae9625a247a0ade0d65f9aa8c8478651",
+      "post_completed/public-default-n8192-b256.json": "86e0f7eb6c7e30d1015f546e6746df3ed9006b584a311fc091b14bb247782928",
+      "public/runs/n8192-b256/measure/result.json": "43c2c71de709b056d909d034661e777ce39581f12b4c964fd1e69c544c7d5961",
+      "post_completed/public-measure-n8192-b256.json": "d2f97dbf8e35d9bdcbb3a883f907b6ee777099853abb79de1aa56f67c5b64627",
+      "installed_public/runs/n8192-b256/default/result.json": "7e3d2f1225d7a044a6ea4bc43aa856f9dda12a109ab8d2c8cf32b88edd6e4f51",
+      "post_completed/installed_public-default-n8192-b256.json": "33f34c610bc989418d38b4a4ba19da25c9a790c37e238f2ca1300cf3d66723ea",
+      "external/n16384-b64-cufft/result.json": "4719895541180e7afa54b03ef4cc3b100777cc27df58996e03465b0b9a6cceb3",
+      "post_completed/n16384-b64-cufft.json": "5d1c74687822653eeebcb03354c0d69f8495c2799af161ec3d6f61d587ac7ff5",
+      "public/runs/n16384-b64/default/result.json": "d9d9207a0eb4233ab0adfd602348e429efae41bf21c926f171043abf85d6a253",
+      "post_completed/public-default-n16384-b64.json": "ae9143c5a84261f13b6726efad733df30a6fe77cdb1a66bd3b1a7070976627f1",
+      "public/runs/n16384-b64/measure/result.json": "a3c43ee4abddb8923283dc674b9488b305efffa2ef6e06e641426200be16c982",
+      "post_completed/public-measure-n16384-b64.json": "c49a2593aa4e4979be4fea52d18465bdbdaa495cbe1f870aef56c7d0ecdd6fa9",
+      "installed_public/runs/n16384-b64/default/result.json": "12c862431c3e61b59ee97d83ded2cf5e4729c73a3bd0bb06a5608462e6998236",
+      "post_completed/installed_public-default-n16384-b64.json": "30e8f70aba8fa60c01f8be09dcb7ef5b148644bd0e782577ec7e7eeb9d75a868",
+      "external/n16384-b512-cufft/result.json": "bb094561ffc9337ebfaabcc9a9bb8a63a8fe4ada408b58c96dc2bcc8276711ad",
+      "post_completed/n16384-b512-cufft.json": "3d848432e440cc7a97f4221e72a7ec70f7352ecdb32a4f76ba83d6628cb09151",
+      "public/runs/n16384-b512/default/result.json": "7630726d5eb6482bda3ce0fa9fa7eec3e345e70f7ec294829173a2504e24db3b",
+      "post_completed/public-default-n16384-b512.json": "372cfa41d64ca7a91f9edb252ed35b9a0b71ffa0378ab7b82876665cebf7177e",
+      "public/runs/n16384-b512/measure/result.json": "9f23b879881fe4f90de94cfb9e431d350e3ed896459ed85b3bdcce06648d35a6",
+      "post_completed/public-measure-n16384-b512.json": "561cf893df45276a62689ae95945033301c2cf5896cf932cb47cc581f46ce31d",
+      "installed_public/runs/n16384-b512/default/result.json": "f4dd259e1044186f16b6dcff6c19951c2259b25112e7a62345a1408eb6a29197",
+      "post_completed/installed_public-default-n16384-b512.json": "acf5e38ec769e5a2a3f77bf6fbc123f5145d0ebc5bb6a6399bab968c6965f7cb",
+      "external/n32768-b32-cufft/result.json": "d02eea31f5f2f1fd5142a3ca714dca9e64cb403334d891a669de97750fc2a263",
+      "post_completed/n32768-b32-cufft.json": "3343fe6f136431f33fb9c5a6e425bfaa20b858a3b7a7a9f269f96e4b8b5bc7f7",
+      "public/runs/n32768-b32/default/result.json": "af81e04073e22ed061f24ec8074ec4b3504a8915ab1e9df5c261940323c96985",
+      "post_completed/public-default-n32768-b32.json": "9e33d30aece701ffd0ba1eae50a5fce0724c0d3f3f2cc3a0411594c43a37bc0f",
+      "public/runs/n32768-b32/measure/result.json": "f5d4b1b7fe29b59515ac80ee89716be2b15999d55c31ff20fb8cee009bfab4dc",
+      "post_completed/public-measure-n32768-b32.json": "64a5a391655d15c841c8e2fb129ec6da315bdc61b33b46fcd2b4397dc2843e69",
+      "installed_public/runs/n32768-b32/default/result.json": "c4b87d58be8e10390dbd92c8c0bbf55cacc7d67ed7371d38a44fbef58797853d",
+      "post_completed/installed_public-default-n32768-b32.json": "efd81fb75dd0d7e9543a320d658f4f7d8f2fba17b599187bea1191ca4928e8ff",
+      "external/n32768-b256-cufft/result.json": "db6bb96b1cbdaa32957bac9da083feb129dcbe22853e11f78f83a018fe034a4e",
+      "post_completed/n32768-b256-cufft.json": "c526036160a0a71a178e07be111f1a22219e6a22df3328293d821cb8f431ad4f",
+      "public/runs/n32768-b256/default/result.json": "01e581d9983a3c8f9687c27f334a26ba794c7d7f51c7d3b010004c7bbd24dd58",
+      "post_completed/public-default-n32768-b256.json": "8d51145ea6b72df2c509e5f07dd6cb663d17f3c5454ca1c2d811c55ab2a23ba8",
+      "public/runs/n32768-b256/measure/result.json": "1445ce3592d991f2546413714610318a62d48aa09b55c026d9c93796d6318df9",
+      "post_completed/public-measure-n32768-b256.json": "14c10a0c0c4783ed18beba922f8e894134e297e45cea248ffd169eae93d7bbfe",
+      "installed_public/runs/n32768-b256/default/result.json": "70e1c239bc5255315a09a15b4b0fae96718e94a5dcbe59ccc68452def1042e61",
+      "post_completed/installed_public-default-n32768-b256.json": "c31e53782d7bb594b646e73f4b160c2f8860abbea58dd0ddbb6a9d91005019ee",
+      "external/n262144-b4-cufft/result.json": "46e6a5c491bf878b83b4694b21531abc8723ae07f87919d12ffc33a9de436c6f",
+      "post_completed/n262144-b4-cufft.json": "9548adac9b1613cd02af33496d8e25c54b202e6ebc425cbefb6e6907ed98c823",
+      "public/runs/n262144-b4/default/result.json": "7576c3ae7fabd9dc12287ab5cb8526392814a6bc3df506a1bb5d5482aa4834df",
+      "post_completed/public-default-n262144-b4.json": "29993216a057dfc2d8aa506fa2a140c34fbfbe674bb8f948e9cd274e13b74f6a",
+      "public/runs/n262144-b4/measure/result.json": "0a416ff0df21258db73ee45f926565602650a9634f15d7d8838b77911042f7c7",
+      "post_completed/public-measure-n262144-b4.json": "ff2c9b443303b1c1361a199a604be08b6aa281dba9b2cc87ea7ac6be9ac3133c",
+      "installed_public/runs/n262144-b4/default/result.json": "1e744384859393c298c6317c39cee7fcdd17706e299e3cd777b7449bf81429f9",
+      "post_completed/installed_public-default-n262144-b4.json": "4e0054808b66a4d795ffc20a41e2eb4eb9ba2804c983681e96c6e6f01810f2de",
+      "external/n262144-b32-cufft/result.json": "03c15de2284cccd5f57a6daa432b5be3e5c8bcb064e558c8afc53e803e2253a5",
+      "post_completed/n262144-b32-cufft.json": "d1123bf74f5026096367cbf6d6e5f5f65ae1f2ee5f193b98a6fead276245b111",
+      "public/runs/n262144-b32/default/result.json": "7c35102f79b82fdf1501962d3612458fef2b01221d711e397520d8299130624d",
+      "post_completed/public-default-n262144-b32.json": "ac37b0479002fcf642deead0d549db2f342d4eace47397cfbc9384bc8e374104",
+      "public/runs/n262144-b32/measure/result.json": "b3d0444705b2458d9a585cd1363d746019a0d7407d247e514affe61073ed82b2",
+      "post_completed/public-measure-n262144-b32.json": "fa8adab59147e18c4f1b1263768f730ad115195e1c722f561808801ee9bbd664",
+      "installed_public/runs/n262144-b32/default/result.json": "f5941963cf0d7973338cb3aa1241aaa322a729ff4878ed00ecdb36dccbc0e7ec",
+      "post_completed/installed_public-default-n262144-b32.json": "e0719c211c59d266556144f7433d4872f09fad060107f2be2e4b6b936b36adfa",
+      "public/runs/fp16-inverse/default/result.json": "6e5859f258084e8a6145f4f49d3d95e9406f0b25532f0252c67ab62381a580f4",
+      "post_completed/public-fp16-inverse.json": "419ab9e68183c8bbb9e53eb7bd88b07b392e99d73b8a39f2d622a797fa0e06b3",
+      "public/runs/bf16-inverse/default/result.json": "4162148a979201adc843b66082bdc86427e5bb9b17104869c69feaad1fee9ce5",
+      "post_completed/public-bf16-inverse.json": "f8833bfe34b3a0e29cf47a037774b8ac5bcc635bdee480e759a27dcdbe46d0b3",
+      "public/runs/bf16-forward/default/result.json": "8ba180dce83a0b7160966b821469ec45dfab043bd8937d825b420904b5165826",
+      "post_completed/public-bf16-forward.json": "9c77c9a77f50803350a3343d9c01730454a0506e789a9c569f3dbf0b5f32f8f2",
+      "public/runs/fp16-fp32/default/result.json": "6c2dbeb0b0f82b81d7549e9bf169854f920dd2f51fbc86272939b43690221c63",
+      "post_completed/public-fp16-fp32.json": "b142cb47576a2a7f2c0f3630861772f796a704f836e0a65afc4b2bdc4e943f98",
+      "installed_public/runs/fp16-inverse/default/result.json": "bf5f2f879d8e551f2f24e0c49470069c21f1922744cd98fb8a0f384f7667e977",
+      "post_completed/installed_public-fp16-inverse.json": "6b78dfcc3f17fe1d828aa1aa54c41d3aae1e271d05d409a78661cee78f93d643",
+      "installed_public/runs/bf16-inverse/default/result.json": "5b1029f3028df49c019fc17f5f4174e521167d247be76ae95fa26d1b66673bb9",
+      "post_completed/installed_public-bf16-inverse.json": "126adb3e1db82d694733880752ef604d3d772b94606ec4fb1e1b1d86b63c5df0",
+      "installed_public/runs/bf16-forward/default/result.json": "ba1123d72f7b03c1fd1f5962444d9746ba04f89bfe7e6ba8e673a1df5a2f6f72",
+      "post_completed/installed_public-bf16-forward.json": "34a2f8b3674c35e2b69920cddae14fcf4dc5ffcf9e23832ebcfba3f9e8b144d8",
+      "installed_public/runs/fp16-fp32/default/result.json": "7c69681c475849d7876dad25e0d18feaff435f472b58592a41d8049d325788a0",
+      "post_completed/installed_public-fp16-fp32.json": "18be39c6a6cebcb60d92db7005087a10e9c6eddffbd9fdc92bb708e3bdf570ea",
+      "legacy/development/fft-fp64-n20-b16/result.json": "075910bc7fd9be5c20ef1fbf65730a6b07429e8863a98c19d7fbbba8acfa0219",
+      "post_completed/legacy-development-fft-fp64-n20-b16.json": "a2b553aa5ff3170d8c037dbe41d9b0aca4b0a2537ca4bb7d339bdc9af0031e4b",
+      "legacy/development/fwht-fp32-n16-b16/result.json": "90ed0fa4b862d036e0372605466fab140bbec8fa771f996cb2a2ba53915ae219",
+      "post_completed/legacy-development-fwht-fp32-n16-b16.json": "25ccdd9752e8e6d82de1575a266975500cee271f832bad77eab1e23fba43636b",
+      "legacy/development/fwht-fp32-n15-b32/result.json": "e4a9b9038ebb5dd93e1865b92faf39ffb86666302aa9f81453750a4167449a8d",
+      "post_completed/legacy-development-fwht-fp32-n15-b32.json": "a3b88f7a9e2ec683e5d3cbfeb335983ca2deaf52a288a7a9c13a4a7e77b4e4f4",
+      "legacy/installed/fft-fp64-n20-b16/result.json": "05ea998e5bdec40f81013c3de1eb691765815226daeca1bc1b9d23da1e97f700",
+      "post_completed/legacy-installed-fft-fp64-n20-b16.json": "2a6c967ea744844045754a1ce95a64e7e374ca8fc809fcae3a62a5dc6de0a675",
+      "legacy/installed/fwht-fp32-n16-b16/result.json": "485427beabbf48346d76921951014a198c707673ac7bf5502e87a385cbd2b33a",
+      "post_completed/legacy-installed-fwht-fp32-n16-b16.json": "7792f7cb3ced4296d2a4b1432f59bd8cdcf73362337e351e310fd36843bf67e5",
+      "legacy/installed/fwht-fp32-n15-b32/result.json": "be9cb3d933a8685b068b8c3bfb3036a3c61076620b6abbbba6744907a56e46a0",
+      "post_completed/legacy-installed-fwht-fp32-n15-b32.json": "d56e11d1b7710edf92acd3db6d85d7f873feaa026594a2b13be10f5cee19328a"
+    },
+    "runtime_fingerprint": "3f24ebf748992e13153782f818b5503a1438510555609a1b5291af913edb3de5:research",
+    "library_sha256": "775a85c8f76e44bbfee886fd90489e7c309bd097b60e968183e446aa006177b2",
+    "gpu_uuid": "GPU-00000000-0000-0000-0000-000000000001",
+    "graph_protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup",
+    "bf16_status": "pending; semantic smokes are not an automatic comparison cohort",
+    "limitations": [
+      "Nine finite FP16 forward requests; not full-matrix coverage",
+      "Numerical errors are report-only; no accuracy acceptance claim",
+      "MEASURE and installed DEFAULT retained separately; only development DEFAULT enters pairs",
+      "cuFFT internal arithmetic is unspecified"
+    ]
+  },
+  "fft_l_loader_sha256": null,
+  "fft_l_acceptance": null,
+  "frozen_inputs": true,
+  "frozen_fp16_sha256": "d8afb30a01ff81099bbe4255ac0fa1ccfa8829d77663ff06b9439424b1768a05",
+  "application_closeout_sha256": "156277b1865c9cb2111e9c5eadc8060b76671586a25231c81af45fd17a67f8aa",
+  "application_closeout_exporter_sha256": "bf34fd86f198c4fa15912e26a283bccd1566e9ac88f6b0e93e6dc47113c9c406",
+  "quarot_fused_followup_sha256": "e9ef94b60c34a9aab45f99bcd4333c0bf348362dc4a4cb81c22c2caf9debb9c4"
+}

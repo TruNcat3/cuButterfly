@@ -1,0 +1,25 @@
+{
+  "schema": "cubutterfly-platform-tuning-v1",
+  "description": "Optional unmeasured candidate priorities, never a substitute for the exact measured registry. Native CompactStage remains in the common inventory even without this file.",
+  "targets": [
+    {
+      "hardware": {
+        "device": "NVIDIA A100 80GB PCIe",
+        "compute_capability": "8.0",
+        "global_memory_bytes": 84974239744
+      },
+      "rules": [
+        {
+          "id": "native-forward-bit-reversed-ntt",
+          "match": {
+            "operator": "ntt", "precision": "word64", "direction": "forward",
+            "logN": 20, "batch": {"min": 1, "max": 65535},
+            "input_order": "natural", "output_order": "bit-reversed",
+            "modulus": {"min": 3, "max": 4611686018427387903}
+          },
+          "mapping": {"backend": "compact-stage", "compute_unit": "radix2"}
+        }
+      ]
+    }
+  ]
+}

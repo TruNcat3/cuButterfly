@@ -1,0 +1,861 @@
+{
+  "scope": "CPU-only cached sm80 SASS/resource audit; FP64 N65536 B16 factors [8,8], EPT16 columns4; both forward and inverse compiled kernels recorded, profile forward kernels selected by direction. No GPU execution or compilation.",
+  "created": "2026-11-08T18:37:30.159958",
+  "cuobjdump_version": "cuobjdump: NVIDIA (R) fat binary listing tool\nCopyright (c) 2005-2024 NVIDIA Corporation\nBuilt on Tue_Feb_27_16:19:38_PST_2024\nCuda compilation tools, release 12.4, V12.4.99\nBuild cuda_12.4.r12.4/compiler.33961263_0\n",
+  "count_semantics": "Static SASS instruction sites per kernel, not dynamic executed counts. Four device kernels/module (forward/inverse x Done0/Done8). Host exports excluded; never sum their counts as one FFT invocation.",
+  "source_pointers": {
+    "async_copy_commit_wait": "src/fft_factor_streamed.cuh:35-58",
+    "ring_prefill_refill_core": "src/fft_factor_streamed.cuh:108-166",
+    "shared_formula": "src/fft_factor_streamed.cuh:226-230",
+    "native_scratch": "src/fft_factor_native.cuh:10-17",
+    "generator_launch_resources": "scripts/compile_module.py:345-365"
+  },
+  "limits": [
+    "SASS establishes emitted async-copy/commit/wait mechanisms and resource declarations; it cannot establish measured latency hiding, overlap duration, occupancy, stall cause, or speedup.",
+    "cuobjdump SHARED is static shared only; dynamic shared uses source launch expression. cuFFTDx exact dynamic scratch is intentionally unconfirmed by this CPU-only audit.",
+    "Kernel loops, predication and tail guards mean static sites do not equal runtime copy groups or instructions.",
+    "Current source pointers explain mechanism; cached module SHA256 is the authority for actual instructions."
+  ],
+  "modules": [
+    {
+      "id": "native-t1-d0",
+      "module": "/home/anonymous/.cache/cubutterfly/modules/14e8727a4a411f9be12cd4629ab24560871a4d6f6a66c914dd742fe5d40b1202/module.so",
+      "sha256": "692f78457fa646313a6621e02034ac408654413f64de361e0c61c224ba31b1f8",
+      "manifest_hash_matches": true,
+      "sass_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/native-t1-d0.sass.txt",
+      "resource_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/native-t1-d0.resources.txt",
+      "kernels": [
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb0ENS_9Complex64EEELj16ELj8ELj8ELj4ELj1ELj0ELb0ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, false, cuntt::Complex64>, 16u, 8u, 8u, 4u, 1u, 0u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 166,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb0ENS_9Complex64EEELj16ELj8ELj0ELj4ELj1ELj0ELb0ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, false, cuntt::Complex64>, 16u, 8u, 0u, 4u, 1u, 0u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 168,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb1ENS_9Complex64EEELj16ELj8ELj8ELj4ELj1ELj0ELb1ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, true, cuntt::Complex64>, 16u, 8u, 8u, 4u, 1u, 0u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 166,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb1ENS_9Complex64EEELj16ELj8ELj0ELj4ELj1ELj0ELb1ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, true, cuntt::Complex64>, 16u, 8u, 0u, 4u, 1u, 0u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 166,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        }
+      ],
+      "launch_dynamic_shared_bytes": 16384,
+      "launch_dynamic_shared_lower_bound_bytes": 16384,
+      "dynamic_shared_note": "Native exact from NativeFactor::shared_memory_size; cuFFTDx lower bound only: exact expression ring + max(16384, FFT::shared_memory_size), no CUDA runtime query performed."
+    },
+    {
+      "id": "native-t4-d0",
+      "module": "/home/anonymous/.cache/cubutterfly/modules/fd955d026592de0f7855831ffb36a9e0613336c75987c5cd5f90d26e45741619/module.so",
+      "sha256": "4140f508c47559f2681ed429d0e731a1ace364ff7127d8aad1375b6dfbfddb0e",
+      "manifest_hash_matches": true,
+      "sass_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/native-t4-d0.sass.txt",
+      "resource_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/native-t4-d0.resources.txt",
+      "kernels": [
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb0ENS_9Complex64EEELj16ELj8ELj8ELj4ELj4ELj0ELb0ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, false, cuntt::Complex64>, 16u, 8u, 8u, 4u, 4u, 0u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 168,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb0ENS_9Complex64EEELj16ELj8ELj0ELj4ELj4ELj0ELb0ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, false, cuntt::Complex64>, 16u, 8u, 0u, 4u, 4u, 0u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 166,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb1ENS_9Complex64EEELj16ELj8ELj8ELj4ELj4ELj0ELb1ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, true, cuntt::Complex64>, 16u, 8u, 8u, 4u, 4u, 0u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 168,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb1ENS_9Complex64EEELj16ELj8ELj0ELj4ELj4ELj0ELb1ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, true, cuntt::Complex64>, 16u, 8u, 0u, 4u, 4u, 0u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 168,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        }
+      ],
+      "launch_dynamic_shared_bytes": 16384,
+      "launch_dynamic_shared_lower_bound_bytes": 16384,
+      "dynamic_shared_note": "Native exact from NativeFactor::shared_memory_size; cuFFTDx lower bound only: exact expression ring + max(16384, FFT::shared_memory_size), no CUDA runtime query performed."
+    },
+    {
+      "id": "native-t4-d1",
+      "module": "/home/anonymous/.cache/cubutterfly/modules/3ea4fbb024799042e097c53e339cf353ccb4efd41e22ab1768d831dbc850bac4/module.so",
+      "sha256": "d24dc14c45b5fc87c2e9c8ec2f5e72153f0897850b077eaa27ef0a227dd19537",
+      "manifest_hash_matches": true,
+      "sass_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/native-t4-d1.sass.txt",
+      "resource_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/native-t4-d1.resources.txt",
+      "kernels": [
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb0ENS_9Complex64EEELj16ELj8ELj8ELj4ELj4ELj1ELb0ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, false, cuntt::Complex64>, 16u, 8u, 8u, 4u, 4u, 1u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 3,
+            "LDGDEPBAR": 3,
+            "DEPBAR": 1,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x1"
+          ],
+          "resources": {
+            "REG": 164,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb0ENS_9Complex64EEELj16ELj8ELj0ELj4ELj4ELj1ELb0ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, false, cuntt::Complex64>, 16u, 8u, 0u, 4u, 4u, 1u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 3,
+            "LDGDEPBAR": 3,
+            "DEPBAR": 1,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x1"
+          ],
+          "resources": {
+            "REG": 166,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb1ENS_9Complex64EEELj16ELj8ELj8ELj4ELj4ELj1ELb1ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, true, cuntt::Complex64>, 16u, 8u, 8u, 4u, 4u, 1u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 3,
+            "LDGDEPBAR": 3,
+            "DEPBAR": 1,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x1"
+          ],
+          "resources": {
+            "REG": 164,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb1ENS_9Complex64EEELj16ELj8ELj0ELj4ELj4ELj1ELb1ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, true, cuntt::Complex64>, 16u, 8u, 0u, 4u, 4u, 1u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 3,
+            "LDGDEPBAR": 3,
+            "DEPBAR": 1,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x1"
+          ],
+          "resources": {
+            "REG": 166,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        }
+      ],
+      "launch_dynamic_shared_bytes": 49152,
+      "launch_dynamic_shared_lower_bound_bytes": 49152,
+      "dynamic_shared_note": "Native exact from NativeFactor::shared_memory_size; cuFFTDx lower bound only: exact expression ring + max(16384, FFT::shared_memory_size), no CUDA runtime query performed."
+    },
+    {
+      "id": "native-t4-d2",
+      "module": "/home/anonymous/.cache/cubutterfly/modules/3f83372139cd72c50be4d0608fe4b1ce95c51adf361881dd2a0c9ae8901dbda6/module.so",
+      "sha256": "259d3185afcf89ca9235a1fd83908bb3dd4060f3afe9f9651aa7e940f5b8c222",
+      "manifest_hash_matches": true,
+      "sass_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/native-t4-d2.sass.txt",
+      "resource_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/native-t4-d2.resources.txt",
+      "kernels": [
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb0ENS_9Complex64EEELj16ELj8ELj8ELj4ELj4ELj2ELb0ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, false, cuntt::Complex64>, 16u, 8u, 8u, 4u, 4u, 2u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 4,
+            "LDGDEPBAR": 4,
+            "DEPBAR": 1,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x2"
+          ],
+          "resources": {
+            "REG": 168,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb0ENS_9Complex64EEELj16ELj8ELj0ELj4ELj4ELj2ELb0ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, false, cuntt::Complex64>, 16u, 8u, 0u, 4u, 4u, 2u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 4,
+            "LDGDEPBAR": 4,
+            "DEPBAR": 1,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x2"
+          ],
+          "resources": {
+            "REG": 166,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb1ENS_9Complex64EEELj16ELj8ELj8ELj4ELj4ELj2ELb1ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, true, cuntt::Complex64>, 16u, 8u, 8u, 4u, 4u, 2u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 4,
+            "LDGDEPBAR": 4,
+            "DEPBAR": 1,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x2"
+          ],
+          "resources": {
+            "REG": 167,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelINS1_12NativeFactorILj8ELj16ELj4ELb1ENS_9Complex64EEELj16ELj8ELj0ELj4ELj4ELj2ELb1ES4_Lb0ELb0EEEvPKT7_PS6_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cuntt::detail::factor_streamed::NativeFactor<8u, 16u, 4u, true, cuntt::Complex64>, 16u, 8u, 0u, 4u, 4u, 2u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 4,
+            "LDGDEPBAR": 4,
+            "DEPBAR": 1,
+            "BAR": 6,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x2"
+          ],
+          "resources": {
+            "REG": 166,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        }
+      ],
+      "launch_dynamic_shared_bytes": 65536,
+      "launch_dynamic_shared_lower_bound_bytes": 65536,
+      "dynamic_shared_note": "Native exact from NativeFactor::shared_memory_size; cuFFTDx lower bound only: exact expression ring + max(16384, FFT::shared_memory_size), no CUDA runtime query performed."
+    },
+    {
+      "id": "cufftdx-t1-d0",
+      "module": "/home/anonymous/.cache/cubutterfly/modules/d862c6e6abcff2f62c713067cd3f1d69de8b1743723e383bb2bcc346d5e191dc/module.so",
+      "sha256": "022eb3533a6582d9d81e448ce070926448f2114ecae267a84c3297d088502dfb",
+      "manifest_hash_matches": true,
+      "sass_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/cufftdx-t1-d0.sass.txt",
+      "resource_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/cufftdx-t1-d0.resources.txt",
+      "kernels": [
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE0EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj8ELj4ELj1ELj0ELb0ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)0>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 8u, 4u, 1u, 0u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 128,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE0EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj0ELj4ELj1ELj0ELb0ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)0>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 0u, 4u, 1u, 0u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 128,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE1EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj8ELj4ELj1ELj0ELb1ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)1>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 8u, 4u, 1u, 0u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 121,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE1EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj0ELj4ELj1ELj0ELb1ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)1>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 0u, 4u, 1u, 0u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 128,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        }
+      ],
+      "launch_dynamic_shared_bytes": null,
+      "launch_dynamic_shared_lower_bound_bytes": 16384,
+      "dynamic_shared_note": "Native exact from NativeFactor::shared_memory_size; cuFFTDx lower bound only: exact expression ring + max(16384, FFT::shared_memory_size), no CUDA runtime query performed."
+    },
+    {
+      "id": "cufftdx-t4-d0",
+      "module": "/home/anonymous/.cache/cubutterfly/modules/5465f8fcbbd4bb86da69c2bfe41528a76eeeb6f2550a8f33e6e8f3533f41a661/module.so",
+      "sha256": "a60b7b3b46a4d3541ad5b696803e1221fbb84d246bf81a4f4def7aeae3d49996",
+      "manifest_hash_matches": true,
+      "sass_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/cufftdx-t4-d0.sass.txt",
+      "resource_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/cufftdx-t4-d0.resources.txt",
+      "kernels": [
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE0EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj8ELj4ELj4ELj0ELb0ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)0>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 8u, 4u, 4u, 0u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 128,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE0EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj0ELj4ELj4ELj0ELb0ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)0>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 0u, 4u, 4u, 0u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 128,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE1EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj8ELj4ELj4ELj0ELb1ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)1>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 8u, 4u, 4u, 0u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 122,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE1EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj0ELj4ELj4ELj0ELb1ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)1>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 0u, 4u, 4u, 0u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 0,
+            "LDGDEPBAR": 0,
+            "DEPBAR": 0,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [],
+          "resources": {
+            "REG": 128,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        }
+      ],
+      "launch_dynamic_shared_bytes": null,
+      "launch_dynamic_shared_lower_bound_bytes": 16384,
+      "dynamic_shared_note": "Native exact from NativeFactor::shared_memory_size; cuFFTDx lower bound only: exact expression ring + max(16384, FFT::shared_memory_size), no CUDA runtime query performed."
+    },
+    {
+      "id": "cufftdx-t4-d1",
+      "module": "/home/anonymous/.cache/cubutterfly/modules/4ba18532b935d3304cd423deef4d51eac1a1beb205d657b75ca136e5eb25ae24/module.so",
+      "sha256": "9d3da933f6084c9213c6b20f3f1b9af557f9b2dfc83bb03709122bef35e3fe07",
+      "manifest_hash_matches": true,
+      "sass_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/cufftdx-t4-d1.sass.txt",
+      "resource_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/cufftdx-t4-d1.resources.txt",
+      "kernels": [
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE0EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj8ELj4ELj4ELj1ELb0ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)0>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 8u, 4u, 4u, 1u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 3,
+            "LDGDEPBAR": 3,
+            "DEPBAR": 1,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x1"
+          ],
+          "resources": {
+            "REG": 158,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE0EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj0ELj4ELj4ELj1ELb0ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)0>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 0u, 4u, 4u, 1u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 3,
+            "LDGDEPBAR": 3,
+            "DEPBAR": 1,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x1"
+          ],
+          "resources": {
+            "REG": 128,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE1EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj8ELj4ELj4ELj1ELb1ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)1>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 8u, 4u, 4u, 1u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 3,
+            "LDGDEPBAR": 3,
+            "DEPBAR": 1,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x1"
+          ],
+          "resources": {
+            "REG": 156,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE1EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj0ELj4ELj4ELj1ELb1ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)1>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 0u, 4u, 4u, 1u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 3,
+            "LDGDEPBAR": 3,
+            "DEPBAR": 1,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x1"
+          ],
+          "resources": {
+            "REG": 128,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        }
+      ],
+      "launch_dynamic_shared_bytes": null,
+      "launch_dynamic_shared_lower_bound_bytes": 49152,
+      "dynamic_shared_note": "Native exact from NativeFactor::shared_memory_size; cuFFTDx lower bound only: exact expression ring + max(16384, FFT::shared_memory_size), no CUDA runtime query performed."
+    },
+    {
+      "id": "cufftdx-t4-d2",
+      "module": "/home/anonymous/.cache/cubutterfly/modules/62d16dd47dc208a366b7b2186cd8a050cb35f7512c25f6d72b8f5c2420dfe40f/module.so",
+      "sha256": "34b14f0cc4f60ed90d28f0bf944dab3ab28a8c40595a2833586ad829241c4bc8",
+      "manifest_hash_matches": true,
+      "sass_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/cufftdx-t4-d2.sass.txt",
+      "resource_path": "/workspace/cuButterfly/results/representative_profiles_20261108/instruction_audit_raw/cufftdx-t4-d2.resources.txt",
+      "kernels": [
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE0EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj8ELj4ELj4ELj2ELb0ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)0>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 8u, 4u, 4u, 2u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 4,
+            "LDGDEPBAR": 4,
+            "DEPBAR": 1,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x2"
+          ],
+          "resources": {
+            "REG": 156,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE0EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj0ELj4ELj4ELj2ELb0ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)0>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 0u, 4u, 4u, 2u, false, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "forward",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 4,
+            "LDGDEPBAR": 4,
+            "DEPBAR": 1,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x2"
+          ],
+          "resources": {
+            "REG": 128,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE1EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj8ELj4ELj4ELj2ELb1ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)1>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 8u, 4u, 4u, 2u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 8,
+          "static_instruction_sites": {
+            "LDGSTS": 4,
+            "LDGDEPBAR": 4,
+            "DEPBAR": 1,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x2"
+          ],
+          "resources": {
+            "REG": 156,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        },
+        {
+          "mangled_name": "_ZN5cuntt6detail15factor_streamed6kernelIN7cufftdx6detail19fft_block_executionIJNS3_5BlockENS3_4SizeILj256EEENS3_4TypeILNS3_8fft_typeE0EEENS3_9DirectionILNS3_13fft_directionE1EEENS3_9PrecisionIdEENS3_17ElementsPerThreadILj16EEENS3_12FFTsPerBlockILj4EEENS3_2SMILj800EEEEEELj16ELj8ELj0ELj4ELj4ELj2ELb1ENS_9Complex64ELb0ELb0EEEvPKT7_PSP_mmmbmmmm",
+          "demangled_name": "void cuntt::detail::factor_streamed::kernel<cufftdx::detail::fft_block_execution<cufftdx::Block, cufftdx::Size<256u>, cufftdx::Type<(cufftdx::fft_type)0>, cufftdx::Direction<(cufftdx::fft_direction)1>, cufftdx::Precision<double>, cufftdx::ElementsPerThread<16u>, cufftdx::FFTsPerBlock<4u>, cufftdx::SM<800u> >, 16u, 8u, 0u, 4u, 4u, 2u, true, cuntt::Complex64, false, false>(cuntt::Complex64 const*, cuntt::Complex64*, unsigned long, unsigned long, unsigned long, bool, unsigned long, unsigned long, unsigned long, unsigned long)",
+          "kernel": true,
+          "direction": "inverse",
+          "done_stages": 0,
+          "static_instruction_sites": {
+            "LDGSTS": 4,
+            "LDGDEPBAR": 4,
+            "DEPBAR": 1,
+            "BAR": 7,
+            "LDL": 0,
+            "STL": 0
+          },
+          "wait_operands": [
+            "SB0, 0x2"
+          ],
+          "resources": {
+            "REG": 128,
+            "STACK": 0,
+            "SHARED": 0,
+            "LOCAL": 0
+          }
+        }
+      ],
+      "launch_dynamic_shared_bytes": null,
+      "launch_dynamic_shared_lower_bound_bytes": 65536,
+      "dynamic_shared_note": "Native exact from NativeFactor::shared_memory_size; cuFFTDx lower bound only: exact expression ring + max(16384, FFT::shared_memory_size), no CUDA runtime query performed."
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "snapshot_date": "2026-09-17",
+  "scope": "Frozen FWHT composition examples; historical measurements, no new GPU experiment. GPU core-control records remain in historical_motivation.json.",
+  "source": {
+    "path": "results/staged_migration_20260916/a100-80gb-composition/public_completed_services.json",
+    "sha256": "77d3e1891c25e9df7742ffcdb9ccba35580ff79f6841aecd3250be3412449381"
+  },
+  "units": "milliseconds",
+  "rows": [
+    {
+      "source_row_1based": 26,
+      "operator": "fwht",
+      "precision": "fp32",
+      "logN": 12,
+      "batch": 64,
+      "tile_batch": 8,
+      "partition": [
+        8,
+        4
+      ],
+      "threads": 128,
+      "schedule_tiles": 8,
+      "stages": [
+        {
+          "overhead_ms": 0,
+          "body_ms": 0.004464639816433191,
+          "sm_demand": 0.07407407407407407,
+          "hbm_demand": 0.03951046707120848,
+          "launch_count": 1,
+          "service_source": "measured-exact"
+        },
+        {
+          "overhead_ms": 0,
+          "body_ms": 0.005560319870710373,
+          "sm_demand": 1,
+          "hbm_demand": 0.03172479435602208,
+          "launch_count": 1,
+          "service_source": "measured-exact"
+        }
+      ],
+      "resource_estimate_ms": 0.051262197205451894,
+      "scheduling_floor_ms": 0.056442880630493165,
+      "predicted_ms": 0.056442880630493165,
+      "measured_ms": 0.082276,
+      "relative_error": 0.3139812262325202,
+      "concurrency_calibrated": false
+    },
+    {
+      "source_row_1based": 27,
+      "operator": "fwht",
+      "precision": "fp32",
+      "logN": 12,
+      "batch": 64,
+      "tile_batch": 16,
+      "partition": [
+        8,
+        4
+      ],
+      "threads": 128,
+      "schedule_tiles": 4,
+      "stages": [
+        {
+          "overhead_ms": 0,
+          "body_ms": 0.004957091147926721,
+          "sm_demand": 0.14814814814814814,
+          "hbm_demand": 0.07117077301504464,
+          "launch_count": 1,
+          "service_source": "measured-piecewise-linear"
+        },
+        {
+          "overhead_ms": 0,
+          "body_ms": 0.007148451256481084,
+          "sm_demand": 1,
+          "hbm_demand": 0.04935334889275723,
+          "launch_count": 1,
+          "service_source": "measured-piecewise-linear"
+        }
+      ],
+      "resource_estimate_ms": 0.03575404779515182,
+      "scheduling_floor_ms": 0.028692479133605956,
+      "predicted_ms": 0.03575404779515182,
+      "measured_ms": 0.047538,
+      "relative_error": 0.24788489639547673,
+      "concurrency_calibrated": false
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "schema": "cubutterfly-large-fft-extension-v1",
+  "id": "large-fft-extension-20260917-a10040",
+  "target_id": "a100-40gb-gpu0",
+  "rank1": {
+    "logN": [22, 23, 24],
+    "batch": [1, 4, 16],
+    "precision": ["fp32", "fp64"]
+  },
+  "rank2": [
+    {
+      "id": "rank2-2048x2048-fp32-b1",
+      "shape": [2048, 2048],
+      "precision": "fp32",
+      "batch": 1
+    },
+    {
+      "id": "rank2-4096x4096-fp32-b1",
+      "shape": [4096, 4096],
+      "precision": "fp32",
+      "batch": 1
+    }
+  ],
+  "rank2_policy": {
+    "schema": "finite-explicit-composition-v1",
+    "variant_count": 4,
+    "variants": [
+      {
+        "id": "direct-direct-t256",
+        "axis0": {"core": "cufftdx-direct", "threads": 256},
+        "axis1": {"core": "cufftdx-direct", "threads": 256}
+      },
+      {
+        "id": "direct-block-t128",
+        "axis0": {"core": "cufftdx-direct", "threads": 256},
+        "axis1": {"core": "cufftdx-block", "threads": 128}
+      },
+      {
+        "id": "block-direct-t128",
+        "axis0": {"core": "cufftdx-block", "threads": 128},
+        "axis1": {"core": "cufftdx-direct", "threads": 256}
+      },
+      {
+        "id": "block-block-t256",
+        "axis0": {"core": "cufftdx-block", "threads": 256},
+        "axis1": {"core": "cufftdx-block", "threads": 256}
+      }
+    ],
+    "search_claim": "finite four-point explicit composition screen; not exhaustive measure"
+  },
+  "excluded_completed": [
+    {
+      "precision": "fp32",
+      "logN": 22,
+      "batch": 4,
+      "source": "results/framework_refactor_20260912/paired_20260913_fp32_n22/measurements.json"
+    },
+    {
+      "precision": "fp64",
+      "logN": 22,
+      "batch": 4,
+      "source": "results/framework_refactor_20260912/factor_partial_a10080_full_acceptance/measurements.json"
+    },
+    {
+      "precision": "fp32",
+      "logN": 24,
+      "batch": 1,
+      "source": "results/framework_refactor_20260912/paired_20260913_n24/measurements.json"
+    },
+    {
+      "precision": "fp64",
+      "logN": 24,
+      "batch": 1,
+      "source": "results/framework_refactor_20260912/paired_20260913_n24/measurements.json"
+    },
+    {
+      "precision": "fp32",
+      "logN": 24,
+      "batch": 16,
+      "source": "results/framework_refactor_20260912/factor_partial_a10080_paired/measurements.json"
+    },
+    {
+      "precision": "fp64",
+      "logN": 24,
+      "batch": 16,
+      "source": "results/framework_refactor_20260912/factor_partial_a10080_paired/measurements.json"
+    }
+  ],
+  "protocol": {
+    "search_budget": 12,
+    "seed_budget": 4,
+    "screen_budget_total": 16,
+    "finalists": 3,
+    "trials": 3,
+    "warmup": 1000,
+    "repeat": 100,
+    "rank2_trials": 3,
+    "verify_batches": 0,
+    "timing": "CUDA-event kernel time; compile, plan creation and initialization are outside CUDA-event kernel timing",
+    "correctness": "full-batch verification is required; verify-batches=0 means the benchmark checks every batch"
+  },
+  "candidate_policy": {
+    "families": [
+      "shared-iterative scalar",
+      "factor-streamed cuFFTDx block",
+      "online-reorder register-tile"
+    ],
+    "shared_threads": [128, 256],
+    "bounded_module_representatives": true,
+    "max_module_count": 24,
+    "omitted_candidate_families": [
+      {
+        "family": "factor-streamed native register-tile",
+        "reason": "Current standalone compiler limits factor_ept to 32; N24 native factors would require EPT=64 under the existing uniform-factor request contract."
+      }
+    ],
+    "runtime_export": "deferred; the bounded manifest is not a substitute for target-GPU --list-design-points"
+  },
+  "limitations": [
+    "This is a separate exploratory A100 40GB extension and must not be merged into the existing E1 or GPU1 large-FFT mean.",
+    "The screen denominator is exactly 16 candidates: 12 searched candidates plus 4 mapping seeds; seeds are candidates, not extra budget.",
+    "The 1D acceptance schema represents batch independent transforms, not rank-2 or rank-3 dimensions.",
+    "Rank 2 is API-supported but has no matching run_research_acceptance adapter in this queue; its two supplementary shapes use four fixed explicit compositions each with full cuFFT output verification.",
+    "Rank 3 is rejected by cubutterflySetShape and is outside this extension.",
+    "Historical exclusion records are kept out of the new GPU0 workloads and mean even when their old verification or build identity is incomplete.",
+    "The limited module manifest is structural preparation; target-GPU legality, correctness and runtime candidate coverage remain pending.",
+    "Acceptance requires a fresh independent GPU0 stage calibration checkpoint; the interrupted GPU1 checkpoint is never imported.",
+    "The historical mapping registry is used only as four candidate seeds and does not contribute historical timing to the new mean.",
+    "This A100 40GB cohort is a hardware-portability result, not a relabeling of the interrupted A100 80GB GPU1 cohort.",
+    "The rank-2 screen is exactly four explicit composition variants per shape; it is not an exhaustive measure search."
+  ]
+}

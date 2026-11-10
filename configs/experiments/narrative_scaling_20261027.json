@@ -1,0 +1,17 @@
+{
+  "schema": "cubutterfly-narrative-scaling-preparation-v1",
+  "operators": [{"operator": "fft", "precision": "fp64"}, {"operator": "fwht", "precision": "fp64"}, {"operator": "ntt", "precision": "word64"}],
+  "shapes": [{"logN": 16, "stage_partition": [8, 8], "threads": 128}, {"logN": 20, "stage_partition": [10, 10], "threads": 256}],
+  "batches": [1, 4, 16],
+  "local_widths": [0, 2, 4],
+  "modulus": 576460756061519873,
+  "protocol": {"trials": 3, "warmup": 10, "repeat": 20, "verify_batches": 0},
+  "hardware_model": "config/hardware/NVIDIA-A100-80GB-PCIe-sm80-84974239744B/hardware_model.json",
+  "build_dir": "build-e13-cufftdx",
+  "sm": 80,
+  "cache": "results/cache/modules",
+  "mathdx": "external/mathdx/nvidia/mathdx",
+  "nvcc": "/usr/local/cuda/bin/nvcc",
+  "output": "results/narrative_gap_20261027/m1",
+  "scope": "Scalar radix2 primitive fixed; local publication/register-residency scaling only. Local grouping changes ownership, synchronization and resource use. Not an HHD-wide or autotuned competitor comparison. Floating full-error-distribution acceptance remains unfinished."
+}

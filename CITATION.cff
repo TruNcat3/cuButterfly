@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+message: "Anonymous research artifact."
+title: "cuButterfly: Hierarchical Hybrid Tile-Dataflow Graphs"
+type: software
+authors:
+  - name: "Anonymous authors"
+version: 0.9.0
+license: LicenseRef-RONC-1.0

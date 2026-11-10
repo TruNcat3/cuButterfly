@@ -1,0 +1,19 @@
+{
+  "schema": "cubutterfly-medium-large-residency-v2",
+  "source_launch": "results/paper_targeted_20261012/medium_large_mechanism/fwht/launch.json",
+  "output": "results/paper_targeted_20261012/medium_large_residency_v2",
+  "operator": "fwht",
+  "logN": 20,
+  "batch": 4,
+  "physical_partition": [10, 10],
+  "threads": 256,
+  "layout": "linear",
+  "baseline_local_partitions": [],
+  "treatment_local_partitions": [[2, 2, 2, 2, 2], [2, 2, 2, 2, 2]],
+  "changed_public_axes": ["local_stage_partitions"],
+  "changed_implementation_axes": ["shared_iterative_kernel -> shared_resident_kernel", "four values owned in registers per thread per local unit", "shared publication units 10 -> 5 per physical group", "pair ownership and per-thread arithmetic schedule", "register pressure/instructions may change; measure, do not assume"],
+  "fixed": ["FwhtOperator<float>::apply scalar radix2 native primitive", "forward/none/out-of-place FP32", "physical partition [10,10]", "256 launch threads", "linear shared layout", "batch tile one, overlap false", "two global-boundary kernel launches"],
+  "claim": "One public organization parameter with explicit induced machine changes, not strict machine-level single-variable or core x organization 2x2.",
+  "numerical_policy": "Internal benchmark sanity only; user acceptance unassessed until report-only public fixed-mapping error validation. No new or relaxed threshold.",
+  "deadline": "2026-10-12T16:30:00+08:00"
+}

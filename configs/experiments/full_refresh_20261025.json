@@ -1,0 +1,172 @@
+{
+  "schema": "cubutterfly-full-refresh-plan-v1",
+  "id": "full-refresh-20261025",
+  "status": "planned",
+  "scope_ref": "benchmark/scopes/a100_80gb_research_v1.json",
+  "scope_id": "a100-80gb-research-0.9.3.11",
+  "output_root": "results/full_current_20261025",
+  "build_dir": "build-e13-cufftdx",
+  "library": "build-e13-cufftdx/libcuntt.so",
+  "python": "python",
+  "compile_mode": "research",
+  "followup_plan_ref": "configs/experiments/full_refresh_followups_20261025.json",
+  "runnable_queue": {
+    "status": "ready",
+    "measurement_status": "pending",
+    "entrypoint": "scripts/run_full_semantic_refresh.py",
+    "watcher": "scripts/watch_idle_campaign.py",
+    "order": ["current calibration", "finalization", "xD calibration", "66-request async comparison", "explicit followups and prepared application dependency queues"],
+    "inline_followup_job_ids": ["mechanism-timing", "ntt-five-point", "fft-grouped", "poisson-1024-b4", "poisson-2048-b4", "poisson-2048-b16", "mechanism-profile", "poisson-adaptive-trace", "fft-filters", "composed-138-public-default"],
+    "prepared_application_queues": ["results/full_current_20261025/ckks/normalized_followups.json", "results/full_current_20261025/composed_138/normalized_followups.json"],
+    "resolved_followup_jobs": 35,
+    "failure_policy": "Preserve failed followups, mark dependent jobs blocked, and continue independent jobs. Bind prepared consumer/config/helper files; never retry a failed experiment automatically or count it as a victory.",
+    "terminal_statuses": ["complete-runnable-refresh", "complete-runnable-refresh-with-gaps"],
+    "full_refresh_complete": false,
+    "terminal_scope": "Terminal queue status covers only the explicit finite jobs and their prepared dependencies. Inventory support, numerical review and any unresolved calibrated composition coverage remain open."
+  },
+  "device_contract": {"model": "A100 80GB PCIe", "sm": 80, "selector": "explicit GPU UUID", "isolation": "exclusive guarded execution"},
+  "status_definitions": {
+    "planned": "Frozen requested work; no current measurement is claimed.",
+    "ready": "Named preparation or entry point is available; GPU execution may still depend on calibration and exclusivity.",
+    "pending": "A named prerequisite, binding, or runtime verification remains.",
+    "unsupported": "The named inventory request or evidence claim has no matching execution contract in this plan."
+  },
+  "completion_contract": {
+    "track_count": 7,
+    "rule": "Report every track as measured or with explicit unresolved cases; pending work never counts as measured full refresh.",
+    "old_results": "Immutable priors and controls only; adopt zero historical timing rows into this refresh.",
+    "aggregation_keys": ["gpu_uuid", "library_sha256", "timing_protocol", "native_or_adapted"],
+    "numerics": "Exact integers; finite floating outputs with complete error distributions and explicit accuracy-review status.",
+    "timing_excluded": ["compilation", "planning", "search", "allocation", "reference generation", "warmup"],
+    "timing_included": ["required conversion", "permutation", "normalization", "placement adaptation", "complete requested execution"]
+  },
+  "inventory_only": {
+    "ref": "config/benchmark_full.json",
+    "status": "unsupported",
+    "expanded_request_rows": 12552,
+    "by_scope": {"operator": 11424, "e2e": 360, "profile": 768},
+    "reason": "Runner-neutral inventory includes unavailable operator/provider/precision and scene combinations; it is not an executable acceptance matrix."
+  },
+  "dependencies": [
+    {"id": "cpu66", "status": "ready", "manifest": "results/full_current_20261025/manifest.json", "manifest_sha256": "0f85cb6c3a0847de9e6521b7496863996939e8235cb5ab21c619844e2523fed0", "preparation": "results/full_current_20261025/prepared", "records": 66, "ready_records": 66, "checked_on": "2026-10-25", "policy": "Reuse this current preparation; do not regenerate serial CPU references."},
+    {"id": "current_calibration", "status": "pending", "owner_entrypoint": "scripts/run_full_semantic_refresh.py", "requirements": ["current library/build fingerprint", "same GPU UUID and memory capacity", "research compile/JIT identity", "finalized measured mappings", "passed selector replay"], "prior": "results/install_compare_repair_20261014/finalized/calibration_manifest.json"},
+    {"id": "guarded_async_driver", "status": "ready", "owner_entrypoint": "scripts/run_full_semantic_refresh.py", "watcher": "scripts/watch_idle_campaign.py", "measurement_entrypoint": "scripts/run_async_semantic_campaign.py", "followup_plan": "configs/experiments/full_refresh_followups_20261025.json", "reason": "Driver implements --followup-plan and guarded remaining status. Current GPU calibration and measurements remain pending."},
+    {"id": "mechanism_cpu_preparation", "status": "ready", "artifact": "results/full_current_20261025/mechanism/timing.json", "population_count": 6, "variant_count": 12, "gpu_measurements_claimed": false},
+    {"id": "application_cpu_imports", "status": "ready", "versions": {"cupy": "13.6.0", "torch": "2.5.1+cu124", "numpy": "1.26.4"}, "gpu_execution_validated": false, "checked_on": "2026-10-25"},
+    {"id": "filter_cpu_preparation", "status": "ready", "artifact": "results/full_current_20261025/fft_filters/prepared.json", "cases": 2, "reference": "persisted same-precision CPU original and changed-input results", "gpu_execution_validated": false},
+    {"id": "ckks_cpu_preparation", "status": "ready", "artifact": "results/full_current_20261025/ckks/cpu_build_receipt.json", "consumer_builds": 2, "distinct_rns_requests": 118, "gpu_execution_validated": false, "offline_mapping_ready": false},
+    {"id": "crypto_cyclic_cpu_preparation", "status": "ready", "artifact": "results/full_current_20261025/composed_138/cyclic_mapping/prepared", "records": 90, "ready_records": 90, "scope": "Derived cyclic channels from the frozen 138 compositions; not additional application samples", "gpu_execution_validated": false}
+  ],
+  "tracks": [
+    {
+      "track_id": "operator_comparison_66", "status": "pending", "kind": "operator_comparison",
+      "population_ref": "results/install_compare_20261013/campaign_config.json", "current_manifest_ref": "results/full_current_20261025/manifest.json", "population_count": 66,
+      "axes": {"operators": {"fft": 17, "fwht": 13, "ntt": 13, "subset-zeta": 8, "superset-zeta": 8, "structured-2x2": 7}, "ranks": {"1": 42, "2": 6, "3": 6, "4": 6, "8": 6}, "directions": {"forward": 40, "inverse": 26}, "placements": ["out-of-place"], "batches": [1, 4, 16, 32, 256], "storage": ["complex64", "complex128", "fp32", "fp64", "uint32", "uint64"]},
+      "protocol": {"id": "comparison-graph-v1", "warmup_calls": 10, "graph_replays": 7, "calls_per_graph": 20},
+      "entrypoint": "scripts/run_full_semantic_refresh.py", "measurement_entrypoint": "scripts/run_async_semantic_campaign.py",
+      "external_libraries": ["cuFFT", "VkFFT", "GPU-NTT", "Dao-AILab FHT where exact contract applies", "same-precision CPU references and external fallback cohorts"],
+      "external_artifacts": ["build-a100-vkfft/libvkfft_xd_bridge.so", "build-e13-cufftdx/libgpuntt_semantic_bridge.so", "config/external_comparison_catalog.json"],
+      "depends_on": ["cpu66", "current_calibration", "guarded_async_driver"], "output": "results/full_current_20261025/measurement",
+      "prior_result": "results/install_compare_repair_20261014/measurement/results.json",
+      "gaps": ["Historical 37 floating requests require accuracy review; a new finite-output report alone does not supply a numerical acceptance threshold.", "Historical 15 missing baseline rows remain explicit until current adapters establish exact support.", "No FFT-L, xor-zeta, or in-place coverage is supplied by this 66-request population."]
+    },
+    {
+      "track_id": "ntt_search_repair_5", "status": "pending", "kind": "operator_comparison",
+      "population_ref": "results/ntt_diagnostic_20261017/followup_summary.json#expected_case_ids", "population_count": 5,
+      "case_ids": ["5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e", "65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f", "eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa", "83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b", "38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e"],
+      "protocol": {"search": "search-host-event-loop-v1", "comparison": "comparison-graph-v1", "search_budget": 512, "required_independent_graph_rounds": 3},
+      "entrypoint_status": "ready", "entrypoint": "scripts/run_ntt_comparison_supplement.py", "legacy_entrypoint": "results/ntt_diagnostic_20261017/run.py", "followup_job_ids": ["ntt-five-point"], "external_libraries": ["GPU-NTT exact rank-one word64"],
+      "historical_receipt": "results/ntt_diagnostic_20261017/automatic_remaining/status.json",
+      "historical_argv": ["results/ntt_diagnostic_20261017/run.py", "--automatic", "--exclude-case-id", "38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e", "--library", "build-contract-20261013/libcuntt.so", "--preparation", "results/ntt_diagnostic_20261017/prepared"],
+      "depends_on": ["current_calibration", "operator_comparison_66"], "output": "results/full_current_20261025/ntt_search_repair_5",
+      "binding_contract": "Explicit current checkpoint, manifest, library, preparation, output and GPU UUID; library SHA and GPU must match the checkpoint. All five fixed IDs are selected independently of baseline status.",
+      "completion": "results.json status=complete, full_population=true, no remaining_case_ids; five public-measure pass rows with three trials each.",
+      "blockers": ["Await completion of the same-build 66-request measurement receipt before binding the supplement.", "The historical receipt covers four requests; the queued job uses no point exclusion and confirms all five."]
+    },
+    {
+      "track_id": "mechanism_profile_controlled", "status": "planned", "kind": "mechanism_profile",
+      "population_ref": "results/mechanism_current_20261017_v2/study.json", "population_count": 6, "variant_count": 12,
+      "population": "FFT fp32, FWHT fp32, NTT word64; each logN12/B4 and logN18/B1, forward; scalar radix2 core fixed, stagewise versus resident8 stage partitions.",
+      "protocol": {"id": "diagnostic-event-loop-v1", "warmup": 10, "repeat": 20, "trials": 3, "verify_batches": 0},
+      "entrypoint_status": "ready", "entrypoint": "scripts/run_controlled_experiment.py", "external_libraries": [], "requires_current_calibration": false,
+      "cpu_preparation_status": "ready", "cpu_preparation_ref": "results/full_current_20261025/mechanism/timing.json", "followup_job_ids": ["mechanism-timing", "mechanism-profile"],
+      "commands": [
+        {"argv": ["scripts/run_controlled_experiment.py", "--study", "results/mechanism_current_20261017_v2/study.json", "--build-dir", "build-e13-cufftdx", "--output", "results/full_current_20261025/mechanism/timing.json", "--mode", "prepare"]},
+        {"argv": ["scripts/run_controlled_experiment.py", "--study", "results/mechanism_current_20261017_v2/study.json", "--build-dir", "build-e13-cufftdx", "--output", "results/full_current_20261025/mechanism/timing.json", "--mode", "run", "--resume", "--gpu-uuid", "{gpu_uuid}"]},
+        {"argv": ["scripts/profile_current_mechanism.py", "--journal", "results/full_current_20261025/mechanism/timing.json", "--output-dir", "results/full_current_20261025/mechanism/profile", "--gpu-uuid", "{gpu_uuid}", "--run"]}
+      ],
+      "profilers": ["NCU", "NSYS"], "profile_population": "All six requests and twelve variants. Separate case/variant output; full-process capture may include setup/teardown. Ordinary timing remains authoritative.",
+      "profile_metrics": ["kernel count and grid geometry", "registers", "shared memory", "active warps", "barrier and long-scoreboard stalls", "DRAM bytes", "L2 hit rate"],
+      "output": "results/full_current_20261025/mechanism", "prior_result": "results/mechanism_current_20261017_v2/report.json",
+      "gaps": ["Current build must still accept the fixed mappings; report illegal lowerings instead of substituting a core.", "Full-process profile is not an operator-only range. Separate setup kernels when interpreting per-kernel metrics; do not aggregate replay time into application speedup."]
+    },
+    {
+      "track_id": "end_to_end_butterfly_applications", "status": "pending", "kind": "end_to_end",
+      "population_ref": "config/research_campaign/composed.json", "declared_case_count": 138,
+      "actual_population": "138 crypto composition contracts: single-modulus/RNS, cyclic/negacyclic/coset; not complete CKKS operations or image filtering.",
+      "canonical_protocol": "comparison-graph-v1", "entrypoint": "scripts/run_crypto_composition.py", "external_libraries": [],
+      "existing_runner_protocol": {"trials": 1, "warmup": 10, "repeat": 20, "graph_replays": 7, "calls_per_graph": 20, "patterns": ["random", "boundary"], "timing": "complete device-resident Graph including twists and all channels; 10 warmup graph replays; setup/CPU validation excluded"},
+      "required_binary": "results/full_current_20261025/composed_138/consumer-build/crypto_ntt_bench", "binary_status": "ready",
+      "cpu_preparation": "results/full_current_20261025/composed_138/preparation.json",
+      "calibration_workloads": "results/full_current_20261025/composed_138/calibration_workloads.json",
+      "mapping_adapter": "scripts/crypto_semantic_mapping_refresh.py",
+      "mapping_adapter_status": "CPU-verified; current GPU selection/Graph confirmation pending",
+      "derived_cyclic_reference_records": {"ready": 90, "total": 90},
+      "mapping_jobs": ["crypto-cyclic-90-public-measure-graph", "composed-138-searched-graph"],
+      "current_default_job": "composed-138-public-default",
+      "depends_on": ["current_calibration"], "output": "results/full_current_20261025/composed_138",
+      "blockers": ["Current exact-channel selected mappings require GPU measurement; fixed public-default is a separate diagnostic and does not satisfy that claim.", "Complete composition CPU references are still generated by the consumer outside timing; this preparation does not claim to precompute all 138 references.", "138 compositions are not complete CKKS/FHE/image applications. The supplementary application cohorts have separate populations and receipts."]
+    },
+    {
+      "track_id": "fft_xd_grouped_baseline", "status": "pending", "kind": "operator_comparison",
+      "population_ref": "results/ntt_diagnostic_20261017/fft_gaps_grouped/release/supplement.json", "request_count": 2, "expected_result_rows": 6,
+      "cases": [{"id": "b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40", "shape": [8, 8, 8, 8], "batch": 4}, {"id": "ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86", "shape": [2, 2, 2, 2, 2, 2, 2, 2], "batch": 16}],
+      "protocol": {"id": "comparison-graph-v1", "adapter": "Group at most three vendor axes; packing/copies/normalization included."},
+      "entrypoint_status": "ready", "entrypoint": "scripts/run_fft_grouped_supplement.py", "legacy_entrypoint": "results/ntt_diagnostic_20261017/run_fft_gaps.py", "followup_job_ids": ["fft-grouped"], "historical_receipt": "results/ntt_diagnostic_20261017/fft_gaps_grouped/status.json", "historical_argv": ["results/ntt_diagnostic_20261017/run_fft_gaps.py"],
+      "external_libraries": ["cuFFT grouped adapter", "VkFFT grouped adapter"], "depends_on": ["current_calibration", "operator_comparison_66"],
+      "output": "results/full_current_20261025/fft_xd_grouped_baseline",
+      "binding_contract": "Explicit current checkpoint, manifest, library, preparation, output and GPU UUID; replay the two current public selections and retain the grouped adapted cohort.",
+      "completion": "supplement.json status=complete-error-report-only, both fixed IDs present, each with cuButterfly timing/error evidence plus cuFFT and VkFFT accuracy-review-required timing rows.",
+      "blockers": ["Await completion of the same-build 66-request measurement receipt before binding the supplement."]
+    },
+    {
+      "track_id": "end_to_end_fft_poisson_current", "status": "planned", "kind": "end_to_end",
+      "population_ref": "results/e2e_current_20261017/manifest.json", "population_count": 3,
+      "cases": [{"id": "poisson-1024-b4", "shape": [1024, 1024], "batch": 4}, {"id": "poisson-2048-b4", "shape": [2048, 2048], "batch": 4}, {"id": "poisson-2048-b16", "shape": [2048, 2048], "batch": 16}],
+      "protocol": {"id": "comparison-graph-v1", "track_override": "Historical population manifest uses 3 warmups instead of common-contract 10; retain and disclose the per-track protocol.", "warmup_calls": 3, "graph_replays": 7, "calls_per_graph": 20, "modes": ["eager", "graph"]},
+      "entrypoint_status": "ready", "entrypoint": "experiments/tools/run_periodic_poisson_graph_20261013.py",
+      "cpu_import_status": "ready", "followup_job_ids": ["poisson-1024-b4", "poisson-2048-b4", "poisson-2048-b16"],
+      "command_template": {"argv": ["experiments/tools/run_periodic_poisson_graph_20261013.py", "--library", "build-e13-cufftdx/libcuntt.so", "--size", "{size}", "--batch", "{batch}", "--norm", "backward", "--calls", "20", "--warmup", "3", "--output", "results/full_current_20261025/poisson/{case_id}/report.json"]},
+      "external_libraries": ["PyTorch/cuFFT", "CuPy/cuFFT"], "selection": "Current RealFFT public planning/search and fresh output-local plan cache; no historical plan replay.",
+      "depends_on": ["current_calibration"], "output": "results/full_current_20261025/poisson",
+      "fallback_entrypoint": "experiments/tools/run_periodic_poisson_torch_graph_20261017.py",
+      "gaps": ["CPU imports passed for CuPy 13.6.0, Torch 2.5.1+cu124 and NumPy 1.26.4; GPU adapter execution remains unmeasured.", "Torch-only remains a separate two-backend/input-provenance cohort if a runtime CuPy gap appears."]
+    },
+    {
+      "track_id": "end_to_end_fft_poisson_adaptive_revision", "status": "planned", "kind": "end_to_end",
+      "revision_of": "end_to_end_fft_poisson_current", "population_ref": "results/e2e_current_20261017/poisson_2048_b16_adaptive_trace/manifest.json", "population_count": 1,
+      "case": {"shape": [2048, 2048], "batch": 16}, "protocol": {"id": "comparison-graph-v1", "warmup_calls": 3, "graph_replays": 7, "calls_per_graph": 20},
+      "entrypoint_status": "ready", "entrypoint": "experiments/tools/run_periodic_poisson_graph_20261013.py",
+      "followup_job_ids": ["poisson-adaptive-trace"],
+      "command_template": {"argv": ["experiments/tools/run_periodic_poisson_graph_20261013.py", "--library", "build-e13-cufftdx/libcuntt.so", "--size", "2048", "--batch", "16", "--norm", "backward", "--calls", "20", "--warmup", "3", "--profile", "--output", "results/full_current_20261025/poisson_adaptive_trace/report.json"]},
+      "external_libraries": ["PyTorch/cuFFT", "CuPy/cuFFT"], "depends_on": ["current_calibration", "end_to_end_fft_poisson_current"],
+      "output": "results/full_current_20261025/poisson_adaptive_trace",
+      "gaps": ["Profiler time remains diagnostic. Reuse the matching ordinary Poisson point for speedup; count this as one revision witness, not an extra independent application request."]
+    }
+  ],
+  "supplemental_existing_populations": [
+    {"id": "matched_padding_fft_filters", "status": "pending", "cpu_status": "ready", "population_ref": "benchmark/research_evidence_gap_20261017.md#2026-10-18-current-build-supplement", "cases": ["image1024_filter31_batch16", "image2048_filter31_batch16"], "entrypoint": "scripts/prepare_filter_refresh.py", "protocol": "Matched fast-padding, Graph complete-call; preserve historical receipt knobs.", "external_libraries": ["CuPy", "PyTorch/cuFFT"], "output": "results/full_current_20261025/fft_filters", "reason": "Original/changed input FP32 CPU references persisted, current library and receipt protocol bound. GPU validation and timing pending."},
+    {"id": "ckks_auto_schedule_36", "status": "pending", "cpu_status": "ready", "population_ref": "results/ckks_auto_schedule_20261019/README.md", "population_count": 36, "entrypoint": "scripts/prepare_ckks_refresh.py", "protocol": "Five complete paths; selection 7x5, independent timing 20x10; retain thermal-protocol cohorts.", "external_libraries": ["HEonGPU native GPU-NTT"], "output": "results/full_current_20261025/ckks/auto_schedule_36", "reason": "Current isolated consumer built. Five cohorts have explicit discovery, exact preparation and independent cache-only measurement dependencies; GPU phases pending."},
+    {"id": "ckks_bootstrap_prepared_118", "status": "pending", "cpu_status": "ready", "population_ref": "results/rns_prepared_20261021/requests/manifest.json", "request_count": 118, "application_batches": [1, 8], "entrypoint": "scripts/prepare_ckks_refresh.py", "protocol": "bootstrap-v1-small independent public-API loop, Graph; full exact ciphertext validation and changed-input replay.", "external_libraries": ["HEonGPU native GPU-NTT"], "output": "results/full_current_20261025/ckks/bootstrap_prepared", "reason": "118 request contracts checked and current consumer built. Current mapping tuning and independent cache-only replay are GPU dependencies; 118 requests are not 118 applications."},
+    {"id": "quarot_graph", "status": "unsupported", "population_ref": "benchmark/application_gap_review_20261021.md", "output": "results/full_current_20261025/quarot_graph", "reason": "Existing baseline-first and treatment-first Graph probes produced nonfinite replay outputs; no validated Graph comparison contract yet. Historical eager negative result remains prior evidence."},
+    {"id": "full_inventory_fft_l_and_unmapped_pairs", "status": "unsupported", "population_ref": "config/benchmark_full.json", "output": "results/full_current_20261025/inventory_gaps", "reason": "12552 request inventory has no universal dispatch adapter; vendor low-precision support does not establish an exact locally measured adapter. Preserve catalog gaps."}
+  ],
+  "next_actions": [
+    {"id": "launch_current66", "status": "ready", "action": "Run CPU --prepare-only with --followup-plan, then launch the same guarded async driver through watch_idle_campaign --resume. Reuse 66 ready CPU artifacts and current compiler inputs."},
+    {"id": "queue_mechanism_poisson", "status": "ready", "action": "The followup plan includes prepared mechanism timing, all six paired profiles with L2 counters, three Poisson pairs and adaptive trace. Retain all runtime failures."},
+    {"id": "bind_supplements", "status": "ready", "action": "The queued NTT5 and FFT2 CLI arguments bind the new measurement checkpoint, current library and current preparation; runtime binding waits for the 66-request receipt."},
+    {"id": "resolve_composed138", "status": "pending", "action": "Current consumer and actual Graph protocol are implemented; generate current exact-channel selected mappings and verify complete compositions on GPU."},
+    {"id": "bind_app_receipts", "status": "ready", "action": "Filter references and CKKS consumers/request contracts are prepared. Execute strict dependent GPU jobs; retain QuaRot Graph and missing-adapter gaps."},
+    {"id": "publish_evidence", "status": "planned", "action": "After measurement, summarize every track including failures and gaps; update docs/paper figures from current result paths and explicit historical priors."}
+  ]
+}

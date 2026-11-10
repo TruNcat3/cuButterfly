@@ -1,0 +1,14 @@
+{
+  "schema": "cubutterfly-install-search-v1",
+  "scope": "Factor partial-readiness follow-up: FP32/64, logN18/24, batch1/16; full FFT acceptance remains separate",
+  "workloads": [
+    {"operator":"fft","precision":"fp32","logN":18,"batch":1,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fft","precision":"fp32","logN":18,"batch":16,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fft","precision":"fp32","logN":24,"batch":1,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fft","precision":"fp32","logN":24,"batch":16,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fft","precision":"fp64","logN":18,"batch":1,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fft","precision":"fp64","logN":18,"batch":16,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fft","precision":"fp64","logN":24,"batch":1,"placement":"out-of-place","normalization":"none"},
+    {"operator":"fft","precision":"fp64","logN":24,"batch":16,"placement":"out-of-place","normalization":"none"}
+  ]
+}

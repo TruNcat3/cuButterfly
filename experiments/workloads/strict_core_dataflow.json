@@ -1,0 +1,72 @@
+{
+  "schema": "cubutterfly-strict-core-dataflow-config-v1",
+  "protocol": {
+    "trials": 3,
+    "warmup": 100,
+    "repeat": 100,
+    "verify_batches": 0
+  },
+  "scope": "A fair 2x2 FFT ablation for the same factorized execution shape. The core axis selects the native register-tile codelet or the imported cuFFTDx block codelet. The dataflow axis selects serial factor execution or dependency-sliced factor overlap. Both axes keep the workload, logical partition, factor partition, shared layout, EPT, columns, CTA tile count, and prefetch policy fixed within each case.",
+  "non_hybrid_definition": {
+    "label": "serial-factor",
+    "factor_slices": 2,
+    "factor_overlap": false,
+    "meaning": "The same two dependency-closed factor slices and fixed factor groups execute serially with no inter-slice dependency overlap. This is the traditional fixed-group control, not a claim that the factor decomposition disappears."
+  },
+  "hybrid_definition": {
+    "label": "sliced-hybrid",
+    "factor_slices": 2,
+    "factor_overlap": true,
+    "meaning": "The same factorized subgraphs execute two dependency-closed slices with the factor pipeline enabled. The arithmetic core and factor shape remain unchanged."
+  },
+  "cases": [
+    {
+      "id": "fft-fp32-n8-b16384",
+      "workload": {
+        "operator": "fft",
+        "precision": "fp32",
+        "logN": 8,
+        "batch": 16384,
+        "placement": "out-of-place",
+        "direction": "forward",
+        "normalization": "none"
+      },
+      "stage_partition": [8],
+      "factor_partition": [4, 4],
+      "factor_ept": 4,
+      "factor_columns": 8
+    },
+    {
+      "id": "fft-fp32-n12-b1024",
+      "workload": {
+        "operator": "fft",
+        "precision": "fp32",
+        "logN": 12,
+        "batch": 1024,
+        "placement": "out-of-place",
+        "direction": "forward",
+        "normalization": "none"
+      },
+      "stage_partition": [12],
+      "factor_partition": [6, 6],
+      "factor_ept": 8,
+      "factor_columns": 4
+    },
+    {
+      "id": "fft-fp32-n18-b16",
+      "workload": {
+        "operator": "fft",
+        "precision": "fp32",
+        "logN": 18,
+        "batch": 16,
+        "placement": "out-of-place",
+        "direction": "forward",
+        "normalization": "none"
+      },
+      "stage_partition": [18],
+      "factor_partition": [6, 6, 6],
+      "factor_ept": 8,
+      "factor_columns": 4
+    }
+  ]
+}

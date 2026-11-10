@@ -1,0 +1,576 @@
+{
+  "points": [
+    {
+      "batch": 64,
+      "logN": 16,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          8
+        ],
+        "tile_threads": 128
+      },
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 64,
+      "logN": 16,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          8
+        ],
+        "tile_threads": 256
+      },
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 64,
+      "logN": 16,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          8
+        ],
+        "tile_threads": 128
+      },
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 64,
+      "logN": 16,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          8
+        ],
+        "tile_threads": 256
+      },
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 16,
+      "logN": 18,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          8,
+          2
+        ],
+        "tile_threads": 128
+      },
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "in-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 16,
+      "logN": 18,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          8,
+          2
+        ],
+        "tile_threads": 256
+      },
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "in-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 64,
+      "logN": 18,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          8,
+          2
+        ],
+        "tile_threads": 128
+      },
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "in-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 64,
+      "logN": 18,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          8,
+          2
+        ],
+        "tile_threads": 256
+      },
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "in-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 4,
+      "logN": 20,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          8,
+          4
+        ],
+        "tile_threads": 128
+      },
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "in-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 4,
+      "logN": 20,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          8,
+          4
+        ],
+        "tile_threads": 256
+      },
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "in-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 16,
+      "logN": 20,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          8,
+          4
+        ],
+        "tile_threads": 128
+      },
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "in-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 16,
+      "logN": 20,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          8,
+          4
+        ],
+        "tile_threads": 256
+      },
+      "normalization": "none",
+      "operator": "fft",
+      "placement": "in-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 128,
+      "logN": 15,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          7
+        ],
+        "tile_threads": 128
+      },
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 128,
+      "logN": 15,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          7
+        ],
+        "tile_threads": 256
+      },
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp32"
+    },
+    {
+      "batch": 64,
+      "logN": 12,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          4
+        ],
+        "tile_threads": 128
+      },
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 64,
+      "logN": 12,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          4
+        ],
+        "tile_threads": 256
+      },
+      "normalization": "none",
+      "operator": "fwht",
+      "placement": "out-of-place",
+      "precision": "fp64"
+    },
+    {
+      "batch": 1024,
+      "logN": 12,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          4
+        ],
+        "tile_threads": 128
+      },
+      "normalization": "none",
+      "operator": "subset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 1024,
+      "logN": 12,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          4
+        ],
+        "tile_threads": 256
+      },
+      "normalization": "none",
+      "operator": "subset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 1024,
+      "logN": 12,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          4
+        ],
+        "tile_threads": 128
+      },
+      "normalization": "none",
+      "operator": "superset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 1024,
+      "logN": 12,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          4
+        ],
+        "tile_threads": 256
+      },
+      "normalization": "none",
+      "operator": "superset-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 1024,
+      "logN": 12,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          4
+        ],
+        "tile_threads": 128
+      },
+      "normalization": "none",
+      "operator": "xor-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 1024,
+      "logN": 12,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          4
+        ],
+        "tile_threads": 256
+      },
+      "normalization": "none",
+      "operator": "xor-zeta",
+      "placement": "out-of-place",
+      "precision": "uint32"
+    },
+    {
+      "batch": 1024,
+      "logN": 12,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          4
+        ],
+        "tile_threads": 128
+      },
+      "normalization": "none",
+      "operator": "structured-2x2",
+      "placement": "out-of-place",
+      "precision": "fp32",
+      "stage_matrix": "1,0.25,-0.5,1"
+    },
+    {
+      "batch": 1024,
+      "logN": 12,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "kind": "butterfly",
+        "schema_version": 1,
+        "shared_layout": "writer-aligned",
+        "stage_partition": [
+          8,
+          4
+        ],
+        "tile_threads": 256
+      },
+      "normalization": "none",
+      "operator": "structured-2x2",
+      "placement": "out-of-place",
+      "precision": "fp32",
+      "stage_matrix": "1,0.25,-0.5,1"
+    },
+    {
+      "batch": 128,
+      "logN": 12,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "dataflow_layout": "hermes-xor",
+        "kind": "ntt",
+        "schema_version": 1,
+        "stage_partition": [
+          8,
+          4
+        ],
+        "threads_per_block": 128
+      },
+      "modulus": 998244353,
+      "operator": "ntt",
+      "placement": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 128,
+      "logN": 12,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "dataflow_layout": "hermes-xor",
+        "kind": "ntt",
+        "schema_version": 1,
+        "stage_partition": [
+          8,
+          4
+        ],
+        "threads_per_block": 256
+      },
+      "modulus": 998244353,
+      "operator": "ntt",
+      "placement": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "logN": 16,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "dataflow_layout": "hermes-xor",
+        "kind": "ntt",
+        "schema_version": 1,
+        "stage_partition": [
+          8,
+          8
+        ],
+        "threads_per_block": 128
+      },
+      "modulus": 576460756061519873,
+      "operator": "ntt",
+      "placement": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "logN": 16,
+      "mapping": {
+        "backend": "shared-iterative",
+        "compute_unit": "radix2",
+        "dataflow_layout": "hermes-xor",
+        "kind": "ntt",
+        "schema_version": 1,
+        "stage_partition": [
+          8,
+          8
+        ],
+        "threads_per_block": 256
+      },
+      "modulus": 576460756061519873,
+      "operator": "ntt",
+      "placement": "natural",
+      "precision": "word64"
+    }
+  ],
+  "schema": "cubutterfly-stage-points-v1",
+  "scope": "28 shared-iterative semantic calibration points; no timing evidence"
+}

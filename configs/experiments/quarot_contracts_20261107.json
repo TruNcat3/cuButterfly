@@ -1,0 +1,69 @@
+{
+  "schema": "quarot-eight-contracts-v1",
+  "cases": [
+    {
+      "id": "b1_prefill_n32",
+      "application_batch": 1,
+      "phase": "prefill",
+      "N": 32,
+      "batch": 16384,
+      "full_n": 32
+    },
+    {
+      "id": "b1_prefill_n64",
+      "application_batch": 1,
+      "phase": "prefill",
+      "N": 64,
+      "batch": 22016,
+      "full_n": 11008
+    },
+    {
+      "id": "b1_decode_n32",
+      "application_batch": 1,
+      "phase": "decode",
+      "N": 32,
+      "batch": 128,
+      "full_n": 32
+    },
+    {
+      "id": "b1_decode_n64",
+      "application_batch": 1,
+      "phase": "decode",
+      "N": 64,
+      "batch": 172,
+      "full_n": 11008
+    },
+    {
+      "id": "b4_prefill_n32",
+      "application_batch": 4,
+      "phase": "prefill",
+      "N": 32,
+      "batch": 65536,
+      "full_n": 32
+    },
+    {
+      "id": "b4_prefill_n64",
+      "application_batch": 4,
+      "phase": "prefill",
+      "N": 64,
+      "batch": 88064,
+      "full_n": 11008
+    },
+    {
+      "id": "b4_decode_n32",
+      "application_batch": 4,
+      "phase": "decode",
+      "N": 32,
+      "batch": 512,
+      "full_n": 32
+    },
+    {
+      "id": "b4_decode_n64",
+      "application_batch": 4,
+      "phase": "decode",
+      "N": 64,
+      "batch": 688,
+      "full_n": 11008
+    }
+  ]
+}

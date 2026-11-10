@@ -1,0 +1,1034 @@
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <numeric>
+#include <random>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "cuntt/butterfly.hpp"
+
+namespace {
+
+constexpr std::size_t kBatch = 17;
+
+void check_dataflow_projection(const cuntt::ButterflyPlan& plan) {
+    const auto& flow = plan.dataflow_plan();
+    const auto& config = plan.config();
+    if (!flow.executable || flow.dispatch == cuntt::DataflowDispatch::Unresolved ||
+        flow.graph.log_n != config.log_n || flow.graph.batch != config.batch ||
+        flow.graph.element_stride != config.element_stride || flow.graph.batch_stride != config.batch_stride ||
+        flow.graph.inverse != config.inverse)
+        throw std::runtime_error("runtime plan does not preserve the resolved dataflow contract");
+    if (config.backend == cuntt::ButterflyBackend::Hierarchical &&
+        (flow.dispatch != cuntt::DataflowDispatch::Hierarchical || flow.persistent ||
+         flow.stage_partition.size() != config.log_n - config.local_stages + 1))
+        throw std::runtime_error("hierarchical launch schedule differs from dataflow projection");
+}
+
+void check_cuda(cudaError_t status, const char* operation) {
+    if (status != cudaSuccess)
+        throw std::runtime_error(std::string(operation) + ": " + cudaGetErrorString(status));
+}
+
+class TestStream {
+  public:
+    TestStream() { check_cuda(cudaStreamCreateWithFlags(&stream_, cudaStreamNonBlocking), "cudaStreamCreateWithFlags"); }
+    ~TestStream() { cudaStreamDestroy(stream_); }
+    cudaStream_t get() const noexcept { return stream_; }
+
+  private:
+    cudaStream_t stream_ = nullptr;
+};
+
+class TestDeviceBuffer {
+  public:
+    explicit TestDeviceBuffer(std::size_t bytes) {
+        if (bytes != 0)
+            check_cuda(cudaMalloc(&pointer_, bytes), "cudaMalloc");
+    }
+    ~TestDeviceBuffer() { cudaFree(pointer_); }
+    void* get() const noexcept { return pointer_; }
+
+  private:
+    void* pointer_ = nullptr;
+};
+
+void test_fwht(cuntt::ButterflyBackend backend, std::uint32_t stage_space, std::uint32_t warp_stages = 5, std::uint32_t pipeline_warps = 8,
+               std::uint32_t tile_threads = 128, cuntt::ComputeUnit compute_unit = cuntt::ComputeUnit::Radix2, std::uint32_t log_n = 8,
+               bool inverse = false, bool normalize_inverse = true, std::uint32_t local_stages = 10, std::uint32_t reorder_columns = 1,
+               cuntt::LocalExchange local_exchange = cuntt::LocalExchange::SharedMemory) {
+    const std::size_t                     n = std::size_t{1} << log_n;
+    std::mt19937                          random(0xf017U + stage_space);
+    std::uniform_real_distribution<float> distribution(-1.0F, 1.0F);
+    std::vector<float>                    input(kBatch * n);
+    std::generate(input.begin(), input.end(), [&] { return distribution(random); });
+
+    cuntt::ButterflyConfig config;
+    config.op                = cuntt::ButterflyOperator::Fwht;
+    config.backend           = backend;
+    config.batch             = kBatch;
+    config.log_n             = log_n;
+    config.inverse           = inverse;
+    config.normalize_inverse = normalize_inverse;
+    config.stage_space       = stage_space;
+    config.warp_stages       = warp_stages;
+    config.pipeline_warps    = pipeline_warps;
+    config.tile_threads      = tile_threads;
+    config.compute_unit      = compute_unit;
+    config.local_stages      = local_stages;
+    config.reorder_columns   = reorder_columns;
+    config.local_exchange    = local_exchange;
+    cuntt::ButterflyPlan plan(config);
+    check_dataflow_projection(plan);
+    std::vector<float>   output;
+    plan.execute(input, output, 0, 1);
+
+    for (std::size_t transform = 0; transform < kBatch; ++transform) {
+        std::vector<float> expected(input.begin() + transform * n, input.begin() + (transform + 1) * n);
+        cuntt::reference_fwht(expected, inverse, normalize_inverse);
+        for (std::size_t index = 0; index < n; ++index) {
+            if (std::abs(expected[index] - output[transform * n + index]) > 1.0e-4F) {
+                throw std::runtime_error("FWHT mismatch backend=" + std::string(cuntt::butterfly_backend_name(backend)) +
+                                         " Us=" + std::to_string(stage_space));
+            }
+        }
+    }
+    std::cout << "PASS FWHT backend=" << cuntt::butterfly_backend_name(backend) << " Us=" << stage_space << '\n';
+}
+
+void test_fft(cuntt::ButterflyBackend backend, std::uint32_t stage_space, std::uint32_t warp_stages = 5, std::uint32_t pipeline_warps = 8,
+              std::uint32_t tile_threads = 128, cuntt::ComputeUnit compute_unit = cuntt::ComputeUnit::Radix2, std::uint32_t log_n = 8,
+              bool inverse = false, bool normalize_inverse = true, std::uint32_t local_stages = 10, std::uint32_t reorder_columns = 1,
+              cuntt::ComplexMultiply complex_multiply = cuntt::ComplexMultiply::FourMul,
+              cuntt::FftCore fft_core = cuntt::FftCore::Scalar,
+              cuntt::ButterflyPrecision precision = cuntt::ButterflyPrecision::Fp32,
+              cuntt::CrossTwiddleMode cross_twiddle = cuntt::CrossTwiddleMode::Table,
+              std::uint32_t prefix_threads = 0, std::uint32_t suffix_threads = 0,
+              std::uint32_t prefix_ept = 8, std::uint32_t suffix_ept = 8) {
+    const std::size_t                     n = std::size_t{1} << log_n;
+    std::mt19937                          random(0xff70U + stage_space);
+    std::uniform_real_distribution<float> distribution(-1.0F, 1.0F);
+    std::vector<cuntt::Complex32>         input(kBatch * n);
+    std::generate(input.begin(), input.end(), [&] { return cuntt::Complex32{distribution(random), distribution(random)}; });
+
+    cuntt::ButterflyConfig config;
+    config.op                = cuntt::ButterflyOperator::Fft;
+    config.backend           = backend;
+    config.batch             = kBatch;
+    config.log_n             = log_n;
+    config.inverse           = inverse;
+    config.normalize_inverse = normalize_inverse;
+    config.stage_space       = stage_space;
+    config.warp_stages       = warp_stages;
+    config.pipeline_warps    = pipeline_warps;
+    config.tile_threads      = tile_threads;
+    config.compute_unit      = backend == cuntt::ButterflyBackend::CuFft ? cuntt::ComputeUnit::Auto : compute_unit;
+    config.complex_multiply  = complex_multiply;
+    config.local_stages      = local_stages;
+    config.reorder_columns   = reorder_columns;
+    config.fft_core          = fft_core;
+    config.precision         = precision;
+    config.cross_twiddle     = cross_twiddle;
+    config.prefix_threads    = prefix_threads;
+    config.suffix_threads    = suffix_threads;
+    config.prefix_ept        = prefix_ept;
+    config.suffix_ept        = suffix_ept;
+    cuntt::ButterflyPlan          plan(config);
+    check_dataflow_projection(plan);
+    std::vector<cuntt::Complex32> output;
+    plan.execute(input, output, 0, 1);
+
+    for (std::size_t transform = 0; transform < kBatch; ++transform) {
+        std::vector<cuntt::Complex32> expected(input.begin() + transform * n, input.begin() + (transform + 1) * n);
+        cuntt::reference_fft(expected, inverse, normalize_inverse);
+        for (std::size_t index = 0; index < n; ++index) {
+            const auto& actual = output[transform * n + index];
+            const float error  = std::hypot(expected[index].real - actual.real, expected[index].imag - actual.imag);
+            const float tolerance = precision == cuntt::ButterflyPrecision::Fp16Fp32
+                                        ? 1.0e-2F
+                                        : (fft_core == cuntt::FftCore::TurboFftGenerated && log_n == 10
+                                               ? 3.0e-4F
+                                               : 2.0e-4F * std::sqrt(std::max(1.0F, static_cast<float>(n) / 1024.0F)));
+            if (error > tolerance) {
+                throw std::runtime_error("FFT mismatch backend=" + std::string(cuntt::butterfly_backend_name(backend)) +
+                                         " Us=" + std::to_string(stage_space) + " error=" + std::to_string(error));
+            }
+        }
+    }
+    std::cout << "PASS FFT backend=" << cuntt::butterfly_backend_name(backend) << " Us=" << stage_space << '\n';
+}
+
+template <typename Storage, typename Complex>
+void test_low_precision_contract(cuntt::ButterflyPrecision precision, cuntt::ButterflyAccumulation accumulation) {
+    constexpr std::size_t batch = 3;
+    auto relative_error = [](const auto& actual, const auto& expected) {
+        long double error = 0.0;
+        long double reference = 0.0;
+        for (std::size_t index = 0; index < actual.size(); ++index) {
+            const long double delta = static_cast<float>(actual[index]) - expected[index];
+            error += delta * delta;
+            reference += static_cast<long double>(expected[index]) * expected[index];
+        }
+        return std::sqrt(error / std::max(reference, 1.0e-30L));
+    };
+
+    for (const auto backend : {cuntt::ButterflyBackend::TemporalTile,
+                               cuntt::ButterflyBackend::Hierarchical,
+                               cuntt::ButterflyBackend::OnlineReorder}) {
+        const std::uint32_t log_n = backend == cuntt::ButterflyBackend::TemporalTile ? 8U : 11U;
+        const std::size_t n = std::size_t{1} << log_n;
+        std::vector<Storage> input(batch * n);
+        for (std::size_t index = 0; index < input.size(); ++index)
+            input[index] = Storage((static_cast<int>(index % 17) - 8) / std::sqrt(static_cast<float>(n)));
+        cuntt::ButterflyConfig config;
+        config.op = cuntt::ButterflyOperator::Fwht;
+        config.backend = backend;
+        config.precision = precision;
+        config.accumulation = accumulation;
+        config.log_n = log_n;
+        config.batch = batch;
+        config.tile_threads = 128;
+        config.local_stages = 5;
+        config.reorder_columns = 1;
+        cuntt::ButterflyPlan plan(config);
+        check_dataflow_projection(plan);
+        std::vector<Storage> output;
+        plan.execute(input, output, 0, 1);
+        std::vector<float> expected;
+        expected.reserve(output.size());
+        for (std::size_t transform = 0; transform < batch; ++transform) {
+            std::vector<float> one(n);
+            for (std::size_t index = 0; index < n; ++index)
+                one[index] = static_cast<float>(input[transform * n + index]);
+            cuntt::reference_fwht(one);
+            expected.insert(expected.end(), one.begin(), one.end());
+        }
+        if (relative_error(output, expected) > 0.25L)
+            throw std::runtime_error("low-precision FWHT mismatch");
+    }
+
+    constexpr std::uint32_t log_n = 8;
+    constexpr std::size_t n = std::size_t{1} << log_n;
+    std::vector<Complex> input(batch * n);
+    for (std::size_t index = 0; index < input.size(); ++index)
+        input[index] = {Storage((static_cast<int>(index % 13) - 6) / 64.0F),
+                        Storage((static_cast<int>(index % 11) - 5) / 64.0F)};
+    cuntt::ButterflyConfig config;
+    config.op = cuntt::ButterflyOperator::Fft;
+    config.backend = cuntt::ButterflyBackend::TemporalTile;
+    config.precision = precision;
+    config.accumulation = accumulation;
+    config.log_n = log_n;
+    config.batch = batch;
+    config.tile_threads = 128;
+    cuntt::ButterflyPlan plan(config);
+    std::vector<Complex> output;
+    plan.execute(input, output, 0, 1);
+    long double error = 0.0;
+    long double reference = 0.0;
+    for (std::size_t transform = 0; transform < batch; ++transform) {
+        std::vector<cuntt::Complex32> expected(n);
+        for (std::size_t index = 0; index < n; ++index) {
+            const auto value = input[transform * n + index];
+            expected[index] = {static_cast<float>(value.real), static_cast<float>(value.imag)};
+        }
+        cuntt::reference_fft(expected);
+        for (std::size_t index = 0; index < n; ++index) {
+            const auto actual = output[transform * n + index];
+            const long double dr = static_cast<float>(actual.real) - expected[index].real;
+            const long double di = static_cast<float>(actual.imag) - expected[index].imag;
+            error += dr * dr + di * di;
+            reference += static_cast<long double>(expected[index].real) * expected[index].real +
+                         static_cast<long double>(expected[index].imag) * expected[index].imag;
+        }
+    }
+    if (std::sqrt(error / std::max(reference, 1.0e-30L)) > 0.25L)
+        throw std::runtime_error("low-precision FFT mismatch");
+
+    std::vector<Storage> structured_input(batch * n);
+    for (std::size_t index = 0; index < structured_input.size(); ++index)
+        structured_input[index] = Storage((static_cast<int>(index % 17) - 8) / 64.0F);
+    cuntt::ButterflyConfig structured_config;
+    structured_config.op = cuntt::ButterflyOperator::Structured2x2;
+    structured_config.backend = cuntt::ButterflyBackend::TemporalTile;
+    structured_config.precision = precision;
+    structured_config.accumulation = accumulation;
+    structured_config.log_n = log_n;
+    structured_config.batch = batch;
+    structured_config.tile_threads = 128;
+    structured_config.stage_matrices = {{0.9238795, -0.3826834, 0.3826834, 0.9238795}};
+    cuntt::ButterflyPlan structured_plan(structured_config);
+    std::vector<Storage> structured_output;
+    structured_plan.execute(structured_input, structured_output, 0, 1);
+    std::vector<float> structured_expected;
+    structured_expected.reserve(structured_output.size());
+    for (std::size_t transform = 0; transform < batch; ++transform) {
+        std::vector<float> one(n);
+        for (std::size_t index = 0; index < n; ++index)
+            one[index] = static_cast<float>(structured_input[transform * n + index]);
+        cuntt::reference_structured_2x2(one, structured_config.stage_matrices, false);
+        structured_expected.insert(structured_expected.end(), one.begin(), one.end());
+    }
+    if (relative_error(structured_output, structured_expected) > 0.25L)
+        throw std::runtime_error("low-precision Structured2x2 mismatch");
+    std::cout << "PASS low precision=" << cuntt::butterfly_precision_name(precision)
+              << " accumulation=" << cuntt::butterfly_accumulation_name(accumulation) << '\n';
+}
+
+void test_xor_zeta(cuntt::ButterflyBackend backend, std::uint32_t stage_space, std::uint32_t warp_stages = 5, std::uint32_t pipeline_warps = 8,
+                   std::uint32_t tile_threads = 128, cuntt::ComputeUnit compute_unit = cuntt::ComputeUnit::Radix2, std::uint32_t log_n = 8,
+                   bool inverse = false, std::uint32_t local_stages = 10, std::uint32_t reorder_columns = 1,
+                   cuntt::ButterflyOperator op = cuntt::ButterflyOperator::XorZeta) {
+    const std::size_t                            n = std::size_t{1} << log_n;
+    std::mt19937                                 random(0x207aU + stage_space);
+    std::uniform_int_distribution<std::uint32_t> distribution(0, 1023);
+    std::vector<std::uint32_t>                   input(kBatch * n);
+    std::generate(input.begin(), input.end(), [&] { return distribution(random); });
+
+    cuntt::ButterflyConfig config;
+    config.op              = op;
+    config.backend         = backend;
+    config.batch           = kBatch;
+    config.log_n           = log_n;
+    config.inverse         = inverse;
+    config.stage_space     = stage_space;
+    config.warp_stages     = warp_stages;
+    config.pipeline_warps  = pipeline_warps;
+    config.tile_threads    = tile_threads;
+    config.compute_unit    = compute_unit;
+    config.local_stages    = local_stages;
+    config.reorder_columns = reorder_columns;
+    cuntt::ButterflyPlan       plan(config);
+    check_dataflow_projection(plan);
+    std::vector<std::uint32_t> output;
+    plan.execute(input, output, 0, 1);
+
+    for (std::size_t transform = 0; transform < kBatch; ++transform) {
+        std::vector<std::uint32_t> expected(input.begin() + transform * n, input.begin() + (transform + 1) * n);
+        if (op == cuntt::ButterflyOperator::SupersetZeta) {
+            cuntt::reference_superset_zeta(expected, inverse);
+        } else if (op == cuntt::ButterflyOperator::SubsetZeta) {
+            cuntt::reference_subset_zeta(expected, inverse);
+        } else {
+            cuntt::reference_xor_zeta(expected, inverse);
+        }
+        if (!std::equal(expected.begin(), expected.end(), output.begin() + transform * n)) {
+            throw std::runtime_error(std::string(cuntt::butterfly_operator_name(op)) + " mismatch backend=" +
+                                     std::string(cuntt::butterfly_backend_name(backend)) +
+                                     " Us=" + std::to_string(stage_space));
+        }
+    }
+    std::cout << "PASS " << cuntt::butterfly_operator_name(op) << " backend=" << cuntt::butterfly_backend_name(backend)
+              << " Us=" << stage_space << '\n';
+}
+
+void test_extended_zeta_operators() {
+    for (const auto op : {cuntt::ButterflyOperator::SubsetZeta, cuntt::ButterflyOperator::SupersetZeta}) {
+        for (const bool inverse : {false, true}) {
+            for (const auto unit : {cuntt::ComputeUnit::Radix2, cuntt::ComputeUnit::Radix4, cuntt::ComputeUnit::Radix8}) {
+                test_xor_zeta(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, 128, unit, 8, inverse, 0, 1, op);
+            }
+            test_xor_zeta(cuntt::ButterflyBackend::StagePipeline, 2, 5, 8, 128,
+                          cuntt::ComputeUnit::Radix2, 8, inverse, 0, 1, op);
+            test_xor_zeta(cuntt::ButterflyBackend::WarpHybrid, 1, 4, 8, 128,
+                          cuntt::ComputeUnit::Radix2, 8, inverse, 0, 1, op);
+            test_xor_zeta(cuntt::ButterflyBackend::Hierarchical, 0, 0, 0, 128,
+                          cuntt::ComputeUnit::Radix4, 11, inverse, 5, 1, op);
+            test_xor_zeta(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 128,
+                          cuntt::ComputeUnit::Radix4, 11, inverse, 5, 2, op);
+        }
+    }
+}
+
+void test_uint64_zeta_operators() {
+    constexpr std::size_t n = 256;
+    constexpr std::size_t batch = 3;
+    std::vector<std::uint64_t> input(batch * n);
+    for (std::size_t i = 0; i < input.size(); ++i)
+        input[i] = UINT64_MAX - i * (std::uint64_t{1} << 40) + i;
+    for (const auto op : {cuntt::ButterflyOperator::SubsetZeta, cuntt::ButterflyOperator::SupersetZeta}) {
+        for (const bool inverse : {false, true}) {
+            std::vector<std::uint64_t> expected(input.size());
+            for (std::size_t b = 0; b < batch; ++b) {
+                for (std::size_t target = 0; target < n; ++target) {
+                    for (std::size_t source = 0; source < n; ++source) {
+                        const bool superset = op == cuntt::ButterflyOperator::SupersetZeta;
+                        if (superset ? ((target & source) != target) : ((target & source) != source)) continue;
+                        const auto distance = __builtin_popcount(static_cast<unsigned>(target ^ source));
+                        if (inverse && (distance & 1)) expected[b * n + target] -= input[b * n + source];
+                        else expected[b * n + target] += input[b * n + source];
+                    }
+                }
+            }
+            for (const auto backend : {cuntt::ButterflyBackend::TemporalTile,
+                                       cuntt::ButterflyBackend::WarpHybrid,
+                                       cuntt::ButterflyBackend::StagePipeline,
+                                       cuntt::ButterflyBackend::Hierarchical,
+                                       cuntt::ButterflyBackend::OnlineReorder}) {
+                cuntt::ButterflyConfig config;
+                config.op = op;
+                config.precision = cuntt::ButterflyPrecision::Uint64;
+                config.backend = backend;
+                config.log_n = 8;
+                config.batch = batch;
+                config.inverse = inverse;
+                config.local_stages = 5;
+                config.warp_stages = 4;
+                config.stage_space = 2;
+                cuntt::ButterflyPlan plan(config);
+                if (plan.data_size() != input.size() * sizeof(std::uint64_t))
+                    throw std::runtime_error("UINT64 zeta byte extent mismatch");
+                std::vector<std::uint64_t> output;
+                plan.execute(input, output, 0, 1);
+                if (output != expected) throw std::runtime_error("UINT64 zeta backend mismatch");
+            }
+        }
+    }
+    std::cout << "PASS UINT64 zeta operators with wraparound\n";
+}
+
+std::vector<cuntt::ButterflyMatrix2x2> structured_matrices(std::uint32_t log_n) {
+    std::vector<cuntt::ButterflyMatrix2x2> matrices;
+    matrices.reserve(log_n);
+    for (std::uint32_t stage = 0; stage < log_n; ++stage) {
+        const double delta = 0.01 * static_cast<double>(stage);
+        matrices.push_back({1.0 + delta, 0.125, -0.0625, 0.875 - 0.5 * delta});
+    }
+    return matrices;
+}
+
+void test_structured_reference_roundtrip() {
+    constexpr std::uint32_t log_n = 6;
+    const auto matrices = structured_matrices(log_n);
+    std::vector<double> values(std::size_t{1} << log_n);
+    std::iota(values.begin(), values.end(), -17.0);
+    const auto original = values;
+    cuntt::reference_structured_2x2(values, matrices, false);
+    cuntt::reference_structured_2x2(values, matrices, true);
+    for (std::size_t index = 0; index < values.size(); ++index) {
+        if (std::abs(values[index] - original[index]) > 1.0e-10)
+            throw std::runtime_error("structured-2x2 CPU reference roundtrip mismatch");
+    }
+    std::cout << "PASS structured-2x2 CPU reference roundtrip\n";
+}
+
+void test_structured_2x2(cuntt::ButterflyBackend backend, cuntt::ButterflyPrecision precision,
+                         cuntt::ComputeUnit unit, std::uint32_t log_n, bool inverse,
+                         std::uint32_t local_stages = 0, std::uint32_t stage_space = 0,
+                         std::uint32_t warp_stages = 0,
+                         cuntt::LocalExchange exchange = cuntt::LocalExchange::SharedMemory,
+                         bool broadcast = false) {
+    const std::size_t n = std::size_t{1} << log_n;
+    const auto matrices = broadcast ? std::vector<cuntt::ButterflyMatrix2x2>{{1.0, 0.25, -0.5, 1.0}}
+                                    : structured_matrices(log_n);
+    cuntt::ButterflyConfig config;
+    config.op              = cuntt::ButterflyOperator::Structured2x2;
+    config.backend         = backend;
+    config.precision       = precision;
+    config.compute_unit    = unit;
+    config.log_n           = log_n;
+    config.batch           = kBatch;
+    config.inverse         = inverse;
+    config.stage_matrices  = matrices;
+    config.local_stages    = local_stages;
+    config.stage_space     = stage_space;
+    config.warp_stages     = warp_stages;
+    config.local_exchange  = exchange;
+    config.reorder_columns = 1;
+
+    cuntt::ButterflyPlan plan(config);
+    check_dataflow_projection(plan);
+    std::mt19937 random(0x2b2bU + log_n + static_cast<unsigned int>(inverse));
+    if (precision == cuntt::ButterflyPrecision::Fp64) {
+        std::uniform_real_distribution<double> distribution(-1.0, 1.0);
+        std::vector<double> input(kBatch * n);
+        std::generate(input.begin(), input.end(), [&] { return distribution(random); });
+        std::vector<double> output;
+        plan.execute(input, output, 0, 1);
+        for (std::size_t transform = 0; transform < kBatch; ++transform) {
+            std::vector<double> expected(input.begin() + transform * n, input.begin() + (transform + 1) * n);
+            cuntt::reference_structured_2x2(expected, matrices, inverse);
+            for (std::size_t index = 0; index < n; ++index) {
+                const double error = std::abs(expected[index] - output[transform * n + index]);
+                if (error > 1.0e-10 * std::max(1.0, std::abs(expected[index])))
+                    throw std::runtime_error("FP64 structured-2x2 mismatch");
+            }
+        }
+    } else {
+        std::uniform_real_distribution<float> distribution(-1.0F, 1.0F);
+        std::vector<float> input(kBatch * n);
+        std::generate(input.begin(), input.end(), [&] { return distribution(random); });
+        std::vector<float> output;
+        plan.execute(input, output, 0, 1);
+        for (std::size_t transform = 0; transform < kBatch; ++transform) {
+            std::vector<float> expected(input.begin() + transform * n, input.begin() + (transform + 1) * n);
+            cuntt::reference_structured_2x2(expected, matrices, inverse);
+            for (std::size_t index = 0; index < n; ++index) {
+                const float error = std::abs(expected[index] - output[transform * n + index]);
+                if (error > 2.0e-4F * std::max(1.0F, std::abs(expected[index])))
+                    throw std::runtime_error("FP32 structured-2x2 mismatch");
+            }
+        }
+    }
+    std::cout << "PASS structured-2x2 backend=" << cuntt::butterfly_backend_name(backend)
+              << " precision=" << cuntt::butterfly_precision_name(precision) << '\n';
+}
+
+void test_structured_operators() {
+    test_structured_reference_roundtrip();
+    for (const bool inverse : {false, true}) {
+        for (std::uint32_t log_n = 3; log_n <= 15; ++log_n) {
+            test_structured_2x2(cuntt::ButterflyBackend::TemporalTile, cuntt::ButterflyPrecision::Fp32,
+                                cuntt::ComputeUnit::Radix2, log_n, inverse, 0, 0, 0,
+                                cuntt::LocalExchange::WarpRegister);
+        }
+        for (const std::uint32_t log_n : {8U, 12U, 15U}) {
+            test_structured_2x2(cuntt::ButterflyBackend::TemporalTile, cuntt::ButterflyPrecision::Fp32,
+                                cuntt::ComputeUnit::Radix2, log_n, inverse, 0, 0, 0,
+                                cuntt::LocalExchange::WarpRegister, true);
+        }
+        for (const auto unit : {cuntt::ComputeUnit::Radix2, cuntt::ComputeUnit::Radix4, cuntt::ComputeUnit::Radix8}) {
+            test_structured_2x2(cuntt::ButterflyBackend::TemporalTile, cuntt::ButterflyPrecision::Fp32,
+                                unit, 8, inverse);
+        }
+        test_structured_2x2(cuntt::ButterflyBackend::StagePipeline, cuntt::ButterflyPrecision::Fp32,
+                            cuntt::ComputeUnit::Radix2, 8, inverse, 0, 4);
+        test_structured_2x2(cuntt::ButterflyBackend::WarpHybrid, cuntt::ButterflyPrecision::Fp32,
+                            cuntt::ComputeUnit::Radix2, 8, inverse, 0, 0, 4);
+        test_structured_2x2(cuntt::ButterflyBackend::Hierarchical, cuntt::ButterflyPrecision::Fp32,
+                            cuntt::ComputeUnit::Radix4, 11, inverse, 5);
+        test_structured_2x2(cuntt::ButterflyBackend::OnlineReorder, cuntt::ButterflyPrecision::Fp32,
+                            cuntt::ComputeUnit::Radix4, 11, inverse, 5);
+        test_structured_2x2(cuntt::ButterflyBackend::TemporalTile, cuntt::ButterflyPrecision::Fp64,
+                            cuntt::ComputeUnit::Radix4, 8, inverse);
+        test_structured_2x2(cuntt::ButterflyBackend::OnlineReorder, cuntt::ButterflyPrecision::Fp64,
+                            cuntt::ComputeUnit::Radix4, 11, inverse, 5);
+    }
+}
+
+void test_zero_extended_register_units() {
+    constexpr std::size_t logical_n = 6;
+    constexpr std::size_t physical_n = 8;
+    constexpr std::size_t batch = 3;
+    const std::vector<float> input{
+        1, 2, 3, 4, 5, 6,
+        -1, 0.5F, 2, -3, 4, -0.25F,
+        0.125F, -0.5F, 1.5F, 2.5F, -4, 8};
+    const std::vector<cuntt::ButterflyMatrix2x2> matrices{{1.0, 0.25, -0.5, 1.0}};
+    TestStream stream;
+    TestDeviceBuffer device_input(input.size() * sizeof(float));
+    TestDeviceBuffer device_output(batch * physical_n * sizeof(float));
+    check_cuda(cudaMemcpyAsync(device_input.get(), input.data(), input.size() * sizeof(float),
+                               cudaMemcpyHostToDevice, stream.get()),
+               "cudaMemcpyAsync zero-extended input");
+
+    for (const auto op : {cuntt::ButterflyOperator::Fwht,
+                          cuntt::ButterflyOperator::Structured2x2}) {
+        cuntt::ButterflyConfig config;
+        config.op = op;
+        config.backend = cuntt::ButterflyBackend::TemporalTile;
+        config.precision = cuntt::ButterflyPrecision::Fp32;
+        config.log_n = 3;
+        config.batch = batch;
+        config.local_exchange = cuntt::LocalExchange::WarpRegister;
+        if (op == cuntt::ButterflyOperator::Structured2x2)
+            config.stage_matrices = matrices;
+        cuntt::ButterflyPlan plan(config);
+        plan.set_stream(stream.get());
+        plan.execute_zero_extended_async(
+            static_cast<const float*>(device_input.get()),
+            static_cast<float*>(device_output.get()), logical_n, logical_n);
+
+        std::vector<float> output(batch * physical_n);
+        check_cuda(cudaMemcpyAsync(output.data(), device_output.get(), output.size() * sizeof(float),
+                                   cudaMemcpyDeviceToHost, stream.get()),
+                   "cudaMemcpyAsync zero-extended output");
+        check_cuda(cudaStreamSynchronize(stream.get()), "cudaStreamSynchronize zero-extended");
+        for (std::size_t transform = 0; transform < batch; ++transform) {
+            std::vector<float> expected(physical_n, 0.0F);
+            std::copy_n(input.begin() + transform * logical_n, logical_n, expected.begin());
+            if (op == cuntt::ButterflyOperator::Fwht)
+                cuntt::reference_fwht(expected);
+            else
+                cuntt::reference_structured_2x2(expected, matrices);
+            for (std::size_t index = 0; index < physical_n; ++index) {
+                if (std::abs(output[transform * physical_n + index] - expected[index]) > 1.0e-4F)
+                    throw std::runtime_error("zero-extended warp-register processing-unit mismatch");
+            }
+        }
+    }
+    std::cout << "PASS zero-extended warp-register processing units\n";
+}
+
+void test_fp64(std::uint32_t log_n, bool inverse) {
+    const std::size_t                      n = std::size_t{1} << log_n;
+    std::mt19937                           random(0x6400U + log_n + static_cast<unsigned int>(inverse));
+    std::uniform_real_distribution<double> distribution(-1.0, 1.0);
+
+    std::vector<double> fwht_input(kBatch * n);
+    std::generate(fwht_input.begin(), fwht_input.end(), [&] { return distribution(random); });
+    cuntt::ButterflyConfig fwht_config;
+    fwht_config.op           = cuntt::ButterflyOperator::Fwht;
+    fwht_config.precision    = cuntt::ButterflyPrecision::Fp64;
+    fwht_config.backend      = log_n <= 10 ? cuntt::ButterflyBackend::TemporalTile : cuntt::ButterflyBackend::Hierarchical;
+    fwht_config.compute_unit = cuntt::ComputeUnit::Radix4;
+    fwht_config.log_n        = log_n;
+    fwht_config.batch        = kBatch;
+    fwht_config.inverse      = inverse;
+    cuntt::ButterflyPlan fwht_plan(fwht_config);
+    std::vector<double>  fwht_output;
+    fwht_plan.execute(fwht_input, fwht_output, 0, 1);
+    for (std::size_t transform = 0; transform < kBatch; ++transform) {
+        std::vector<double> expected(fwht_input.begin() + transform * n, fwht_input.begin() + (transform + 1) * n);
+        cuntt::reference_fwht(expected, inverse);
+        for (std::size_t index = 0; index < n; ++index) {
+            if (std::abs(expected[index] - fwht_output[transform * n + index]) > 1.0e-10)
+                throw std::runtime_error("FP64 FWHT mismatch");
+        }
+    }
+
+    std::vector<cuntt::Complex64> fft_input(kBatch * n);
+    std::generate(fft_input.begin(), fft_input.end(), [&] { return cuntt::Complex64{distribution(random), distribution(random)}; });
+    const std::vector<cuntt::ButterflyBackend> fft_backends =
+        log_n <= 10 ? std::vector<cuntt::ButterflyBackend>{cuntt::ButterflyBackend::TemporalTile, cuntt::ButterflyBackend::CuFft}
+                    : std::vector<cuntt::ButterflyBackend>{cuntt::ButterflyBackend::Hierarchical, cuntt::ButterflyBackend::OnlineReorder,
+                                                           cuntt::ButterflyBackend::CuFft};
+    for (const auto backend : fft_backends) {
+        cuntt::ButterflyConfig fft_config;
+        fft_config.op           = cuntt::ButterflyOperator::Fft;
+        fft_config.precision    = cuntt::ButterflyPrecision::Fp64;
+        fft_config.backend      = backend;
+        fft_config.compute_unit = backend == cuntt::ButterflyBackend::CuFft ? cuntt::ComputeUnit::Auto : cuntt::ComputeUnit::Radix4;
+        fft_config.log_n        = log_n;
+        fft_config.batch        = kBatch;
+        fft_config.inverse      = inverse;
+        cuntt::ButterflyPlan          fft_plan(fft_config);
+        std::vector<cuntt::Complex64> fft_output;
+        fft_plan.execute(fft_input, fft_output, 0, 1);
+        for (std::size_t transform = 0; transform < kBatch; ++transform) {
+            std::vector<cuntt::Complex64> expected(fft_input.begin() + transform * n, fft_input.begin() + (transform + 1) * n);
+            cuntt::reference_fft(expected, inverse);
+            for (std::size_t index = 0; index < n; ++index) {
+                const auto actual = fft_output[transform * n + index];
+                if (std::hypot(expected[index].real - actual.real, expected[index].imag - actual.imag) > 1.0e-10) {
+                    throw std::runtime_error("FP64 FFT mismatch");
+                }
+            }
+        }
+    }
+}
+
+void test_layout(cuntt::ButterflyBackend backend, std::uint32_t log_n, cuntt::ButterflyPlacement placement,
+                 cuntt::FftCore fft_core = cuntt::FftCore::Scalar, std::uint32_t local_stages = 10) {
+    const std::size_t                     n              = std::size_t{1} << log_n;
+    const std::size_t                     element_stride = 2;
+    const std::size_t                     stride         = (n - 1) * element_stride + 1 + 13;
+    const std::size_t                     extent         = (kBatch - 1) * stride + (n - 1) * element_stride + 1;
+    std::mt19937                          random(0x1a700U + log_n + static_cast<unsigned int>(backend));
+    std::uniform_real_distribution<float> distribution(-1.0F, 1.0F);
+    std::vector<cuntt::Complex32>         input(extent);
+    std::generate(input.begin(), input.end(), [&] { return cuntt::Complex32{distribution(random), distribution(random)}; });
+
+    cuntt::ButterflyConfig config;
+    config.op           = cuntt::ButterflyOperator::Fft;
+    config.backend      = backend;
+    config.compute_unit = backend == cuntt::ButterflyBackend::TemporalTile ? cuntt::ComputeUnit::Radix4 : cuntt::ComputeUnit::Radix2;
+    if (backend == cuntt::ButterflyBackend::CuFft)
+        config.compute_unit = cuntt::ComputeUnit::Auto;
+    config.log_n          = log_n;
+    config.batch          = kBatch;
+    config.batch_stride   = stride;
+    config.element_stride = element_stride;
+    config.placement      = placement;
+    config.inverse        = placement == cuntt::ButterflyPlacement::InPlace;
+    config.fft_core       = fft_core;
+    config.local_stages   = local_stages;
+    if (fft_core == cuntt::FftCore::CufftDxResident || fft_core == cuntt::FftCore::CufftDxDirect)
+        config.tile_threads = 512;
+    cuntt::ButterflyPlan          plan(config);
+    std::vector<cuntt::Complex32> output;
+    const bool                    repeated_in_place = placement == cuntt::ButterflyPlacement::InPlace;
+    plan.execute(input, output, repeated_in_place ? 2 : 0, repeated_in_place ? 3 : 1);
+    for (std::size_t transform = 0; transform < kBatch; ++transform) {
+        const std::size_t             base = transform * stride;
+        std::vector<cuntt::Complex32> expected(n);
+        for (std::size_t index = 0; index < n; ++index)
+            expected[index] = input[base + index * element_stride];
+        cuntt::reference_fft(expected, config.inverse);
+        for (std::size_t index = 0; index < n; ++index) {
+            const auto actual = output[base + index * element_stride];
+            if (std::hypot(expected[index].real - actual.real, expected[index].imag - actual.imag) > 2.0e-4F) {
+                throw std::runtime_error("strided/in-place FFT mismatch");
+            }
+        }
+    }
+}
+
+void test_device_api() {
+    constexpr std::uint32_t log_n = 11;
+    constexpr std::size_t batch = 3;
+    const std::size_t points = std::size_t{1} << log_n;
+
+    cuntt::ButterflyConfig config;
+    config.op = cuntt::ButterflyOperator::Fwht;
+    config.precision = cuntt::ButterflyPrecision::Fp32;
+    config.backend = cuntt::ButterflyBackend::OnlineReorder;
+    config.compute_unit = cuntt::ComputeUnit::Radix4;
+    config.log_n = log_n;
+    config.local_stages = 5;
+    config.batch = batch;
+    config.auto_allocate_workspace = false;
+
+    cuntt::ButterflyPlan plan(config);
+    check_dataflow_projection(plan);
+    if (plan.data_size() != batch * points * sizeof(float) || plan.workspace_size() != plan.data_size())
+        throw std::runtime_error("device API size query mismatch");
+    if (plan.workspace() != nullptr)
+        throw std::runtime_error("external-workspace plan unexpectedly allocated scratch");
+
+    std::vector<float> input(batch * points);
+    std::mt19937 random(0xd3a1U);
+    std::uniform_real_distribution<float> distribution(-1.0F, 1.0F);
+    std::generate(input.begin(), input.end(), [&] { return distribution(random); });
+    std::vector<float> output(input.size());
+
+    TestStream stream;
+    TestDeviceBuffer device_input(plan.data_size());
+    TestDeviceBuffer device_output(plan.data_size());
+    TestDeviceBuffer workspace(plan.workspace_size());
+    plan.set_stream(stream.get());
+    if (plan.stream() != stream.get())
+        throw std::runtime_error("plan did not retain the configured CUDA stream");
+
+    bool rejected_missing_workspace = false;
+    try {
+        plan.execute_async(static_cast<const float*>(device_input.get()), static_cast<float*>(device_output.get()));
+    } catch (const std::invalid_argument&) {
+        rejected_missing_workspace = true;
+    }
+    if (!rejected_missing_workspace)
+        throw std::runtime_error("device API accepted a missing external workspace");
+
+    bool rejected_small_workspace = false;
+    try {
+        plan.set_workspace(workspace.get(), plan.workspace_size() - 1);
+    } catch (const std::invalid_argument&) {
+        rejected_small_workspace = true;
+    }
+    if (!rejected_small_workspace)
+        throw std::runtime_error("device API accepted an undersized external workspace");
+
+    plan.set_workspace(workspace.get(), plan.workspace_size());
+    check_cuda(cudaMemcpyAsync(device_input.get(), input.data(), plan.data_size(), cudaMemcpyHostToDevice, stream.get()),
+               "device API H2D");
+    plan.execute_async(static_cast<const float*>(device_input.get()), static_cast<float*>(device_output.get()));
+    check_cuda(cudaMemcpyAsync(output.data(), device_output.get(), plan.data_size(), cudaMemcpyDeviceToHost, stream.get()),
+               "device API D2H");
+    check_cuda(cudaStreamSynchronize(stream.get()), "device API stream synchronize");
+
+    for (std::size_t transform = 0; transform < batch; ++transform) {
+        std::vector<float> expected(input.begin() + transform * points, input.begin() + (transform + 1) * points);
+        cuntt::reference_fwht(expected);
+        for (std::size_t index = 0; index < points; ++index) {
+            if (std::abs(expected[index] - output[transform * points + index]) > 1.0e-4F)
+                throw std::runtime_error("asynchronous external-workspace FWHT mismatch");
+        }
+    }
+
+    config.backend = cuntt::ButterflyBackend::TemporalTile;
+    config.log_n = 8;
+    config.batch = 1;
+    config.local_stages = 0;
+    config.auto_allocate_workspace = true;
+    cuntt::ButterflyPlan in_place_plan(config);
+    TestDeviceBuffer in_place_data(in_place_plan.data_size());
+    TestDeviceBuffer distinct_output(in_place_plan.data_size());
+    check_cuda(cudaMemset(in_place_data.get(), 0, in_place_plan.data_size()), "device API memset");
+    bool rejected_alias = false;
+    try {
+        in_place_plan.execute_async(static_cast<const float*>(in_place_data.get()), static_cast<float*>(in_place_data.get()));
+    } catch (const std::invalid_argument&) {
+        rejected_alias = true;
+    }
+    if (!rejected_alias)
+        throw std::runtime_error("out-of-place device API accepted aliased pointers");
+    in_place_plan.execute_async(static_cast<const float*>(in_place_data.get()), static_cast<float*>(distinct_output.get()));
+    check_cuda(cudaDeviceSynchronize(), "device API no-workspace synchronize");
+
+    config.placement = cuntt::ButterflyPlacement::InPlace;
+    cuntt::ButterflyPlan true_in_place_plan(config);
+    bool rejected_distinct = false;
+    try {
+        true_in_place_plan.execute_async(static_cast<const float*>(in_place_data.get()), static_cast<float*>(distinct_output.get()));
+    } catch (const std::invalid_argument&) {
+        rejected_distinct = true;
+    }
+    if (!rejected_distinct)
+        throw std::runtime_error("in-place device API accepted distinct pointers");
+    true_in_place_plan.execute_async(static_cast<const float*>(in_place_data.get()), static_cast<float*>(in_place_data.get()));
+    check_cuda(cudaDeviceSynchronize(), "in-place device API synchronize");
+
+    std::cout << "PASS asynchronous device-pointer API\n";
+}
+
+void test_runtime_selector() {
+    const auto device = cuntt::current_device_info();
+    if (device.compute_major != 7 || device.compute_minor != 0) {
+        std::cout << "SKIP V100-specific selector anchors on " << device.name << '\n';
+        return;
+    }
+    cuntt::ButterflyConfig config;
+    config.op          = cuntt::ButterflyOperator::Fwht;
+    config.precision   = cuntt::ButterflyPrecision::Fp32;
+    config.placement   = cuntt::ButterflyPlacement::OutOfPlace;
+    config.log_n       = 8;
+    config.batch       = 4;
+    config.auto_select = true;
+    cuntt::ButterflyPlan plan(config);
+    if (!plan.config().auto_select || plan.config().backend != cuntt::ButterflyBackend::TemporalTile ||
+        plan.config().local_exchange != cuntt::LocalExchange::WarpRegister) {
+        throw std::runtime_error("FWHT runtime selector did not retain the platform prior");
+    }
+    std::vector<float> input(config.batch * (1ULL << config.log_n), 1.0F);
+    std::vector<float> output;
+    plan.execute(input, output, 0, 1);
+    for (std::size_t transform = 0; transform < config.batch; ++transform) {
+        if (output[transform * (1ULL << config.log_n)] != static_cast<float>(1ULL << config.log_n)) {
+            throw std::runtime_error("auto-selected FWHT produced an incorrect result");
+        }
+    }
+
+    config.log_n = 15;
+    config.batch = 1;
+    cuntt::ButterflyPlan low_batch(config);
+    if (low_batch.config().backend != cuntt::ButterflyBackend::OnlineReorder) {
+        throw std::runtime_error("FWHT selector missed the low-batch online mapping");
+    }
+    config.batch = 16;
+    cuntt::ButterflyPlan saturated(config);
+    if (saturated.config().backend != cuntt::ButterflyBackend::TemporalTile ||
+        saturated.config().local_exchange != cuntt::LocalExchange::WarpRegister) {
+        throw std::runtime_error("FWHT selector missed the saturated warp-register mapping");
+    }
+
+#if CUBUTTERFLY_TEST_CUFFTDX
+    config.op        = cuntt::ButterflyOperator::Fft;
+    config.placement = cuntt::ButterflyPlacement::InPlace;
+    config.log_n     = 14;
+    config.batch     = 4;
+    cuntt::ButterflyPlan fft_plan(config);
+    if (fft_plan.config().fft_core != cuntt::FftCore::CufftDxDirect) {
+        throw std::runtime_error("FFT runtime selector did not resolve the direct processing unit");
+    }
+#endif
+
+    config.op        = cuntt::ButterflyOperator::Fwht;
+    config.placement = cuntt::ButterflyPlacement::OutOfPlace;
+    config.log_n     = 9;
+    cuntt::ButterflyPlan fallback(config);
+    if(!fallback.config().auto_select || fallback.selection().calibrated)
+        throw std::runtime_error("unmeasured fallback incorrectly reported calibration");
+    std::cout << "PASS butterfly platform prior and generic fallback\n";
+}
+
+}  // namespace
+
+int main() {
+    try {
+        const auto hardware = cuntt::query_hardware_resource_model();
+        const auto device = cuntt::current_device_info();
+        if (hardware.device_name != device.name || hardware.memory_bytes != device.global_memory_bytes ||
+            hardware.sm_count != static_cast<std::uint32_t>(device.multiprocessors) ||
+            hardware.compute_major != device.compute_major || hardware.compute_minor != device.compute_minor ||
+            hardware.max_threads_per_block == 0 || hardware.shared_bytes_per_block == 0)
+            throw std::runtime_error("mixed-dataflow hardware query disagrees with active device");
+        test_device_api();
+        test_runtime_selector();
+        for (const auto accumulation : {cuntt::ButterflyAccumulation::Native,
+                                        cuntt::ButterflyAccumulation::Fp32}) {
+            test_low_precision_contract<cuntt::Fp16, cuntt::Complex16>(cuntt::ButterflyPrecision::Fp16,
+                                                                       accumulation);
+            test_low_precision_contract<cuntt::Bf16, cuntt::ComplexBf16>(cuntt::ButterflyPrecision::Bf16,
+                                                                         accumulation);
+        }
+        test_extended_zeta_operators();
+        test_uint64_zeta_operators();
+        test_structured_operators();
+        test_zero_extended_register_units();
+        for (const std::uint32_t tile_threads : {32U, 64U, 128U, 256U}) {
+            test_fwht(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, tile_threads);
+            test_fft(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, tile_threads);
+            test_xor_zeta(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, tile_threads);
+            test_fwht(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, tile_threads, cuntt::ComputeUnit::Radix4);
+            test_fft(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, tile_threads, cuntt::ComputeUnit::Radix4);
+            test_xor_zeta(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, tile_threads, cuntt::ComputeUnit::Radix4);
+        }
+        for (const std::uint32_t stage_space : {1U, 2U, 4U, 8U}) {
+            test_fwht(cuntt::ButterflyBackend::StagePipeline, stage_space);
+            test_fft(cuntt::ButterflyBackend::StagePipeline, stage_space);
+            test_xor_zeta(cuntt::ButterflyBackend::StagePipeline, stage_space);
+        }
+        for (const std::uint32_t stage_space : {1U, 2U, 4U}) {
+            test_fwht(cuntt::ButterflyBackend::StagePipeline, stage_space, 5, 4);
+            test_fft(cuntt::ButterflyBackend::StagePipeline, stage_space, 5, 4);
+            test_xor_zeta(cuntt::ButterflyBackend::StagePipeline, stage_space, 5, 4);
+        }
+        for (std::uint32_t warp_stages = 0; warp_stages <= 5; ++warp_stages) {
+            test_fwht(cuntt::ButterflyBackend::WarpHybrid, 1, warp_stages);
+            test_fft(cuntt::ButterflyBackend::WarpHybrid, 1, warp_stages);
+            test_xor_zeta(cuntt::ButterflyBackend::WarpHybrid, 1, warp_stages);
+        }
+        test_fft(cuntt::ButterflyBackend::CuFft, 1);
+        for (const bool inverse : {false, true}) {
+            test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, 128, cuntt::ComputeUnit::Radix8, 3, inverse, true, 0, 0,
+                     cuntt::ComplexMultiply::FourMul, cuntt::FftCore::ThreadDft8, cuntt::ButterflyPrecision::Fp32);
+            test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, 256, cuntt::ComputeUnit::Radix8, 3, inverse, true, 0, 0,
+                     cuntt::ComplexMultiply::FourMul, cuntt::FftCore::WmmaDft8, cuntt::ButterflyPrecision::Fp16Fp32);
+        }
+        for (std::uint32_t log_n = 3; log_n <= 10; ++log_n) {
+            for (const std::uint32_t tile_threads : {32U, 64U, 128U, 256U}) {
+                if (tile_threads * 8 < (1U << log_n))
+                    continue;
+                for (const bool inverse : {false, true}) {
+                    test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, tile_threads, cuntt::ComputeUnit::Radix8, log_n, inverse, true, 0, 0,
+                             cuntt::ComplexMultiply::FourMul, cuntt::FftCore::CtaDft8, cuntt::ButterflyPrecision::Fp32);
+                }
+            }
+        }
+#ifdef CUBUTTERFLY_TEST_CUFFTDX
+        for (std::uint32_t log_n = 3; log_n <= 10; ++log_n) {
+            for (const bool inverse : {false, true}) {
+                test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, 32, cuntt::ComputeUnit::Auto, log_n, inverse, true, 0, 0,
+                         cuntt::ComplexMultiply::FourMul, cuntt::FftCore::CufftDxBlock, cuntt::ButterflyPrecision::Fp32);
+            }
+        }
+        for (const auto placement : {cuntt::ButterflyPlacement::OutOfPlace, cuntt::ButterflyPlacement::InPlace}) {
+            test_layout(cuntt::ButterflyBackend::TemporalTile, 10, placement, cuntt::FftCore::CufftDxBlock);
+            test_layout(cuntt::ButterflyBackend::TemporalTile, 12, placement, cuntt::FftCore::CufftDxDirect);
+            test_layout(cuntt::ButterflyBackend::OnlineReorder, 12, placement, cuntt::FftCore::CufftDxBlock, 6);
+            test_layout(cuntt::ButterflyBackend::OnlineReorder, 12, placement, cuntt::FftCore::CufftDxResident, 6);
+            test_layout(cuntt::ButterflyBackend::OnlineReorder, 14, placement, cuntt::FftCore::CufftDxResident, 7);
+        }
+        for (const auto& point : {std::pair{12U, 6U}, std::pair{14U, 7U}}) {
+            for (const auto cross_twiddle : {cuntt::CrossTwiddleMode::Table, cuntt::CrossTwiddleMode::Recurrence}) {
+                for (const bool inverse : {false, true}) {
+                    test_fft(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 512, cuntt::ComputeUnit::Auto,
+                             point.first, inverse, true, point.second, 1, cuntt::ComplexMultiply::FourMul,
+                             cuntt::FftCore::CufftDxResident, cuntt::ButterflyPrecision::Fp32, cross_twiddle);
+                }
+            }
+        }
+        for (std::uint32_t log_n = 11; log_n <= 14; ++log_n) {
+            for (const std::uint32_t tile_threads : {256U, 512U, 1024U}) {
+                if (log_n == 14 && tile_threads == 256)
+                    continue;
+                test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, tile_threads, cuntt::ComputeUnit::Auto,
+                         log_n, false, true, 0, 0, cuntt::ComplexMultiply::FourMul,
+                         cuntt::FftCore::CufftDxDirect, cuntt::ButterflyPrecision::Fp32);
+            }
+            test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, 512, cuntt::ComputeUnit::Auto,
+                     log_n, true, true, 0, 0, cuntt::ComplexMultiply::FourMul,
+                     cuntt::FftCore::CufftDxDirect, cuntt::ButterflyPrecision::Fp32);
+        }
+        for (const auto& point : {std::pair{12U, 6U}, std::pair{16U, 6U}, std::pair{16U, 10U}}) {
+            for (const auto cross_twiddle : {cuntt::CrossTwiddleMode::Table, cuntt::CrossTwiddleMode::Recurrence}) {
+                for (const bool inverse : {false, true}) {
+                    test_fft(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 32, cuntt::ComputeUnit::Auto,
+                             point.first, inverse, true, point.second, 1, cuntt::ComplexMultiply::FourMul,
+                             cuntt::FftCore::CufftDxBlock, cuntt::ButterflyPrecision::Fp32, cross_twiddle);
+                }
+            }
+        }
+        for (const auto& threads : {std::pair{128U, 1024U}, std::pair{1024U, 128U}}) {
+            test_fft(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 32, cuntt::ComputeUnit::Auto,
+                     16, false, true, 8, 1, cuntt::ComplexMultiply::FourMul,
+                     cuntt::FftCore::CufftDxBlock, cuntt::ButterflyPrecision::Fp32,
+                     cuntt::CrossTwiddleMode::Recurrence, threads.first, threads.second);
+        }
+        for (const auto& ept : {std::pair{4U, 16U}, std::pair{16U, 4U}}) {
+            test_fft(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 256, cuntt::ComputeUnit::Auto,
+                     18, false, true, 9, 1, cuntt::ComplexMultiply::FourMul,
+                     cuntt::FftCore::CufftDxBlock, cuntt::ButterflyPrecision::Fp32,
+                     cuntt::CrossTwiddleMode::Recurrence, 256, 256, ept.first, ept.second);
+        }
+#endif
+#ifdef CUBUTTERFLY_TEST_TURBOFFT
+        for (std::uint32_t log_n = 7; log_n <= 10; ++log_n) {
+            test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, 32, cuntt::ComputeUnit::Auto, log_n, false, false, 0, 0,
+                     cuntt::ComplexMultiply::FourMul, cuntt::FftCore::TurboFftGenerated, cuntt::ButterflyPrecision::Fp32);
+        }
+#endif
+        for (std::uint32_t log_n = 1; log_n <= 10; ++log_n) {
+            for (const auto unit : {cuntt::ComputeUnit::Radix2, cuntt::ComputeUnit::Radix4, cuntt::ComputeUnit::Radix8}) {
+                for (const bool inverse : {false, true}) {
+                    test_fwht(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, 128, unit, log_n, inverse);
+                    test_fft(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, 128, unit, log_n, inverse);
+                    test_xor_zeta(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, 128, unit, log_n, inverse);
+                }
+            }
+            test_fft(cuntt::ButterflyBackend::CuFft, 1, 5, 8, 128, cuntt::ComputeUnit::Auto, log_n, true);
+        }
+        for (std::uint32_t log_n = 3; log_n <= 15; ++log_n) {
+            for (const bool inverse : {false, true}) {
+                test_fwht(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, 0, cuntt::ComputeUnit::Radix2, log_n, inverse, true, 0, 0,
+                          cuntt::LocalExchange::WarpRegister);
+            }
+        }
+        for (const std::uint32_t log_n : {1U, 5U, 8U, 10U}) {
+            test_fp64(log_n, false);
+            test_fp64(log_n, true);
+        }
+        test_fp64(11, false);
+        test_fp64(11, true);
+        test_fwht(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, 128, cuntt::ComputeUnit::Radix4, 5, true, false);
+        test_fft(cuntt::ButterflyBackend::TemporalTile, 1, 5, 8, 128, cuntt::ComputeUnit::Radix4, 5, true, false);
+        test_fft(cuntt::ButterflyBackend::CuFft, 1, 5, 8, 128, cuntt::ComputeUnit::Auto, 5, true, false);
+        for (const auto unit : {cuntt::ComputeUnit::Radix2, cuntt::ComputeUnit::Radix4, cuntt::ComputeUnit::Radix8}) {
+            for (const bool inverse : {false, true}) {
+                test_fwht(cuntt::ButterflyBackend::Hierarchical, 0, 0, 0, 128, unit, 11, inverse);
+                test_fft(cuntt::ButterflyBackend::Hierarchical, 0, 0, 0, 128, unit, 11, inverse);
+                test_xor_zeta(cuntt::ButterflyBackend::Hierarchical, 0, 0, 0, 128, unit, 11, inverse);
+                test_fwht(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 128, unit, 11, inverse, true, 5);
+                test_fft(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 128, unit, 11, inverse, true, 5);
+                test_xor_zeta(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 128, unit, 11, inverse, 5);
+            }
+        }
+        test_fwht(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 256, cuntt::ComputeUnit::Radix4, 16, false, true, 8, 4);
+        test_fft(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 256, cuntt::ComputeUnit::Radix4, 16, false, true, 8, 4);
+        test_xor_zeta(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 256, cuntt::ComputeUnit::Radix4, 16, false, 8, 4);
+        test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, 128, cuntt::ComputeUnit::Radix8, 10, false, true, 10, 1,
+                 cuntt::ComplexMultiply::Gauss3);
+        test_fft(cuntt::ButterflyBackend::Hierarchical, 0, 0, 0, 128, cuntt::ComputeUnit::Radix8, 11, false, true, 8, 1,
+                 cuntt::ComplexMultiply::Gauss3);
+        test_fft(cuntt::ButterflyBackend::OnlineReorder, 0, 0, 0, 128, cuntt::ComputeUnit::Radix8, 11, false, true, 5, 1,
+                 cuntt::ComplexMultiply::Gauss3);
+        test_fft(cuntt::ButterflyBackend::WarpHybrid, 0, 5, 0, 128, cuntt::ComputeUnit::Radix2, 8, false, true, 10, 1,
+                 cuntt::ComplexMultiply::Gauss3);
+        test_fft(cuntt::ButterflyBackend::StagePipeline, 2, 0, 8, 128, cuntt::ComputeUnit::Radix2, 8, false, true, 10, 1,
+                 cuntt::ComplexMultiply::Gauss3);
+        test_fft(cuntt::ButterflyBackend::CuFft, 0, 0, 0, 128, cuntt::ComputeUnit::Auto, 12, true);
+        // FP32 shared-memory tiles cover logN=12 without a materialized
+        // prefix/suffix boundary on GPUs with sufficient dynamic shared memory.
+        test_fft(cuntt::ButterflyBackend::TemporalTile, 0, 0, 0, 256,
+                 cuntt::ComputeUnit::Radix4, 12, false, true, 0, 0,
+                 cuntt::ComplexMultiply::FourMul, cuntt::FftCore::Scalar,
+                 cuntt::ButterflyPrecision::Fp32);
+        for (const auto placement : {cuntt::ButterflyPlacement::OutOfPlace, cuntt::ButterflyPlacement::InPlace}) {
+            test_layout(cuntt::ButterflyBackend::TemporalTile, 10, placement);
+            test_layout(cuntt::ButterflyBackend::WarpHybrid, 8, placement);
+            test_layout(cuntt::ButterflyBackend::StagePipeline, 8, placement);
+            test_layout(cuntt::ButterflyBackend::CuFft, 10, placement);
+            test_layout(cuntt::ButterflyBackend::Hierarchical, 11, placement);
+            test_layout(cuntt::ButterflyBackend::OnlineReorder, 11, placement);
+        }
+    } catch (const std::exception& error) {
+        std::cerr << "FAIL: " << error.what() << '\n';
+        return 1;
+    }
+    std::cout << "All cuButterfly tests passed\n";
+    return 0;
+}

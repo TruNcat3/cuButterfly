@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "release": "0.9.0",
+  "name": "cuButterfly layered architecture",
+  "layers": {
+    "templates": {
+      "role": "CUDA kernels and generated processing-unit templates",
+      "paths": ["src", "include", "scripts/generate_design_points.py", "scripts/generate_fft_codegen.py"]
+    },
+    "platform_profiles": {
+      "role": "GPU capabilities, compiler target, and measured hardware facts",
+      "paths": ["config/fft_architecture_space.json", "scripts/initialize_hardware_profile.py", "scripts/calibrate_local_hardware.py"]
+    },
+    "parameters": {
+      "role": "legal architecture axes, decomposition, layout, precision, and launch parameters",
+      "paths": ["config/butterfly_architecture_space.json", "config/fft_architecture_space.json", "config/v100_design_points.json"]
+    },
+    "search_and_calibration": {
+      "role": "candidate enumeration, exclusive benchmark, fitting, and promotion",
+      "paths": ["scripts/sweep_cubutterfly_designs.py", "scripts/run_comprehensive_suite.py", "scripts/fit_local_cost_model.py"]
+    },
+    "runtime_selection": {
+      "role": "exact local points and generated fallback selectors",
+      "paths": ["src/mapping_selector.cpp", "scripts/generate_runtime_selector.py", "results/local_hardware_profile_a100_gpu1_special"]
+    }
+  },
+  "compatibility_profiles": {
+    "v100-sm70": {
+      "status": "frozen-evidence",
+      "path_prefix": "config/v100_",
+      "performance_claim": "V100 only"
+    },
+    "target-local": {
+      "status": "install-time-calibrated",
+      "path_prefix": "results/local_hardware_profile_",
+      "performance_claim": "only for the fingerprinted GPU and measured semantic cell"
+    }
+  },
+  "invariants": [
+    "templates do not select a GPU profile",
+    "profiles do not contain kernel implementation code",
+    "search results are not runtime selectors until correctness and identity checks pass",
+    "historical v100 evidence is never silently reused as a target-local measurement"
+  ]
+}

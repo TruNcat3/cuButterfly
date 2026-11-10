@@ -1,0 +1,24 @@
+{
+  "schema": "cubutterfly-explicit-graph-suite-v1",
+  "purpose": "Bounded neighbors of the measured t1 winner, including asymmetric factors and an explicit t2 point outside the default finite inventory",
+  "operator": "fft", "precision": "fp64", "logN": 20, "batch": 16,
+  "inverse": false, "seed": 1237, "warmup": 5, "repeat": 30, "trials": 7,
+  "base_mapping": {
+    "schema_version": 1, "kind": "butterfly", "backend": "factor-streamed",
+    "fft_core": "cufftdx-block", "compute_unit": "auto",
+    "shared_layout": "writer-aligned", "cross_twiddle": "recurrence",
+    "stage_partition": [20], "factor_partition": [10, 10],
+    "factor_ept": 8, "factor_columns": 4, "data_tiles_per_cta": 1,
+    "prefetch_depth": 0, "factor_io_policies": ["dynamic", "dynamic"]
+  },
+  "cases": [
+    {"id": "c4-e8-t4-d0", "mapping": {"data_tiles_per_cta": 4}},
+    {"id": "c4-e8-t1-d0", "mapping": {}},
+    {"id": "c4-e8-t2-d0", "mapping": {"data_tiles_per_cta": 2}},
+    {"id": "c8-e8-t1-d0", "mapping": {"factor_columns": 8}},
+    {"id": "c4-e16-t1-d0", "mapping": {"factor_ept": 16}},
+    {"id": "f9-11-c4-e8-t1-d0", "mapping": {"factor_partition": [9, 11]}},
+    {"id": "f11-9-c4-e8-t1-d0", "mapping": {"factor_partition": [11, 9]}},
+    {"id": "cufft", "mapping": {"backend": "cufft"}, "inherit_base": false}
+  ]
+}

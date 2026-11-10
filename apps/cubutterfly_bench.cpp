@@ -1,0 +1,840 @@
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <random>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+#include "cuntt/butterfly.hpp"
+#include "benchmark_verification.hpp"
+#include "cubutterfly/mapping.hpp"
+#include "../src/fft_register_dispatch.hpp"
+#include "../src/low_fft_reference.hpp"
+
+namespace {
+
+std::string take_arg(int& index, int argc, char** argv) {
+    if (index + 1 >= argc) {
+        throw std::invalid_argument(std::string("missing value for ") + argv[index]);
+    }
+    return argv[++index];
+}
+
+std::vector<std::uint32_t> parse_stage_partition(const std::string& text) {
+    std::vector<std::uint32_t> partition;
+    std::size_t begin = 0;
+    while (begin <= text.size()) {
+        const std::size_t end = text.find(',', begin);
+        const std::string token = text.substr(begin, end == std::string::npos ? end : end - begin);
+        if (token.empty())
+            throw std::invalid_argument("stage partition contains an empty segment");
+        std::size_t consumed = 0;
+        const auto stages = std::stoul(token, &consumed);
+        if (consumed != token.size() || stages == 0 ||
+            stages > std::numeric_limits<std::uint32_t>::max())
+            throw std::invalid_argument("stage partition values must be positive integers");
+        partition.push_back(static_cast<std::uint32_t>(stages));
+        if (end == std::string::npos)
+            break;
+        begin = end + 1;
+    }
+    return partition;
+}
+
+std::vector<std::string> parse_csv_tokens(const std::string& text) {
+    std::vector<std::string> tokens;
+    std::size_t begin = 0;
+    while (begin <= text.size()) {
+        const std::size_t end = text.find(',', begin);
+        const std::string token = text.substr(begin, end == std::string::npos ? end : end - begin);
+        if (token.empty())
+            throw std::invalid_argument("comma-separated list contains an empty value");
+        tokens.push_back(token);
+        if (end == std::string::npos)
+            break;
+        begin = end + 1;
+    }
+    return tokens;
+}
+
+std::vector<std::uint32_t> parse_positive_list(const std::string& text, const char* name) {
+    std::vector<std::uint32_t> values;
+    for (const auto& token : parse_csv_tokens(text)) {
+        std::size_t consumed = 0;
+        const auto value = std::stoul(token, &consumed);
+        if (consumed != token.size() || value == 0 || value > std::numeric_limits<std::uint32_t>::max())
+            throw std::invalid_argument(std::string(name) + " values must be positive integers");
+        values.push_back(static_cast<std::uint32_t>(value));
+    }
+    return values;
+}
+
+cuntt::ButterflyMatrix2x2 parse_stage_matrix(const std::string& text) {
+    const auto tokens = parse_csv_tokens(text);
+    if (tokens.size() != 4)
+        throw std::invalid_argument("stage matrix must contain m00,m01,m10,m11");
+    double values[4]{};
+    for (std::size_t index = 0; index < 4; ++index) {
+        std::size_t consumed = 0;
+        values[index] = std::stod(tokens[index], &consumed);
+        if (consumed != tokens[index].size())
+            throw std::invalid_argument("stage matrix entries must be floating-point values");
+    }
+    return {values[0], values[1], values[2], values[3]};
+}
+
+std::string format_stage_matrices(const std::vector<cuntt::ButterflyMatrix2x2>& matrices) {
+    std::ostringstream text;
+    text << std::setprecision(17);
+    for (std::size_t index = 0; index < matrices.size(); ++index) {
+        if (index != 0)
+            text << 'x';
+        const auto& matrix = matrices[index];
+        text << matrix.m00 << ':' << matrix.m01 << ':' << matrix.m10 << ':' << matrix.m11;
+    }
+    return text.str();
+}
+
+std::string format_stage_partition(const std::vector<std::uint32_t>& partition) {
+    std::string text;
+    for (const auto stages : partition) {
+        if (!text.empty())
+            text += 'x';
+        text += std::to_string(stages);
+    }
+    return text;
+}
+
+template <typename Mapping, typename Getter>
+std::string format_mapping_list(const std::vector<Mapping>& mappings, Getter getter) {
+    std::string text;
+    for (const auto& mapping : mappings) {
+        if (!text.empty())
+            text += 'x';
+        text += getter(mapping);
+    }
+    return text;
+}
+
+void print_usage() {
+    std::cout
+        << "cubutterfly_bench [--operator fwht|fft|subset-zeta|superset-zeta|structured-2x2|xor-zeta] [--backend temporal-tile|hierarchical|online-reorder|shared-iterative|warp-hybrid|stage-pipeline|cufft]\n"
+        << "                    [--logN 8] [--batch 16384] [--inverse]\n"
+        << "                    [--stage-partition 9,9]\n"
+        << "                    [--stage-matrix m00,m01,m10,m11; repeat once per stage or broadcast one]\n"
+        << "                    [--segment-threads 256,256,256] [--segment-ept 8,8,8]\n"
+        << "                    [--boundary-twiddle table,recurrence] [--boundary-layout direct-strided,direct-strided]\n"
+        << "                    [--boundary-residency fused,global-scratch]\n"
+        << "                    [--group-threads 512,512] [--group-ept 8,8]\n"
+        << "                    [--normalization none|inverse]\n"
+        << "                    [--auto-select]\n"
+        << "                    [--stage-overlap] [--batch-tile-count N; shared bulk 1..4, overlap chunk size]\n"
+        << "                    [--placement in-place|out-of-place]\n"
+        << "                    [--batch-stride N]\n"
+        << "                    [--element-stride N]\n"
+        << "                    [--stage-space 1|2|4|8]\n"
+        << "                    [--stage-handoff atomic|named-barrier]\n"
+        << "                    [--tile-threads N; shared accepts device-supported warp multiples, other cores have their own limits]\n"
+        << "                    [--local-stages 5..10; cuFFTDx online 5..12] [--reorder-columns power-of-two]\n"
+        << "                    [--register-threads 0|shape-specific warp-register template threads]\n"
+        << "                    [--prefix-threads 128|256|512|1024] [--suffix-threads 128|256|512|1024]\n"
+        << "                    [--prefix-ept N] [--suffix-ept N]\n"
+        << "                    [--warp-stages 0..5]\n"
+        << "                    [--pipeline-warps 4|8]\n"
+        << "                    [--compute-unit auto|radix2|radix4|radix8]\n"
+        << "                    [--complex-multiply four-mul|gauss3]\n"
+        << "                    [--cross-twiddle table|recurrence]\n"
+        << "                    [--direct-boundary direct-strided|tiled-transpose|prefix-tiled-transpose]\n"
+        << "                    [--local-exchange shared|warp-register]\n"
+        << "                    [--shared-layout linear|writer-aligned|xor-swizzle]\n"
+        << "                    [--fft-core scalar|thread-dft8|cta-dft8|wmma-dft8|cufftdx-block|cufftdx-direct|cufftdx-resident|turbofft-generated|register-tile]\n"
+        << "                    [--precision fp16|bf16|fp32|fp64|fp16-fp32|uint32|uint64]\n"
+        << "                    [--accumulation native|fp32]\n"
+        << "                    [--warmup 20] [--repeat 100] [--verify] [--verify-batches 0] [--csv] [--low-fft-error-report-only]\n"
+        << "                    [--mapping-json JSON] [--list-design-points] [--candidate-capability-audit]\n"
+        << "                    [--list-capabilities] [--list-processing-units] [--list-register-tile-mappings] [--device-identity]\n";
+}
+
+void print_capabilities() {
+    std::cout << "backend,min_logN,max_logN,radix2,radix4,radix8,warp_register,fft_thread_dft8,fft_cta_dft8,fft_wmma_dft8,fft_four_mul,fft_gauss3,fp32,fp64,fp16_fp32,uint32,in_place,strided_layout,constraint\n";
+    for (const auto& capability : cuntt::butterfly_capabilities()) {
+        std::cout << cuntt::butterfly_backend_name(capability.backend) << ',' << capability.min_log_n << ',' << capability.max_log_n << ','
+                  << capability.radix2 << ',' << capability.radix4 << ',' << capability.radix8 << ',' << capability.warp_register << ','
+                  << capability.fft_thread_dft8 << ',' << capability.fft_cta_dft8 << ',' << capability.fft_wmma_dft8 << ','
+                  << capability.fft_four_mul << ','
+                  << capability.fft_gauss3 << ',' << capability.fp32 << ',' << capability.fp64 << ',' << capability.fp16_fp32 << ','
+                  << capability.uint32 << ','
+                  << capability.in_place << ',' << capability.strided_layout << ",\"" << capability.constraint << "\"\n";
+    }
+}
+
+float complex_error(cuntt::Complex32 expected, cuntt::Complex32 actual) {
+    return std::hypot(expected.real - actual.real, expected.imag - actual.imag);
+}
+
+double complex_error(cuntt::Complex64 expected, cuntt::Complex64 actual) {
+    return std::hypot(expected.real - actual.real, expected.imag - actual.imag);
+}
+
+float fft_tolerance_fp32(std::size_t n) {
+    return 2.0e-4F * std::sqrt(std::max(1.0F, static_cast<float>(n) / 1024.0F));
+}
+
+double fft_tolerance_fp64(std::size_t n) {
+    return 1.0e-10 * std::sqrt(std::max(1.0, static_cast<double>(n) / 1024.0));
+}
+
+}  // namespace
+
+int main(int argc, char** argv) {
+    cuntt::ButterflyConfig config;
+    std::uint32_t          warmup = 20;
+    std::uint32_t          repeat = 100;
+    bool                   verify = false;
+    bool low_fft_error_report_only = false;
+    std::size_t verify_batch_limit = 0;
+    bool                   csv    = false;
+    bool list_design_points = false;
+    bool candidate_capability_audit = false;
+    std::string mapping_json;
+
+    try {
+        for (int index = 1; index < argc; ++index) {
+            const std::string arg = argv[index];
+            if (arg == "--help" || arg == "-h") {
+                print_usage();
+                return 0;
+            }
+            if (arg == "--list-capabilities") {
+                print_capabilities();
+                return 0;
+            }
+            if (arg == "--list-processing-units") {
+                std::cout << "precision,logN,threads,ept\n";
+                for (const auto& unit : cuntt::fft_online_processing_units())
+                    std::cout << cuntt::butterfly_precision_name(unit.precision) << ','
+                              << unit.log_n << ',' << unit.threads << ',' << unit.ept << '\n';
+                return 0;
+            }
+            if (arg == "--list-register-tile-mappings") {
+                std::cout << "logN,local_stages,prefix_threads,prefix_ept,suffix_threads,suffix_ept,"
+                             "prefix_codelet,prefix_shared_layout,prefix_codelet_lanes\n";
+                for(const auto& mapping : cuntt::detail::register_tile_mappings())
+                    std::cout << mapping.log_n << ',' << mapping.local_stages << ',' << mapping.prefix_threads << ','
+                              << mapping.prefix_ept << ',' << mapping.suffix_threads << ',' << mapping.suffix_ept << ','
+                              << mapping.prefix_codelet << ',' << mapping.prefix_shared_layout << ','
+                              << mapping.prefix_codelet_lanes << '\n';
+                return 0;
+            }
+            if (arg == "--device-identity") {
+                const auto device = cuntt::current_device_info();
+                std::cout << "device,compute_capability,global_memory_bytes\n\"" << device.name << "\","
+                          << device.compute_major << '.' << device.compute_minor << ','
+                          << device.global_memory_bytes << '\n';
+                return 0;
+            }
+            if (arg == "--list-design-points") {
+                list_design_points = true;
+            } else if (arg == "--candidate-capability-audit") {
+                candidate_capability_audit = true;
+            } else if (arg == "--mapping-json") {
+                mapping_json = take_arg(index, argc, argv);
+            } else if (arg == "--operator") {
+                config.op = cuntt::parse_butterfly_operator(take_arg(index, argc, argv));
+            } else if (arg == "--backend") {
+                config.backend = cuntt::parse_butterfly_backend(take_arg(index, argc, argv));
+            } else if (arg == "--logN") {
+                config.log_n = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--batch") {
+                config.batch = std::stoull(take_arg(index, argc, argv));
+            } else if (arg == "--stage-partition") {
+                config.stage_partition = parse_stage_partition(take_arg(index, argc, argv));
+            } else if (arg == "--stage-matrix") {
+                config.stage_matrices.push_back(parse_stage_matrix(take_arg(index, argc, argv)));
+            } else if (arg == "--segment-threads") {
+                const auto values = parse_positive_list(take_arg(index, argc, argv), "segment threads");
+                if (!config.segment_mappings.empty() && config.segment_mappings.size() != values.size())
+                    throw std::invalid_argument("segment threads and EPT lists must have equal length");
+                config.segment_mappings.resize(values.size());
+                for (std::size_t segment = 0; segment < values.size(); ++segment)
+                    config.segment_mappings[segment].threads = values[segment];
+            } else if (arg == "--segment-ept") {
+                const auto values = parse_positive_list(take_arg(index, argc, argv), "segment EPT");
+                if (!config.segment_mappings.empty() && config.segment_mappings.size() != values.size())
+                    throw std::invalid_argument("segment threads and EPT lists must have equal length");
+                config.segment_mappings.resize(values.size());
+                for (std::size_t segment = 0; segment < values.size(); ++segment)
+                    config.segment_mappings[segment].ept = values[segment];
+            } else if (arg == "--boundary-twiddle") {
+                const auto values = parse_csv_tokens(take_arg(index, argc, argv));
+                if (!config.boundaries.empty() && config.boundaries.size() != values.size())
+                    throw std::invalid_argument("boundary twiddle and layout lists must have equal length");
+                config.boundaries.resize(values.size());
+                for (std::size_t boundary = 0; boundary < values.size(); ++boundary)
+                    config.boundaries[boundary].cross_twiddle = cuntt::parse_cross_twiddle_mode(values[boundary]);
+            } else if (arg == "--boundary-layout") {
+                const auto values = parse_csv_tokens(take_arg(index, argc, argv));
+                if (!config.boundaries.empty() && config.boundaries.size() != values.size())
+                    throw std::invalid_argument("boundary twiddle and layout lists must have equal length");
+                config.boundaries.resize(values.size());
+                for (std::size_t boundary = 0; boundary < values.size(); ++boundary)
+                    config.boundaries[boundary].layout = cuntt::parse_direct_boundary(values[boundary]);
+            } else if (arg == "--boundary-residency") {
+                const auto values = parse_csv_tokens(take_arg(index, argc, argv));
+                if (!config.boundaries.empty() && config.boundaries.size() != values.size())
+                    throw std::invalid_argument("boundary parameter lists must have equal length");
+                config.boundaries.resize(values.size());
+                for (std::size_t boundary = 0; boundary < values.size(); ++boundary)
+                    config.boundaries[boundary].residency = cuntt::parse_fft_boundary_residency(values[boundary]);
+            } else if (arg == "--group-threads") {
+                const auto values = parse_positive_list(take_arg(index, argc, argv), "group threads");
+                if (!config.execution_group_mappings.empty() && config.execution_group_mappings.size() != values.size())
+                    throw std::invalid_argument("group threads and EPT lists must have equal length");
+                config.execution_group_mappings.resize(values.size());
+                for (std::size_t group = 0; group < values.size(); ++group)
+                    config.execution_group_mappings[group].threads = values[group];
+            } else if (arg == "--group-ept") {
+                const auto values = parse_positive_list(take_arg(index, argc, argv), "group EPT");
+                if (!config.execution_group_mappings.empty() && config.execution_group_mappings.size() != values.size())
+                    throw std::invalid_argument("group threads and EPT lists must have equal length");
+                config.execution_group_mappings.resize(values.size());
+                for (std::size_t group = 0; group < values.size(); ++group)
+                    config.execution_group_mappings[group].ept = values[group];
+            } else if (arg == "--batch-stride") {
+                config.batch_stride = std::stoull(take_arg(index, argc, argv));
+            } else if (arg == "--element-stride") {
+                config.element_stride = std::stoull(take_arg(index, argc, argv));
+            } else if (arg == "--stage-space") {
+                config.stage_space = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--stage-handoff") {
+                config.stage_handoff = cuntt::parse_stage_handoff(take_arg(index, argc, argv));
+            } else if (arg == "--tile-threads") {
+                config.tile_threads = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--register-threads") {
+                config.register_threads = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--prefix-threads") {
+                config.prefix_threads = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--suffix-threads") {
+                config.suffix_threads = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--prefix-ept") {
+                config.prefix_ept = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--suffix-ept") {
+                config.suffix_ept = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--local-stages") {
+                config.local_stages = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--reorder-columns") {
+                config.reorder_columns = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--warp-stages") {
+                config.warp_stages = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--pipeline-warps") {
+                config.pipeline_warps = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--compute-unit") {
+                config.compute_unit = cuntt::parse_compute_unit(take_arg(index, argc, argv));
+            } else if (arg == "--complex-multiply") {
+                config.complex_multiply = cuntt::parse_complex_multiply(take_arg(index, argc, argv));
+            } else if (arg == "--cross-twiddle") {
+                config.cross_twiddle = cuntt::parse_cross_twiddle_mode(take_arg(index, argc, argv));
+            } else if (arg == "--direct-boundary") {
+                config.direct_boundary = cuntt::parse_direct_boundary(take_arg(index, argc, argv));
+            } else if (arg == "--local-exchange") {
+                config.local_exchange = cuntt::parse_local_exchange(take_arg(index, argc, argv));
+            } else if (arg == "--shared-layout") {
+                config.shared_layout = cuntt::parse_shared_layout(take_arg(index, argc, argv));
+            } else if (arg == "--fft-core") {
+                config.fft_core = cuntt::parse_fft_core(take_arg(index, argc, argv));
+            } else if (arg == "--precision") {
+                config.precision = cuntt::parse_butterfly_precision(take_arg(index, argc, argv));
+            } else if (arg == "--accumulation") {
+                config.accumulation = cuntt::parse_butterfly_accumulation(take_arg(index, argc, argv));
+            } else if (arg == "--placement") {
+                config.placement = cuntt::parse_butterfly_placement(take_arg(index, argc, argv));
+            } else if (arg == "--inverse") {
+                config.inverse = true;
+            } else if (arg == "--stage-overlap") {
+                config.stage_overlap = true;
+            } else if (arg == "--batch-tile-count") {
+                config.batch_tile_count = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--auto-select") {
+                config.auto_select = true;
+            } else if (arg == "--normalization") {
+                const std::string mode = take_arg(index, argc, argv);
+                if (mode == "none")
+                    config.normalize_inverse = false;
+                else if (mode == "inverse")
+                    config.normalize_inverse = true;
+                else
+                    throw std::invalid_argument("normalization must be none or inverse");
+            } else if (arg == "--warmup") {
+                warmup = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--repeat") {
+                repeat = std::stoul(take_arg(index, argc, argv));
+            } else if (arg == "--low-fft-error-report-only") {
+                low_fft_error_report_only = true;
+            } else if (arg == "--verify") {
+                verify = true;
+            } else if (arg == "--verify-batches") {
+                verify_batch_limit = std::stoull(take_arg(index, argc, argv));
+            } else if (arg == "--csv") {
+                csv = true;
+            } else {
+                throw std::invalid_argument("unknown argument: " + arg);
+            }
+        }
+
+        if (candidate_capability_audit) {
+            std::string audit;
+            cubutterfly::portable_butterfly_candidates(config, &audit);
+            std::cout << audit << '\n';
+            return 0;
+        }
+        if (list_design_points) {
+            for (const auto& candidate : cubutterfly::portable_butterfly_candidates(config))
+                std::cout << cubutterfly::serialize_mapping(candidate) << '\n';
+            return 0;
+        }
+        if (!mapping_json.empty()) cubutterfly::apply_serialized_mapping(mapping_json, config);
+        if (low_fft_error_report_only && (config.op != cuntt::ButterflyOperator::Fft ||
+            (config.precision != cuntt::ButterflyPrecision::Fp16 && config.precision != cuntt::ButterflyPrecision::Bf16)))
+            throw std::invalid_argument("--low-fft-error-report-only requires FP16/BF16 FFT");
+        cuntt::ButterflyPlan plan(config);
+        config = plan.config();
+        const auto checked_batches = verification_batches(config.batch, verify_batch_limit);
+        const auto& selection = plan.selection();
+        std::mt19937                          random(0x43554246U + static_cast<unsigned int>(config.batch));
+        std::uniform_real_distribution<float> distribution(-1.0F, 1.0F);
+        cuntt::ButterflyStats                 stats;
+        float                                 max_error = 0.0F;
+        double low_fft_max_abs = 0.0, low_fft_relative_l2 = 0.0;
+        bool                                  correct   = true;
+        const std::size_t                     n         = std::size_t{1} << config.log_n;
+        const std::size_t                     extent    = (config.batch - 1) * config.batch_stride + (n - 1) * config.element_stride + 1;
+
+        auto execute_low_real = [&](auto storage_zero, bool structured) {
+            using Storage = decltype(storage_zero);
+            const float input_scale = 1.0F / std::sqrt(static_cast<float>(n));
+            std::vector<Storage> input(extent);
+            std::generate(input.begin(), input.end(), [&] { return Storage(distribution(random) * input_scale); });
+            std::vector<Storage> output;
+            stats = plan.execute(input, output, warmup, repeat);
+            if (!verify)
+                return;
+            long double error_norm = 0.0;
+            long double reference_norm = 0.0;
+            for (const auto transform : checked_batches) {
+                const auto base = transform * config.batch_stride;
+                std::vector<float> expected(n);
+                for (std::size_t index = 0; index < n; ++index)
+                    expected[index] = static_cast<float>(input[base + index * config.element_stride]);
+                if (structured)
+                    cuntt::reference_structured_2x2(expected, config.stage_matrices, config.inverse);
+                else
+                    cuntt::reference_fwht(expected, config.inverse, config.normalize_inverse);
+                for (std::size_t index = 0; index < n; ++index) {
+                    const float actual = static_cast<float>(output[base + index * config.element_stride]);
+                    const long double error = static_cast<long double>(actual) - expected[index];
+                    error_norm += error * error;
+                    reference_norm += static_cast<long double>(expected[index]) * expected[index];
+                }
+            }
+            max_error = static_cast<float>(std::sqrt(error_norm / std::max(reference_norm, 1.0e-30L)));
+            correct = std::isfinite(max_error) && max_error <= 0.25F;
+        };
+
+        auto execute_low_fft = [&](auto complex_zero) {
+            using Complex = decltype(complex_zero);
+            using Storage = decltype(complex_zero.real);
+            const float input_scale = 1.0F / std::sqrt(static_cast<float>(n));
+            std::vector<Complex> input(extent);
+            std::generate(input.begin(), input.end(), [&] {
+                return Complex{Storage(distribution(random) * input_scale), Storage(distribution(random) * input_scale)};
+            });
+            std::vector<Complex> output;
+            stats = plan.execute(input, output, warmup, repeat);
+            if (!verify)
+                return;
+            if (low_fft_error_report_only) {
+                // Finiteness covers all logical outputs, even when CPU reference
+                // checking samples only a subset of batches.
+                for (std::size_t b = 0; b < config.batch; ++b)
+                    for (std::size_t i = 0; i < n; ++i) {
+                        const auto v = output[b * config.batch_stride + i * config.element_stride];
+                        correct &= std::isfinite(static_cast<float>(v.real)) && std::isfinite(static_cast<float>(v.imag));
+                    }
+            }
+            long double error_norm = 0.0;
+            long double reference_norm = 0.0;
+            for (const auto transform : checked_batches) {
+                const auto base = transform * config.batch_stride;
+                std::vector<cuntt::Complex32> expected(n);
+                for (std::size_t index = 0; index < n; ++index) {
+                    const auto value = input[base + index * config.element_stride];
+                    expected[index] = {static_cast<float>(value.real), static_cast<float>(value.imag)};
+                }
+                if (low_fft_error_report_only) {
+                    std::vector<Complex> same_storage(n);
+                    for (std::size_t i = 0; i < n; ++i)
+                        same_storage[i] = input[base + i * config.element_stride];
+                    cuntt::detail::reference_low_fft(same_storage, config.inverse, config.normalize_inverse,
+                        config.accumulation == cuntt::ButterflyAccumulation::Native);
+                    for (std::size_t i = 0; i < n; ++i)
+                        expected[i] = {static_cast<float>(same_storage[i].real), static_cast<float>(same_storage[i].imag)};
+                } else cuntt::reference_fft(expected, config.inverse, config.normalize_inverse);
+                for (std::size_t index = 0; index < n; ++index) {
+                    const auto value = output[base + index * config.element_stride];
+                    const long double dr = static_cast<float>(value.real) - expected[index].real;
+                    const long double di = static_cast<float>(value.imag) - expected[index].imag;
+                    error_norm += dr * dr + di * di;
+                    low_fft_max_abs = std::max(low_fft_max_abs, static_cast<double>(std::hypot(dr, di)));
+                    reference_norm += static_cast<long double>(expected[index].real) * expected[index].real +
+                                      static_cast<long double>(expected[index].imag) * expected[index].imag;
+                }
+            }
+            max_error = static_cast<float>(std::sqrt(error_norm / std::max(reference_norm, 1.0e-30L)));
+            low_fft_relative_l2 = static_cast<double>(std::sqrt(error_norm / std::max(reference_norm, 1.0e-30L)));
+            if (!low_fft_error_report_only) correct = std::isfinite(max_error) && max_error <= 0.25F;
+        };
+
+        if (config.op == cuntt::ButterflyOperator::Fwht) {
+            if (config.precision == cuntt::ButterflyPrecision::Fp64) {
+                std::vector<double> input(extent);
+                std::generate(input.begin(), input.end(), [&] { return static_cast<double>(distribution(random)); });
+                std::vector<double> output;
+                stats = plan.execute(input, output, warmup, repeat);
+                if (verify) {
+                    double error = 0.0;
+                    for (const auto transform : checked_batches) {
+                        const auto          base = transform * config.batch_stride;
+                        std::vector<double> expected(n);
+                        for (std::size_t index = 0; index < n; ++index)
+                            expected[index] = input[base + index * config.element_stride];
+                        cuntt::reference_fwht(expected, config.inverse, config.normalize_inverse);
+                        for (std::size_t index = 0; index < n; ++index)
+                            error = std::max(error, std::abs(expected[index] - output[base + index * config.element_stride]));
+                    }
+                    max_error = static_cast<float>(error);
+                    correct   = error <= fft_tolerance_fp64(n);
+                }
+            } else if (config.precision == cuntt::ButterflyPrecision::Fp16) {
+                execute_low_real(cuntt::Fp16{}, false);
+            } else if (config.precision == cuntt::ButterflyPrecision::Bf16) {
+                execute_low_real(cuntt::Bf16{}, false);
+            } else {
+                std::vector<float> input(extent);
+                std::generate(input.begin(), input.end(), [&] { return distribution(random); });
+                std::vector<float> output;
+                stats = plan.execute(input, output, warmup, repeat);
+                if (verify) {
+                    for (const auto transform : checked_batches) {
+                        const auto         base = transform * config.batch_stride;
+                        std::vector<float> expected(n);
+                        for (std::size_t index = 0; index < n; ++index)
+                            expected[index] = input[base + index * config.element_stride];
+                        cuntt::reference_fwht(expected, config.inverse, config.normalize_inverse);
+                        for (std::size_t index = 0; index < n; ++index)
+                            max_error = std::max(max_error, std::abs(expected[index] - output[base + index * config.element_stride]));
+                    }
+                    correct = max_error <= 1.0e-4F;
+                }
+            }
+        } else if (config.op == cuntt::ButterflyOperator::Structured2x2) {
+            if (config.precision == cuntt::ButterflyPrecision::Fp64) {
+                std::vector<double> input(extent);
+                std::generate(input.begin(), input.end(), [&] { return static_cast<double>(distribution(random)); });
+                std::vector<double> output;
+                stats = plan.execute(input, output, warmup, repeat);
+                if (verify) {
+                    double relative_error = 0.0;
+                    for (const auto transform : checked_batches) {
+                        const auto base = transform * config.batch_stride;
+                        std::vector<double> expected(n);
+                        for (std::size_t index = 0; index < n; ++index)
+                            expected[index] = input[base + index * config.element_stride];
+                        cuntt::reference_structured_2x2(expected, config.stage_matrices, config.inverse);
+                        for (std::size_t index = 0; index < n; ++index) {
+                            const double error = std::abs(expected[index] - output[base + index * config.element_stride]);
+                            relative_error = std::max(relative_error, error / std::max(1.0, std::abs(expected[index])));
+                        }
+                    }
+                    max_error = static_cast<float>(relative_error);
+                    correct   = relative_error <= 1.0e-10;
+                }
+            } else if (config.precision == cuntt::ButterflyPrecision::Fp16) {
+                execute_low_real(cuntt::Fp16{}, true);
+            } else if (config.precision == cuntt::ButterflyPrecision::Bf16) {
+                execute_low_real(cuntt::Bf16{}, true);
+            } else {
+                std::vector<float> input(extent);
+                std::generate(input.begin(), input.end(), [&] { return distribution(random); });
+                std::vector<float> output;
+                stats = plan.execute(input, output, warmup, repeat);
+                if (verify) {
+                    float relative_error = 0.0F;
+                    for (const auto transform : checked_batches) {
+                        const auto base = transform * config.batch_stride;
+                        std::vector<float> expected(n);
+                        for (std::size_t index = 0; index < n; ++index)
+                            expected[index] = input[base + index * config.element_stride];
+                        cuntt::reference_structured_2x2(expected, config.stage_matrices, config.inverse);
+                        for (std::size_t index = 0; index < n; ++index) {
+                            const float error = std::abs(expected[index] - output[base + index * config.element_stride]);
+                            relative_error = std::max(relative_error, error / std::max(1.0F, std::abs(expected[index])));
+                        }
+                    }
+                    max_error = relative_error;
+                    correct   = relative_error <= 2.0e-4F;
+                }
+            }
+        } else if (config.op == cuntt::ButterflyOperator::Fft) {
+            if (config.precision == cuntt::ButterflyPrecision::Fp64) {
+                std::vector<cuntt::Complex64> input(extent);
+                std::generate(input.begin(), input.end(), [&] { return cuntt::Complex64{distribution(random), distribution(random)}; });
+                std::vector<cuntt::Complex64> output;
+                stats = plan.execute(input, output, warmup, repeat);
+                if (verify) {
+                    double error = 0.0;
+                    for (const auto transform : checked_batches) {
+                        const auto                    base = transform * config.batch_stride;
+                        std::vector<cuntt::Complex64> expected(n);
+                        for (std::size_t index = 0; index < n; ++index)
+                            expected[index] = input[base + index * config.element_stride];
+                        cuntt::reference_fft(expected, config.inverse, config.normalize_inverse);
+                        for (std::size_t index = 0; index < n; ++index)
+                            error = std::max(error, complex_error(expected[index], output[base + index * config.element_stride]));
+                    }
+                    max_error = static_cast<float>(error);
+                    correct   = error <= 1.0e-10;
+                }
+            } else if (config.precision == cuntt::ButterflyPrecision::Fp16) {
+                execute_low_fft(cuntt::Complex16{});
+            } else if (config.precision == cuntt::ButterflyPrecision::Bf16) {
+                execute_low_fft(cuntt::ComplexBf16{});
+            } else {
+                std::vector<cuntt::Complex32> input(extent);
+                std::generate(input.begin(), input.end(), [&] { return cuntt::Complex32{distribution(random), distribution(random)}; });
+                std::vector<cuntt::Complex32> output;
+                stats = plan.execute(input, output, warmup, repeat);
+                if (verify) {
+                    for (const auto transform : checked_batches) {
+                        const auto                    base = transform * config.batch_stride;
+                        std::vector<cuntt::Complex32> expected(n);
+                        for (std::size_t index = 0; index < n; ++index)
+                            expected[index] = input[base + index * config.element_stride];
+                        cuntt::reference_fft(expected, config.inverse, config.normalize_inverse);
+                        for (std::size_t index = 0; index < n; ++index)
+                            max_error = std::max(max_error, complex_error(expected[index], output[base + index * config.element_stride]));
+                    }
+                    const float tolerance = config.precision == cuntt::ButterflyPrecision::Fp16Fp32 ? 1.0e-2F : fft_tolerance_fp32(n);
+                    correct               = max_error <= tolerance;
+                }
+            }
+        } else if (config.precision == cuntt::ButterflyPrecision::Uint64) {
+            std::vector<std::uint64_t> input(extent);
+            for (std::size_t index = 0; index < extent; ++index) {
+                const auto offset = static_cast<std::uint64_t>(index);
+                switch (index % 4) {
+                case 0: input[index] = UINT64_MAX - offset; break;
+                case 1: input[index] = (std::uint64_t{1} << 53) + offset + 1; break;
+                case 2: input[index] = (std::uint64_t{1} << 32) + offset + 1; break;
+                default: input[index] = offset; break;
+                }
+            }
+            std::vector<std::uint64_t> output;
+            stats = plan.execute(input, output, warmup, repeat);
+            if (verify) {
+                for (const auto transform : checked_batches) {
+                    const auto base = transform * config.batch_stride;
+                    std::vector<std::uint64_t> expected(n);
+                    for (std::size_t index = 0; index < n; ++index)
+                        expected[index] = input[base + index * config.element_stride];
+                    if (config.op == cuntt::ButterflyOperator::SupersetZeta)
+                        cuntt::reference_superset_zeta(expected, config.inverse);
+                    else
+                        cuntt::reference_subset_zeta(expected, config.inverse);
+                    for (std::size_t index = 0; index < n; ++index) {
+                        if (expected[index] != output[base + index * config.element_stride]) {
+                            correct = false;
+                            // Exact mismatch indicator avoids narrowing a UINT64 difference.
+                            max_error = 1.0F;
+                        }
+                    }
+                }
+            }
+        } else {
+            std::uniform_int_distribution<std::uint32_t> integer_distribution(0, 1023);
+            std::vector<std::uint32_t>                   input(extent);
+            std::generate(input.begin(), input.end(), [&] { return integer_distribution(random); });
+            std::vector<std::uint32_t> output;
+            stats = plan.execute(input, output, warmup, repeat);
+            if (verify) {
+                for (const auto transform : checked_batches) {
+                    const auto                 base = transform * config.batch_stride;
+                    std::vector<std::uint32_t> expected(n);
+                    for (std::size_t index = 0; index < n; ++index)
+                        expected[index] = input[base + index * config.element_stride];
+                    if (config.op == cuntt::ButterflyOperator::SupersetZeta) {
+                        cuntt::reference_superset_zeta(expected, config.inverse);
+                    } else if (config.op == cuntt::ButterflyOperator::SubsetZeta) {
+                        cuntt::reference_subset_zeta(expected, config.inverse);
+                    } else {
+                        cuntt::reference_xor_zeta(expected, config.inverse);
+                    }
+                    for (std::size_t index = 0; index < n; ++index) {
+                        if (expected[index] != output[base + index * config.element_stride]) {
+                            correct   = false;
+                            max_error = std::max(
+                                max_error, static_cast<float>(std::abs(static_cast<std::int64_t>(expected[index]) -
+                                                                       static_cast<std::int64_t>(output[base + index * config.element_stride]))));
+                        }
+                    }
+                }
+            }
+        }
+
+        const auto device = cuntt::current_device_info();
+        std::cout << std::fixed << std::setprecision(6);
+        if (csv) {
+            std::cout << "device,compute_capability,operator,precision,accumulation,emulated_native,direction,normalization,placement,auto_select,selection_target,selected_implementation,selection_confidence,predicted_kernel_ms,selection_reason,backend,compute_unit,complex_multiply,cross_twiddle,direct_boundary,stage_matrices,decomposition_count,stages_per_decomposition,segment_threads,segment_ept,boundary_twiddles,boundary_layouts,boundary_residencies,execution_group_count,group_threads,group_ept,local_"
+                         "exchange,shared_layout,fft_core,stage_space,stage_handoff,tile_threads,prefix_threads,suffix_threads,prefix_ept,suffix_ept,prefix_units_per_cta,suffix_units_per_cta,local_stages,reorder_columns,warp_stages,pipeline_warps,logN,N,batch,element_stride,batch_"
+                         "stride,warmup,repeat,h2d_ms,kernel_ms,d2h_ms,"
+                         "transforms_s,Gbutterfly_s,points_s,max_error,correct,stage_overlap,batch_tile_count,workspace_bytes,segment_cores,group_cores,mapping_json,runtime_fingerprint,execution_groups_json,verified_batches";
+            if (low_fft_error_report_only) std::cout << ",numeric_policy,verification_performed,relative_l2,max_abs";
+            std::cout << '\n';
+            std::cout << '"' << device.name << "\"," << device.compute_major << '.' << device.compute_minor << ','
+                      << cuntt::butterfly_operator_name(config.op) << ',' << cuntt::butterfly_precision_name(config.precision) << ','
+                      << cuntt::butterfly_accumulation_name(config.accumulation) << ','
+                      << static_cast<int>(config.precision == cuntt::ButterflyPrecision::Bf16 &&
+                                          config.accumulation == cuntt::ButterflyAccumulation::Native && device.compute_major < 8) << ','
+                      << (config.inverse ? "inverse" : "forward") << ',' << (config.normalize_inverse ? "inverse" : "none") << ','
+                      << cuntt::butterfly_placement_name(config.placement) << ',' << static_cast<int>(config.auto_select) << ','
+                      << cubutterfly::csv_field(selection.target) << ','
+                      << cubutterfly::csv_field(selection.implementation) << ','
+                      << cubutterfly::csv_field(selection.confidence) << ','
+                      << selection.predicted_kernel_ms << ',' << cubutterfly::csv_field(selection.reason) << ','
+                      << cuntt::butterfly_backend_name(config.backend) << ','
+                      << cuntt::compute_unit_name(config.compute_unit) << ',' << cuntt::complex_multiply_name(config.complex_multiply) << ','
+                      << cuntt::cross_twiddle_mode_name(config.cross_twiddle) << ','
+                      << cuntt::direct_boundary_name(config.direct_boundary) << ','
+                      << format_stage_matrices(config.stage_matrices) << ','
+                      << config.stage_partition.size() << ',' << format_stage_partition(config.stage_partition) << ','
+                      << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.threads); }) << ','
+                      << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << ','
+                      << format_mapping_list(config.boundaries, [](const auto& boundary) { return std::string(cuntt::cross_twiddle_mode_name(boundary.cross_twiddle)); }) << ','
+                      << format_mapping_list(config.boundaries, [](const auto& boundary) { return std::string(cuntt::direct_boundary_name(boundary.layout)); }) << ','
+                      << format_mapping_list(config.boundaries, [](const auto& boundary) { return std::string(cuntt::fft_boundary_residency_name(boundary.residency)); }) << ','
+                      << config.execution_group_mappings.size() << ','
+                      << format_mapping_list(config.execution_group_mappings, [](const auto& mapping) { return std::to_string(mapping.threads); }) << ','
+                      << format_mapping_list(config.execution_group_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << ','
+                      << cuntt::local_exchange_name(config.local_exchange) << ','
+                      << cuntt::shared_layout_name(config.shared_layout) << ','
+                      << cuntt::fft_core_name(config.fft_core) << ',' << config.stage_space << ','
+                      << cuntt::stage_handoff_name(config.stage_handoff) << ',' << config.tile_threads << ','
+                      << config.prefix_threads << ',' << config.suffix_threads << ',' << config.prefix_ept << ',' << config.suffix_ept << ','
+                      << config.prefix_units_per_cta << ',' << config.suffix_units_per_cta << ',' << config.local_stages << ','
+                      << config.reorder_columns << ',' << config.warp_stages << ',' << config.pipeline_warps << ','
+                      << config.log_n << ',' << n << ',' << config.batch << ',' << config.element_stride << ',' << config.batch_stride << ','
+                      << warmup << ',' << repeat << ',' << stats.h2d_ms << ',' << stats.kernel_ms << ',' << stats.d2h_ms << ','
+                      << stats.transforms_per_second << ',' << stats.butterflies_per_second / 1.0e9 << ',' << stats.points_per_second << ','
+                      << max_error << ',' << (verify ? static_cast<int>(correct) : -1) << ','
+                      << config.stage_overlap << ',' << config.batch_tile_count << ',' << plan.workspace_size() << ',';
+            for (std::size_t i=0; i<config.segment_mappings.size(); ++i)
+                std::cout << (i ? ":" : "") << cuntt::fft_core_name(config.segment_mappings[i].core);
+            std::cout << ',';
+            for (std::size_t i=0; i<config.execution_group_mappings.size(); ++i)
+                std::cout << (i ? ":" : "") << cuntt::fft_core_name(config.execution_group_mappings[i].core);
+            std::cout << ',' << cubutterfly::csv_field(cubutterfly::serialize_mapping(config)) << ','
+                      << cubutterfly::runtime_fingerprint() << ',' << cubutterfly::csv_field(cubutterfly::execution_groups_json(plan.dataflow_plan()))
+                      << ',' << (verify ? checked_batches.size() : 0);
+            if (low_fft_error_report_only) {
+                std::cout << ",same-storage-low-fft-error-report-only," << (verify ? 1 : 0) << ',';
+                if (verify) std::cout << low_fft_relative_l2;
+                std::cout << ',';
+                if (verify) std::cout << low_fft_max_abs;
+            }
+            std::cout << '\n';
+        } else {
+            const auto& dataflow = plan.dataflow_plan();
+            const auto hardware = cuntt::query_hardware_resource_model();
+            const auto estimate = cuntt::estimate_resources(dataflow, hardware);
+            std::cout << "device: " << device.name << " (sm_" << device.compute_major << device.compute_minor << ")\n"
+                      << "operator: " << cuntt::butterfly_operator_name(config.op) << "\n"
+                      << "precision: " << cuntt::butterfly_precision_name(config.precision) << "\n"
+                      << "accumulation: " << cuntt::butterfly_accumulation_name(config.accumulation) << "\n"
+                      << "direction: " << (config.inverse ? "inverse" : "forward") << "\n"
+                      << "normalization: " << (config.normalize_inverse ? "inverse" : "none") << "\n"
+                      << "placement: " << cuntt::butterfly_placement_name(config.placement) << "\n"
+                      << "auto_select: " << (config.auto_select ? "yes" : "no") << "\n"
+                      << "backend: " << cuntt::butterfly_backend_name(config.backend) << "\n"
+                      << "dataflow_operator: " << cuntt::dataflow_operator_name(dataflow.graph.op) << "\n"
+                      << "dataflow_dispatch: " << cuntt::dataflow_dispatch_name(dataflow.dispatch) << "\n"
+                      << "dataflow_subgraph_logN: " << dataflow.subgraph_log_n << "\n"
+                      << "dataflow_stage_partition: " << format_stage_partition(dataflow.stage_partition) << "\n"
+                      << "dataflow_boundary: " << cuntt::boundary_policy_name(dataflow.boundary) << "\n"
+                      << "dataflow_exchange: " << cuntt::exchange_policy_name(dataflow.exchange) << "\n"
+                      << "dataflow_persistent: " << (dataflow.persistent ? "yes" : "no") << "\n"
+                      << "dataflow_resources: feasible=" << (estimate.feasible ? "yes" : "no")
+                      << ", resident_ctas=" << estimate.resident_ctas
+                      << ", grid_waves=" << estimate.grid_waves
+                      << ", boundary_bytes=" << estimate.boundary_bytes << "\n";
+            if (selection.automatic) {
+                std::cout << "selected_implementation: " << selection.implementation << "\n"
+                          << "selection_target: " << selection.target << "\n"
+                          << "selection_confidence: " << selection.confidence << "\n"
+                          << "predicted_kernel_ms: " << selection.predicted_kernel_ms << "\n"
+                          << "selection_reason: " << selection.reason << "\n";
+            }
+            std::cout
+                      << "compute_unit: " << cuntt::compute_unit_name(config.compute_unit) << "\n"
+                      << "complex_multiply: " << cuntt::complex_multiply_name(config.complex_multiply) << "\n"
+                      << "cross_twiddle: " << cuntt::cross_twiddle_mode_name(config.cross_twiddle) << "\n"
+                      << "direct_boundary: " << cuntt::direct_boundary_name(config.direct_boundary) << "\n"
+                      << "stage_matrices: " << format_stage_matrices(config.stage_matrices) << "\n"
+                      << "stage_partition: " << format_stage_partition(config.stage_partition) << "\n"
+                      << "segment_threads: " << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.threads); }) << "\n"
+                      << "segment_ept: " << format_mapping_list(config.segment_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << "\n"
+                      << "boundary_residencies: " << format_mapping_list(config.boundaries, [](const auto& boundary) { return std::string(cuntt::fft_boundary_residency_name(boundary.residency)); }) << "\n"
+                      << "group_threads: " << format_mapping_list(config.execution_group_mappings, [](const auto& mapping) { return std::to_string(mapping.threads); }) << "\n"
+                      << "group_ept: " << format_mapping_list(config.execution_group_mappings, [](const auto& mapping) { return std::to_string(mapping.ept); }) << "\n"
+                      << "local_exchange: " << cuntt::local_exchange_name(config.local_exchange) << "\n"
+                      << "shared_layout: " << cuntt::shared_layout_name(config.shared_layout) << "\n"
+                      << "fft_core: " << cuntt::fft_core_name(config.fft_core) << "\n"
+                      << "stage_space: " << config.stage_space << "\n"
+                      << "stage_handoff: " << cuntt::stage_handoff_name(config.stage_handoff) << "\n"
+                      << "tile_threads: " << config.tile_threads << "\n"
+                      << "prefix_threads: " << config.prefix_threads << "\n"
+                      << "suffix_threads: " << config.suffix_threads << "\n"
+                      << "prefix_ept: " << config.prefix_ept << "\n"
+                      << "suffix_ept: " << config.suffix_ept << "\n"
+                      << "prefix_units_per_cta: " << config.prefix_units_per_cta << "\n"
+                      << "suffix_units_per_cta: " << config.suffix_units_per_cta << "\n"
+                      << "local_stages: " << config.local_stages << "\n"
+                      << "reorder_columns: " << config.reorder_columns << "\n"
+                      << "warp_stages: " << config.warp_stages << "\n"
+                      << "pipeline_warps: " << config.pipeline_warps << "\n"
+                      << "shape: logN=" << config.log_n << ", N=" << n << ", batch=" << config.batch << "\n"
+                      << "batch_stride: " << config.batch_stride << "\n"
+                      << "stage_overlap: " << (config.stage_overlap ? "yes" : "no") << "\n"
+                      << "batch_tile_count: " << config.batch_tile_count << "\n"
+                      << "workspace_bytes: " << plan.workspace_size() << "\n"
+                      << "element_stride: " << config.element_stride << "\n"
+                      << "kernel_ms: " << stats.kernel_ms << "\n"
+                      << "Gbutterfly_s: " << stats.butterflies_per_second / 1.0e9 << "\n"
+                      << "max_error: " << max_error << "\n"
+                      << "correct: " << (verify ? (correct ? "yes" : "no") : "not checked") << '\n';
+        }
+        if (!csv && low_fft_error_report_only) {
+            std::cout << "numeric_policy: same-storage-low-fft-error-report-only\n"
+                      << "verification_performed: " << (verify ? "yes" : "no") << '\n';
+            if (verify) std::cout << "relative_l2: " << low_fft_relative_l2 << "\nmax_abs: " << low_fft_max_abs << '\n';
+        }
+        return verify && !correct ? 1 : 0;
+    } catch (const std::exception& error) {
+        std::cerr << "error: " << error.what() << '\n';
+        print_usage();
+        return 1;
+    }
+}

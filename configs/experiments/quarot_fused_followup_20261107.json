@@ -1,0 +1,21 @@
+{
+  "schema": "quarot-fused-followup-v1",
+  "contract": {
+    "compute_contract": "public_fp32_final",
+    "precision_contract": "sameFP16storageFP32compute",
+    "execution_mode": "graph",
+    "attention_backend": "torch_sdpa",
+    "prefill": 128,
+    "decode": 8,
+    "seed": 20261003,
+    "validation_warmup": 4,
+    "warmup": 2,
+    "calls": 7
+  },
+  "jobs": [
+    {"id": "b1_baseline_first", "batch_size": 1, "variant_order": "baseline-first"},
+    {"id": "b1_treatment_first", "batch_size": 1, "variant_order": "treatment-first"},
+    {"id": "b4_baseline_first", "batch_size": 4, "variant_order": "baseline-first"},
+    {"id": "b4_treatment_first", "batch_size": 4, "variant_order": "treatment-first"}
+  ]
+}

@@ -1,0 +1,160 @@
+{
+  "schema": 2,
+  "name": "weak-regions-a100-small-v1",
+  "purpose": "Reproduce the current FFT precision/shape tails and low-batch butterfly controls before Nsight diagnosis.",
+  "gpu": "2",
+  "compile_mode": "research",
+  "search_budget": 24,
+  "library": "build-e13-cufftdx/libcuntt.so",
+  "benchmark": "build-e13-cufftdx/cubutterfly_plan_bench",
+  "runners": {
+    "ntt": {
+      "kind": "ntt",
+      "executable": "build-e13-cufftdx/cuntt_bench"
+    },
+    "gpuntt": {
+      "kind": "gpuntt",
+      "executable": "results/crypto_external_20260929/bin/gpuntt_crypto_bench"
+    }
+  },
+  "timing": {
+    "policy": "measure",
+    "warmup": 2,
+    "repeat": 25,
+    "trials": 2
+  },
+  "trace": {
+    "enabled": true,
+    "tool": "nsys",
+    "executable": "/usr/sbin/nsys",
+    "warmup": 0,
+    "repeat": 1,
+    "trials": 1,
+    "metrics": [
+      "gpu__time_duration.sum",
+      "dram__throughput.avg.pct_of_peak_sustained_elapsed",
+      "sm__warps_active.avg.pct_of_peak_sustained_active",
+      "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct",
+      "launch__registers_per_thread"
+    ],
+    "cases": [
+      "fft-fp32-512x512-b16",
+      "fft-fp64-256x256-b64"
+    ]
+  },
+  "excluded_cases": [
+    {
+      "id": "fft-fp32-128x128x16-b16",
+      "shape": [128, 128, 16],
+      "batch": 16,
+      "precision": "fp32",
+      "reason": "现场候选搜索 exceeded the bounded 90-second planning budget; replay mapping is required before a trace"
+    }
+  ],
+  "cases": [
+    {
+      "id": "fft-fp32-512x512-b16",
+      "operator": "fft",
+      "shape": [512, 512],
+      "batch": 16,
+      "precision": "fp32",
+      "execution_mode": "xd",
+      "compare_cufft": true,
+      "verify": true,
+      "trace": true
+    },
+    {
+      "id": "fft-fp32-1024x1024-b4",
+      "operator": "fft",
+      "shape": [1024, 1024],
+      "batch": 4,
+      "precision": "fp32",
+      "execution_mode": "xd",
+      "compare_cufft": true,
+      "verify": true,
+      "trace": false
+    },
+    {
+      "id": "fft-fp64-256x256-b64",
+      "operator": "fft",
+      "shape": [256, 256],
+      "batch": 64,
+      "precision": "fp64",
+      "execution_mode": "xd",
+      "compare_cufft": true,
+      "verify": true,
+      "trace": true
+    },
+    {
+      "id": "fwht-fp32-128x256-b4",
+      "operator": "fwht",
+      "shape": [128, 256],
+      "batch": 4,
+      "precision": "fp32",
+      "execution_mode": "xd",
+      "trace": false
+    },
+    {
+      "id": "ntt-uint64-256x256-b4",
+      "operator": "ntt",
+      "shape": [256, 256],
+      "batch": 4,
+      "precision": "uint64",
+      "execution_mode": "xd",
+      "modulus": 576460756061519873,
+      "trace": false
+    },
+    {
+      "id": "ntt-uint64-65536-b64",
+      "operator": "ntt",
+      "shape": [65536],
+      "batch": 64,
+      "precision": "uint64",
+      "modulus": 576460756061519873,
+      "runner": "ntt",
+      "backend": "hybrid2d",
+      "input_order": "natural",
+      "output_order": "natural",
+      "verify": true,
+      "baselines": ["gpuntt"],
+      "trace": false
+    },
+    {
+      "id": "ntt-uint64-1048576-b4",
+      "operator": "ntt",
+      "shape": [1048576],
+      "batch": 4,
+      "precision": "uint64",
+      "modulus": 576460756061519873,
+      "runner": "ntt",
+      "backend": "hybrid2d",
+      "input_order": "natural",
+      "output_order": "natural",
+      "verify": true,
+      "baselines": ["gpuntt"],
+      "trace": false
+    },
+    {
+      "id": "fft-fp64-1d-65536-b64",
+      "operator": "fft",
+      "shape": [65536],
+      "batch": 64,
+      "precision": "fp64",
+      "execution_mode": "auto",
+      "compare_cufft": true,
+      "verify": true,
+      "trace": false
+    },
+    {
+      "id": "fft-fp32-1d-1048576-b4",
+      "operator": "fft",
+      "shape": [1048576],
+      "batch": 4,
+      "precision": "fp32",
+      "execution_mode": "auto",
+      "compare_cufft": true,
+      "verify": true,
+      "trace": false
+    }
+  ]
+}

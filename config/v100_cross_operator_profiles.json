@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "hardware": "v100-sm70",
+  "binaries": {
+    "butterfly": "build-cuda118-cufftdx2/cubutterfly_bench",
+    "ntt": "build-cuda118-cufftdx2/cuntt_bench"
+  },
+  "profiles": [
+    {
+      "id": "fft14_v06_direct", "operator": "fft", "precision": "fp32",
+      "direction": "forward", "version": "v0.6", "candidate_role": "incumbent",
+      "implementation": "cufftdx-direct", "paradigm_status": "legacy-single-kernel",
+      "runner": "butterfly", "logN": 14, "batch": 16,
+      "logical_partition": [14], "physical_partition": [14],
+      "physical_core": "cufftdx-direct", "coefficient_policy": "native-table",
+      "args": ["--operator", "fft", "--precision", "fp32", "--backend", "temporal-tile", "--fft-core", "cufftdx-direct", "--tile-threads", "1024", "--placement", "in-place", "--normalization", "none"]
+    },
+    {
+      "id": "fft14_v08_resident", "operator": "fft", "precision": "fp32",
+      "direction": "forward", "version": "v0.8", "candidate_role": "searched",
+      "implementation": "cufftdx-resident", "paradigm_status": "native-resident-subgraph",
+      "runner": "butterfly", "logN": 14, "batch": 16,
+      "logical_partition": [7, 7], "physical_partition": [7, 7],
+      "physical_core": "cufftdx-resident", "coefficient_policy": "native-table",
+      "args": ["--operator", "fft", "--precision", "fp32", "--backend", "online-reorder", "--fft-core", "cufftdx-resident", "--tile-threads", "512", "--local-stages", "7", "--reorder-columns", "1", "--placement", "in-place", "--normalization", "none"]
+    },
+    {
+      "id": "fft14_cufft", "operator": "fft", "precision": "fp32",
+      "direction": "forward", "version": "vendor", "candidate_role": "library",
+      "implementation": "cuFFT", "paradigm_status": "external-library",
+      "runner": "butterfly", "logN": 14, "batch": 16,
+      "logical_partition": [14], "physical_partition": [14],
+      "physical_core": "cufft", "coefficient_policy": "vendor",
+      "args": ["--operator", "fft", "--precision", "fp32", "--backend", "cufft", "--placement", "in-place", "--normalization", "none"]
+    },
+
+    {
+      "id": "fwht15_v06_hierarchical", "operator": "fwht", "precision": "fp32",
+      "direction": "forward", "version": "v0.6", "candidate_role": "incumbent",
+      "implementation": "hierarchical-radix4", "paradigm_status": "legacy-materialized-tail",
+      "runner": "butterfly", "logN": 15, "batch": 16,
+      "logical_partition": [8, 7], "physical_partition": [8, 1, 1, 1, 1, 1, 1, 1],
+      "physical_core": "scalar-radix4", "coefficient_policy": "none",
+      "args": ["--operator", "fwht", "--precision", "fp32", "--backend", "hierarchical", "--compute-unit", "radix4", "--tile-threads", "256", "--local-stages", "8", "--normalization", "none"]
+    },
+    {
+      "id": "fwht15_v06_warp_register", "operator": "fwht", "precision": "fp32",
+      "direction": "forward", "version": "v0.6", "candidate_role": "incumbent",
+      "implementation": "warp-register-radix2", "paradigm_status": "legacy-warp-register",
+      "runner": "butterfly", "logN": 15, "batch": 16,
+      "logical_partition": [15], "physical_partition": [15],
+      "physical_core": "warp-register-radix2", "coefficient_policy": "none",
+      "args": ["--operator", "fwht", "--precision", "fp32", "--backend", "temporal-tile", "--local-exchange", "warp-register", "--compute-unit", "radix2", "--tile-threads", "256", "--normalization", "none"]
+    },
+    {
+      "id": "fwht15_v08_online", "operator": "fwht", "precision": "fp32",
+      "direction": "forward", "version": "v0.8", "candidate_role": "searched",
+      "implementation": "online-radix4-8x7", "paradigm_status": "compatibility-lowered-two-segment",
+      "runner": "butterfly", "logN": 15, "batch": 16,
+      "logical_partition": [8, 7], "physical_partition": [8, 7],
+      "physical_core": "scalar-radix4", "coefficient_policy": "none",
+      "args": ["--operator", "fwht", "--precision", "fp32", "--backend", "online-reorder", "--compute-unit", "radix4", "--tile-threads", "256", "--stage-partition", "8,7", "--reorder-columns", "1", "--normalization", "none"]
+    },
+    {
+      "id": "fwht15_v08_warp_register", "operator": "fwht", "precision": "fp32",
+      "direction": "forward", "version": "v0.8", "candidate_role": "searched",
+      "implementation": "warp-register-radix2", "paradigm_status": "v08-inherited-physical-core",
+      "runner": "butterfly", "logN": 15, "batch": 16,
+      "logical_partition": [15], "physical_partition": [15],
+      "physical_core": "warp-register-radix2", "coefficient_policy": "none",
+      "args": ["--operator", "fwht", "--precision", "fp32", "--backend", "temporal-tile", "--local-exchange", "warp-register", "--compute-unit", "radix2", "--tile-threads", "256", "--normalization", "none"]
+    },
+
+    {
+      "id": "subset15_v06_hierarchical", "operator": "subset-zeta", "precision": "uint32",
+      "direction": "forward", "version": "v0.6", "candidate_role": "incumbent",
+      "implementation": "hierarchical-radix4", "paradigm_status": "legacy-materialized-tail",
+      "runner": "butterfly", "logN": 15, "batch": 16,
+      "logical_partition": [8, 7], "physical_partition": [8, 1, 1, 1, 1, 1, 1, 1],
+      "physical_core": "scalar-radix4", "coefficient_policy": "none",
+      "args": ["--operator", "subset-zeta", "--precision", "uint32", "--backend", "hierarchical", "--compute-unit", "radix4", "--tile-threads", "256", "--local-stages", "8"]
+    },
+    {
+      "id": "subset15_v08_online", "operator": "subset-zeta", "precision": "uint32",
+      "direction": "forward", "version": "v0.8", "candidate_role": "searched",
+      "implementation": "online-radix4-8x7", "paradigm_status": "compatibility-lowered-two-segment",
+      "runner": "butterfly", "logN": 15, "batch": 16,
+      "logical_partition": [8, 7], "physical_partition": [8, 7],
+      "physical_core": "scalar-radix4", "coefficient_policy": "none",
+      "args": ["--operator", "subset-zeta", "--precision", "uint32", "--backend", "online-reorder", "--compute-unit", "radix4", "--tile-threads", "256", "--stage-partition", "8,7", "--reorder-columns", "1"]
+    },
+
+    {
+      "id": "superset15_v06_hierarchical", "operator": "superset-zeta", "precision": "uint32",
+      "direction": "forward", "version": "v0.6", "candidate_role": "incumbent",
+      "implementation": "hierarchical-radix4", "paradigm_status": "legacy-materialized-tail",
+      "runner": "butterfly", "logN": 15, "batch": 16,
+      "logical_partition": [8, 7], "physical_partition": [8, 1, 1, 1, 1, 1, 1, 1],
+      "physical_core": "scalar-radix4", "coefficient_policy": "none",
+      "args": ["--operator", "superset-zeta", "--precision", "uint32", "--backend", "hierarchical", "--compute-unit", "radix4", "--tile-threads", "256", "--local-stages", "8"]
+    },
+    {
+      "id": "superset15_v08_online", "operator": "superset-zeta", "precision": "uint32",
+      "direction": "forward", "version": "v0.8", "candidate_role": "searched",
+      "implementation": "online-radix4-8x7", "paradigm_status": "compatibility-lowered-two-segment",
+      "runner": "butterfly", "logN": 15, "batch": 16,
+      "logical_partition": [8, 7], "physical_partition": [8, 7],
+      "physical_core": "scalar-radix4", "coefficient_policy": "none",
+      "args": ["--operator", "superset-zeta", "--precision", "uint32", "--backend", "online-reorder", "--compute-unit", "radix4", "--tile-threads", "256", "--stage-partition", "8,7", "--reorder-columns", "1"]
+    },
+
+    {
+      "id": "structured15_v06_hierarchical", "operator": "structured-2x2", "precision": "fp32",
+      "direction": "forward", "version": "v0.6", "candidate_role": "incumbent",
+      "implementation": "hierarchical-radix4", "paradigm_status": "legacy-materialized-tail",
+      "runner": "butterfly", "logN": 15, "batch": 16,
+      "logical_partition": [8, 7], "physical_partition": [8, 1, 1, 1, 1, 1, 1, 1],
+      "physical_core": "scalar-radix4", "coefficient_policy": "broadcast-matrix",
+      "args": ["--operator", "structured-2x2", "--precision", "fp32", "--backend", "hierarchical", "--compute-unit", "radix4", "--tile-threads", "256", "--local-stages", "8", "--stage-matrix", "0.9238795,-0.3826834,0.3826834,0.9238795"]
+    },
+    {
+      "id": "structured15_v08_online", "operator": "structured-2x2", "precision": "fp32",
+      "direction": "forward", "version": "v0.8", "candidate_role": "searched",
+      "implementation": "online-radix4-8x7", "paradigm_status": "compatibility-lowered-two-segment",
+      "runner": "butterfly", "logN": 15, "batch": 16,
+      "logical_partition": [8, 7], "physical_partition": [8, 7],
+      "physical_core": "scalar-radix4", "coefficient_policy": "broadcast-matrix",
+      "args": ["--operator", "structured-2x2", "--precision", "fp32", "--backend", "online-reorder", "--compute-unit", "radix4", "--tile-threads", "256", "--stage-partition", "8,7", "--reorder-columns", "1", "--stage-matrix", "0.9238795,-0.3826834,0.3826834,0.9238795"]
+    },
+
+    {
+      "id": "xor15_v06_hierarchical", "operator": "xor-zeta", "precision": "uint32",
+      "direction": "forward", "version": "v0.6", "candidate_role": "incumbent",
+      "implementation": "hierarchical-radix4", "paradigm_status": "legacy-materialized-tail",
+      "runner": "butterfly", "logN": 15, "batch": 16,
+      "logical_partition": [8, 7], "physical_partition": [8, 1, 1, 1, 1, 1, 1, 1],
+      "physical_core": "scalar-radix4", "coefficient_policy": "none",
+      "args": ["--operator", "xor-zeta", "--precision", "uint32", "--backend", "hierarchical", "--compute-unit", "radix4", "--tile-threads", "256", "--local-stages", "8"]
+    },
+    {
+      "id": "xor15_v08_online", "operator": "xor-zeta", "precision": "uint32",
+      "direction": "forward", "version": "v0.8", "candidate_role": "searched",
+      "implementation": "online-radix4-8x7", "paradigm_status": "compatibility-lowered-two-segment",
+      "runner": "butterfly", "logN": 15, "batch": 16,
+      "logical_partition": [8, 7], "physical_partition": [8, 7],
+      "physical_core": "scalar-radix4", "coefficient_policy": "none",
+      "args": ["--operator", "xor-zeta", "--precision", "uint32", "--backend", "online-reorder", "--compute-unit", "radix4", "--tile-threads", "256", "--stage-partition", "8,7", "--reorder-columns", "1"]
+    },
+
+    {
+      "id": "ntt20_v06_hybrid2d", "operator": "ntt", "precision": "uint32",
+      "direction": "forward", "version": "v0.6", "candidate_role": "incumbent",
+      "implementation": "hybrid2d-radix4-10x10", "paradigm_status": "legacy-two-kernel",
+      "runner": "ntt", "logN": 20, "batch": 16,
+      "logical_partition": [10, 10], "physical_partition": [10, 10],
+      "physical_core": "hybrid2d-radix4", "coefficient_policy": "shoup",
+      "args": ["--word-bits", "32", "--modulus", "998244353", "--backend", "hybrid2d", "--compute-unit", "radix4", "--n1-log", "10", "--rows-per-block", "2", "--threads-per-block", "512", "--cross-twiddle", "fused", "--mod-multiply", "shoup", "--output-order", "natural"]
+    },
+    {
+      "id": "ntt20_v08_resident", "operator": "ntt", "precision": "uint32",
+      "direction": "forward", "version": "v0.8", "candidate_role": "searched",
+      "implementation": "resident-queue-radix4-10x10", "paradigm_status": "native-resident-subgraph",
+      "runner": "ntt", "logN": 20, "batch": 16,
+      "logical_partition": [10, 10], "physical_partition": [10, 10],
+      "physical_core": "dataflow-radix4", "coefficient_policy": "shoup",
+      "args": ["--word-bits", "32", "--modulus", "998244353", "--backend", "hierarchical-dataflow", "--stage-partition", "10,10", "--segment-cores", "dataflow-radix4,dataflow-radix4", "--segment-work-distribution", "resident-queue", "--segment-threads", "256", "--segment-units", "1", "--segment-data-space", "4", "--segment-data-time", "1", "--segment-cta-weights", "9,11", "--boundary-storage", "full-scratch", "--cross-twiddle", "fused", "--mod-multiply", "shoup", "--output-order", "natural"]
+    }
+  ]
+}

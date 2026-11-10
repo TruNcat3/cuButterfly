@@ -1,0 +1,37 @@
+operator,precision,baseline,n,paired_geometric_mean,status
+fft,fp32,cuFFT,6,1.1029176464537598,matched
+fft,fp32,VkFFT,6,1.0287995286652265,matched
+fft,fp32,Dao FHT,0,,no matched measured baseline
+fft,fp32,GPU-NTT,0,,no matched measured baseline
+fft,fp64,cuFFT,6,1.3533432587235752,matched
+fft,fp64,VkFFT,6,1.3249178416577982,matched
+fft,fp64,Dao FHT,0,,no matched measured baseline
+fft,fp64,GPU-NTT,0,,no matched measured baseline
+fwht,fp32,cuFFT,0,,no matched measured baseline
+fwht,fp32,VkFFT,0,,no matched measured baseline
+fwht,fp32,Dao FHT,6,1.6672765965989444,matched
+fwht,fp32,GPU-NTT,0,,no matched measured baseline
+fwht,fp64,cuFFT,0,,no matched measured baseline
+fwht,fp64,VkFFT,0,,no matched measured baseline
+fwht,fp64,Dao FHT,0,,no matched measured baseline
+fwht,fp64,GPU-NTT,0,,no matched measured baseline
+ntt,word32,cuFFT,0,,no matched measured baseline
+ntt,word32,VkFFT,0,,no matched measured baseline
+ntt,word32,Dao FHT,0,,no matched measured baseline
+ntt,word32,GPU-NTT,0,,no matched measured baseline
+ntt,word64,cuFFT,0,,no matched measured baseline
+ntt,word64,VkFFT,0,,no matched measured baseline
+ntt,word64,Dao FHT,0,,no matched measured baseline
+ntt,word64,GPU-NTT,4,1.197216081157152,matched
+subset-zeta,uint32,cuFFT,0,,no matched measured baseline
+subset-zeta,uint32,VkFFT,0,,no matched measured baseline
+subset-zeta,uint32,Dao FHT,0,,no matched measured baseline
+subset-zeta,uint32,GPU-NTT,0,,no matched measured baseline
+superset-zeta,uint32,cuFFT,0,,no matched measured baseline
+superset-zeta,uint32,VkFFT,0,,no matched measured baseline
+superset-zeta,uint32,Dao FHT,0,,no matched measured baseline
+superset-zeta,uint32,GPU-NTT,0,,no matched measured baseline
+structured-2x2,fp32,cuFFT,0,,no matched measured baseline
+structured-2x2,fp32,VkFFT,0,,no matched measured baseline
+structured-2x2,fp32,Dao FHT,0,,no matched measured baseline
+structured-2x2,fp32,GPU-NTT,0,,no matched measured baseline

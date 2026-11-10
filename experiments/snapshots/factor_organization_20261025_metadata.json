@@ -1,0 +1,69 @@
+{
+  "schema": "factor-organization-render-v1",
+  "caption": "Fixed-core matched-organization diagnostic for forward, natural-order, unnormalized FP64 FFT (N=65536, batch=16) on NVIDIA A100 80GB PCIe. Each point is the median of seven timing trials of the complete CUDA Graph; whiskers show trial min-max, not confidence intervals or independent replicates. The cuFFT complete-library median is dashed with its trial min-max shaded. tXdY denotes X data tiles per CTA and prefetch depth Y. Both factor cores keep partition [8,8], EPT=16, columns=4, and all other mapping fields fixed within core. Explicit matched-organization mechanism diagnostic; not AUTO selection or an external provider's native organization. NativeFactor is the auditable repository register-tile implementation, not a VkFFT core transplant. cuFFT is a complete-library comparator.",
+  "scope": "Explicit matched-organization mechanism diagnostic; not AUTO selection or an external provider's native organization. NativeFactor is the auditable repository register-tile implementation, not a VkFFT core transplant. cuFFT is a complete-library comparator.",
+  "snapshot": "paper/evidence/factor_organization_20261025.json",
+  "snapshot_sha256": "b0af4c0ab2e29b4ef05d00ca700a61daf18c45dec7e6d0c78df4fb6278f4c5bb",
+  "sources": {
+    "results": {
+      "path": "results/factor_graph_20261025/core_organization_waitfix_gpu1/release/results.json",
+      "sha256": "d0f7bdcd5802a07fb6c4d6e8f73f7d0db177e5a33ac10fbdf939159bcafef54e"
+    },
+    "preparation": {
+      "path": "results/factor_graph_20261025/core_organization_waitfix_gpu1/release/preparation.json",
+      "sha256": "b8872a7f58f3d48a9bfc183cc84bb5ae3562a68a7fcda4c7f061da1af756bc1b"
+    },
+    "control_groups": {
+      "path": "results/factor_graph_20261025/core_organization_waitfix_gpu1/release/control_groups.json",
+      "sha256": "bcb4b8d308b9250b38ff4f65368a89d06975acaed74a5ddf22f93caf11bce217"
+    },
+    "status": {
+      "path": "results/factor_graph_20261025/core_organization_waitfix_gpu1/status.json",
+      "sha256": "92adf019f794fbe4c8cf64e97b18bf5ddee52d5388b7e151f0a494dd7e3ec7ba"
+    },
+    "prepared_suite": {
+      "path": "results/factor_graph_20261025/core_organization_waitfix.json",
+      "sha256": "f93f35b9f9b2035f8c10db9838aea09c0899430f984baa5138326ed240325afc"
+    },
+    "prepared_manifest": {
+      "path": "results/factor_graph_20261025/core_organization_waitfix.manifest.json",
+      "sha256": "b8872a7f58f3d48a9bfc183cc84bb5ae3562a68a7fcda4c7f061da1af756bc1b"
+    },
+    "config": {
+      "path": "configs/experiments/factor_graph_core_organization_20261025.json",
+      "sha256": "d1de65fd7f42e39ec62b20643a383bfc54a85c3e5a2c66a9e23e607e926bb5e3"
+    },
+    "hardware": {
+      "path": "config/hardware/NVIDIA-A100-80GB-PCIe-sm80-84974239744B/hardware_model.json",
+      "sha256": "27d360400478070efb4948cc7fe62b14b4cad51592f49fbd7008248d669e2206"
+    }
+  },
+  "figure_inches": [
+    3.4,
+    2.3
+  ],
+  "png_dpi": 600,
+  "matplotlib": "3.10.9",
+  "python": "3.10.6",
+  "estimator": "median(trial_ms) * 1000",
+  "spread": "trial min-max; not a CI; trials are not independent replicates",
+  "paired_formula": "reference median / target median; within the same core and cohort",
+  "exclusions": [],
+  "all_cases": [
+    "native-t1-d0",
+    "native-t4-d0",
+    "native-t4-d1",
+    "native-t4-d2",
+    "cufftdx-t1-d0",
+    "cufftdx-t4-d0",
+    "cufftdx-t4-d1",
+    "cufftdx-t4-d2",
+    "cufft"
+  ],
+  "outputs": {
+    "paper/figures/factor_organization_20261025.pdf": "349295db0c61eeb262819c8d23ceafedc24d749ca4d72d45fc16fa29f7cd5d35",
+    "paper/figures/factor_organization_20261025.png": "62beb15fea615f0bfad4ee2740a7debffb461dd399b53276dffaefbe1b1f36e5",
+    "paper/generated/factor_organization_20261025_latency.csv": "ce86af367d203f49983d8a282096e789120e7c222cd01d26f89338f159b64fec",
+    "paper/generated/factor_organization_20261025_paired.csv": "86fbd779bc17b73c06b3c53d08ba6c7ff38ce2c062af9ccdd306e7848f54ff2f"
+  }
+}

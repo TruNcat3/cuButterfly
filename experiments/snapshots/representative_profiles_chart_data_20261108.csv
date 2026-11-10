@@ -1,0 +1,87 @@
+baseline,baseline_GiB,baseline_ms,core,estimator,kernel_id,kind,maximum,metric,minimum,panel,process,unit,value,variant,variant_GiB,variant_ms
+native/stagewise-hbm,,1.41389832,0,within-process ratio,,ordinary,,,,a,0,speedup,1.1838299438447477,native/resident-prefix-2,,1.19434242
+native/stagewise-hbm,,1.41375488,0,within-process ratio,,ordinary,,,,a,1,speedup,1.1834257449973136,native/resident-prefix-2,,1.19462914
+native/stagewise-hbm,,1.4138266,0,within-process ratio,,ordinary,,,,a,2,speedup,1.1836785470186357,native/resident-prefix-2,,1.19443459
+native/stagewise-hbm,,,0,ratio of process medians,,ordinary_summary,1.1838299438447477,,1.1834257449973136,a,,speedup,1.1836785470186357,native/resident-prefix-2,,
+cufftdx-thread/stagewise-hbm,,1.43094788,1,within-process ratio,,ordinary,,,,a,0,speedup,1.1899738251108523,cufftdx-thread/resident-prefix-2,,1.20250366
+cufftdx-thread/stagewise-hbm,,1.4301799,1,within-process ratio,,ordinary,,,,a,1,speedup,1.1892642438763381,cufftdx-thread/resident-prefix-2,,1.20257538
+cufftdx-thread/stagewise-hbm,,1.43101959,1,within-process ratio,,ordinary,,,,a,2,speedup,1.18992194809259,cufftdx-thread/resident-prefix-2,,1.20261635
+cufftdx-thread/stagewise-hbm,,,1,ratio of process medians,,ordinary_summary,1.1899738251108523,,1.1892642438763381,a,,speedup,1.1899028566508654,cufftdx-thread/resident-prefix-2,,
+,1.258886694908142,,0,ratio of full-call count sums,,profile_summary,,DRAM,,b,,percent,77.0844162011578,,0.9704054594039917,
+,1.2628047466278076,,1,ratio of full-call count sums,,profile_summary,,DRAM,,b,,percent,76.88115006890285,,0.9708588123321533,
+,3.020747423171997,,0,ratio of full-call count sums,,profile_summary,,L2,,b,,percent,86.94659829692864,,2.6264371275901794,
+,3.0238410234451294,,1,ratio of full-call count sums,,profile_summary,,L2,,b,,percent,86.83272354286873,,2.625683516263962,
+,,,0,"single capture, per kernel",1,profile,,launch__registers_per_thread,,c,,register/thread,48.0,external step 1,,
+,,,0,"single capture, per kernel",2,profile,,launch__registers_per_thread,,c,,register/thread,51.0,external step 2,,
+,,,0,"single capture, per kernel",1,profile,,launch__registers_per_thread,,c,,register/thread,80.0,resident prefix,,
+,,,1,"single capture, per kernel",1,profile,,launch__registers_per_thread,,c,,register/thread,46.0,external step 1,,
+,,,1,"single capture, per kernel",2,profile,,launch__registers_per_thread,,c,,register/thread,54.0,external step 2,,
+,,,1,"single capture, per kernel",1,profile,,launch__registers_per_thread,,c,,register/thread,83.0,resident prefix,,
+native-t1-d0,,0.07537663727998734,0,within-process ratio,,ordinary,,,,d,0,speedup,1.0,native-t1-d0,,0.07537663727998734
+native-t1-d0,,0.07532544434070587,0,within-process ratio,,ordinary,,,,d,1,speedup,1.0,native-t1-d0,,0.07532544434070587
+native-t1-d0,,0.0753151997923851,0,within-process ratio,,ordinary,,,,d,2,speedup,1.0,native-t1-d0,,0.0753151997923851
+native-t1-d0,,,0,ratio of process medians,,ordinary_summary,1.0,,1.0,d,,speedup,1.0,native-t1-d0,,
+cufftdx-t1-d0,,0.08029184490442276,1,within-process ratio,,ordinary,,,,d,0,speedup,1.0,cufftdx-t1-d0,,0.08029184490442276
+cufftdx-t1-d0,,0.08040448278188705,1,within-process ratio,,ordinary,,,,d,1,speedup,1.0,cufftdx-t1-d0,,0.08040448278188705
+cufftdx-t1-d0,,0.08040448278188705,1,within-process ratio,,ordinary,,,,d,2,speedup,1.0,cufftdx-t1-d0,,0.08040448278188705
+cufftdx-t1-d0,,,1,ratio of process medians,,ordinary_summary,1.0,,1.0,d,,speedup,1.0,cufftdx-t1-d0,,
+native-t1-d0,,0.07537663727998734,0,within-process ratio,,ordinary,,,,d,0,speedup,0.5991372014864604,native-t4-d0,,0.12580864131450653
+native-t1-d0,,0.07532544434070587,0,within-process ratio,,ordinary,,,,d,1,speedup,0.5982919993466729,native-t4-d0,,0.12590080499649048
+native-t1-d0,,0.0753151997923851,0,within-process ratio,,ordinary,,,,d,2,speedup,0.598113363171643,native-t4-d0,,0.12592127919197083
+native-t1-d0,,,0,ratio of process medians,,ordinary_summary,0.5991372014864604,,0.598113363171643,d,,speedup,0.5982919993466729,native-t4-d0,,
+cufftdx-t1-d0,,0.08029184490442276,1,within-process ratio,,ordinary,,,,d,0,speedup,0.5969092580240747,cufftdx-t4-d0,,0.13451264798641205
+cufftdx-t1-d0,,0.08040448278188705,1,within-process ratio,,ordinary,,,,d,1,speedup,0.5974737446565286,cufftdx-t4-d0,,0.13457408547401428
+cufftdx-t1-d0,,0.08040448278188705,1,within-process ratio,,ordinary,,,,d,2,speedup,0.5975646585615976,cufftdx-t4-d0,,0.13455361127853394
+cufftdx-t1-d0,,,1,ratio of process medians,,ordinary_summary,0.5975646585615976,,0.5969092580240747,d,,speedup,0.5975646585615976,cufftdx-t4-d0,,
+native-t1-d0,,0.07537663727998734,0,within-process ratio,,ordinary,,,,d,0,speedup,1.1524972129904152,native-t4-d1,,0.06540288031101227
+native-t1-d0,,0.07532544434070587,0,within-process ratio,,ordinary,,,,d,1,speedup,1.1517144808073978,native-t4-d1,,0.06540288031101227
+native-t1-d0,,0.0753151997923851,0,within-process ratio,,ordinary,,,,d,2,speedup,1.153002013976819,native-t4-d1,,0.06532096117734909
+native-t1-d0,,,0,ratio of process medians,,ordinary_summary,1.153002013976819,,1.1517144808073978,d,,speedup,1.1517144808073978,native-t4-d1,,
+cufftdx-t1-d0,,0.08029184490442276,1,within-process ratio,,ordinary,,,,d,0,speedup,1.1158388897885614,cufftdx-t4-d1,,0.07195648550987244
+cufftdx-t1-d0,,0.08040448278188705,1,within-process ratio,,ordinary,,,,d,1,speedup,1.1153409850778786,cufftdx-t4-d1,,0.07208959758281708
+cufftdx-t1-d0,,0.08040448278188705,1,within-process ratio,,ordinary,,,,d,2,speedup,1.116927542015811,cufftdx-t4-d1,,0.07198719680309296
+cufftdx-t1-d0,,,1,ratio of process medians,,ordinary_summary,1.116927542015811,,1.1153409850778786,d,,speedup,1.116927542015811,cufftdx-t4-d1,,
+native-t1-d0,,0.07537663727998734,0,within-process ratio,,ordinary,,,,d,0,speedup,0.9414247682771575,native-t4-d2,,0.08006655424833298
+native-t1-d0,,0.07532544434070587,0,within-process ratio,,ordinary,,,,d,1,speedup,0.9399437875122967,native-t4-d2,,0.08013824373483658
+native-t1-d0,,0.0753151997923851,0,within-process ratio,,ordinary,,,,d,2,speedup,0.9400562101189374,native-t4-d2,,0.08011776208877563
+native-t1-d0,,,0,ratio of process medians,,ordinary_summary,0.9414247682771575,,0.9399437875122967,d,,speedup,0.9401840787469878,native-t4-d2,,
+cufftdx-t1-d0,,0.08029184490442276,1,within-process ratio,,ordinary,,,,d,0,speedup,0.8612697776125734,cufftdx-t4-d2,,0.09322496503591537
+cufftdx-t1-d0,,0.08040448278188705,1,within-process ratio,,ordinary,,,,d,1,speedup,0.8632365626765796,cufftdx-t4-d2,,0.0931430459022522
+cufftdx-t1-d0,,0.08040448278188705,1,within-process ratio,,ordinary,,,,d,2,speedup,0.8638064015779463,cufftdx-t4-d2,,0.09308160096406937
+cufftdx-t1-d0,,,1,ratio of process medians,,ordinary_summary,0.8638064015779463,,0.8612697776125734,d,,speedup,0.8632365626765796,cufftdx-t4-d2,,
+,,,0,"single capture, per kernel",0,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,70.02,t1-d0,,
+,,,0,"single capture, per kernel",1,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,69.19,t1-d0,,
+,,,1,"single capture, per kernel",0,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,67.49,t1-d0,,
+,,,1,"single capture, per kernel",1,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,62.42,t1-d0,,
+,,,0,"single capture, per kernel",0,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,71.02,t4-d0,,
+,,,0,"single capture, per kernel",1,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,72.38,t4-d0,,
+,,,1,"single capture, per kernel",0,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,63.27,t4-d0,,
+,,,1,"single capture, per kernel",1,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,67.68,t4-d0,,
+,,,0,"single capture, per kernel",0,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,13.79,t4-d1,,
+,,,0,"single capture, per kernel",1,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,20.63,t4-d1,,
+,,,1,"single capture, per kernel",0,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,19.63,t4-d1,,
+,,,1,"single capture, per kernel",1,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,18.53,t4-d1,,
+,,,0,"single capture, per kernel",0,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,8.41,t4-d2,,
+,,,0,"single capture, per kernel",1,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,14.96,t4-d2,,
+,,,1,"single capture, per kernel",0,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,13.93,t4-d2,,
+,,,1,"single capture, per kernel",1,profile,,smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct,,e,,%,13.9,t4-d2,,
+,,,,identical across both cores and both factor kernels,,profile,,launch__shared_mem_per_block_allocated,,f-top,,KiB/block,17.0,t1-d0,,
+,,,,identical across both cores and both factor kernels,,profile,,launch__shared_mem_per_block_allocated,,f-top,,KiB/block,17.0,t4-d0,,
+,,,,identical across both cores and both factor kernels,,profile,,launch__shared_mem_per_block_allocated,,f-top,,KiB/block,49.0,t4-d1,,
+,,,,identical across both cores and both factor kernels,,profile,,launch__shared_mem_per_block_allocated,,f-top,,KiB/block,65.0,t4-d2,,
+,,,0,"single capture, per kernel",0,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,14.73,t1-d0,,
+,,,0,"single capture, per kernel",1,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,14.72,t1-d0,,
+,,,1,"single capture, per kernel",0,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,18.28,t1-d0,,
+,,,1,"single capture, per kernel",1,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,18.75,t1-d0,,
+,,,0,"single capture, per kernel",0,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,7.24,t4-d0,,
+,,,0,"single capture, per kernel",1,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,7.25,t4-d0,,
+,,,1,"single capture, per kernel",0,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,7.27,t4-d0,,
+,,,1,"single capture, per kernel",1,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,7.4,t4-d0,,
+,,,0,"single capture, per kernel",0,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,6.68,t4-d1,,
+,,,0,"single capture, per kernel",1,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,6.89,t4-d1,,
+,,,1,"single capture, per kernel",0,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,7.08,t4-d1,,
+,,,1,"single capture, per kernel",1,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,7.1,t4-d1,,
+,,,0,"single capture, per kernel",0,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,5.76,t4-d2,,
+,,,0,"single capture, per kernel",1,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,5.69,t4-d2,,
+,,,1,"single capture, per kernel",0,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,5.75,t4-d2,,
+,,,1,"single capture, per kernel",1,profile,,sm__warps_active.avg.pct_of_peak_sustained_active,,f-bottom,,%,5.6,t4-d2,,

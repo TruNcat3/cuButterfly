@@ -1,0 +1,62 @@
+{
+  "counts": {
+    "batch_precision": 284,
+    "composed": 138,
+    "core": 74,
+    "crypto": 208,
+    "mapping_seeds": 79,
+    "operator_extensions": 18,
+    "plan_deferred": 11,
+    "plan_workloads": 16,
+    "stage_points": 28
+  },
+  "deferred_plan_harness": {
+    "count": 11,
+    "reason": "plan_bench --verify is complete only for forward standard out-of-place FFT"
+  },
+  "files": {
+    "batch_precision.json": {
+      "bytes": 75979,
+      "sha256": "92c21438c77d4bda6144a6a2c8dade0bb249eb8662079521d97d5e8efd504fcc"
+    },
+    "composed.json": {
+      "bytes": 67410,
+      "sha256": "19c400ad468cef8d1dbbee35555a0e330b46dec893365cad7afa9a93fc1b2e35"
+    },
+    "core.json": {
+      "bytes": 13619,
+      "sha256": "638e721d81e3bf22e614a27851260b29ec4fcdca463175c71c395af31cf747f5"
+    },
+    "crypto.json": {
+      "bytes": 48392,
+      "sha256": "7e0e2e79a05a8b3d6be8530796e5eb8667f8ee442341c694efb6b6d23432fff5"
+    },
+    "mapping_seeds.json": {
+      "bytes": 126342,
+      "sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    "operator_extensions.json": {
+      "bytes": 4705,
+      "sha256": "b7d1c043e0243a660cfa28d7e1fc9bb1a1e5b08d90292e52509bfde1096c75b8"
+    },
+    "plan_workloads.json": {
+      "bytes": 20362,
+      "sha256": "bbb32d30106a924e98f6ac9b52167d128e54b03ece2d7a4482c77c0087944fed"
+    },
+    "stage_points.json": {
+      "bytes": 13316,
+      "sha256": "5739af604ab84ac4ed73176a495c63f56893d2f7df67e92fdf25a85e0fe66409"
+    }
+  },
+  "manifest_sha256": "d90c4d59d4117c06ef5ecb7f97e95e0cf9c3b6889f3169e6685b7027808daf39",
+  "portable": true,
+  "schema": "cubutterfly-research-campaign-v1",
+  "source_inputs": {
+    "batch_precision": "workloads.json",
+    "composed": "composed_workloads.json",
+    "core": "workloads.json",
+    "crypto": "workloads.json",
+    "mapping_seeds": "mapping_seeds.json",
+    "stage_points": "stage_points.json"
+  }
+}

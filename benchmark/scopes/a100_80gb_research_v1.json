@@ -1,0 +1,389 @@
+{
+  "schema": "cubutterfly-benchmark-scope-v1",
+  "scope_id": "a100-80gb-research-0.9.3.11",
+  "status": "active-research",
+  "declared_on": "2026-10-17",
+  "hardware": {
+    "vendor": "NVIDIA",
+    "family": "A100",
+    "memory_gib": 80,
+    "primary_target": "A100 80GB PCIe",
+    "primary_sm": 80,
+    "identity": "GPU UUID plus model and memory capacity",
+    "isolation": "exclusive UUID guard"
+  },
+  "semantic_axes": {
+    "operators": [
+      "fft",
+      "ntt",
+      "fwht",
+      "subset-zeta",
+      "superset-zeta",
+      "xor-zeta",
+      "structured-2x2"
+    ],
+    "precisions": [
+      "fp16",
+      "bf16",
+      "fp32",
+      "fp64",
+      "fp16-fp32",
+      "uint32",
+      "uint64",
+      "word32",
+      "word64"
+    ],
+    "directions": [
+      "forward",
+      "inverse"
+    ],
+    "ranks": [
+      1,
+      2,
+      3,
+      4,
+      8
+    ],
+    "orders": [
+      "natural",
+      "bit-reversed",
+      "logical-order-preserving"
+    ],
+    "layouts": [
+      "packed",
+      "strided",
+      "complex",
+      "real",
+      "modular"
+    ],
+    "placements": [
+      "in-place",
+      "out-of-place"
+    ],
+    "normalization": [
+      "none",
+      "inverse",
+      "requested-scale"
+    ],
+    "batch_policy": "representative small, medium and large batches; no silent batch reduction",
+    "size_policy": "power-of-two extents bounded by each named manifest; no implicit padding or flattening"
+  },
+  "common_contract": {
+    "case_identity": [
+      "operator",
+      "precision",
+      "accumulation",
+      "shape",
+      "rank",
+      "batch",
+      "direction",
+      "normalization",
+      "input_order",
+      "output_order",
+      "placement",
+      "layout",
+      "strides"
+    ],
+    "correctness": {
+      "integer": "full elementwise exact comparison against same-precision CPU reference",
+      "floating": "all-finite check plus complete absolute and relative error distribution; no runner-assigned threshold",
+      "input_preservation": true,
+      "padding_checks": true
+    },
+    "timing": {
+      "common_excluded": [
+        "compilation",
+        "plan construction",
+        "allocation",
+        "reference generation",
+        "warmup"
+      ],
+      "common_included": [
+        "normalization",
+        "permutation",
+        "layout conversion",
+        "placement adapter",
+        "complete execution"
+      ],
+      "protocols": {
+        "comparison-graph-v1": {
+          "warmup_calls": 10,
+          "graph_replays": 7,
+          "calls_per_graph": 20,
+          "measurement": "CUDA Graph"
+        },
+        "search-host-event-loop-v1": {
+          "warmup_calls": 3,
+          "repetitions": 20,
+          "measurement": "host-submitted CUDA events",
+          "ranking_only": true
+        },
+        "diagnostic-event-loop-v1": {
+          "warmup_calls": 3,
+          "repetitions": 20,
+          "measurement": "host-submitted CUDA events",
+          "ranking_only": true
+        }
+      },
+      "online_compilation": "allowed during research search and excluded from execution latency"
+    },
+    "baseline_policy": {
+      "applicability": "exact semantic contract only",
+      "missing_baseline": "record a gap",
+      "forbidden_substitutions": [
+        "precision",
+        "smaller shape",
+        "smaller batch",
+        "flattened rank",
+        "unrelated operator"
+      ],
+      "adapter_reporting": "include real adapter cost and label native and adapted cohorts separately"
+    },
+    "aggregation": "never combine different GPU UUIDs, library builds, timing protocols, or native/adapted cohorts"
+  },
+  "tracks": [
+    {
+      "track_id": "operator_comparison_66",
+      "kind": "operator_comparison",
+      "status": "complete",
+      "population_ref": "config/benchmark_populations/operator_comparison_66.json",
+      "population_sha256": "ba53eb9b6a814c86f4c51c44d3a430dba68c94f0201702caccfb8f48738e599f",
+      "population_count": 66,
+      "result_ref": "results/install_compare_repair_20261014/measurement/results.json",
+      "result_sha256": "0dd16c95ecc497c917877e2db1b6165a0d0b98a47f8c577b74a09a883d34973a",
+      "baseline_ref": "config/external_comparison_catalog.json",
+      "baseline_sha256": "9f1fd8b7c287e2ae78b00d1b62253e95d8979c7ebc850b4db8eebe4c2abbcb81",
+      "selection": "public-measure selection bound to the recorded build and calibration",
+      "timing_protocol_id": "comparison-graph-v1",
+      "revision_of": "results/install_compare_20261013/campaign_config.json",
+      "measured_axes": {
+        "ranks": [
+          1,
+          2,
+          3,
+          4,
+          8
+        ],
+        "operators": [
+          "fft",
+          "ntt",
+          "fwht",
+          "subset-zeta",
+          "superset-zeta",
+          "structured-2x2"
+        ]
+      }
+    },
+    {
+      "track_id": "ntt_search_repair_5",
+      "kind": "operator_comparison",
+      "status": "complete",
+      "population_ref": "config/benchmark_populations/operator_comparison_66.json",
+      "population_sha256": "ba53eb9b6a814c86f4c51c44d3a430dba68c94f0201702caccfb8f48738e599f",
+      "population_count": 5,
+      "result_ref": "results/ntt_diagnostic_20261017/followup_summary.json",
+      "search_budget": 512,
+      "search_policy": "family quota sampling before within-family sampling; incumbent retained",
+      "baseline": "GPU-NTT exact rank-one word64 contract; word32 is a separate conditional historical cohort",
+      "timing_protocol_ids": [
+        "search-host-event-loop-v1",
+        "comparison-graph-v1"
+      ],
+      "measured_axes": {
+        "ranks": [
+          1
+        ],
+        "precision": [
+          "word64"
+        ],
+        "batch": [
+          1,
+          4
+        ]
+      },
+      "aggregate": "withhold five-point geometric mean until all five points share GPU UUID, library hash and three valid Graph rounds"
+    },
+    {
+      "track_id": "mechanism_profile_controlled",
+      "kind": "mechanism_profile",
+      "status": "complete",
+      "population_ref": "config/benchmark_populations/mechanism_profile_controlled.json",
+      "population_sha256": "f672f194ff5a7473699f529a7a97f30957a6c694e3d49c419f536e138cf200e7",
+      "population_count": 6,
+      "result_ref": "results/mechanism_current_20261017_v2/report.json",
+      "result_sha256": "0abed45ccf12e7d937d8d123dacaf3ecbb5adce7397e9a3ec898a8fd13acab50",
+      "profile_ref": "results/mechanism_current_20261017_v2/profile/manifest.json",
+      "profile_sha256": "0fa8fb0672d3956402401b630a592148ed6b94cc1ed06303af760ef076b21c61",
+      "control": "change one organization mechanism while fixing semantic request and arithmetic core",
+      "timing_protocol_id": "diagnostic-event-loop-v1",
+      "measured_axes": {
+        "operators": [
+          "fft",
+          "fwht",
+          "ntt"
+        ],
+        "precision": [
+          "fp32",
+          "word64"
+        ],
+        "ranks": [
+          1
+        ],
+        "directions": [
+          "forward"
+        ],
+        "batch": [
+          1,
+          4
+        ]
+      },
+      "metrics": [
+        "complete latency",
+        "kernel latency",
+        "launch count",
+        "grid geometry",
+        "registers",
+        "shared memory",
+        "occupancy"
+      ]
+    },
+    {
+      "track_id": "end_to_end_butterfly_applications",
+      "kind": "end_to_end",
+      "status": "planned",
+      "population_ref": "config/benchmark_populations/composed.json",
+      "population_sha256": "19c400ad468cef8d1dbbee35555a0e330b46dec893365cad7afa9a93fc1b2e35",
+      "declared_case_count": 138,
+      "result_ref": null,
+      "applications": [
+        "CKKS/NTT pipeline",
+        "FHE polynomial transform",
+        "FFT image filtering"
+      ],
+      "input_policy": "same deterministic random inputs and weights for every implementation",
+      "batch_policy": "matched batch; report butterfly fraction of end-to-end time",
+      "timing_protocol_id": "comparison-graph-v1",
+      "measured_axes": null
+    },
+    {
+      "track_id": "fft_xd_grouped_baseline",
+      "kind": "operator_comparison",
+      "status": "complete-supplement",
+      "population_ref": "config/benchmark_populations/operator_comparison_66.json",
+      "population_sha256": "ba53eb9b6a814c86f4c51c44d3a430dba68c94f0201702caccfb8f48738e599f",
+      "request_count": 2,
+      "result_rows": 6,
+      "result_ref": "results/ntt_diagnostic_20261017/fft_gaps_grouped/release/supplement.json",
+      "baseline_ref": "config/external_comparison_catalog.json",
+      "adapter_policy": "group at most three vendor axes and include packing, copies and normalization in Graph timing",
+      "timing_protocol_id": "comparison-graph-v1",
+      "measured_axes": {
+        "ranks": [
+          4,
+          8
+        ],
+        "precision": [
+          "fp32"
+        ],
+        "population": [
+          "external-axis-composition"
+        ]
+      }
+    },
+    {
+      "track_id": "end_to_end_fft_poisson_current",
+      "kind": "end_to_end",
+      "status": "complete",
+      "population_ref": "config/benchmark_populations/fft_poisson_current.json",
+      "population_sha256": "59e906cc34af03b49fa58a688ba7719113301cc15debdbdeb7d47720dd7c0066",
+      "population_count": 3,
+      "result_ref": "results/e2e_current_20261017/poisson_2048_b16/report.json",
+      "result_sha256": "de7688732668e5304f7d34eb5b54175933c40f9309b29d37ebfd4a40bf6106bb",
+      "large_batch_trace_ref": "results/e2e_current_20261017/poisson_2048_b16_adaptive_trace/report.json",
+      "large_batch_trace_sha256": "d572d18ffa1eefa75ca900109a12779108207e5d758150000bf7fd2073be0616",
+      "large_batch_trace_build_sha256": "93471bbb7863cd1414b04cb0d29232ee9e3606b674771336bf4b8c7c01382ade",
+      "large_batch_trace_doc": "docs/e2e_b16_trace_20261017.md",
+      "timing_protocol_id": "comparison-graph-v1",
+      "applications": [
+        "2D periodic spectral Poisson solve"
+      ],
+      "measured_axes": {
+        "operators": [
+          "fft"
+        ],
+        "precision": [
+          "fp32"
+        ],
+        "ranks": [
+          2
+        ],
+        "shapes": [
+          [
+            1024,
+            1024
+          ],
+          [
+            2048,
+            2048
+          ]
+        ],
+        "batch": [
+          4,
+          16
+        ],
+        "modes": [
+          "eager",
+          "cuda-graph"
+        ]
+      }
+    },
+    {
+      "track_id": "end_to_end_fft_poisson_adaptive_revision",
+      "kind": "end_to_end",
+      "status": "complete-supplement",
+      "revision_of": "end_to_end_fft_poisson_current",
+      "population_ref": "config/benchmark_populations/fft_poisson_current.json",
+      "population_sha256": "59e906cc34af03b49fa58a688ba7719113301cc15debdbdeb7d47720dd7c0066",
+      "population_count": 1,
+      "result_ref": "results/e2e_current_20261017/poisson_2048_b16_adaptive_trace/report.json",
+      "result_sha256": "d572d18ffa1eefa75ca900109a12779108207e5d758150000bf7fd2073be0616",
+      "library_build": "build-contract-20261017",
+      "library_sha256": "93471bbb7863cd1414b04cb0d29232ee9e3606b674771336bf4b8c7c01382ade",
+      "timing_protocol_id": "comparison-graph-v1",
+      "applications": [
+        "2D periodic spectral Poisson solve"
+      ],
+      "measured_axes": {
+        "operators": [
+          "fft"
+        ],
+        "precision": [
+          "fp32"
+        ],
+        "ranks": [
+          2
+        ],
+        "shapes": [
+          [
+            2048,
+            2048
+          ]
+        ],
+        "batch": [
+          16
+        ],
+        "modes": [
+          "eager",
+          "cuda-graph"
+        ]
+      }
+    }
+  ],
+  "provenance": {
+    "library_build": "per-track; see each track population manifest",
+    "track_provenance_policy": "library build and binary SHA are recorded per track; historical tracks retain their original identity",
+    "environment": "/opt/conda/envs/cubutterfly",
+    "historical_policy": "historical populations remain named evidence and are never silently merged",
+    "declared_axes_are_capabilities": "declared axes describe the framework; each track must state measured_axes before a coverage claim"
+  }
+}

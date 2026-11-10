@@ -1,0 +1,120 @@
+--- a/src/include/heongpu/host/ckks/operator.cuh
++++ b/src/include/heongpu/host/ckks/operator.cuh
+@@ -1991,6 +1991,10 @@
+         __host__ void quick_ckks_encoder_constant_complex(Complex64 input,
+                                                           Data64* output,
+                                                           const double scale);
++        __host__ void quick_ckks_encoder_constant_complex(Complex64 input,
++                                                          Data64* output,
++                                                          const double scale,
++                                                          cudaStream_t stream);
+ 
+         __host__ void quick_ckks_encoder_constant_double(double input,
+                                                          Data64* output,
+--- a/src/lib/host/ckks/operator.cu
++++ b/src/lib/host/ckks/operator.cu
+@@ -616,8 +616,8 @@
+             imag_rns_host[i] = NTL::to_long(imag_mod);
+         }
+ 
+-        DeviceVector<Data64> real_rns = DeviceVector<Data64>(real_rns_host);
+-        DeviceVector<Data64> imag_rns = DeviceVector<Data64>(imag_rns_host);
++        DeviceVector<Data64> real_rns = DeviceVector<Data64>(real_rns_host, stream);
++        DeviceVector<Data64> imag_rns = DeviceVector<Data64>(imag_rns_host, stream);
+ 
+         cipher_add_by_gaussian_integer_kernel<<<
+             dim3((context_->n >> 8), current_decomp_count, cipher_size), 256, 0,
+@@ -709,8 +709,8 @@
+             imag_rns_host[i] = NTL::to_long(imag_mod);
+         }
+ 
+-        DeviceVector<Data64> real_rns = DeviceVector<Data64>(real_rns_host);
+-        DeviceVector<Data64> imag_rns = DeviceVector<Data64>(imag_rns_host);
++        DeviceVector<Data64> real_rns = DeviceVector<Data64>(real_rns_host, stream);
++        DeviceVector<Data64> imag_rns = DeviceVector<Data64>(imag_rns_host, stream);
+ 
+         cipher_mult_by_gaussian_integer_kernel<<<
+             dim3((context_->n >> 8), current_decomp_count, cipher_size), 256, 0,
+@@ -2543,15 +2543,22 @@
+     __host__ void HEOperator<Scheme::CKKS>::quick_ckks_encoder_constant_complex(
+         Complex64 input, Data64* output, const double scale)
+     {
++        quick_ckks_encoder_constant_complex(input, output, scale, cudaStreamDefault);
++    }
++
++    __host__ void HEOperator<Scheme::CKKS>::quick_ckks_encoder_constant_complex(
++        Complex64 input, Data64* output, const double scale,
++        cudaStream_t stream)
++    {
+         // std::vector<Complex64> in = {input};
+         std::vector<Complex64> in;
+         for (int i = 0; i < slot_count_; i++)
+         {
+             in.push_back(input);
+         }
+-        DeviceVector<Complex64> message_gpu(slot_count_);
+-        cudaMemcpy(message_gpu.data(), in.data(), in.size() * sizeof(Complex64),
+-                   cudaMemcpyHostToDevice);
++        DeviceVector<Complex64> message_gpu(slot_count_, stream);
++        cudaMemcpyAsync(message_gpu.data(), in.data(), in.size() * sizeof(Complex64),
++                        cudaMemcpyHostToDevice, stream);
+         HEONGPU_CUDA_CHECK(cudaGetLastError());
+ 
+         double fix = scale / static_cast<double>(slot_count_);
+@@ -2560,13 +2567,13 @@
+         cfg_ifft.n_power = log_slot_count_;
+         cfg_ifft.fft_type = gpufft::type::INVERSE;
+         cfg_ifft.mod_inverse = Complex64(fix, 0.0);
+-        cfg_ifft.stream = 0;
++        cfg_ifft.stream = stream;
+ 
+         gpufft::GPU_Special_FFT(message_gpu.data(),
+                                 special_ifft_roots_table_->data(), cfg_ifft, 1);
+ 
+         encode_kernel_ckks_conversion<<<dim3(((slot_count_) >> 8), 1, 1),
+-                                        256>>>(
++                                        256, 0, stream>>>(
+             output, message_gpu.data(), context_->modulus_->data(),
+             context_->Q_size, two_pow_64_, reverse_order_->data(),
+             context_->n_power);
+@@ -2578,7 +2585,7 @@
+             .ntt_layout = gpuntt::PerPolynomial,
+             .reduction_poly = gpuntt::ReductionPolynomial::X_N_plus,
+             .zero_padding = false,
+-            .stream = 0};
++            .stream = stream};
+ 
+         gpuntt::GPU_NTT_Inplace(output, context_->ntt_table_->data(),
+                                 context_->modulus_->data(), cfg_ntt,
+@@ -2939,7 +2946,7 @@
+             for (int k = 0; k < P_size; k++)
+                 pq_mod_host[current_decomp_count + k] =
+                     context_->prime_vector_[Q_size + k];
+-            DeviceVector<Modulus64> pq_modulus_dev(pq_mod_host);
++            DeviceVector<Modulus64> pq_modulus_dev(pq_mod_host, stream);
+ 
+             // Compute P mod q_j for each active Q prime
+             std::vector<Data64> P_mod_q_host(current_decomp_count);
+@@ -2958,7 +2965,7 @@
+                 }
+                 P_mod_q_host[j] = p_mod_qj;
+             }
+-            DeviceVector<Data64> P_mod_q_dev(P_mod_q_host);
++            DeviceVector<Data64> P_mod_q_dev(P_mod_q_host, stream);
+ 
+             // ============================================================
+             // NTT location for PQ_l
+@@ -4433,10 +4440,11 @@
+             Ciphertext<Scheme::CKKS> xi_term = powered_ciphers[i];
+ 
+             DeviceVector<Data64> encoded_coeff_i(context_->Q_size
+-                                                 << context_->n_power);
++                                                 << context_->n_power,
++                                                 options.stream_);
+             quick_ckks_encoder_constant_complex(pol.coeffs_[i],
+                                                 encoded_coeff_i.data(),
+-                                                target_scale / xi_term.scale_);
++                                                target_scale / xi_term.scale_, options.stream_);
+             HEONGPU_CUDA_CHECK(cudaGetLastError());
+ 
+             int current_decomp_count = context_->Q_size - xi_term.depth_;

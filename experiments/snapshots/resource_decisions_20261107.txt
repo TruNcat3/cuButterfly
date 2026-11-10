@@ -1,0 +1,15 @@
+\begingroup
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Request ($N/B$) & G & SMEM$^{\max}$ & Retro. & Confirm\\\midrule
+FFT64 $2^{20}/16$ & 2 & 64 & 1.0651 & 1.0727\\
+FWHT32 $2^{16}/16$ & 7 & 4 & 0.0450 & 0.0449\\
+FWHT32 $2^{15}/32$ & 1 & 32 & 0.0186 & 0.0184\\
+\bottomrule
+\end{tabular}
+\endgroup
+% Times in ms; SMEM max in KiB; G counts ordered stage bands, not compute groups.
+% * Retrospective service-composition check, not a certified prediction frozen before confirmation.
+% SMEM is maximum observed kernel live shared allocation, not the dependency-region value footprint.
+% NTT chain is absent from this cohort; see resource_decisions_20261107.json.

@@ -1,0 +1,55 @@
+{
+  "snapshot_date": "2026-09-17",
+  "scope": "Historical motivation evidence only; not merged into the frozen comprehensive benchmark or current factorial.",
+  "sources": [
+    {"path": "results/fft_register_tile_20260912/report.md", "sha256": "0b284bb876cd9f17c0860f70548690d6594b602668ff45e5b36f11f9d94cdfaa"},
+    {"path": "results/fft_register_tile_20260912/accurate_core_control/paired_summary.json", "sha256": "0fe8cbcbf45566fd2a8516e5e24bc5068608ba0fbb98430a4ece9f01fdedd706"},
+    {"path": "results/fft_register_tile_20260912/accurate_core_control/paired_metadata.json", "sha256": "1da3e572e7bafbd5579216dd48646b10f80c4a918cf792b693f1f3a1e3e94fcd"},
+    {"path": "results/homogeneous_warp_dual_groups/analysis.md", "sha256": "105d543f6a1d120388f647b32a08e1a43a3b7f28e2139037080af85fc5188ad1"},
+    {"path": "results/hierarchical_streaming/comprehensive/analysis.md", "sha256": "008a56d6a1fbc1751fb831929e2acfdbc1b8ff617ce38c83076e413d03a68792"},
+    {"path": "results/hierarchical_streaming/comprehensive/summary.csv", "sha256": "32b88f453e0c8f61dcaea7ea12eb6447ae76ea7920ba780d484576c10fde85ab"},
+    {"path": "results/hierarchical_streaming/v07_wave_core_checkpoint.md", "sha256": "c07a7ee35840ceede8cb86abc735ece4a102d15b2d6d1b6d9f32c976a6f70590"}
+  ],
+  "cohorts": [
+    {
+      "id": "a10080_fft_accurate_prefix_core_control",
+      "device": "A100 PCIe 80GB", "operator": "FP32 complex forward FFT",
+      "fixed": "declared prefix columns=16, suffix=4096 and transpose path; natural output, out of place",
+      "change": "register-c16 native prefix to dx-thread-c16 cuFFTDx Thread prefix",
+      "protocol": "5 paired rounds, 100 executions per round, corrected accuracy contract",
+      "rows": [
+        {"logN": 18, "batch": 4, "before_ms": 0.035031, "after_ms": 0.0336486},
+        {"logN": 20, "batch": 4, "before_ms": 0.148951, "after_ms": 0.145633}
+      ],
+      "limits": "End-to-end core-substitution observation; compiled resource effects included; not a full factorial."
+    },
+    {
+      "id": "v100_uint32_single_dual_row_groups",
+      "device": "Tesla V100", "operator": "uint32 Shoup NTT",
+      "fixed": "logN=20, 10+10, four-row static IO, local continuation, 101 registers/thread",
+      "change": "one four-warp group/CTA to two groups/CTA with 16 resident warps/SM in either case",
+      "protocol": "3 confirmation trials, 5 warmups, 30 repetitions",
+      "rows": [
+        {"batch": 1, "before_ms": 0.177, "after_ms": 0.177},
+        {"batch": 4, "before_ms": 0.426, "after_ms": 0.470},
+        {"batch": 16, "before_ms": 1.506, "after_ms": 1.305}
+      ],
+      "limits": "Times rounded in source report; CTA/shared/residency change with organization. Counter pass is separate from event timing."
+    },
+    {
+      "id": "v100_uint32_barrier_resident1010",
+      "device": "Tesla V100-SXM2-16GB", "operator": "uint32 NTT",
+      "fixed": "logN=20, mature local radix-4 core, logical 10+10 partition",
+      "change": "barrier phases to fixed-role readiness-driven resident streaming",
+      "protocol": "3 independent process trials, 10 warmups, 50 repetitions",
+      "rows": [
+        {"batch": 1, "before_ms": 0.080179, "after_ms": 0.129372},
+        {"batch": 4, "before_ms": 0.271708, "after_ms": 0.347505},
+        {"batch": 8, "before_ms": 0.501760, "after_ms": 0.546652},
+        {"batch": 16, "before_ms": 1.058591, "after_ms": 1.020949},
+        {"batch": 32, "before_ms": 2.852577, "after_ms": 2.398044}
+      ],
+      "limits": "Ownership, publication and fill/drain change jointly. Maximum uint32 trial spread reported as 16.99%; not a universal speedup."
+    }
+  ]
+}

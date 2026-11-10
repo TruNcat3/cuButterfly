@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "output": "results/full_current_20261025/ckks",
+  "library": "build-e13-cufftdx/libcuntt.so",
+  "heongpu_source": "results/e13_assets/sources/HEonGPU",
+  "cached_build": "results/e13_assets/heongpu-build-e13",
+  "auto_history": "results/ckks_auto_schedule_20261019",
+  "auto_cohorts": ["method1_n14", "method2_n14", "method1_n16_b1", "method1_n16_b8", "method1_n16_b32_cooled"],
+  "bootstrap_history": "results/rns_prepared_20261021/ckks_graph.metadata.json",
+  "requests": "results/rns_prepared_20261021/requests/manifest.json",
+  "expected_auto_configurations": 36,
+  "expected_requests": 118,
+  "arch": "80",
+  "tune_repetitions": 5
+}

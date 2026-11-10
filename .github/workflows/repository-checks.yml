@@ -1,0 +1,35 @@
+name: Repository checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.11"
+      - name: Check repository metadata and local links
+        run: python3 scripts/check_repository.py
+      - name: Test source-link and benchmark-scope validation
+        run: |
+          python3 -m pip install pytest
+          python3 -m pytest -q tests/test_repository_links.py tests/test_benchmark_scope.py
+      - name: Check shell syntax
+        run: |
+          for script in scripts/*.sh; do
+            bash -n "$script"
+          done
+      - name: Exercise the design-point generator
+        run: |
+          python3 scripts/generate_design_points.py \
+            --spec config/v100_design_points.json \
+            --output-dir /tmp/cubutterfly-generated
+          test -s /tmp/cubutterfly-generated/design_points.cmake
+          test -s /tmp/cubutterfly-generated/design_points.json

@@ -1,0 +1,43 @@
+{
+  "schema": "cubutterfly-explicit-graph-suite-v1",
+  "purpose": "Fixed-core organization transfer: matched organization control, not external-library native performance or AUTO selection",
+  "core_provenance": {
+    "register-tile": "Auditable existing NativeFactor implementation in src/fft_factor_native.cuh",
+    "cufftdx-block": "Existing cuFFTDx block provider under the public factor-streamed organization"
+  },
+  "operator": "fft", "precision": "fp64", "logN": 16, "batch": 16,
+  "inverse": false, "seed": 6143, "warmup": 5, "repeat": 30, "trials": 7,
+  "base_mapping": {
+    "schema_version": 1, "kind": "butterfly", "backend": "factor-streamed",
+    "fft_core": "register-tile", "compute_unit": "auto",
+    "shared_layout": "writer-aligned", "cross_twiddle": "recurrence",
+    "stage_partition": [16], "factor_partition": [8, 8],
+    "factor_ept": 16, "factor_columns": 4,
+    "factor_slices": 1, "factor_overlap": false, "stage_overlap": false,
+    "data_tiles_per_cta": 1, "prefetch_depth": 0,
+    "factor_io_policies": ["dynamic", "dynamic"]
+  },
+  "control_groups": [
+    {
+      "id": "native-factor-fixed-core",
+      "cases": ["native-t1-d0", "native-t4-d0", "native-t4-d1", "native-t4-d2"],
+      "allowed_differences": ["data_tiles_per_cta", "prefetch_depth"]
+    },
+    {
+      "id": "cufftdx-block-fixed-core",
+      "cases": ["cufftdx-t1-d0", "cufftdx-t4-d0", "cufftdx-t4-d1", "cufftdx-t4-d2"],
+      "allowed_differences": ["data_tiles_per_cta", "prefetch_depth"]
+    }
+  ],
+  "cases": [
+    {"id": "native-t1-d0", "mapping": {}},
+    {"id": "native-t4-d0", "mapping": {"data_tiles_per_cta": 4}},
+    {"id": "native-t4-d1", "mapping": {"data_tiles_per_cta": 4, "prefetch_depth": 1}},
+    {"id": "native-t4-d2", "mapping": {"data_tiles_per_cta": 4, "prefetch_depth": 2}},
+    {"id": "cufftdx-t1-d0", "mapping": {"fft_core": "cufftdx-block"}},
+    {"id": "cufftdx-t4-d0", "mapping": {"fft_core": "cufftdx-block", "data_tiles_per_cta": 4}},
+    {"id": "cufftdx-t4-d1", "mapping": {"fft_core": "cufftdx-block", "data_tiles_per_cta": 4, "prefetch_depth": 1}},
+    {"id": "cufftdx-t4-d2", "mapping": {"fft_core": "cufftdx-block", "data_tiles_per_cta": 4, "prefetch_depth": 2}},
+    {"id": "cufft", "mapping": {"backend": "cufft"}, "inherit_base": false}
+  ]
+}

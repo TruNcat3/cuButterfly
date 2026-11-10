@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "hardware": {
+    "id": "v100-sm70",
+    "compute_capability": 70,
+    "sm_count": 80,
+    "warp_size": 32,
+    "registers_per_sm": 65536,
+    "shared_bytes_per_sm": 98304,
+    "threads_per_sm": 2048,
+    "warps_per_sm": 64,
+    "max_ctas_per_sm": 32,
+    "max_threads_per_cta": 1024,
+    "max_registers_per_cta": 65536,
+    "max_shared_bytes_per_cta": 49152,
+    "register_allocation_unit_per_warp": 256,
+    "shared_allocation_unit_per_cta": 256,
+    "l2_bytes": 6291456
+  },
+  "max_points": 16777216,
+  "protocols": {
+    "quick": {"target_points": 4194304, "warmup": 20, "repeat": 50, "trials": 3, "verify_batch": 1},
+    "full": {"target_points": 4194304, "warmup": 1000, "repeat": 100, "trials": 5, "verify_batch": 1}
+  },
+  "binaries": {
+    "butterfly": "build/cubutterfly_bench",
+    "ntt": "build/cuntt_bench"
+  },
+  "lengths": {
+    "quick": [8, 15, 20],
+    "full": [10, 12, 13, 14, 16, 18]
+  },
+  "wave_targets": {
+    "quick": [1.0],
+    "full": [0.5, 2.0, 4.0]
+  },
+  "contracts": [
+    {"id": "fp16-native", "operators": ["fft", "fwht", "structured-2x2"], "precision": "fp16", "accumulation": "native", "storage_bits": 16, "compute_bits": 16, "accumulator_bits": 16, "emulated_native": 0},
+    {"id": "fp16-fp32", "operators": ["fft", "fwht", "structured-2x2"], "precision": "fp16", "accumulation": "fp32", "storage_bits": 16, "compute_bits": 32, "accumulator_bits": 32, "emulated_native": 0},
+    {"id": "bf16-native", "operators": ["fft", "fwht", "structured-2x2"], "precision": "bf16", "accumulation": "native", "storage_bits": 16, "compute_bits": 32, "accumulator_bits": 16, "emulated_native": 1},
+    {"id": "bf16-fp32", "operators": ["fft", "fwht", "structured-2x2"], "precision": "bf16", "accumulation": "fp32", "storage_bits": 16, "compute_bits": 32, "accumulator_bits": 32, "emulated_native": 0},
+    {"id": "fp32", "operators": ["fft", "fwht", "structured-2x2"], "precision": "fp32", "accumulation": "native", "storage_bits": 32, "compute_bits": 32, "accumulator_bits": 32, "emulated_native": 0},
+    {"id": "fp64", "operators": ["fft", "fwht", "structured-2x2"], "precision": "fp64", "accumulation": "native", "storage_bits": 64, "compute_bits": 64, "accumulator_bits": 64, "emulated_native": 0},
+    {"id": "uint32-zeta", "operators": ["subset-zeta"], "precision": "uint32", "accumulation": "native", "storage_bits": 32, "compute_bits": 32, "accumulator_bits": 32, "emulated_native": 0},
+    {"id": "uint32-ntt", "operators": ["ntt"], "precision": "uint32", "accumulation": "native", "storage_bits": 32, "compute_bits": 32, "accumulator_bits": 32, "emulated_native": 0, "modulus_bits": 30},
+    {"id": "uint64-ntt", "operators": ["ntt"], "precision": "uint64", "accumulation": "native", "storage_bits": 64, "compute_bits": 64, "accumulator_bits": 64, "emulated_native": 0, "modulus_bits": 60}
+  ],
+  "operators": [
+    {"id": "fft", "value_lanes": 2, "coefficient_policy": "per-stage-twiddle", "arithmetic_pipeline": "floating-complex"},
+    {"id": "fwht", "value_lanes": 1, "coefficient_policy": "implicit-sign", "arithmetic_pipeline": "floating-add"},
+    {"id": "structured-2x2", "value_lanes": 1, "coefficient_policy": "broadcast", "arithmetic_pipeline": "floating-fma", "stage_matrix": "0.9238795,-0.3826834,0.3826834,0.9238795"},
+    {"id": "subset-zeta", "value_lanes": 1, "coefficient_policy": "implicit-unit", "arithmetic_pipeline": "integer-add"},
+    {"id": "ntt", "runner": "ntt", "min_logN": 12, "max_logN": 20, "value_lanes": 1, "coefficient_policy": "per-stage-root", "arithmetic_pipeline": "modular-multiply-reduce"}
+  ],
+  "mappings": [
+    {"id": "temporal-r2-t128", "operators": ["fft", "fwht", "structured-2x2", "subset-zeta"], "backend": "temporal-tile", "compute_unit": "radix2", "threads": 128, "min_logN": 1, "max_logN": 10, "base_registers": 28, "state_words_per_thread": 2},
+    {"id": "temporal-r4-t128", "operators": ["fft", "fwht", "structured-2x2", "subset-zeta"], "backend": "temporal-tile", "compute_unit": "radix4", "threads": 128, "min_logN": 2, "max_logN": 10, "base_registers": 34, "state_words_per_thread": 4},
+    {"id": "online-r2-t256", "operators": ["fft", "fwht", "structured-2x2", "subset-zeta"], "backend": "online-reorder", "compute_unit": "radix2", "threads": 256, "min_logN": 11, "max_logN": 20, "local_stages": "balanced", "base_registers": 34, "state_words_per_thread": 2},
+    {"id": "online-r4-t256", "operators": ["fft", "fwht", "structured-2x2", "subset-zeta"], "backend": "online-reorder", "compute_unit": "radix4", "threads": 256, "min_logN": 11, "max_logN": 20, "local_stages": "balanced", "base_registers": 42, "state_words_per_thread": 4},
+    {"id": "hier-r4-t256", "operators": ["fft", "fwht", "structured-2x2", "subset-zeta"], "backend": "hierarchical", "compute_unit": "radix4", "threads": 256, "min_logN": 11, "max_logN": 20, "local_stages": "balanced", "base_registers": 40, "state_words_per_thread": 4},
+    {"id": "ntt-hybrid-r2-t256", "operators": ["ntt"], "backend": "hybrid2d", "compute_unit": "radix2", "threads": 256, "min_logN": 12, "max_logN": 20, "base_registers": 48, "state_words_per_thread": 2},
+    {"id": "ntt-hybrid-r4-t256", "operators": ["ntt"], "backend": "hybrid2d", "compute_unit": "radix4", "threads": 256, "min_logN": 12, "max_logN": 20, "base_registers": 58, "state_words_per_thread": 4}
+  ],
+  "baselines": [
+    {"operator": "fft", "implementation": "cuFFT", "precisions": ["fp16", "fp32", "fp64"], "status": "supported"},
+    {"operator": "fft", "implementation": "cuFFT", "precisions": ["bf16"], "status": "unsupported-hardware", "reason": "CUDA 11.8 BF16 cuFFT requires SM80; V100 is SM70"},
+    {"operator": "fft", "implementation": "VkFFT", "precisions": ["fp16", "fp32", "fp64"], "status": "adapter-required"},
+    {"operator": "fwht", "implementation": "Dao-AILab FHT", "precisions": ["fp16", "bf16", "fp32"], "status": "supported"},
+    {"operator": "fwht", "implementation": "Dao-AILab FHT", "precisions": ["fp64"], "status": "unsupported-contract"},
+    {"operator": "structured-2x2", "implementation": "none", "precisions": ["fp16", "bf16", "fp32", "fp64"], "status": "no-matched-public-baseline"},
+    {"operator": "subset-zeta", "implementation": "none", "precisions": ["uint32"], "status": "no-matched-public-baseline"},
+    {"operator": "ntt", "implementation": "GPU-NTT", "precisions": ["uint32", "uint64"], "status": "supported-contract-dependent", "reason": "compare only matching modulus and output order"}
+  ]
+}

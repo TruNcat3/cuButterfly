@@ -1,0 +1,3 @@
+phase,latency_us,gpu,gpu_uuid,library_sha256,source
+old,34.15040075778961,NVIDIA A100-PCIE-40GB,2b759faa-3e58-7106-10aa-ea6e387c3f8e,6651f17cdaa71dba2bd43ffda8bfd85f18014240c163099e51c67a83dc5b6c8c,results/a100_fft_l_boundary_20261104/whole40/old/result.json
+new,34.20160114765167,NVIDIA A100-PCIE-40GB,2b759faa-3e58-7106-10aa-ea6e387c3f8e,cc6696af3a7894a5105f1c9e5af07bee42e92426ab2022dcae70c16977902a23,results/a100_fft_l_boundary_20261104/whole40/new/result.json

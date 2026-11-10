@@ -1,0 +1,21 @@
+{
+  "schema": "cubutterfly-paper-target-v1",
+  "id": "a100-80gb-gpu1",
+  "gpu_uuid": "GPU-00000000-0000-0000-0000-000000000001",
+  "device": "NVIDIA A100 80GB PCIe",
+  "compute_capability": "8.0",
+  "global_memory_bytes": 84974239744,
+  "python": "python",
+  "compile_mode": "research",
+  "build_dir": "build-a100-cufftdx",
+  "profile": "results/staged_migration_20260917/a100-80gb-gpu1/calibration_device.json",
+  "stage_checkpoint": "results/staged_migration_20260917/a100-80gb-gpu1/stage_calibration.json",
+  "pipeline_calibration": "results/staged_migration_20260917/a100-80gb-gpu1/pipeline_schedule_calibration.json",
+  "schedule_calibration": "results/staged_migration_20260917/a100-80gb-gpu1/schedule_calibration.json",
+  "mapping_seeds": [],
+  "acceptance_dir": "results/comprehensive_20260917/a100-80gb-gpu1",
+  "precompile_dir": "results/comprehensive_20260916/a100-80gb-precompile",
+  "vkfft_binary": "build-a100-vkfft/vkfft_bench",
+  "fht_python": "python",
+  "gpuntt_binary": "/tmp/gpuntt_merge_gap_bench_a100"
+}

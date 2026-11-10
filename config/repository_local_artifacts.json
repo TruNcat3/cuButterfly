@@ -1,0 +1,6 @@
+{
+  "schema": "cubutterfly-repository-local-artifacts-v1",
+  "description": "Exact historical raw artifact targets referenced by published documentation but not bundled with the source release. Registration does not verify their contents or experimental validity. New missing targets require explicit review.",
+  "reader_entry": "experiments/snapshots/current_refresh/snapshot.json",
+  "artifacts": []
+}

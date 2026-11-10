@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "hardware": "v100-sm70",
+  "protocol": {"warmup": 1000, "repeat": 100, "trials": 5, "seed": 20260724},
+  "workloads": [
+    {
+      "id": "fwht8", "operator": "fwht", "precision": "fp32", "logN": 8,
+      "direction": "forward", "normalization": "none", "placement": "out-of-place",
+      "batches": [4096, 65536],
+      "implementations": [
+        {"id": "warp", "name": "cuButterfly-warp-register", "runner": "butterfly", "reference": true,
+         "args": ["--backend", "temporal-tile", "--local-exchange", "warp-register", "--compute-unit", "radix2", "--tile-threads", "32"]},
+        {"id": "dao", "name": "Dao-AILab-FHT", "runner": "dao-fht", "args": []}
+      ]
+    },
+    {
+      "id": "fwht15", "operator": "fwht", "precision": "fp32", "logN": 15,
+      "direction": "forward", "normalization": "none", "placement": "out-of-place",
+      "batches": [4, 16, 256, 512],
+      "implementations": [
+        {"id": "warp", "name": "cuButterfly-warp-register", "runner": "butterfly", "reference": true,
+         "args": ["--backend", "temporal-tile", "--local-exchange", "warp-register", "--compute-unit", "radix2", "--tile-threads", "256"]},
+        {"id": "dao", "name": "Dao-AILab-FHT", "runner": "dao-fht", "args": []}
+      ]
+    },
+    {
+      "id": "ntt16", "operator": "ntt", "precision": "uint64", "modulus": "576460756061519873",
+      "modulus_bits": 60, "logN": 16, "direction": "forward", "normalization": "none",
+      "placement": "out-of-place", "output_order": "natural", "batches": [4, 64, 256],
+      "implementations": [
+        {"id": "cub", "name": "cuNTT-Hybrid2D-radix4", "runner": "ntt", "reference": true,
+         "args": ["--backend", "hybrid2d", "--compute-unit", "radix4", "--word-bits", "64", "--cross-twiddle", "fused", "--output-order", "natural"]},
+        {"id": "gpuntt", "name": "GPU-NTT-Merge-natural", "runner": "gpuntt", "naturalize": true, "args": []}
+      ]
+    },
+    {
+      "id": "ntt20", "operator": "ntt", "precision": "uint64", "modulus": "576460756061519873",
+      "modulus_bits": 60, "logN": 20, "direction": "forward", "normalization": "none",
+      "placement": "out-of-place", "output_order": "bit-reversed", "batches": [2, 4, 16],
+      "implementations": [
+        {"id": "cub", "name": "cuNTT-compact-stage", "runner": "ntt", "reference": true,
+         "args": ["--backend", "compact-stage", "--compute-unit", "radix2", "--word-bits", "64", "--output-order", "bit-reversed"]},
+        {"id": "gpuntt", "name": "GPU-NTT-Merge-native", "runner": "gpuntt", "naturalize": false, "args": []}
+      ]
+    }
+  ]
+}

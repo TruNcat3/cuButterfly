@@ -1,0 +1,33 @@
+{
+  "schema": "cubutterfly-hardware-model-v1",
+  "hardware": {
+    "device": "NVIDIA A100 80GB PCIe",
+    "compute_capability": "8.0",
+    "memory_bytes": 84974239744,
+    "sm_count": 108,
+    "max_threads_per_block": 1024,
+    "max_threads_per_sm": 2048,
+    "max_blocks_per_sm": 32,
+    "registers_per_sm": 65536,
+    "registers_per_block": 65536,
+    "shared_bytes_per_sm": 167936,
+    "shared_bytes_per_block": 166912,
+    "cooperative_launch": true
+  },
+  "provenance": {
+    "origin": "existing-calibration-and-ncu-device-attributes",
+    "assembled_on": "2026-10-24",
+    "new_gpu_measurement": false,
+    "capacity_scope": "exact model, compute capability and memory capacity",
+    "shared_limit_kind": "per-CTA opt-in capacity, not the default 49152-byte limit",
+    "source_sha256": {
+      "results/local_hardware_profile_a100_gpu1_current_20261006/calibration_device.json": "53dd5d0dfb722d9ab08a6efa26d085d154f9844e7d0921246a2134cdfcf61c7d",
+      "results/fft_intra_stage_20261024/profile/register_n20_fp64.csv": "cfd37964835b4e935810875b1a4ef755a2199fbde26831fc1492fb5667d0072e"
+    },
+    "observed_device_uuids": [
+      "GPU-00000000-0000-0000-0000-000000000001",
+      "GPU-00000000-0000-0000-0000-000000000002"
+    ],
+    "performance_scope": "Capacity facts only. Does not certify a cost model, candidate ranking or current-build timings."
+  }
+}

@@ -1,0 +1,2087 @@
+{
+  "kind": "crypto",
+  "schema": "cubutterfly-install-search-v1",
+  "scope": "portable semantic snapshot of cyclic cryptographic NTT workloads",
+  "workloads": [
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 8,
+      "modulus": "8380417",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 8,
+      "modulus": "8380417",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 18,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 18,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 1,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 8,
+      "modulus": "8380417",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 8,
+      "modulus": "8380417",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 18,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 18,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 3,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 8,
+      "modulus": "8380417",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 8,
+      "modulus": "8380417",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 18,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 18,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 7,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 8,
+      "modulus": "8380417",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 8,
+      "modulus": "8380417",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 18,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 18,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 16,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 8,
+      "modulus": "8380417",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 8,
+      "modulus": "8380417",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 12,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 16,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 18,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 18,
+      "modulus": "1073479681",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2013265921",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2130706433",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word32"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "2391411402133733377",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "550829555713",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "568447511560193",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "forward",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    },
+    {
+      "batch": 256,
+      "direction": "inverse",
+      "input_order": "natural",
+      "logN": 20,
+      "modulus": "582090251837636609",
+      "operator": "ntt",
+      "output_order": "natural",
+      "precision": "word64"
+    }
+  ]
+}

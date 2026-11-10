@@ -1,0 +1,16 @@
+{
+  "schema": "filter-refresh-frozen-v1",
+  "library": "build-e13-cufftdx/libcuntt.so",
+  "output": "results/full_current_20261025/fft_filters",
+  "cases": [
+    {"id": "image1024_filter31_batch16", "source": "results/e2e_current_20261018/fft_n1024_b16", "receipt": "image1024_filter31_batch16.current_graph_fast.json", "padding": [1080, 1080], "warmup": 2, "repeats": 3, "samples": 5},
+    {"id": "image2048_filter31_batch16", "source": "results/e2e_current_20261018/fft_n2048_b16", "receipt": "image2048_filter31_batch16.current_graph_fast.json", "padding": [2100, 2100], "warmup": 2, "repeats": 2, "samples": 4}
+  ],
+  "execution_mode": "graph",
+  "padding_policy": "fast",
+  "cache_filter_spectrum": true,
+  "torch_control": true,
+  "precision": "float32/complex64 CPU torch.fft; no precision promotion",
+  "acceptance": "error distribution only; no invented tolerance",
+  "excluded": ["compilation", "plan_setup", "search", "graph_capture", "cpu_reference", "host_device_transfer"]
+}

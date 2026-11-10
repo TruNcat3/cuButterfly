@@ -1,0 +1,88 @@
+{
+  "csv_path": "/workspace/cuButterfly/paper/generated/rc2_unified_absolute_throughput.csv",
+  "device": "NVIDIA A100 80GB PCIe",
+  "figure_path": "/workspace/cuButterfly/paper/figures/rc2_unified_absolute_boxplot.pdf",
+  "group_rows": {
+    "FFT-FP32": 22,
+    "FFT-FP64": 14,
+    "FWHT-BF16": 18,
+    "FWHT-FP16": 18,
+    "NTT-word32": 70,
+    "NTT-word64": 144
+  },
+  "groups": {
+    "FFT-FP32": {
+      "VkFFT": 20,
+      "cuButterfly": 22,
+      "cuFFT": 22
+    },
+    "FFT-FP64": {
+      "cuButterfly": 14,
+      "cuFFT": 14
+    },
+    "FWHT-BF16": {
+      "DAO": 18,
+      "cuButterfly": 18,
+      "shared-iterative": 18
+    },
+    "FWHT-FP16": {
+      "DAO": 18,
+      "cuButterfly": 18,
+      "shared-iterative": 18
+    },
+    "NTT-word32": {
+      "GPU-NTT Merge": 70,
+      "cuButterfly": 70
+    },
+    "NTT-word64": {
+      "GPU-NTT Merge": 144,
+      "cuButterfly": 144
+    }
+  },
+  "metrics": [
+    "effective_butterfly_pairs_per_s",
+    "transforms_per_s"
+  ],
+  "note": "Boxes are descriptive distributions within operator/precision groups; no cross-operator score is reported.",
+  "rows": 628,
+  "schema": "cubutterfly-rc2-unified-absolute-throughput-v1",
+  "source_root": "/workspace/cuButterfly-v0.9.1-rc2/results/integrated_repairs_20261001_replay_fix1/a100-80gb",
+  "speedup_summary": {
+    "FFT-FP32": {
+      "geometric_mean_speedup": 1.026416492770278,
+      "matched_pairs": 42,
+      "maximum_speedup": 1.5052021403091562,
+      "minimum_speedup": 0.846370097394051
+    },
+    "FFT-FP64": {
+      "geometric_mean_speedup": 1.037482481870939,
+      "matched_pairs": 14,
+      "maximum_speedup": 1.2433604949449222,
+      "minimum_speedup": 0.8939855513969884
+    },
+    "FWHT-BF16": {
+      "geometric_mean_speedup": 2.86072977536665,
+      "matched_pairs": 36,
+      "maximum_speedup": 18.639968996253714,
+      "minimum_speedup": 0.7358419330480745
+    },
+    "FWHT-FP16": {
+      "geometric_mean_speedup": 2.858335782222171,
+      "matched_pairs": 36,
+      "maximum_speedup": 18.796479791395047,
+      "minimum_speedup": 0.7372822737848206
+    },
+    "NTT-word32": {
+      "geometric_mean_speedup": 1.8049651512481322,
+      "matched_pairs": 70,
+      "maximum_speedup": 3.0354610573194787,
+      "minimum_speedup": 1.106526655047259
+    },
+    "NTT-word64": {
+      "geometric_mean_speedup": 1.3335426869211844,
+      "matched_pairs": 144,
+      "maximum_speedup": 1.7829321637108997,
+      "minimum_speedup": 0.966626676622612
+    }
+  }
+}

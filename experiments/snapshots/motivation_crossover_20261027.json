@@ -1,0 +1,101 @@
+{
+  "figure": "motivation_crossover_20261027",
+  "source": {
+    "path": "results/homogeneous_warp_dual_groups/analysis.md",
+    "sha256": "105d543f6a1d120388f647b32a08e1a43a3b7f28e2139037080af85fc5188ad1",
+    "selection": "First Markdown table; all three rows retained",
+    "original_table": [
+      "| batch | v0.6 ms | single ms | dual ms | dual/single throughput | dual/v0.6 throughput |",
+      "|---:|---:|---:|---:|---:|---:|",
+      "| 1 | 0.136 | 0.177 | 0.177 | 0.999x | 0.768x |",
+      "| 4 | 0.320 | 0.426 | 0.470 | 0.906x | 0.681x |",
+      "| 16 | 1.106 | 1.506 | 1.305 | 1.154x | 0.847x |"
+    ]
+  },
+  "script": {
+    "path": "paper/tools/render_motivation_crossover.py",
+    "sha256": "d1d4f3fba334d4ac94b4e7b3554c529c0d0d971083a0b37cb1a16ae9e2601451"
+  },
+  "context": {
+    "device": "V100",
+    "operation": "uint32 Shoup NTT",
+    "N": 1048576,
+    "factorization": "10+10",
+    "io": "four-row static IO",
+    "single": "one synchronous four-warp row group; CTA128; target four CTAs/SM",
+    "dual": "two independent synchronous four-warp row groups; CTA256; target two CTAs/SM",
+    "matched": "same register-resident stage-7/8/9 continuation; theoretical capacity of 16 resident warps per SM"
+  },
+  "estimator": "Source reports trial medians from three confirmation trials, each with five warmups and thirty repetitions.",
+  "units": {
+    "batch": "NTTs",
+    "single_ms_rounded": "ms",
+    "dual_ms_rounded": "ms",
+    "dual_over_single_throughput": "dimensionless ratio (x)"
+  },
+  "normalization": "dual throughput / single throughput = single time / dual time for equal work; plotted values read directly from the reported throughput column, never recomputed from rounded ms",
+  "selection_reason": "Compare CTA organization at fixed computational shape and register continuation, including its changed launch and resource configuration; this is not a comparison against the v0.6 baseline.",
+  "transformations": [
+    "Parse the first Markdown table",
+    "Select batch, rounded single/dual latency, and reported dual/single throughput",
+    "Use base-2 logarithmic batch axis; no smoothing, extrapolation, exclusions, or re-estimation"
+  ],
+  "limitations": [
+    "Underlying per-trial measurements were not read; no error bars or uncertainty estimates are available",
+    "Only three measured batches; connecting segments guide the eye and do not imply interpolation or a general crossover threshold"
+  ],
+  "encoding": {
+    "observations": "blue (#0072B2) connected circle markers with direct numeric labels",
+    "reference": "gray dashed horizontal 1x baseline",
+    "size_inches": [
+      3.4,
+      1.7
+    ],
+    "y_limits": [
+      0.85,
+      1.24
+    ],
+    "png_preview": "Same figure artists and geometry as the SVG; rasterized by Matplotlib at 300 dpi",
+    "pdf_fonts": "Type 42 embedded TrueType",
+    "svg_fonts": "glyph paths for portable appearance"
+  },
+  "alt_description": "Point-and-line plot of dual-group relative to single-group throughput for a matched V100 uint32 Shoup NTT at N=2^20. On a base-2 log batch axis, batches 1, 4, and 16 have reported ratios 0.999x, 0.906x, and 1.154x. The first two lie below the dashed 1x reference; batch 16 lies above it. Lines only guide the eye; uncertainty is unavailable.",
+  "versions": {
+    "python": "3.10.6",
+    "matplotlib": "3.10.9",
+    "pillow": "12.2.0",
+    "backend": "Agg"
+  },
+  "raster": {
+    "size_pixels": [
+      1020,
+      510
+    ],
+    "mode": "RGBA",
+    "dpi": [
+      299.9994,
+      299.9994
+    ],
+    "opaque": true
+  },
+  "outputs": {
+    "paper/generated/motivation_crossover_20261027.csv": {
+      "sha256": "5055078d1e35a8d082c205c7b8b53704087b15b9c8611ffe990436a98347ae70",
+      "bytes": 173
+    },
+    "paper/figures/motivation_crossover_20261027.pdf": {
+      "sha256": "4bb4691f2702d041003621f4435dfe81fc3863c38164e67569e49f603335d3e8",
+      "bytes": 10683
+    },
+    "paper/figures/motivation_crossover_20261027.svg": {
+      "sha256": "79fd3d9a1f6fcb8b91144952bdf0f86221011e40644f8f9c5a3f8eff9401a2da",
+      "bytes": 23825
+    },
+    "paper/figures/motivation_crossover_20261027.png": {
+      "sha256": "94195b3e60e14e89c7deb2ebac95477ea24278bd0d50939351984eea2b652346",
+      "bytes": 49072
+    }
+  },
+  "hash_note": "Output hashes cover CSV and figure files; the JSON manifest does not hash itself.",
+  "publisher_requirements": "Provisional single-column manuscript figure; venue-specific rules and final manuscript layout remain to be checked."
+}

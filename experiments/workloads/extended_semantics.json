@@ -1,0 +1,53 @@
+{
+  "schema": "cubutterfly-extended-semantics-v1",
+  "purpose": "Bounded precision, inverse, and CT/GS coverage extension; this is a preparation contract, not a performance claim.",
+  "target": {
+    "device": "a100-80gb",
+    "logN": 12,
+    "batch": 32,
+    "placement": "out-of-place",
+    "backend": "hierarchical",
+    "compute_unit": "radix2",
+    "local_stages": 8,
+    "tile_threads": 128
+  },
+  "algorithm_forms": {
+    "ct": {
+      "status": "gpu-lowered",
+      "input_order": "natural",
+      "output_order": "natural",
+      "implementation": "existing lowering; form is recorded explicitly for the extension cohort"
+    },
+    "gs": {
+      "status": "reference-only",
+      "input_order": "natural",
+      "output_order": "natural",
+      "implementation": "requires a distinct stage-direction/twiddle lowering; do not alias to CT timing"
+    }
+  },
+  "precision_regimes": [
+    {"id": "fp16-native", "precision": "fp16", "accumulation": "native"},
+    {"id": "fp16-fp32", "precision": "fp16", "accumulation": "fp32"},
+    {"id": "bf16-native", "precision": "bf16", "accumulation": "native"},
+    {"id": "bf16-fp32", "precision": "bf16", "accumulation": "fp32"},
+    {"id": "fp32", "precision": "fp32", "accumulation": "native"},
+    {"id": "fp64", "precision": "fp64", "accumulation": "native"}
+  ],
+  "operator_families": [
+    {"operator": "fft", "precision_regimes": "floating", "inverse_normalization": "inverse"},
+    {"operator": "fwht", "precision_regimes": "floating", "inverse_normalization": "inverse"},
+    {"operator": "structured-2x2", "precision_regimes": "floating", "inverse_normalization": "operator-defined", "stage_matrix": "1,0.25,-0.5,1"},
+    {"operator": "subset-zeta", "precision_regimes": ["uint32"], "inverse_normalization": "none"},
+    {"operator": "superset-zeta", "precision_regimes": ["uint32"], "inverse_normalization": "none"},
+    {"operator": "xor-zeta", "precision_regimes": ["uint32"], "inverse_normalization": "none"},
+    {"operator": "ntt", "precision_regimes": ["word32", "word64"], "inverse_normalization": "inverse", "moduli": {"word32": 2013265921, "word64": 1152921504606584833}}
+  ],
+  "external_baseline_policy": "Compare only when a library exposes the same storage, accumulation, direction, normalization, placement, order, and modulus. Otherwise report internal precision/inverse timing and an explicit no-matched-baseline status.",
+  "measurement_policy": {
+    "warmup": 100,
+    "repeat": 100,
+    "trials": 3,
+    "compile_and_plan_excluded": true,
+    "correctness_required": true
+  }
+}

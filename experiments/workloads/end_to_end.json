@@ -1,0 +1,501 @@
+{
+  "schema": "cubutterfly-end-to-end-v1",
+  "experiment_id": "E13",
+  "status": "prepared_not_run",
+  "purpose": "Select one reproducible open-source application for FFT, FWHT, and NTT. This manifest is a preparation contract, not a result table.",
+  "scope": {
+    "one_application_per_operator": true,
+    "operator_count": 3,
+    "cases_per_application": 2,
+    "gpu_execution_performed": false,
+    "application_results_claimed": false,
+    "pinned_source_checkout_performed": true,
+    "external_data_downloaded": false,
+    "model_or_weight_downloaded": false,
+    "network_application_runs_performed": false
+  },
+  "source_validation": {
+    "checked_on": "2026-09-21",
+    "method": "Read-only git ls-remote and pinned-commit source checkout; LICENSE files and entry points were inspected.",
+    "recheck_policy": "A future run may revalidate refs, but must not replace the pinned commit without creating a new manifest.",
+    "repositories": [
+      {
+        "id": "neuraloperator",
+        "url": "https://github.com/neuraloperator/neuraloperator",
+        "commit": "00b7d86f8d74ff0af55da53eb585fe26df9c71f0",
+        "license": "MIT",
+        "license_url": "https://raw.githubusercontent.com/neuraloperator/neuraloperator/00b7d86f8d74ff0af55da53eb585fe26df9c71f0/LICENSE",
+        "source_urls": [
+          "https://github.com/neuraloperator/neuraloperator/tree/00b7d86f8d74ff0af55da53eb585fe26df9c71f0",
+          "https://github.com/neuraloperator/neuraloperator/blob/00b7d86f8d74ff0af55da53eb585fe26df9c71f0/examples/models/plot_FNO_darcy.py",
+          "https://github.com/neuraloperator/neuraloperator/blob/00b7d86f8d74ff0af55da53eb585fe26df9c71f0/neuralop/layers/spectral_convolution.py"
+        ],
+        "verification": "git ls-remote HEAD resolved to the pinned commit; raw LICENSE begins with MIT License."
+      },
+      {
+        "id": "quarot",
+        "url": "https://github.com/spcl/QuaRot",
+        "commit": "5008669b08c1f11f9b64d52d16fddd47ca754c5a",
+        "license": "Apache-2.0",
+        "license_url": "https://raw.githubusercontent.com/spcl/QuaRot/5008669b08c1f11f9b64d52d16fddd47ca754c5a/LICENSE",
+        "source_urls": [
+          "https://github.com/spcl/QuaRot/tree/5008669b08c1f11f9b64d52d16fddd47ca754c5a",
+          "https://github.com/spcl/QuaRot/blob/5008669b08c1f11f9b64d52d16fddd47ca754c5a/e2e/benchmark.py",
+          "https://github.com/spcl/QuaRot/blob/5008669b08c1f11f9b64d52d16fddd47ca754c5a/quarot/functional/hadamard.py"
+        ],
+        "verification": "git ls-remote HEAD resolved to the pinned commit; LICENSE is Apache License Version 2.0."
+      },
+      {
+        "id": "heongpu",
+        "url": "https://github.com/Alisah-Ozcan/HEonGPU",
+        "commit": "1928a14bb002c5d7f1cb5534eca9fa19b555b4f2",
+        "license": "Apache-2.0",
+        "license_url": "https://raw.githubusercontent.com/Alisah-Ozcan/HEonGPU/1928a14bb002c5d7f1cb5534eca9fa19b555b4f2/LICENSE",
+        "source_urls": [
+          "https://github.com/Alisah-Ozcan/HEonGPU/tree/1928a14bb002c5d7f1cb5534eca9fa19b555b4f2",
+          "https://github.com/Alisah-Ozcan/HEonGPU/blob/1928a14bb002c5d7f1cb5534eca9fa19b555b4f2/example/bootstrapping/1_ckks_regular_bootstrapping.cpp",
+          "https://github.com/Alisah-Ozcan/HEonGPU/blob/1928a14bb002c5d7f1cb5534eca9fa19b555b4f2/src/lib/host/ckks/operator.cu"
+        ],
+        "verification": "git ls-remote HEAD resolved to the pinned commit; LICENSE is Apache License Version 2.0.",
+        "submodules": [
+          {
+            "path": "thirdparty/GPU-NTT",
+            "url": "https://github.com/Alisah-Ozcan/GPU-NTT",
+            "commit": "8a4daf11c7cdea8dde45fa0f8f7183c138d42b3b",
+            "license": "Apache-2.0",
+            "verification": "The HEonGPU tree records this gitlink; the commit is fetchable from the GPU-NTT remote."
+          }
+        ]
+      }
+    ]
+  },
+  "applications": [
+    {
+      "id": "fft_fno_darcy",
+      "operator": "fft",
+      "application": "NeuralOperator FNO Darcy-flow surrogate",
+      "repository": "neuraloperator",
+      "license": "MIT",
+      "entry_points": [
+        {
+          "path": "examples/models/plot_FNO_darcy.py",
+          "url": "https://github.com/neuraloperator/neuraloperator/blob/00b7d86f8d74ff0af55da53eb585fe26df9c71f0/examples/models/plot_FNO_darcy.py",
+          "role": "Official end-to-end training, evaluation, and resolution-transfer example; the high-resolution payload uses the same package DarcyDataset contract."
+        },
+        {
+          "path": "scripts/train_darcy.py",
+          "url": "https://github.com/neuraloperator/neuraloperator/blob/00b7d86f8d74ff0af55da53eb585fe26df9c71f0/scripts/train_darcy.py",
+          "role": "Official configurable Darcy training entry."
+        },
+        {
+          "path": "neuralop/layers/spectral_convolution.py",
+          "url": "https://github.com/neuraloperator/neuraloperator/blob/00b7d86f8d74ff0af55da53eb585fe26df9c71f0/neuralop/layers/spectral_convolution.py",
+          "role": "Pinned real/complex spectral transform and mode truncation contract."
+        },
+        {
+          "path": "neuralop/data/datasets/darcy.py",
+          "url": "https://github.com/neuraloperator/neuraloperator/blob/00b7d86f8d74ff0af55da53eb585fe26df9c71f0/neuralop/data/datasets/darcy.py",
+          "role": "Official Zenodo-backed DarcyDataset with 16, 32, 64, 128, and 421 resolution validation."
+        }
+      ],
+      "baseline": {
+        "name": "pinned_neuraloperator_fno",
+        "model": "neuralop.models.FNO",
+        "complex_data": false,
+        "transform": {
+          "forward": "torch.fft.rfftn(x, norm=fft_norm, dim=spatial_dims)",
+          "norm": "forward (the official SpectralConv default)",
+          "layout": "fftshift on all spatial dimensions except the last real-FFT dimension",
+          "spectrum": "last dimension has n//2+1 real-FFT coefficients; retain n_modes after the library setter adjusts the last mode",
+          "inverse": "torch.fft.irfftn(out_fft, s=mode_sizes, dim=spatial_dims, norm=fft_norm), with the documented Hermitian-symmetry path when enabled"
+        },
+        "training_contract": "The official example trains on Darcy permeability-to-pressure pairs with H1 training loss and L2/H1 evaluation."
+      },
+      "replacement_boundary": {
+        "replace": "Only the real forward/inverse FFT calls and their compatible spectral data movement inside SpectralConv.",
+        "preserve": [
+          "FNO lifting, projection, skip connections, nonlinearities, channel contraction, mode truncation, and data processor.",
+          "rfftn half-spectrum shape, fftshift axes, forward normalization, output_shape/s argument, and Hermitian symmetry enforcement.",
+          "The same model parameters and checkpoint for baseline and treatment."
+        ],
+        "required_adapter": "cuButterfly currently exposes mainly complex-to-complex FFT paths. Add an explicit real-FFT adapter for the half-spectrum and irfftn contract; do not set complex_data=true to avoid the adapter.",
+        "real_fft_required": true,
+        "forbidden_shortcut": "A C2C FNO run is not a valid baseline for this application."
+      },
+      "external_data": {
+        "name": "Darcy Flow Dataset",
+        "record_url": "https://zenodo.org/records/12784353",
+        "record_api_url": "https://zenodo.org/api/records/12784353",
+        "record_id": 12784353,
+        "license": "CC-BY-4.0",
+        "available_resolutions": [16, 32, 64, 128, 421],
+        "verified_files": [
+          {"key": "darcy_64.tgz", "bytes": 187103764, "md5": "49027fc1972647915f6c0893a79bbc59"},
+          {"key": "darcy_128.tgz", "bytes": 373869283, "md5": "43e85ec9bff754d0f6d3925e26d5a8ac"}
+        ],
+        "download_status": "not_downloaded"
+      },
+      "payloads": [
+        {
+          "id": "small_64x64_train",
+          "role": "meaningful finite high-resolution training and inference case",
+          "train_resolution": [64, 64],
+          "eval_resolution": [64, 64],
+          "n_train": 1000,
+          "n_test": 100,
+          "batch_size": 8,
+          "n_modes": [16, 16],
+          "hidden_channels": 24,
+          "epochs": 300,
+          "loader": "DarcyDataset(train_resolution=64, test_resolutions=[64], download=false after explicit archive verification)",
+          "status": "pending_data_acquisition_checkpoint_and_gpu_run"
+        },
+        {
+          "id": "large_128x128_train",
+          "role": "largest practical first-round public Darcy case",
+          "train_resolution": [128, 128],
+          "eval_resolution": [128, 128],
+          "n_train": 1000,
+          "n_test": 100,
+          "batch_size": 4,
+          "n_modes": [16, 16],
+          "hidden_channels": 24,
+          "epochs": 300,
+          "loader": "DarcyDataset(train_resolution=128, test_resolutions=[128], download=false after explicit archive verification)",
+          "status": "pending_data_acquisition_checkpoint_and_gpu_run",
+          "boundary_note": "The public Zenodo archive verifies this resolution; the trained checkpoint remains unpinned until the same protocol is run."
+        }
+      ],
+      "smoke_payloads": [
+        {
+          "id": "smoke_16x16",
+          "train_resolution": 16,
+          "eval_resolution": 16,
+          "purpose": "CPU/GPU adapter smoke only; not a main application case."
+        },
+        {
+          "id": "smoke_32x32_transfer",
+          "train_resolution": 16,
+          "eval_resolution": 32,
+          "purpose": "Official tutorial resolution-transfer smoke only; not a main application case."
+        }
+      ],
+      "quality_contract": {
+        "reference": "Run the unmodified pinned FNO with the same frozen checkpoint and preprocessed Darcy samples.",
+        "metrics": ["relative L2 output error", "H1 output error", "max absolute output difference"],
+        "minimum_checks": "Both resolutions must complete without shape/layout fallback; treatment-vs-reference relative L2 <= 1e-4 and max absolute difference <= 1e-4 in FP32, or the tolerance must be justified and frozen before timing.",
+        "application_quality": "Report held-out Darcy error at 64x64 and 128x128 separately; keep 16x16/32x32 only as smoke evidence."
+      },
+      "timing_contract": {
+        "setup_ms": "Import, model construction, checkpoint load, and data-processor setup; report separately.",
+        "primary_gpu_ms": "GPU-resident complete FNO forward, including all FFT adapter launches, on preloaded device tensors after one correctness warmup; baseline and treatment use the same model and input.",
+        "host_io_ms": "Dataset fetch, preprocess, host-to-device copy, postprocess, and device-to-host output; report separately and do not fold into the primary GPU metric.",
+        "steady_state_ms": "Repeated primary_gpu_ms calls after setup and one correctness warmup; CUDA-event scope must be recorded.",
+        "training": "Training time and checkpoint acquisition are excluded from inference timing and reported as preparation cost."
+      },
+      "resources": {
+        "required": ["PyTorch compatible with the pinned neuraloperator requirements", "CUDA GPU for final timing"],
+        "not_required_for_prepare": ["GPU", "network", "checkpoint"],
+        "data": "Use the verified CC-BY-4.0 Zenodo archives for 64x64 and 128x128; record extracted tensor hashes and archive hashes at run time."
+      },
+      "blockers": [
+        "The pinned repository contains no fixed 64x64 or 128x128 trained checkpoint; train once with the official DarcyDataset path or obtain an authorized checkpoint, then freeze its hash.",
+        "The 64x64/128x128 high-resolution training wrapper must be configured through the verified DarcyDataset API; the tutorial's load_darcy_flow_small helper remains a 16x16 training smoke path.",
+        "The cuButterfly real-FFT adapter and Hermitian/layout correctness are not implemented or validated in this preparation task.",
+        "No GPU application run or quality result exists yet."
+      ],
+      "commands": [
+        {
+          "phase": "source_checkout",
+          "command": "git clone --filter=blob:none --no-checkout https://github.com/neuraloperator/neuraloperator.git neuraloperator && git -C neuraloperator checkout 00b7d86f8d74ff0af55da53eb585fe26df9c71f0",
+          "network": true,
+          "requires_explicit_opt_in": true
+        },
+        {
+          "phase": "official_reference",
+          "command": "python examples/models/plot_FNO_darcy.py",
+          "network": false,
+          "gpu": false,
+          "status": "verified_source_entry_for_16x16_smoke_only"
+        }
+      ]
+    },
+    {
+      "id": "fwht_quarot_llama2",
+      "operator": "fwht",
+      "application": "QuaRot Llama-2-7B int4 prefill/decode inference",
+      "repository": "quarot",
+      "license": "Apache-2.0",
+      "entry_points": [
+        {
+          "path": "e2e/benchmark.py",
+          "url": "https://github.com/spcl/QuaRot/blob/5008669b08c1f11f9b64d52d16fddd47ca754c5a/e2e/benchmark.py",
+          "role": "Pinned prefill, decode, and combined e2e benchmark harness."
+        },
+        {
+          "path": "e2e/quantized_llama/modeling_llama.py",
+          "url": "https://github.com/spcl/QuaRot/blob/5008669b08c1f11f9b64d52d16fddd47ca754c5a/e2e/quantized_llama/modeling_llama.py",
+          "role": "Quantized and FP16 model classes and OnlineHadamard call sites."
+        },
+        {
+          "path": "quarot/functional/hadamard.py",
+          "url": "https://github.com/spcl/QuaRot/blob/5008669b08c1f11f9b64d52d16fddd47ca754c5a/quarot/functional/hadamard.py",
+          "role": "get_hadK decomposition and fast_hadamard_transform boundary."
+        },
+        {
+          "path": "fake_quant/data_utils.py",
+          "url": "https://github.com/spcl/QuaRot/blob/5008669b08c1f11f9b64d52d16fddd47ca754c5a/fake_quant/data_utils.py",
+          "role": "Public WikiText-2 evaluation data path."
+        }
+      ],
+      "baseline": {
+        "name": "pinned_quarot_online_hadamard",
+        "model": "meta-llama/Llama-2-7b-hf as selected by the upstream e2e harness",
+        "precision": "int4 weights/activations and int4 KV cache in the Quarot model path",
+        "hadamard": "quarot.nn.OnlineHadamard -> matmul_hadU_cuda -> fast_hadamard_transform plus optional small hadK matrix",
+        "upstream_warning": "e2e/benchmark.py constructs the quantized model under no_init_weights(), so its default performance path has random/uninitialized weights and is not a quality result."
+      },
+      "replacement_boundary": {
+        "replace": "Only the power-of-two fast Hadamard transform call inside matmul_hadU_cuda.",
+        "preserve": [
+          "get_hadK selection, hadK buffer and hadK @ input multiplication.",
+          "The exact 1/sqrt(n) normalization, contiguous/view semantics, dtype conversion, and transpose orientation.",
+          "Quantizer, Linear4bit/int4 GEMM, fused CUDA extension, flash attention, rotary embedding, and int4 KV cache."
+        ],
+        "llama2_7b_shape_contract": {
+          "intermediate_size": 11008,
+          "small_hadamard_factor": 172,
+          "power_of_two_subpath": 64,
+          "attention": "OnlineHadamard is instantiated with num_heads=32, so the K=1 power-of-two path is used there.",
+          "mlp_down_projection": "intermediate_size=11008 is decomposed by get_hadK as K=172 and n/K=64; run cuButterfly FWHT on the 64-wide power-of-two subpath, then retain the original 172x172 hadK multiply.",
+          "forbidden_shortcut": "Do not zero-pad 11008 to a power of two, replace the 172x172 factor, or compare a different model class."
+        }
+      },
+      "payloads": [
+        {
+          "id": "small_prefill512_decode32",
+          "batch_size": 1,
+          "prefill_seq_len": 512,
+          "decode_steps": 32,
+          "model": "meta-llama/Llama-2-7b-hf",
+          "status": "random_weight_performance_ready_runtime_pending"
+        },
+        {
+          "id": "large_prefill2048_decode128",
+          "batch_size": 1,
+          "prefill_seq_len": 2048,
+          "decode_steps": 128,
+          "model": "meta-llama/Llama-2-7b-hf",
+          "status": "random_weight_performance_ready_runtime_pending"
+        }
+      ],
+      "quality_contract": {
+        "weights": "Quality mode uses one authorized, frozen Llama-2-7B checkpoint for both variants. Performance mode uses one deterministically initialized random model state with seed 20261003, cloned into both variants.",
+        "data": "Use the pinned QuaRot WikiText-2 raw validation path (wikitext-2-raw-v1), freeze dataset revision and tokenizer files, and record hashes before evaluation.",
+        "metrics": ["WikiText-2 perplexity", "next-token logit relative error against pinned QuaRot baseline", "greedy token agreement on a fixed seed"],
+        "causal_comparison": "The causal pair is the same model state with only the FWHT subpath replaced. Upstream int4-vs-FP16 numbers are not this comparison.",
+        "random_performance_claim": "Random weights are valid for latency, launch, memory and trace comparisons only; no quality or perplexity claim is allowed."
+      },
+      "timing_contract": {
+        "setup_ms": "Extension build, tokenizer/model load, quantized checkpoint load, and KV-cache allocation; report separately.",
+        "primary_gpu_ms": "GPU-resident full-model prefill and decode loop with the same KV-cache behavior, all FWHT launches, logits/greedy output synchronization, and no host input/output in the timed interval; exclude checkpoint download and setup.",
+        "host_io_ms": "Public tokenization/batch preparation, host-to-device input transfer, device-to-host logits or token collection, and postprocess; report separately and do not fold into the primary GPU metric.",
+        "steady_state_ms": "Repeated GPU-resident prefill+decode calls after one correctness run; include all FWHT launches and their synchronization in the application path.",
+        "upstream_reference": "The verified upstream syntax is python e2e/benchmark.py --batch_size B --prefill_seq_len S --decode_steps D. The E13 random-performance runner must freeze one initialized state before constructing the baseline and treatment."
+      },
+      "resources": {
+        "required": ["CUDA GPU", "PyTorch/Transformers-compatible environment from pinned requirements", "flash-attention and QuaRot CUDA extension"],
+        "not_required_for_prepare": ["GPU", "network", "model weights"],
+        "memory": "Record peak allocation for both variants. Random initialization is explicit and reproducible; the upstream no_init_weights path is not sufficient."
+      },
+      "blockers": [
+        "Random-performance runner must initialize one deterministic state and clone it into baseline and treatment before any timing.",
+        "The causal adapter preserving K=172 x 64 decomposition, quantization, and GEMM is not implemented or validated in this task.",
+        "No public-data quality run or GPU application run exists yet."
+      ],
+      "commands": [
+        {
+          "phase": "source_checkout",
+          "command": "git clone --filter=blob:none --no-checkout https://github.com/spcl/QuaRot.git QuaRot && git -C QuaRot checkout 5008669b08c1f11f9b64d52d16fddd47ca754c5a",
+          "network": true,
+          "requires_explicit_opt_in": true
+        },
+        {
+          "phase": "upstream_reference",
+          "command": "python e2e/benchmark.py --batch_size 1 --prefill_seq_len 2048 --decode_steps 128",
+          "network": true,
+          "requires_explicit_opt_in": true,
+          "network_note": "AutoConfig.from_pretrained may fetch model metadata unless already cached; this is a reference command, not a quality-valid application runner.",
+          "gpu": true,
+          "status": "blocked_until_random_runner_runtime_and_causal_replacement_are_frozen"
+        }
+      ]
+    },
+    {
+      "id": "ntt_heongpu_ckks_regular_bootstrap",
+      "operator": "ntt",
+      "application": "HEonGPU CKKS regular bootstrapping call",
+      "repository": "heongpu",
+      "license": "Apache-2.0",
+      "entry_points": [
+        {
+          "path": "example/bootstrapping/1_ckks_regular_bootstrapping.cpp",
+          "url": "https://github.com/Alisah-Ozcan/HEonGPU/blob/1928a14bb002c5d7f1cb5534eca9fa19b555b4f2/example/bootstrapping/1_ckks_regular_bootstrapping.cpp",
+          "role": "Official CKKS regular bootstrapping setup, call, decrypt, and precision example."
+        },
+        {
+          "path": "src/lib/host/ckks/operator.cu",
+          "url": "https://github.com/Alisah-Ozcan/HEonGPU/blob/1928a14bb002c5d7f1cb5534eca9fa19b555b4f2/src/lib/host/ckks/operator.cu",
+          "role": "Pinned regular_bootstrapping NTT call sites and stream propagation."
+        },
+        {
+          "path": "thirdparty/GPU-NTT",
+          "url": "https://github.com/Alisah-Ozcan/GPU-NTT/tree/8a4daf11c7cdea8dde45fa0f8f7183c138d42b3b",
+          "role": "Pinned GPU-NTT implementation used by the CKKS path."
+        },
+        {
+          "path": "src/include/heongpu/kernel/defines.h",
+          "url": "https://github.com/Alisah-Ozcan/HEonGPU/blob/1928a14bb002c5d7f1cb5534eca9fa19b555b4f2/src/include/heongpu/kernel/defines.h",
+          "role": "Polynomial-degree, word-modulus, and memory-pool limits."
+        }
+      ],
+      "baseline": {
+        "name": "pinned_heongpu_gpu_ntt",
+        "application_boundary": "The measured application operation is operators.regular_bootstrapping(C1, galois_key, relin_key), after the input ciphertext is prepared at the required maximum depth.",
+        "ntt_calls": "The baseline includes every GPU-NTT dispatch reached by regular_bootstrapping: the direct GPU_INTT, mod_raise, and GPU_NTT_Inplace path before CoeffToSlot plus any nested coeff_to_slot, matrix/key-switch, exp_scaled, and slot_to_coeff dispatches. The complete pinned call trace is the baseline and must be audited rather than reduced to the two direct calls.",
+        "contract": {
+          "ring": "Z_q[X]/(X^N+1), selected by ReductionPolynomial::X_N_plus",
+          "layout": "gpuntt::PerPolynomial",
+          "zero_padding": false,
+          "roots": "Forward and inverse root tables are generated per RNS modulus from primitive roots for N and stored in the context.",
+          "inverse_scale": "context_->n_inverse_ supplies per-modulus N inverse to GPU_INTT.",
+          "stream": "ExecutionOptions.stream_ is passed to both NTT configs and all surrounding kernels; default is cudaStreamDefault.",
+          "order": "The API exposes ring/layout but does not make a separate natural-order promise; freeze the observed order by comparing each direction with the pinned GPU-NTT reference before replacement."
+        }
+      },
+      "replacement_boundary": {
+        "replace": "Every compatible GPU-NTT dispatch reached by the complete regular_bootstrapping call graph, with one word64 call per RNS modulus where needed; unsupported layouts remain explicitly native or blocked.",
+        "preserve": [
+          "X^N+1 negacyclic semantics, each modulus and root table, RNS limb ordering, per-polynomial layout, no zero padding, inverse N scaling, and the caller stream.",
+          "ModRaise, CoeffToSlot, EvalMod, SlotToCoeff, key switching, ciphertext metadata, and all key material.",
+          "The complete bootstrapping call as the timed application operation."
+        ],
+        "arithmetic_boundary": "cuButterfly word64 supports moduli below 2^63 only. The adapter must handle each HEonGPU RNS limb separately; generic multi-limb arithmetic is out of scope.",
+        "word64_modulus_max_exclusive": 9223372036854775808,
+        "stream_boundary": "A replacement launch on a different stream or an implicit device synchronize is invalid; stream identity and dependency ordering must be checked."
+      },
+      "dispatch_coverage": {
+        "call_graph": "regular_bootstrapping -> coeff_to_slot -> multiply_matrix or multiply_matrix_less_memory -> exp_scaled (twice) -> slot_to_coeff",
+        "scope_rule": "Instrument the complete call, including nested matrix, key-switch, exponentiation, and transform helpers; a top-level two-call replacement is not full coverage.",
+        "dispatch_families": [
+          {
+            "family": "GPU_INTT and GPU_INTT_Inplace",
+            "observed_role": "Coefficient-domain recovery and inverse transforms in CKKS helper paths.",
+            "initial_policy": "Replace only after per-polynomial word64 root/order equivalence; otherwise retain the pinned HEonGPU implementation and count the native dispatch."
+          },
+          {
+            "family": "GPU_NTT and GPU_NTT_Inplace",
+            "observed_role": "Forward transforms for raised ciphertexts and CKKS helper paths.",
+            "initial_policy": "Candidate for cuButterfly replacement when modulus, layout, root, inverse-scale, and stream contracts match; record every native and replacement call."
+          },
+          {
+            "family": "GPU_NTT_Modulus_Ordered_Inplace and GPU_NTT_Poly_Ordered_Inplace",
+            "observed_role": "Ordered RNS/layout variants used by HEonGPU arithmetic helpers.",
+            "initial_policy": "Native-retained or unsupported until ordered layout and per-limb mapping are audited; no silent fallback is allowed."
+          }
+        ],
+        "excluded_dispatches": "SmallForwardNTT and SmallInverseNTT are device-local helper kernels for HEonGPU bootstrapping internals, not a cuButterfly GPU-NTT replacement target in this regular CKKS dispatch audit; record if a future call trace reaches them.",
+        "required_record": "For each payload, report call counts by family as replacement, native_retained, unsupported, and total; report the exact call trace or instrumentation hash.",
+        "claim_rule": "If any required compatible dispatch is unsupported or unaccounted for, label the run a partial NTT ablation and do not call it a complete replacement."
+      },
+      "payload_policy": {
+        "main_payload_ids": [],
+        "candidate_payload_ids": ["large_N16384_parameter_audit"],
+        "smoke_payload_ids": ["small_N4096_official_demo"],
+        "rule": "N=4096 is an insecure source demonstration and may only smoke-test the adapter. N=16384 is a resource-exploration candidate, not a selected main case; select a main payload only after a safe security level, valid multiplicative depth, complete Q/P chain, and memory audit freeze a possibly different N."
+      },
+      "payloads": [
+        {
+          "id": "small_N4096_official_demo",
+          "role": "smoke_only",
+          "poly_modulus_degree": 4096,
+          "coeff_modulus_bit_sizes": "The exact 31-element Q/P lists in the pinned official example.",
+          "boot_type": "REGULAR_BOOTSTRAPPING",
+          "boot_config": {"CtoS_piece": 3, "StoC_piece": 3, "taylor_number": 11, "less_key_mode": true},
+          "status": "pending_build_and_gpu_run",
+          "resource_note": "Officially documented as a functional but insecure demonstration parameter set."
+        },
+        {
+          "id": "large_N16384_parameter_audit",
+          "role": "resource_exploration_candidate_not_main",
+          "poly_modulus_degree": 16384,
+          "coeff_modulus_bit_sizes": "Must be frozen from a validated CKKS bootstrapping parameter set; do not copy the N=4096 list without a depth/noise audit.",
+          "boot_type": "REGULAR_BOOTSTRAPPING",
+          "boot_config": {"CtoS_piece": 3, "StoC_piece": 3, "taylor_number": 11, "less_key_mode": true},
+          "status": "blocked_pending_security_depth_qp_and_memory_audit",
+          "resource_note": "The pinned source warns that bootstrapping is memory intensive and was tested on an RTX 4090 with 24 GB; check available memory before any GPU launch."
+        }
+      ],
+      "quality_contract": {
+        "reference": "Pinned HEonGPU GPU-NTT for the same context and ciphertext, with replacement disabled.",
+        "checks": ["per-limb forward/inverse NTT reference agreement", "X^N+1 round-trip", "decoded CKKS precision statistics after regular bootstrapping", "ciphertext depth and scale metadata"],
+        "application_quality": "The decrypted message must remain within a frozen CKKS precision tolerance and the treatment must not change the bootstrap output contract. Key generation, encryption, and decryption are quality/setup checks, not part of the bootstrap timing claim."
+      },
+      "timing_contract": {
+        "setup_ms": "Context generation, bootstrapping parameter generation, key generation, plaintext encode, encryption, and input leveling; report separately.",
+        "primary_gpu_ms": "The complete regular_bootstrapping call from the prepared device-resident ciphertext to the returned refreshed ciphertext, including every compatible NTT dispatch, all CKKS stages, the cuButterfly adapter launches, and required stream synchronization; exclude host input/output and setup.",
+        "host_io_ms": "Ciphertext preparation, host/device transfers, decrypt, decode, and result collection; report separately and do not fold into the primary GPU metric.",
+        "steady_state_ms": "Repeated complete bootstrap calls after one correctness run, with the same stream, keys, and context; record synchronization protocol and dispatch coverage.",
+        "not_claimed": "This is an application-level CKKS bootstrapping workflow, not a claim of a complete FHE service, model, or user-facing workload."
+      },
+      "resources": {
+        "required": ["CUDA GPU", "CUDA/CMake toolchain", "HEonGPU dependencies including GPU-NTT, GPU-FFT, RNGonGPU, and RMM", "exclusive memory headroom"],
+        "not_required_for_prepare": ["GPU", "network", "build"],
+        "memory_policy": "The source initializes a device memory pool at 0.9 of GPU memory and allows 0.95 maximum; do not run blindly on a shared device."
+      },
+      "blockers": [
+        "No HEonGPU build or GPU execution was performed in this preparation task.",
+        "The per-RNS word64 adapter, root/order equivalence, and stream-safe integration are not implemented or validated.",
+        "No safe main CKKS payload is fixed: N=16384 is only a resource-exploration candidate, and its security level, depth, complete Q/P chain, and memory feasibility remain pending.",
+        "No CKKS precision result exists yet."
+      ],
+      "commands": [
+        {
+          "phase": "source_checkout",
+          "command": "git clone --filter=blob:none --no-checkout https://github.com/Alisah-Ozcan/HEonGPU.git HEonGPU && git -C HEonGPU checkout 1928a14bb002c5d7f1cb5534eca9fa19b555b4f2 && git -C HEonGPU submodule update --init thirdparty/GPU-NTT",
+          "network": true,
+          "requires_explicit_opt_in": true
+        }
+      ]
+    }
+  ],
+  "measurement_protocol": {
+    "status": "proposed_not_run",
+    "process_trials": 3,
+    "warmup_complete_calls_per_variant": 5,
+    "measured_complete_calls_per_variant_per_trial": 10,
+    "ordering_seed": 20260921,
+    "ordering": "Balanced baseline/treatment order within each trial, frozen before reading timings. Record every call and its order.",
+    "primary_latency": "Synchronized wall time of the complete declared model or bootstrap operation on GPU-resident inputs. Include per-call adapter work, allocations, CPU dispatch, and required synchronization. Exclude compilation, reusable setup, and host dataset/token input preparation.",
+    "secondary_device_span": "CUDA-event span is valid only if the ending caller-stream event joins every participating stream. Keep it separate from wall time and profiler diagnostics.",
+    "state": "Each invocation starts from equivalent input, ciphertext, and KV state. Any per-request reset/allocation required by the application is included identically in both timed variants.",
+    "aggregation": "Report each trial median and the median of the three trial medians, raw samples, paired speedup, peak memory, and quality. Do not pool the three applications into one speedup.",
+    "quality_gate": "Freeze checkpoint/data/parameter hashes and numerical tolerances, then validate before timing. Record NTT native/replaced dispatch coverage and partial-adapter limitations.",
+    "profiling": "Use separate diagnostic runs for butterfly attribution, adapter cost, launches, and memory traffic. Do not substitute summed profiler kernel time for complete application latency.",
+    "resources": "Record the GPU UUID, model, memory capacity, software build, compiler policy, and telemetry. Reuse the existing exclusive-device measurement discipline. This preparation script starts no jobs."
+  },
+  "cross_application_rules": {
+    "comparison": "Report each application separately; do not average FFT/FWHT/NTT ratios into one application claim.",
+    "timing": "Separate setup, first correct use, steady-state application time, and quality checks. Do not include compilation or model/key downloads in steady-state timing.",
+    "baseline": "Use the pinned application's real default contract. A semantic downgrade to fit an existing cuButterfly path invalidates the comparison.",
+    "result_language": "Until the blockers are cleared, use prepared, pending, or unavailable; never use completed, measured, speedup, or quality result.",
+    "external_assets": "Record model/data/license authorization and SHA-256 for every externally acquired asset before running."
+  },
+  "cpu_validation_record": {
+    "performed": false,
+    "scope": "The companion prepare_end_to_end.py performs schema, source identity format, operator uniqueness, two-case coverage, arithmetic bounds, and command-readiness checks.",
+    "gpu_run": false,
+    "network_run": false,
+    "application_result": false
+  }
+}

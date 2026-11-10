@@ -1,0 +1,164 @@
+{
+  "schema": "cubutterfly-principle-figures-v1",
+  "figures": {
+    "e1_latency": {
+      "width_inches": 7,
+      "height_inches": 3,
+      "png_dpi": 300,
+      "description": "Unified absolute latency distribution by operator and precision; missing external baselines explicit.",
+      "sources": [
+        "results/paper_targeted_20261012/unified_report/operators.csv"
+      ],
+      "outputs": {
+        "paper/figures/principle_e1_latency.pdf": "49a5713009450e1938b067ae74e03d561deaef1526dfc8d448beb37dab2ed6a3",
+        "paper/figures/principle_e1_latency.png": "6f68a4f7fc4308ddee0e6625087d0c4334bce840338c4334405f71289798c370",
+        "paper/figures/principle_e1_latency.svg": "f7d57ceff57b9a16966b708dfb65c6dd29c1445db6e89124e74bffd0e51e69ff"
+      }
+    },
+    "ntt_extension": {
+      "width_inches": 7,
+      "height_inches": 2.5,
+      "png_dpi": 300,
+      "description": "Separate 12-point NTT extension, split original four and additional eight; three-process ranges.",
+      "sources": [
+        "results/paper_targeted_20261012/unified_report/operators.csv",
+        "results/paper_targeted_20261012/ntt_extension/summary.json"
+      ],
+      "outputs": {
+        "paper/figures/principle_ntt_extension.pdf": "e2730dad52726671325f7d7ce5f456734f788d0061c737e0e7b0e038b248dcb2",
+        "paper/figures/principle_ntt_extension.png": "c704717303bc982f34ab25a3e566e3a1a3eca7bad1a09addf8255628f224e9bb",
+        "paper/figures/principle_ntt_extension.svg": "25f40e707b3d55e51927ef61cf15777e6ebcd8d7f36c457d18ec3aa21de509d5"
+      }
+    },
+    "core_organization": {
+      "width_inches": 3.5,
+      "height_inches": 2.5,
+      "png_dpi": 300,
+      "description": "Same-core organization ratios for six historical 80GB FFT workloads using two local codelets.",
+      "sources": [
+        "results/paper_completion_20260917/core_dataflow_ablation/summary.json",
+        "results/paper_completion_20260917/core_dataflow_ablation/measurements.csv",
+        "results/paper_completion_20260917/core_dataflow_ablation/runtime_manifest.json"
+      ],
+      "outputs": {
+        "paper/figures/principle_core_organization.pdf": "d020335e19ba8f9b9b2a7a91444cf3920f1b6345fa5573ec486b73e4867730d4",
+        "paper/figures/principle_core_organization.png": "962c12288d86521d4cea5541e5d3aecdd7d4c6f159fb9183f829134055dbfa34",
+        "paper/figures/principle_core_organization.svg": "152ec504cd37f23821b54938b31402677e9cf5c1ce399b51fdc7f9b2255557d7"
+      }
+    },
+    "application_throughput_ratio": {
+      "width_inches": 7,
+      "height_inches": 3,
+      "png_dpi": 300,
+      "description": "Nine batch filtering workloads with three real process measurements; primary and diagnostic baselines distinct.",
+      "sources": [
+        "results/paper_targeted_20261012/unified_report/applications.csv"
+      ],
+      "outputs": {
+        "paper/figures/principle_application_throughput_ratio.pdf": "9fe80ce40bd3e3b67e1e149dff5ad81a1f93a0263a139533667f1005c8a23abe",
+        "paper/figures/principle_application_throughput_ratio.png": "95281b08910a6aae5ca61e0aef4d32c13b161522071a422cf380378efff65335",
+        "paper/figures/principle_application_throughput_ratio.svg": "93bd70adc34b05ad827349fb766feadb648814f267811ed9e03bf875ada35a4a"
+      }
+    },
+    "application_latency": {
+      "width_inches": 7,
+      "height_inches": 2.5,
+      "png_dpi": 300,
+      "description": "Nine batch filtering workloads with three real process measurements; primary and diagnostic baselines distinct.",
+      "sources": [
+        "results/paper_targeted_20261012/unified_report/applications.csv"
+      ],
+      "outputs": {
+        "paper/figures/principle_application_latency.pdf": "efe15630b12b6a08fcd657c64850639851b74b31d48c8ac021bf2b7437a1bb4c",
+        "paper/figures/principle_application_latency.png": "116b4892a5c5e6280ad93abc3d8f28d8914caae6f64b44557bd7eceba1c9db06",
+        "paper/figures/principle_application_latency.svg": "2057c5ff654a31df1792dc783b9c71c50b850d55dfdcf27b10f8ab4934f18dca"
+      }
+    },
+    "application_poisson_endpoint": {
+      "width_inches": 3.5,
+      "height_inches": 1.75,
+      "png_dpi": 300,
+      "description": "Measured 2-D periodic spectral Poisson endpoint at N=2048 and B=16; eager and CUDA Graph modes across three backends. Boxes: quartiles and median; whiskers: min/max; all 20 individual wall samples per box shown.",
+      "sources": [
+        "results/e2e_current_20261017/poisson_2048_b16_adaptive_trace/report.json"
+      ],
+      "outputs": {
+        "paper/figures/principle_application_poisson_endpoint.pdf": "6f8fb30a395aa3d6f827031bdee468ce816783339f563073e12cf199eb89fa93",
+        "paper/figures/principle_application_poisson_endpoint.png": "a55505044188fc90393b926e023a6c66c54f8b7c75b2ddeadc35d5adf6ca4590",
+        "paper/figures/principle_application_poisson_endpoint.svg": "66c9ef2e2c8034b8d3337c3447c7aab36449b8b6d011f8620c1afc984b1ea647"
+      }
+    }
+  },
+  "source_hashes": {
+    "results/paper_targeted_20261012/unified_report/operators.csv": "422502f64714a4092452db59fc6fee9299e7332182bd26a6521b3d7ee7303e39",
+    "results/paper_targeted_20261012/unified_report/applications.csv": "5dc9e4cdd23ce1d4bbe5a7c7c598f4b037d5c601b1d4e257b76d97f2a81896e2",
+    "results/paper_completion_20260917/core_dataflow_ablation/summary.json": "cee2270fb7a747f532557b58ecb34d99c8a46128ece787b33cf78a7267b41e56",
+    "results/paper_completion_20260917/core_dataflow_ablation/measurements.csv": "a151dde5e839b09ff62e40519628cbe0b88bbc1fdd8838f68fe61c1d0e71d5e8",
+    "results/paper_completion_20260917/core_dataflow_ablation/runtime_manifest.json": "85f78bf8c97372afd1bb674987f6f97f7cc0ac89c97f8ad1c341bc34f2719425",
+    "results/paper_targeted_20261012/ntt_extension/summary.json": "a6a31a8797c23037b3243cb8e078cd20277999652d6190b2a204bbdb3ed0c186",
+    "docs/research_principles.md": "bcd79c2e06142bf2cbee441e54a973170b7a541db5a2023735798e580049389b",
+    "results/e2e_current_20261017/poisson_2048_b16_adaptive_trace/report.json": "d572d18ffa1eefa75ca900109a12779108207e5d758150000bf7fd2073be0616",
+    "paper/tools/render_principle_evaluation.py": "a157e3cfdb4ee1055f1f073749937f29fec2927d36b62ee3c6cdbe7a8a575741"
+  },
+  "software": {
+    "matplotlib": "3.10.9",
+    "numpy": "1.26.4"
+  },
+  "export": "7 inch double-column figures; 3.5 inch fixed-core figure; opaque PDF/PNG/SVG; 300 DPI RGB PNG; embedded TrueType PDF; editable SVG text",
+  "publisher_status": "general manuscript figures; venue-specific requirements pending review",
+  "policy": "no pooled competitor ratios, no pooled historical/current cohorts, no invented missing observations",
+  "e1": {
+    "requests": 36,
+    "groups": 9,
+    "aggregation": "one measured complete-call latency per workload; box IQR and min/max across requests",
+    "pairing": "baseline_us / cubutterfly_us on identical request; separate GM per operator/precision/competitor",
+    "missing": "unsupported/not-applicable retained; absent box is not zero or a win"
+  },
+  "core_organization": {
+    "formula": "same-core stagewise cell median / resident cell median",
+    "uncertainty": "min/max of three trial-paired ratios; not CI",
+    "interpretation": "finite matched control, not external-library native performance or current-build throughput",
+    "omitted": "A100 40GB historical ratios excluded"
+  },
+  "applications": {
+    "cohort": "applications-20261012-filter-v2",
+    "points": 9,
+    "independent_processes_per_point": 3,
+    "throughput": "B * 1e6 / process latency_us",
+    "ratio": "baseline process latency / cuButterfly process latency; matched process index",
+    "interval": "median and min/max; not CI",
+    "accuracy": "no explicit floating threshold; exploratory measured results only"
+  },
+  "poisson_endpoint": {
+    "cohort": "e2e-20261017-poisson-2048-b16",
+    "application": "periodic 2D spectral Poisson RHS-to-solution solve",
+    "size": 2048,
+    "batch": 16,
+    "hardware": {
+      "name": "NVIDIA A100 80GB PCIe",
+      "uuid": "0eae5f07-33de-321b-70a9-ffeae49309e6",
+      "memory_bytes": 84974239744
+    },
+    "samples": "20 repeated steady-state wall_ms samples per backend/mode in one process; not independent process replicates",
+    "timing_scope": "device input copy + complete RHS FFT/multiplier/inverse FFT or replay + independent full solution output copy + synchronization",
+    "setup_search_capture_excluded": true,
+    "report_path": "results/e2e_current_20261017/poisson_2048_b16_adaptive_trace/report.json",
+    "report_sha256": "d572d18ffa1eefa75ca900109a12779108207e5d758150000bf7fd2073be0616",
+    "library_sha256": "93471bbb7863cd1414b04cb0d29232ee9e3606b674771336bf4b8c7c01382ade",
+    "source": "https://github.com/google/jax-cfd/blob/main/jax_cfd/spectral/utils.py"
+  },
+  "generated_hashes": {
+    "paper/generated/principle_application_poisson_endpoint.csv": "5531d2f6f7180650536cbcdc570264aba3ae74e67b830bf4757c6e75ff960a66",
+    "paper/generated/principle_application_poisson_endpoint.tex": "8821cc84cc46de5067a90bc0d961eb64f22e5681fd78faf70a8130845660a424",
+    "paper/generated/principle_application_poisson_endpoint_summary.csv": "ee6acb20fc7e3e2bf75d8528ebc234da4c2638a2916d0d24c8074d8f204b4b91",
+    "paper/generated/principle_application_processes.csv": "1f0617d6a826a1c03aa2de67e9d6d9062be1cfaa5ea65c1af4b844fa4c4d1d79",
+    "paper/generated/principle_application_table.csv": "8a4b9b94bae566a2ce4ea6ad2852ddd51b784412f292708c810a6abcbf43acf3",
+    "paper/generated/principle_application_table.tex": "e98c026ea42259705bc35abf9526404c2900fe3f18255c208b10a7fa3f79a5c9",
+    "paper/generated/principle_captions.tex": "ea117ad67608f26254aead4be43b37712cc04c3e38cc8c146efe88c28024cdf2",
+    "paper/generated/principle_core_organization.csv": "d906f8576ff0197c0a8c7edcad260bc0bbf05dcf240d0516071a634159758fd0",
+    "paper/generated/principle_e1_latency.csv": "47c221c099312bdc310fa9abefcb73509965d7a9d1cab4468232f8a9749e343e",
+    "paper/generated/principle_e1_pair_summary.csv": "90494539710e2758ed1d5fc9dd87a6d6e83cd769bb47c33aec6242451cbd5ed6",
+    "paper/generated/principle_e1_pairs.csv": "5956b778faf01001ae747f12912ccbf8ba219ee0ee911ec0ed0c779bf4c330d3",
+    "paper/generated/principle_ntt_extension.csv": "8c274b75404ee1272263ca9a68648ada84bf75694e4273c2c536526adf07330a"
+  }
+}
