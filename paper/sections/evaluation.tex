@@ -7,11 +7,11 @@ Comparisons retain their populations and timing boundaries.
 \begin{figure*}[t]
 \centering
 \includegraphics[width=.98\textwidth]{figures/current_refresh_operators.pdf}
-\caption{Frozen complete-call comparisons span operator families and precisions.
+\caption{Frozen matched complete-call ratios span operator families and precisions.
 The main-study DaoFHT calls include supplied-output copying; the independent
 FWHT interface study is reported separately in Table~\ref{tab:fwht-interfaces}.
 FP16 uses nine public selections, while further BF16 comparisons are deferred.}
-\label{fig:rc2-absolute-throughput}
+\label{fig:current-operator-ratios}
 \end{figure*}
 
 \subsection{Experimental setup}
@@ -63,7 +63,7 @@ not confidence intervals. Near-parity ratios do not establish significance.
 \subsection{Performance comparisons}
 \textbf{Question 1: How competitive are the generated operators?}
 \label{sec:rc2-results}
-Figure~\ref{fig:rc2-absolute-throughput} and Table~\ref{tab:current-operators}
+Figure~\ref{fig:current-operator-ratios} and Table~\ref{tab:current-operators}
 report matched baseline/\system{} latency ratios. The 66 requests yield
 49 external pairs; some have multiple competitors, others no matched baseline. Boxes span workloads, not uncertainty. Missing pairs
 are not counted as wins.
@@ -126,9 +126,9 @@ uses two processes on a shared host and a different timing boundary.
 \textbf{Finite-field range and batch.}
 The five main-study word64 NTT pairs give \CurrentNTT$\times$; three-trial
 replay gives 1.175$\times$. The independent cyclic study obtains 54 exact
-GPU-NTT pairs with GM \CurrentCyclicNTT$\times$, including 51 ratios above
-one. Its 18 word32 pairs give 1.400$\times$ and 36 word64 pairs give
-1.265$\times$. Comparator modulus limits ($2^{30}$ for word32 and $2^{61}$
+GPU-NTT pairs with 51 ratios above one. Its 18 word32 pairs give
+\CurrentCyclicNTTWordThirtyTwo$\times$ and 36 word64 pairs give
+\CurrentCyclicNTTWordSixtyFour$\times$. Comparator modulus limits ($2^{30}$ for word32 and $2^{61}$
 for word64) exclude 36 requests, which retain exact \system{} results
 without external ratios. Three word64 $B=1$ pairs yield 0.972--0.999$\times$.
 Eighteen pairs were measured together; 36 use unchanged \system{} timings

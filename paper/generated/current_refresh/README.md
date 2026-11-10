@@ -27,8 +27,10 @@ acceptance directory is an error, not a reason to substitute fixed controls.
 | `numbers.tex` | Generated headline operator and CKKS numbers used by the manuscript |
 | `figure_manifest.json` | Snapshot/renderer hashes, physical sizes, data descriptions and vector/raster output hashes |
 
-The unified latency figure includes all `main66` requests plus nine separately
-identified FP16 DEFAULT requests. Their geometric mean against cuFFT is
+The paired speedup figure includes all `main66` requests plus nine separately
+identified FP16 DEFAULT requests. Every plotted point and box uses only a
+request with a complete cuButterfly/baseline pair; no unmatched latency is
+plotted. Their geometric mean against cuFFT is
 0.853583, with one ratio above one. MEASURE and installed DEFAULT are retained
 separately, never used as per-request minima. Further BF16 experiments are deferred. The earlier
 22 fixed controls and single public-winner replay stay archived under

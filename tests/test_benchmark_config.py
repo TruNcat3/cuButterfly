@@ -20,7 +20,10 @@ def test_quick_manifest_expands_all_scopes_and_is_bounded():
     document = load_manifest(ROOT / "config" / "benchmark_quick.json")
     cases = expand_cases(document, "quick")
     assert {case["scope"] for case in cases} == {"operator", "e2e", "profile"}
-    assert len(cases) == 14
+    # The bounded smoke matrix currently has one low-precision FFT case. BF16
+    # remains a declared semantic class but its external comparison campaign
+    # is deferred, so it must not silently expand the executable quick set.
+    assert len(cases) == 13
     assert all(case["mode"] == "quick" for case in cases)
     assert all("execution" in case for case in cases)
     assert all(not (case["provider"] == "cpu" and case["execution"]["gpu"]) for case in cases)
@@ -112,7 +115,7 @@ def test_fft_aliases_and_legacy_filter_preserve_operator(mode):
     assert {case["operator"] for case in legacy} == {"fft"}
     assert {case["compute_type"] for case in high} == {"fft-h"}
     assert {case["compute_type"] for case in low} == {"fft-l"}
-    assert {case["precision"] for case in low} == {"fp16", "bf16"}
+    assert {case["precision"] for case in low} == {"fp16"}
 
 
 def test_fft_semantic_contract_and_rejections():

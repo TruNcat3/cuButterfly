@@ -18,8 +18,9 @@ On A100, fixed-core controls obtain approximately 1.22$\times$ organization
 gains with either of two FFT leaves, with conditional gains also observed
 for FWHT and NTT. Separate complete-call comparisons obtain geometric means
 of \CurrentFFTSingle$\times$/\CurrentFFTDouble$\times$ over cuFFT for FP32/FP64,
-including adapted and multidimensional requests, and \CurrentCyclicNTT$\times$
-over GPU-NTT across 54 matched requests. Thirty-six short-chain CKKS requests
+including adapted and multidimensional requests, and \CurrentCyclicNTTWordThirtyTwo$\times$
+and \CurrentCyclicNTTWordSixtyFour$\times$ for word32 and word64 cyclic NTT requests,
+respectively. Thirty-six short-chain CKKS requests
 achieve \CurrentCKKSFast$\times$ over the faster of two native execution choices.
 FP16 and application losses delimit these benefits. Floating-point errors are
 reported without a fixed acceptance threshold, and cross-architecture

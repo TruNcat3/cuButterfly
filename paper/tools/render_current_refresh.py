@@ -90,12 +90,11 @@ def operator_plot(data, output, manifest):
     ax.axvspan(-.5, 1.5, color="#f3f3f3", zorder=0)
     all_values = []
     for i, group in enumerate(GROUPS):
-        req = [r for r in requests if (r["operator"], r["precision"]) == group]
-        match = [r for r in pairs if (r["operator"], r["precision"]) == group]
-        series = {"cuButterfly": [r["own_us"] for r in req if r.get("own_us")
-                                   and r["status"] in ("pass", "accuracy-review-required")]}
+        match = [r for r in pairs if (r["operator"], r["precision"]) == group
+                 and r.get("speedup") is not None]
+        series = {}
         for baseline in list(STYLES)[1:]:
-            vals = [r["baseline_us"] for r in match if r["baseline"] == baseline]
+            vals = [r["speedup"] for r in match if r["baseline"] == baseline]
             if vals:
                 series[baseline] = vals
         offsets = np.linspace(-.25, .25, len(series)) if len(series) > 1 else [0]
@@ -116,10 +115,8 @@ def operator_plot(data, output, manifest):
                 box["boxes"][0].set_hatch(hatch)
             ax.scatter(i + offset + np.linspace(-.035, .035, len(vals)), vals,
                        s=10, marker=marker, color=color, zorder=3)
-            if name != "cuButterfly":
-                ratios = [r["speedup"] for r in match if r["baseline"] == name]
-                short = {"cufft": "C", "vkfft": "V", "daofht": "D", "gpu-ntt": "G"}[name]
-                annotations.append(f"{short} {gm(ratios):.2f}x/{len(ratios)}")
+            short = {"cufft": "C", "vkfft": "V", "daofht": "D", "gpu-ntt": "G"}[name]
+            annotations.append(f"{short} {gm(vals):.2f}x/{len(vals)}")
         note = "\n".join(annotations) if annotations else "No ext.\nresult"
         if group == ("fft", "fp16"):
             note += "\n" + ("DEFAULT" if public_default else "Replay")
@@ -137,17 +134,23 @@ def operator_plot(data, output, manifest):
                                (12, 13, "Structured 2×2")):
         ax.text((left + right) / 2, -.30, title, transform=ax.get_xaxis_transform(),
                 ha="center", va="top", fontsize=6.5, fontweight="bold")
+    if not all_values:
+        raise ValueError("operator plot has no matched speedups")
     ax.set_yscale("log", base=10)
     ax.set_ylim(min(all_values) / 1.35, max(all_values) * 1.4)
     ax.set_xlim(-.55, len(GROUPS) - .45)
-    ax.set_ylabel("Complete-call latency (us; log10)", fontsize=7.5)
+    ax.set_ylabel("Baseline / cuButterfly speedup (log10)", fontsize=7.5)
     axis_style(ax)
     for boundary in (3.5, 5.5, 7.5, 9.5, 11.5):
         ax.axvline(boundary, color="#AAAAAA", linestyle=":", linewidth=.7)
+    # The plotted values are ratios, so cuButterfly is the denominator rather
+    # than a plotted series.  Leaving its old marker in the legend would imply
+    # an unpaired absolute-latency series.
     handles = [Line2D([], [], color=c, marker=m, linestyle="none", markersize=4,
-                      label=NAMES[n]) for n, (c, m, _) in STYLES.items()]
+                      label=NAMES[n]) for n, (c, m, _) in STYLES.items()
+               if n != "cuButterfly"]
     fig.legend(handles=handles, loc="upper center", ncol=5, frameon=False, fontsize=7)
-    fig.text(.5, .825, "Paired GM (baseline/cuButterfly); C/V/D/G = cuFFT/VkFFT/DaoFHT/GPU-NTT",
+    fig.text(.5, .825, "Matched complete-call ratios (baseline / cuButterfly); C/V/D/G = cuFFT/VkFFT/DaoFHT/GPU-NTT",
              ha="center", fontsize=6.2)
     low_label = f"{low_count} FP16 DEFAULT requests" if public_default else "1 FFT-L replay"
     low_scope = ("*FP16: independent forward cohort; Further BF16 experiments deferred. Floating errors are reported."
@@ -156,7 +159,7 @@ def operator_plot(data, output, manifest):
     fig.text(.5, .012, f"Main 66 requests + {low_label}; boxes span workloads, not uncertainty.\n" + low_scope,
              ha="center", fontsize=6.1, linespacing=1.3)
     save(fig, "operators", output, manifest,
-         f"Unified operator/precision view: main66 and {low_label}, kept as separate cohorts. Further BF16 experiments are deferred. No fixed-control mappings enter the library comparison. Operator family headings group explicit precision labels. Single requests are points, not boxes. Ratios use matched requests; missing results have no box.")
+         f"Unified matched speedup view: main66 and {low_label}, kept as separate cohorts. Each box and point uses only a request with the same semantic case in cuButterfly and the named baseline. Further BF16 experiments are deferred. No fixed-control mappings enter the library comparison. Boxes span workloads, not uncertainty; missing results have no ratio.")
     manifest["figures"]["operators"].update(main_requests=66,
         fft_l_public_replays=0 if public_default else low_count,
         fft_l_public_defaults=low_count if public_default else 0,
@@ -481,7 +484,9 @@ def write_tables(data, generated):
         macros["CurrentFFT" + ("Single" if precision == "fp32" else "Double")] = f"{gm(selected):.3f}"
     for op, baseline, macro in (("ntt", "gpu-ntt", "CurrentNTT"), ("fwht", "daofht", "CurrentFWHT")):
         macros[macro] = f"{gm([r['speedup'] for r in pairs if r['operator'] == op and r['baseline'] == baseline]):.3f}"
-    macros["CurrentCyclicNTT"] = f"{gm([r['speedup'] for r in cyclic_pairs]):.3f}" if cyclic_pairs else "pending"
+    for precision, suffix in (("word32", "WordThirtyTwo"), ("word64", "WordSixtyFour")):
+        values = [r["speedup"] for r in cyclic_pairs if r["precision"] == precision]
+        macros["CurrentCyclicNTT" + suffix] = f"{gm(values):.3f}" if values else "pending"
     for baseline, macro in (("HEonGPU_native_loop", "CurrentCKKSLoop"),
                             ("HEonGPU_native_stage_batch", "CurrentCKKSBatch")):
         macros[macro] = f"{gm([r['speedup'] for r in ckks if r['baseline'] == baseline]):.3f}"

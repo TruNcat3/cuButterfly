@@ -2,17 +2,17 @@
   "schema": "current-paper-refresh-figures-v1",
   "snapshot": "paper/generated/current_refresh/snapshot.json",
   "snapshot_sha256": "8af841214c03793fc9455c512517341151337b3c4f9c61f16241a8d1c9051e91",
-  "renderer_sha256": "6e5ca885f437083728e2da25bc8fbd01a9f8125a8823dd5b205b49617873f804",
+  "renderer_sha256": "71da82823ae653fa6bf0bcedeeea51500b31b161bb79695d1b9e833f89805363",
   "matplotlib": "3.10.9",
   "figures": {
     "operators": {
-      "description": "Unified operator/precision view: main66 and 9 FP16 DEFAULT requests, kept as separate cohorts. Further BF16 experiments are deferred. No fixed-control mappings enter the library comparison. Operator family headings group explicit precision labels. Single requests are points, not boxes. Ratios use matched requests; missing results have no box.",
+      "description": "Unified matched speedup view: main66 and 9 FP16 DEFAULT requests, kept as separate cohorts. Each box and point uses only a request with the same semantic case in cuButterfly and the named baseline. Further BF16 experiments are deferred. No fixed-control mappings enter the library comparison. Boxes span workloads, not uncertainty; missing results have no ratio.",
       "width_inches": 7.0,
       "height_inches": 2.55,
       "files": {
-        "paper/figures/current_refresh_operators.pdf": "bd52af0b1a7501f507641c7f1d86ae27ffc68e86ab8faa8f5929316b873a7bed",
-        "paper/figures/current_refresh_operators.svg": "bc9e2133503c8be7834b5d438f573f48bf63547956d7c380aa30bb310b97dd82",
-        "paper/figures/current_refresh_operators.png": "bd465f83ba8b6f3047358d49863803ba112f72ecf6150c2c2af14b1d4222c991"
+        "paper/figures/current_refresh_operators.pdf": "606400495dbd6bf66afb8963fc378f488006933ab7ebb89fb1b5989aed54f35f",
+        "paper/figures/current_refresh_operators.svg": "05294510b72ae3fbd408fe1894e6c6769e95354a91bd15d97a412a8704634cad",
+        "paper/figures/current_refresh_operators.png": "b2ea098fa805cd5714e2920192cef6d6a8e0c8b5d219f67711b56decba3cd2df"
       },
       "main_requests": 66,
       "fft_l_public_replays": 0,
