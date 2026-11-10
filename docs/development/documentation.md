@@ -34,7 +34,7 @@ Ascend-FFT 的[任务导航与指南分层](https://github.com/TruNcat3/ascend-f
 
 - 原始测量保留在各自结果目录，并绑定命令、scope、build、硬件与计时协议；不覆盖旧 trial，也不把诊断数据改称正式结果。
 - 派生表格和图由有记录的脚本从明确输入生成，保留源路径与 provenance；不要手改生成表来修正文案或替换缺测值。
-- 论文 source 与接纳的冻结证据分别维护。论文入口见 [paper/evidence](../../paper/evidence/README.md)，公开快照见 [current_refresh](../../paper/generated/current_refresh/snapshot.json)；运行中的目录不自动成为论文证据。
+- 论文 source 独立维护，不纳入软件仓库。实验入口见 experiments/README.md，公开快照见 [current_refresh](../../experiments/snapshots/current_refresh/snapshot.json)；运行中的目录不自动成为论文证据。
 
 状态标签、完整报告字段、负结果、unsupported 和复现要求均以
 [reporting contract](../reporting_contract.md)为准。源码发布未附带的历史工件使用

@@ -169,7 +169,7 @@ until the native baseline graph is finite.
 - NTT selector ablation traces: `results/selector_ablation_20261017/ntt_n16384_b4/`
 - Current Graph Poisson control: `results/e2e_current_20261017/poisson_1024_b16_torch_v2/report.json`
 - Current Graph Poisson controls: `results/e2e_current_20261017/poisson_2048_b4_torch_v2/report.json` and `results/e2e_current_20261017/poisson_2048_b16_torch_v2/report.json`
-- Current Graph Torch-only runner: `paper/tools/run_periodic_poisson_torch_graph_20261017.py`
+- Current Graph Torch-only runner: `experiments/tools/run_periodic_poisson_torch_graph_20261017.py`
 - Current matched-padding FFT filters: `results/e2e_current_20261018/fft_n1024_b16/` and `results/e2e_current_20261018/fft_n2048_b16/`
 - Current QuaRot FP32-composed eager row: `results/e2e_current_20261018/quarot_b1_p128_d8_eager_fp32.json`
 - QuaRot graph finite-output diagnostics: `results/e2e_current_20261018/quarot_debug_graph_p16_d1.json` and `results/e2e_current_20261018/quarot_debug_graph_p16_d1_baseline_first.json`
@@ -307,7 +307,7 @@ application result: the small full-model validation was blocked by a host
 filesystem page wait before producing a report.
 
 The supplemental CKKS/TFHE contract is
-`paper/experiments/ckks_tfhe_workloads.json`. CKKS uses the pinned HEonGPU v2
+`experiments/workloads/ckks_tfhe_workloads.json`. CKKS uses the pinned HEonGPU v2
 regular bootstrap (`N=65536`, 25 Q primes, 5 P primes, scale `2^40`, secret
 weight 192) and keeps the v1 `N=4096` path as an explicitly insecure smoke
 case. TFHE uses the pinned context (`N=1024`, `n=512`, `k=1`, `bk_l=2`,
@@ -315,7 +315,7 @@ case. TFHE uses the pinned context (`N=1024`, `n=512`, `k=1`, `bk_l=2`,
 NAND/XOR circuits. The native complete-call reference is now measured in
 `results/e2e_current_20261018/tfhe_native_full.csv`; all 44 rows passed exact
 bit decryption. The full-call runner is
-`paper/experiments/run_heongpu_tfhe_e2e.py` and reports setup/encryption
+`experiments/workloads/run_heongpu_tfhe_e2e.py` and reports setup/encryption
 separately while timing every public gate or circuit call through CUDA
 completion.
 
@@ -332,7 +332,7 @@ CKKS/RNS component cases rather than TFHE claims.
 
 ## Measured CKKS operation integration (2026-10-18)
 
-The new `paper/experiments/run_heongpu_ckks_e2e.py` replaces the NTT calls
+The new `experiments/workloads/run_heongpu_ckks_e2e.py` replaces the NTT calls
 inside complete CKKS key switching, square/relinearize/rescale, square followed
 by key switching, and slot rotation. The original keys, ciphertexts and
 non-butterfly computation are shared. The adapter performs per-prime root

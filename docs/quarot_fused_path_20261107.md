@@ -87,7 +87,7 @@ are recorded separately from measured application rows.
 
 ## 完整 7B 最终结果（2026-11-07）
 
-四个独立 clean 进程已经完成。来源为 [生成证据](../paper/generated/current_refresh/quarot_fused_e2e.json)，其中记录逐进程原始报告路径、SHA256、库与 runner 身份、全部 wall/event 样本和数值误差。CPU 核验逐份原始报告 hash，并从每变体各7个样本重算两时钟中位数及其比值；下表与生成证据一致。
+四个独立 clean 进程已经完成。来源为 [生成证据](../experiments/snapshots/current_refresh/quarot_fused_e2e.json)，其中记录逐进程原始报告路径、SHA256、库与 runner 身份、全部 wall/event 样本和数值误差。CPU 核验逐份原始报告 hash，并从每变体各7个样本重算两时钟中位数及其比值；下表与生成证据一致。
 
 A100 80GB PCIe，UUID `GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02`；库 SHA256 `775a85c8f76e44bbfee886fd90489e7c309bd097b60e968183e446aa006177b2`。固定32层随机权重 Llama-2-7B、seed20261003、prefill128/decode8、SDPA prefill、验证预热4次、计时预热2次、每变体7次完整 Graph 调用。边界为设备输入 refresh、完整 prefill/decode、独立 logits clone 和同步，wall 包含 host 调用；setup、计划创建与 Graph capture 排除。替换的 FWHT 路径采用 FP16 storage、FP32 compute、final FP16 writeback（并非宣称整个模型使用 FP32 运算）；实际走 `public_fp32_final`。该路径已成为默认值，旧 native/composed/eager 可显式重放。
 

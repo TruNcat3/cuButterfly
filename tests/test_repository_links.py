@@ -97,7 +97,7 @@ def test_nested_document_preserves_external_and_exact_artifact_rules(repository)
 
 @pytest.mark.parametrize('target', ['../results/historical/typo.json',
     '../results/archived-directory/unlisted-child.json', '../scripts/missing.py',
-    '../paper/generated/missing.json'])
+    '../experiments/snapshots/missing.json'])
 def test_unregistered_raw_source_and_paper_links_remain_errors(repository, target):
     (repository / 'docs/broken.md').write_text(f'[missing]({target})\n')
     with pytest.raises(RuntimeError, match='missing'):
@@ -119,7 +119,7 @@ def test_strict_mode_requires_the_whole_exact_inventory(repository):
 
 
 @pytest.mark.parametrize('entry', ['results/*', 'results/history/../typo.json',
-    'paper/generated/snapshot.json', '/results/raw.json', 'results/history/'])
+    'experiments/snapshots/snapshot.json', '/results/raw.json', 'results/history/'])
 def test_inventory_cannot_exempt_prefixes_or_nonresults_paths(repository, entry):
     manifest = repository / 'config/repository_local_artifacts.json'
     data = json.loads(manifest.read_text())

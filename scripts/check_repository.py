@@ -39,6 +39,7 @@ def check_markdown_links(strict_local_artifacts=False):
         ROOT / "CONTRIBUTING.md",
         ROOT / "ROADMAP.md",
         *sorted((ROOT / "docs").rglob("*.md")),
+        *sorted((ROOT / "experiments").rglob("*.md")),
     ]
     pattern = re.compile(r"!?\[[^]]*\]\(([^)]+)\)")
     for document in documents:
@@ -83,14 +84,15 @@ def check_markdown_links(strict_local_artifacts=False):
 
 
 def check_json():
-    paths = sorted((*ROOT.glob("config/**/*.json"), *ROOT.glob("configs/**/*.json")))
+    paths = sorted((*ROOT.glob("config/**/*.json"), *ROOT.glob("configs/**/*.json"),
+                    *ROOT.glob("experiments/**/*.json")))
     for path in paths:
         json.loads(path.read_text())
     return len(paths)
 
 
 def check_python():
-    paths = sorted((ROOT / "scripts").glob("*.py"))
+    paths = sorted((*ROOT.glob("scripts/*.py"), *ROOT.glob("experiments/**/*.py")))
     for path in paths:
         py_compile.compile(path, doraise=True)
     return len(paths)

@@ -7,7 +7,7 @@ from unittest.mock import patch
 import numpy as np
 import torch
 
-PATH = Path(__file__).resolve().parents[1]/'paper/tools/run_xd_application_breakdown_20261012.py'
+PATH = Path(__file__).resolve().parents[1]/'experiments/tools/run_xd_application_breakdown_20261012.py'
 spec = importlib.util.spec_from_file_location('xd_breakdown', PATH)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)

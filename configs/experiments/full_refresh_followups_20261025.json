@@ -5,7 +5,7 @@
   "input_paths": [
     "results/mechanism_current_20261017_v2/study.json",
     "configs/experiments/filter_refresh_20261025.json",
-    "paper/experiments/e13/run_fft_filter_end_to_end.py",
+    "experiments/workloads/e13/run_fft_filter_end_to_end.py",
     "results/e13_assets/cubutterfly_real_fft.py",
     "{output_dir}/fft_filters/prepared.json",
     "config/research_campaign/composed.json",
@@ -30,15 +30,15 @@
     },
     {
       "id": "poisson-1024-b4",
-      "argv": ["paper/tools/run_periodic_poisson_graph_20261013.py", "--library", "{build_dir}/libcuntt.so", "--size", "1024", "--batch", "4", "--norm", "backward", "--calls", "20", "--warmup", "3", "--output", "{output_dir}/poisson/poisson-1024-b4/report.json"]
+      "argv": ["experiments/tools/run_periodic_poisson_graph_20261013.py", "--library", "{build_dir}/libcuntt.so", "--size", "1024", "--batch", "4", "--norm", "backward", "--calls", "20", "--warmup", "3", "--output", "{output_dir}/poisson/poisson-1024-b4/report.json"]
     },
     {
       "id": "poisson-2048-b4",
-      "argv": ["paper/tools/run_periodic_poisson_graph_20261013.py", "--library", "{build_dir}/libcuntt.so", "--size", "2048", "--batch", "4", "--norm", "backward", "--calls", "20", "--warmup", "3", "--output", "{output_dir}/poisson/poisson-2048-b4/report.json"]
+      "argv": ["experiments/tools/run_periodic_poisson_graph_20261013.py", "--library", "{build_dir}/libcuntt.so", "--size", "2048", "--batch", "4", "--norm", "backward", "--calls", "20", "--warmup", "3", "--output", "{output_dir}/poisson/poisson-2048-b4/report.json"]
     },
     {
       "id": "poisson-2048-b16",
-      "argv": ["paper/tools/run_periodic_poisson_graph_20261013.py", "--library", "{build_dir}/libcuntt.so", "--size", "2048", "--batch", "16", "--norm", "backward", "--calls", "20", "--warmup", "3", "--output", "{output_dir}/poisson/poisson-2048-b16/report.json"]
+      "argv": ["experiments/tools/run_periodic_poisson_graph_20261013.py", "--library", "{build_dir}/libcuntt.so", "--size", "2048", "--batch", "16", "--norm", "backward", "--calls", "20", "--warmup", "3", "--output", "{output_dir}/poisson/poisson-2048-b16/report.json"]
     },
     {
       "id": "mechanism-profile",
@@ -47,7 +47,7 @@
     },
     {
       "id": "poisson-adaptive-trace",
-      "argv": ["paper/tools/run_periodic_poisson_graph_20261013.py", "--library", "{build_dir}/libcuntt.so", "--size", "2048", "--batch", "16", "--norm", "backward", "--calls", "20", "--warmup", "3", "--profile", "--output", "{output_dir}/poisson_adaptive_trace/report.json"]
+      "argv": ["experiments/tools/run_periodic_poisson_graph_20261013.py", "--library", "{build_dir}/libcuntt.so", "--size", "2048", "--batch", "16", "--norm", "backward", "--calls", "20", "--warmup", "3", "--profile", "--output", "{output_dir}/poisson_adaptive_trace/report.json"]
     },
     {
       "id": "fft-filters",

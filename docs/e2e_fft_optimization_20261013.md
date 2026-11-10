@@ -113,10 +113,10 @@ CuPy 的 2.3× 不能归因于 FFT 组织。这个负结果保留；下一步要
 - [分组配置与 Driver 资源探针](../results/e2e_fft_opt_20261013/grouped_verified_driver/release/grouped_verified_driver.json)。
 - [逆变换尺度放置验证](../results/e2e_fft_opt_20261013/prefix_validation/release/prefix_validation.json)。
 - [公共 API 缓存回放](../results/e2e_fft_opt_20261013/public_replay_verified/release/public_replay_validation.json)。
-- [增量构建脚本](../paper/tools/build_e2e_incremental_20261013.py)、
-  [Poisson/配准与旧库控制矩阵](../paper/tools/run_e2e_fft_opt_matrix_20261013.py)、
-  [结果汇总器](../paper/tools/summarize_e2e_fft_opt_20261013.py)。滤波复测调用
-  `paper/experiments/e13/run_fft_filter_end_to_end.py`，两个隔离任务的
+- [增量构建脚本](../experiments/tools/build_e2e_incremental_20261013.py)、
+  [Poisson/配准与旧库控制矩阵](../experiments/tools/run_e2e_fft_opt_matrix_20261013.py)、
+  [结果汇总器](../experiments/tools/summarize_e2e_fft_opt_20261013.py)。滤波复测调用
+  `experiments/workloads/e13/run_fft_filter_end_to_end.py`，两个隔离任务的
   `status.json` 均保留完整命令及参数。
 
 三个生产源文件与相关头文件的 24 项输入哈希已和最终构建记录逐项核对。

@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location('resource_decisions', ROOT / 'paper/tools/export_resource_decisions.py')
+spec = importlib.util.spec_from_file_location('resource_decisions', ROOT / 'experiments/tools/export_resource_decisions.py')
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
@@ -22,7 +22,7 @@ def test_dependency_regions_are_not_ctas_or_compiler_smem():
 
 
 def test_frozen_chain_recomputes_samples_and_preserves_missing_ntt():
-    frozen = json.loads((ROOT / 'paper/generated/resource_decisions_20261107.json').read_text())
+    frozen = json.loads((ROOT / 'experiments/snapshots/resource_decisions_20261107.json').read_text())
     missing = [entry['path'] for entry in frozen['sources'] if not (ROOT / entry['path']).is_file()]
     if missing:
         pytest.skip('Raw-evidence recomputation unavailable: %s; frozen-artifact checks remain separate; this skip is not measurement completion' % ', '.join(missing[:3]))
@@ -47,13 +47,13 @@ def test_frozen_chain_recomputes_samples_and_preserves_missing_ntt():
     assert len(extension['chronology']['guard_completion_receipts']) == 4
     assert 'same' in module.render_prospective(data)
     assert all(r['choices']['conventional']['mapping'] == r['choices']['extended']['mapping'] for r in extension['rows'][2:])
-    assert (ROOT / 'paper/generated/resource_measured_selection_20261107.tex').read_text() == module.render_prospective(data)
-    assert json.loads((ROOT / 'paper/generated/resource_decisions_20261107.json').read_text()) == data
+    assert (ROOT / 'experiments/snapshots/resource_measured_selection_20261107.txt').read_text() == module.render_prospective(data)
+    assert json.loads((ROOT / 'experiments/snapshots/resource_decisions_20261107.json').read_text()) == data
 
 
 def test_portable_frozen_artifact_numbers_semantics_and_tables():
     # No raw results, production model imports, CUDA or remote filesystem needed.
-    data = json.loads((ROOT / 'paper/generated/resource_decisions_20261107.json').read_text())
+    data = json.loads((ROOT / 'experiments/snapshots/resource_decisions_20261107.json').read_text())
     assert data['schema'] == 'resource-decisions-audit-v1'
     cohort = data['cohort']
     assert (cohort['certified_keys'], cohort['clean_probes'], cohort['independent_group_holdouts'],
@@ -85,6 +85,6 @@ def test_portable_frozen_artifact_numbers_semantics_and_tables():
         assert statistics.median(p['ratio'] for p in pairs) == row['median_paired_ratio']
         if row['workload']['operator'] == 'ntt':
             assert row['same_winner'] and row['choices']['extended']['id'] == 't256-o1'
-    assert (ROOT / 'paper/generated/resource_decisions_20261107.tex').read_text() == module.render(data)
-    assert (ROOT / 'paper/generated/resource_measured_selection_20261107.tex').read_text() == module.render_prospective(data)
+    assert (ROOT / 'experiments/snapshots/resource_decisions_20261107.txt').read_text() == module.render(data)
+    assert (ROOT / 'experiments/snapshots/resource_measured_selection_20261107.txt').read_text() == module.render_prospective(data)
     assert 'FFT64' in module.render(data) and 'SMEM' in module.render(data)

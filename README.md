@@ -35,7 +35,7 @@ research software, not an institutional release.
 | Extend an operator, core or platform | [Engineering map](docs/development/repository-layout.md) → [Contributing](CONTRIBUTING.md) |
 | Calibrate or tune a GPU | [Hardware workflow](docs/hardware_profile_install.md) → [Target runbooks](docs/hardware/README.md) |
 | Run a comparison | [Benchmark guide](benchmark/README.md) → [Reporting protocol](docs/reporting_contract.md) |
-| Read the paper and evidence | [Paper](paper/main.pdf) → [Paper guide](paper/README.md) → [Experimental results](docs/benchmarks/results.md) |
+| Read benchmark results | [Experimental results](docs/benchmarks/results.md) → [Reproduction tools](experiments/README.md) |
 
 The [documentation index](docs/README.md) provides the complete reading routes.
 The [archive](docs/archive/README.md) preserves version history and research records.
@@ -73,26 +73,26 @@ inside the complete-call timing boundary.
 
 ## Performance overview
 
-The A100 80GB PCIe results below compare each request with the same request
-in a specialized library. The main comparison, cyclic NTT extension and FP16
-comparison remain separate studies from the November 2026 evidence snapshot.
+The A100 80GB PCIe overview compares complete transforms with a common CPU
+reference for each operator family. Each value is CPU latency divided by the
+latency of the GPU backend on the same request.
 
-[![Paired complete-call speedups on A100 80GB. Each point compares the same workload in cuButterfly and an external library. Separate panels show the main comparison, 32-bit and 64-bit cyclic NTT, and FP16 FFT, including ratios below one.](figures/readme_performance.svg)](figures/readme_performance.png)
+[![CPU-normalized performance distributions grouped by butterfly operator and precision. Boxes compare cuButterfly and available external GPU libraries on a shared axis.](figures/cpu_normalized_performance.svg)](figures/cpu_normalized_performance.png)
 
-Speedup is baseline latency divided by cuButterfly latency; values above 1×
-favor cuButterfly. Each dot is a matched request, boxes show workload IQR and
-whiskers span the full range. The geometric mean and nominal faster count
-summarize each row, not statistical confidence. Unmatched requests have no ratio.
-FWHT uses the supplied-output interface; [native-return comparisons](docs/fwht_native_repair_20261107.md)
-are reported separately. The [paired data](figures/readme_performance.csv) and
-[results guide](docs/benchmarks/results.md#reading-performance-distributions)
-describe coverage, modulus limits and numerical reports. FWHT FP64, zeta and
-structured 2×2 have library measurements but no matched GPU comparison in these studies.
+Boxes show workload IQR, the center line is the median, and whiskers span the
+observed range. Each point is a matched CPU/GPU request. The letters above each
+group report each backend's geometric mean and sample count. CPU references are
+FFTW with eight threads, and FXT, HEXL or the author Butterfly implementation with
+one thread, as indicated in the figure. These shared-host CPU measurements are
+provisional. CPU wall time and resident GPU time have different boundaries;
+host-device transfers are excluded from GPU measurements.
 
-For the same main66 requests, the [CPU-normalized distribution](paper/figures/cpu_normalized_performance.svg)
-uses CPU time divided by backend time. It is a complementary view with
-operator-specific CPU references and a provisional shared-host qualification;
-it is kept separate from GPU/GPU ratios.
+The [paired GPU comparison](figures/readme_performance.svg) separately reports
+specialized-library latency divided by cuButterfly latency, including losses.
+Its main comparison, cyclic NTT extension and FP16 cohort retain independent
+populations. The [results guide](docs/benchmarks/results.md#reading-performance-distributions)
+describes coverage, modulus limits, numerical reports and interface contracts.
+Missing external comparisons remain gaps, not zero-valued measurements.
 
 ## Installation and first checks
 
@@ -144,8 +144,7 @@ relationship; their results are not pooled with CUDA comparisons.
 
 ## Citation and license
 
-Use [CITATION.cff](CITATION.cff) for software metadata. The paper draft and the
-software release have distinct version identities.
+Use [CITATION.cff](CITATION.cff) for software metadata. Software metadata identifies this implementation and its release version.
 
 ```bibtex
 @software{wang_cubutterfly_2026,

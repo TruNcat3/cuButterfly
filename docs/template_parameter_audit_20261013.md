@@ -41,7 +41,7 @@
 | cuFFTDx rank-one codelet | [external_fft_units.cuh](../src/external_fft_units.cuh)、cufftdx_fft.cu 及 JIT 路径实际调用 imported 局部核心，并与本库分组/布局配合 | 是真实核心 provider；固定核心的组织比较仍需匹配算术/shape/支持域 |
 | cuFFT 整体 rank-one | ButterflyBackend::Cufft 与 Bluestein external 路径 | 整体外部基线，不等于把 cuFFT 内部 codelet 移植成可搜索模板；xD 单轴 provider 在其他审查范围 |
 | fast-hadamard-transform 策略 | `src/register_fwht.cuh:8` 明确署名 register hierarchy/XOR exchange 来源；RegisterFwhtTraits、warp_wht、register_structured_kernel 为本库 standalone 实现，生成与公共候选可达 | 已完成有限支持域的策略移植，且用于 structured；不是直接调用外部 FWHT provider，也不是所有 shape 参数可搜索 |
-| GPU-NTT / HEonGPU | [heongpu_ntt_adapter_probe.cu](../paper/experiments/e13/heongpu_ntt_adapter_probe.cu) 是实验 adapter/probe，使用 gpuntt::GPU_NTT_Inplace/GPU_INTT 并显式顺序与 twist 转换；src/include 的公共 NTT 链路未见 gpuntt provider | 有实验语义适配证据；不能宣称外部局部核心已导入公共 NTT 模板 |
+| GPU-NTT / HEonGPU | [heongpu_ntt_adapter_probe.cu](../experiments/workloads/e13/heongpu_ntt_adapter_probe.cu) 是实验 adapter/probe，使用 gpuntt::GPU_NTT_Inplace/GPU_INTT 并显式顺序与 twist 转换；src/include 的公共 NTT 链路未见 gpuntt provider | 有实验语义适配证据；不能宣称外部局部核心已导入公共 NTT 模板 |
 
 减少中间写回、布局转换、复制或独立缩放 pass 是 A/L/F 与边界组织收益。计入相同完整语义调用，并核对归一化及舍入位置后，可以归为方法收益；无需把局部乘加指令变快作为唯一收益定义。但切换 provider 的算术收益不能混作同核心组织收益。
 

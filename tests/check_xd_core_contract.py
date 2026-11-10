@@ -20,7 +20,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 CPP = Path(__file__).with_name("xd_core_contract_bridge.cpp")
-sys.path.insert(0, str(ROOT / "paper" / "tools"))
+sys.path.insert(0, str(ROOT / "experiments" / "tools"))
 from validate_vkfft_public_20261013 import check, reference_inputs
 
 

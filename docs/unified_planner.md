@@ -916,7 +916,7 @@ cost model was not used. This interface has not yet been added to the general
 C descriptor, global planner candidate inventory, or installation calibration
 schema. Those remain integration work. Cross-ciphertext batching is now an
 explicit HEonGPU Graph lowering option, described below; eager calls retain
-their original dependency contract. See [CKKS comparison](../paper/experiments/README_ckks.md) for the
+their original dependency contract. See [CKKS comparison](../experiments/workloads/README_ckks.md) for the
 controlled legacy path, semantics and reproduction commands.
 
 `adapters/heongpu/rns_stage_batch.hpp` binds independent RNS requests to their

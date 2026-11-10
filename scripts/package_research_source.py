@@ -23,7 +23,7 @@ SCHEMA = "cubutterfly-research-source-package-v1"
 ARCHIVE_PREFIX = "cuButterfly/"
 WHITELIST_DIRS = (
     "src", "include", "apps", "examples", "scripts", "config", "configs", "benchmarks",
-    "tests", "cmake", "patches", "docs", "python", "benchmark", "adapters",
+    "tests", "cmake", "patches", "docs", "python", "benchmark", "adapters", "experiments",
 )
 WHITELIST_FILES = (
     "CMakeLists.txt", "LICENSE", "LICENSE.txt", "README", "README.md", "AGENTS.md",

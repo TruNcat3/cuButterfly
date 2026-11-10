@@ -29,7 +29,7 @@ class HybridDataflowGeneratorTest(unittest.TestCase):
         self.assertEqual(5, len(defaults))
 
         with tempfile.TemporaryDirectory() as directory:
-            header = Path(directory) / "generated.hpp"
+            header = Path(directory) / "snapshots.hpp"
             GENERATOR.write_header(header, points, defaults)
             text = header.read_text()
             self.assertIn("CUNTT_FOR_EACH_HYBRID_DATAFLOW_KERNEL", text)

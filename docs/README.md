@@ -48,15 +48,13 @@ how counters and traces complement complete-call measurements.
 
 <a id="read-the-a100-paper-evidence"></a>
 
-## Read the paper and results
+## Read benchmark results
 
-[Paper](../paper/main.pdf) → [Paper guide](../paper/README.md) →
-[Experimental results](benchmarks/results.md).
+[Experimental results](benchmarks/results.md) → [Reproduction tools](../experiments/README.md).
 
 Results identify the hardware, workload, numerical contract and timing protocol
-for each comparison. The [evidence index](../paper/evidence/README.md) links frozen
-inputs and derivations; [terminology](../paper/TERMINOLOGY.md) aligns the method
-and its implementation.
+for each comparison. Frozen experiment snapshots support reproducible reporting;
+the [terminology guide](terminology.md) aligns the method and its implementation.
 
 ## Extend and maintain
 

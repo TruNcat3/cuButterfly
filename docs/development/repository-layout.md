@@ -14,7 +14,7 @@
 | 可替换 core 与 lowering | [FFT core 合同](../../src/fft_local_core_contract.hpp)、[cuFFTDx provider](../../src/cufftdx_provider.hpp)、[算术 traits](../../src/operator_traits.cuh)、[shared lowering](../../src/shared_iterative.cuh)、[NTT 候选](../../src/ntt_template_candidates.hpp)、[xD axis](../../src/xd_axis_fft.cu) | 支持域、数值合同、组织接口与实际执行分别核对；见[核心集成策略](../core_integration_strategy.md)和[xD lowering](../xd_lowering.md)。 |
 | 静态硬件事实与服务 profile | [硬件 seed](../../config/hardware/README.md)、[静态 profile 工具](../../scripts/static_hardware_profile.py)、[校准入口](../../scripts/calibrate_hardware.py)、[阶段服务模型](../../scripts/stage_service_model.py) | 容量事实、测量样本、拟合服务与可执行覆盖分开；消费策略以[ADR 0001](../adr/0001-static-profile-driven-planning.md)及[硬件校准指南](../hardware_profile_install.md)为准。 |
 | selection、编译缓存与公共调用 | [公共 C API / planning](../../src/c_api.cpp)、[registry](../../src/plan_registry.cpp)、[mapping selector](../../src/mapping_selector.cpp)、[静态排序](../../src/static_candidate_ranking.hpp)、[JIT module](../../src/jit_module.cpp)、[module API](../../include/cubutterfly/module.h) | 区分注册结果、模型估计、测量选择与编译产物；缓存存在不代表语义、构建和策略兼容。 |
-| benchmark 与论文冻结证据 | [benchmark 合同](../../benchmark/README.md)、[scope](../../benchmark/scopes/a100_80gb_research_v1.json)、[报告合同](../reporting_contract.md)、[论文证据入口](../../paper/evidence/README.md)、[冻结快照](../../paper/generated/current_refresh/snapshot.json) | 完整调用对照、同核心组织消融和应用证据分别取证；派生快照不代替原始测量。 |
+| benchmark 与论文冻结证据 | [benchmark 合同](../../benchmark/README.md)、[scope](../../benchmark/scopes/a100_80gb_research_v1.json)、[报告合同](../reporting_contract.md)、论文证据入口、[冻结快照](../../experiments/snapshots/current_refresh/snapshot.json) | 完整调用对照、同核心组织消融和应用证据分别取证；派生快照不代替原始测量。 |
 
 rank-one 与 xD 当前仍有不同的选择路径；公共接口收敛不代表内部已成为单一实现。
 `src/c_api.cpp` 同时承担前端、候选选择与部分 xD 编排，是后续解耦的实际边界；
@@ -34,7 +34,7 @@ rank-one 与 xD 当前仍有不同的选择路径；公共接口收敛不代表�
 | `apps/` | 可执行探针、微基准及实验程序，例如 [plan probe](../../apps/cubutterfly_plan_probe.cpp)；应用集成也可能位于 adapters 和 scripts。 |
 | `adapters/` | 面向外部应用的集成和补丁，例如 [HEonGPU NTT adapter](../../adapters/heongpu/ntt_adapter.hpp)；需计入适配边界成本。 |
 | `tests/` | CPU 合同测试、构建/缓存检查及需要设备的正确性测试；按改动选择验证，文档修改不触发 GPU 测量。 |
-| `docs/`、`paper/`、`results/` | 稳定指南与报告、论文 source/冻结证据、本地测量工件；维护方式见[文档约定](documentation.md)。 |
+| `docs/`、`experiments/`、`results/` | 稳定指南与报告、可复现实验与冻结数据、本地测量工件；维护方式见[文档约定](documentation.md)。 |
 
 ## 扩展时接到哪里
 

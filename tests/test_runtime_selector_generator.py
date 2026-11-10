@@ -17,7 +17,7 @@ class RuntimeSelectorGeneratorTest(unittest.TestCase):
         self.assertEqual(set(tables), set(MODULE.TABLES))
         self.assertTrue(all(len(anchors) >= 2 for anchors in tables.values()))
         with tempfile.TemporaryDirectory() as directory:
-            output = pathlib.Path(directory) / "generated.hpp"
+            output = pathlib.Path(directory) / "snapshots.hpp"
             MODULE.generate_header(output, tables)
             text = output.read_text()
             self.assertIn("kFwht15WarpAnchors", text)

@@ -21,8 +21,8 @@ from matplotlib.ticker import FixedLocator, FuncFormatter, NullLocator
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "figures"
-SOURCES = ["paper/generated/current_refresh/snapshot.json",
-           "paper/generated/current_refresh/fp16_comparison.json"]
+SOURCES = ["experiments/snapshots/current_refresh/snapshot.json",
+           "experiments/snapshots/current_refresh/fp16_comparison.json"]
 MAIN = "main66"
 CYCLIC = "cyclic90"
 FP16 = "fp16_public_default9_20261105"

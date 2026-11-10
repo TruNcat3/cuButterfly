@@ -10,7 +10,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNNER = ROOT / 'paper/experiments/e13/run_quarot_random_end_to_end.py'
+RUNNER = ROOT / 'experiments/workloads/e13/run_quarot_random_end_to_end.py'
 DEFAULT_CONFIG = ROOT / 'configs/experiments/quarot_fused_followup_20261107.json'
 
 

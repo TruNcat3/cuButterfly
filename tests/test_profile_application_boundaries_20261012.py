@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PATH = ROOT / "paper/tools/profile_application_boundaries_20261012.py"
+PATH = ROOT / "experiments/tools/profile_application_boundaries_20261012.py"
 SPEC = importlib.util.spec_from_file_location("application_boundaries", PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)

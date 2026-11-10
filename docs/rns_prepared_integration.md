@@ -214,7 +214,7 @@ The CKKS experiment wrapper builds `rns_request_compare` against its pinned
 GPU-NTT archive. Select explicit IDs from the extracted manifest:
 
 ```bash
-python paper/experiments/run_rns_request_comparison.py \
+python experiments/workloads/run_rns_request_comparison.py \
   --manifest work/rns/requests/manifest.json \
   --request-id rns-REPLACE_WITH_MANIFEST_ID \
   --binary build-ckks/rns_request_compare \
@@ -258,7 +258,7 @@ arguments fixed; use `require` so both runs load the same cached mapping:
 
 ```bash
 for exchange in block dependency_scoped; do
-  python paper/experiments/run_rns_request_comparison.py \
+  python experiments/workloads/run_rns_request_comparison.py \
     --manifest work/rns/requests/manifest.json \
     --request-id rns-REPLACE_WITH_MANIFEST_ID \
     --binary build-ckks/rns_request_compare \

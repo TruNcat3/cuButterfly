@@ -8,12 +8,12 @@
     "fp16_public_default9_20261105": "2026-11-05"
   },
   "sources": {
-    "paper/generated/current_refresh/snapshot.json": "8af841214c03793fc9455c512517341151337b3c4f9c61f16241a8d1c9051e91",
-    "paper/generated/current_refresh/fp16_comparison.json": "d8afb30a01ff81099bbe4255ac0fa1ccfa8829d77663ff06b9439424b1768a05"
+    "experiments/snapshots/current_refresh/snapshot.json": "8af841214c03793fc9455c512517341151337b3c4f9c61f16241a8d1c9051e91",
+    "experiments/snapshots/current_refresh/fp16_comparison.json": "d8afb30a01ff81099bbe4255ac0fa1ccfa8829d77663ff06b9439424b1768a05"
   },
   "generator": {
     "path": "scripts/render_readme_performance.py",
-    "sha256": "0cb05b5293aef27c36fb5a9a94cdeb25bd7e95cef1292a0510911de1efd5b707"
+    "sha256": "5d107da0a145a0a3f7fcbacc63b3da47c632f56d2110a3a813faa4c38ccbdd58"
   },
   "versions": {
     "matplotlib": "3.10.9",

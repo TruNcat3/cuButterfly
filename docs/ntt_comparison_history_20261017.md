@@ -25,10 +25,10 @@ above remains available in this repository.
 | Same summary, `groups/word32` | 70 pairs | GM 1.804965x |
 | Same summary, `groups/inverse` | 107 pairs | GM 1.571609x |
 | Same summary, `groups/coset` | 30 pairs | GM 1.656135x |
-| [2026-10-12 ledger](../paper/evidence/EXPERIMENT_REUSE_20261012.json), last `operator_groups` entry | 12 word64 pairs, three processes | GM 1.285470x; maximum 1.614771x |
+| [2026-10-12 ledger](../experiments/provenance/EXPERIMENT_REUSE_20261012.json), last `operator_groups` entry | 12 word64 pairs, three processes | GM 1.285470x; maximum 1.614771x |
 | [V100 three-way raw summary](../results/v100_three_way_comparison.csv), three NTT rows | N=65536, B=4/64/256, forward, natural | 1.117641/1.409846/1.437809x |
 
-[RC2 status](../paper/RC2_STATUS_20261002.md) explicitly reports 1.472x.
+RC2 status explicitly reports 1.472x.
 The 1.614771x October 12 maximum is N=4096/B256 normalized inverse, not an
 aggregate. RC2 also contains groups near 1.6x, but the user's intended source
 of “1.6x” cannot be established from that phrase alone.

@@ -28,7 +28,7 @@ from generate_design_points import (load_points, register_legacy_threads,
 ])
 def test_register_generation_preserves_bytes_and_unchanged_mtime(
         tmp_path, writer, log_ns, requested, expected_sha256):
-    path = tmp_path / "generated.cu"
+    path = tmp_path / "snapshots.cu"
     writer(path, log_ns, requested)
     # Digests capture the output before removing intermediate legacy writes.
     original = path.read_bytes()

@@ -6,7 +6,7 @@ import sys
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "paper/tools"))
+sys.path.insert(0, str(ROOT / "experiments/tools"))
 import prepare_principle_gap_campaign as campaign
 
 
@@ -87,7 +87,7 @@ def test_prepare_never_invokes_process_or_gpu(tmp_path, monkeypatch):
         source = sources / relative
         source.parent.mkdir(parents=True, exist_ok=True)
         source.write_text(relative)
-    telemetry = fake_root / "paper/tools/run_with_gpu_telemetry.py"
+    telemetry = fake_root / "experiments/tools/run_with_gpu_telemetry.py"
     telemetry.parent.mkdir(parents=True)
     telemetry.write_text("# frozen telemetry fixture\n")
     calibration = fake_root / target["calibration"]
@@ -144,7 +144,7 @@ def test_guard_child_rejects_missing_or_foreign_context(tmp_path):
 
 
 def test_followup_inventory_cannot_expand_the_frozen_queue():
-    path = ROOT / "paper/experiments/principle_gap_campaign_20261012_followup.json"
+    path = ROOT / "experiments/workloads/principle_gap_campaign_20261012_followup.json"
     followup = json.loads(path.read_text())
     assert followup["extends_sha256"] == campaign.sha(campaign.CONFIG)
     assert len(followup["tasks"]) == 6

@@ -30,7 +30,7 @@ def main():
     os.environ['CUBUTTERFLY_E13_ALGORITHM_POLICY'] = args.algorithm_policy
     import torch
     import sys
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'paper/experiments/e13'))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'experiments/workloads/e13'))
     from quarot_adapter import QuaRotFWHTAdapter
     device = torch.device(args.device)
     torch.cuda.set_device(device)

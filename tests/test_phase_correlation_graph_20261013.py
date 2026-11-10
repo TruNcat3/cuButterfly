@@ -5,7 +5,7 @@ import unittest
 import torch
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location("phase_correlation", ROOT / "paper/tools/run_phase_correlation_graph_20261013.py")
+SPEC = importlib.util.spec_from_file_location("phase_correlation", ROOT / "experiments/tools/run_phase_correlation_graph_20261013.py")
 APP = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(APP)
 

@@ -9,7 +9,7 @@ import pytest
 import torch
 
 
-PATH = Path(__file__).resolve().parents[1] / "paper/experiments/e13/run_quarot_random_end_to_end.py"
+PATH = Path(__file__).resolve().parents[1] / "experiments/workloads/e13/run_quarot_random_end_to_end.py"
 SPEC = importlib.util.spec_from_file_location("quarot_graph_runner", PATH)
 runner = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(runner)

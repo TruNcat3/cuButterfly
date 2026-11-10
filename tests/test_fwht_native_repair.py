@@ -6,8 +6,8 @@ import statistics
 
 import pytest
 ROOT=Path(__file__).resolve().parents[1]
-ARTIFACT=ROOT/'paper/generated/fwht_native_repair_20261107.json'
-spec=importlib.util.spec_from_file_location('fwht_native_repair',ROOT/'paper/tools/export_fwht_native_repair.py')
+ARTIFACT=ROOT/'experiments/snapshots/fwht_native_repair_20261107.json'
+spec=importlib.util.spec_from_file_location('fwht_native_repair',ROOT/'experiments/tools/export_fwht_native_repair.py')
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 
 def test_portable_frozen_samples_statistics_semantics_lifecycle():
@@ -106,7 +106,7 @@ def test_float32_reference_dense_small_and_portable_precision_labels():
 
 
 def test_public_default_mapping_statistics_and_installed_identity():
-    support=json.loads((ROOT/'paper/generated/fwht_native_repair_support_20261107.json').read_text())
+    support=json.loads((ROOT/'experiments/snapshots/fwht_native_repair_support_20261107.json').read_text())
     d=support['public_default']; summary=d['summary']
     assert summary['single_process_sanity'] and summary['guard_status']['state']=='complete'
     assert len(d['records'])==40 and len(d['plan_checks'])==10

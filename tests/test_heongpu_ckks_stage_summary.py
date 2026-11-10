@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch
 
 
-EXPERIMENTS = Path(__file__).resolve().parents[1] / "paper" / "experiments"
+EXPERIMENTS = Path(__file__).resolve().parents[1] / "experiments" / "workloads"
 
 
 def load_module(name):

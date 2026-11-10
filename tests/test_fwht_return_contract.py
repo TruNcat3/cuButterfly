@@ -57,7 +57,7 @@ def test_portable_frozen_summary_recomputes_without_raw_results():
     import json
     import math
     import statistics
-    path=ROOT/'paper/generated/fwht_return_contract_20261107.json'
+    path=ROOT/'experiments/snapshots/fwht_return_contract_20261107.json'
     data=json.loads(path.read_text())
     assert len(data['records'])==120 and len(data['pairs'])==60
     assert sum(len(row['timing']['samples_ms']) for row in data['records'])==840

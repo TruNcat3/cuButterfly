@@ -96,7 +96,7 @@ def run(args, report):
     import importlib.metadata
     import torch
     import fast_hadamard_transform
-    sys.path.insert(0, str(ROOT / 'paper/experiments/e13'))
+    sys.path.insert(0, str(ROOT / 'experiments/workloads/e13'))
     from quarot_adapter import QuaRotFWHTAdapter
 
     if not torch.cuda.is_available():
@@ -203,7 +203,7 @@ def main():
         args.output = Path(os.environ['XD_REPORT_DIR']) / 'report.json'
     report = {'schema': 'quarot-matched-contracts-v2', 'status': 'partial', 'graph_calls': args.graph_calls, 'results': [],
               'timing_boundary': 'CUDA events around repeated graph replays / (repeats * graph_calls); each graph captures graph_calls complete transforms; includes contiguous, casts and scale required by variant; excludes preparation, warmup, capture, CPU oracle, profiler, input copy, output clone, hadK matmul and 7B model',
-              'source_sha256': {str(p.relative_to(ROOT)): sha(p) for p in (Path(__file__).resolve(), ROOT / 'paper/experiments/e13/quarot_adapter.py')},
+              'source_sha256': {str(p.relative_to(ROOT)): sha(p) for p in (Path(__file__).resolve(), ROOT / 'experiments/workloads/e13/quarot_adapter.py')},
               'library': str(args.library.resolve()), 'library_sha256': sha(args.library),
               'numerical_contract': 'CPU FP32 Sylvester FWHT, FP32 normalization multiplication, final FP16 storage; errors reported without a new threshold',
               'timing_note': 'Events may include idle gaps between host graph replay submissions; graph capture contains graph_calls complete transform subpaths; profile counts cover the whole graph and kernels_per_call divides by graph_calls',

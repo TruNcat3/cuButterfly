@@ -89,13 +89,13 @@ repeated automatically.
 | Inverse semantic smoke | [E8 GPU summary](../results/paper_experiments_20260917/semantic_adaptation/e8_gpu_summary.json) completed | Reuse intent in the new descriptor matrix |
 | Model ranking and search | [Historical search analysis](../results/paper_experiments_20260917/analysis/search_protocol_summary.json); [covered holdout](../results/paper_experiments_20260917/protocols/a100-80gb-gpu1/covered-holdout/heldout_validation.json) has only two eligible workloads | Freeze training/holdout identities and assess supported new paths; report uncovered classes |
 | Hardware mechanism diagnostics | [Control/profile analysis](../results/paper_experiments_20260917/analysis/control_profile_analysis.json) and later FFT diagnostic artifacts | Refresh a finite set of changed positive/negative cases after ordinary timing |
-| FNO and QuaRot applications | [E13 queue](../paper/experiments/end_to_end_queue.json) records FNO 64/128 v9 and fixed-random-weight QuaRot small/large runs | Confirm integration identity before new-version claims; finish outstanding application diagnostics |
+| FNO and QuaRot applications | [E13 queue](../experiments/workloads/end_to_end_queue.json) records FNO 64/128 v9 and fixed-random-weight QuaRot small/large runs | Confirm integration identity before new-version claims; finish outstanding application diagnostics |
 
 The broader historical model protocol recorded eight service gaps, whereas the
 covered holdout only evaluates two workloads. Neither establishes general
 ranking coverage for the new precision adapters. Preparation/search cost and
 finite mechanism studies remain separate from steady-state operator timing.
-The [paper experiment plan](../paper/experiments/plan.json) defines these claims
+The [paper experiment plan](../experiments/workloads/plan.json) defines these claims
 and their completion criteria.
 
 ## Remaining baseline, application and hardware work
@@ -138,7 +138,7 @@ HEonGPU currently has a successful build and single-prime adapter probe.
 Full RNS integration and complete CKKS application comparison remain pending.
 FNO still needs application trace/peak-memory diagnostics according to its
 recorded queue; QuaRot random-weight timings do not establish trained-model
-quality. The older [E13 source manifest](../paper/experiments/end_to_end.json)
+quality. The older [E13 source manifest](../experiments/workloads/end_to_end.json)
 contains preparation-era statuses; the queue and measured reports give the
 later execution evidence.
 

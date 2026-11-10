@@ -17,7 +17,7 @@
 
 来源是 `results/a100_closure_20261102/applications/quarot_b{1,4}_p128d8_process{1,2}/release/report.json` 的 `summary.end_to_end` 与两变体的 `cuda_event_ms.end_to_end` 中位数。两进程交换变体顺序仍有倒退。GPU event 同样增加，因此不能仅归因于 Python/FFI 提交成本。
 
-`paper/experiments/e13/run_quarot_random_end_to_end.py:253` 的 `_timed` 同时记录 wall 与 GPU event，开始前同步，末尾再次同步；`:704` 用 **wall 中位数** 计算主表。`:352` 的 timed_replay 在 Graph replay 前执行两个静态输入 `copy_`，之后 clone 全部九个 logits。`:320` 捕获一次完整 prefill 加八次 decode；`:365` 的 capture/setup、计划创建和验证在计时外。host wall 包含 Python bookkeeping、event 建立与同步；GPU event 包含输入 copy、Graph 及输出 clone，也可能包含 host 提交间隙。它不是仅 FWHT 时间，也不是纯 Graph replay 时间。
+`experiments/workloads/e13/run_quarot_random_end_to_end.py:253` 的 `_timed` 同时记录 wall 与 GPU event，开始前同步，末尾再次同步；`:704` 用 **wall 中位数** 计算主表。`:352` 的 timed_replay 在 Graph replay 前执行两个静态输入 `copy_`，之后 clone 全部九个 logits。`:320` 捕获一次完整 prefill 加八次 decode；`:365` 的 capture/setup、计划创建和验证在计时外。host wall 包含 Python bookkeeping、event 建立与同步；GPU event 包含输入 copy、Graph 及输出 clone，也可能包含 host 提交间隙。它不是仅 FWHT 时间，也不是纯 Graph replay 时间。
 
 ## 实际替换合同与主横评不匹配
 
@@ -40,7 +40,7 @@ batch 与 N 直接来自报告 `adapter_setup.plans[*].descriptor.semantics`。�
 
 baseline 是 QuaRot 复合公式：`quarot/functional/hadamard.py:92` 调用 native Dao 对连续 FP16 输入执行 FWHT 并传入 `1/sqrt(full_n)`，K>1 后执行 `hadK @ input`。它不是把整个 QuaRot 复合操作都替换为裸 Dao 的单算子对比。
 
-Nov2 treatment 明确为 `fp32_composed`。`paper/experiments/e13/quarot_adapter.py:435` 先保证 contiguous，再 `.float()`；`:450` 执行未归一化 FP32 FWHT；`:459` 单独 `mul_`；`:467` 通过 `copy_` 窄化到复用 FP16 输出；`:503` 在 K=172 路径继续同样的 hadK matmul。attention 转置后的连续化在双方都存在；不能把全部布局代价算成 treatment 新增成本。K 矩阵 `.to()` 若 device/dtype 已匹配可以无复制，未测不能按真实复制计数。输出复用减少分配但不会消除上述类型转换和缩放的数据访问。
+Nov2 treatment 明确为 `fp32_composed`。`experiments/workloads/e13/quarot_adapter.py:435` 先保证 contiguous，再 `.float()`；`:450` 执行未归一化 FP32 FWHT；`:459` 单独 `mul_`；`:467` 通过 `copy_` 窄化到复用 FP16 输出；`:503` 在 K=172 路径继续同样的 hadK matmul。attention 转置后的连续化在双方都存在；不能把全部布局代价算成 treatment 新增成本。K 矩阵 `.to()` 若 device/dtype 已匹配可以无复制，未测不能按真实复制计数。输出复用减少分配但不会消除上述类型转换和缩放的数据访问。
 
 全部八个实际合同选择 `temporal-tile-radix4` 或 `temporal-tile-radix8`，mapping 为 rank-one packed、natural order，未显示额外边界置换。逐进程选择不同，见 JSON。报告的 `selection_reason.kernel_ms` 是计划搜索时记录的单侧候选测量，**不是 matched Graph 分项 trace**，不能将其乘调用数作为已证实的应用核心占比。也没有证据确认执行时额外通用 pack/permute 的次数或耗时。
 
@@ -79,7 +79,7 @@ env -u CUBUTTERFLY_HARDWARE_MODEL -u CUBUTTERFLY_PROFILE_ROOT \
 
 ## 完整 7B 最终结果（2026-11-07）
 
-四个独立 clean 进程已经完成。来源为 [生成证据](../paper/generated/current_refresh/quarot_fused_e2e.json)，其中记录逐进程原始报告路径、SHA256、库与 runner 身份、全部 wall/event 样本和数值误差。CPU 核验逐份原始报告 hash，并从每变体各7个样本重算两时钟中位数及其比值；下表与生成证据一致。
+四个独立 clean 进程已经完成。来源为 [生成证据](../experiments/snapshots/current_refresh/quarot_fused_e2e.json)，其中记录逐进程原始报告路径、SHA256、库与 runner 身份、全部 wall/event 样本和数值误差。CPU 核验逐份原始报告 hash，并从每变体各7个样本重算两时钟中位数及其比值；下表与生成证据一致。
 
 A100 80GB PCIe，UUID `GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02`；库 SHA256 `775a85c8f76e44bbfee886fd90489e7c309bd097b60e968183e446aa006177b2`。固定32层随机权重 Llama-2-7B、seed20261003、prefill128/decode8、SDPA prefill、验证预热4次、计时预热2次、每变体7次完整 Graph 调用。边界为设备输入 refresh、完整 prefill/decode、独立 logits clone 和同步，wall 包含 host 调用；setup、计划创建与 Graph capture 排除。输入输出 FP16 storage、FP32 compute、final FP16 writeback；实际走 `public_fp32_final`。该路径已成为默认值，旧 native/composed/eager 可显式重放。
 

@@ -3,7 +3,7 @@
 > **Historical runbook snapshot — September 2026.** “Current”, partial-checkpoint
 > and “no result” statements below refer to that checkpoint and build. Later
 > [November 7 status](../research_status_20261107.md) and the
-> [A100 closeout](../../paper/evidence/A100_CLOSEOUT_20261107.md) record the separate
+> [A100 closeout](../../experiments/reports/A100_CLOSEOUT_20261107.md) record the separate
 > eleven-request 40GB FP16 automatic-selection and installed-default supplement.
 > Independent stage-service calibration was skipped; model ranking on unseen
 > requests remains unvalidated. This supplement is not pooled with 80GB results.

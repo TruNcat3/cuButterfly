@@ -50,7 +50,7 @@ def campaign(tmp_path, monkeypatch):
         prior['phases'][f'timing_gpu{slot}'] = {'gpu_uuid': uuid, 'total_processed_cases': 14585,
                                              'missing_lowering_cases': 116,
                                              'evidence': [audit.continuation.evidence(parent_path)]}
-        plan = {'handoff': str(source / 'evidence/handoff.json'), 'library': str(library),
+        plan = {'handoff': str(source / 'provenance/handoff.json'), 'library': str(library),
                 'calibration_manifest': str(calibration_path), 'gpu_uuid': uuid,
                 'phases': [{'name': 'timing', 'manifest': str(parent_path), 'timing': True}]}
         plan_path = source / f'gpu{slot}_plan.json'
@@ -85,7 +85,7 @@ def campaign(tmp_path, monkeypatch):
                             'manifest': str(shard_path), 'pid': 123}], 'completed': {}}}}
         save(source / f'gpu{slot}/queue_status.json', state)
         paths.append(report_path)
-    save(source / 'evidence/handoff.json', prior)
+    save(source / 'provenance/handoff.json', prior)
     return source, tmp_path / 'new/evidence', snapshot, paths
 
 

@@ -5,7 +5,7 @@ import pytest
 import torch
 
 
-PATH = Path(__file__).resolve().parents[1] / "paper/experiments/e13/quarot_random_checks.py"
+PATH = Path(__file__).resolve().parents[1] / "experiments/workloads/e13/quarot_random_checks.py"
 SPEC = importlib.util.spec_from_file_location("quarot_random_checks", PATH)
 checks = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(checks)

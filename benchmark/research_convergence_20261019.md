@@ -58,7 +58,7 @@ metadata 用 `cool-before-selection-and-measurement-rounds-v2` 标记协议。
 | 端到端 | FFT Poisson/固定滤波器 Graph，以及 CKKS 完整操作与短链 | QuaRot Graph 数值执行问题、完整 CKKS/TFHE bootstrap 适配与性能尚未完成；原有应用负点继续保留 |
 
 这些范围来自 [已有证据缺口记录](research_evidence_gap_20261017.md) 和
-[当前论文证据台账](../paper/evidence/CURRENT_EVIDENCE_20261019.md)。本次收敛
+当前论文证据台账。本次收敛
 不取消后续工作，也不把单个 CKKS 子集的完成等同于整个库或论文完成。
 硬件迁移独立推进，A100 结果不推算 H100、Ascend 或 V100 的表现。
 

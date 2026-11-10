@@ -7,12 +7,12 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
-    "core_dataflow_prepare", ROOT / "paper/tools/prepare_core_dataflow_ablation.py")
+    "core_dataflow_prepare", ROOT / "experiments/tools/prepare_core_dataflow_ablation.py")
 prepare = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(prepare)
 
-CONFIG = ROOT / "paper/experiments/core_dataflow_ablation.json"
-TARGET = ROOT / "paper/experiments/targets/a100-80gb-gpu1.json"
+CONFIG = ROOT / "experiments/workloads/core_dataflow_ablation.json"
+TARGET = ROOT / "experiments/workloads/targets/a100-80gb-gpu1.json"
 APP = ROOT / "apps/cubutterfly_core_dataflow_ablation.cu"
 
 

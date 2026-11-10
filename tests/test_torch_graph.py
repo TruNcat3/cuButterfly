@@ -68,7 +68,7 @@ def test_rejects_training_after_capture(graph):
 
 
 def test_trial_rotation_covers_all_positions():
-    spec = importlib.util.spec_from_file_location("fno_graph_runner", ROOT / "paper/tools/run_fno_graph_integration_20261013.py")
+    spec = importlib.util.spec_from_file_location("fno_graph_runner", ROOT / "experiments/tools/run_fno_graph_integration_20261013.py")
     runner = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runner)
     orders = [runner.variant_order(index) for index in range(4)]
@@ -77,7 +77,7 @@ def test_trial_rotation_covers_all_positions():
 
 
 def test_weight_digest_includes_extra_state():
-    spec = importlib.util.spec_from_file_location("fno_graph_digest", ROOT / "paper/tools/run_fno_graph_integration_20261013.py")
+    spec = importlib.util.spec_from_file_location("fno_graph_digest", ROOT / "experiments/tools/run_fno_graph_integration_20261013.py")
     runner = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runner)
     model = SimpleNamespace(state_dict=lambda: {"weights": torch.ones(3),
@@ -89,7 +89,7 @@ def test_weight_digest_includes_extra_state():
 
 @pytest.mark.parametrize("inverse", [False, True])
 def test_public_patch_delegates_original_tensor(inverse):
-    spec = importlib.util.spec_from_file_location("fno_patch_hotpath", ROOT / "paper/tools/run_fno_graph_integration_20261013.py")
+    spec = importlib.util.spec_from_file_location("fno_patch_hotpath", ROOT / "experiments/tools/run_fno_graph_integration_20261013.py")
     runner = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runner)
     instance = runner.public_patch(object, torch)()

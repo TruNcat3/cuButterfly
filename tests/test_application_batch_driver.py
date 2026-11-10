@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location('application_batch_driver', ROOT/'paper/tools/run_application_batch_20261012.py')
+spec = importlib.util.spec_from_file_location('application_batch_driver', ROOT/'experiments/tools/run_application_batch_20261012.py')
 driver = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(driver)
 

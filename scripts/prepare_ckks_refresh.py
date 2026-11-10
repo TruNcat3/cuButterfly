@@ -76,7 +76,7 @@ def without_options(argv, flags=(), values=()):
 def prepare(config, *, build=False, jobs=2):
     if os.environ.get('CUDA_VISIBLE_DEVICES') != '':
         raise ValueError("CPU preparation requires CUDA_VISIBLE_DEVICES='' explicitly")
-    runner = load_module('ckks_refresh_runner', ROOT / 'paper/experiments/run_heongpu_ckks_e2e.py')
+    runner = load_module('ckks_refresh_runner', ROOT / 'experiments/workloads/run_heongpu_ckks_e2e.py')
     requests = load_module('ckks_refresh_requests', ROOT / 'scripts/prepare_rns_requests.py')
     output = safe_path(ROOT / config['output'])
     output.mkdir(parents=True, exist_ok=True)
@@ -118,7 +118,7 @@ def prepare(config, *, build=False, jobs=2):
                        'request_files': [runner.file_identity(safe_path(manifest_path.parent / entry['request_file']))
                                          for entry in manifest['requests']]}
     write_json(output / 'request_validation.json', request_receipt)
-    wrapper = ROOT / 'paper/experiments/run_heongpu_ckks_e2e.py'
+    wrapper = ROOT / 'experiments/workloads/run_heongpu_ckks_e2e.py'
     builds = {name: output / 'consumer_builds' / name for name in ('short_chain', 'bootstrap_v1_small')}
     common = [str(PYTHON), str(wrapper), '--cuntt-library', str(library),
               '--heongpu-source', str(source), '--cached-build', str(cached), '--arch', config['arch']]
@@ -257,10 +257,10 @@ def prepare(config, *, build=False, jobs=2):
               'queue_policy': 'Execute only after dependencies pass; replace GPU UUID, verify exclusive model/memory identity; commands require GPU and are never executed by this CPU script.',
               'scope_note': 'Historical mapping fields are prior provenance, not current confirmed mappings. 118 requests are not 118 independent applications.'}
     static_paths = [Path(__file__), ROOT / 'configs/experiments/ckks_refresh_20261025.json', wrapper,
-                    ROOT / 'paper/experiments/summarize_heongpu_ckks_e2e.py',
-                    ROOT / 'paper/experiments/ckks_tfhe_workloads.json',
-                    ROOT / 'paper/experiments/heongpu_ckks_e2e_bench.cu',
-                    ROOT / 'paper/experiments/gpu_thermal_guard.hpp',
+                    ROOT / 'experiments/workloads/summarize_heongpu_ckks_e2e.py',
+                    ROOT / 'experiments/workloads/ckks_tfhe_workloads.json',
+                    ROOT / 'experiments/workloads/heongpu_ckks_e2e_bench.cu',
+                    ROOT / 'experiments/workloads/gpu_thermal_guard.hpp',
                     ROOT / 'scripts/prepare_rns_requests.py', output / 'cpu_build_receipt.json',
                     output / 'request_validation.json', output / 'cpu_tests.xml',
                     source / 'src/include/heongpu/host/ckks/operator.cuh', request_dir / 'manifest.json', *assets[:-1]]
@@ -298,7 +298,7 @@ def option(argv, name, default=None):
 
 def validate_job(job, plan, gpu_uuid):
     """Reject successful processes whose requested evidence is incomplete."""
-    runner = load_module('ckks_job_runner', ROOT / 'paper/experiments/run_heongpu_ckks_e2e.py')
+    runner = load_module('ckks_job_runner', ROOT / 'experiments/workloads/run_heongpu_ckks_e2e.py')
     requests = load_module('ckks_job_requests', ROOT / 'scripts/prepare_rns_requests.py')
     argv = job['argv']
     name = job['id']
@@ -376,8 +376,8 @@ def validate_job(job, plan, gpu_uuid):
     if name.startswith('measure_'):
         if meta['rns_preparation'].get('CUBUTTERFLY_RNS_CACHE_POLICY') != 'require' or any(item.get('cache_hit') is not True for item in observations):
             raise ValueError('formal measurement requires all cache hits without tuning')
-    sys.path.insert(0, str(ROOT / 'paper/experiments'))
-    summary = load_module('ckks_job_summary', ROOT / 'paper/experiments/summarize_heongpu_ckks_e2e.py')
+    sys.path.insert(0, str(ROOT / 'experiments/workloads'))
+    summary = load_module('ckks_job_summary', ROOT / 'experiments/workloads/summarize_heongpu_ckks_e2e.py')
     summary.require_performance_evidence(meta, path)
     if 'bootstrap_v1_small' not in name:
         summary.parse_rows(rows, meta, path)
@@ -461,7 +461,7 @@ def begin_attempt(output, job, binding):
 def run_job(output, job_id, gpu_uuid):
     output = safe_path(output)
     plan = read_json(output / 'gpu_queue.json')
-    runner = load_module('ckks_execute_runner', ROOT / 'paper/experiments/run_heongpu_ckks_e2e.py')
+    runner = load_module('ckks_execute_runner', ROOT / 'experiments/workloads/run_heongpu_ckks_e2e.py')
     runner.target_gpu_uuid({'CUDA_VISIBLE_DEVICES': gpu_uuid})
     jobs = {job['id']: job for job in plan['queue']}
     job = jobs[job_id]

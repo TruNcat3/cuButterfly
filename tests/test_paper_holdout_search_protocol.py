@@ -20,8 +20,8 @@ def _load(name, path):
     return module
 
 
-heldout = _load("heldout_protocol", "paper/tools/heldout_protocol.py")
-pool = _load("search_pool_protocol", "paper/tools/search_pool_protocol.py")
+heldout = _load("heldout_protocol", "experiments/tools/heldout_protocol.py")
+pool = _load("search_pool_protocol", "experiments/tools/search_pool_protocol.py")
 
 
 @pytest.fixture

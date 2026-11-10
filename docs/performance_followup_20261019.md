@@ -241,7 +241,7 @@ CUDA_VISIBLE_DEVICES=GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02 \
 nsys profile --trace=cuda,nvtx --sample=none --cpuctxsw=none \
   --capture-range=cudaProfilerApi --cuda-graph-trace=node \
   --output=results/ckks_auto_schedule_20261019/trace_m1_n14_b1 \
-  /home/wt/yes/envs/cubutterfly/bin/python paper/experiments/run_heongpu_ckks_e2e.py \
+  /home/wt/yes/envs/cubutterfly/bin/python experiments/workloads/run_heongpu_ckks_e2e.py \
   --build-dir build-fhe-inplace-20261019 --skip-build \
   --cuntt-library build-contract-20261017/libcuntt.so \
   --sizes 16384 --batches 1 --aux-primes 1 \
@@ -255,7 +255,7 @@ nsys export --type=sqlite \
   results/ckks_auto_schedule_20261019/trace_m1_n14_b1.nsys-rep
 
 /home/wt/yes/envs/cubutterfly/bin/python \
-  paper/experiments/analyze_ckks_schedule_trace.py \
+  experiments/workloads/analyze_ckks_schedule_trace.py \
   results/ckks_auto_schedule_20261019/trace_m1_n14_b1.sqlite \
   --ntt-size 16384 \
   --plan-log results/ckks_auto_schedule_20261019/trace_m1_n14_b1.log \
@@ -270,7 +270,7 @@ nsys export --type=sqlite \
 采集区间由 `cudaProfilerStart/Stop` 限定为稳态测量。每轮四/五条路径各自用
 `ckks_measure/{scene}/{variant}/{round}` 标记；variant 为 `native_loop`、
 `cu_loop`、`native_stage_batch`、`cu_stage_batch`，以及可选 `cu_auto`。
-[新 CPU 解析器](../paper/experiments/analyze_ckks_schedule_trace.py) 复用已有
+[新 CPU 解析器](../experiments/workloads/analyze_ckks_schedule_trace.py) 复用已有
 解析器的 SQLite 只读和 GraphLaunch correlation 关联方式，移除旧 N14/B8
 节点数硬编码，按 NVTX 同线程范围找到 API，再按 correlation ID 找 kernel。
 GPU 时间戳无需落在 host NVTX 范围内；异步工作不能按 host 区间裁切。

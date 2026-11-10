@@ -17,7 +17,7 @@ import tempfile
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNNER = ROOT / 'paper/experiments/e13/run_fft_filter_end_to_end.py'
+RUNNER = ROOT / 'experiments/workloads/e13/run_fft_filter_end_to_end.py'
 ADAPTER = ROOT / 'results/e13_assets/cubutterfly_real_fft.py'
 DEFAULT_CONFIG = ROOT / 'configs/experiments/filter_refresh_20261025.json'
 

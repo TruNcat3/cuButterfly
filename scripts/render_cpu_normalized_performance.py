@@ -7,10 +7,28 @@ from collections import defaultdict
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.lines import Line2D
 
-DEFAULT_INPUT = Path('paper/generated/current_refresh/cpu_normalized.json')
+DEFAULT_INPUT = Path('experiments/snapshots/current_refresh/cpu_normalized.json')
 DEFAULT_PREFIX = Path('figures/cpu_normalized_performance')
 GPU_ORDER = ['cuButterfly','cufft','vkfft','daofht','gpu-ntt']
+NAMES = {'cuButterfly': 'cuButterfly', 'cufft': 'cuFFT', 'vkfft': 'VkFFT',
+         'daofht': 'DaoFHT', 'gpu-ntt': 'GPU-NTT'}
+STYLES = {'cuButterfly': ('#0072B2', 'o', ''), 'cufft': ('#A34D00', 's', '//'),
+          'vkfft': ('#007B59', '^', '..'), 'daofht': ('#AA3377', 'D', '\\\\'),
+          'gpu-ntt': ('#555555', 'P', 'xx')}
+GROUP_ORDER = [('fft', 'fp32'), ('fft', 'fp64'), ('fwht', 'fp32'), ('fwht', 'fp64'),
+               ('ntt', 'word32'), ('ntt', 'word64'), ('subset-zeta', 'uint32'),
+               ('subset-zeta', 'word64'), ('superset-zeta', 'uint32'),
+               ('superset-zeta', 'word64'), ('structured-2x2', 'fp32'),
+               ('structured-2x2', 'fp64')]
+GROUP_LABELS = {('fft', 'fp32'): 'FFT-F32', ('fft', 'fp64'): 'FFT-F64',
+                ('fwht', 'fp32'): 'FWHT-F32', ('fwht', 'fp64'): 'FWHT-F64',
+                ('ntt', 'word32'): 'NTT-w32', ('ntt', 'word64'): 'NTT-w64',
+                ('subset-zeta', 'uint32'): 'SZ-u32', ('subset-zeta', 'word64'): 'SZ-w64',
+                ('superset-zeta', 'uint32'): 'PZ-u32', ('superset-zeta', 'word64'): 'PZ-w64',
+                ('structured-2x2', 'fp32'): '2x2-F32', ('structured-2x2', 'fp64'): '2x2-F64'}
 
 def finite_pos(x):
     try: return math.isfinite(float(x)) and float(x) > 0
@@ -58,56 +76,68 @@ def main():
         if len(cpu_backends) > 1:
             raise ValueError(f'CPU denominator varies within family {gkey}: {sorted(cpu_backends)}')
     plot_rows=[]; audit=[]
-    for gkey, rs in sorted(groups.items()):
+    by_group={}
+    for gkey in GROUP_ORDER:
+        rs=groups.get(gkey, [])
         by_backend=defaultdict(dict)
         for r in rs: by_backend[r['backend']][r['case_id']]=r
-        own=set(by_backend.get('cuButterfly',{}))
-        ext=set().union(*(set(v) for k,v in by_backend.items() if k!='cuButterfly'))
-        inter=own & ext
-        # external comparison intersection requires each included backend to have exact IDs.
-        participating=[b for b in GPU_ORDER if b in by_backend]
-        common=set(own)
-        for b in participating:
-            common &= set(by_backend[b])
-        common &= inter
-        if common:
-            for b in participating:
-                vals=[by_backend[b][c]['speedup'] for c in sorted(common)]
-                plot_rows.append((gkey,'common',b,vals,sorted(common)))
-            audit.append({'group':gkey,'panel':'common','case_ids':sorted(common),'backends':participating})
-        own_only=sorted(own-common)
-        if own_only:
-            vals=[by_backend['cuButterfly'][c]['speedup'] for c in own_only]
-            plot_rows.append((gkey,'cuButterfly-only','cuButterfly',vals,own_only))
-            audit.append({'group':gkey,'panel':'cuButterfly-only','case_ids':own_only,'backends':['cuButterfly']})
+        if not by_backend: continue
+        by_group[gkey]=by_backend
+        audit.append({'group':gkey, 'panel':'single-axis',
+                      'backends': [b for b in GPU_ORDER if b in by_backend],
+                      'case_ids': {b: sorted(by_backend[b]) for b in GPU_ORDER if b in by_backend}})
+        for backend in GPU_ORDER:
+            if backend in by_backend:
+                cases=sorted(by_backend[backend])
+                plot_rows.append((gkey, backend, [by_backend[backend][c]['speedup'] for c in cases], cases))
     if not plot_rows: raise ValueError('no plottable groups')
-    panels=[('common',[x for x in plot_rows if x[1]=='common']),('cuButterfly-only',[x for x in plot_rows if x[1]=='cuButterfly-only'])]
-    panels=[x for x in panels if x[1]]
-    fig, axes=plt.subplots(1,len(panels),sharey=True,figsize=(max(10,sum(len(x[1]) for x in panels)*1.25),6.5),squeeze=False)
-    axes=axes[0]
-    for ax,(panel_name,prows) in zip(axes,panels):
-        positions=list(range(1,len(prows)+1)); labels=[]
-        for pos,(g,p,b,vals,cases) in zip(positions,prows):
-            ax.boxplot(vals,positions=[pos],widths=.65,patch_artist=True,showfliers=False,whis=(0,100),
-                       boxprops={'facecolor':'#4c78a8' if b=='cuButterfly' else '#bdbdbd','alpha':.8},
-                       medianprops={'color':'black','linewidth':1.4}, flierprops={'marker':'o','markersize':3,'alpha':.45})
-            # Show every request so the box never hides the finite workload
-            # population; deterministic jitter only separates coincident values.
-            import numpy as np
-            jitter = np.random.default_rng(410 + pos).uniform(-.17, .17, len(vals))
-            ax.scatter([pos + j for j in jitter], vals, s=13,
-                       color='#1f5f9d' if b == 'cuButterfly' else '#666666',
-                       edgecolors='white', linewidths=.35, zorder=3)
-            labels.append(f'{g[0]}\n{g[1]}\n{b}\nn={len(cases)}')
-        ax.axhline(1,color='black',linestyle='--',linewidth=1)
-        ax.set_yscale('log'); ax.set_xticks(positions); ax.set_xticklabels(labels,rotation=45,ha='right'); ax.grid(axis='y',which='both',alpha=.2)
-        ax.set_title('Shared request intersection' if panel_name=='common' else 'cuButterfly requests without complete external comparison')
-    axes[0].set_ylabel('Speedup relative to CPU (CPU time / backend time)')
-    fig.suptitle('CPU-normalized performance (paired requests)')
-    fig.text(0.01,0.038,'CPU denominator: FFTW-t8 (FFT), FXT-t1 (FWHT/zeta), HEXL-t1 (NTT), author Butterfly-t1 (2x2).',fontsize=8)
-    fig.text(0.01,0.012,'Provisional shared-host CPU timings; CPU wall/device-resident GPU timing; host-device transfers excluded.',fontsize=8)
-    fig.text(0.99,0.985,'blue: cuButterfly   gray: external GPU',ha='right',va='top',fontsize=8)
-    fig.tight_layout()
+    shown_groups=[g for g in GROUP_ORDER if g in by_group]
+    fig, ax=plt.subplots(figsize=(9.4, 3.7))
+    fig.subplots_adjust(left=.075, right=.995, bottom=.30, top=.72)
+    all_values=[]
+    for i,gkey in enumerate(shown_groups):
+        series=[row for row in plot_rows if row[0] == gkey]
+        offsets=np.linspace(-.30,.30,len(series)) if len(series)>1 else [0]
+        notes=[]
+        for offset,(group,backend,vals,cases) in zip(offsets,series):
+            color,marker,hatch=STYLES[backend]
+            all_values.extend(vals)
+            box=ax.boxplot(vals, positions=[i+offset], widths=.16, patch_artist=True,
+                           showfliers=False, whis=(0,100), manage_ticks=False,
+                           boxprops={'edgecolor':color,'facecolor':'white','linewidth':.8},
+                           medianprops={'color':'black','linewidth':.85},
+                           whiskerprops={'color':color,'linewidth':.7},
+                           capprops={'color':color,'linewidth':.7})
+            box['boxes'][0].set_hatch(hatch)
+            jitter=np.random.default_rng(410+i*7+len(backend)).uniform(-.035,.035,len(vals))
+            ax.scatter(i+offset+jitter, vals, s=10, marker=marker, color=color,
+                       edgecolors='white', linewidths=.25, zorder=3)
+            gm=math.exp(sum(math.log(v) for v in vals)/len(vals))
+            short={'cuButterfly':'B','cufft':'C','vkfft':'V','daofht':'D','gpu-ntt':'G'}[backend]
+            notes.append(f'{short} {gm:.2f}x/{len(vals)}')
+        ax.text(i, .985, '\n'.join(notes), transform=ax.get_xaxis_transform(),
+                ha='center', va='top', fontsize=5.8, linespacing=1.05)
+    if not all_values: raise ValueError('no positive speedups to plot')
+    ax.axhline(1,color='#333333',linestyle='--',linewidth=1)
+    ax.set_yscale('log'); ax.set_ylim(min(all_values)/1.35,max(all_values)*1.5)
+    ax.set_xlim(-.55,len(shown_groups)-.45)
+    ax.set_ylabel('CPU time / backend time (log scale)', fontsize=7.5)
+    ax.set_xticks(range(len(shown_groups)))
+    ax.set_xticklabels([f'{GROUP_LABELS[g]}\n(n={len(by_group[g].get("cuButterfly",{}))})' for g in shown_groups], fontsize=6.5)
+    ax.grid(axis='y',which='both',alpha=.25); ax.set_axisbelow(True)
+    for boundary in [i-.5 for i in range(2,len(shown_groups)) if GROUP_LABELS[shown_groups[i-1]][:3] != GROUP_LABELS[shown_groups[i]][:3]]:
+        ax.axvline(boundary,color='#AAAAAA',linestyle=':',linewidth=.7)
+    group_titles=[(0,2,'FFT'),(2,4,'FWHT'),(4,6,'NTT'),(6,10,'Zeta'),(10,12,'Structured 2x2')]
+    for left,right,title in group_titles:
+        valid=[i for i,g in enumerate(shown_groups) if left<=GROUP_ORDER.index(g)<right]
+        if valid:
+            ax.text((min(valid)+max(valid))/2,-.30,title,transform=ax.get_xaxis_transform(),
+                    ha='center',va='top',fontsize=6.5,fontweight='bold')
+    handles=[Line2D([],[],color=c,marker=m,linestyle='none',markersize=4,label=NAMES[n])
+             for n,(c,m,_) in STYLES.items()]
+    fig.legend(handles=handles,loc='upper center',ncol=5,frameon=False,fontsize=7)
+    fig.text(.5,.835,'CPU-normalized complete-call distributions; letters above each group give GM / n',ha='center',fontsize=6.2)
+    fig.text(.01,.012,'CPU: FFTW-t8 (FFT), FXT-t1 (FWHT/zeta), HEXL-t1 (NTT), author Butterfly-t1 (2x2). Shared-host provisional; GPU transfers excluded.',fontsize=6.1)
     prefix=args.output_prefix; prefix.parent.mkdir(parents=True,exist_ok=True)
     for ext in ('svg','png','pdf'):
         path = prefix.with_suffix('.'+ext)
@@ -115,11 +145,12 @@ def main():
         if ext == 'svg':
             path.write_text('\n'.join(line.rstrip() for line in path.read_text().splitlines())+'\n')
     csvpath=prefix.with_suffix('.csv')
-    with csvpath.open('w',newline='') as f:
-        w=csv.writer(f); w.writerow(['operator','precision','panel','backend','case_id','speedup'])
-        for g,p,b,vals,cases in plot_rows:
-            for c,v in zip(cases,vals): w.writerow([g[0],g[1],p,b,c,v])
-    manifest={'schema':'cpu-normalized-performance-render-v1',
+    with csvpath.open('w', newline='') as f:
+        w = csv.writer(f, lineterminator='\n')
+        w.writerow(['operator', 'precision', 'panel', 'backend', 'case_id', 'speedup'])
+        for g,b,vals,cases in plot_rows:
+            for c,v in zip(cases,vals): w.writerow([g[0],g[1],'single-axis',b,c,v])
+    manifest={'schema':'cpu-normalized-performance-render-v2',
               'input':str(args.input),
               'input_sha256':hashlib.sha256(args.input.read_bytes()).hexdigest(),
               'fftw_threads':args.fftw_threads,

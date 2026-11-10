@@ -6,7 +6,7 @@
 
 ## 1. 资源表征、选择与确认
 
-[资源链审计](../paper/evidence/RESOURCE_DECISIONS_20261107.md)与[完整快照](../paper/generated/resource_decisions_20261107.json)区分两类证据。
+[资源链审计](../experiments/reports/RESOURCE_DECISIONS_20261107.md)与[完整快照](../experiments/snapshots/resource_decisions_20261107.json)区分两类证据。
 
 | 证据 | 完成范围 | 能说明什么 | 不能说明什么 |
 |---|---|---|---|
@@ -17,7 +17,7 @@
 
 ## 2. FWHT 同请求、同返回合同的外部对照
 
-硬件为 A100 80GB PCIe，UUID `GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02`；cuButterfly 使用 `775a85c8f76e44bbfee886fd90489e7c309bd097b60e968183e446aa006177b2` 库，Torch 2.5.1/CUDA 12.4。十个请求沿用主66的FP32、方向、归一化、N、B、rank、顺序和布局，五正向/五逆向，CPU参考与原工件逐元素一致。完整身份、Dao版本/扩展hash、实际选择mapping、误差、120项测量与840个event样本见[便携快照](../paper/generated/fwht_return_contract_20261107.json)。
+硬件为 A100 80GB PCIe，UUID `GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02`；cuButterfly 使用 `775a85c8f76e44bbfee886fd90489e7c309bd097b60e968183e446aa006177b2` 库，Torch 2.5.1/CUDA 12.4。十个请求沿用主66的FP32、方向、归一化、N、B、rank、顺序和布局，五正向/五逆向，CPU参考与原工件逐元素一致。完整身份、Dao版本/扩展hash、实际选择mapping、误差、120项测量与840个event样本见[便携快照](../experiments/snapshots/fwht_return_contract_20261107.json)。
 
 每个独立进程测两侧、两接口，交替顺序。10次warmup、每Graph20次调用、7次event回放取中位数除20。初始化、编译、参考验证、Graph构建及主机分配不计入稳态计时；所需GPU计算、缩放和接口复制计入。三进程均clean release。
 
@@ -64,7 +64,7 @@
 | NTT shared radix4 | TPB256、dt1 → 同一配置 | 1585.398 / 同一次测量 | 同一配置 | 1（身份） |
 | NTT warp radix2 | TPB256、dt1 → 同一配置 | 3706.778 / 同一次测量 | 同一配置 | 1（身份） |
 
-FWHT概要为2阶段[8,8]—局部256点—前缀1子图/计算块、后缀1或4列—线程128或256—标量radix2/radix4—前缀直接写消费者布局。NTT为2个逻辑阶段[10,10]—局部1024点—cooperative producer/consumer单launch—线程256—每角色packet含1/2/4个transform—shared radix4或warp radix2—Shoup算术。逻辑阶段不是launch数，grid按占用约束确定，完整mapping在[冻结证据](../paper/generated/nonfft_endpoint_control_20261107.json)。
+FWHT概要为2阶段[8,8]—局部256点—前缀1子图/计算块、后缀1或4列—线程128或256—标量radix2/radix4—前缀直接写消费者布局。NTT为2个逻辑阶段[10,10]—局部1024点—cooperative producer/consumer单launch—线程256—每角色packet含1/2/4个transform—shared radix4或warp radix2—Shoup算术。逻辑阶段不是launch数，grid按占用约束确定，完整mapping在[冻结证据](../experiments/snapshots/nonfft_endpoint_control_20261107.json)。
 
 一次screen选赢家，三次独立guard进程只确认已选点，第二进程反转顺序。C++ event包围100次完整device调用，100次warmup；这是direct-launch，可能包含主机提交空隙，不与FWHT外部Graph计时混算。18个screen候选及每轮6个去重赢家均通过全16batch原校验；NTT逐元素精确。12个FWHT候选额外通过公共Plan对照全部1,048,576个FP32 CPU输出，误差均0，无新增阈值。
 
@@ -82,7 +82,7 @@ FWHT概要为2阶段[8,8]—局部256点—前缀1子图/计算块、后缀1或4
 
 ```bash
 python -m pytest -q tests/test_resource_decisions.py tests/test_nonfft_endpoint_control.py tests/test_fwht_return_contract.py
-make -C paper all evidence
+python scripts/render_readme_performance.py
 ```
 
-源码发布包含三个冻结JSON和生成脚本，不打包原始大数组/库。没有本机`results/`时，两个raw-source重算测试明确skip，便携快照与统计核验继续执行；skip不表示原始实验已在新机重现。原始数据仅在本机存在时可用 `python paper/tools/export_resource_decisions.py` 与 `python paper/tools/export_fwht_return_contract.py` 重算。两个日期化runner绑定本轮A100构建/UUID，属于可审计实验收据，不应直接当成PRO6000入口；目标机使用[独立迁移流程](hardware/pro6000_server96.md)。
+源码发布包含三个冻结JSON和生成脚本，不打包原始大数组/库。没有本机`results/`时，两个raw-source重算测试明确skip，便携快照与统计核验继续执行；skip不表示原始实验已在新机重现。原始数据仅在本机存在时可用 `python experiments/tools/export_resource_decisions.py` 与 `python experiments/tools/export_fwht_return_contract.py` 重算。两个日期化runner绑定本轮A100构建/UUID，属于可审计实验收据，不应直接当成PRO6000入口；目标机使用[独立迁移流程](hardware/pro6000_server96.md)。

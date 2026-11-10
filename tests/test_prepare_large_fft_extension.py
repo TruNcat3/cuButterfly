@@ -8,7 +8,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
-    "large_fft_prepare", ROOT / "paper/tools/prepare_large_fft_extension.py")
+    "large_fft_prepare", ROOT / "experiments/tools/prepare_large_fft_extension.py")
 prepare = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prepare)
 
@@ -17,7 +17,7 @@ def test_prepare_generates_12_new_cells_and_six_traceable_exclusions(tmp_path):
     output = tmp_path / "large_fft"
     queue = prepare.prepare(
         ROOT / "config/large_fft_extension.json",
-        ROOT / "paper/experiments/targets/a100-80gb-gpu1.json",
+        ROOT / "experiments/workloads/targets/a100-80gb-gpu1.json",
         output,
         root=ROOT,
     )
@@ -61,7 +61,7 @@ def test_prepare_supports_separate_40gb_gpu0_cohort(tmp_path):
     output = tmp_path / "large_fft40"
     queue = prepare.prepare(
         ROOT / "config/large_fft_extension_40gb.json",
-        ROOT / "paper/experiments/targets/a100-40gb-gpu0.json",
+        ROOT / "experiments/workloads/targets/a100-40gb-gpu0.json",
         output,
         root=ROOT,
     )
@@ -91,7 +91,7 @@ def test_limited_manifest_projects_existing_families_without_live_probe(tmp_path
     output = tmp_path / "large_fft"
     queue = prepare.prepare(
         ROOT / "config/large_fft_extension.json",
-        ROOT / "paper/experiments/targets/a100-80gb-gpu1.json",
+        ROOT / "experiments/workloads/targets/a100-80gb-gpu1.json",
         output,
         root=ROOT,
     )
@@ -107,7 +107,7 @@ def test_limited_manifest_projects_existing_families_without_live_probe(tmp_path
     assert all(not command["executed"] for command in queue["commands"])
     assert queue["gpu_probe_performed"] is False
     assert all(command["env"].get("CUDA_VISIBLE_DEVICES") in ("", prepare.json.loads(
-        (ROOT / "paper/experiments/targets/a100-80gb-gpu1.json").read_text())["gpu_uuid"])
+        (ROOT / "experiments/workloads/targets/a100-80gb-gpu1.json").read_text())["gpu_uuid"])
                for command in queue["commands"])
     assert [command["id"] for command in queue["commands"]] == [
         "precompile-compile-cpu", "stage-calibration-gpu1", "acceptance-gpu1",
@@ -133,7 +133,7 @@ def test_rank2_is_separate_and_uses_plan_bench_compare_cufft(tmp_path):
     output = tmp_path / "large_fft"
     prepare.prepare(
         ROOT / "config/large_fft_extension.json",
-        ROOT / "paper/experiments/targets/a100-80gb-gpu1.json",
+        ROOT / "experiments/workloads/targets/a100-80gb-gpu1.json",
         output,
         root=ROOT,
     )
@@ -168,7 +168,7 @@ def test_rank2_is_separate_and_uses_plan_bench_compare_cufft(tmp_path):
         }
         assert all(axis["tile_threads"] in {128, 256} for axis in composition["axes"])
         assert argv[argv.index("--") + 1].endswith("/cubutterfly_plan_bench")
-        assert argv[argv.index("--") + 1] != str(ROOT / "paper/tools/run_with_gpu_telemetry.py")
+        assert argv[argv.index("--") + 1] != str(ROOT / "experiments/tools/run_with_gpu_telemetry.py")
         assert case["correctness"]["required"] is True
         assert argv[argv.index("--trials") + 1] == "3"
 
@@ -191,7 +191,7 @@ def test_rank2_verify_contract_is_present_in_standalone_source():
 
 def test_prepare_rejects_changed_target_or_existing_plan(tmp_path):
     output = tmp_path / "large_fft"
-    target = json.loads((ROOT / "paper/experiments/targets/a100-80gb-gpu1.json").read_text())
+    target = json.loads((ROOT / "experiments/workloads/targets/a100-80gb-gpu1.json").read_text())
     target["id"] = "a100-40gb-gpu0"
     target_path = tmp_path / "target.json"
     target_path.write_text(json.dumps(target))
@@ -200,7 +200,7 @@ def test_prepare_rejects_changed_target_or_existing_plan(tmp_path):
 
     prepare.prepare(
         ROOT / "config/large_fft_extension.json",
-        ROOT / "paper/experiments/targets/a100-80gb-gpu1.json",
+        ROOT / "experiments/workloads/targets/a100-80gb-gpu1.json",
         output,
         root=ROOT,
     )
@@ -209,4 +209,4 @@ def test_prepare_rejects_changed_target_or_existing_plan(tmp_path):
     changed_path = tmp_path / "changed-config.json"
     changed_path.write_text(json.dumps(changed))
     with pytest.raises(ValueError, match="inputs changed"):
-        prepare.prepare(changed_path, ROOT / "paper/experiments/targets/a100-80gb-gpu1.json", output, root=ROOT)
+        prepare.prepare(changed_path, ROOT / "experiments/workloads/targets/a100-80gb-gpu1.json", output, root=ROOT)

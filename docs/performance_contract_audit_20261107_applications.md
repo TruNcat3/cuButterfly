@@ -4,7 +4,7 @@
 
 ## 确定发现
 
-1. **初轮发现的 CKKS mean/median 标签问题已修正。** 初轮 `paper/generated/current_refresh/snapshot.json:aggregation.ratio` 写 complete-call median；`paper/experiments/heongpu_ckks_e2e_bench.cu:819–845,898–902` 实际逐重复累加 sample_ms，CSV 写 `times/reference repetitions`，比值为样本算术均值之比。导出器 `export_current_refresh.py:325–345` 直接读 CSV，不转换为中位数。数字未因此算错。最终 snapshot 已改为每行匹配统计量、时钟和边界，并注明 NTT5 的 paired median；CKKS 均值不再被全局称为 median。历史二进制对应关系仍限制这项源码解释。
+1. **初轮发现的 CKKS mean/median 标签问题已修正。** 初轮 `experiments/snapshots/current_refresh/snapshot.json:aggregation.ratio` 写 complete-call median；`experiments/workloads/heongpu_ckks_e2e_bench.cu:819–845,898–902` 实际逐重复累加 sample_ms，CSV 写 `times/reference repetitions`，比值为样本算术均值之比。导出器 `export_current_refresh.py:325–345` 直接读 CSV，不转换为中位数。数字未因此算错。最终 snapshot 已改为每行匹配统计量、时钟和边界，并注明 NTT5 的 paired median；CKKS 均值不再被全局称为 median。历史二进制对应关系仍限制这项源码解释。
 2. **FNO 正收益只在 Graph wall time。** `results/e2e_unified_20261013/fno_hotpath_summary.json` 两独立进程、B4、64²/128² 的 Graph wall ratio 为 1.0299315353/1.0564188968；eager 为 0.9554150066/0.9573577328。两者都完整包含设备输入 copy、forward/replay、独立输出 clone、同步；setup 排除。`export_application_closeout.py:39–50` 分开导出，`application_cohorts.tex` 只显示 Graph，故文字必须显式限定 Graph。不能把它解释为 eager 改善、训练性能或模型质量。旧 `application_historical_complete_call.json` 的 B8 64² 和 B4 128² 为另一个历史 cohort，不能拼接为同批次的 before/after。
 3. **bootstrap 不是安全参数生产性能。** Nov2 `application_closeout.json` 的 bootstrap B1/B8 为 1.0333320794/1.0315936768，记录 `sec_level=none` 和 `source_binary_correspondence=not_verified`。CKKS runner:434 显式用 none；`exact_ciphertext=1` 证明替换输出一致，不证明安全性或安全参数性能。当前 refresh 的两点约 1.030/1.032 与 Nov2 是不同来源，不宜混算单一刷新均值。
 
@@ -43,7 +43,7 @@ CKKS `ckks_table.tex` 每 batch 12 个请求，共 36 个；每请求两基线�
 
 ## 完整 7B 最终结果（2026-11-07）
 
-四个独立 clean 进程已经完成。来源为 [生成证据](../paper/generated/current_refresh/quarot_fused_e2e.json)，其中记录逐进程原始报告路径、SHA256、库与 runner 身份、全部 wall/event 样本和数值误差。CPU 核验逐份原始报告 hash，并从每变体各7个样本重算两时钟中位数及其比值；下表与生成证据一致。
+四个独立 clean 进程已经完成。来源为 [生成证据](../experiments/snapshots/current_refresh/quarot_fused_e2e.json)，其中记录逐进程原始报告路径、SHA256、库与 runner 身份、全部 wall/event 样本和数值误差。CPU 核验逐份原始报告 hash，并从每变体各7个样本重算两时钟中位数及其比值；下表与生成证据一致。
 
 A100 80GB PCIe，UUID `GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02`；库 SHA256 `775a85c8f76e44bbfee886fd90489e7c309bd097b60e968183e446aa006177b2`。固定32层随机权重 Llama-2-7B、seed20261003、prefill128/decode8、SDPA prefill、验证预热4次、计时预热2次、每变体7次完整 Graph 调用。边界为设备输入 refresh、完整 prefill/decode、独立 logits clone 和同步，wall 包含 host 调用；setup、计划创建与 Graph capture 排除。输入输出 FP16 storage、FP32 compute、final FP16 writeback；实际走 `public_fp32_final`。该路径已成为默认值，旧 native/composed/eager 可显式重放。
 
@@ -62,7 +62,7 @@ B1 wall 比值为1.004201–1.004570，B4为1.014958–1.017074；每批次保�
 
 ## 历史四点的最终资格核对
 
-初次核对时，`paper/generated/application_historical_complete_call.json` 仅有四舍五入延迟和比值，不含 source/hash/数值状态。最终数据文件已保留四行原顺序，补充 source/hash 与 performance_eligible：两旧 FNO 为 true（仅历史构建），两旧 QuaRot 为 false（历史归档，不用于有效性能证据）。FNO 已改用原始精确中位数及比值；两旧 QuaRot 数字原样保留。`paper/tools/render_application_historical.py:20–25` 硬编码这些数字。以下仅核对这四点；原始文件未修改。
+初次核对时，`experiments/snapshots/application_historical_complete_call.json` 仅有四舍五入延迟和比值，不含 source/hash/数值状态。最终数据文件已保留四行原顺序，补充 source/hash 与 performance_eligible：两旧 FNO 为 true（仅历史构建），两旧 QuaRot 为 false（历史归档，不用于有效性能证据）。FNO 已改用原始精确中位数及比值；两旧 QuaRot 数字原样保留。`experiments/tools/render_application_historical.py:20–25` 硬编码这些数字。以下仅核对这四点；原始文件未修改。
 
 | 点 | 原始报告（相对仓库） | 原始报告 SHA256 | 资格 |
 | --- | --- | --- | --- |
@@ -71,7 +71,7 @@ B1 wall 比值为1.004201–1.004570，B4为1.014958–1.017074；每批次保�
 | FNO 64²/B8 | `results/paper_profile_rc2/end_to_end/fno_darcy_64_v9.json` | `447e417e301083c0c64d7a6124736d799ec8dc78b54a41846d8b0d40d11d8bd0` | 可保留为历史构建负结果 |
 | FNO 128²/B4 | `results/paper_profile_rc2/end_to_end/fno_darcy_128_v9.json` | `6e227576bd97041026c3d86fc26b67d4af802588585064f100efb1447671699a` | 可保留为历史构建负结果 |
 
-四份 hash 均与 `paper/evidence/application_snapshot_20261009.json` 匹配。旧 QuaRot 原始中位数比值确为1.0080077398/1.0028010053，算术没有挽救证据资格：raw 仅有 `status=pass` 和同 seed 声明，没有 state hash/summary、finite/prefill/decode output checks、runner/adapter hash。`README_quarot.md` 的修复前历史段明确声明 invalid random state；`paper/experiments/targeted_evaluation_followup_20261012.md:133–136` 进一步说明旧 Linear4bit 零 scale 与 cache-position 兼容问题使其不具备应用性能证据资格。因此这两个点应退出有效性能证据图，原始数字保留为失效历史记录。确证的是来源、缺少检查和项目修复记录；无法从这些 raw 文件确定每个输出当时是否 NaN，也不能重建缺失的 runner/adapter 源码身份。
+四份 hash 均与 `experiments/provenance/application_snapshot_20261009.json` 匹配。旧 QuaRot 原始中位数比值确为1.0080077398/1.0028010053，算术没有挽救证据资格：raw 仅有 `status=pass` 和同 seed 声明，没有 state hash/summary、finite/prefill/decode output checks、runner/adapter hash。`README_quarot.md` 的修复前历史段明确声明 invalid random state；`paper/experiments/targeted_evaluation_followup_20261012.md:133–136` 进一步说明旧 Linear4bit 零 scale 与 cache-position 兼容问题使其不具备应用性能证据资格。因此这两个点应退出有效性能证据图，原始数字保留为失效历史记录。确证的是来源、缺少检查和项目修复记录；无法从这些 raw 文件确定每个输出当时是否 NaN，也不能重建缺失的 runner/adapter 源码身份。
 
 旧 QuaRot library 为 `90a63df0b568aa0d76231ebd76cecbfcbd16656c06c8ab4e39587069787132e4`。修复后的 `results/paper_targeted_20261012/quarot/full512_validation.json` 是另一身份：library `24486975585fa2ab6399a0cfeae4b9449c398490cb76c5ea5a73a3560abe8c66`、`fp32_composed`、双方 state SHA `2ea312e2a11a3b032cbac425fe23cf2dee9a890696926b9ab4831465d5dfa638`，1,359,872个 scale 全部正且 finite，状态 `pass_validation`。后来的修复验证不能追溯认证旧两个时间点。
 

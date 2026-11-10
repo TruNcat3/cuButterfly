@@ -82,7 +82,7 @@ def test_generated_contents_and_behavior_settings_change_identity(tmpdir):
     inputs = [tmp_path / name for name in [
         "generated_hybrid_dataflow_config.hpp", "generated_runtime_selector.hpp",
     ]]
-    local_selector = tmp_path / "generated_local_selector.hpp"
+    local_selector = tmp_path / "snapshots_local_selector.hpp"
     local_selector.write_text("initial local selector\n")
     for path in inputs:
         path.write_text("initial contents\n")
@@ -124,7 +124,7 @@ def test_calibration_uses_build_compile_policy_and_rejects_invalid_override(tmp_
     from calibrate_local_hardware import effective_compile_mode
     monkeypatch.delenv("CUBUTTERFLY_COMPILE_MODE", raising=False)
     assert effective_compile_mode(tmp_path) == "build-default-unknown"
-    generated = tmp_path / "generated"
+    generated = tmp_path / "snapshots"
     generated.mkdir()
     (generated / "jit_config.hpp").write_text('#define CUBUTTERFLY_DEFAULT_CODEGEN_MODE "on-demand"\n')
     assert effective_compile_mode(tmp_path) == "on-demand"

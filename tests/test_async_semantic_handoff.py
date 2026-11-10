@@ -173,7 +173,7 @@ def test_full_cli_writes_three_queues_and_pilot_without_excluding_pilot(source, 
 
 
 def test_evidence_stat_capture_rejects_mutation_during_final_verification(tmp_path, monkeypatch):
-    path = tmp_path / 'evidence.json'
+    path = tmp_path / 'provenance.json'
     path.write_text('initial evidence')
     metadata = {'evidence': [handoff.continuation.evidence(path)]}
 

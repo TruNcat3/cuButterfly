@@ -14,7 +14,7 @@
 2. [benchmark contract](../benchmark/README.md)：确认 scope、计时边界、baseline 和缺口政策。
 3. 专题报告：先看范围与协议，再看结果表、trace/profile 归因和限制。
 4. [Reproducibility](reproducibility.md)：使用报告中绑定的命令和原始数据路径重跑。
-5. [论文证据索引](../paper/evidence/README.md)：查看论文当前接纳的冻结快照。
+5. 论文证据索引：查看论文当前接纳的冻结快照。
 
 ## 结果目录与状态
 
@@ -121,8 +121,8 @@ kernel trace、负结果及复现路径。该案例的自适应结果可以作�
 源码发布保留历史实验文档及其原始工件链接，但不打包本机完整 `results/`。
 [显式工件清单](../config/repository_local_artifacts.json) 逐项登记本次发布中缺失的
 202 个确切路径；它不按目录前缀豁免子文件，也不承认工件内容已经核验。
-论文读者可先查看随源码发布的[冻结证据快照](../paper/generated/current_refresh/snapshot.json)
-及[应用 cohort 说明](../paper/generated/current_refresh/APPLICATION_COHORTS.md)。冻结派生
+论文读者可先查看随源码发布的[冻结证据快照](../experiments/snapshots/current_refresh/snapshot.json)
+及[应用 cohort 说明](../experiments/snapshots/current_refresh/APPLICATION_COHORTS.md)。冻结派生
 数据不代替未附带的原始测量、输入或构建工件。
 
 `python scripts/check_repository.py` 检查源码链接，并单独报告已登记但未附带的原始工件数量。

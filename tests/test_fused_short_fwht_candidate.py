@@ -6,7 +6,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "python"))
-sys.path.insert(0, str(ROOT / "paper/tools"))
+sys.path.insert(0, str(ROOT / "experiments/tools"))
 from cubutterfly import fused_short_fwht as provider
 import benchmark_fused_short_fwht_20261012 as bench
 

@@ -20,7 +20,7 @@ and xor-zeta 1/1. The unavailable case requests NTT word64 N=2^16, batch16,
 natural input and bit-reversed output. This records an implementation/contract
 gap, not a failure of the mapping theory.
 
-The corresponding generated summary (local artifact: `../paper/generated/current_results_summary.json`; not included in this source release)
+The corresponding generated summary (local artifact: `../experiments/snapshots/current_results_summary.json`; not included in this source release)
 contains these matching external-library comparisons:
 
 | Operator / baseline | Paired cells | Throughput geomean | Faster / equal / slower |
@@ -38,7 +38,7 @@ and FWHT FP32/Dao. Inverse NTT itself is correct/measured, but GPU-NTT's
 current adapter does not provide that matching inverse baseline. Summary rows
 are flat records; direction is a top-level field, not nested in `workload`.
 
-The older `paper/evidence/manifest.json` snapshot (5/72 complete in September
+The older `experiments/provenance/manifest.json` snapshot (5/72 complete in September
 16 data) must not be used as the current execution completion count. The
 current figure renderer uses the September 17 cohort above. Likewise, the
 separate 40GB large-FFT cohort and later selected suffix pools must retain

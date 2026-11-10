@@ -57,9 +57,9 @@ to preserve FP32/FP64, avoiding NumPy's implicit FFT precision promotion.
 The coverage driver is `scripts/validate_e2e_xd_coverage.py`; it accepts
 `--matrix coverage` for explicit candidate validation or `--matrix filter` for
 public measurement/replay. Application runners are
-`paper/experiments/e13/run_fft_filter_end_to_end.py`,
-`paper/experiments/e13/run_quarot_random_end_to_end.py` and
-`paper/tools/run_fno_graph_integration_20261013.py`.
+`experiments/workloads/e13/run_fft_filter_end_to_end.py`,
+`experiments/workloads/e13/run_quarot_random_end_to_end.py` and
+`experiments/tools/run_fno_graph_integration_20261013.py`.
 
 Validation completed on the new library includes 20 public FWHT GPU tests
 against CPU arithmetic, 64 complex xD candidate rows, eight compact-real

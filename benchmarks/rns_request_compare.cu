@@ -3,7 +3,7 @@
 #include <cuntt/rns_tuning.hpp>
 #include <cuda_runtime.h>
 #include "gpuntt/ntt_merge/ntt.cuh"
-#include "../paper/experiments/gpu_thermal_guard.hpp"
+#include "../experiments/workloads/gpu_thermal_guard.hpp"
 
 #include <algorithm>
 #include <array>

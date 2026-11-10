@@ -7,15 +7,15 @@ import subprocess
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("paper_prepare", ROOT / "paper/tools/prepare_experiments.py")
+spec = importlib.util.spec_from_file_location("paper_prepare", ROOT / "experiments/tools/prepare_experiments.py")
 prepare = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prepare)
 
 
 @pytest.fixture
 def inputs(tmp_path):
-    plan = json.loads((ROOT / "paper/experiments/plan.json").read_text())
-    target = json.loads((ROOT / "paper/experiments/targets/a100-80gb-gpu1.json").read_text())
+    plan = json.loads((ROOT / "experiments/workloads/plan.json").read_text())
+    target = json.loads((ROOT / "experiments/workloads/targets/a100-80gb-gpu1.json").read_text())
     target["acceptance_dir"] = "live"
     target["profile"] = "calibration.json"
     profile = {key: target[key] for key in ("device", "compute_capability", "global_memory_bytes")}

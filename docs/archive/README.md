@@ -34,7 +34,7 @@ The [artifact index](../../results/README.md) is the entry to available raw reco
 ## Dated reports
 
 This inventory covers Markdown documents under `docs/`; it does not enumerate
-the raw `results/` tree or replace the [paper evidence index](../../paper/evidence/README.md).
+the raw `results/` tree or replace the experiment index.
 Dates below come from filenames and are not claims of current validation.
 
 ### 2026-11

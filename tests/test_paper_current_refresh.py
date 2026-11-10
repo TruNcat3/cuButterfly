@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 
-MODULE = Path(__file__).resolve().parents[1] / "paper/tools/export_current_refresh.py"
+MODULE = Path(__file__).resolve().parents[1] / "experiments/tools/export_current_refresh.py"
 SPEC = importlib.util.spec_from_file_location("current_refresh", MODULE)
 refresh = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(refresh)
@@ -296,7 +296,7 @@ def application_modules():
 
 def test_frozen_application_closeout_retains_every_cohort_and_negative_result():
     helper, _ = application_modules()
-    data = helper.load(MODULE.parents[1] / 'generated/current_refresh/application_closeout.json')
+    data = helper.load(MODULE.parents[1] / 'snapshots/current_refresh/application_closeout.json')
     closure = [r for r in data['records'] if r['cohort'] == 'nov2-application-closure']
     assert len(closure) == 14
     assert len({r['job_id'] for r in closure}) == 9
@@ -328,7 +328,7 @@ def test_frozen_application_closeout_retains_every_cohort_and_negative_result():
 @pytest.mark.parametrize('tamper', ['ratio', 'source', 'missing-row'])
 def test_application_closeout_rejects_corrupt_frozen_evidence(tmp_path, tamper):
     helper, _ = application_modules()
-    data = json.loads((MODULE.parents[1] / 'generated/current_refresh/application_closeout.json').read_text())
+    data = json.loads((MODULE.parents[1] / 'snapshots/current_refresh/application_closeout.json').read_text())
     if tamper == 'ratio':
         data['records'][0]['speedup'] = 2
     elif tamper == 'source':
@@ -345,9 +345,9 @@ def test_frozen_renderer_never_loads_raw_results(tmp_path, monkeypatch):
     import shutil
     import sys
     _, renderer = application_modules()
-    generated = tmp_path / 'paper/generated/current_refresh'
+    generated = tmp_path / 'experiments/snapshots/current_refresh'
     generated.mkdir(parents=True)
-    original = MODULE.parents[1] / 'generated/current_refresh'
+    original = MODULE.parents[1] / 'snapshots/current_refresh'
     for name in ('snapshot.json', 'fp16_comparison.json', 'application_closeout.json'):
         shutil.copyfile(original / name, generated / name)
     monkeypatch.setattr(renderer, 'ROOT', tmp_path)
@@ -373,17 +373,17 @@ def test_source_release_can_redraw_without_results_tree(tmp_path):
     import subprocess
     import sys
     paper = MODULE.parents[1]
-    tools = tmp_path / 'paper/tools'
+    tools = tmp_path / 'experiments/tools'
     tools.mkdir(parents=True)
     for name in ('render_current_refresh.py', 'load_fp16_acceptance.py',
                  'load_fft_l_comparison.py', 'export_application_closeout.py'):
         shutil.copyfile(paper / 'tools' / name, tools / name)
-    generated = tmp_path / 'paper/generated/current_refresh'
+    generated = tmp_path / 'experiments/snapshots/current_refresh'
     generated.mkdir(parents=True)
     for name in ('snapshot.json', 'fp16_comparison.json', 'application_closeout.json'):
-        shutil.copyfile(paper / 'generated/current_refresh' / name, generated / name)
+        shutil.copyfile(paper / 'snapshots/current_refresh' / name, generated / name)
     for name in ('motivation_organization_a100.csv', 'application_historical_complete_call.json'):
-        shutil.copyfile(paper / 'generated' / name, generated.parent / name)
+        shutil.copyfile(paper / 'snapshots' / name, generated.parent / name)
     subprocess.run([sys.executable, str(tools / 'render_current_refresh.py'),
                     '--figures-only', '--frozen-inputs'], check=True, capture_output=True,
                    env=dict(os.environ, CUDA_VISIBLE_DEVICES=''), cwd=tmp_path)
@@ -394,7 +394,7 @@ def test_source_release_can_redraw_without_results_tree(tmp_path):
     assert manifest['figures']['applications']['historical_archived_records'] == 4
     exclusions = manifest['figures']['applications']['historical_exclusions']
     assert len(exclusions) == 2 and all('QuaRot' in row['workload'] for row in exclusions)
-    assert (tmp_path / 'paper/figures/current_refresh_applications.pdf').is_file()
+    assert (tmp_path / 'experiments/figures/current_refresh_applications.pdf').is_file()
 
 
 def test_operator_export_preserves_full_semantics_and_unknown_contract():
@@ -419,7 +419,7 @@ def test_operator_export_preserves_full_semantics_and_unknown_contract():
 
 def test_frozen_metadata_and_operator_aggregates():
     root = MODULE.parents[2]
-    data = json.loads((root / 'paper/generated/current_refresh/snapshot.json').read_text())
+    data = json.loads((root / 'experiments/snapshots/current_refresh/snapshot.json').read_text())
     assert data['operators']['comparison_groups'] == data['operators']['groups']
     pairs = [p for p in data['operators']['pairs'] if p['cohort'] == 'main66' and p['speedup'] is not None]
     assert len(pairs) == 49
@@ -441,7 +441,7 @@ def test_local_operator_evidence_reproduces_frozen_snapshot():
     if not campaign.is_dir():
         pytest.skip('raw campaign is local evidence, not bundled in source releases')
     assert refresh.Exporter(campaign).export() == json.loads(
-        (root / 'paper/generated/current_refresh/snapshot.json').read_text())
+        (root / 'experiments/snapshots/current_refresh/snapshot.json').read_text())
 
 
 def test_application_closeout_timing_metadata_and_ratios():
@@ -450,7 +450,7 @@ def test_application_closeout_timing_metadata_and_ratios():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     root = MODULE.parents[2]
-    data = module.load(root / 'paper/generated/current_refresh/application_closeout.json')
+    data = module.load(root / 'experiments/snapshots/current_refresh/application_closeout.json')
     assert len(data['records']) == 18
     for row in data['records']:
         assert row['speedup'] == pytest.approx(row['baseline_ms'] / row['own_ms'], abs=1e-8)
@@ -473,4 +473,4 @@ def test_local_application_evidence_reproduces_frozen_snapshot():
         pytest.skip('raw application reports are local evidence, not bundled in source releases')
     module, _ = application_modules()
     assert module.export() == json.loads(
-        (root / 'paper/generated/current_refresh/application_closeout.json').read_text())
+        (root / 'experiments/snapshots/current_refresh/application_closeout.json').read_text())

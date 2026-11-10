@@ -7,7 +7,7 @@ import sys
 import pytest
 
 SPEC = importlib.util.spec_from_file_location(
-    "prepared_queue", Path(__file__).resolve().parents[1] / "paper/tools/run_prepared_queue.py")
+    "prepared_queue", Path(__file__).resolve().parents[1] / "experiments/tools/run_prepared_queue.py")
 queue = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(queue)
 

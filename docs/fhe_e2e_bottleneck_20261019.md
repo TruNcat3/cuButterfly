@@ -133,7 +133,7 @@ ring、顺序、root/domain、offset 和 stream，并把独立 ciphertext 行放
 
 ```bash
 CUDA_VISIBLE_DEVICES=GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02 \
-python paper/experiments/run_heongpu_ckks_e2e.py \
+python experiments/workloads/run_heongpu_ckks_e2e.py \
   --cuntt-library build-contract-20261017/libcuntt.so \
   --build-dir build-fhe-inplace-20261019 \
   --sizes 16384 --batches 8 --warmup 1 --repetitions 5 \

@@ -36,14 +36,14 @@ kernel itself is competitive.
 
 ## Changes
 
-`paper/experiments/e13/run_fft_filter_end_to_end.py` now has an explicit
+`experiments/workloads/e13/run_fft_filter_end_to_end.py` now has an explicit
 `--cache-filter-spectrum` mode. It precomputes the fixed filter spectrum
 outside the timed region for cuButterfly, PyTorch, and a CuPy native-padding
 control. The original complete-call mode remains unchanged. The preparation
 path also keeps the SciPy convolution oracle available on hosts with an old
 `scipy.fft` namespace.
 
-`paper/experiments/e13/quarot_adapter.py` adds an opt-in `reuse_buffers=True`
+`experiments/workloads/e13/quarot_adapter.py` adds an opt-in `reuse_buffers=True`
 mode. It reuses the FWHT output and the narrowed FP16 output for a serialized
 inference stream. The standalone default still returns independent storage.
 The QuaRot runner enables this mode and avoids a redundant `contiguous()` when

@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location('quarot_fused_export', ROOT / 'paper/tools/export_quarot_fused_followup.py')
+SPEC = importlib.util.spec_from_file_location('quarot_fused_export', ROOT / 'experiments/tools/export_quarot_fused_followup.py')
 exporter = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(exporter)
 

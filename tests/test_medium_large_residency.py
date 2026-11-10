@@ -5,7 +5,7 @@ import sys
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "paper/tools"))
+sys.path.insert(0, str(ROOT / "experiments/tools"))
 import prepare_medium_large_mechanism_20261012 as medium
 import prepare_medium_large_residency_20261012_v2 as residency
 import validate_fixed_mapping_error_20261012 as errors

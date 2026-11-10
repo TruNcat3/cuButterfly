@@ -3,9 +3,9 @@
 > **Historical runbook snapshot — September 2026.** “Current”, interrupted
 > acceptance and incomplete-migration statements below refer to their named
 > September checkpoints. Later bounded A100 work is recorded in the
-> [November 7 closeout](../../paper/evidence/A100_CLOSEOUT_20261107.md), with
-> [November 8 representative profiles](../../paper/evidence/REPRESENTATIVE_PROFILES_20261108.md)
-> and [November 9 boundary controls](../../paper/evidence/BOUNDARY_IO_CONTROL_20261109.md)
+> [November 7 closeout](../../experiments/reports/A100_CLOSEOUT_20261107.md), with
+> [November 8 representative profiles](../../experiments/reports/REPRESENTATIVE_PROFILES_20261108.md)
+> and [November 9 boundary controls](../../experiments/reports/BOUNDARY_IO_CONTROL_20261109.md)
 > as separate supplements. These do not certify every model/lowering or relabel
 > old manifests as complete. Keep each device UUID, build and population separate.
 > Use the [hardware index](README.md) and

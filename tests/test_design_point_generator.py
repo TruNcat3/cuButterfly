@@ -20,7 +20,7 @@ class DesignPointGeneratorTest(unittest.TestCase):
         selected = points[("structured-2x2", "warp-register", "fp32")]
         self.assertEqual(selected, {3, 12, 15})
         with tempfile.TemporaryDirectory() as directory:
-            path = pathlib.Path(directory) / "generated_register_structured.cu"
+            path = pathlib.Path(directory) / "snapshots_register_structured.cu"
             write_structured(path, selected)
             source = path.read_text()
             self.assertIn("launch_register_structured<12, 256>", source)

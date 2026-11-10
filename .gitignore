@@ -29,3 +29,7 @@
 .idea/
 *~
 .DS_Store
+
+# Manuscripts are maintained outside the software repository.
+/paper/
+/APPT26/

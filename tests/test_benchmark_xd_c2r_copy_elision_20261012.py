@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 
-PATH = Path(__file__).resolve().parents[1] / "paper/tools/benchmark_xd_c2r_copy_elision_20261012.py"
+PATH = Path(__file__).resolve().parents[1] / "experiments/tools/benchmark_xd_c2r_copy_elision_20261012.py"
 spec = importlib.util.spec_from_file_location("c2r_copy_runner", PATH)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)

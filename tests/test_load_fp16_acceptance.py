@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-MODULE = Path(__file__).resolve().parents[1] / 'paper/tools/load_fp16_acceptance.py'
+MODULE = Path(__file__).resolve().parents[1] / 'experiments/tools/load_fp16_acceptance.py'
 spec = importlib.util.spec_from_file_location('fp16_acceptance_loader', MODULE)
 loader = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(loader)

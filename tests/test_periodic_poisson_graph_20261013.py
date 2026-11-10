@@ -6,7 +6,7 @@ from unittest.mock import patch
 import torch
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location("periodic_poisson", ROOT / "paper/tools/run_periodic_poisson_graph_20261013.py")
+SPEC = importlib.util.spec_from_file_location("periodic_poisson", ROOT / "experiments/tools/run_periodic_poisson_graph_20261013.py")
 APP = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(APP)
 

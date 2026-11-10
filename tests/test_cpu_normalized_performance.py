@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_frozen_cpu_normalized_rows_are_exact_and_complete():
-    data = json.loads((ROOT / "paper/generated/current_refresh/cpu_normalized.json").read_text())
+    data = json.loads((ROOT / "experiments/snapshots/current_refresh/cpu_normalized.json").read_text())
     assert data["schema"] == "cpu-normalized-performance-v1"
     assert data["coverage"] == {
         "cpu_rows": 83,

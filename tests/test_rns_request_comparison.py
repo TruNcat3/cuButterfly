@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
-    "run_rns_request_comparison", ROOT / "paper/experiments/run_rns_request_comparison.py")
+    "run_rns_request_comparison", ROOT / "experiments/workloads/run_rns_request_comparison.py")
 runner = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(runner)
 

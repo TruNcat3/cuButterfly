@@ -6,15 +6,15 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "paper" / "tools"))
+sys.path.insert(0, str(ROOT / "experiments" / "tools"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import prepare_strict_core_dataflow as strict
 import run_controlled_experiment as controlled
 
 
-CONFIG = ROOT / "paper/experiments/strict_core_dataflow.json"
-TARGET = ROOT / "paper/experiments/targets/a100-80gb-gpu1.json"
+CONFIG = ROOT / "experiments/workloads/strict_core_dataflow.json"
+TARGET = ROOT / "experiments/workloads/targets/a100-80gb-gpu1.json"
 
 
 def test_study_is_a_complete_fair_two_by_two_factorial():

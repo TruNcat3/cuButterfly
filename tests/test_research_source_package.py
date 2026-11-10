@@ -56,6 +56,8 @@ class ResearchSourcePackageTests(unittest.TestCase):
                 path = root / relative
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(content)
+            (root / "experiments/tools").mkdir(parents=True)
+            (root / "experiments/tools/run_case.py").write_text("print(1)\n")
             (root / "results/v100_scaling_full_summary.csv").write_text("operator,correct\nfft,1\n")
             # Historical PDFs are excluded even under an otherwise allowed
             # documentation tree; large raster assets are excluded as well.
@@ -71,6 +73,7 @@ class ResearchSourcePackageTests(unittest.TestCase):
                 self.assertIn("cuButterfly/scripts/untracked_runner.py", names)
                 self.assertIn("cuButterfly/python/cubutterfly/__init__.py", names)
                 self.assertIn("cuButterfly/benchmark/manifest.py", names)
+                self.assertIn("cuButterfly/experiments/tools/run_case.py", names)
                 self.assertIn("cuButterfly/adapters/application.cu", names)
                 for excluded in ("python/__pycache__/api.pyc", "benchmark/.pytest_cache/state",
                                  "python/external/vendor.py", "benchmark/results/old.json"):

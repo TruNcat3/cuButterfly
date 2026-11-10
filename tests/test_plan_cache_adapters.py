@@ -24,7 +24,7 @@ def load(name, path):
 class CacheTests(unittest.TestCase):
     def test_quarot_public_final_rounding_uses_descriptor_scale(self):
         from unittest.mock import Mock
-        q = load("cache_quarot_final", ROOT / "paper/experiments/e13/quarot_adapter.py")
+        q = load("cache_quarot_final", ROOT / "experiments/workloads/e13/quarot_adapter.py")
         own = q.QuaRotFWHTAdapter.__new__(q.QuaRotFWHTAdapter)
         own.compute_contract, own._scales, own.reuse_buffers = "public_fp32_final", {}, False
         values = q.torch.ones((2, 32), dtype=q.torch.float16)
@@ -58,7 +58,7 @@ class CacheTests(unittest.TestCase):
 
     def test_adapters_resolve_environment_and_reject_bad_paths(self):
         import tempfile
-        modules = [load("cache_quarot", ROOT / "paper/experiments/e13/quarot_adapter.py"),
+        modules = [load("cache_quarot", ROOT / "experiments/workloads/e13/quarot_adapter.py"),
                    load("cache_real_fft", ROOT / "results/e13_assets/cubutterfly_real_fft.py")]
         with tempfile.TemporaryDirectory() as directory:
             path = str(Path(directory) / "gpu.cache")
@@ -78,7 +78,7 @@ class CacheTests(unittest.TestCase):
 
     def test_adapter_native_calls_and_complete_metadata(self):
         import tempfile
-        q = load("cache_quarot_calls", ROOT / "paper/experiments/e13/quarot_adapter.py")
+        q = load("cache_quarot_calls", ROOT / "experiments/workloads/e13/quarot_adapter.py")
         r = load("cache_real_calls", ROOT / "results/e13_assets/cubutterfly_real_fft.py")
         with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {}, clear=True):
             cache = str(Path(directory) / "gpu.cache")
@@ -115,7 +115,7 @@ class CacheTests(unittest.TestCase):
             if status:
                 raise RuntimeError(operation)
 
-        q = load("cache_quarot_failure", ROOT / "paper/experiments/e13/quarot_adapter.py")
+        q = load("cache_quarot_failure", ROOT / "experiments/workloads/e13/quarot_adapter.py")
         r = load("cache_real_failure", ROOT / "results/e13_assets/cubutterfly_real_fft.py")
         for module, adapter_type, invoke in (
             (q, q.QuaRotFWHTAdapter, lambda a: a._make_plan(None, 16, 1, 7)),

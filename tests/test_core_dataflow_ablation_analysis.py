@@ -7,11 +7,11 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
-    "core_dataflow_analysis", ROOT / "paper/tools/analyze_core_dataflow_ablation.py")
+    "core_dataflow_analysis", ROOT / "experiments/tools/analyze_core_dataflow_ablation.py")
 analysis = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(analysis)
 
-CONFIG = ROOT / "paper/experiments/core_dataflow_ablation.json"
+CONFIG = ROOT / "experiments/workloads/core_dataflow_ablation.json"
 
 
 HEADER = ("device,device_name,compute_capability,logN,batch,core,organization,trial,kernel_ms,correct,"

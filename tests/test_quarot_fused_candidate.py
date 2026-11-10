@@ -5,7 +5,7 @@ import sys
 import torch
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "paper/tools"))
+sys.path.insert(0, str(ROOT / "experiments/tools"))
 import quarot_fused_candidate_20261012 as probe
 
 

@@ -348,7 +348,7 @@ For each of the three frozen Poisson pairs, use the existing runner with its act
 flags; the JSON plan supplies the size, batch and destination substitutions:
 
 ```bash
-python paper/tools/run_periodic_poisson_graph_20261013.py \
+python experiments/tools/run_periodic_poisson_graph_20261013.py \
   --library build-e13-cufftdx/libcuntt.so --size 2048 --batch 16 \
   --norm backward --calls 20 --warmup 3 \
   --output results/full_current_20261025/poisson/poisson-2048-b16/report.json

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "paper/experiments/analyze_ckks_schedule_trace.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "experiments/workloads/analyze_ckks_schedule_trace.py"
 spec = importlib.util.spec_from_file_location("ckks_schedule_trace", SCRIPT)
 trace = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(trace)

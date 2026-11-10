@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 SPEC = importlib.util.spec_from_file_location('graph_application_profile',
-    Path(__file__).resolve().parents[1] / 'paper/tools/profile_graph_application.py')
+    Path(__file__).resolve().parents[1] / 'experiments/tools/profile_graph_application.py')
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 

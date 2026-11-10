@@ -10,7 +10,7 @@ import torch
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'python'))
 from cubutterfly.real_fft import output_scale,RealFFT
-spec=importlib.util.spec_from_file_location('filter_opt',ROOT/'paper/tools/filter_normalization_optimization_20261012.py')
+spec=importlib.util.spec_from_file_location('filter_opt',ROOT/'experiments/tools/filter_normalization_optimization_20261012.py')
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 
 

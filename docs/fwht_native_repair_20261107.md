@@ -6,7 +6,7 @@
 
 ## 范围、实现和身份
 
-请求完全沿用前轮十个FP32 FWHT：自然顺序、out-of-place、五正向/五归一化逆向，N256/4096/32768及rank2/3/4/8，原batch/输入不变。独立确认实际用A100 80GB PCIe GPU UUID `GPU-0eae5f07-33de-321b-70a9-ffeae49309e6`；原请求来源GPU1只表示前轮出处。旧库SHA为`775a85c8f76e44bbfee886fd90489e7c309bd097b60e968183e446aa006177b2`，新库`41f432161548a028f3afc9c420bced06edad542556539410d659a9201a587098`。CUDA12.4、Torch2.5.1，完整编译/链接/未改object哈希见[便携证据](../paper/generated/fwht_native_repair_20261107.json)。
+请求完全沿用前轮十个FP32 FWHT：自然顺序、out-of-place、五正向/五归一化逆向，N256/4096/32768及rank2/3/4/8，原batch/输入不变。独立确认实际用A100 80GB PCIe GPU UUID `GPU-0eae5f07-33de-321b-70a9-ffeae49309e6`；原请求来源GPU1只表示前轮出处。旧库SHA为`775a85c8f76e44bbfee886fd90489e7c309bd097b60e968183e446aa006177b2`，新库`41f432161548a028f3afc9c420bced06edad542556539410d659a9201a587098`。CUDA12.4、Torch2.5.1，完整编译/链接/未改object哈希见[便携证据](../experiments/snapshots/fwht_native_repair_20261107.json)。
 
 此前已经使用Dao设计启发的独立warp-register provider，不是没有接入高性能核心。N256用32线程，N4096/32768用256线程；归一化在写回融合，没有普遍额外copy/scale。N128×128的原选中点为两轴warp-register和两次transpose，其余高rank为数学等价flatten。
 
@@ -60,7 +60,7 @@ N4096修复后寄存器数反而增加，但short-scoreboard指标下降、普�
 
 历史十请求输入FP32，但原CPU reference实际是FP64。本轮纠正此前“FP32 CPU参考”的错误表述；不修改旧GPU计时或旧原始参考。240个保存的actual另与同精度FP32 CPU逐轴Sylvester参考比较，按FP32逐级加减、逆向每轴以FP32乘1/n。最大绝对误差0.00048828125，最大L2相对误差1.502582946e-7，完整分布与误差数组hash保存；旧FP64参考误差另列诊断。60对同mapping旧/新输出逐元素且逐byte完全相同。不新增或放宽浮点验收阈值，不把误差不变说成精度提升。
 
-[普通计时和数值快照](../paper/generated/fwht_native_repair_20261107.json)与[NCU/公共正确性快照](../paper/generated/fwht_native_repair_support_20261107.json)可在没有本机原始results的机器读取。大误差数组、NCU原文件及库保留本机，源码发布提供对应hash。普通测试入口：
+[普通计时和数值快照](../experiments/snapshots/fwht_native_repair_20261107.json)与[NCU/公共正确性快照](../experiments/snapshots/fwht_native_repair_support_20261107.json)可在没有本机原始results的机器读取。大误差数组、NCU原文件及库保留本机，源码发布提供对应hash。普通测试入口：
 
 ```bash
 python -m pytest -q tests/test_fwht_native_repair.py

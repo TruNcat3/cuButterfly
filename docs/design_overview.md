@@ -47,7 +47,7 @@ regions. Every column receives one value from each row. Each local region uses
 four values, but the inter-band boundary covers sixteen. A four-value local
 budget is therefore not a claim that all intermediate data fit in four words.
 
-The [paper](../paper/main.pdf) develops this example and the correctness
+The paper develops this example and the correctness
 conditions. [APPT layout analysis](appt_static_layout.md) records the earlier
 NTT-specific formulation.
 
@@ -108,7 +108,7 @@ uses `4c + (r XOR c)` to preserve the consumer region and distribute row/column
 accesses across banks. This analytical example does not guarantee conflict
 freedom for arbitrary vectors, value widths or simultaneous groups.
 
-The [boundary control evidence](../paper/evidence/BOUNDARY_IO_CONTROL_20261109.md)
+The [boundary control evidence](../experiments/reports/BOUNDARY_IO_CONTROL_20261109.md)
 measures external layout and local shared staging separately. These are
 independent experiments, not a cumulative speedup chain.
 
@@ -151,7 +151,7 @@ choices across the measured families. External-library competitiveness,
 fixed-core attribution and application gains answer different questions. They
 retain their own precision, workload, device and timing contracts, including
 negative results. Follow the [current evidence route](README.md#read-the-a100-paper-evidence)
-and [paper terminology](../paper/TERMINOLOGY.md) for the accepted claims.
+and [paper terminology](terminology.md) for the accepted claims.
 
 Each hardware target has its own calibration and performance evidence.
 [Ascend-FFT and Kunlunxin-FFT](platform_ports.md) reuse the method with

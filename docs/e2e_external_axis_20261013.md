@@ -124,9 +124,9 @@ block 数并未增加，因此不能概括成 occupancy 提升。尚无本轮带
 
 ## 复现入口
 
-- [隔离增量构建](../paper/tools/build_e2e_vkfft_axis_20261013.py)，以
+- [隔离增量构建](../experiments/tools/build_e2e_vkfft_axis_20261013.py)，以
   `--destination build-e2e-vkfft2-20261013 --execute` 构建；已有库不可覆盖。
-- [公共应用矩阵](../paper/tools/run_e2e_fft_opt_matrix_20261013.py)，指定
+- [公共应用矩阵](../experiments/tools/run_e2e_fft_opt_matrix_20261013.py)，指定
   `--library`、`--library-sha256`、新 `--output`、明确 `--until`，使用
   `--skip-old-control` 复用不变旧库证据。
 - [公共验证](../results/e2e_vkfft_axis_20261013/public_validation_v2/release/public_validation.json)、
@@ -135,7 +135,7 @@ block 数并未增加，因此不能概括成 occupancy 提升。尚无本轮带
 - [真实应用缓存回放](../results/e2e_vkfft_axis_20261013/public_cache_replay/release/replay.json)：
   两个新 adapter 的正逆共 4 个 plan 均命中 user cache，mapping 与源应用一致。
 - [固定请求的核心计时与 Driver 资源探针](../results/e2e_vkfft_axis_20261013/core_profile/release/core_profile.json)。
-- [身份与协议检查后的汇总器](../paper/tools/summarize_e2e_vkfft_axis_20261013.py)。
+- [身份与协议检查后的汇总器](../experiments/tools/summarize_e2e_vkfft_axis_20261013.py)。
   滤波回归复用既有 `run_fft_filter_end_to_end.py`，完整参数保留在两个
   `filter_b16_t*/status.json` 中。
 

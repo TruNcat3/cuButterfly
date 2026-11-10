@@ -262,6 +262,6 @@ C 为单局部核心每 CTA 的逻辑独立 FFT 数或 factor 的逻辑列数，
 对源码 Python frontend 的访问改为 lazy import，避免安装验收提前绑定源码前端。
 `tests/test_low_fft_cpu_reference.py` 的 12 项 CPU 测试通过。
 
-[完整验收证据及来源哈希](../paper/evidence/FP16_PUBLIC_ACCEPTANCE_20261105.md)
+[完整验收证据及来源哈希](../experiments/reports/FP16_PUBLIC_ACCEPTANCE_20261105.md)
 保留每个 `post_completed` 的结果哈希。BF16 在此只有语义 smoke，完整自动横评仍待测；
 原 A100 主66请求均值不变，本次九点不代表全矩阵重测完成。

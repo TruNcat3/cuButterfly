@@ -6,7 +6,7 @@ import sys
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "paper/tools"))
+sys.path.insert(0, str(ROOT / "experiments/tools"))
 import prepare_medium_large_mechanism_20261012 as medium
 from test_principle_gap_campaign import accepted_journal
 

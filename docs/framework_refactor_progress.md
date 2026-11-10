@@ -50,7 +50,7 @@ cells also completed; the shared conda installation is `installed-validated`.
 The nine DEFAULT/cuFFT ratios have GM 0.853583x, range 0.733471--1.066737x,
 with 1/9 nominal wins. Separate MEASURE and installed DEFAULT GMs are
 0.853388x and 0.855909x; no minimum is taken across paths. The
-[public acceptance evidence](../paper/evidence/FP16_PUBLIC_ACCEPTANCE_20261105.md)
+[public acceptance evidence](../experiments/reports/FP16_PUBLIC_ACCEPTANCE_20261105.md)
 lists all nine latency pairs, resolved designs and source hashes.
 
 Two repairs addressed false seed rejection of the provider's radix2-to-auto alias

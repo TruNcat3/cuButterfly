@@ -1,6 +1,6 @@
 # Application component breakdown audit
 
-`paper/tools/profile_application_boundaries_20261012.py` now emits the common
+`experiments/tools/profile_application_boundaries_20261012.py` now emits the common
 `cubutterfly-application-breakdown-v1` schema while preserving the previous
 profiler fields and timing files.
 

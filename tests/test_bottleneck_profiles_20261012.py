@@ -8,7 +8,7 @@ import os
 import json
 
 ROOT=Path(__file__).resolve().parents[1]
-spec=importlib.util.spec_from_file_location('ncu_wrapper',ROOT/'paper/tools/run_bottleneck_profiles_20261012.py')
+spec=importlib.util.spec_from_file_location('ncu_wrapper',ROOT/'experiments/tools/run_bottleneck_profiles_20261012.py')
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 
 
