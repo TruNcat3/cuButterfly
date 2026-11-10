@@ -85,6 +85,16 @@ def operator_plot(data, output, manifest):
     low_count = len(low["requests"])
     requests += low["requests"]
     pairs += low["pairs"]
+    # The cyclic NTT extension is a separate audited population, but it is
+    # part of the operator coverage shown by this figure.  Keep only matched
+    # ratios in the boxes while retaining all requests in the group n labels;
+    # the table continues to report main66 and cyclic90 separately.
+    cyclic_requests = [r for r in data.get("cyclic", {}).get("requests", [])
+                       if r.get("cohort") == "cyclic90"]
+    cyclic_pairs = [r for r in data.get("cyclic", {}).get("pairs", [])
+                    if r.get("speedup") is not None]
+    requests += cyclic_requests
+    pairs += cyclic_pairs
     fig, ax = plt.subplots(figsize=(7, 2.55))
     fig.subplots_adjust(left=.075, right=.995, bottom=.30, top=.70)
     ax.axvspan(-.5, 1.5, color="#f3f3f3", zorder=0)
@@ -136,10 +146,14 @@ def operator_plot(data, output, manifest):
                 ha="center", va="top", fontsize=6.5, fontweight="bold")
     if not all_values:
         raise ValueError("operator plot has no matched speedups")
-    ax.set_yscale("log", base=10)
-    ax.set_ylim(min(all_values) / 1.35, max(all_values) * 1.4)
+    # The matched ratios in this figure span less than one decade.  A linear
+    # axis keeps the distance from the parity line (1x) visible and avoids
+    # implying a log-scale dynamic range that the measured cohort does not
+    # have.
+    ax.set_ylim(0.0, max(all_values) * 1.30)
+    ax.axhline(1.0, color="#777777", linestyle="--", linewidth=.65, zorder=1)
     ax.set_xlim(-.55, len(GROUPS) - .45)
-    ax.set_ylabel("Baseline / cuButterfly speedup (log10)", fontsize=7.5)
+    ax.set_ylabel("Baseline / cuButterfly speedup", fontsize=7.5)
     axis_style(ax)
     for boundary in (3.5, 5.5, 7.5, 9.5, 11.5):
         ax.axvline(boundary, color="#AAAAAA", linestyle=":", linewidth=.7)
@@ -156,13 +170,14 @@ def operator_plot(data, output, manifest):
     low_scope = ("*FP16: independent forward cohort; Further BF16 experiments deferred. Floating errors are reported."
                  if public_default else
                  "*FFT-L: public-winner replay only; Further BF16 experiments deferred. Floating errors are reported.")
-    fig.text(.5, .012, f"Main 66 requests + {low_label}; boxes span workloads, not uncertainty.\n" + low_scope,
+    fig.text(.5, .012, f"Main 66 requests + {low_label} + 90 cyclic NTT requests; boxes span workloads, not uncertainty.\n" + low_scope,
              ha="center", fontsize=6.1, linespacing=1.3)
     save(fig, "operators", output, manifest,
          f"Unified matched speedup view: main66 and {low_label}, kept as separate cohorts. Each box and point uses only a request with the same semantic case in cuButterfly and the named baseline. Further BF16 experiments are deferred. No fixed-control mappings enter the library comparison. Boxes span workloads, not uncertainty; missing results have no ratio.")
     manifest["figures"]["operators"].update(main_requests=66,
         fft_l_public_replays=0 if public_default else low_count,
         fft_l_public_defaults=low_count if public_default else 0,
+        cyclic_requests=len(cyclic_requests), cyclic_matched_pairs=len(cyclic_pairs),
         fft_l_bf16_status="deferred", fixed_controls_included=0,
         displayed_groups=[list(group) for group in GROUPS])
 
