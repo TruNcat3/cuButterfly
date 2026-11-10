@@ -19,6 +19,12 @@
   For method changes, consult the relevant APPT26 paper sections (locally available
   at `../APPT26/samplepaper.tex`) and [mapping methodology](docs/hardware_mapping_methodology.md).
   Historical experiment sections are evidence for their named builds.
+- Use the [task navigation](docs/README.md) and [engineering map](docs/development/repository-layout.md)
+  to locate current contracts. Dated reports and target checkpoints keep their
+  original scope; do not treat old pending items as current status. Maintain
+  existing document paths and the [archive index](docs/archive/README.md) when
+  reorganizing navigation. The [documentation guide](docs/development/documentation.md)
+  defines content ownership and attribution.
 - On this research host, reuse `/home/wt/yes/envs/cubutterfly` and the existing
   build. Research defaults to `CUBUTTERFLY_COMPILE_MODE=research`; preserve an
   explicitly selected policy. Reinstall or recalibrate when relevant inputs change.

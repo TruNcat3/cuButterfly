@@ -78,10 +78,15 @@ scope, adding its presentation, and reviewing prose, rather than silently
 growing a previous denominator. Existing historical negative evidence stays
 separate. Final refresh also requires checking numerical prose and PDF layout.
 
-The application figure now shows the 46 current complete-call pairs and four
-historical FNO/QuaRot records in a separately shaded pinned-build cohort. The
-historical records are coverage evidence only and are excluded from current
-batch aggregates. The organization figure reads the audited
+The application figure upper panel shows the 46 current complete-call pairs
+and two numerically checked historical FNO observations in a separately shaded
+pinned-build cohort. Two early QuaRot observations remain archived but are
+excluded because random-state preparation was invalid and outputs were not
+checked. Historical FNO records are coverage evidence only and are excluded
+from current batch aggregates. The lower panel retains the independent
+application queue, FNO Graph aggregates, and fused QuaRot follow-up as separate
+cohorts; see [APPLICATION_COHORTS.md](APPLICATION_COHORTS.md).
+The organization figure reads the audited
 `paper/generated/motivation_organization_a100.csv` table directly and displays
 18 workloads, 54 organization cells, and 162 trial observations across FFT,
 FWHT, and NTT.

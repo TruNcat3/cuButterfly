@@ -24,9 +24,10 @@ Mature GPU libraries already optimize both arithmetic and data movement
 also reuse mathematical descriptions to generate implementations
 ~\cite{spiral2005,fftx2018}. The recurring performance problem is how a
 compatible core retains values, communicates changing pair groups, and shares
-finite resources as the workload or target changes. A useful common method
-must preserve arithmetic specialization while making these organization
-choices derivable and comparable under the target's constraints.
+finite resources as the workload or target changes. A common method must
+preserve arithmetic specialization while making these organization choices
+comparable. Shared dependencies offer that opportunity through a common
+construction of legal local work and its interfaces.
 
 Arithmetic intensity and Roofline~\cite{roofline} provide a starting point
 for understanding this variation. Yet matched organizations with the same
@@ -40,7 +41,7 @@ parallel work can therefore use hardware inefficiently.
 
 The effect is measurable independently of core replacement. FFT controls
 improve complete-call performance by about 1.22$\times$ while holding each
-of two arithmetic leaves fixed (Section~\ref{sec:core-organization}). Further
+of two local FFT implementations fixed (Section~\ref{sec:core-organization}). Further
 FFT, FWHT, and NTT controls show that deeper retention can help or hurt
 (Section~\ref{sec:motivation}). The question is therefore
 \textbf{whether a common organization method can jointly manage local reuse,
@@ -51,8 +52,9 @@ The key difficulty is that a local grouping changes both the values that can
 remain resident and the predecessors needed by the next group. A tile size
 alone leaves its communication and readiness unresolved. These relationships
 follow the changing pair structure and can be constructed before choosing a
-physical layout or core. This provides a shared basis for organization
-decisions while allowing arithmetic and resource costs to differ.
+physical layout or core. Their resource demands let different operators
+compare organizations while retaining specialized arithmetic and
+workload-dependent choices.
 
 \system{} connects these choices through a \textbf{dependency-driven
 resource characterization}. Stage dependencies determine

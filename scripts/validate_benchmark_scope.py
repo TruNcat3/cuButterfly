@@ -32,7 +32,7 @@ def _load(path: Path):
     return value
 
 
-def validate(path: Path, repo: Path | None = None) -> dict:
+def validate(path: Path, repo: Path | None = None, *, source_only: bool = False) -> dict:
     repo = (repo or Path(__file__).resolve().parents[1]).resolve()
     scope = _load(path)
     if scope.get("schema") != "cubutterfly-benchmark-scope-v1":
@@ -67,6 +67,7 @@ def validate(path: Path, repo: Path | None = None) -> dict:
         raise ValueError("tracks must be a non-empty list")
     ids = set()
     checked_refs = 0
+    unchecked_results = []
     for track in tracks:
         if not isinstance(track, dict):
             raise ValueError("each track must be an object")
@@ -104,21 +105,30 @@ def validate(path: Path, repo: Path | None = None) -> dict:
         if result is not None:
             if not isinstance(result, str) or not result:
                 raise ValueError(f"result_ref must be a non-empty string or null for {track_id}")
+            if source_only:
+                unchecked_results.append({"track_id": track_id, "result_ref": result})
+                continue
             target = result.split("#", 1)[0]
             if not (repo / target).exists():
                 parent = (repo / target).parent
                 if track.get("status") not in {"in-progress", "planned"} or not parent.exists():
                     raise ValueError(f"result_ref does not exist for {track_id}: {target}")
-    return {"scope_id": scope["scope_id"], "status": scope["status"],
-            "track_count": len(tracks), "checked_population_refs": checked_refs}
+    summary = {"scope_id": scope["scope_id"], "status": scope["status"],
+               "track_count": len(tracks), "checked_population_refs": checked_refs}
+    if source_only:
+        summary.update(validation_scope="source-only", unchecked_result_refs=unchecked_results,
+                       result_evidence_verified=False, completion_verified=False)
+    return summary
 
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("scope", type=Path)
+    parser.add_argument("--source-only", action="store_true",
+                        help="Validate source contracts and population hashes only; do not check result evidence or certify completion")
     args = parser.parse_args(argv)
     try:
-        result = validate(args.scope.resolve())
+        result = validate(args.scope.resolve(), source_only=args.source_only)
     except ValueError as exc:
         print(f"benchmark scope invalid: {exc}", file=sys.stderr)
         return 2

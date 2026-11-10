@@ -1,431 +1,107 @@
-# Getting Started
+# Getting started
 
-For the current C/C++ planner, research compilation and hardware registry, see
-the [unified planner guide](unified_planner.md). Backend examples below include
-explicit historical experiments; their parameters are not portable search defaults.
+cuButterfly exposes butterfly transforms through the public C, C++ and Python
+interfaces. Start with a semantic request and let the planner select an executable
+mapping. The [unified planner](unified_planner.md) describes selection, explicit
+mapping replay and current lowering limits.
 
-## Requirements
+## Choose the environment
 
-- Linux with an NVIDIA GPU
-- CUDA Toolkit with `nvcc` and cuFFT
-- CMake 3.20 or newer
-- a C++17 host compiler supported by the installed CUDA version
-- Python 3 for generators, sweeps, and result summarization
-- optional: Nsight Compute, Nsight Systems, PyTorch, and external baselines
+Build prerequisites are CMake 3.20+, a C++17 compiler, a CUDA toolkit compatible
+with the target GPU and host compiler, and Python 3.9+. Python tooling and CMake
+may download dependencies. GPU execution also needs a compatible driver.
+There is no universal CUDA 11.8 or SM70 default: a new native build detects the
+architecture; cross compilation must name it explicitly.
 
-The checked-in V100 profile was built with CUDA 11.8 and `sm_70`. Building for
-another GPU is supported, but the V100-selected mappings are not portable
-performance defaults.
+Activate a Python environment that meets these prerequisites and reuse a
+compatible existing build when available. Keep the interpreter, compiler,
+architecture and install prefix consistent. Hardware-specific setup and evidence
+are indexed in [hardware profiles](hardware/README.md); profiles from another
+model or memory capacity are not interchangeable.
 
-On hosts with multiple CUDA installations, CMake may otherwise find an older
-`/usr/bin/nvcc`. The archived V100 clean-clone validation used CUDA 11.8 and GCC 11.
-CUDA 11.5 with GCC 11 fails in the standard library before compiling project
-code; select a compatible CUDA/host-compiler pair explicitly.
+## Build and install on a target GPU
 
-## Configure And Build
-
-For a new machine, the recommended path is the unified installer. It detects
-the first visible GPU architecture, builds the matching target, initializes
-the hardware profile, records a bounded operator search in the dynamic registry,
-then verifies and installs the package:
+Run from the repository root in the chosen environment. `PREFIX` is the install
+destination; choose a writable prefix and keep the same value throughout.
+For a new Python-enabled build:
 
 ```bash
-./scripts/install_with_hardware_profile.sh \
-  --build-dir build-local \
-  --prefix "$HOME/.local"
+export PREFIX="${CONDA_PREFIX:-$HOME/.local}"
+export BUILD="$PWD/build"
+cmake -S . -B "$BUILD" -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCUBUTTERFLY_BUILD_SHARED=ON \
+  -DPython3_EXECUTABLE="$(command -v python)"
+bash scripts/install_with_hardware_profile.sh \
+  --build-dir "$BUILD" --prefix "$PREFIX" \
+  --stage-calibration bounded --search-seconds 300 --compile-seconds 600
+python -m pip install ./python
 ```
 
-Add `--enable-cufftdx` to install MathDx and include the cuFFTDx processing
-unit in the calibration. Select the intended GPU before installation; the default
-profile path includes its model, SM and memory capacity. For an already installed
-research environment, reuse the existing build and
-[resume calibration](hardware_profile_install.md#shared-gpu-waiting-and-recovery)
-instead of reinstalling. Enable `CUBUTTERFLY_COMPILE_MODE=research` when exploring
-on-demand mappings; plan/JIT time is excluded from kernel timing.
+The configure step compiles no kernels for measurement. The installer then builds,
+selects a compatible static profile, initializes one if missing, runs its configured
+correctness tests and installs. **Initialization uses the live GPU**; the command
+above is not a CPU-only setup command. Its bounded budget limits work, not coverage
+or the quality of the resulting optimum. Optional providers such as cuFFTDx need
+explicit setup; see [hardware installation](hardware_profile_install.md).
 
-The explicit CMake example below reproduces the archived V100 configuration.
-Choose the CUDA toolchain and architecture appropriate to the target device
-when configuring a different manual build.
+When reusing an existing build, preserve its compiler, architecture and codegen
+policy. Inspect its CMake cache before changing them. For cross compilation add
+`-DCMAKE_CUDA_ARCHITECTURES=<target>` to configuration; this permits compilation
+without a visible GPU but does not make the installer CPU-only.
+
+CPU precompilation produces executable specializations and compiler resource
+information. GPU calibration acquires capacity/rate/service observations and
+selected workload measurements. Neither establishes full design-space coverage.
+`precompiled` is the default FFT codegen policy; research workflows may use
+`--fft-codegen-mode on-demand` and `CUBUTTERFLY_COMPILE_MODE=research` for additional
+implemented specializations. See [compile policies](unified_planner.md).
+
+## Check the public Python boundary
+
+Set `CUBUTTERFLY_LIBRARY` to the actual shared library in the build or prefix.
+The following CPU descriptor check loads the library but creates no GPU plan:
 
 ```bash
-cmake -S . -B build \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_CUDA_COMPILER=/usr/local/cuda-11.8/bin/nvcc \
-  -DCMAKE_CUDA_ARCHITECTURES=70
-cmake --build build -j
+export CUBUTTERFLY_LIBRARY="$BUILD/libcuntt.so"
+python - <<'PY'
+import json
+import cubutterfly as cb
+library = cb.Library()
+request = cb.Transform(op=cb.Operator.FWHT, storage=cb.DataType.FP32,
+                       extents=[64], batch=1)
+with cb.Descriptor(library, request) as descriptor:
+    descriptor.validate()
+    print(descriptor.json())
+    print(json.loads(descriptor.capabilities_json()))
+PY
+ctest --test-dir "$BUILD" --output-on-failure \
+  -R '^(semantic_contract_cpu|cpp_descriptor_cpu)$'
 ```
 
-Select a different generated processing-unit specification with:
-
-```bash
-cmake -S . -B build \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_CUDA_COMPILER=/usr/local/cuda-11.8/bin/nvcc \
-  -DCMAKE_CUDA_ARCHITECTURES=80 \
-  -DCUNTT_DESIGN_SPEC="$PWD/config/v100_design_points.json"
-```
-
-For hardware migration, keep the archived V100 records intact and generate a
-target-local profile. A custom processing-unit JSON is optional; it is not
-required merely because the GPU model changes.
-
-### Optional FFT Processing Units
-
-cuFFTDx and TurboFFT are optional and the default build remains dependency
-free beyond the CUDA Toolkit. Install the pinned versions and enable both
-adapters with:
-
-```bash
-./scripts/install_cufftdx.sh
-./scripts/install_turbofft.sh
-
-cmake -S . -B build \
-  -DCMAKE_CUDA_COMPILER=/usr/local/cuda-11.8/bin/nvcc \
-  -DCMAKE_CUDA_ARCHITECTURES=70 \
-  -DCUBUTTERFLY_ENABLE_CUFFTDX=ON \
-  -DCUBUTTERFLY_ENABLE_TURBOFFT=ON
-cmake --build build -j
-```
-
-The compiled cuFFTDx units depend on the build's generated inventory. Inspect
-`cubutterfly_bench --list-processing-units` for available precision/length/thread/EPT
-combinations and `--list-design-points` for a workload's projected mappings.
-The unified planner also supports standalone register FFT modules in FP32/FP64.
-The TurboFFT artifact
-adapter supports the generated FP32 forward, contiguous, out-of-place kernels
-actually present upstream at `logN=7..10`.
-
-## Test
-
-For a new build or a full correctness milestone:
-
-```bash
-cmake --build build --target test
-```
-
-This runs the registered CTest suite, including numerical and public API checks.
-The tests compare CUDA results against CPU references across lengths, directions,
-radices, layouts, tails, generated units and supported numeric types. During
-iteration, use `ctest --test-dir <build-dir> -R <affected-tests> --output-on-failure`
-for the changed contracts and broaden only when changes or failures justify it.
-Keep valid earlier results tied to their build; full performance acceptance has
-its own calibrated, exclusive-GPU protocol in the unified planner guide.
-
-Optional memory checking:
-
-```bash
-compute-sanitizer --tool memcheck ./build/cuntt_tests
-compute-sanitizer --tool memcheck ./build/cubutterfly_tests
-compute-sanitizer --tool racecheck ./build/cubutterfly_tests
-```
-
-## NTT CLI
-
-The experimental resident graph-streaming backend is selected explicitly:
-
-```bash
-./build/cuntt_bench --backend hybrid-dataflow --logN 12 --batch 16 \
-  --compute-unit radix4 \
-  --flow-tile-log 6 --stage-space 6 --role-stages 6 \
-  --data-space 16 --data-time 12 --token-interleave 1 \
-  --pipeline-buffers 2 --dataflow-layout hermes-xor \
-  --dataflow-state inplace --stage-handoff named-barrier --verify
-```
-
-It has zero global workspace and rejects transforms that do not fit in one
-CTA's shared memory. It is not selected by `--auto-select`.
-
-The preserved v0.6 two-phase implementation is explicit:
-
-```bash
-./build/cuntt_bench --backend hierarchical-barrier \
-  --logN 20 --batch 4 --word-bits 32 --modulus 998244353 \
-  --n1-log 10 --rows-per-block 4 --data-time 1 \
-  --threads-per-block 256 --verify
-```
-
-This backend requires cooperative launch support and one full-size workspace
-for its online-transposed inter-layer boundary. `n1_log` selects the first
-resident graph layer; the second contains `logN-n1_log` stages. Both local
-lengths must currently be in `6..10`.
-
-At the generated `10+10` point, add `--hierarchical-core hybrid2d-radix4` to
-select the mature Hybrid2D local schedule as an explicit physical-unit
-ablation. The default is `dataflow-radix4`.
-
-The v0.7 backend accepts a variable subgraph decomposition and records direct
-evidence of overlap:
-
-```bash
-./build/cuntt_bench --backend hierarchical-dataflow \
-  --logN 15 --batch 2 --stage-partition 5,5,5 \
-  --segment-threads 256 --segment-cta-weights 5,5,5 \
-  --boundary-storage full-scratch --trace-pipeline --verify
-```
-
-For a large batch, `--boundary-storage ring --boundary-buffers 2` bounds each
-edge to two transform slots. Epoch tokens prevent a slot from being overwritten
-until every downstream task has loaded its prior transform.
-
-Adjacent segments overlap when `pipeline_segment_(i+1).start` is smaller than
-`pipeline_segment_i.end`. The streaming ABI provides generic radix-2/4/8
-subgraph cores with warp-level data-space unfolding. On V100, `logN=20`
-defaults to a generated `10+10` point that imports the mature four-row resident
-radix-4 core; use an explicit `7,7,6` partition to study the three-segment
-single-transform wavefront. The latter accepts `--segment-units 8|16|32`; its
-measured V100 default is 32 units per CTA with `6,6,8` role weights.
-
-`--compute-unit radix4` selects the primary resident physical unit. It combines
-two NTT stages before each CTA synchronization while retaining the full state
-on chip. `--compute-unit radix2` selects the original persistent-role pipeline
-as an architectural ablation; `radix8` is not generated for this backend.
-
-`--role-stages 1` selects the original one-stage-per-role stream.
-`--role-stages K` fuses `K` consecutive stages in registers and is available
-only for points emitted by the target manifest.
-`--token-interleave 2` selects the two-token register software-pipeline
-ablation. It is distinct from `--data-time`, which sets packet depth.
-`--target-ctas-per-sm K` selects a generated launch-bounds candidate. The V100
-default is `1`; higher targets are explicit physical-unit ablations, not runtime
-promises.
-
-```bash
-./build/cuntt_bench --help
-```
-
-Examples:
-
-```bash
-# Generic local tile
-./build/cuntt_bench --logN 16 --batch 1 --backend tile256 --verify
-
-# Hardware-parameterized two-pass mapping
-./build/cuntt_bench --logN 20 --batch 4 --backend hybrid2d \
-  --n1-log 10 --rows-per-block 2 --threads-per-block 512 \
-  --compute-unit radix4 --cross-twiddle fused \
-  --mod-multiply shoup --verify --csv
-
-# Native bit-reversed compact path
-./build/cuntt_bench --logN 20 --batch 4 --backend compact-stage \
-  --modulus 576460756061519873 \
-  --output-order bit-reversed --verify --csv
-```
-
-Kernel timing excludes host/device transfers. The CSV also reports transfer and
-end-to-end rates.
-
-## Common Butterfly CLI
-
-```bash
-./build/cubutterfly_bench --help
-./build/cubutterfly_bench --list-capabilities
-```
-
-For the unified C plan surface, arbitrary lengths, and rank-two shapes, use:
-
-```bash
-# Exact 3x5 FP32 FFT using the internal default composition
-./build/cubutterfly_plan_bench --operator fft --shape 3x5 --repeat 100
-./build/cubutterfly_plan_bench --operator fft --shape 3x5 --compare-cufft --repeat 100
-
-# Explicit Bluestein composition using external cuFFT cores as a baseline
-./build/cubutterfly_plan_bench --operator fft --shape 3x5 \
-  --algorithm bluestein-cufft-power2-core --repeat 100
-
-# Exact length-3 uint64 NTT; the modulus/root domain is validated
-./build/cubutterfly_plan_bench --operator ntt --shape 3 --precision uint64
-
-# One-time search followed by exact-key cache reuse
-./build/cubutterfly_plan_bench --operator fwht --shape 4096 --batch 64 \
-  --policy measure --cache results/local_selection.cache
-./build/cubutterfly_plan_bench --operator fwht --shape 4096 --batch 64 \
-  --cache results/local_selection.cache
-
-# Embedded Structured 2x2 with one broadcast matrix per axis
-./build/cubutterfly_plan_bench --operator structured-2x2 --shape 32767 \
-  --length-mode embedding --matrix 1,0.25,-0.5,1 --policy measure \
-  --cache results/local_selection.cache
-```
-
-Profile misses are printed with the hardware/workload key and selected
-fallback. See [C Plan API](c_api.md) and [General Shape Mapping](general_shapes.md).
-
-Examples:
-
-```bash
-# FP64 inverse FFT with padded, strided, in-place storage
-./build/cubutterfly_bench --operator fft --backend temporal-tile \
-  --precision fp64 --compute-unit radix8 --complex-multiply gauss3 \
-  --logN 10 --inverse --normalization inverse --placement in-place \
-  --element-stride 2 --batch-stride 2061 --tile-threads 256 \
-  --batch 17 --verify
-
-# BF16-storage FWHT with FP32 accumulation. On V100, BF16 native-width
-# arithmetic is emulated and labeled in CSV output.
-./build/cubutterfly_bench --operator fwht --backend temporal-tile \
-  --precision bf16 --accumulation fp32 --compute-unit radix4 \
-  --logN 8 --batch 16384 --verify --csv
-
-# Generated CTA DFT8 design point
-./build/cubutterfly_bench --operator fft --backend temporal-tile \
-  --precision fp32 --fft-core cta-dft8 --compute-unit radix8 \
-  --logN 8 --tile-threads 64 --batch 16384 --verify --csv
-
-# Imported cuFFTDx block processing unit
-./build/cubutterfly_bench --operator fft --backend temporal-tile \
-  --precision fp32 --fft-core cufftdx-block --logN 9 \
-  --tile-threads 32 --batch 8192 --verify --csv
-
-# Imported TurboFFT generated processing unit
-./build/cubutterfly_bench --operator fft --backend temporal-tile \
-  --precision fp32 --fft-core turbofft-generated --logN 9 \
-  --tile-threads 32 --batch 8192 --placement out-of-place \
-  --normalization none --verify --csv
-
-# Long two-pass cuFFTDx composition with register cross-twiddle recurrence
-./build/cubutterfly_bench --operator fft --backend online-reorder \
-  --precision fp32 --fft-core cufftdx-block --logN 20 \
-  --local-stages 10 --cross-twiddle recurrence \
-  --prefix-threads 512 --prefix-ept 8 \
-  --suffix-threads 512 --suffix-ept 8 \
-  --tile-threads 32 --reorder-columns 1 --batch 4 --verify --csv
-
-# Independently search both FFT dimensions on the current GPU
-./scripts/explore_fft_architecture.py --logNs 16 18 20 \
-  --target-points 4194304 \
-  --output-prefix results/fft_architecture_explore_v100
-
-# Fully resident 64x64 schedule: one CTA, one launch, no global scratch traffic
-./build/cubutterfly_bench --operator fft --backend online-reorder \
-  --precision fp32 --fft-core cufftdx-resident --logN 12 \
-  --local-stages 6 --cross-twiddle recurrence --tile-threads 1024 \
-  --reorder-columns 1 --batch 1024 --verify --csv
-
-# Whole-transform equivalent processing unit used by the same runtime
-./build/cubutterfly_bench --operator fft --backend temporal-tile \
-  --precision fp32 --fft-core cufftdx-direct --logN 12 \
-  --tile-threads 512 --batch 1024 --verify --csv
-
-# Long online-reorder FFT
-./build/cubutterfly_bench --operator fft --backend online-reorder \
-  --precision fp32 --compute-unit radix4 --logN 20 \
-  --local-stages 10 --reorder-columns 1 --tile-threads 256 \
-  --batch 4 --verify --csv
-
-# Register FWHT
-./build/cubutterfly_bench --operator fwht --backend temporal-tile \
-  --precision fp32 --local-exchange warp-register \
-  --logN 15 --batch 128 --verify --csv
-
-# Vendor FFT baseline
-./build/cubutterfly_bench --operator fft --backend cufft \
-  --precision fp32 --logN 20 --batch 4 --csv
-
-# Subset zeta and Mobius inverse over uint32 mask-indexed data
-./build/cubutterfly_bench --operator subset-zeta --backend online-reorder \
-  --compute-unit radix4 --logN 20 --local-stages 10 --batch 4 --verify --csv
-./build/cubutterfly_bench --operator superset-zeta --backend hierarchical \
-  --compute-unit radix4 --logN 20 --local-stages 10 --batch 4 --inverse --verify --csv
-
-# A stage-parameterized real 2x2 butterfly; one matrix is broadcast.
-./build/cubutterfly_bench --operator structured-2x2 \
-  --stage-matrix 1,0.25,-0.5,1 --precision fp32 \
-  --backend temporal-tile --local-exchange warp-register \
-  --compute-unit radix2 --logN 12 --batch 1024 --verify --csv
-```
-
-## C++ API
-
-The public headers are `include/cuntt/ntt.hpp` and
-`include/cuntt/butterfly.hpp`. Applications can install and consume the CMake
-package without depending on the source tree:
-
-```bash
-cmake --install build --prefix "$HOME/.local"
-```
-
-```cmake
-find_package(cuButterfly CONFIG REQUIRED)
-target_link_libraries(my_app PRIVATE cuButterfly::cuButterfly)
-```
-
-The primary integration path accepts caller-owned device pointers and a CUDA
-stream. Query and optionally bind the exact workspace before submitting work:
-
-```cpp
-#include "cuntt/butterfly.hpp"
-
-cuntt::ButterflyConfig config;
-config.op = cuntt::ButterflyOperator::Fwht;
-config.backend = cuntt::ButterflyBackend::OnlineReorder;
-config.precision = cuntt::ButterflyPrecision::Fp32;
-config.log_n = 15;
-config.batch = 16;
-config.auto_select = true;
-config.auto_allocate_workspace = false;
-
-cuntt::ButterflyPlan plan(config);
-plan.set_stream(stream);
-cudaMalloc(&workspace, plan.workspace_size());
-plan.set_workspace(workspace, plan.workspace_size());
-plan.execute_async(device_input, device_output);
-```
-
-`execute_async` performs no allocation, transfer, or synchronization. Input,
-output, workspace, and stream lifetimes remain the caller's responsibility.
-The complete contract and NTT equivalent are in [Device API](device_api.md).
-The calibrated coverage and decision metadata are described in [Runtime
-Mapping Selector](runtime_selector.md).
-
-The [Programming Guide](programming_guide.md) defines device association,
-layout, concurrency, CUDA Graph status, determinism, and resource lifetime.
-Use the [C++ API Reference](api_reference.md) for individual configuration
-fields and methods, the [Capability and Compatibility
-Matrix](support_matrix.md) for supported ranges, and [Examples](examples.md)
-for build-checked programs.
-
-Typed host vectors remain convenient for reference execution and benchmark
-timing:
-
-```cpp
-#include "cuntt/butterfly.hpp"
-
-cuntt::ButterflyConfig config;
-config.op = cuntt::ButterflyOperator::Fwht;
-config.backend = cuntt::ButterflyBackend::TemporalTile;
-config.precision = cuntt::ButterflyPrecision::Fp32;
-config.log_n = 10;
-config.batch = 32;
-config.compute_unit = cuntt::ComputeUnit::Radix4;
-
-cuntt::ButterflyPlan plan(config);
-std::vector<float> input(config.batch * (1U << config.log_n));
-std::vector<float> output;
-const auto stats = plan.execute(input, output, 20, 100);
-```
-
-The host overload owns its staging allocations and reports transfer and kernel
-timings; it should not be used to measure application submission overhead.
-
-## Design-Space Sweeps
-
-```bash
-python3 scripts/sweep_cubutterfly_designs.py \
-  --operators fwht fft subset-zeta superset-zeta structured-2x2 \
-  --logNs 8 10 12 --target-points 4194304 \
-  --trials 5 --output results/my_sweep_raw.csv
-
-python3 scripts/summarize_cubutterfly_designs.py \
-  results/my_sweep_raw.csv --output results/my_sweep_summary.csv
-```
-
-Use `--verify` for individual development points. Full sweeps rely on the test
-suite and should be followed by targeted verification of selected mappings.
-
-With both optional FFT units enabled, reproduce the V100 local-unit comparison
-and derive the per-core medians with:
-
-```bash
-./scripts/benchmark_fft_processing_units.sh
-./scripts/benchmark_fft_cufftdx_long.sh
-```
+Descriptor validation checks semantics; capability output distinguishes eligibility
+from missing lowerings. It does not prove a kernel's numerical result or speed.
+For GPU planning and execution use `cb.Plan` or C++ `<cubutterfly/plan.hpp>` as
+specified in the [planner guide](unified_planner.md), and run the affected
+correctness cases listed by `ctest --test-dir "$BUILD" -N`. Python execution
+accepts device pointers; allocations and stream lifetimes remain the caller's
+responsibility. The [semantic contract](unified_semantics.md) defines precision,
+normalization, layout and unsupported combinations.
+
+## Reuse, refresh and tune
+
+The installer prefers an explicit `CUBUTTERFLY_HARDWARE_MODEL`, then compatible
+local profiles, then bundled seeds. Reuse does not run calibration/search and does
+not certify missing performance layers. Source the printed `profile_environment.sh`
+for a custom profile location; conda installations also install activation hooks.
+
+Use `--refresh-profile` to request new measurements, or `--resume-search` to
+continue compatible interrupted work; they are mutually exclusive. Public
+`DEFAULT` selection can reuse compatible measured entries or use a static model,
+rate prior or labelled unmeasured fallback. Explicit `MEASURE` tuning is a
+separate GPU measurement request. None of these paths guarantees a global optimum
+or automatically tunes every size, batch and operator. Budgets, identities and
+selection provenance are detailed in [hardware profiles](hardware_profile_install.md).
+
+Historical low-level NTT/backend examples remain in the
+[programming guide](programming_guide.md); use the public planner contract for new
+applications. For changes and matching validation, see [Contributing](../CONTRIBUTING.md).

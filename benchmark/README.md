@@ -1,39 +1,22 @@
 # Benchmark contracts
 
-For a new RTX PRO 6000 Blackwell Server96 target, follow the [migration runbook](../docs/hardware/pro6000_server96.md) and [quick12/full66 contract](../config/paper_portability/README.md). `scripts/research_platform.py` runs this finite main comparison; full66 does not cover all paper tracks.
+Use the [campaign manifest](#unified-campaign-manifest) to declare operator,
+application and profiling requests, then choose a runner that implements the
+requested semantics and timing boundary. The manifest expands requests without
+selecting a device, compiling kernels or running a GPU workload.
 
-`benchmark/` is the canonical index for benchmark scope. Existing workload
-JSON files and historical results remain in their original locations; this
-directory records which one is authoritative for each evidence track.
+`benchmark/` indexes benchmark scope. Workload files and measured results keep
+their original locations; [`scopes/`](scopes/) binds evidence populations to
+specific identities. See [frozen results and evidence](../docs/benchmarks/results.md)
+for operator comparisons, fixed-core controls, applications and numerical protocols.
 
-Start with [`scopes/a100_80gb_research_v1.json`](scopes/a100_80gb_research_v1.json)
-and validate it before starting or summarizing a run:
-
-```bash
-python scripts/validate_benchmark_scope.py benchmark/scopes/a100_80gb_research_v1.json
-```
-
-The current A100 completion ledger is
-[`results/a100_closure_20261102/README.md`](../results/a100_closure_20261102/README.md).
-It links the completed 66-request main comparison, 90 cyclic NTT requests,
-138 searched composition requests and 34 CPU comparisons. The nine application
-jobs, controlled studies, profiles and 32 FFT-L requests also finished execution.
-The [winner correction](../results/a100_closure_20261102/winner_correction_20261102/REPORT.md)
-fixes string ordering of CSV latencies; the changed FFT winner's full numerical
-replay is complete. The [negative-result diagnosis](../results/a100_closure_20261102/negative_trace_20261102/README.md)
-records bounded traces and single-axis interventions separately from the original comparisons. Negative results and
-FFT-L oracle/baseline gaps remain explicit.
-The [application progress table](../results/a100_closure_20261102/applications/progress_summary.md)
-keeps new repetitions and historical measurements separate, including losses.
-
-The earlier paper-oriented scope is recorded in
-[`research_evidence_gap_20261017.md`](research_evidence_gap_20261017.md).
-[`application_gap_review_20261021.md`](application_gap_review_20261021.md)
-records the application results available on October 21; use the current ledger
-for completion status and subsequent results.
-The [October 19 convergence record](research_convergence_20261019.md) fixes the
-remaining CKKS automatic-selection acceptance set and separates its completion
-from the outstanding paper and portability evidence.
+For a new campaign, start with [`config/benchmark_quick.json`](../config/benchmark_quick.json)
+or [`config/benchmark_full.json`](../config/benchmark_full.json), emit the resolved
+manifest, and check runner and baseline support before measurement. Use the
+[research acceptance workflow](../docs/research_acceptance.md) for resumable
+comparison and the [hardware profile guide](../docs/hardware_profile_install.md)
+for target-local preparation and calibration. A declared population is separate
+from measured coverage and model validation.
 
 New reports follow the repository-wide
 [reporting and evidence contract](../docs/reporting_contract.md): scope and
@@ -141,10 +124,10 @@ support or measurement coverage.
 `fft-h` and `fft-l` classify benchmark requests and comparisons; both emit the
 same underlying `operator: "fft"` and reuse its kernels and search. FFT-H requires
 FP32/FP64 input storage and FP32/FP64 core arithmetic. FFT-L is the low-storage
-class. The current A100 external-comparison scope uses FP16 input storage; BF16
-remains a framework capability with retained measurements, but new BF16
-experiments are deferred by the agreed scope. cuFFT Xt supports BF16 storage;
-its internal mixed arithmetic differs from our native-BF16 arithmetic contract.
+class. FP16 and BF16 requests retain their storage, multiplication and accumulation
+contracts. cuFFT Xt supports BF16 storage; its internal mixed arithmetic differs
+from a native-BF16 arithmetic contract. Provider support, local adapters and
+measured coverage must be checked separately.
 FFT-L also covers explicit FP32 arithmetic and explicit
 low-precision multiplication with higher-precision accumulation. Output dtype
 alone does not determine the class. These groups never replace the full
@@ -196,3 +179,28 @@ The bounded [FFT-L CPU preparation](fft_l_quick.md) reuses the semantic runner's
 quantized sources and diagnostic reference, records exact vendor binding gaps,
 and keeps raw and scaled-input cohorts separate. Preparation establishes no
 GPU performance, fair comparison coverage, or numerical acceptance.
+
+## Reproduce archived populations
+
+[`scopes/a100_80gb_research_v1.json`](scopes/a100_80gb_research_v1.json) records
+accepted research populations and their identities. On an evidence archive with
+the referenced population and result files, validate it with:
+
+```bash
+python scripts/validate_benchmark_scope.py benchmark/scopes/a100_80gb_research_v1.json
+```
+
+`--source-only` skips result-path checks but still requires every population
+file and recorded hash. The five-request NTT repair population is sourced from
+`results/install_compare_repair_20261014/measurement/results.json`; a source-only
+checkout lacking that file cannot validate the full scope even with this flag.
+Do not substitute a different population. Neither validation mode checks numerical
+contents or proves track completion. For configuration-only preparation without
+historical measurements, use the manifest workflow above.
+
+The [results reading guide](../docs/benchmarks/results.md) links frozen cohorts,
+protocols and later corrections. Earlier planning records remain at
+[October 17 evidence gaps](research_evidence_gap_20261017.md),
+[October 19 convergence](research_convergence_20261019.md) and
+[October 21 application review](application_gap_review_20261021.md); their pending
+items describe those dated snapshots rather than the completion of later cohorts.

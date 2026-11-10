@@ -2,6 +2,18 @@
 
 All notable repository and research-artifact changes are recorded here.
 
+## Unreleased — v0.9 source-release documentation
+
+- Describe the common dependency/resource method, tile subgraph execution and
+  replaceable cores through task-oriented public documentation.
+- Separate stable installation/API guides, experimental results, platform
+  references and development records; retain historical evidence paths.
+- Document native/CMake 0.9.3 and Python frontend 0.9.3.11 as component identities
+  within the v0.9 family, preserving build fingerprints and module ABI contracts.
+- Check nested documentation links and support explicit source-contract scope
+  validation without presenting missing result evidence as verified.
+
+
 ## Unreleased - Fixed-core FFT controls and full refresh preparation, 2026-10-25
 
 - Correct the multi-slot factor prefetch wait distance and report effective zero

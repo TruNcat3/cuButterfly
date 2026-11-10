@@ -11,9 +11,16 @@ work was performed.
 
 ## Historical number provenance
 
+The RC2 raw files belong to a separately archived local worktree and are not
+bundled with this source release. Their original directory was
+`../cuButterfly-v0.9.1-rc2/results/integrated_repairs_20261001_replay_fix1/a100-80gb/ntt/`
+relative to the repository root. `summary.json`, `identity.json` and
+`journal.json` below name files in that archive; the numerical ledger linked
+above remains available in this repository.
+
 | Evidence | Population | GPU-NTT ratio |
 | --- | --- | ---: |
-| [RC2 frozen summary](../../cuButterfly-v0.9.1-rc2/results/integrated_repairs_20261001_replay_fix1/a100-80gb/ntt/summary.json), `groups/all-complete` | 214 completed pairs, 209 wins | GM 1.472341x |
+| RC2 frozen `summary.json` (local artifact), `groups/all-complete` | 214 completed pairs, 209 wins | GM 1.472341x |
 | Same summary, `groups/word64` | 144 pairs | GM 1.333543x |
 | Same summary, `groups/word32` | 70 pairs | GM 1.804965x |
 | Same summary, `groups/inverse` | 107 pairs | GM 1.571609x |
@@ -31,12 +38,12 @@ has GM 1.354585x over 214 pairs. It is not the RC2 1.472341x artifact.
 
 ## Contract and timing differences
 
-RC2's [identity](../../cuButterfly-v0.9.1-rc2/results/integrated_repairs_20261001_replay_fix1/a100-80gb/ntt/identity.json)
+RC2's archived `identity.json`
 records A100 80GB PCIe UUID `GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02`,
 cuButterfly binary SHA256 beginning `e0dfa6a3`, research compile policy and fused
 boundary mode. GPU-NTT Merge is pinned to
 `d03c5eaeadaa780d153496afcb3b6a9b79a13a63`. Its completed
-[journal cells](../../cuButterfly-v0.9.1-rc2/results/integrated_repairs_20261001_replay_fix1/a100-80gb/ntt/journal.json)
+`journal.json` cells
 cover N={256,4096,65536,262144,1048576}, B={1,3,7,16,256}, both directions,
 cyclic/coset/negacyclic modes and one/two modulus channels. Completed moduli are
 8380417 (23 bits), 1073479681 (30), 550829555713 (40), 568447511560193 (50),

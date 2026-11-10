@@ -1,31 +1,72 @@
-# v0.9 Framework Release
+# cuButterfly v0.9
 
-v0.9 separates the reusable cuButterfly framework from the historical V100
-research baseline. The framework has five explicit layers:
+v0.9 is the research release family for hierarchical hybrid dataflow across
+butterfly computations. It brings operator semantics, workload description,
+execution organization, local cores and hardware constraints into a common
+planning framework.
 
-1. Templates contain CUDA kernels, processing-unit adapters, and code generators.
-2. Platform profiles describe GPU capabilities, compiler targets, and measured hardware facts.
-3. Parameter spaces describe legal decompositions, layouts, precision, and launch choices.
-4. Search and calibration produce correctness-checked measurements and fit local cost models.
-5. Runtime selection promotes only exact, fingerprinted local points or generated fallback entries.
+## Method and implementation
 
-The authoritative map is [v09_architecture_manifest.json](../config/v09_architecture_manifest.json).
-The configure step validates the map through
-`scripts/check_v09_architecture.py`, so a new layer cannot silently drift away
-from the build.
+The method derives dependency-closed regions and their handoffs from staged
+pair relations. Spatial expansion and temporal reuse expose resource demands
+across storage scopes. Tile subgraph execution realizes those choices through
+bounded residency, compatible arithmetic and producer/consumer boundary layouts.
 
-The old `config/v100_*` files remain intentionally unchanged as compatibility
-and evidence inputs. They describe the frozen V100 profile; they are not the
-generic framework defaults. A new GPU is integrated through the install-time
-profile and calibration workflow, which records the device name, compute
-capability, compiler target, candidate identity, correctness, and timing in the
-local profile directory.
+The framework separates the following responsibilities:
 
-For large transforms, v0.9 also treats launch mapping as platform data. The
-A100 logN=18 and logN=20 points are measured during calibration because their
-CTA/EPT choices materially change performance. The runtime selector cannot use
-them on another GPU unless that GPU has its own matching calibration points.
+| Layer | What it provides |
+| --- | --- |
+| Semantics and workload | Operator, precision, coefficients, direction, normalization, order, shape, batch and layout |
+| Organization | Stage bands, closed regions, residency, spatial/time reuse, handoffs and concurrency |
+| Arithmetic cores and lowering | Compatible local implementations, value roles, storage and physical resource requirements |
+| Hardware descriptions | Capacity facts, measured service rates and explicit platform rules |
+| Generation and selection | Constraint checks, compilation, model or measurement-based selection, cache reuse and plan reporting |
+| Evaluation | Matched operator, fixed-core organization and application comparisons |
 
-This release does not claim that every processing unit is novel. Its boundary
-is the reusable mapping framework: graph and operator contracts, parameter
-spaces, lowering, hardware calibration, search, and runtime promotion.
+See the [design overview](design_overview.md) for the argument and the
+[engineering map](development/repository-layout.md) for actual code boundaries.
+Search and calibration implement selection; they are not separate research
+contributions or guarantees of global optimality.
+
+## Library capabilities
+
+The public C, C++ and Python interfaces describe FFT, NTT, FWHT, structured 2×2,
+and subset/superset zeta transforms. Precision, forward/inverse direction,
+input/output order, shape, rank, batch and strides are request dimensions.
+Multidimensional and adapted paths preserve these semantics and include required
+conversion costs.
+
+The [support contract](support_matrix.md) distinguishes expressible requests,
+implemented lowerings, compiled specializations and measured mappings. Optional
+providers and hardware resources constrain the available combinations. Single-band
+and unit-expansion designs remain valid candidates alongside segmented or
+pipelined execution.
+
+## Installation and reproducibility
+
+Follow [Getting started](getting_started.md) to build and install for a compatible
+CUDA target. The [hardware workflow](hardware_profile_install.md) reuses
+compatible static profiles and supports explicit calibration and tuning.
+Preparation and compilation are separated from warm execution timing.
+
+The [benchmark guide](../benchmark/README.md) provides configuration-driven
+workload manifests and matched comparison rules. [Experimental results](benchmarks/results.md)
+separate library competitiveness, fixed-core organization effects and application
+benefits. Performance and numerical claims apply to their recorded workloads,
+precision, hardware and protocols, including the reported negative results.
+
+## Version identity
+
+`v0.9` names the release family. The native library and Python frontend retain
+component versions:
+
+| Component | Version |
+| --- | --- |
+| Native library, C API and CMake package | `0.9.3` |
+| Python frontend | `0.9.3.11` |
+
+Record the source revision and build fingerprint when reproducing results.
+Component versions do not replace the module ABI or cache identity. Earlier
+versioned measurements retain their original identities. The
+[changelog](../CHANGELOG.md) records detailed changes; software citation metadata
+is maintained in [CITATION.cff](../CITATION.cff).

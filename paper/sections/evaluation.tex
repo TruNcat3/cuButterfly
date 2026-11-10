@@ -1,8 +1,8 @@
 \section{Evaluation}
 \label{sec:evaluation}
-We evaluate complete-call competitiveness, fixed-core organization effects,
-and their resource explanations. External comparisons and controlled
-experiments retain separate populations and timing boundaries.
+We compare complete operators and applications with external libraries,
+isolate fixed-core organization effects, and explain their resource costs.
+Comparisons retain their populations and timing boundaries.
 
 \begin{figure*}[t]
 \centering
@@ -29,25 +29,29 @@ storage and mixed internal arithmetic differ from our native-BF16 core.
 Historical local-grouping, cross-core, and low-precision boundary controls
 use A100 40GB; the independent service and tuned-endpoint studies use 80GB.
 Fixed-core FFT controls use 80GB, with an independent 40GB FP32 replication.
-Each cohort retains its device, build, and protocol identity; subsequent
-refinements do not replace earlier measurements. All reported platforms are
-A100. Cross-architecture evaluation on PRO 6000 remains unmeasured.
+The independent external-layout and local-bank controls also use 80GB.
+Cohorts retain distinct device/build/protocol identities. All platforms are
+A100; PRO 6000 remains unmeasured.
 
 \textbf{Numerical and timing contracts.}
 All 29 main-study integer and 90 cyclic NTT requests agree exactly with their
 references. The 37 floating requests have finite outputs and retained error
 distributions. Their CPU references use FP64, including for FP32 outputs;
-these historical diagnostics are distinct from the same-precision FWHT and
-explicitly rounded FP16 controls below. We report floating errors without a
+these higher-precision FP32 diagnostics remain distinct from the
+same-precision FWHT and explicitly rounded FP16 controls below. We report floating errors without a
+% Numerical scope: paper/evidence/NUMERICAL_SCOPE_20261108.md.
 fixed acceptance threshold, so their performance results remain exploratory.
 Relative $L_2$ error divides the difference norm by the reference norm.
+Main-study FP64 FFT errors span $2.45\times10^{-16}$--$4.96\times10^{-16}$;
+structured butterflies span $6.82\times10^{-8}$--$9.15\times10^{-8}$ in FP32
+and 0--$2.97\times10^{-16}$ in FP64 against those references.
 FP16 scale controls repeat one seeded transform scaled by $2^{-6}$ across
 batches and backends. Random weights and short-chain cryptography establish
 neither task quality nor production security.
 
-Operator timing includes required conversions and output materialization.
-After ten warmups, each applicable baseline captures twenty calls per CUDA
-graph and reports the median of seven event-timed replays divided by twenty.
+Operator timing includes required conversions and output materialization,
+using ten warmups and the median of seven CUDA Graph replays,
+each containing twenty calls, normalized per call.
 Search, compilation, allocation, capture, and checking are outside this warm
 execution boundary. Application ratios match boundaries within each cohort:
 FNO and QuaRot use host-wall medians, filtering and Poisson use device-event
@@ -60,9 +64,8 @@ not confidence intervals. Near-parity ratios do not establish significance.
 \textbf{Question 1: How competitive are the generated operators?}
 \label{sec:rc2-results}
 Figure~\ref{fig:rc2-absolute-throughput} and Table~\ref{tab:current-operators}
-report matched baseline/\system{} latency ratios. The main 66 requests yield
-49 external pairs, with multiple competitors for some requests and no matched
-baseline for others. Boxes span workloads, not uncertainty. Missing pairs
+report matched baseline/\system{} latency ratios. The 66 requests yield
+49 external pairs; some have multiple competitors, others no matched baseline. Boxes span workloads, not uncertainty. Missing pairs
 are not counted as wins.
 
 \begin{table}[t]
@@ -75,8 +78,7 @@ N/A/X counts native, adapted, and axis-composed baseline calls.}
 
 FFT FP32 and FP64 achieve geometric means (GM) of
 \CurrentFFTSingle$\times$ and \CurrentFFTDouble$\times$ over cuFFT.
-These are complete-call gains, including requested layout and normalization
-adaptation. Native cuFFT subsets give 1.034$\times$ over five FP32 pairs
+Complete calls include requested layout and normalization adaptation. Native cuFFT subsets give 1.034$\times$ over five FP32 pairs
 and 1.225$\times$ over three FP64 pairs; adapted subsets give
 1.290$\times$ over four FP32 pairs and 1.524$\times$ over three FP64 pairs.
 Independent rank-4/8 axis-composition replays retain 1.925/2.748$\times$.
@@ -84,13 +86,13 @@ The gains therefore combine local execution and organization around the cores.
 For the eleven FP32 requests, relative $L_2$ error against the common CPU FP64
 reference ranges from $7.90\times10^{-8}$ to $2.98\times10^{-7}$ for
 \system{} and to $2.94\times10^{-7}$ for cuFFT, with the same minimum.
-These are per-request error ranges, not acceptance bounds or confidence intervals.
+These per-request ranges are neither acceptance bounds nor confidence intervals.
 
 \textbf{Output contracts affect the FWHT comparison.}
 The main-study 1.474$\times$ against DaoFHT includes copying its returned
-tensor to a supplied buffer. Table~\ref{tab:fwht-interfaces} instead shows an
-independent study of both interfaces after contiguous-access specialization,
-using the same ten requests and selected mappings. Both sides retain twenty
+tensor to a supplied buffer. Table~\ref{tab:fwht-interfaces} independently compares
+both interfaces after contiguous-access specialization, with the same ten
+requests and mappings. Both sides retain twenty
 independent outputs in the native-return Graph; both reuse one caller buffer
 in the supplied-output Graph. Each comparison matches output lifetime, but
 subtracting the two interfaces would not isolate copy cost.
@@ -111,9 +113,9 @@ Supplied buffer & 1.320--1.330$\times$ & 1.324$\times$\\
 \end{tabular}
 \end{table}
 
-The public DEFAULT check selects the same ten mappings. All sixty paired
-outputs before and after specialization are byte-identical. A separate CPU
-FP32 audit gives maximum absolute error $4.88\times10^{-4}$ and relative
+Public DEFAULT selects the same ten mappings. All sixty paired
+pre/post-specialization outputs are byte-identical. A separate CPU FP32 audit
+gives maximum absolute error $4.88\times10^{-4}$ and relative
 $L_2$ error $1.50\times10^{-7}$ for both backends on these inputs;
 historical FP64-reference diagnostics remain separate.
 Native-return results are near parity, with individual losses, while the
@@ -129,8 +131,8 @@ one. Its 18 word32 pairs give 1.400$\times$ and 36 word64 pairs give
 1.265$\times$. Comparator modulus limits ($2^{30}$ for word32 and $2^{61}$
 for word64) exclude 36 requests, which retain exact \system{} results
 without external ratios. Three word64 $B=1$ pairs yield 0.972--0.999$\times$.
-Eighteen pairs were measured together; 36 pair unchanged \system{} timings
-with separately collected baseline timings on the same GPU and protocol.
+Eighteen pairs were measured together; 36 use unchanged \system{} timings
+and separately collected baselines on the same GPU/protocol.
 
 \textbf{Limits of the aggregate gains.}
 Independent three-process confirmations yield 0.838$\times$ for FP64 FFT
@@ -151,10 +153,10 @@ ranking unvalidated because independent stage calibration is missing.
 \input{generated/current_refresh/quarot_fused_numbers}
 \textbf{Question 2: Do operator gains reach complete applications?}
 \label{sec:application-evaluation}
-Matched application calls share inputs, precision, keys, and weights.
-Complete Graph timing includes surrounding work and required copies,
-with reusable setup excluded~\cite{heongpucode}.
-Figure~\ref{fig:application-batch} separates cohorts and retains losses.
+Matched applications share inputs, precision, keys, and weights. Timings include
+surrounding work and required copies, excluding reusable setup~\cite{heongpucode}.
+Figure~\ref{fig:application-batch} retains losses and separate cohorts, including
+their Graph/eager protocols.
 
 \begin{figure}[t]
 \centering
@@ -180,26 +182,23 @@ contract and wins only three of nine earlier requests.
 CKKS crosses key switching, square/relinearize/rescale,
 square/rescale/key switching, and rotation with $B=1,8,32$:
 methods I/II at $N=16384$ and method I at $N=65536$.
-After loop/stage-batch selection, twenty holdout event-timed rounds of ten
-Graph replays measure each request. All 36 selected paths produce
+Holdout Graph timing follows loop/stage-batch selection. All 36 paths produce
 identical ciphertexts, with GM \CurrentCKKSLoop$\times$ over the native
-loop. This comparison includes integration gains, which the control below
-separates. Small-parameter regular bootstrap at $N=4096$, $B=1/8$ gives
+loop. The control below separates integration gains. Small-parameter regular bootstrap at $N=4096$, $B=1/8$ gives
 approximately 1.03$\times$ over HEonGPU from five samples per backend.
-Both cryptographic cohorts use \texttt{sec\_level=none}.
+Both cryptographic cohorts use \texttt{sec\_level=none}; bootstrap source/binary
+correspondence is unverified, limiting reproducibility of that comparison.
 
 FNO at $64^2/128^2$, $B=4$, gives 1.030/1.056$\times$ in Graph mode
 and 0.955/0.957$\times$ in eager mode, including copies and synchronization
 ~\cite{neuraloperatorcode}. QuaRot's composed conversion/FWHT/scaling path
 gives 0.957--0.968$\times$ at prefill/decode $128/8$, $B=1/4$.
-An existing core that reads FP16, computes and scales in FP32, and writes
-FP16 gives
+An existing core reading FP16, computing/scaling in FP32, and writing FP16 gives
 \CurrentQuaRotFusedBOne$\times$/\CurrentQuaRotFusedBFour$\times$ for the
 complete 7B model in both process orders; all nine output steps match exactly
 ~\cite{quarotcode}. Core selection also changes, so these small gains cannot
 be attributed to fusion alone. Earlier QuaRot traces without valid random-state
-preparation and output checks are excluded. The evidence supports application
-benefits under stated execution contracts, not universal end-to-end speedups.
+preparation and output checks are excluded. Application benefits depend on these execution contracts.
 
 \textbf{Matched application integration.}
 \label{sec:integration-control}
@@ -224,12 +223,11 @@ This is an integration control, not fixed-core attribution.
 \subsection{Ablations}
 \textbf{Question 3: What does organization contribute with a fixed core?}
 \label{sec:core-organization}
-We test subgraph execution (Section~\ref{sec:subgraph-execution}) with fixed
-leaves, stronger endpoints, and other arithmetic families.
-We cross register and cuFFTDx Thread 16-point FFT leaves with external exchange between radix-16 steps and a
+Library and application comparisons combine arithmetic and organization choices.
+To isolate subgraph execution (Section~\ref{sec:subgraph-execution}), we cross register and cuFFTDx Thread 16-point FFT leaves with external exchange between radix-16 steps and a
 resident 256-value prefix spanning two such steps (eight radix-2 stages).
-Intermediate storage is shared; later steps are unchanged. These four cells
-separate subgraph organization from core substitution.
+The resident prefix uses shared storage; later steps stay unchanged.
+The four cells separate organization from core substitution.
 
 \begin{figure*}[t]
 \centering
@@ -238,28 +236,28 @@ separate subgraph organization from core substitution.
 (a--c) Resident prefixes versus external steps; (d--f) tile supply with the stronger 1/0 reference.
 Speedup bars are ratios of three-process medians; points and ranges retain paired process ratios.
 Traffic uses the same-core external-step reference; factor points represent separate kernels.
-$t/d$ denotes consecutive tile groups/prefetch depth; (f) shows allocated shared storage
+$t/d$ denotes consecutive tiles per compute group/prefetch depth; (f) shows allocated shared storage
 per compute group and active-warp fractions.}
 \label{fig:core-organization}
 \label{fig:factor-organization}
 \end{figure*}
 
-Six FP32 workloads, four cells, and three trials produce 72 checked rows,
-with 10,000 warmups and 100 repetitions. The resident organization improves all six workloads
+Six FP32 workloads, four cells, and three trials produce 72 checked rows.
+The resident organization improves all six workloads
 for both leaves, giving GM 1.217/1.221$\times$, versus 1.042/1.046$\times$
 from core substitution at fixed organization. Independent replication gives
 organization gains of 1.226/1.231$\times$.
 Ownership, storage, launches, and wrappers change while the leaf and requested
 transform stay fixed. At $N=256,B=1$, the organizations launch 16 and 256
-threads. This measures complete subgraph-organization gains, not residency
-alone or internal overlap.
+threads. This tests Section~\ref{sec:subgraph-execution}'s complete organization,
+without isolating residency or internal overlap.
 
 \textbf{A stronger endpoint bounds the organization gain.}
 The FP64 control at $N=65536,B=16$ fixes two 256-point factors, four local
-transforms per compute group, and 16 elements per thread. Both cores share
+transforms per tile, and 16 elements per thread. Both cores share
 the factor template and writer-aligned handoff.
 Three fresh processes on a second A100 80GB device accompany the matched
-profiles in Figure~\ref{fig:factor-organization}. At four tile groups per
+profiles in Figure~\ref{fig:factor-organization}. At four consecutive tiles per
 compute group, one-step prefetch reduces register/cuFFTDx Block latency
 from 125.901/134.554 to 65.403/71.987~$\mu$s, or 1.925/1.869$\times$.
 Against the stronger one-tile synchronous endpoints (75.325/80.404~$\mu$s),
@@ -275,8 +273,8 @@ at $N=2^{16},2^{20}$ and $B=1,4,16$, three organizations, and three process
 trials, for 162 observations. Two-stage groups give GM 1.196/1.106/1.199$\times$
 for FFT/FWHT/NTT; groups of up to four stages give
 0.932/1.103/0.816$\times$. Here the two outer bands remain fixed; local grouping
-changes exchanges within them. This complements the FFT external-boundary
-control and shows that subgraph organization also matters within a storage scope.
+changes exchanges within them. Section~\ref{sec:scaling}'s retention/service
+trade-off recurs within a storage scope, with family-dependent benefits.
 
 \textbf{One construction, different organization choices.}
 \label{sec:decision-walkthrough}
@@ -284,9 +282,8 @@ The same dependency rule yields 4096 regions per eight-stage band for
 FWHT FP32 at $N=2^{16},B=16$, and 16,384 per ten-stage band for word64
 NTT at $N=2^{20},B=16$. FWHT regions contain 256 values (1\,KiB),
 and NTT regions contain 1024 (8\,KiB).
-Each uses two bands with disjoint pairing bits. Within a transform, each
-producer--consumer pair shares one value, so every consumer needs all
-producers of that transform. This common structure admits different mappings.
+Both use two disjoint-bit bands: within each transform, producer--consumer
+pairs share one value, requiring every producer before any consumer.
 
 FWHT groups one/two/four suffix regions per compute group. Suffix group
 counts fall from 4096 to 2048/1024, while source-derived shared-storage
@@ -296,12 +293,12 @@ handoffs. Traversal grouping does not merge dependency packets. Logical
 value traffic stays at 16/512\,MiB for FWHT/NTT across these choices;
 neither quantity is measured traffic or simultaneous on-chip storage.
 
-Each fixed leaf retains its conventional endpoint. FWHT tunes 128/256
-threads in both domains; NTT fixes 256. Conventional/extended pools contain
-2/6 and 1/3 candidates, respectively, under a six-candidate ceiling.
+Each fixed leaf retains its conventional endpoint under matched tuning:
+FWHT tunes 128/256 threads in both domains; NTT fixes 256. Conventional/extended
+pools contain 2/6 and 1/3 candidates, respectively, under a six-candidate ceiling.
 All execute successfully, so capacity alone does not choose among them.
-Resource expectations and candidates are frozen before screening; three new
-processes confirm the selected mappings, with the second reversing order.
+Candidates and resource expectations are frozen before screening, followed
+by three-process confirmation with order reversal.
 
 \begin{table}[t]
 \centering\small
@@ -313,13 +310,12 @@ Times and paired ratios are three-process medians; ``same'' reuses one mapping.}
 
 FWHT selects 256 threads/four columns over 128 threads/one column,
 giving 1.315--1.318$\times$ and 1.365--1.367$\times$ across processes.
-Both NTT domains retain the original mapping, timed once per process;
-unity denotes identity (Table~\ref{tab:nonfft-endpoints}). NTT checks are
+Both NTT domains retain the mapping, timed once per process; unity denotes identity (Table~\ref{tab:nonfft-endpoints}). NTT checks are
 full-batch exact; all twelve FWHT candidates match CPU FP32 over $2^{20}$ outputs.
 Fixing an internal leaf does not fix execution geometry: FWHT changes threads
 and columns, and NTT's shared-radix4 traversals use different wrappers.
 These are complete-organization outcomes, not isolated grouping effects.
-The construction retains original endpoints and uses measured NTT selection.
+NTT retains its endpoint without a measured benefit from changing it.
 
 \textbf{Optional mechanisms have costs.}
 \label{sec:component-ablation}
@@ -328,12 +324,11 @@ native/imported-core latency from 127.560/126.331 to 132.346/130.957~$\mu$s.
 A separate pipeline-batching control loses to bulk in all 27 comparisons;
 at $N=4096,B=64$, times are 45.636 versus 29.266~$\mu$s.
 Writer-aligned layout also loses in three tested pairs, whereas greater
-resident depth wins in three. These interventions test applicability, not
-whether a mechanism must help every family.
-Eight-candidate searches with overlap, resident fusion, or successor layout
-disabled show small FFT/FWHT differences and NTT differences of at most
+resident depth wins in three. These test conditional applicability.
+Eight-candidate searches disabling overlap, resident fusion, or
+successor layout show small FFT/FWHT differences and NTT differences of at most
 2.9\%. Two rejected unrestricted mappings leave unequal accepted pools,
-limiting attribution. These finite comparisons do not establish global optima.
+limiting attribution. Finite comparisons establish no global optima.
 \label{sec:selection-evaluation}
 
 \textbf{Composition reuse.}\nopagebreak[4]
@@ -348,9 +343,9 @@ process trials.
 
 \subsection{Analysis}
 \textbf{Question 4: Which resource costs explain organization choices?}
-We connect dependency-derived demand, compiled resources, and execution.
-NCU counters and NSYS timelines compare matched internal controls, not
-different external-library implementations.
+The ablations establish which organization changes help. NCU counters and
+NSYS timelines examine why, relating traffic, storage, and concurrency
+to the resource characterization through matched internal controls.
 
 \textbf{Subgraph execution removes a measured exchange.}
 Figure~\ref{fig:core-organization}(a--c) profiles the complete FP32 call at
@@ -359,12 +354,10 @@ external exchange and reduces kernel count from five to four, including
 the common input permutation. Ordinary latency falls from 1.414/1.431 to
 1.194/1.203\,ms, or 1.184/1.190$\times$.
 Measured DRAM read-plus-write volume falls by 22.9/23.1\%, while L2 sector
-volume falls by 13.1/13.2\%. These distinct reductions show why logical
-boundaries, cache traffic, and external-memory traffic cannot be equated.
+volume falls by 13.1/13.2\%. Logical boundaries, cache traffic, and external-memory traffic remain distinct.
 The resident kernel uses 80/83 registers per thread versus 46--54 for the
-separate steps. Thus reduced communication wins despite greater local
-resource demand; the joint change does not isolate residency from ownership,
-wrapper, or launch effects. CPU FP32 relative $L_2$ error is below
+separate steps. Reduced communication wins despite higher local demand; residency remains
+confounded with ownership, wrappers, and launches. CPU FP32 relative $L_2$ error is below
 $4.0\times10^{-7}$ for all four implementations.
 
 \textbf{Tile prefetch changes supply rather than the stage boundary.}
@@ -375,18 +368,15 @@ long-scoreboard stalls from 63.3--72.4\% to 13.8--20.6\%, and increased
 issue activity, while active-warp fractions remain only 6.7--7.1\%.
 Depth two lowers these stalls further but increases allocated shared storage
 from 49 to 65\,KiB per compute group and reduces active-warp fractions to
-5.6--5.8\%; the complete call becomes slower. Neither lower waiting nor
-higher local reuse alone determines performance. Each profile captures one
-complete call after preparation and warmup. NCU replay uses uncontrolled
-caches and clocks; its counters are diagnostic observations, and only
-unprofiled timings supply speedups. NSYS confirms launch scope, not
-overlap inside a kernel.
+5.6--5.8\%; the complete call becomes slower. Neither waiting nor reuse alone determines performance. Single-call NCU profiles use
+uncontrolled caches and clocks; counters are
+diagnostic, while unprofiled timings supply speedups. NSYS confirms launch
+scope, not overlap inside a kernel.
 
 \textbf{From resource demand to complete-plan service.}
-Dependency analysis supplies region counts and logical interface traffic;
-compilation supplies storage and register requirements. Independent service
-curves supply timing. Table~\ref{tab:resource-decisions} connects these layers
-for three FFT/FWHT requests, using 34 service keys and 117 clean probes.
+Table~\ref{tab:resource-decisions} combines dependency-derived regions/traffic,
+compiled storage/registers, and independent service curves for three FFT/FWHT
+requests, using 34 service keys and 117 clean probes.
 Median relative errors are 0.565\% over 68 group holdouts and 0.429\% over
 15 complete-plan confirmations. Removing complete-plan-fitted fallback
 parameters leaves predictions unchanged. However, the final composition
@@ -396,15 +386,14 @@ certified prospective prediction. It does not cover NTT.
 \begin{table}[t]
 \centering\footnotesize
 \caption{Independent services reproduce complete-plan times retrospectively.
-G counts execution groups; shared storage is in KiB and times are in ms.}
+G counts ordered stage bands; shared storage is in KiB and times are in ms.}
 \label{tab:resource-decisions}
 \input{generated/resource_decisions_20261107}
 \end{table}
 
 Unlike the prospective measured choices in
 Table~\ref{tab:nonfft-endpoints}, these estimates test composition from
-independent local services. The two studies test distinct links of the
-construction-to-execution chain; neither establishes unseen-hardware prediction.
+independent local services. Neither study establishes unseen-hardware prediction.
 
 \begin{figure}[!hbp]
 \centering
@@ -419,13 +408,12 @@ organization at $N=2^{20},B=16$; their spans are not trial uncertainty.}
 \textbf{More local reuse need not improve execution.}
 Figure~\ref{fig:local-organization-scaling} retains two outer bands
 (8+8 stages at $N=2^{16}$ and 10+10 at $N=2^{20}$), changing local shared
-exchange under fixed arithmetic. At $N=2^{20},B=16$, each organization's
-two kernels launch 16,384 compute groups of 256 threads.
+exchange under fixed arithmetic. At $N=2^{20},B=16$, each of the two kernels
+is configured with 16,384 compute groups of 256 threads.
 Two-stage leaves change measured DRAM traffic little. Four-stage leaves
 increase register demand and reduce active-warp fractions from roughly
 49\% to 24\% for FFT, 97\% to 48\% for FWHT, and 98\% to 12--25\% for NTT;
-barrier-stall percentages also rise. Fewer local exchanges can therefore
-accompany greater resource pressure and waiting. Shared-access counts and
+barrier-stall percentages also rise. Fewer exchanges can accompany greater pressure and waiting. Shared-access counts and
 instruction-level attribution are not available for these controls.
 
 \textbf{Overlap must offset fragmentation.}
@@ -433,20 +421,42 @@ The factor-streamed FFT variants both launch three kernels, with measured
 L2 traffic differing by less than 0.2\%. The imported core uses fewer
 registers, yet improves the complete call by only about 1\%.
 NSYS observes overlap in the bulk/pipeline control, but pipeline launches
-eight kernels instead of two. Observed concurrency alone is not evidence
-of faster completion. Similarly, six stage-grouping controls reduce launches
+eight kernels instead of two. Concurrency alone does not imply faster completion. Similarly, six stage-grouping controls reduce launches
 from 12 to 2 or 18 to 3; capture traffic includes setup and replay and must
 not be read as ordinary complete-call traffic.
 
-\textbf{Boundary service and local-core limits.}
+\textbf{Boundary placement has scope-dependent effects.}
+\label{sec:boundary-io-control}
+External-boundary controls (Section~\ref{sec:boundary-conflicts}) fix scalar
+FFT/FWHT FP32 cores, $(N,B)=(2^{16},16),(2^{20},4)$, equal two-band partitions
+and 256-thread groups. Median paired speedups from three processes are
+0.973--1.020$\times$ for direct consumer-oriented stores over strided boundaries.
+In the smaller FWHT case,
+suffix load sectors per request fall from 31.9 to 4, while prefix stores
+rise from 4 to 32: better reads can cost more writes.
+
+A cuFFTDx control fixes partition 8+12 at $N=2^{20}$, changing only
+prefix shared staging from linear to XOR placement.
+At $B=4/16$, median paired process speedups are 1.247/1.248$\times$.
+Prefix load/store bank conflicts fall by about 94/83\%, with 80 registers
+per thread in both variants. Complete timings include both computation
+kernels and the final transpose. Outputs are byte-identical, with CPU FP32
+relative $L_2$ error below $3.3\times10^{-7}$. The two controls isolate
+different storage scopes.
+% Frozen controls: generated/boundary_io_control_20261109.json.
+
+\textbf{Boundary improvements coexist with local-core limits.}
 At FP16 $N=4096,B=256$, matched two-band implementations retain packed
-arithmetic instruction counts. Revised ownership and writeback reduce store
+arithmetic instruction counts. Joint ownership/writeback changes test boundary
+service (Section~\ref{sec:boundary-conflicts}), without isolating a swizzle, and
+reduce store
 sectors per request from 32 to 4 in both bands and total warp instructions
 from 34.32 to 11.48 million. Barrier-stall fractions fall from
 75.2/55.8\% to 10.5/14.0\%. The complete call improves from 126.26 to
 43.16~$\mu$s, although the 34.20~$\mu$s single-band alternative and
-11.11~$\mu$s cuFFT call remain faster. These counters do not imply eightfold
-fewer external-memory bytes, and some shared-memory bank conflicts increase.
+11.11~$\mu$s cuFFT call remain faster. Eightfold fewer store sectors do not
+imply eightfold fewer external-memory bytes; some shared-memory bank conflicts
+increase.
 
 Load also changes the preferred organization. FP16 radix-4 single-/two-band
 times are 13.11/9.27~$\mu$s at $N=4096,B=4$ but 33.59/39.83~$\mu$s
@@ -458,14 +468,10 @@ writer-aligned handoffs and grouped, prefetched tiles at larger batches.
 Factor kernels use 96--128 registers/thread and about 15--17 active warps,
 versus cuFFT's 32--48 registers and 35--59 warps. Resource pressure accompanies
 a local-core efficiency gap, although two factor passes beat cuFFT's three
-passes at $N=2^{18},B=32$. Organization benefits and provider limitations
-can coexist.
+passes at $N=2^{18},B=32$.
 
 \textbf{Preparation remains a separate cost.}
-A ten-request public DEFAULT FWHT check takes 43.2 minutes to prepare plans.
-CPU preparation optimizations preserve all scores and rankings across 30,146
-and 371,848 candidates. Three public requests retain their mappings and
-outputs while preparation falls from 17.7 to 14.8 minutes. These shared-host
-measurements are not interleaved trials or an installation benchmark.
-Reuse amortizes preparation; the first-call path remains costly and is
-excluded from warm execution.
+A ten-request public DEFAULT FWHT check takes 43.2 minutes to prepare plans
+on the shared host. Reuse amortizes preparation outside warm execution. This is not an installation
+benchmark; the evidence notes retain measurements and protocols.
+% paper/evidence/EVALUATION_PROTOCOL_NOTES_20261108.md

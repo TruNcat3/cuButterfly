@@ -1,19 +1,17 @@
 # cuButterfly
 
-For RTX PRO 6000 Blackwell Server96 migration, use the [target runbook](docs/hardware/pro6000_server96.md) and [quick12/full66 population contract](config/paper_portability/README.md). The platform entry separates CPU preparation from target-local GPU calibration; full covers the main66 comparison only.
-
-Current A100 evidence and paper updates are summarized in the [November 7 handoff](docs/pro6000_handoff_20261107.md). The [paper](paper/main.pdf) includes separate operator, mechanism and application results, with negative results retained.
-
-**Hardware-mapped space-time parallelism for regular butterfly computations on GPUs.**
+**Hierarchical hybrid dataflow for butterfly computation on GPUs.**
 
 [![Repository checks](https://github.com/TruNcat3/cuButterfly/actions/workflows/repository-checks.yml/badge.svg)](https://github.com/TruNcat3/cuButterfly/actions/workflows/repository-checks.yml)
 [![License](https://img.shields.io/badge/license-research--only%20non--commercial-orange.svg)](LICENSE)
+[![Citation](https://img.shields.io/badge/citation-CFF-orange.svg)](CITATION.cff)
 
-cuButterfly is a CUDA research library and reproducible artifact for FFT, NTT,
-FWHT, structured 2x2, and subset/superset zeta transforms. The project studies
-an architecture mapping problem rather than one fixed kernel: the same layered
-butterfly graph is unfolded across data and stage dimensions, then lowered to a
-hardware-appropriate processing unit.
+cuButterfly is a CUDA research library for FFT, NTT, FWHT, structured 2×2,
+and subset/superset zeta transforms. It derives local work and communication
+from butterfly dependencies, then combines spatial expansion and temporal
+reuse under hardware constraints. Compatible arithmetic cores remain
+replaceable; a single-band transform is also a valid organization.
+The [v0.9 overview](docs/release_v09.md) describes the framework and public interfaces.
 
 <p align="center">
   <strong>Teng Wang</strong><br>
@@ -23,268 +21,108 @@ hardware-appropriate processing unit.
   <a href="mailto:wangt635@ustc.edu.cn">wangt635@ustc.edu.cn</a>
 </p>
 
-cuButterfly is independently maintained by the author. The institution name
-describes research affiliation and does not imply an official release,
-certification, sponsorship, or endorsement. The complete attribution and
-license boundary are in [Project and authorship](docs/about.md).
+Author affiliation, software citation and third-party attribution are maintained
+in [Project and authorship](docs/about.md), [CITATION.cff](CITATION.cff) and
+[third-party notices](THIRD_PARTY_NOTICES.md). This is independently maintained
+research software, not an institutional release.
 
-> **Release status:** v0.9 is the cross-hardware framework release. v0.8 remains a frozen V100 research baseline for the
-> documented experiments. The install workflow also supports target-local
-> GPU detection and calibration (including A100); those profiles are local
-> tuning artifacts, not portable cross-GPU performance claims.
+## Start with your task
 
-For the current V100 research campaign, follow the [target-machine runbook](docs/hardware/v100.md).
-It covers SM70 CPU builds and precompilation, target-local calibration, searched
-comparisons, and resumable execution of the portable 738-contract matrix.
-New-version V100 GPU measurements remain pending; see the runbook for memory
-deferrals, baseline coverage and the distinction from historical v0.8 results.
+| Task | Entry |
+| --- | --- |
+| Install and call the library | [Getting started](docs/getting_started.md) → [Public planner](docs/unified_planner.md) → [Support contract](docs/support_matrix.md) |
+| Understand the method | [Design overview](docs/design_overview.md) → [Research principles](docs/research_principles.md) → [Design space](docs/butterfly_design_space.md) |
+| Extend an operator, core or platform | [Engineering map](docs/development/repository-layout.md) → [Contributing](CONTRIBUTING.md) |
+| Calibrate or tune a GPU | [Hardware workflow](docs/hardware_profile_install.md) → [Target runbooks](docs/hardware/README.md) |
+| Run a comparison | [Benchmark guide](benchmark/README.md) → [Reporting protocol](docs/reporting_contract.md) |
+| Read the paper and evidence | [Paper](paper/main.pdf) → [Paper guide](paper/README.md) → [Experimental results](docs/benchmarks/results.md) |
 
-The [October 25 fixed-core FFT study](docs/factor_core_organization_experiment_20261025.md)
-reports measured organization gains and the remaining cuFFT gap. The
-[full refresh plan](docs/full_benchmark_refresh_20261025.md) freezes the next
-operator, mechanism and application comparisons. CPU preparation is complete for
-66 operator requests; this is not a completed new full-library performance claim.
-The [paper](paper/main.pdf) keeps current diagnostics separate from historical
-headline cohorts, with editable figures and frozen plotting inputs in `paper/`.
+The [documentation index](docs/README.md) provides the complete reading routes.
+The [archive](docs/archive/README.md) preserves version history and research records.
 
-## Read This Repository In Order
+## Research method and engineering
 
-1. **Orient yourself:** read this page through the two figures below, then read the
-   [v0.9 framework release](docs/release_v09.md) for the layer boundaries;
-   the [v0.8 release overview](docs/release_v08.md) preserves the V100 evidence.
-2. **Use the library:** follow [Getting Started](docs/getting_started.md),
-   then the [Programming Guide](docs/programming_guide.md) and [C Plan API](docs/c_api.md).
-3. **Understand the method:** read [Design Overview](docs/design_overview.md),
-   [Hardware Mapping Methodology](docs/hardware_mapping_methodology.md), and
-   [v0.8 Nested Physical Space](docs/v0.8_nested_physical_space.md). The
-   [cross-platform ports](docs/platform_ports.md) page shows how the method is
-   independently lowered to non-CUDA hardware.
-4. **Understand the design space:** read [Architecture Guardrails](docs/architecture_guardrails.md),
-   [Processing-Unit Design Space](docs/processing_unit_design_space.md), and
-   [Runtime Selector](docs/runtime_selector.md).
-5. **Reproduce and audit:** use [Hardware Profile Initialization](docs/hardware_profile_install.md),
-   [Reproducibility](docs/reproducibility.md), the [reporting and evidence contract](docs/reporting_contract.md),
-   and the [comparison evidence](docs/v100_three_way_comparison.md).
+A fast local core still depends on data supply, storage capacity, communication
+and concurrency. Roofline bounds the available performance, but does not
+choose how dependent stages and data regions should execute. cuButterfly
+studies that organization problem across butterfly arithmetic families.
 
-The complete map, including older experiment notes and generated artifacts, is
-maintained in the [documentation index](docs/README.md).
+1. **Derive local work and handoffs.** Stage dependencies define closed regions;
+   their intersections identify exchanged values and consumer predecessors.
+2. **Characterize resource demand.** Stage and data dimensions admit spatial
+   expansion and temporal reuse. Their combination determines live state,
+   communication, arithmetic work and ready work at each storage scope.
+3. **Execute tile subgraphs.** Bind legal regions to compatible cores and bounded
+   storage. Producer writes and consumer reads jointly determine boundary
+   placement; publication and buffer reuse preserve dependencies.
 
-The [summary and example](docs/summary_example.md) provides a compact introduction
-and a first verified FWHT workload.
-
-## Core Idea
-
-The mapping layer and the arithmetic core are deliberately separate:
-
-```text
-layered graph
-    |  data-space/time + stage-space/time unfolding
-    v
-architecture mapping (residence, pipeline, layout, ownership)
-    |  processing-unit selection and lowering contract
-    v
-radix / modular / warp / cuFFTDx / generated local core
-    |  hardware profile + measured performance model
-    v
-selected plan for (GPU, operator, precision, length, batch, layout)
-```
-
-The four primary factors are:
-
-```text
-data work   D = Ud * Td       stage work   S = Us * Ts
-Ud, Us: spatial replication;  Td, Ts: temporal reuse
-```
-
-They are workload- and hardware-dependent parameters, not fixed tile sizes.
-Residence, boundary layout, synchronization, physical execution groups, and
-the local processing unit are additional explicit design-space dimensions.
-The conceptual figure is available as
-[`figures/cubutterfly_concept.svg`](figures/cubutterfly_concept.svg), with
-editable Graphviz source in
-[`figures/cubutterfly_concept.dot`](figures/cubutterfly_concept.dot).
+The same construction repeats across storage scopes. Its winning partition,
+core, layout and pipeline depth may differ by arithmetic, precision, workload
+and hardware. More residency or overlap need not improve every request.
 
 <p align="center">
-  <img src="figures/cubutterfly_concept.svg" alt="cuButterfly architecture mapping from a layered butterfly graph to hardware-selected GPU realization" width="100%">
+  <img src="figures/cubutterfly_concept.svg" alt="Dependencies define regions and handoffs; organization and compatible cores are checked against static hardware profiles before preparation and execution" width="100%">
 </p>
 
-**How to read the architecture figure:** the graph dimensions are unfolded
-independently; residence, transport, ownership, and boundaries are selected
-after the unfolding; the arithmetic core is replaceable; measurement feeds
-back into plan selection. This is the architecture claim, not a claim that
-every local arithmetic unit is newly invented here.
+The [editable diagram](figures/cubutterfly_concept.dot) separates the method from
+its engineering pipeline. Calibration supplies target-local observations;
+selection, compilation and caching prepare executable plans. These mechanisms
+support the research method and are not separate novelty claims. Warm execution
+excludes preparation; required permutations, conversions and normalization stay
+inside the complete-call timing boundary.
 
-### Why This Organization
+## Installation and first checks
 
-The design follows a hardware argument rather than a fixed tile recipe. A
-Roofline view exposes the first limit, dependence edges cap pure data-space
-expansion, and the live state plus handoff traffic cap pure stage-space
-expansion. cuButterfly therefore combines stage/data **space** and **time**:
-independent work is replicated only where the target GPU can feed it, while
-dependency-closed subgraphs reuse bounded register/shared state and change
-layout at required boundaries. A small hardware calibration then tests the
-predicted limiting service and selects the legal mapping and processing unit.
+Use a CUDA toolkit and compiler compatible with the target GPU. Follow
+[Getting started](docs/getting_started.md) for a shared-library installation,
+Python descriptor validation and the public execution interface. The installer
+can detect the target and reuse compatible static profiles. Refresh and tuning
+are explicit operations; a bounded calibration is not exhaustive optimization.
 
-The full derivation, including why existing specialized designs do not expose
-one common mapping vocabulary, is in [Why The Mapping Is Hybrid](docs/design_overview.md).
-
-## What Is Frozen In v0.8
-
-| Area | Current evidence boundary |
-|:--|:--|
-| Architecture | v0.6-compatible GridTiled mappings, resident physical groups, mixed-dataflow roles, and independent processing-unit lowering are represented explicitly. |
-| Operators | FFT, NTT, FWHT, Structured 2x2, subset/superset zeta, and legacy xor-zeta paths are implemented with documented contracts. |
-| Selection | V100 confirmed cells are compiled into the runtime selector; exact measured cells report `confirmed-median`, while uncovered cells fall back to calibrated/model behavior. |
-| Performance | Many non-FFT resident points exceed the mature v0.6 path. FFT reaches cuFFT parity or better for selected shapes, while saturated long-batch FFT points remain below cuFFT. |
-| Portability | V100 remains the fully measured, reproducible release baseline. A100 and other GPUs can generate target-local profiles during installation, but those measurements are not portable performance claims. |
-
-Representative long-FFT three-way results are shown below; ratios above 1 mean
-cuButterfly has lower kernel time than cuFFT.
-
-| Shape | v0.6 (ms) | v0.8 (ms) | cuFFT (ms) | v0.8/cuFFT |
-|:--|--:|--:|--:|--:|
-| FP32 logN18, batch 2 | 0.029778 | 0.029819 | 0.031683 | 1.063x |
-| FP32 logN18, batch 64 | 0.812708 | 0.769270 | 0.707174 | 0.919x |
-| FP32 logN20, batch 2 | 0.119460 | 0.119972 | 0.121467 | 1.012x |
-| FP32 logN20, batch 16 | 0.827249 | 0.767611 | 0.724091 | 0.943x |
-
-These are matched V100 measurements, not universal claims. The complete
-protocol, external-baseline coverage, raw CSV paths, and limitations are in
-the [v0.8 release overview](docs/release_v08.md).
-
-For prior-work context, see the [FFT library comparison](docs/fft_library_comparison.md),
-the [research positioning](docs/cubutterfly_positioning.md), and the
-[V100 external-baseline report](docs/v100_external_baselines.md). These pages
-explain what is a complete library baseline, what is an imported local
-processing unit, and which rows are actually protocol-matched.
-
-### External-library summary
-
-The following compact view summarizes the selected V100 matrix in
-[`results/v100_three_way_comparison.md`](results/v100_three_way_comparison.md).
-Each gray bar is the matched specialist-library baseline; each blue bar is the
-searched cuButterfly/cuNTT throughput ratio. A value of `1.0x` means parity.
-
-<p align="center">
-  <img src="figures/v100_library_comparison.svg" alt="V100 selected matrix throughput ratios versus cuFFT, Dao FHT, and GPU-NTT" width="100%">
-</p>
-
-This is a representative matched matrix, not an all-shapes guarantee. FFT and
-FWHT have four and three shapes respectively; NTT uses three archived
-matching-protocol rows. Saturated long-batch FFT gaps and unsupported external
-operator baselines remain explicitly documented.
-
-The figure is reproducible with:
+On an existing checkout, these checks need no GPU:
 
 ```bash
-python3 scripts/generate_readme_performance_figure.py
+python scripts/check_repository.py
+python -m benchmark.manifest config/benchmark_quick.json --mode quick \
+  --output /tmp/cubutterfly-quick-manifest.json
 ```
 
-## Quick Start
+Use the Python environment selected for installation. Manifest expansion records
+requested cases without executing GPU workloads. See the
+[benchmark guide](benchmark/README.md) for measurement and reproduction.
 
-Requirements: Linux, CMake 3.20+, C++17, CUDA Toolkit 11.8 or a compatible
-toolchain, and a GPU architecture supported by the selected build.
+## Capability and evidence scope
 
-```bash
-git clone https://github.com/TruNcat3/cuButterfly.git
-cd cuButterfly
-cmake -S . -B build \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_CUDA_COMPILER=/usr/local/cuda-11.8/bin/nvcc \
-  -DCMAKE_CUDA_ARCHITECTURES=70
-cmake --build build -j
-ctest --test-dir build --output-on-failure
-```
+A request combines operator semantics with precision, direction, normalization,
+input/output order, rank, shape, batch, placement and strides. The
+[support contract](docs/support_matrix.md) distinguishes a valid request from an
+implemented, compiled, measured or selected realization. Adapters retain full
+conversion costs; unavailable combinations remain explicit.
 
-Run a verified workload:
+Evaluation covers three complementary questions:
 
-```bash
-./build/cubutterfly_bench --operator fwht --backend temporal-tile \
-  --local-exchange warp-register --precision fp32 \
-  --logN 15 --batch 128 --verify
+| Experiment | Question |
+| --- | --- |
+| Operator comparisons | How do complete generated transforms compare with specialized libraries? |
+| Controlled organization experiments | What changes when the arithmetic core is held fixed, and which resource effects explain it? |
+| Applications | How much of the transform benefit reaches a complete application under matched invocation and output contracts? |
 
-./build/cuntt_bench --logN 16 --batch 64 --backend hybrid2d \
-  --compute-unit radix4 --cross-twiddle fused --verify
-```
+[Experimental results](docs/benchmarks/results.md) report the measured domains,
+protocols and limitations, including negative results. The common method permits
+different winning organizations; it does not require every mechanism to help
+every request.
 
-For the public plan API, device-pointer integration, workspace ownership,
-selection logs, and supported combinations, start with:
+[Ascend-FFT](https://github.com/TruNcat3/ascend-fft) is an independent lowering of
+the method to Huawei Ascend. Its hardware-specific kernels, interfaces and
+measurements belong to that repository. See [platform ports](docs/platform_ports.md)
+for the relationship; its results are not pooled with CUDA comparisons.
 
-- [Getting Started](docs/getting_started.md)
-- [Programming Guide](docs/programming_guide.md)
-- [C Plan API](docs/c_api.md)
-- [Capability Matrix](docs/support_matrix.md)
+## Citation and license
 
-For a new machine, use the [Hardware Profile Initialization](docs/hardware_profile_install.md)
-flow after selecting the CUDA architecture. It automatically measures local
-GPU service rates and writes a device-specific model table; do not copy the
-V100 table to another GPU.
+Use [CITATION.cff](CITATION.cff) for software metadata and
+[Project and authorship](docs/about.md) for BibTeX. The paper draft and the
+software release have distinct version identities.
 
-## Documentation
-
-The [documentation index](docs/README.md) preserves the reading order above
-and separates the detailed material into four paths:
-
-1. **Use the library:** build, plans, streams, layouts, workspaces, errors, and examples.
-2. **Understand the method:** design overview, hardware mapping, physical-chain model, and processing-unit lowering.
-3. **Reproduce results:** V100 protocols, cross-operator matrices, Nsight scripts, raw data, and evidence labels.
-4. **Read the release:** [v0.8 freeze overview](docs/release_v08.md), research status, positioning, changelog, and roadmap.
-
-The most important architecture documents are [Design Overview](docs/design_overview.md),
-[Architecture Guardrails](docs/architecture_guardrails.md),
-[Hardware Mapping Methodology](docs/hardware_mapping_methodology.md),
-[v0.8 Nested Physical Space](docs/v0.8_nested_physical_space.md), and
-[Processing-Unit Design Space](docs/processing_unit_design_space.md).
-The [cross-platform migration list](docs/platform_ports.md) currently includes
-[Ascend-FFT](https://github.com/TruNcat3/ascend-fft), an independent lowering of
-the method to Huawei Ascend AIV/UB/MTE rather than a reuse of CUDA kernels.
-
-## Evidence And Scope
-
-All performance statements must identify the GPU, operator, precision or
-modulus, length, batch, direction, placement, output order, timing boundary,
-and trial protocol. The repository distinguishes:
-
-| Label | Meaning |
-|:--|:--|
-| `measured` | Direct timing or counter data from a checked-in command. |
-| `derived` | A value calculated from measured data using a stated equation. |
-| `external` | A pinned third-party implementation under a matched protocol. |
-| `placeholder` | A schema or future hardware slot without a performance claim. |
-
-cuButterfly should not be described as universally faster than cuFFT, Dao FHT,
-GPU-NTT, or every specialist library. Current external comparisons are sparse
-and workload-specific; Structured and Zeta do not yet have an equivalent
-external CUDA baseline in this repository. The defensible claim is that one
-architecture-level mapping and search framework reaches parity or leadership
-across many measured V100 butterfly workloads while preserving explicit
-fallbacks and correctness contracts.
-
-## Citation
-
-Please cite the software and its experimental data using
-[`CITATION.cff`](CITATION.cff). BibTeX:
-
-```bibtex
-@software{wang_cubutterfly_2026,
-  author  = {Teng Wang},
-  title   = {cuButterfly: Hardware-Mapped Space-Time Parallelism for Butterfly Computations on GPUs},
-  year    = {2026},
-  version = {0.9.0},
-  url     = {https://github.com/TruNcat3/cuButterfly}
-}
-```
-
-Author and affiliation details are maintained in [docs/about.md](docs/about.md)
-and [`CITATION.cff`](CITATION.cff). Performance evidence follows the
-[reporting and evidence contract](docs/reporting_contract.md); missing or
-unsupported combinations remain visible instead of being silently substituted.
-
-## License
-
-The repository is released under the [Research-Only Non-Commercial License
-(RONC-1.0)](LICENSE). Non-commercial research, teaching, evaluation, and
-personal modification and redistribution are permitted; Commercial Use is
-prohibited without a separate written license. Adapted third-party code
-remains subject to its own notice and license in
-[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+The [Research-Only Non-Commercial License](LICENSE) permits the uses stated
+there; commercial use requires a separate license. Third-party components retain
+their [own notices and licenses](THIRD_PARTY_NOTICES.md).

@@ -2,8 +2,9 @@
 
 cuButterfly 是一个面向 GPU 的 CUDA 研究库和可复现实验工件，研究对象是
 FFT、NTT、FWHT、结构化 2x2 以及 subset/superset zeta 中的规则蝶形计算。
-项目的主要贡献边界是依赖驱动的分层混合数据流、可替换计算核心、硬件约束下的
-lowering 与测量选择。某个局部 arithmetic core 的实现技巧不自动归因于整个方法。
+项目的主要贡献是依赖驱动的资源表征与分层混合数据流。可替换核心、子图执行和
+边界处理实现这一方法，校准、搜索与编译提供工程支持。某个局部 arithmetic core
+的实现技巧不自动归因于整个方法，搜索算法本身不是论文的核心贡献。
 
 ## 作者与归属
 
@@ -23,8 +24,9 @@ lowering 与测量选择。某个局部 arithmetic core 的实现技巧不自动
 ## 方法来源与贡献边界
 
 cuButterfly 的方法分析来自共同蝶形依赖、stage/data 的时空展开、局部驻留和边界布局交接。
-本仓库也可以吸收 cuFFTDx、VkFFT、TurboFFT、Dao FHT 或 GPU-NTT 等成熟 arithmetic core，
-但必须把核心替换、组织替换和硬件 lowering 分开测量。跨 GPU 的 profile 和 selector 是目标卡
+兼容的外部核心或其设计策略可以接入；具体接入方式见[核心集成策略](core_integration_strategy.md)。
+完整外部库对照、可调用 provider 和实际移植的局部核心是不同状态，必须把核心替换、组织替换
+和硬件 lowering 分开测量。跨 GPU 的 profile 和 selector 是目标卡
 上的迁移证据，不是把一张卡的表格当成所有 GPU 的通用最优解。
 
 ## 引用

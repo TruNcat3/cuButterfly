@@ -42,8 +42,8 @@ preserves the request, with adaptation included in execution cost.
 \textbf{The same graph admits different organizations.}
 Figure~\ref{fig:organization-tradeoffs} holds the 16-point Hadamard graph
 fixed. Stagewise execution exposes eight independent pairs and transfers all
-values at every stage. Two-stage groups retain four values each and halve
-materialized traffic. One whole-transform group minimizes traffic but exposes
+values at every stage. Two-stage bands retain four values per region and halve
+materialized traffic. A whole-transform band minimizes traffic but exposes
 one independent region per transform. These region counts do not fix worker
 counts, since workers can cooperate within a region.
 

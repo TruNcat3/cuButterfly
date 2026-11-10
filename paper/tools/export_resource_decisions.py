@@ -248,7 +248,7 @@ def render(data):
         label = f"{w['operator'].upper()}{w['precision'][2:]} $2^{{{w['logN']}}}/{w['batch']}$"
         lines.append(f"{label} & {len(groups)} & {smem:g} & {row['retrospective_model_validation']['predicted_kernel_ms']:.4f} & {row['confirmation']['median_ms']:.4f}\\\\")
     lines.extend([r'\bottomrule', r'\end{tabular}', r'\endgroup',
-                  r'% Times in ms; SMEM max in KiB; G counts physical execution groups.',
+                  r'% Times in ms; SMEM max in KiB; G counts ordered stage bands, not compute groups.',
                   r'% * Retrospective service-composition check, not a certified prediction frozen before confirmation.',
                   r'% SMEM is maximum observed kernel live shared allocation, not the dependency-region value footprint.',
                   r'% NTT chain is absent from this cohort; see resource_decisions_20261107.json.'])

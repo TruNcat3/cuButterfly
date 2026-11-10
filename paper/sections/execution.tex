@@ -1,23 +1,34 @@
 \section{Realizing the Method with Subgraph Execution}
 \label{sec:execution}
-A \textbf{tile subgraph} binds closed regions to a core, ownership, storage,
-and handoffs. Common templates supply traversal and exchange for scalar
+A \textbf{tile subgraph} realizes dependency-closed regions through a core,
+value ownership, storage, and handoffs. Common templates supply traversal and exchange for scalar
 radix-2 FFT, FWHT, and NTT; arithmetic traits supply operations, coefficients,
 and scaling. Specialized cores may require different boundary realizations.
 
+% Declare the boundary figure before its first discussion to avoid a page of lag.
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/drawio/exports/hierarchy.pdf}
+\caption{Boundary placement connects producer outputs to the next core's
+ordered inputs. (a) Colors track producer value roles through writes and
+reads by the expanded consumer $C_1$. (b) External segments and (c) shared banks illustrate distinct
+access costs; these are analytical layouts, not measured traffic or timing.}
+\label{fig:hierarchy}
+\label{fig:banklayout}
+\end{figure*}
+
 \subsection{Executing a bounded subgraph}
 \label{sec:subgraph-execution}
-Once inputs are ready, a compute group loads a tile, executes its operations
-in dependency order, and publishes its boundary values. Closure permits local
-execution because no internal operation needs an intermediate producer outside
-the region. For example, both pair stages of a four-value Hadamard row can
-execute locally before publication; columns still require all their input rows.
-Placement and lifetime must satisfy Section~\ref{sec:method}'s composition rules.
+Once inputs are ready, a compute group loads a tile, executes its dependent
+operations locally, and publishes boundary values. Closure keeps internal
+producers within the region. In Figure~\ref{fig:overview}, each worker
+executes two row tiles before the column phase. Each tile retains its two
+pair stages locally; columns wait for all row outputs. The boundary is reused
+after the final column read. This schedule needs no cross-band overlap.
 
-The subgraph becomes the \textbf{unit of execution and communication}.
-Retaining its intermediates can remove outer-storage transfers and separate
-submissions, at the cost of local capacity, ports, and synchronization.
-Section~\ref{sec:scaling}'s resource trade-off determines the expected benefit.
+The subgraph is the \textbf{unit of execution and communication}. Retention
+can remove outer-storage transfers and submissions, at the cost of local
+capacity, ports, and synchronization (Section~\ref{sec:scaling}).
 
 A compute group may process several tiles within one kernel, reusing storage
 after final reads. Only selected tiles and lookahead buffers occupy local
@@ -43,14 +54,21 @@ Hadamard example, a producer can write logical index $4r+c$ at address
 $4c+r$, so the next band reads a column contiguously. Identity placement and
 explicit permutation remain alternatives. Consumer locality alone does not
 guarantee efficient stores, so the candidate cost includes both transactions
-and any staging.
+and any staging. Figure~\ref{fig:banklayout}b makes the trade-off explicit.
+Under an illustrative four-word segment size, the column's addresses
+$\{1,5,9,13\}$ span four segments; successor-major addresses $\{4,5,6,7\}$
+span one. Conversely, one row producer's stores spread from one segment to
+four. Cooperative staging or different ownership can regroup those stores,
+but its cost belongs to the boundary. Efficient input supply therefore
+requires a joint output and input mapping, not a read-only layout choice.
 
 \subsection{Resolving boundary bank conflicts}
 \label{sec:boundary-conflicts}
-\textbf{An aligned layout can still serialize its consumers.}
+\textbf{An aligned layout can still serialize boundary accesses.}
 Successor tiles gather different combinations than producers write.
 Distinct concurrent addresses can map to the same bank, whose limited ports
-serialize service even when values fit and successor reads are aligned.
+serialize producer or consumer service even when values fit. Contention
+between concurrently served groups must also be accounted for.
 
 We address this boundary mismatch with a \textbf{successor-aware bank mapping}.
 The producer and consumer use the same physical placement for each value.
@@ -87,24 +105,37 @@ low-bit mapping is also a permutation, giving a bijection over the storage
 domain. This establishes conflict freedom for these single-word groups on
 single-ported banks, rather than for arbitrary concurrent accesses.
 
-For an illustrative square tile with
-power-of-two side $P$, $P$ single-ported banks, and one word per value, consider
+
+
+Figure~\ref{fig:banklayout} composes both decisions for the running example.
+Successor-major placement $4c+r$ gives each column a contiguous range, but a
+row producer's four stores reach the same bank. For a square tile of
+power-of-two side $P$ with $P$ single-ported banks and one word per value,
+retain the successor offset $c$ and permute its banks:
 \begin{equation}
-\lambda(r,c)=P\,r+(c\mathbin{\oplus}r).
+\lambda(r,c)=P\,c+(r\mathbin{\oplus}c).
 \label{eq:swizzle}
 \end{equation}
-With bank index $\lambda\bmod P$, linear placement $Pr+c$ sends a whole
-column to one bank. XOR by a fixed row or column is a permutation, so the
-map above distributes either access across all $P$ banks. In
-Figure~\ref{fig:banklayout}b, consumer values $\{1,5,9,13\}$ move from bank
-indices $(1,1,1,1)$ to $(1,0,3,2)$ without a separate data-reordering pass.
-On GPUs, such address remapping is commonly called a shared-memory bank
+This is the preceding bank construction with the row and column roles
+exchanged. XOR by either fixed coordinate is a permutation. Each row store
+group and each column load group therefore reaches every bank once, and the
+map is bijective. This guarantee concerns each access group; concurrent
+groups can still compete for bank service. In Figure~\ref{fig:banklayout}a,
+all four producer outputs reach this boundary directly through their mapped
+stores. $P_0$ uses banks $(0,1,2,3)$, while $C_1$ reads values $\{1,5,9,13\}$ at addresses $\{5,4,7,6\}$ and banks
+$(1,0,3,2)$. Consumer lane $r$ selects bank $r\mathbin{\oplus}1$, restoring
+the local core's ordered inputs; final results follow the requested output
+order. The write and read maps agree on each value, avoiding an intervening
+reorder. Figure~\ref{fig:banklayout}c contrasts the producer bank accesses
+before and after this remapping. On GPUs this is a shared-memory bank
 swizzle~\cite{cudaSwizzle}.
 
 Conflict analysis uses actual transactions, value width, and bank capacity;
 vectors and broadcasts require separate checks. Outer-storage layouts require
 alignment, transaction-count, and coalescing checks. Thus one XOR formula
 need not suit every core or scope.
+Section~\ref{sec:boundary-io-control} separately measures external layout
+trade-offs and local bank mapping with fixed arithmetic cores.
 
 \subsection{Residency, publication, and finite buffers}
 Correct placement still needs readiness and safe reuse. A buffer slot is
@@ -121,17 +152,21 @@ publish, their columns may overlap another transform's rows. Batch supplies
 independent work, but neither guarantees nor requires cross-band overlap.
 
 \subsection{Composing physical services}
-A \textbf{service model} translates placement and lifetime into startup,
-repeated work, and tail costs for each stage band,
+The characterization specifies resource demands. A \textbf{service model}
+combines them with measured services to estimate startup, repeated work,
+and tail costs for one compute group within a stage band,
 \begin{equation}
 T_{\mathrm{group}}=T_{\mathrm{start}}+R\,T_{\mathrm{step}}+T_{\mathrm{tail}}.
 \label{eq:serial}
 \end{equation}
-Terms depend on core, tile, layout, launch geometry, and storage scope.
-Bulk execution sums band services and boundary costs, without recounting
-launches or tails already included in measured services.
+Here $R$ counts successive tile-service steps in the modeled group. A step
+may serve several tiles under the chosen mapping; its service contract
+specifies that grouping. Terms depend on core, tile, layout, and storage scope.
+Band completion composes its groups under the available concurrency. Bulk execution sums
+these band times and boundary costs without recounting launches or tails
+already included in measured services.
 
-For $K$ tiles in a repeatable pipeline, the corresponding view is
+For a total of $K$ tiles in a repeatable pipeline, the corresponding view is
 \begin{equation}
 T_{\mathrm{pipe}}\mathrel{\approx}T_{\mathrm{fill}}+(K-1)\,\mathrm{interval}
                   +T_{\mathrm{drain}}.

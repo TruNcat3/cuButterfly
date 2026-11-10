@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import pathlib
 import py_compile
 import re
@@ -30,16 +31,22 @@ def local_artifact_paths():
 
 def check_markdown_links(strict_local_artifacts=False):
     registered = local_artifact_paths()
+    root = ROOT.resolve()
     missing = []
     unbundled = set()
     documents = [
         ROOT / "README.md",
         ROOT / "CONTRIBUTING.md",
         ROOT / "ROADMAP.md",
-        *sorted((ROOT / "docs").glob("*.md")),
+        *sorted((ROOT / "docs").rglob("*.md")),
     ]
     pattern = re.compile(r"!?\[[^]]*\]\(([^)]+)\)")
     for document in documents:
+        try:
+            document.resolve().relative_to(root)
+        except ValueError:
+            missing.append(f"{document.relative_to(ROOT)}: outside repository")
+            continue
         for target in pattern.findall(document.read_text()):
             target = target.strip()
             if target.startswith(("http://", "https://", "mailto:", "#")):
@@ -47,13 +54,18 @@ def check_markdown_links(strict_local_artifacts=False):
             local = target.split("#", 1)[0]
             if not local:
                 continue
-            resolved = (document.parent / local).resolve()
+            # Check lexical containment before following symlinks, then check
+            # resolved containment before probing the target's existence.
+            candidate = pathlib.Path(os.path.abspath(document.parent / local))
+            try:
+                candidate.relative_to(root)
+                resolved = candidate.resolve()
+                relative = resolved.relative_to(root).as_posix()
+            except ValueError:
+                missing.append(f"{document.relative_to(ROOT)}: outside repository: {target}")
+                continue
             if resolved.exists():
                 continue
-            try:
-                relative = resolved.relative_to(ROOT.resolve()).as_posix()
-            except ValueError:
-                relative = None
             if relative in registered:
                 unbundled.add(relative)
                 if not strict_local_artifacts:

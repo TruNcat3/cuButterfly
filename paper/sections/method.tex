@@ -1,25 +1,20 @@
 \section{Hierarchical Hybrid Dataflow}
 \label{sec:method}
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{figures/drawio/exports/overview.pdf}
-\caption{\system{} maps labeled dependencies through space--time choices to bounded
-tile execution while retaining specialized arithmetic cores.}
-\label{fig:overview}
-\end{figure*}
 
-The method connects \textbf{dependency structure, resource demand, and
-hardware constraints}. An \textbf{operator contract} specifies arithmetic,
-coefficients, direction, normalization, precision, and logical input/output order;
-a \textbf{workload domain} specifies shape, batch, placement, strides, and storage
-layout; \textbf{hardware capabilities}
-specify resources and compatible cores. These inputs jointly determine performance.
-Figure~\ref{fig:overview} traces the construction: derive dependency-closed
-regions and handoffs, characterize spatial/temporal demands, then bind selected
-tile subgraphs to cores and storage scopes under target capacities and service
-rates. We develop it through a 16-point Hadamard example.
+
+We connect \textbf{dependency structure,
+resource demand, and hardware constraints}. The \textbf{operator contract} specifies arithmetic,
+coefficients, direction, normalization, precision, and logical order; the
+\textbf{workload domain} supplies shape, batch, placement, strides, and layout;
+\textbf{hardware capabilities} supply capacities, cores, and service rates.
+Figure~\ref{fig:overview} pairs five abstract steps with one 16-point Hadamard
+example. Closed regions and their intersections determine local work,
+communication, and readiness. Spatial and temporal choices expose demands;
+boundary placement and execution realize the organization. Repeating this
+construction at another storage scope gives the hierarchy.
 
 \subsection{Dependency-closed regions}
+\label{sec:region-construction}
 Local reuse requires a group containing all values needed by its operations.
 The stage-bit representation constructs such groups directly.
 \textbf{A stage band determines its local data domain.}
@@ -35,13 +30,11 @@ independent regions of $2^{|Q|}$ values. The band's computation on one region
 is a \textbf{dependency-closed region}. Closure is local to the band, whose
 inputs and outputs still connect to other bands.
 
-Any ordered stage partition defines such regions, including one band spanning
-the complete transform when capacity and core support permit. Spatial expansion
-factors may also be one. Band width controls local
-reuse, while the number of regions assigned to a worker controls worker
-reuse. Arithmetic labels remain attached to the operations. In particular,
-an FFT band may require global-index-dependent twiddles, so a standalone
-smaller FFT is not automatically a compatible core.
+Any ordered stage partition defines regions, including a whole-transform
+band when capacity and core support permit. Spatial factors may also be one.
+Band width controls local reuse; regions per worker control worker reuse.
+Arithmetic labels remain attached. An FFT band may require global-index-dependent
+twiddles, so a standalone smaller FFT is not automatically a compatible core.
 
 \noindent\textbf{A running example.}
 For a 16-point unnormalized Hadamard transform with stage bits $(0,1,2,3)$,
@@ -52,15 +45,31 @@ stagewise and whole-transform partitions of the full graph.
 Region membership follows variable bits rather than original contiguity,
 allowing a representation chosen for physical stores and reads.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/drawio/exports/hierarchy.pdf}
-\caption{The Hadamard example exposes dependency, capacity, and bank constraints.
-(a) Each column needs all row producers. (b) A separate four-bank swizzle
-distributes its reads; this map is not composed with (a). Counts are analytical.}
-\label{fig:hierarchy}
-\label{fig:banklayout}
-\end{figure}
+\subsection{Communication and readiness}
+\label{sec:handoff-construction}
+At a band boundary, changing pair partners connect closed regions through
+their index-set intersections.
+A producer and consumer with variable-bit sets $P$ and $Q$ share values when
+they agree on all bits fixed by both. Their shared variable bits $P\cap Q$
+determine each nonempty intersection. Producers covering the remaining
+consumer bits $Q\setminus P$ form its predecessor set. This derives
+communication without enumerating scalar edges.
+
+Fixing the bits outside $P\cup Q$ groups connected regions into a
+\textbf{boundary packet}. No edge crosses packets at that boundary. Within
+a packet, every producer and consumer intersect on the full pairing envelope.
+For complete-region publication, a consumer must therefore await every
+producer in its predecessor set. One-sided operators or finer publication
+units can expose finer dependencies.
+
+In Figure~\ref{fig:overview}, each producer $P_r$ contributes one value to
+each consumer $C_c$; $C_1$ needs $\{1,5,9,13\}$ from all four rows.
+Independent transforms can advance concurrently, and larger transforms may
+contain several packets. Packet membership is derived at each boundary;
+it denotes a dependency domain, not a fixed pipeline, buffer, or execution
+group. Values may span workers and external buffers. Changing partners can
+still concentrate accesses on a few banks, so placement must account for
+both producers and consumers (Section~\ref{sec:boundary-conflicts}).
 
 \subsection{Space--time organization and resource demand}
 \label{sec:scaling}
@@ -78,27 +87,21 @@ spatial and temporal mapping has precedents~\cite{timeloop2019}. Here,
 butterfly closure and intersections determine the legal regions and handoffs.
 
 \textbf{Characterization separates demand from capability.}
-At each scope, stage-space and data-space factors describe concurrent stage
-positions and independent pair work. Their temporal counterparts describe
-reuse of those resources. Table~\ref{tab:organization-demand} distinguishes
-their demands at the selected storage and execution scope, with the chosen
-core and layout. These are logical organization choices; a worker count or
-compiler unrolling alone does not establish spatial execution.
+At each scope, stage-space and data-space factors allocate concurrent stage
+positions and independent pair work; their temporal counterparts reuse those
+resources. Each choice has distinct demands:
 
-\begin{table}[t]
-\centering\small
-\caption{Spatial and temporal choices impose different resource demands.}
-\label{tab:organization-demand}
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{.25\columnwidth}>{\raggedright\arraybackslash}p{.68\columnwidth}@{}}
-\toprule
-Choice & Demand to characterize\\\midrule
-Stage in space & Concurrent cores, inter-stage transport, coefficients, and live pipeline state.\\
-Stage in time & Retained state or feedback transfers, synchronization, and reuse of execution resources.\\
-Data in space & Concurrent workers and state, input/output bandwidth, ports, and coefficient delivery.\\
-Data in time & Sequential tile service, state lifetime, buffer capacity, and fill/drain overhead.\\
-\bottomrule
-\end{tabular}
-\end{table}
+\noindent\emph{Stage in space} requires concurrent cores, inter-stage
+transport, coefficients, and live pipeline state.\par
+\noindent\emph{Stage in time} requires retained state or feedback,
+synchronization, and core reuse.\par
+\noindent\emph{Data in space} requires concurrent workers and state,
+I/O bandwidth, ports, and coefficient delivery.\par
+\noindent\emph{Data in time} requires sequential tile service, state
+lifetime, buffering, and fill/drain.
+
+These are organization choices at a selected storage and execution scope.
+Worker count or compiler unrolling alone does not establish spatial execution.
 
 For example, an ideal fully supplied stage pipeline with $U_s$ stage
 positions and $U_d$ pair units per position has $U_sU_d$ arithmetic units
@@ -147,40 +150,20 @@ a 32-point transform needs at least three such bands. The construction thus
 extends beyond two bands without increasing local storage. Feasibility,
 communication, and parallel organization jointly inform the physical choice.
 
-The construction repeats within regions at successive storage scopes, without
-requiring every scope or expansion dimension to be active. We first derive
-regions and boundary relations, then resolve core, layout, and storage demands
-against capacity. Services and ready work distinguish the feasible choices.
-The next subsection supplies the boundary rule;
-Section~\ref{sec:decision-walkthrough} follows this construction through measured
-FWHT and NTT decisions.
+Figure~\ref{fig:overview} instantiates one feasible choice with two workers,
+each retaining four values after auxiliary reservations. Each worker reuses
+its local resources for two pair stages and then for a second region. A
+separate sixteen-word boundary holds the row outputs before column execution.
+Stage and tile reuse occur in time; two independent regions use space. The
+local limit is per worker. This establishes feasibility, while service rates
+distinguish the feasible organizations.
 
-\subsection{Communication and readiness}
-At a band boundary, changing pair partners connect closed regions through
-their index-set intersections.
-A producer and consumer with variable-bit sets $P$ and $Q$ share values when
-they agree on all bits fixed by both. Their shared variable bits $P\cap Q$
-determine each nonempty intersection. Producers covering the remaining
-consumer bits $Q\setminus P$ form its predecessor set. This derives
-communication without enumerating scalar edges.
-
-Fixing the bits outside $P\cup Q$ groups connected regions into a
-\textbf{boundary packet}. No edge crosses packets at that boundary. Within
-a packet, every producer and consumer intersect on the full pairing envelope.
-For complete-region publication, a consumer must therefore await every
-producer in its predecessor set. One-sided operators or finer publication
-units can expose finer dependencies.
-
-In the example, a completed row cannot release a complete column. Independent
-transforms can nevertheless advance concurrently, and larger transforms may
-contain multiple packets within one transform. Packet membership is derived
-at each boundary, not assumed to form a fixed pipeline across the graph.
-A packet is a dependency domain, not a storage allocation or execution group.
-Its values can be distributed among workers and external storage buffers.
-This ownership description does not guarantee conflict-free service. Changing
-partners can concentrate successor reads on a few storage banks. Boundary
-placement must account for both producer and consumer access groups
-(Section~\ref{sec:boundary-conflicts}).
+The construction repeats across bounded storage scopes without requiring
+every dimension to expand. A larger boundary may use external storage while
+local regions remain bounded. Section~\ref{sec:decision-walkthrough} connects
+these same counts and constraints to measured FWHT and NTT choices. Before
+realizing the example, we explain how its structural rules carry to other
+butterfly variants.
 
 \subsection{Reuse across variants and dimensions}
 \label{sec:equivalence}
@@ -191,17 +174,18 @@ Bit reversal maps an increasing-stride pairing envelope to a decreasing-stride
 one, preserving region and boundary relations. Physical layouts must still
 be evaluated for the transported access pattern.
 
-Figure~\ref{fig:semantic-transport} shows this correspondence on eight indices.
-Reversing the three index bits sends adjacent pairs to stride-four pairs.
-Applying the same relabeling to every stage transports the complete envelope
-and its closed regions. It does not permit stages with different arithmetic
-labels to be exchanged arbitrarily.
+Figure~\ref{fig:semantic-transport} transports the complete eight-point graph.
+Reversing the index bits maps pairing bits $(0,1,2)$ to $(2,1,0)$ while
+preserving the temporal order of the labeled stages. The highlighted four-value
+prefix region becomes noncontiguous in index order but remains closed.
+This correspondence transports local organizations without arbitrarily
+exchanging arithmetic stages.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/drawio/exports/semantic_transport.pdf}
-\caption{Bit reversal maps adjacent pairs to strided pairs while preserving
-their arithmetic labels.}
+\caption{Bit reversal transports the complete dependency graph and its
+closed regions while preserving ordered arithmetic labels.}
 \label{fig:semantic-transport}
 \end{figure}
 
@@ -229,5 +213,6 @@ every read occurs after production and before storage reuse. A topological
 induction suffices. Correct predecessor values reach the next operation through
 consistent layouts and valid lifetimes, and its arithmetic produces the
 required outputs. Thus local arithmetic, boundary layout, and scheduling
-carry distinct correctness obligations. The next section realizes these
-obligations with group-level and resident subgraph execution.
+carry distinct correctness obligations. Tile subgraph execution realizes these
+rules, controlling residency and the boundary service for producers and
+consumers to achieve the intended resource trade-offs.

@@ -11,7 +11,7 @@ execution for FFT, FWHT, and NTT. The Roofline opportunity~\cite{roofline}
 comes from retaining values between dependent stages.
 For $B$ transforms of
 length $N=2^L$, let $e$ be bytes per value and $G$ the number of materialized
-stage groups. There are $BNL/2$ pair updates. If each group reads and writes
+stage bands. There are $BNL/2$ pair updates. If each band reads and writes
 the array once, ideal value-only intensity is
 \begin{equation}
 I_{\mathrm{value}}\simeq\frac{L}{4eG}.
@@ -33,10 +33,10 @@ available hardware performance.}
 \noindent\textbf{Limiting cases expose different organization choices.}
 The H1/H16 points use FWHT FP64 at $N=2^{20}$ and $B=1/16$ with two
 materialized bands. Sixteen times as much independent work raises pair rate
-from 97.8 to 113.4~Gpairs/s at unchanged ideal intensity. Batch can amortize
-startup and fill idle slots, but cannot by itself resolve an inefficient
-organization. These timings show limited scaling; traffic and resource
-measurements are needed to establish its cause.
+from 97.8 to 113.4~Gpairs/s at unchanged ideal intensity. This alone does not distinguish saturation from inefficient organization.
+It motivates examining how work is served: batch supplies independent work,
+while the organization determines its storage, communication, and execution
+costs.
 
 At $N=2^{20}, B=16$, F0/F2/F4 use FFT FP64 with local groups of 0/2/4
 stages, and N2/N4 use word64 NTT with groups of 2/4. All retain two
@@ -66,10 +66,22 @@ common trade-off with different preferred choices.
 
 Logical intensity is not measured traffic: grouping also changes exchange,
 synchronization, and ownership. Matched profiles show increased register use
-and reduced active warps with deeper grouping. Section~\ref{sec:evaluation}
-reports counters and timing ranges without assigning every change to one
-mechanism. The construction must expose these choices and constraints so that
-unfavorable allocations can be rejected for each family and workload.
+and reduced active warps with deeper grouping. A complementary fixed-core
+control removes an outer exchange: measured external traffic falls by about
+23\% despite higher register demand, and complete execution improves
+(Figure~\ref{fig:core-organization}). These observations connect the resource
+trade-off to execution without assigning all gains to one counter. The
+construction must expose both costs and benefits for each family and workload.
+
+% Declare the method overview early so it accompanies the section opening.
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/drawio/exports/overview.pdf}
+\caption{Five construction steps connect abstract rules to one complete
+Hadamard organization. The lower row follows the same value indices throughout;
+capacities and execution order are illustrative, not measured timings.}
+\label{fig:overview}
+\end{figure*}
 
 \subsection{Why a hierarchy and a common construction}
 The observations call for a \textbf{joint characterization of resource
@@ -98,8 +110,8 @@ resources. A successor needs its actual predecessor set, not merely a
 contiguous prefix of producer output. The method must therefore derive both
 locality and readiness from the graph.
 
-Stage-bit dependencies separate \textbf{semantics, workload, and hardware}
-inputs: arithmetic supplies local functions and labels; length and batch
-instantiate work; hardware supplies resources and service rates. The next
-section derives legal local work, handoffs, and resource demands across bounded
-storage scopes. Block-level and resident subgraph execution realize them on GPUs.
+These requirements motivate separate \textbf{semantics, workload, and hardware}
+inputs. Arithmetic supplies functions and labels, length and batch instantiate
+work, and hardware supplies capacities and service rates. Stage-bit dependencies
+derive legal local work and handoffs; their resource demands make organizations
+comparable under the target's constraints.

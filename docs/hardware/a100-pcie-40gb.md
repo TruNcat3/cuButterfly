@@ -1,5 +1,15 @@
 # NVIDIA A100 PCIe 40GB
 
+> **Historical runbook snapshot — September 2026.** “Current”, partial-checkpoint
+> and “no result” statements below refer to that checkpoint and build. Later
+> [November 7 status](../research_status_20261107.md) and the
+> [A100 closeout](../../paper/evidence/A100_CLOSEOUT_20261107.md) record the separate
+> eleven-request 40GB FP16 automatic-selection and installed-default supplement.
+> Independent stage-service calibration was skipped; model ranking on unseen
+> requests remains unvalidated. This supplement is not pooled with 80GB results.
+> Use the [hardware index](README.md) for device/runbook navigation and the
+> [current A100 evidence route](../README.md#read-the-a100-paper-evidence) for later records.
+
 > Note: Paths marked `local artifact` are local experiment records and are not included in this source release.
 
 This page is the target-specific runbook for the A100 PCIe 40GB card. The

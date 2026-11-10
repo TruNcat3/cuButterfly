@@ -58,7 +58,7 @@ def organization_tradeoffs():
 
 def roofline():
     d = Diagram('roofline', 480, 292)
-    d.title('Resource roof, organization gap, and execution service')
+    d.title('Resource limits and measured organization choices')
     # The roof is symbolic. Measured points use the same pair-rate and
     # ideal-intensity definitions as the surrounding text; the y scale is
     # fixed by the selected derived observations, not by a hardware peak.
@@ -69,8 +69,6 @@ def roofline():
     d.line([(62,170),(245,48),(452,48)], color=BLUE, width=2.2)
     d.text(260,24,202,22,'Symbolic resource roof',size=14,color=BLUE)
     d.text(75,46,135,23,'BW<sub>h</sub> x I<sub>h</sub>',size=15,color=BLUE,html=True)
-    d.line([(245,48),(245,170)], color=LIGHT, width=1,dashed=True)
-    d.text(244,62,106,19,'execution gap',size=13,color=GRAY,align='left')
 
     cases_path = ROOT / 'generated' / 'roofline_cases_20261029.csv'
     with cases_path.open(newline='') as handle:
@@ -110,7 +108,7 @@ def roofline():
         d.text(x-16, axis_bottom+5, 32, 16, label, size=11, color=GRAY)
     d.text(64,187,397,20,'Ideal boundary intensity I<sub>h</sub> (pairs / byte)',size=14,html=True)
     d.text(8,211,464,18,'Derived case medians: F=FFT, H=FWHT, N=NTT.',size=12,color=GRAY,align='left')
-    d.text(8,229,464,18,'Points are measured; roof is schematic, not a peak.',size=12,color=GRAY,align='left')
+    d.text(8,229,464,18,'Schematic roof; distances to it are not measured headroom.',size=12,color=GRAY,align='left')
     # Categorical causal legend. Box sizes never encode measured resource use.
     d.line([(8,252),(472,252)],color=LIGHT,width=.8)
     for i,(label,col,fill) in enumerate([

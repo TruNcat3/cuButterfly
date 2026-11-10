@@ -2,18 +2,18 @@
 
 Open [cubutterfly-methods.drawio](cubutterfly-methods.drawio) in draw.io Desktop
 or diagrams.net. Seven of its eight named pages are included in the manuscript;
-the standalone `bank_layout` page remains as an editable source after its
-example was merged into `hierarchy`.
+the standalone `bank_layout` page remains an archived analytical example.
+The manuscript's `hierarchy` page now shows the complete boundary I/O path.
 All diagrams use native shapes, text, and connectors; they are not images
 wrapped inside an editable file. Individual `.drawio` files are the canonical
 sources used by the exporter. The combined document is an editing convenience.
 
 | Page | Question answered |
 | --- | --- |
-| `overview` | How do common dependencies connect local arithmetic, closed regions, and hierarchical execution? |
+| `overview` | How do five abstract construction steps compose one complete Hadamard organization? |
 | `organization_tradeoffs` | How do stage groups change local values, independent components, and transfers in the same graph? |
 | `roofline` | Why can legal organizations attain different rates below the same resource roof? |
-| `hierarchy` | How do row/column handoffs, capacity refinement, and an independent bank-layout example constrain mappings? |
+| `hierarchy` | How do successor-major placement and bank remapping jointly serve the same producer/consumer boundary? |
 | `semantic_transport` | Which structural correspondences carry across order, tensor axes, and inverse local arithmetic? |
 | `bank_layout` | Retained standalone version of the four-bank XOR example now shown within `hierarchy` |
 | `pipeline` | When may consumers start and buffers be reused? |
@@ -71,29 +71,54 @@ exports are sufficient to compile the paper without an installed editor.
 
 ## Layout and evidence
 
-The 2026-11-04 redraw uses one 1000 × 310 overview and six single-column
-figures. The selected-plan figure is now 480 × 292 instead of a second wide
-architecture diagram. The overview owns the common input/construction/resource
-story; the selected-plan figure owns preparation versus execution and a concrete
-boundary binding. The two figures no longer repeat the same architecture boxes.
+The 2026-11-08 walkthrough pairs every abstract step in the full-width
+`overview` with the same 16-point Hadamard example. The five steps derive
+regions, derive handoffs, match resources, place values, and execute subgraphs.
+The 2026-11-09 full-width `hierarchy` figure expands the fourth step into
+producer outputs, mapped stores, boundary storage, consumer lanes, local
+core inputs, and requested outputs, using exactly the same index roles and
+physical map. The overview now contains actual butterfly edges, local-state
+capacity bars, and worker storage slots; `semantic_transport` shows both
+complete three-stage graphs. The separate selected-plan figure
+continues to explain preparation versus reusable execution.
 
 | Source | Canvas | Visual evidence |
 | --- | --- | --- |
-| overview | 1000 × 310 | N=8 dependency edges; stage/data × space/time choices; bounded workers |
+| overview | 1000 × 392 | Complete N=16 network, five rules, demand/capacity bars, worker-local slots, and execution |
 | organization_tradeoffs | 480 × 414 | Full N=16 dependency network, stage cuts, local values and transfers |
-| roofline | 480 × 292 | Seven frozen A100 40GB points; symbolic roof; categorical gap mechanisms |
-| hierarchy | 480 × 436 | Row/column writeback; bounded child bands; bank contention versus XOR |
-| semantic_transport | 480 × 274 | Directed adjacent/strided pair graphs and carried arithmetic labels |
+| roofline | 480 × 292 | Seven frozen points; symbolic roof without a quantitative headroom annotation |
+| hierarchy | 1000 × 414 | Producer cores → mapped stores → banks → lane reads → consumer core → requested output, with separate segment/bank views |
+| semantic_transport | 480 × 328 | Complete N=8 three-stage graphs and a transported closed prefix, with carried labels |
 | pipeline | 480 × 414 | Cross-band readiness plus within-band load/compute/store with two slots |
 | system_architecture | 480 × 292 | Static preparation, reusable execution, concrete successor pairs |
 
 Transfer counts, index maps, bank examples, and buffer schedules are analytical
-constructions. Timeline durations are illustrative. Roofline execution points
-come from `generated/roofline_cases_20261029.csv`; its roof is symbolic, not a
-measured hardware ceiling. The three causal boxes have no quantitative encoding.
-Neither worker lanes nor the symbolic roof establish actual hardware overlap,
-occupancy, or an attainable optimum. In particular, the row/column transpose and
-four-bank XOR examples are separate maps, not a composition proven conflict-free.
+constructions. Timeline widths illustrate order, not measured duration. Roofline
+points come from `generated/roofline_cases_20261029.csv`; the roof is symbolic,
+so distances to it are not measured headroom. Its categorical resource boxes
+encode no quantitative attribution.
+
+The connected example has four values of local storage **per worker** after
+auxiliary reservations and a **separate** 16-word, four-bank boundary. It does
+not fit all intermediate state in a four-value budget. Successor offset `c`
+and bank `r XOR c` give address `4c + (r XOR c)`. Every stated row or column
+access group visits all four banks, while concurrent groups may still contend.
+Two workers reuse their local slots; all producers publish before any column
+consumer starts. The detailed figure expands C1. Its lane r reads bank r XOR 1
+at offset 1, preserving the ordered four-point core input; final values use
+the requested output indices. The lower external-storage panel is an alternative
+scope illustration with four-word segments, not the physical bank-map encoding.
+It shows both the reduction in successor read segments and the increase in
+unstaged producer store segments. Neither is an actual GPU transaction count. Larger boundaries may be materialized at an outer scope.
+The example proves neither a measured rate nor the optimality of this choice.
+
+`tools/walkthrough_example.py` checks closure, intersections, bijectivity, bank
+coverage, publication order, and a complete integer Hadamard result. See
+[the abstract-to-case walkthrough](../../evidence/ABSTRACT_TO_CASE_WALKTHROUGH_20261108.md)
+for assumptions and review findings. The standalone `bank_layout` page retains
+its older row-major example and is not used as the running-example map.
+The [boundary I/O review](../../evidence/METHOD_IO_FIGURE_REVIEW_20261109.md)
+records the complete input/output mapping and final manuscript layout checks.
 
 Use [the redesign review](../../evidence/FIGURE_REDESIGN_20261104.md) for reference
 paper provenance, the purpose of each change, and remaining measurement gaps.

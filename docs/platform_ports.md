@@ -9,10 +9,10 @@ processing units, legality rules, and measured selection data for the target.
 
 | Target | Project | Status | Architecture mapping | Evidence boundary |
 |:--|:--|:--|:--|:--|
-| NVIDIA CUDA | [cuButterfly](https://github.com/TruNcat3/cuButterfly) | Reference implementation | lanes/warps/CTAs, registers/shared memory, shuffle/global transport | V100 is the frozen v0.8 baseline; other GPUs require target-local calibration |
+| NVIDIA CUDA | [cuButterfly](https://github.com/TruNcat3/cuButterfly) | Reference implementation | lanes/warps/CTAs, registers/shared memory, shuffle/global transport | [Experimental results](benchmarks/results.md) identify each measured GPU, workload and protocol |
 | Huawei Ascend | [Ascend-FFT](https://github.com/TruNcat3/ascend-fft) | Independent FFT port | AIV execution, UB residence, MTE transport, and GM boundaries | Ascend910_9382 C2C/R2C/C2R fp32 results; see that repository's published protocol and snapshot |
 
-Ascend-FFT reuses the architecture vocabulary and search methodology. It does
+Ascend-FFT reuses the organization method and maps it to target-specific services. It does
 not reuse cuButterfly CUDA kernels, and its measurements are not evidence for
 CUDA performance. Conversely, cuButterfly's V100/A100 configurations are not
 valid Ascend tuning tables.

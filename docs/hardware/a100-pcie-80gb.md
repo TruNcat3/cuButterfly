@@ -1,5 +1,16 @@
 # NVIDIA A100 PCIe 80GB
 
+> **Historical runbook snapshot — September 2026.** “Current”, interrupted
+> acceptance and incomplete-migration statements below refer to their named
+> September checkpoints. Later bounded A100 work is recorded in the
+> [November 7 closeout](../../paper/evidence/A100_CLOSEOUT_20261107.md), with
+> [November 8 representative profiles](../../paper/evidence/REPRESENTATIVE_PROFILES_20261108.md)
+> and [November 9 boundary controls](../../paper/evidence/BOUNDARY_IO_CONTROL_20261109.md)
+> as separate supplements. These do not certify every model/lowering or relabel
+> old manifests as complete. Keep each device UUID, build and population separate.
+> Use the [hardware index](README.md) and
+> [current A100 evidence route](../README.md#read-the-a100-paper-evidence) for navigation.
+
 > Note: Paths marked `local artifact` are local experiment records and are not included in this source release.
 
 This page is the target-specific runbook for the A100 PCIe 80GB card. Current

@@ -5,42 +5,46 @@ migration workflow. A profile is local evidence for a
 device identity, build, compile policy and workload file. It is not a portable
 set of winning mapping parameters.
 
-## Profiles
+## Hardware identity and compatibility
 
-| Target | Device identity used for this host | Current documentation state |
-| --- | --- | --- |
-| [V100 portable campaign](v100.md) | SM70; model, capacity and UUID detected on the target machine | CPU preparation and same-contract campaign entry; new V100 GPU evidence pending. |
-| [A100 PCIe 40GB](a100-pcie-40gb.md) | A100-PCIE-40GB, sm80, UUID `GPU-2b759faa-3e58-7106-10aa-ea6e387c3f8e` | A resumable partial staged checkpoint exists; no current performance or completion claim is made. |
-| [A100 PCIe 80GB](a100-pcie-80gb.md) | A100 80GB PCIe, sm80, UUID `GPU-0eae5f07-33de-321b-70a9-ffeae49309e6` | Three-cell recovery evidence exists; the model gate remains warning and the migration is incomplete. |
+A target is identified by its GPU model, compute capability and reported memory
+capacity. Measurements additionally record the device UUID, build, compile policy
+and timing protocol. A CUDA index is only a local device selector.
 
-The UUIDs identify the intended device on the current multi-GPU host. A local
-CUDA index is only a selection mechanism and must not be copied between hosts.
-Do not reuse a profile, checkpoint, timing row or model-qualified result between
-the 40GB and 80GB pages. The cumulative registry may be shared: its records
-must be filtered by target identity, and a mapping from another target is only
-a seed proposal that requires correctness and timing on this target.
+Capacity facts, hardware service rates, stage-service models and selected plans
+are separate artifacts. Compatible local or bundled files can be reused;
+measurements from another target may propose candidates but do not establish
+performance on the new device. See the
+[profile policy](../hardware_profile_install.md#static-profile-policy).
 
-## Shared prerequisites
+## Target references
 
-The commands below describe this A100 host. For a separate V100 host, use the
-portable environment/build/calibration commands in [the V100 runbook](v100.md).
-On this host, use the shared conda environment and current research build:
+| Target | Reference |
+| --- | --- |
+| NVIDIA A100 PCIe 40GB | [Device and profile reference](a100-pcie-40gb.md) |
+| NVIDIA A100 PCIe 80GB | [Device and profile reference](a100-pcie-80gb.md) |
+| NVIDIA RTX PRO 6000 Blackwell Server Edition 96GB | [Toolchain and target setup](pro6000_server96.md) |
+| NVIDIA V100 | [SM70 target setup](v100.md) |
+| Another GPU | [Profile template](TEMPLATE.md) |
+
+Target pages may also retain dated experiment records. Use their declared
+hardware and build identities when reproducing those records. A documented
+setup does not imply that every operator configuration has been measured.
+
+## Prepare a target
+
+Follow [installation and calibration](../hardware_profile_install.md) with a CUDA
+compiler that supports the target. Use the Python environment and build directory
+selected for that installation:
 
 ```bash
-PYTHON=/home/wt/yes/envs/cubutterfly/bin/python
-BUILD_DIR=build-a100-cufftdx
+PYTHON=python
+BUILD_DIR=build
 ```
 
-The build must contain the benchmark executables expected by the unified
-calibrator. Keep the source tree and public headers stable during a CUDA build
-or calibration. The calibrator records device identity, compile mode, workload
-hash, benchmark paths and search protocol in its migration manifest.
-
-The general operational contract is in
-[Hardware Profile Initialization](../hardware_profile_install.md). It covers
-the manifest status values, checkpoint reuse, correctness requirements,
-selector replay and the distinction between a model warning and a completed
-migration.
+The calibrator records workload hashes, benchmark paths, device identity,
+compile mode and measurement policy. Keep the source, binaries and target
+profile compatible when resuming a run.
 
 ## Common workflow
 

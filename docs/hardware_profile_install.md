@@ -137,10 +137,12 @@ model and capacity. Without `--profile-dir`, the wrapper stores profiles under
 `PREFIX/share/cuButterfly/hardware/<model>-sm<SM>-<memory-bytes>B`.
 An explicit profile directory must belong to that same target.
 
-On the existing research host, reuse `/home/wt/yes/envs/cubutterfly` and
-`build-a100-cufftdx`. Set `CUBUTTERFLY_COMPILE_MODE=research` for research runs
-unless another policy is requested. Continuing a paused experiment uses the
-calibrator's checkpoint workflow below; it does not require running the installer.
+Reuse a compatible Python environment and build for the chosen target. Preserve
+an explicitly selected compile policy; research workflows can set
+`CUBUTTERFLY_COMPILE_MODE=research` for implemented on-demand specializations.
+Continuing interrupted measurements uses the calibrator's checkpoint workflow
+below; it does not require running the installer. Target-specific setup and
+evidence are indexed in [hardware profiles](hardware/README.md).
 
 After target calibration, use the [cross-operator research acceptance entry](research_acceptance.md)
 for a finite matrix of searched implementations, automatic-selector replay and
@@ -680,12 +682,13 @@ candidate matrix:
   --output "$HOME/.local/share/cuButterfly/hardware/local/cost_model.json"
 ```
 
-For a wider post-install search, require correctness on every candidate and
+Set `GPU_UUID` to the UUID of the exclusively reserved target. For a wider
+post-install search, require correctness on every candidate and
 feed the resulting CSV into the same model. This is intentionally opt-in
 because it is more expensive than the bounded install smoke set:
 
 ```bash
-CUDA_VISIBLE_DEVICES=1 python3 scripts/sweep_cubutterfly_designs.py \
+CUDA_VISIBLE_DEVICES="$GPU_UUID" python3 scripts/sweep_cubutterfly_designs.py \
   --binary build-local/cubutterfly_bench \
   --operators fft --logNs 8 12 16 \
   --target-points 4194304 --verify --require-exclusive-gpu \
@@ -707,19 +710,14 @@ exclusive-GPU marker emitted by `--require-exclusive-gpu`; the fitter rejects
 unmarked files unless `--allow-nonexclusive-csv` is explicitly requested for
 exploratory analysis.
 
-### Shared GPU Waiting and Recovery
+### Shared GPU access and recovery
 
-If the user requests waiting, `sweep_cubutterfly_designs.py` supports
+`sweep_cubutterfly_designs.py` supports optional bounded waiting with
 `--wait-for-exclusive-gpu --exclusive-timeout 1800`. These are sweep options,
-not options of `calibrate_local_hardware.py`; 1800 seconds is an example timeout,
-not a requirement for every task. A waiting budget is not silently renewed.
-For sustained monitoring, use an available resumable task or bounded waits and
-report meaningful state changes rather than repeatedly requesting a GPU window.
-
-When the GPU is occupied, preserve progress and continue available CPU work.
-Absent a continuing-monitoring request, report the checkpoint and remaining GPU
-work. Do not stop other users' jobs or accept contended timings. The existing
-checks can detect contention but do not reserve the device against arriving jobs.
+not options of `calibrate_local_hardware.py`; the timeout is in seconds.
+Reserve the target for measurement, preserve interrupted checkpoints and reject
+contended timings. Contention checks do not reserve the device against arriving
+jobs. CPU preparation can proceed separately from GPU measurement.
 
 [Independent CPU preparation](calibration_cpu_preparation.md) can export pending
 candidate inventories once, score them without a visible GPU, precompile priority
@@ -793,7 +791,7 @@ cmake -S . -B build-vkfft \
   -DCUBUTTERFLY_ENABLE_VKFFT=ON
 cmake --build build-vkfft --target vkfft_bench -j2
 
-CUDA_VISIBLE_DEVICES=1 ./build-vkfft/vkfft_bench \
+CUDA_VISIBLE_DEVICES="$GPU_UUID" ./build-vkfft/vkfft_bench \
   --library vkfft --logN 12 --total-points 4194304 \
   --warmup 20 --repeat 100 --verify --csv
 ```
@@ -807,7 +805,7 @@ For the repeated complete-library protocol, match the calibrated cuButterfly
 placement and require exclusive access throughout the run:
 
 ```bash
-CUDA_VISIBLE_DEVICES=1 \
+CUDA_VISIBLE_DEVICES="$GPU_UUID" \
 BIN=build-vkfft/vkfft_bench \
 PLACEMENT=out-of-place \
 REQUIRE_EXCLUSIVE_GPU=1 \
@@ -820,7 +818,7 @@ the same-point suite through `logN=18` and `logN=20`, and includes FP64,
 inverse, strided, FWHT, zeta, and NTT groups:
 
 ```bash
-CUDA_VISIBLE_DEVICES=1 python3 scripts/run_comprehensive_suite.py \
+CUDA_VISIBLE_DEVICES="$GPU_UUID" python3 scripts/run_comprehensive_suite.py \
   --manifest config/a100_comprehensive_suite.json \
   --mode full --require-exclusive-gpu \
   --output results/a100_comprehensive_full_raw.csv

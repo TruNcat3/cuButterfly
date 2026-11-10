@@ -1,0 +1,42 @@
+{
+  "schema": "cubutterfly-boundary-control-v1",
+  "purpose": "Independent controls for external boundary placement and local shared staging; never pooled as a three-step ablation",
+  "global_boundary": {
+    "operators": ["fft", "fwht"],
+    "precision": "fp32",
+    "requests": [{"log_n": 16, "batch": 16, "split": 8}, {"log_n": 20, "batch": 4, "split": 10}],
+    "tiles": 1, "threads": 256, "inverse": 0,
+    "processes": 3, "repeat": 20, "trials": 7,
+    "modes": ["strided", "materialized", "producer"],
+    "shared_stage_layout": "writer-aligned in all modes; not a bank-XOR toggle",
+    "profile_request": {"log_n": 16, "batch": 16, "split": 8}
+  },
+  "local_bank": {
+    "operator": "fft", "precision": "fp32",
+    "requests": [{"log_n": 20, "batch": 4}, {"log_n": 20, "batch": 16}],
+    "preflight_exclusions": [{"log_n": 16, "reason": "Fixed prefix8 plus suffix256/EPT16 tiled-transpose requires suffix log12, not log8"}, {"log_n": 18, "reason": "Fixed prefix8 plus suffix256/EPT16 tiled-transpose requires suffix log12, not log10"}],
+    "prefix_stages": 8, "prefix_threads": 256, "prefix_ept": 16,
+    "suffix_threads": 256, "suffix_ept": 16,
+    "core": "cufftdx-block", "twiddle": "recurrence", "overlap": false,
+    "processes": 3, "repeat": 20, "trials": 7,
+    "modes": ["linear", "xor"],
+    "scope": "prefix staging only; fixed global I/O and arithmetic; suffix layout unchanged"
+  },
+  "numeric_policy": "Full-batch same-precision CPU errors retained, finite outputs required, unchanged organization controls must agree exactly; no new floating acceptance threshold",
+  "profile_metrics": [
+    "gpu__time_duration.sum",
+    "dram__bytes_read.sum", "dram__bytes_write.sum",
+    "l1tex__t_sectors_pipe_lsu_mem_global_op_ld.sum",
+    "l1tex__t_sectors_pipe_lsu_mem_global_op_st.sum",
+    "l1tex__t_requests_pipe_lsu_mem_global_op_ld.sum",
+    "l1tex__t_requests_pipe_lsu_mem_global_op_st.sum",
+    "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum",
+    "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum",
+    "smsp__inst_executed.sum",
+    "sm__warps_active.avg.pct_of_peak_sustained_active",
+    "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct",
+    "smsp__warp_issue_stalled_short_scoreboard_per_warp_active.pct",
+    "smsp__warp_issue_stalled_barrier_per_warp_active.pct",
+    "launch__registers_per_thread", "launch__shared_mem_per_block_dynamic"
+  ]
+}

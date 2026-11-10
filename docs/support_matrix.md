@@ -1,110 +1,121 @@
-# Capability And Compatibility Matrix
+# Capability and compatibility matrix
 
-This page is the application-facing support contract. The runtime capability
-query and plan-construction validation remain authoritative for a particular
-build because optional processing units change the compiled matrix.
+Support is evaluated for a complete semantic request in a particular build.
+The public descriptor separates operator and workload from execution policy;
+its capability query reports lowering gaps before GPU plan construction.
+A valid request, an eligible lowering, a compiled executable and a measured
+mapping are different states. None alone certifies performance.
 
-## Toolchain And Packaging
+## Public semantic dimensions
 
-| Item | Current contract |
-|:--|:--|
-| operating system | Linux |
-| language | C++17 |
-| build system | CMake 3.20 or newer |
-| required CUDA components | CUDA Runtime and cuFFT development packages |
-| validated artifact toolchain | CUDA 11.8, GCC 11, `sm_70` |
-| default CUDA architecture | `70`; applications should set `CMAKE_CUDA_ARCHITECTURES` explicitly |
-| CMake package | `find_package(cuButterfly CONFIG REQUIRED)` |
-| imported target | `cuButterfly::cuButterfly` |
-| version compatibility | generated package file uses same-major compatibility |
+The [unified semantic contract](unified_semantics.md) defines validation and
+canonicalization. The table below describes request dimensions, not a promise
+that every Cartesian combination has an executable core.
 
-Compiling for another CUDA architecture is supported at build-system level,
-but automatic mapping calibration is currently V100-only. A successful build
-on another GPU is not a performance-portability claim.
+| Dimension | Public representation and boundary |
+| --- | --- |
+| Operator | FFT, NTT, FWHT, subset/superset zeta (inverse gives Mobius), structured 2x2 |
+| Arithmetic | Separate storage and compute types; NTT modulus and 32/64-bit word width; structured matrices |
+| Direction and scaling | Forward/inverse, operator-specific normalization and explicit output scaling/rounding where lowered |
+| Shape and load | Extents vector and independent batch; descriptors can express ranks beyond the current execution limit |
+| Ordering and layout | Independent input/output per-axis logical order, axis strides and batch strides; in-place or out-of-place |
+| FFT interpretation | C2C/R2C/C2R; real and complex sides have distinct element units and compact-spectrum shapes |
+| Length interpretation | Standard transform or explicit zero-extended embedding; exact arbitrary-length execution depends on arithmetic and lowering |
+| Selection | DEFAULT, explicit MEASURE tuning or EXPLICIT mapping; separate AUTO/XD/COMPOSITE execution mode |
 
-## Public Semantic Coverage
+Generic axis composition currently executes through rank eight. Some requests
+use layout, numeric or real-FFT adapters with additional workspace and conversion
+cost. See [unified semantics](unified_semantics.md) for current adapter coverage,
+including UINT64 zeta and low-precision real FFT restrictions. Per-provider length,
+precision, direction, modulus/root and resource requirements still apply.
 
-| Operator | Types | Direction | Placement/layout | Length |
-|:--|:--|:--|:--|:--|
-| FFT | complex FP16/BF16 storage with native-width or FP32 accumulation; complex FP32/FP64; legacy mixed FP16/FP32 WMMA core | forward/inverse, optional inverse normalization | in/out of place, positive element stride and valid batch stride | power of two, common runtime `logN=1..20` subject to backend |
-| FWHT | FP16/BF16 storage with native-width or FP32 accumulation; FP32/FP64 | forward/inverse, optional inverse normalization | in/out of place, positive element stride and valid batch stride | power of two, common runtime `logN=1..20` subject to backend |
-| subset/superset zeta/Mobius | uint32 | forward/inverse | in/out of place, positive element stride and valid batch stride | power of two, common runtime `logN=1..20` subject to backend |
-| structured 2x2 | FP16/BF16 storage with native-width or FP32 accumulation; FP32/FP64 | forward/inverse for nonsingular matrices | in/out of place, positive element stride and valid batch stride | power of two, common runtime `logN=1..20`; generated FP32 warp-register core at `logN=3..15` |
-| legacy `xor-zeta` name | uint32 | established subset-zeta behavior | same as subset zeta | retained for API/CLI/result compatibility |
-| NTT | uint32 or uint64 physical words | forward/inverse subject to backend | contiguous batches, device API out of place | power of two, `logN=1..30` with stricter backend ranges |
+Low storage precision does not imply one universal intermediate arithmetic rule.
+Storage, compute, output rounding and the selected provider's contract must be
+recorded together. In particular, the final-storage FWHT provider has a distinct
+contract from stage-storage rounding; it cannot satisfy a request for the latter.
+See [C API rounding semantics](c_api.md) and the [planner](unified_planner.md).
 
-For the detailed processing-unit ranges, use
-`cubutterfly_bench --list-capabilities` and see [Feature
-Coverage](cubutterfly_feature_coverage.md). Important backend-specific NTT
-restrictions are rejected during `Plan` construction:
+## Inspect a request and its execution state
 
-- Hybrid2D requires `logN=12..20`;
-- CompactStage currently supports its documented forward 64-bit `logN=20`
-  path, with output order controlling workspace behavior;
-- StagePipeline currently supports forward, natural-order 64-bit `logN=8`;
-- HybridDataflow supports generated forward/inverse uint32/uint64 points with
-  strict one-CTA residency, a primary resident radix-4 unit, and the generated
-  radix-2 fused-role pipeline as an ablation;
-  unsupported sizes fail rather than spill to global workspace;
-- HierarchicalDataflow supports forward/inverse uint32/uint64 `logN=12..20`
-  when each of its two resident layers is in `logN=6..10`; it requires
-  cooperative launch support, natural output, fused Shoup radix-4, and one
-  full-size caller-visible workspace for the online-reordered boundary;
-- 32-bit words currently require Hybrid2D or HybridDataflow and a modulus below
-  `2^31`.
+Use `Descriptor.validate()` and `Descriptor.capabilities_json()` through the
+[public Python interface](getting_started.md#check-the-public-python-boundary),
+or the corresponding C/C++ descriptor API. These operations run on the CPU and
+do not create a GPU plan. The descriptor CLI accepts a serialized descriptor:
 
-FP16/BF16 results are narrowed after every logical butterfly output. V100 has
-no native BF16 arithmetic path, so BF16 `Native` measurements on `sm_70` are
-explicitly labeled `emulated_native=1`; this is an arithmetic-contract control,
-not a native-BF16 throughput claim. The legacy `Fp16Fp32` precision remains a
-separate FP32-storage WMMA processing-unit contract.
+```bash
+python -m cubutterfly descriptor.json --library /absolute/path/to/libcuntt.so
+```
 
-## Optional Build Features
+| State | What it establishes |
+| --- | --- |
+| Semantic validation passes | The request satisfies the normalizer's mathematical/layout rules |
+| `missing-lowering` | The request is expressible but the current execution path has a reported gap |
+| `eligible` | Static structural/lowering checks pass; roots, device resources and executable specialization may still need validation |
+| Plan construction succeeds | A concrete executable plan was obtained under the selected policy and resources |
+| Correctness checked | The named cases match a reference within their arithmetic contract |
+| Measured/selected | A mapping has observations for a named workload, hardware, build and timing protocol |
 
-| Option | Default | Effect |
-|:--|:--:|:--|
-| `CUBUTTERFLY_ENABLE_CUFFTDX` | off | compile cuFFTDx block/direct/resident processing-unit adapters from the configured MathDx package |
-| `CUBUTTERFLY_ENABLE_TURBOFFT` | off | compile available TurboFFT-generated kernels |
-| `CUBUTTERFLY_ENABLE_VKFFT` | off | build the comparison benchmark; does not change the public plan backend |
-| `CUBUTTERFLY_BUILD_EXAMPLES` | on | build task-oriented API examples |
+Explicit mapping replay preserves the requested semantics and core configuration;
+an unavailable explicit core must fail rather than silently change the request.
+AUTO selection may choose among other legal implementations. Capability output
+is the first inspection step, not a replacement for plan or numerical checks.
 
-Selecting a processing unit omitted at build time fails explicitly. There is no
-silent substitution with another core.
+## Toolchain and packaging
 
-## Runtime Features
+| Item | Current build contract |
+| --- | --- |
+| Platform/toolchain | Linux research workflow; C++17, CMake 3.20+, compatible CUDA toolkit and host compiler |
+| CUDA architecture | Detected for a new native build; set `CMAKE_CUDA_ARCHITECTURES` explicitly for cross compilation |
+| CUDA dependencies | CUDA Runtime and cuFFT development components |
+| Python frontend | Python 3.9+, thin ctypes package; shared library built with `CUBUTTERFLY_BUILD_SHARED=ON` |
+| CMake consumer | `find_package(cuButterfly CONFIG REQUIRED)`, target `cuButterfly::cuButterfly` |
+| Package version compatibility | Same-major CMake compatibility; no stable minor-release binary ABI promise |
 
-| Feature | Status |
-|:--|:--|
-| caller-owned CUDA stream | supported |
-| caller-owned device buffers | supported |
-| queryable/caller-owned workspace | supported, 16-byte minimum alignment |
-| allocation-free steady-state device submission | supported after plan construction and workspace binding |
-| multiple independent plans/streams | supported when resources do not overlap |
-| concurrent use of one plan | not supported |
-| CUDA Graph capture | not currently claimed/tested |
-| one transform across multiple GPUs | not supported |
-| non-power-of-two transforms | C plan API: exact FP32/FP64 FFT via selected direct cuFFT/Bluestein, exact uint64 NTT when roots exist, or explicit power-of-two embedding for all operators |
-| multidimensional transforms | C plan API: rank-two FFT, NTT, FWHT, zeta/Mobius, and Structured 2x2 via axis plans and transpose boundaries |
-| fused user epilogues | not supported |
+CUDA 11.8/GCC11/SM70 identify older V100 artifact builds, not universal defaults.
+Use a compiler and optional provider version that actually accept the target.
+See [installation](getting_started.md) and
+[hardware profiles](hardware/README.md) for target-specific requirements.
 
-## Automatic Selector Coverage
+| CMake option | Default | Scope |
+| --- | --- | --- |
+| `CUBUTTERFLY_ENABLE_CUFFTDX` | OFF | Optional MathDx/cuFFTDx cores; actual provider capabilities still constrain candidates |
+| `CUBUTTERFLY_ENABLE_TURBOFFT` | OFF | Available TurboFFT-generated kernels |
+| `CUBUTTERFLY_ENABLE_VKFFT` | OFF | Optional VkFFT comparison benchmark |
+| `CUBUTTERFLY_ENABLE_XD_VKFFT` | Follows `ENABLE_VKFFT` | Optional VkFFT xD axis core; distinct from the comparison benchmark |
+| `CUBUTTERFLY_BUILD_EXAMPLES` | ON | Public API examples |
+| `CUBUTTERFLY_FFT_CODEGEN_MODE` | `precompiled` | Precompiled inventory versus `on-demand` research generation; not the theoretical support space |
 
-The checked-in static table recognizes V100 `sm_70` only and accepts a calibrated
-subset of forward contiguous workloads. Its exact FFT, FWHT, legacy XOR-name and NTT shape
-table is documented in [Runtime Mapping Selector](runtime_selector.md).
-Unseen workloads use the legal resource-model fallback and emit a profile-miss
-log; they can be measured and cached. Invalid mathematical domains still fail
-plan creation. The new canonical subset/superset and structured-2x2 names
-require measurement or explicit mapping until their sweeps are recorded.
+## Selection and measurement
 
-## Versioning And ABI
+Current public planning is not restricted to a V100 static winner table.
+Compatible measured registries, static model/rate inputs and labelled unmeasured
+fallbacks have distinct provenance. Rank-one and xD selection have different
+bounded candidate paths. DEFAULT does not automatically run a performance
+benchmark; MEASURE explicitly requests measurements. Installation reuses
+compatible profiles and measures missing targets or explicitly requested updates.
+See [static profile policy](hardware_profile_install.md#static-profile-policy)
+and [planner contracts](unified_planner.md) for compatibility and budget limits.
 
-The installed CMake version file promises package compatibility within the same
-major version. The project does not yet promise a stable binary ABI across minor
-releases. Recompile consumers when upgrading the library. Public source-level
-changes and removals are recorded in [`CHANGELOG.md`](../CHANGELOG.md); no
-deprecated API is currently maintained as a compatibility layer.
+A capacity profile, successful compilation or a finite calibration population
+does not establish that every operator/size/batch is tuned. Performance claims
+require matching numerical semantics, hardware, build and timing boundaries.
 
-Generated design-point JSON, selector tables, benchmark CSV schemas, and
-command-line options are research/artifact interfaces and do not carry the same
-compatibility expectation as the installed C++ headers.
+## Historical backend snapshots
+
+The old V100 selector and low-level NTT tutorials describe named backend
+implementations and generated inventories. Their ranges (for example Hybrid2D,
+CompactStage, StagePipeline and resident dataflow variants) are backend-specific
+snapshots, not limits on the entire current public descriptor/API. In particular,
+the former statement that uint32 NTT requires only Hybrid2D or HybridDataflow
+must not be used as a current universal restriction.
+
+Consult the [historical programming guide](programming_guide.md),
+[feature coverage records](cubutterfly_feature_coverage.md) and
+[legacy runtime selector](runtime_selector.md) when reproducing those paths.
+Check the current descriptor capability and explicit plan construction for the
+actual build. This page does not claim a fresh exhaustive audit of every legacy
+backend, optional provider or semantic combination.
+
+Public source changes are recorded in [CHANGELOG](../CHANGELOG.md). Generated
+design JSON, measurement CSV and CLI schemas remain research interfaces; they do
+not carry the same compatibility expectation as installed public headers.
