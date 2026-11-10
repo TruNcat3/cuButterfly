@@ -56,9 +56,7 @@ Performance claims remain local to each project and hardware target.
 
 ## Citation
 
-Use the cuButterfly entry for the method and CUDA implementation. If a result
-uses the independent Kunlunxin port, cite its software and measurements with
-the second entry as well.
+Use the cuButterfly entry for the method and CUDA implementation.
 
 ```bibtex
 @software{wang_cubutterfly_2026,
@@ -67,12 +65,5 @@ the second entry as well.
   year         = {2026},
   version      = {0.9.0},
   url          = {https://github.com/TruNcat3/cuButterfly}
-}
-
-@software{wang2026kunlunxinfft,
-  author       = {Teng Wang},
-  title        = {Kunlunxin-FFT: A Hardware-Mapped FFT Operator Library for Kunlunxin P800},
-  year         = {2026},
-  url          = {https://github.com/TruNcat3/kunlunxin-fft}
 }
 ```
