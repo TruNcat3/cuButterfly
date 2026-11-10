@@ -11,11 +11,16 @@ processing units, legality rules, and measured selection data for the target.
 |:--|:--|:--|:--|:--|
 | NVIDIA CUDA | [cuButterfly](https://github.com/TruNcat3/cuButterfly) | Reference implementation | lanes/warps/CTAs, registers/shared memory, shuffle/global transport | [Experimental results](benchmarks/results.md) identify each measured GPU, workload and protocol |
 | Huawei Ascend | [Ascend-FFT](https://github.com/TruNcat3/ascend-fft) | Independent FFT port | AIV execution, UB residence, MTE transport, and GM boundaries | Ascend910_9382 C2C/R2C/C2R fp32 results; see that repository's published protocol and snapshot |
+| Kunlunxin P800 | [Kunlunxin-FFT](https://github.com/TruNcat3/kunlunxin-fft) | Independent FFT port | XPU execution, local residence, device-memory transport, and producer/consumer boundaries | P800 FFT results, supported semantics and protocols belong to that repository |
 
-Ascend-FFT reuses the organization method and maps it to target-specific services. It does
-not reuse cuButterfly CUDA kernels, and its measurements are not evidence for
-CUDA performance. Conversely, cuButterfly's V100/A100 configurations are not
-valid Ascend tuning tables.
+Ascend-FFT and Kunlunxin-FFT reuse the organization method and map it to
+target-specific services. They do not reuse cuButterfly CUDA kernels, and their
+measurements are not evidence for CUDA performance. Conversely, cuButterfly's
+GPU profiles are not valid Ascend or Kunlunxin tuning tables.
+
+The Kunlunxin instance documents a P800 lowering with its own processing-unit
+choices, profile-bound selection and fallback. Those implementation details and
+all performance claims remain local to the Kunlunxin repository.
 
 ## Port Acceptance Contract
 
@@ -48,3 +53,26 @@ Open a documentation change that adds one row to the table and links to:
 - the cuButterfly citation or provenance statement used by the port.
 
 Performance claims remain local to each project and hardware target.
+
+## Citation
+
+Use the cuButterfly entry for the method and CUDA implementation. If a result
+uses the independent Kunlunxin port, cite its software and measurements with
+the second entry as well.
+
+```bibtex
+@software{wang_cubutterfly_2026,
+  author       = {Teng Wang},
+  title        = {cuButterfly: Hardware-Mapped Space-Time Parallelism for Butterfly Computations on GPUs},
+  year         = {2026},
+  version      = {0.9.0},
+  url          = {https://github.com/TruNcat3/cuButterfly}
+}
+
+@software{wang2026kunlunxinfft,
+  author       = {Teng Wang},
+  title        = {Kunlunxin-FFT: A Hardware-Mapped FFT Operator Library for Kunlunxin P800},
+  year         = {2026},
+  url          = {https://github.com/TruNcat3/kunlunxin-fft}
+}
+```

@@ -154,7 +154,7 @@ negative results. Follow the [current evidence route](README.md#read-the-a100-pa
 and [paper terminology](../paper/TERMINOLOGY.md) for the accepted claims.
 
 Each hardware target has its own calibration and performance evidence.
-[Ascend-FFT](platform_ports.md) reuses the method with different kernels and
-interfaces. A common construction is not proof
+[Ascend-FFT and Kunlunxin-FFT](platform_ports.md) reuse the method with
+different kernels and interfaces. A common construction is not proof
 that every lowering exists, that every mechanism helps, or that finite selection
 finds a global optimum.

@@ -112,16 +112,44 @@ protocols and limitations, including negative results. The common method permits
 different winning organizations; it does not require every mechanism to help
 every request.
 
-[Ascend-FFT](https://github.com/TruNcat3/ascend-fft) is an independent lowering of
-the method to Huawei Ascend. Its hardware-specific kernels, interfaces and
-measurements belong to that repository. See [platform ports](docs/platform_ports.md)
-for the relationship; its results are not pooled with CUDA comparisons.
+[Ascend-FFT](https://github.com/TruNcat3/ascend-fft) and
+[Kunlunxin-FFT](https://github.com/TruNcat3/kunlunxin-fft) are independent
+lowerings of the method to Huawei Ascend and Kunlunxin P800, respectively.
+Their hardware-specific kernels, interfaces and measurements belong to their
+own repositories. See [platform ports](docs/platform_ports.md) for the
+relationship; their results are not pooled with CUDA comparisons.
 
 ## Citation and license
 
-Use [CITATION.cff](CITATION.cff) for software metadata and
-[Project and authorship](docs/about.md) for BibTeX. The paper draft and the
-software release have distinct version identities.
+Use [CITATION.cff](CITATION.cff) for software metadata. The paper draft and the
+software release have distinct version identities. Cite the independent
+Kunlunxin port separately when using its implementation or measurements.
+
+```bibtex
+@software{wang_cubutterfly_2026,
+  author       = {Teng Wang},
+  title        = {cuButterfly: Hardware-Mapped Space-Time Parallelism for Butterfly Computations on GPUs},
+  year         = {2026},
+  version      = {0.9.0},
+  url          = {https://github.com/TruNcat3/cuButterfly},
+  organization = {High Efficient Intelligent Computing Lab,
+                  Suzhou Institute for Advanced Research,
+                  University of Science and Technology of China}
+}
+
+@software{wang2026kunlunxinfft,
+  author       = {Teng Wang},
+  title        = {Kunlunxin-FFT: A Hardware-Mapped FFT Operator Library for Kunlunxin P800},
+  year         = {2026},
+  url          = {https://github.com/TruNcat3/kunlunxin-fft},
+  organization = {High Efficient Intelligent Computing Lab,
+                  Suzhou Institute for Advanced Research,
+                  University of Science and Technology of China}
+}
+```
+
+The latter entry is the citation for the independent platform port; it does
+not turn its measurements into cuButterfly CUDA evidence.
 
 The [Research-Only Non-Commercial License](LICENSE) permits the uses stated
 there; commercial use requires a separate license. Third-party components retain
