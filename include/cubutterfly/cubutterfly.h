@@ -85,6 +85,11 @@ typedef enum cubutterflyPlacement {
 
 /* STAGE_STORAGE preserves the legacy intermediate rounding. FINAL_STORAGE
  * retains compute precision until the output scale and final storage cast. */
+typedef enum cubutterflyArithmeticPolicy {
+    CUBUTTERFLY_ARITHMETIC_STRICT = 0,
+    CUBUTTERFLY_ARITHMETIC_ALLOW_FP16_MMA
+} cubutterflyArithmeticPolicy_t;
+
 typedef enum cubutterflyOutputRounding {
     CUBUTTERFLY_ROUNDING_STAGE_STORAGE = 0,
     CUBUTTERFLY_ROUNDING_FINAL_STORAGE
@@ -215,6 +220,8 @@ CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetFftOutputScale(
  * Non-default scales require an implemented floating-point lowering. */
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetOutputScale(
     cubutterflyDescriptor_t descriptor, double scale);
+CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetArithmeticPolicy(
+    cubutterflyDescriptor_t descriptor, cubutterflyArithmeticPolicy_t policy);
 CUBUTTERFLYAPI cubutterflyStatus_t cubutterflySetOutputRounding(
     cubutterflyDescriptor_t descriptor, cubutterflyOutputRounding_t rounding);
 /* A NULL side selects its packed axis strides, resolved from its own shape.

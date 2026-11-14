@@ -21,7 +21,7 @@
     },
     "runtime_selection": {
       "role": "exact local points and generated fallback selectors",
-      "paths": ["src/mapping_selector.cpp", "scripts/generate_runtime_selector.py", "results/local_hardware_profile_a100_gpu1_special"]
+      "paths": ["src/mapping_selector.cpp", "scripts/generate_runtime_selector.py"]
     }
   },
   "compatibility_profiles": {

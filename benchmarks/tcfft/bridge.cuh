@@ -37,6 +37,14 @@ extern "C" int tcfft_baseline_create(int n, int batch, void **result) {
     case 16777216: case 33554432: case 67108864: case 134217728: break;
     default: return cudaErrorInvalidValue;
     }
+    // The pinned host creator selects Volta fragment layouts unconditionally.
+    // This adapter is built for SM80; use the upstream Ampere implementations.
+    int device = 0;
+    cudaDeviceProp properties{};
+    cudaError_t device_code = cudaGetDevice(&device);
+    if (device_code == cudaSuccess) device_code = cudaGetDeviceProperties(&properties, device);
+    if (device_code != cudaSuccess) return device_code;
+    if (properties.major != 8) return cudaErrorNotSupported;
     auto *p = new BaselinePlan;
     tcfftCreate(&p->fft, n, batch);
     cudaError_t code = cudaGetLastError();
@@ -44,6 +52,11 @@ extern "C" int tcfft_baseline_create(int n, int batch, void **result) {
         baseline_free(p);
         return code == cudaSuccess ? cudaErrorMemoryAllocation : code;
     }
+    p->fft.layer_0[0] = layer_256_0_A100<32, 8>;
+    p->fft.layer_0[1] = layer_512_0_A100<16, 8>;
+    p->fft.layer_0[2] = layer_1024_0_A100<8, 8>;
+    p->fft.layer_1[0] = layer_256_1_A100<32, 8>;
+    p->fft.layer_1[1] = layer_512_1_A100<16, 8>;
     const int cont[] = {32, 16, 8};
     int step = 1;
     for (int i = 0; i < p->fft.n_mergings; ++i) {
@@ -74,6 +87,11 @@ extern "C" int tcfft_baseline_create(int n, int batch, void **result) {
     code = cudaMalloc(&p->reverse, sizeof(int) * static_cast<size_t>(n));
     if (code == cudaSuccess) code = cudaMalloc(&p->scratch, sizeof(half2) * static_cast<size_t>(n) * batch);
     if (code == cudaSuccess) code = cudaMemcpy(p->reverse, a.data(), sizeof(int) * static_cast<size_t>(n), cudaMemcpyHostToDevice);
+    if (code != cudaSuccess) { baseline_free(p); return code; }
+    // All coefficient/reverse H2D uploads above use the default stream.
+    // Torch callers may execute on nonblocking streams: publish only a ready
+    // plan. Initialization and this wait remain outside capture and timing.
+    code = cudaStreamSynchronize(nullptr);
     if (code != cudaSuccess) { baseline_free(p); return code; }
     *result = p;
     return cudaSuccess;

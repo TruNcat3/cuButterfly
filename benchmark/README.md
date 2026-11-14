@@ -180,6 +180,10 @@ quantized sources and diagnostic reference, records exact vendor binding gaps,
 and keeps raw and scaled-input cohorts separate. Preparation establishes no
 GPU performance, fair comparison coverage, or numerical acceptance.
 
+The [external transform extensions](../docs/benchmarks/external-extensions.md)
+cover GPU-FFT, HadaCore and restricted tcFFT contracts, the separate FP16 FWHT
+population, and CPU preparation, guarded measurement and resume commands.
+
 ## Reproduce archived populations
 
 [`scopes/a100_80gb_research_v1.json`](scopes/a100_80gb_research_v1.json) records

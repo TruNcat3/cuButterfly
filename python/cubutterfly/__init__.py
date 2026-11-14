@@ -93,6 +93,11 @@ class LengthMode(IntEnum):
     ZERO_EXTENDED_EMBEDDING = 1
 
 
+class ArithmeticPolicy(IntEnum):
+    STRICT = 0
+    ALLOW_FP16_MMA = 1
+
+
 class OutputRounding(IntEnum):
     STAGE_STORAGE = 0
     FINAL_STORAGE = 1
@@ -112,6 +117,7 @@ class Transform:
     fft_output_scale: float = 1.0
     output_scale: float = 1.0
     output_rounding: int = OutputRounding.STAGE_STORAGE
+    arithmetic_policy: int = ArithmeticPolicy.STRICT
     length_mode: int = LengthMode.STANDARD
     input_strides: list = field(default_factory=list)
     output_strides: list = field(default_factory=list)
@@ -159,7 +165,7 @@ class Library:
             "SetShape": [p, ct.c_uint32, pn, n], "SetExecutionMode": [p, i],
             "SetFftTransformType": [p, i], "SetFftOutputScale": [p, ct.c_double],
             "SetOutputScale": [p, ct.c_double],
-            "SetOutputRounding": [p, i],
+            "SetOutputRounding": [p, i], "SetArithmeticPolicy": [p, i],
             "SetStrides": [p, pn, n, pn, n], "SetLogicalOrders": [p, pi, pi],
             "SetDirection": [p, i, i], "SetPlacement": [p, i], "SetLengthMode": [p, i],
             "SetAlgorithmPolicy": [p, i, ct.c_char_p],
@@ -181,7 +187,7 @@ class Library:
         self._functions = {}
         for name, args in signatures.items():
             function = getattr(self._dll, "cubutterfly" + name, None)
-            if function is None and name in ("SetOutputScale", "SetOutputRounding", "ExecuteSteady"):
+            if function is None and name in ("SetOutputScale", "SetOutputRounding", "SetArithmeticPolicy", "ExecuteSteady"):
                 continue
             if function is None:
                 raise AttributeError("library is missing cubutterfly" + name)
@@ -249,7 +255,7 @@ class Descriptor:
             if not isinstance(getattr(t, name), bool):
                 raise TypeError(f"{name} must be bool")
         enum_names = ("op", "storage", "compute", "fft_type", "length_mode", "input_order",
-                      "output_order", "execution_mode", "output_rounding")
+                      "output_order", "execution_mode", "output_rounding", "arithmetic_policy")
         enums = {name: _integer(getattr(t, name), name, ct.c_int) for name in enum_names}
         policy = _integer(options.policy, "policy", ct.c_int)
         mode = _integer(options.execution_mode, "options.execution_mode", ct.c_int)
@@ -283,7 +289,8 @@ class Descriptor:
         call("SetFftTransformType", enums["fft_type"])
         call("SetFftOutputScale", t.fft_output_scale)
         for name, value, default in (("SetOutputScale", t.output_scale, 1.0),
-                                     ("SetOutputRounding", enums["output_rounding"], 0)):
+                                     ("SetOutputRounding", enums["output_rounding"], 0),
+                                     ("SetArithmeticPolicy", enums["arithmetic_policy"], 0)):
             if getattr(self.library._dll, "cubutterfly" + name, None) is not None:
                 call(name, value)
             elif value != default:

@@ -45,6 +45,7 @@ def support(n: int, batch: int, *, precision="fp16", accumulation="fp16",
             step *= radix
     return {"supported": not reasons, "reasons": reasons, "n": n, "batch": batch,
             "provider": "tcFFT", "upstream_commit": COMMIT,
+            "kernel_variant": "upstream A100 WMMA fragment layouts", "device_major_required": 8,
             "storage_precision": "fp16", "multiply_precision": "fp16",
             "accumulator_type": "fp16", "input_order": "natural",
             "output_order": "natural", "placement": "contiguous C2C",
@@ -93,7 +94,10 @@ def build(output: Path, nvcc="/usr/local/cuda-12.4/bin/nvcc", upstream=ROOT / "e
     (output / "build.json").write_text(json.dumps({"upstream_commit": COMMIT, "source_sha256": SOURCE_SHA256,
         "header_sha256": HEADER_SHA256, "command": command, "gpu_execution": False,
         "changes": ["explicit stream launch argument", "move function attributes to plan creation",
-                    "append independent C ABI bridge"]}, indent=2) + "\n")
+                    "append independent C ABI bridge",
+                    "select upstream A100 kernels for SM80; reject non-Ampere devices",
+                    "complete default-stream initialization uploads before publishing plan"],
+        "bridge_sha256": hashlib.sha256((ROOT / "benchmarks/tcfft/bridge.cuh").read_bytes()).hexdigest()}, indent=2) + "\n")
     return library
 
 

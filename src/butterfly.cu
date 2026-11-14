@@ -21,6 +21,7 @@
 #include "generated_unit_api.cuh"
 #include "mapping_selector.hpp"
 #include "fwht_contract.hpp"
+#include "hadacore_provider.hpp"
 #include "temporal_tile_contract.hpp"
 #include "fft_local_core_contract.hpp"
 #include "stage_pipeline.cuh"
@@ -578,6 +579,28 @@ class ButterflyPlan::Impl {
             auto selected = detail::select_butterfly_mapping(std::move(config_));
             config_       = std::move(selected.config);
             selection_    = std::move(selected.info);
+        }
+        if (config_.local_core != "native") {
+            if(config_.local_core!="hadacore-local-tile" || !detail::hada_domain(config_) ||
+               config_.stage_partition != std::vector<std::uint32_t>{config_.log_n} || config_.stage_overlap)
+                throw std::invalid_argument("unsupported HadaCore semantic/layout/group contract");
+            hadacore_=std::make_unique<detail::HadaCoreProvider>(config_);
+            points_=std::size_t{1}<<config_.log_n;
+            config_.batch_stride=points_;data_elements_=points_*config_.batch;data_bytes_=2*data_elements_;
+            dataflow_plan_=make_dataflow_plan(config_);
+            dataflow_plan_.execution_groups.clear();
+            ExecutionGroup g;g.stage_count=config_.log_n;g.core="hadacore-local-tile";
+            g.threads=config_.tile_threads;g.compiler_resources_known=true;
+            g.compiler_registers_per_thread=hadacore_->resources.registers_per_thread;
+            g.compiler_local_resources_known=true;g.compiler_local_bytes_per_thread=hadacore_->resources.local_bytes_per_thread;
+            const auto& r=hadacore_->row.at("resources");
+            g.static_shared_bytes=hadacore_->resources.static_shared_bytes;
+            g.dynamic_shared_bytes=r.at("dynamic_shared_bytes");g.shared_components_known=true;
+            g.live_shared_bytes=g.static_shared_bytes+g.dynamic_shared_bytes;
+            g.grid_ctas=(data_elements_/(256*config_.tile_threads/32*config_.hadacore_chunks)+config_.hadacore_groups_per_block-1)/config_.hadacore_groups_per_block;
+            dataflow_plan_.execution_groups.push_back(g);dataflow_plan_.executable=true;
+            dataflow_plan_.state=CandidateState::Compiled;
+            return;
         }
         if (config_.log_n == 0 || config_.log_n > 30 ||
             (config_.log_n > 20 && config_.backend != ButterflyBackend::SharedIterative && config_.backend != ButterflyBackend::FactorStreamed &&
@@ -1924,6 +1947,7 @@ class ButterflyPlan::Impl {
             return;
         }
 
+        if (hadacore_) {hadacore_->execute(config_,input_buffer,output_buffer,stream_);return;}
         if (config_.op == ButterflyOperator::Fwht) {
             if (config_.precision == ButterflyPrecision::Fp64) {
                 const FwhtOperator<double> op{config_.inverse, config_.normalize_inverse};
@@ -2443,6 +2467,7 @@ class ButterflyPlan::Impl {
     }
 
     ButterflyConfig config_;
+    std::unique_ptr<detail::HadaCoreProvider> hadacore_;
     std::unique_ptr<ButterflyPlan> promoted_fwht_;
     std::size_t promoted_offset_ = 0, promoted_buffer_bytes_ = 0;
     int probe_group_ = -1;

@@ -293,6 +293,14 @@ int main() {
         check(!old_json.at("semantics").contains("output_scale") &&
                   !old_json.at("semantics").contains("output_rounding"), "legacy JSON identity");
         check(descriptor_json(descriptor_from_json(old_json)) == old_json, "legacy JSON round trip");
+        auto mma = legacy;mma.op=CUBUTTERFLY_OPERATOR_FWHT;mma.storage=CUBUTTERFLY_DATA_FP16;
+        mma.compute=CUBUTTERFLY_COMPUTE_NATIVE;mma.arithmetic_policy=CUBUTTERFLY_ARITHMETIC_ALLOW_FP16_MMA;
+        auto mj=descriptor_json(mma);
+        check(mj.at("semantics").at("arithmetic_policy")==1,"MMA semantic policy serialized");
+        check(descriptor_json(descriptor_from_json(mj))==mj,"MMA semantic roundtrip");
+        check(!old_json.at("semantics").contains("arithmetic_policy"),"strict legacy identity preserved");
+        mma.direction=CUBUTTERFLY_DIRECTION_INVERSE;
+        invalid([&]{normalize_descriptor(mma);});mma.direction=CUBUTTERFLY_DIRECTION_FORWARD;
         auto scaled = legacy;
         scaled.op = CUBUTTERFLY_OPERATOR_FWHT;
         scaled.storage = CUBUTTERFLY_DATA_FP16;

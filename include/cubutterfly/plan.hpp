@@ -45,6 +45,7 @@ struct Transform {
     double fft_output_scale = 1.0;
     double output_scale = 1.0;
     cubutterflyOutputRounding_t output_rounding = CUBUTTERFLY_ROUNDING_STAGE_STORAGE;
+    cubutterflyArithmeticPolicy_t arithmetic_policy = CUBUTTERFLY_ARITHMETIC_STRICT;
 };
 
 struct PlanOptions {
@@ -121,6 +122,7 @@ class Descriptor {
         check(cubutterflySetFftOutputScale(raw, transform.fft_output_scale));
         check(cubutterflySetOutputScale(raw, transform.output_scale));
         check(cubutterflySetOutputRounding(raw, transform.output_rounding));
+        check(cubutterflySetArithmeticPolicy(raw, transform.arithmetic_policy));
         check(cubutterflySetStrides(raw,
               transform.input_strides.empty() ? nullptr : transform.input_strides.data(), transform.input_batch_stride,
               transform.output_strides.empty() ? nullptr : transform.output_strides.data(), transform.output_batch_stride));

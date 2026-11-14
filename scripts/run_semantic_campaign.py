@@ -10,6 +10,7 @@ import argparse
 import copy
 import ctypes as ct
 import hashlib
+import importlib
 import json
 import math
 import os
@@ -540,7 +541,7 @@ def _time_execute_current_stream(torch, stream, execute, reset, in_place, verify
 
 def run_case(case, library, torch, stream, timing=False, reference_max_elements=1048576,
              ntt_max_operations=16777216, vkfft_library=None, float_verdict='error-report', error_dir=None,
-             gpuntt_library=None):
+             gpuntt_library=None, baseline_names=None, prepared=None, selection_policy=None):
     """Execute one unchanged descriptor, return explicit terminal result and gaps."""
     import cubutterfly as cb
     descriptor = case['descriptor']
@@ -564,9 +565,19 @@ def run_case(case, library, torch, stream, timing=False, reference_max_elements=
         points = s['batch'] * max(_product(side_extents(s, side)) for side in ('input', 'output'))
         if points > reference_max_elements:
             raise Gap('validation-unavailable', f'all-elements bound exceeded: {points}>{reference_max_elements}')
-        source = make_source(s)
-        expected = reference(s, source, reference_max_elements, ntt_max_operations)
+        if prepared is None:
+            source = make_source(s)
+            expected = reference(s, source, reference_max_elements, ntt_max_operations)
+        else:
+            if prepared['s'] != s:
+                raise ValueError('prepared CPU payload semantic mismatch')
+            source, expected = prepared['source'], prepared['expected']
+            row['reference_preparation'] = prepared.get('reference_policy', 'separate CPU preparation')
         chosen = selection_descriptor(descriptor, timing)
+        if selection_policy is not None:
+            if type(selection_policy) is not int or selection_policy not in (0, 1):
+                raise ValueError('automatic selection policy must be DEFAULT=0 or MEASURE=1')
+            chosen['selection']['algorithm_policy'] = selection_policy
         start = time.perf_counter()
         with cb.Descriptor.from_json(library, chosen) as imported:
             plan = cb.Plan(library, imported, stream=stream.cuda_stream)
@@ -579,7 +590,8 @@ def run_case(case, library, torch, stream, timing=False, reference_max_elements=
         row['boundary'] = 'complete public descriptor execution'
         row['category'] = 'adapter' if row['mapping'].get('kind') in ('semantic-boundary', 'numeric-adapter') else 'native-contract'
         row['mapping_kind'] = row['mapping'].get('kind')
-        row['selection_scope'] = 'public MEASURE policy; adapter child selection may exclude fixed boundary cost' if timing else 'public DEFAULT policy'
+        row['selection_scope'] = ('public MEASURE policy; adapter child selection may exclude fixed boundary cost'
+                                  if chosen['selection']['algorithm_policy'] == 1 else 'public DEFAULT policy')
         workspace = torch.empty(max(1, plan.workspace_size()), dtype=torch.uint8, device='cuda')
         if plan.workspace_size():
             plan.set_workspace(workspace, plan.workspace_size())
@@ -636,7 +648,7 @@ def run_case(case, library, torch, stream, timing=False, reference_max_elements=
                                          reset, in_place, lambda: verify(direct_output_raw),
                                          lambda: gpu_output.fill_(0xA5))
         row['baselines'] = run_baselines(case, torch, stream, source, expected, gpu_saved,
-                                         output_initial, timing, vkfft_library, float_verdict, error_dir, gpuntt_library)
+                                         output_initial, timing, vkfft_library, float_verdict, error_dir, gpuntt_library, baseline_names)
         row['status'] = 'accuracy-review-required' if s['storage'] not in (8, 9) and float_verdict == 'error-report' else 'pass'
     except Gap as exc:
         row.update(status=exc.status, error=str(exc))
@@ -659,12 +671,29 @@ def run_case(case, library, torch, stream, timing=False, reference_max_elements=
     return row
 
 
+DEFAULT_BASELINES = ('cufft', 'vkfft', 'daofht', 'gpu-ntt')
+# Packed external cores share the existing timed layout/placement boundary.
+EXTERNAL_CORE_PLUGINS = {'gpu-fft': ('gpufft_baseline', 0),
+                         'hadacore': ('hadacore_baseline', 2)}
+
+
+def selected_baselines(names=None):
+    names = tuple(DEFAULT_BASELINES if names is None else names)
+    allowed = set(DEFAULT_BASELINES) | set(EXTERNAL_CORE_PLUGINS)
+    if not names or len(set(names)) != len(names) or set(names) - allowed:
+        raise ValueError('baseline names must be nonempty, unique and registered')
+    return names
+
+
 def baseline_contract(name, s, vkfft_library=None, gpuntt_library=None):
     """CPU-only exact contract routing, before tensor allocation or backend load."""
-    domains = {'cufft': 0, 'vkfft': 0, 'daofht': 2, 'gpu-ntt': 1}
+    domains = {'cufft': 0, 'vkfft': 0, 'daofht': 2, 'gpu-ntt': 1,
+               **{key: value[1] for key, value in EXTERNAL_CORE_PLUGINS.items()}}
     if name in domains and domains[name] != s['operator']:
         return {'supported': False, 'status': 'not-applicable',
                 'reason': 'baseline operator domain does not include this requested operator', 'metadata': {}}
+    if name in EXTERNAL_CORE_PLUGINS:
+        return importlib.import_module(EXTERNAL_CORE_PLUGINS[name][0]).support(s)
     if name == 'daofht':
         from semantic_dao_baseline import support
         return support(s)
@@ -694,10 +723,10 @@ def baseline_transfer_views(torch, s, physical_input, source, physical_output, o
     return physical_input, source.reshape(-1), physical_output, output.reshape(-1)
 
 
-def run_baselines(case, torch, stream, source, expected, input_saved, output_initial, timing, vkfft_library, float_verdict='error-report', error_dir=None, gpuntt_library=None):
+def run_baselines(case, torch, stream, source, expected, input_saved, output_initial, timing, vkfft_library, float_verdict='error-report', error_dir=None, gpuntt_library=None, baseline_names=None):
     """Vendor cores plus complete GPU gather/scatter and placement boundaries."""
     s = case['descriptor']['semantics']
-    requested = ['cufft', 'vkfft', 'daofht', 'gpu-ntt']
+    requested = selected_baselines(baseline_names)
     results = []
     for name in requested:
         native = None
@@ -728,7 +757,12 @@ def run_baselines(case, torch, stream, source, expected, input_saved, output_ini
             native_source = src if gather else physical_input[:_product(shape)].reshape(shape)
             native_output = out if scatter else physical_output[:_product(shape)].reshape(shape)
             axis_composed = name in ('cufft', 'vkfft') and len(s['shape']) > 3
-            if axis_composed:
+            if name in EXTERNAL_CORE_PLUGINS:
+                plugin = importlib.import_module(EXTERNAL_CORE_PLUGINS[name][0])
+                native = plugin.build_core(torch, s, native_source, native_output, stream)
+                vendor_scale = 1  # Plugin includes the requested inverse normalization.
+                row['metadata'] = native.metadata()
+            elif axis_composed:
                 from semantic_fft_baseline import AxisComposition
                 native = AxisComposition(name, torch, s, native_source, native_output, stream, vkfft_library)
                 vendor_scale = _product(s['shape']) if s['inverse'] and not s['normalize_inverse'] else 1
@@ -764,7 +798,8 @@ def run_baselines(case, torch, stream, source, expected, input_saved, output_ini
             operations = []
             if gather:
                 operations.append('GPU byte-row index_select logical input gather preserving unsigned words' if integer_transfer else 'GPU index_select logical input gather including order')
-            operations.extend(row.get('metadata', {}).get('included_operations', []))
+            metadata = row.get('metadata', {})
+            operations.extend(metadata.get('included_operations', metadata.get('timed_operations', [])))
             if factor != 1:
                 operations.append(f'GPU multiply output by {factor!r}')
             if scatter:
@@ -1017,6 +1052,8 @@ def main(argv=None):
     parser.add_argument('--calibration-manifest', type=Path)
     parser.add_argument('--vkfft-library', type=Path)
     parser.add_argument('--gpuntt-library', type=Path, help='prepared exact GPU-NTT bridge; defaults to audited adapter path')
+    parser.add_argument('--baseline', action='append', choices=(*DEFAULT_BASELINES, *EXTERNAL_CORE_PLUGINS),
+                        help='explicit external comparison subset; repeat for several libraries')
     parser.add_argument('--reference-max-elements', type=int, default=1048576)
     parser.add_argument('--ntt-max-operations', type=int, default=16777216,
                         help='exact NTT budget: radix-2 butterflies, or direct DFT terms for arbitrary axes')
@@ -1024,6 +1061,7 @@ def main(argv=None):
     parser.add_argument('--float-verdict', choices=('legacy-fixed', 'error-report'), default='error-report',
                         help='error-report records errors without a floating pass verdict; integers always exact')
     args = parser.parse_args(argv)
+    baseline_names = selected_baselines(args.baseline)
     error_dir = (args.error_directory or args.output / 'errors').resolve()
     if min(args.max_cases, args.reference_max_elements, args.ntt_max_operations) < 1:
         parser.error('tranche and oracle bounds must be positive')
@@ -1064,6 +1102,7 @@ def main(argv=None):
                 'ntt_reference_sha256': sha256_file(Path(__file__).with_name('semantic_ntt_reference.py')),
                 'frontend_sha256': sha256_file(cb.__file__), 'numpy': np.__version__,
                 'timing': args.timing, 'population': args.population, 'protocol': protocol,
+                'requested_baselines': list(baseline_names),
                 'error_directory': str(error_dir),
                 'vkfft_sha256': sha256_file(args.vkfft_library) if args.vkfft_library else None}
     limitations = []
@@ -1084,6 +1123,14 @@ def main(argv=None):
     from semantic_gpuntt_baseline import DEFAULT_LIBRARY, backend_inventory as gpuntt_inventory
     identity['gpuntt_baseline'] = {'adapter_sha256': sha256_file(Path(__file__).with_name('semantic_gpuntt_baseline.py')),
                                    'backend_identity': gpuntt_inventory(args.gpuntt_library or DEFAULT_LIBRARY)}
+    identity['external_core_plugins'] = {}
+    for name in baseline_names:
+        if name in EXTERNAL_CORE_PLUGINS:
+            plugin = importlib.import_module(EXTERNAL_CORE_PLUGINS[name][0])
+            path = Path(plugin.DEFAULT_LIBRARY)
+            identity['external_core_plugins'][name] = {
+                'adapter_sha256': sha256_file(plugin.__file__), 'library': str(path),
+                'library_sha256': sha256_file(path) if path.is_file() else None}
     args.output.mkdir(parents=True, exist_ok=True)
     path = args.output / 'results.json'
     report = {'schema': 'cubutterfly-semantic-results-v1', 'identity': identity,
@@ -1111,7 +1158,7 @@ def main(argv=None):
             for case in selected:
                 exclusive_gpu(args.gpu_uuid)
                 row = run_case(case, library, torch, stream, args.timing,
-                               args.reference_max_elements, args.ntt_max_operations, args.vkfft_library, args.float_verdict, error_dir, args.gpuntt_library)
+                               args.reference_max_elements, args.ntt_max_operations, args.vkfft_library, args.float_verdict, error_dir, args.gpuntt_library, baseline_names)
                 # Never commit a measured pass before the post-run exclusivity
                 # guard. A conflicted case remains pending for a clean rerun.
                 exclusive_gpu(args.gpu_uuid)

@@ -20,6 +20,7 @@
 #include "xd_pair_core.hpp"
 #include "xd_resident.hpp"
 #include "semantic_contract.hpp"
+#include "hadacore_provider.hpp"
 #include "semantic_numeric_kernels.hpp"
 #include "cufftdx_provider.hpp"
 #include <nlohmann/json.hpp>
@@ -808,6 +809,7 @@ void apply_butterfly_algorithm(cuntt::ButterflyConfig& config, const std::string
 }
 
 std::string butterfly_algorithm_id(const cuntt::ButterflyConfig& config) {
+    if (config.local_core != "native") return cuntt::detail::serialize_mapping(config);
     if (config.backend == cuntt::ButterflyBackend::TemporalTile &&
         config.local_exchange == cuntt::LocalExchange::WarpRegister)
         return "temporal-warp-register-radix2";
@@ -3351,6 +3353,14 @@ cubutterflyStatus_t cubutterflySetOutputScale(cubutterflyDescriptor_t descriptor
     });
 }
 
+cubutterflyStatus_t cubutterflySetArithmeticPolicy(cubutterflyDescriptor_t descriptor, cubutterflyArithmeticPolicy_t policy) {
+    return protect([&] {
+        require(descriptor && (policy == CUBUTTERFLY_ARITHMETIC_STRICT ||
+                policy == CUBUTTERFLY_ARITHMETIC_ALLOW_FP16_MMA), "invalid arithmetic policy");
+        descriptor->arithmetic_policy = policy;
+    });
+}
+
 cubutterflyStatus_t cubutterflySetOutputRounding(cubutterflyDescriptor_t descriptor, cubutterflyOutputRounding_t rounding) {
     return protect([&] {
         require(descriptor != nullptr && (rounding == CUBUTTERFLY_ROUNDING_STAGE_STORAGE ||
@@ -4292,7 +4302,11 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
         prepare_xd_permutation_schedule(*created);
         created->direct_output_boundary = !created->xd && created->composite && output_extents == physical_extents &&
                                           packed_side(resolved, false, output_extents);
-        const std::string cache_key = workload_key(resolved);
+        std::string cache_key = workload_key(resolved);
+        if (resolved.arithmetic_policy == CUBUTTERFLY_ARITHMETIC_ALLOW_FP16_MMA) {
+            const char* profile=std::getenv("CUBUTTERFLY_HADACORE_PROFILE");
+            cache_key += std::string("|hadacore-profile=") + (profile && *profile ? cuntt::detail::hada_hash(profile) : "unavailable");
+        }
         const std::string cached_algorithm = resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_DEFAULT
                                                  ? lookup_cache(handle->cache_path, cache_key)
                                                  : std::string{};
@@ -4663,6 +4677,7 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
             created->workspace_bytes = created->ntt->workspace_size();
         } else {
             cuntt::ButterflyConfig config;
+            config.allow_fp16_mma = resolved.arithmetic_policy == CUBUTTERFLY_ARITHMETIC_ALLOW_FP16_MMA;
             config.op = butterfly_operator(resolved.op);
             config.precision = butterfly_precision(resolved);
             const bool low_precision = config.precision == cuntt::ButterflyPrecision::Fp16 ||
@@ -4694,6 +4709,8 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
                 apply_butterfly_algorithm(config, cached_algorithm);
                 created->selection_source = CUBUTTERFLY_SELECTION_USER_CACHE;
             } else if (resolved.algorithm_policy == CUBUTTERFLY_ALGORITHM_MEASURE) {
+                require(!config.allow_fp16_mma,
+                    "MMA arithmetic policy currently supports calibrated AUTO and explicit replay; runtime MEASURE validation is unavailable");
                 const auto tuned = tune_butterfly(config, resolved.storage, handle->stream);
                 apply_butterfly_algorithm(config, tuned.first);
                 created->selection_source = CUBUTTERFLY_SELECTION_RUNTIME_MEASURED;
@@ -4718,6 +4735,8 @@ cubutterflyStatus_t cubutterflyCreatePlan(cubutterflyHandle_t handle, cubutterfl
                                  "-" + cuntt::compute_unit_name(created->butterfly->config().compute_unit);
             if (created->butterfly->config().fft_core != cuntt::FftCore::Scalar)
                 created->algorithm += std::string("/") + cuntt::fft_core_name(created->butterfly->config().fft_core);
+            if (created->butterfly->config().local_core != "native")
+                created->algorithm = cuntt::detail::serialize_mapping(created->butterfly->config());
             created->workspace_bytes = created->butterfly->workspace_size();
             if (config.final_storage_rounding)
                 created->reason += "; FP32 arithmetic through explicit output scale and final FP16 narrowing; "

@@ -88,6 +88,20 @@ std::vector<ButterflyCapability> butterfly_capabilities() {
     };
 }
 
+std::vector<ButterflyProviderCapability> butterfly_provider_capabilities() {
+    // HadaCore's current adapter is a complete transform.  Keep it visible to
+    // the common inventory as a candidate strategy, but do not let a planner
+    // mistake it for an executable local tile until the tile ABI is available.
+    return {
+        {"hadacore", ButterflyOperator::Fwht, ButterflyPrecision::Fp16,
+         "fp16-mma-orthonormal-final-scale", 1, 15, true, false, true,
+         "packed natural FWHT; N<=32768 and N*batch divisible by 256; local tile ABI pending"},
+        {"hadacore-local-tile", ButterflyOperator::Fwht, ButterflyPrecision::Fp16,
+         "fp16-mma-orthonormal-final-scale", 1, 15, false, true, true,
+         "packed natural forward out-of-place FP16; explicit ALLOW_FP16_MMA policy and target-local validated per-case/chunks/groups calibration required"},
+    };
+}
+
 const char* complex_multiply_name(ComplexMultiply multiply) noexcept {
     switch (multiply) {
         case ComplexMultiply::FourMul:

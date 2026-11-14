@@ -165,6 +165,20 @@ mechanism/ablation studies and application tracks. Migrate those separately with
 their own contracts and reports. BF16 is deferred; this runbook makes no native
 BF16 performance claim. See the [population contract](../../config/paper_portability/README.md).
 
+## Separate external extensions
+
+After the main flow, follow the [target-host FFT17 and optional MMA9 workflow](../benchmarks/external-extensions.md#target-host-fft17-and-optional-mma9).
+It uses this target's CUDA/conda installation and its own calibration bindings;
+quick12/full66 remain the primary comparison. CPU preparation precedes a bounded
+idle watcher and a separate summary. MMA9 additionally requires target-local
+native/MMA calibration and public AUTO validation under explicit arithmetic
+policy. A100 profiles cannot supply that evidence.
+
+GPU-FFT can be built explicitly for SM120. HadaCore comparator/tile builds emit
+compute80 PTX for target JIT; Blackwell execution still needs target validation.
+The tcFFT bridge is hard-gated to compute-capability major 8 and builds SM80
+only, so it is unsupported on SM120 pending a port. Keep that gate intact.
+
 ## Preparation validation, November 7
 
 The migration entry passes 23 CPU contract tests. The real cuFFTDx compile probe

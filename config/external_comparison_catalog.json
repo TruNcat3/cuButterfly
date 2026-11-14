@@ -88,6 +88,35 @@
       "scope": "cross-platform complete GPU FFT library; pinned versions and exact contracts are recorded per campaign"
     },
     {
+      "id": "gpu-fft",
+      "name": "GPU-FFT",
+      "compute_types": [
+        "fft-h"
+      ],
+      "precision_support": {
+        "provider": {
+          "fft-h": [
+            "fp32",
+            "fp64"
+          ]
+        },
+        "local_measured": {
+          "fft-h": []
+        },
+        "constraints": "Rank-one power-of-two complex transforms, exact index and batch limits enforced by adapter. GPU validation required per request."
+      },
+      "comparison_class": "direct-baseline",
+      "operators": [
+        "fft"
+      ],
+      "status": "prepared",
+      "runner": "scripts/gpufft_baseline.py",
+      "source": "https://github.com/Alisah-Ozcan/GPU-FFT",
+      "upstream_commit": "7f05858f7af7c0bbf55a77472426d9ac56ec6b23",
+      "license": "Apache-2.0",
+      "scope": "Complete external transform, both directions. Timed copy/permutation around unchanged upstream CT/GS kernels aligns the requested sign and natural order. Graph, numeric and timing evidence are campaign scoped."
+    },
+    {
       "id": "dao-fht",
       "name": "Dao-AILab fast-hadamard-transform",
       "comparison_class": "direct-baseline",
@@ -144,15 +173,25 @@
     },
     {
       "id": "tcfft",
-      "compute_types": ["fft-l"],
+      "compute_types": [
+        "fft-l"
+      ],
       "precision_support": {
-        "provider": {"fft-l": ["fp16"]},
-        "local_measured": {"fft-l": []},
+        "provider": {
+          "fft-l": [
+            "fp16"
+          ]
+        },
+        "local_measured": {
+          "fft-l": []
+        },
         "constraints": "Upstream half Tensor Core implementation; local adapter CPU-compiled for SM80, GPU execution and CUDA Graph behavior unverified"
       },
       "name": "tcFFT",
-      "comparison_class": "processing-unit",
-      "operators": ["fft"],
+      "comparison_class": "direct-baseline",
+      "operators": [
+        "fft"
+      ],
       "status": "prepared",
       "runner": "scripts/tcfft_baseline.py",
       "local_adapter_status": "cpu-compiled-graph-unverified",
@@ -165,7 +204,7 @@
         "validation": "CPU compilation and contract tests only; no GPU availability, correctness, performance or Graph validation claim"
       },
       "source": "https://github.com/rox906/tcFFT",
-      "scope": "Prepared rank-1 forward unnormalized C2C FP16 storage/multiply/WMMA accumulation adapter with explicit reorder/copy; exact length, batch-divisibility and grid limits checked by scripts/tcfft_baseline.py:support; GPU validation pending"
+      "scope": "Restricted rank-1 forward C2C FP16 external transform with timed reorder and output copy; uses upstream Ampere dispatch on SM80. Exact lengths and batch limits are checked by scripts/tcfft_baseline.py:support. GPU validation is tracked per campaign."
     },
     {
       "id": "fftx-spectralpack",
@@ -266,12 +305,19 @@
     {
       "id": "hadacore",
       "name": "HadaCore",
-      "comparison_class": "processing-unit",
-      "operators": ["fwht"],
-      "status": "source-only",
-      "runner": null,
-      "source": "https://arxiv.org/abs/2412.08832",
-      "scope": "Tensor-Core Hadamard processing unit; no matching local adapter is installed"
+      "comparison_class": "direct-baseline",
+      "operators": [
+        "fwht"
+      ],
+      "status": "measured",
+      "runner": "scripts/hadacore_baseline.py",
+      "integration_roles": ["external-comparator", "candidate-local-core-strategy"],
+      "local_provider_status": "strategy-only-pending-tile-abi",
+      "source": "https://github.com/pytorch-labs/applied-ai/tree/2391954b19988bd76cf3c2ea84c1ce74b68d568b/kernels/cuda/inference/hadamard_transform",
+      "scope": "Complete supplied-output FP16 FWHT through upstream run_fht plus timed normalization adaptation. Natural packed requests only, length <=32768 and N*batch divisible by256. Internal normalization and Tensor Core rounding differ from radix-2 FP16; report both errors. Eleven A100 80GB integration probes have complete error reports; out-of-place Graph and in-place event protocols remain separate. This does not establish calibrated cuButterfly selection or floating numerical acceptance.",
+      "upstream_commit": "2391954b19988bd76cf3c2ea84c1ce74b68d568b",
+      "license": "BSD-3-Clause",
+      "evidence": "experiments/reports/EXTERNAL_COMPARATORS_20261111.md"
     },
     {
       "id": "tensorir",

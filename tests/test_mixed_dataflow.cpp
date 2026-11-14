@@ -2,8 +2,10 @@
 #include "cuntt/appt_layout.hpp"
 
 #include <iostream>
+#include <algorithm>
 #include <limits>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -26,6 +28,21 @@ int main() try {
     for (const auto& capability : butterfly_capabilities())
         if (capability.backend==ButterflyBackend::SharedIterative) shared_advertised=capability.max_log_n==30;
     require(shared_advertised,"common shared lowering missing from capability inventory");
+    const auto providers = butterfly_provider_capabilities();
+    const auto hada = std::find_if(providers.begin(), providers.end(), [](const auto& p) {
+        return std::string(p.name) == "hadacore";
+    });
+    require(hada != providers.end(), "HadaCore strategy missing from provider inventory");
+    require(hada->complete_transform_executable && !hada->local_tile_executable,
+            "HadaCore comparator must not be silently treated as a local tile");
+    require(hada->requires_explicit_arithmetic_contract,
+            "HadaCore arithmetic contract must remain explicit");
+    const auto local_hada = std::find_if(providers.begin(), providers.end(), [](const auto& p) {
+        return std::string(p.name) == "hadacore-local-tile";
+    });
+    require(local_hada != providers.end() && !local_hada->complete_transform_executable &&
+                local_hada->local_tile_executable && local_hada->requires_explicit_arithmetic_contract,
+            "local HadaCore ABI requires explicit arithmetic and per-case calibration gate");
     ButterflyConfig large_reference;
     large_reference.op=ButterflyOperator::Fft; large_reference.backend=ButterflyBackend::CuFft; large_reference.log_n=24;
     require(check_lowering(make_dataflow_plan(large_reference))==LoweringStatus::RequiresBackendValidation,

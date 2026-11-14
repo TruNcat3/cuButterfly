@@ -588,6 +588,11 @@ target_include_directories(cubutterfly_semantic_contract_tests PRIVATE src inclu
 target_link_libraries(cubutterfly_semantic_contract_tests PRIVATE CUDA::cudart nlohmann_json::nlohmann_json)
 target_compile_features(cubutterfly_semantic_contract_tests PRIVATE cxx_std_17)
 target_compile_options(cubutterfly_semantic_contract_tests PRIVATE -Wall -Wextra -UNDEBUG)
+add_executable(cubutterfly_hadacore_profile_tests tests/test_hadacore_profile.cpp)
+target_include_directories(cubutterfly_hadacore_profile_tests PRIVATE src include)
+target_link_libraries(cubutterfly_hadacore_profile_tests PRIVATE CUDA::cudart nlohmann_json::nlohmann_json ${CMAKE_DL_LIBS})
+target_compile_features(cubutterfly_hadacore_profile_tests PRIVATE cxx_std_17)
+target_compile_options(cubutterfly_hadacore_profile_tests PRIVATE -Wall -Wextra -UNDEBUG)
 add_executable(cubutterfly_cpp_descriptor_tests tests/test_cpp_descriptor.cpp)
 target_link_libraries(cubutterfly_cpp_descriptor_tests PRIVATE cuntt)
 target_compile_options(cubutterfly_cpp_descriptor_tests PRIVATE -Wall -Wextra -UNDEBUG)
@@ -742,6 +747,8 @@ if(BUILD_TESTING)
     target_link_libraries(cubutterfly_online_reorder_grouping_tests PRIVATE cuntt)
     add_test(NAME online_reorder_grouping COMMAND cubutterfly_online_reorder_grouping_tests)
     add_test(NAME hardware_model_cpu COMMAND cubutterfly_hardware_model_tests)
+    add_test(NAME hadacore_profile_cpu COMMAND cubutterfly_hadacore_profile_tests)
+    set_tests_properties(hadacore_profile_cpu PROPERTIES LABELS "cpu;hadacore")
     add_test(NAME static_ranking_cpu COMMAND "${CMAKE_COMMAND}" -E env
         "CUBUTTERFLY_TEST_PYTHON=${Python3_EXECUTABLE}" $<TARGET_FILE:cubutterfly_static_ranking_tests>
         "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -817,6 +824,58 @@ if(BUILD_TESTING)
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mapping_selector.py")
     add_test(NAME external_baseline_suite
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_external_baseline_suite.py")
+    add_test(NAME comparator_extension
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_comparator_extension.py")
+    set_tests_properties(comparator_extension PROPERTIES LABELS "cpu;external-comparator")
+    add_test(NAME watch_comparator_extension
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_watch_comparator_extension.py")
+    set_tests_properties(watch_comparator_extension PROPERTIES LABELS "cpu;external-comparator")
+    add_test(NAME summarize_comparator_extension
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_summarize_comparator_extension.py")
+    set_tests_properties(summarize_comparator_extension PROPERTIES LABELS "cpu;external-comparator")
+    add_test(NAME validate_external_comparator
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_validate_external_comparator.py")
+    set_tests_properties(validate_external_comparator PROPERTIES LABELS "cpu;external-comparator")
+    add_test(NAME gpufft_baseline
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_gpufft_baseline.py")
+    set_tests_properties(gpufft_baseline PROPERTIES LABELS "cpu;external-comparator")
+    add_test(NAME hadacore_baseline
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_hadacore_baseline.py")
+    set_tests_properties(hadacore_baseline PROPERTIES LABELS "cpu;external-comparator")
+    add_test(NAME tcfft_baseline
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_tcfft_baseline.py")
+    set_tests_properties(tcfft_baseline PROPERTIES LABELS "cpu;external-comparator")
+    add_test(NAME hadacore_local_core_contract
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_hadacore_local_core_contract.py")
+    set_tests_properties(hadacore_local_core_contract PROPERTIES LABELS "cpu;external-comparator")
+    add_test(NAME validate_hadacore_tile
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_validate_hadacore_tile.py")
+    set_tests_properties(validate_hadacore_tile PROPERTIES LABELS "cpu;external-comparator")
+    add_test(NAME validate_hadacore_public
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_validate_hadacore_public.py")
+    set_tests_properties(validate_hadacore_public PROPERTIES LABELS "cpu;external-comparator")
+    add_test(NAME calibrate_hadacore_tile
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_calibrate_hadacore_tile.py")
+    set_tests_properties(calibrate_hadacore_tile PROPERTIES LABELS "cpu;external-comparator")
+    add_test(NAME calibrate_hadacore_native
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_calibrate_hadacore_native.py")
+    set_tests_properties(calibrate_hadacore_native PROPERTIES LABELS "cpu;external-comparator")
+    add_test(NAME trace_fwht_comparator
+             COMMAND "${Python3_EXECUTABLE}" -m pytest -q
+                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_trace_fwht_comparator.py")
+    set_tests_properties(trace_fwht_comparator PROPERTIES LABELS "cpu;external-comparator")
     add_test(NAME scaling_ncu_analysis
              COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_scaling_ncu_analysis.py")
     add_test(NAME packet_streaming_v06_comparison

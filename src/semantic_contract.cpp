@@ -200,6 +200,14 @@ cubutterflyDescriptor normalize_descriptor(const cubutterflyDescriptor& source) 
     require(std::isfinite(d.fft_output_scale), "FFT output scale must be finite");
     require(std::isfinite(d.output_scale), "output scale must be finite");
     enum_range(d.output_rounding, 1);
+    enum_range(d.arithmetic_policy, 1);
+    if (d.arithmetic_policy == CUBUTTERFLY_ARITHMETIC_ALLOW_FP16_MMA)
+        require(d.op == CUBUTTERFLY_OPERATOR_FWHT && d.storage == CUBUTTERFLY_DATA_FP16 &&
+                d.compute == CUBUTTERFLY_COMPUTE_NATIVE && d.rank == 1 &&
+                d.direction == CUBUTTERFLY_DIRECTION_FORWARD &&
+                d.placement == CUBUTTERFLY_PLACEMENT_OUT_OF_PLACE &&
+                d.output_scale == 1.0 && d.output_rounding == CUBUTTERFLY_ROUNDING_STAGE_STORAGE,
+                "FP16 MMA policy currently supports rank-one forward out-of-place native FP16 FWHT only");
     const bool real = d.storage <= CUBUTTERFLY_DATA_FP64;
     const bool complex = d.storage >= CUBUTTERFLY_DATA_COMPLEX_FP16 &&
                          d.storage <= CUBUTTERFLY_DATA_COMPLEX_FP64;
@@ -292,6 +300,12 @@ cubutterflyDescriptor normalize_descriptor(const cubutterflyDescriptor& source) 
     else if (d.op == CUBUTTERFLY_OPERATOR_NTT) d.normalize_inverse = true;
     else if (d.op == CUBUTTERFLY_OPERATOR_SUBSET_ZETA || d.op == CUBUTTERFLY_OPERATOR_SUPERSET_ZETA ||
              d.op == CUBUTTERFLY_OPERATOR_STRUCTURED_2X2) d.normalize_inverse = false;
+    if (d.arithmetic_policy == CUBUTTERFLY_ARITHMETIC_ALLOW_FP16_MMA)
+        require(d.length_mode == CUBUTTERFLY_LENGTH_STANDARD && power_two(d.extents[0]) &&
+            d.input_strides == std::vector<std::size_t>{1} && d.output_strides == d.input_strides &&
+            d.input_batch_stride == d.extents[0] && d.output_batch_stride == d.extents[0] &&
+            d.input_orders == std::vector<cubutterflyLogicalOrder_t>{CUBUTTERFLY_ORDER_NATURAL} &&
+            d.output_orders == d.input_orders, "FP16 MMA policy currently requires packed natural power-of-two layout");
     return d;
 }
 
@@ -314,6 +328,8 @@ json semantic_json(const cubutterflyDescriptor& descriptor) {
             {"modulus", d.op == CUBUTTERFLY_OPERATOR_NTT ? json(d.modulus) : json(nullptr)},
             {"word_bits", d.op == CUBUTTERFLY_OPERATOR_NTT ? json(d.word_bits) : json(nullptr)}, {"matrices", matrices}};
     if (d.output_scale != 1.0) result["output_scale"] = d.output_scale;
+    if (d.arithmetic_policy != CUBUTTERFLY_ARITHMETIC_STRICT)
+        result["arithmetic_policy"] = int(d.arithmetic_policy);
     if (d.output_rounding != CUBUTTERFLY_ROUNDING_STAGE_STORAGE)
         result["output_rounding"] = int(d.output_rounding);
     return result;
@@ -334,6 +350,7 @@ cubutterflyDescriptor descriptor_from_json(const json& value) {
     auto required_semantics = s;
     required_semantics.erase("output_scale");
     required_semantics.erase("output_rounding");
+    required_semantics.erase("arithmetic_policy");
     exact_fields(required_semantics, {"schema", "operator", "storage", "compute", "shape", "batch", "inverse", "normalize_inverse",
                      "placement", "fft_type", "fft_output_scale", "length_mode", "input_strides", "output_strides",
                      "input_batch_stride", "output_batch_stride", "modulus", "word_bits", "matrices",
@@ -360,6 +377,8 @@ cubutterflyDescriptor descriptor_from_json(const json& value) {
     require(s.at("normalize_inverse").is_boolean(), "JSON boolean required");
     d.normalize_inverse = s.at("normalize_inverse").get<bool>();
     d.fft_output_scale = real_number(s.at("fft_output_scale"));
+    if (s.contains("arithmetic_policy"))
+        d.arithmetic_policy = enumeration<cubutterflyArithmeticPolicy_t>(s.at("arithmetic_policy"), 1);
     if (s.contains("output_scale")) d.output_scale = real_number(s.at("output_scale"));
     if (s.contains("output_rounding"))
         d.output_rounding = enumeration<cubutterflyOutputRounding_t>(s.at("output_rounding"), 1);

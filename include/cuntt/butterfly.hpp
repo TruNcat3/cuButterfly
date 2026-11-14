@@ -126,6 +126,23 @@ struct ButterflyCapability {
     const char*      constraint;
 };
 
+// External/local provider inventory is separate from backend capability.  A
+// provider may be a complete-transform comparator while its local-core ABI is
+// still unavailable.  Callers must inspect local_tile_executable before adding
+// it to an executable plan.
+struct ButterflyProviderCapability {
+    const char*          name;
+    ButterflyOperator     op;
+    ButterflyPrecision    storage_precision;
+    const char*           arithmetic_contract;
+    std::uint32_t         min_log_n;
+    std::uint32_t         max_log_n;
+    bool                   complete_transform_executable;
+    bool                   local_tile_executable;
+    bool                   requires_explicit_arithmetic_contract;
+    const char*            constraint;
+};
+
 enum class ComplexMultiply {
     FourMul,
     Gauss3,
@@ -215,6 +232,7 @@ struct FftBoundaryMapping {
 };
 
 std::vector<ButterflyCapability> butterfly_capabilities();
+std::vector<ButterflyProviderCapability> butterfly_provider_capabilities();
 
 // Compiled local units, not a claim of whole-plan legality or performance.
 struct FftOnlineProcessingUnit {
@@ -226,6 +244,10 @@ struct FftOnlineProcessingUnit {
 std::vector<FftOnlineProcessingUnit> fft_online_processing_units();
 
 struct ButterflyConfig {
+    bool allow_fp16_mma = false;
+    std::string local_core = "native";
+    unsigned hadacore_chunks = 0, hadacore_groups_per_block = 1;
+    std::string hadacore_library_sha256, hadacore_profile_sha256;
     ButterflyOperator  op                = ButterflyOperator::Fwht;
     ButterflyBackend   backend           = ButterflyBackend::StagePipeline;
     ButterflyPrecision precision         = ButterflyPrecision::Fp32;

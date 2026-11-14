@@ -20,6 +20,7 @@ struct cubutterflyDescriptor {
     double fft_output_scale = 1.0;
     double output_scale = 1.0;
     cubutterflyOutputRounding_t output_rounding = CUBUTTERFLY_ROUNDING_STAGE_STORAGE;
+    cubutterflyArithmeticPolicy_t arithmetic_policy = CUBUTTERFLY_ARITHMETIC_STRICT;
     cubutterflyAlgorithmPolicy_t algorithm_policy = CUBUTTERFLY_ALGORITHM_DEFAULT;
     std::string explicit_algorithm;
     std::uint32_t rank = 1;

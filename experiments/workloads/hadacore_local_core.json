@@ -1,0 +1,620 @@
+{
+  "schema": "hadacore-local-core-evaluation-v2",
+  "status": "local-abi-with-target-calibration-gate",
+  "scope": "Bounded FP16 FWHT local-core validation, calibration and public selection; each target requires matching evidence",
+  "provider": {
+    "name": "hadacore",
+    "abi": "packed-local-tile-v1",
+    "local_tile_executable": true,
+    "arithmetic_contract": "fp16-mma-orthonormal-final-scale",
+    "requires_explicit_arithmetic_contract": true,
+    "layout": "packed-natural-contiguous",
+    "source_commit": "2391954b19988bd76cf3c2ea84c1ce74b68d568b",
+    "selection_gate": "explicit ALLOW_FP16_MMA + matching target/library/geometry validation + paired same-protocol native calibration",
+    "public_lowering": "one dependency-closed stage group; packed natural forward out-of-place"
+  },
+  "semantic_contract": {
+    "operator": "fwht",
+    "storage_precision": "fp16",
+    "multiply_precision": "fp16",
+    "accumulation_precision": "fp16-mma",
+    "output_rounding": "fp16",
+    "input_order": "natural",
+    "output_order": "natural",
+    "placement": [
+      "out-of-place"
+    ],
+    "normalization": [
+      "forward-unnormalized"
+    ]
+  },
+  "resource_contract": {
+    "sm": [
+      80
+    ],
+    "tile_lengths": [
+      2,
+      4,
+      8,
+      16,
+      32,
+      64,
+      128,
+      256,
+      512,
+      1024,
+      2048,
+      4096,
+      8192,
+      16384,
+      32768
+    ],
+    "batch": [
+      1,
+      2,
+      4,
+      16,
+      64,
+      256
+    ],
+    "threads": [
+      32,
+      64,
+      128,
+      256,
+      512
+    ],
+    "warps_per_block": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "chunks_per_warp": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "dynamic_shared_bytes": "2 * tile_length",
+    "registers_per_thread": "cudaFuncGetAttributes from compiled specialization",
+    "workspace_bytes": 0,
+    "launch_configs_from_upstream": {
+      "log_n_1_to_8": [
+        {
+          "chunks_per_warp": 1,
+          "warps_per_block": 1,
+          "blocks_per_sm": 24
+        },
+        {
+          "chunks_per_warp": 2,
+          "warps_per_block": 1,
+          "blocks_per_sm": 24
+        }
+      ],
+      "log_n_9_to_15": [
+        {
+          "chunks_per_warp": 2,
+          "warps_per_block": 1,
+          "blocks_per_sm": 24
+        },
+        {
+          "chunks_per_warp": 2,
+          "warps_per_block": 2,
+          "blocks_per_sm": 16
+        },
+        {
+          "chunks_per_warp": 2,
+          "warps_per_block": 4,
+          "blocks_per_sm": 8
+        },
+        {
+          "chunks_per_warp": 2,
+          "warps_per_block": 8,
+          "blocks_per_sm": 4
+        },
+        {
+          "chunks_per_warp": 2,
+          "warps_per_block": 16,
+          "blocks_per_sm": 3
+        },
+        {
+          "chunks_per_warp": 4,
+          "warps_per_block": 16,
+          "blocks_per_sm": 2
+        },
+        {
+          "chunks_per_warp": 8,
+          "warps_per_block": 16,
+          "blocks_per_sm": 1
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "tile_length": 2,
+      "batch": 1
+    },
+    {
+      "tile_length": 2,
+      "batch": 2
+    },
+    {
+      "tile_length": 2,
+      "batch": 4
+    },
+    {
+      "tile_length": 2,
+      "batch": 16
+    },
+    {
+      "tile_length": 2,
+      "batch": 64
+    },
+    {
+      "tile_length": 2,
+      "batch": 256
+    },
+    {
+      "tile_length": 4,
+      "batch": 1
+    },
+    {
+      "tile_length": 4,
+      "batch": 2
+    },
+    {
+      "tile_length": 4,
+      "batch": 4
+    },
+    {
+      "tile_length": 4,
+      "batch": 16
+    },
+    {
+      "tile_length": 4,
+      "batch": 64
+    },
+    {
+      "tile_length": 4,
+      "batch": 256
+    },
+    {
+      "tile_length": 8,
+      "batch": 1
+    },
+    {
+      "tile_length": 8,
+      "batch": 2
+    },
+    {
+      "tile_length": 8,
+      "batch": 4
+    },
+    {
+      "tile_length": 8,
+      "batch": 16
+    },
+    {
+      "tile_length": 8,
+      "batch": 64
+    },
+    {
+      "tile_length": 8,
+      "batch": 256
+    },
+    {
+      "tile_length": 16,
+      "batch": 1
+    },
+    {
+      "tile_length": 16,
+      "batch": 2
+    },
+    {
+      "tile_length": 16,
+      "batch": 4
+    },
+    {
+      "tile_length": 16,
+      "batch": 16
+    },
+    {
+      "tile_length": 16,
+      "batch": 64
+    },
+    {
+      "tile_length": 16,
+      "batch": 256
+    },
+    {
+      "tile_length": 32,
+      "batch": 1
+    },
+    {
+      "tile_length": 32,
+      "batch": 2
+    },
+    {
+      "tile_length": 32,
+      "batch": 4
+    },
+    {
+      "tile_length": 32,
+      "batch": 16
+    },
+    {
+      "tile_length": 32,
+      "batch": 64
+    },
+    {
+      "tile_length": 32,
+      "batch": 256
+    },
+    {
+      "tile_length": 64,
+      "batch": 1
+    },
+    {
+      "tile_length": 64,
+      "batch": 2
+    },
+    {
+      "tile_length": 64,
+      "batch": 4
+    },
+    {
+      "tile_length": 64,
+      "batch": 16
+    },
+    {
+      "tile_length": 64,
+      "batch": 64
+    },
+    {
+      "tile_length": 64,
+      "batch": 256
+    },
+    {
+      "tile_length": 128,
+      "batch": 1
+    },
+    {
+      "tile_length": 128,
+      "batch": 2
+    },
+    {
+      "tile_length": 128,
+      "batch": 4
+    },
+    {
+      "tile_length": 128,
+      "batch": 16
+    },
+    {
+      "tile_length": 128,
+      "batch": 64
+    },
+    {
+      "tile_length": 128,
+      "batch": 256
+    },
+    {
+      "tile_length": 256,
+      "batch": 1
+    },
+    {
+      "tile_length": 256,
+      "batch": 2
+    },
+    {
+      "tile_length": 256,
+      "batch": 4
+    },
+    {
+      "tile_length": 256,
+      "batch": 16
+    },
+    {
+      "tile_length": 256,
+      "batch": 64
+    },
+    {
+      "tile_length": 256,
+      "batch": 256
+    },
+    {
+      "tile_length": 512,
+      "batch": 1
+    },
+    {
+      "tile_length": 512,
+      "batch": 2
+    },
+    {
+      "tile_length": 512,
+      "batch": 4
+    },
+    {
+      "tile_length": 512,
+      "batch": 16
+    },
+    {
+      "tile_length": 512,
+      "batch": 64
+    },
+    {
+      "tile_length": 512,
+      "batch": 256
+    },
+    {
+      "tile_length": 1024,
+      "batch": 1
+    },
+    {
+      "tile_length": 1024,
+      "batch": 2
+    },
+    {
+      "tile_length": 1024,
+      "batch": 4
+    },
+    {
+      "tile_length": 1024,
+      "batch": 16
+    },
+    {
+      "tile_length": 1024,
+      "batch": 64
+    },
+    {
+      "tile_length": 1024,
+      "batch": 256
+    },
+    {
+      "tile_length": 2048,
+      "batch": 1
+    },
+    {
+      "tile_length": 2048,
+      "batch": 2
+    },
+    {
+      "tile_length": 2048,
+      "batch": 4
+    },
+    {
+      "tile_length": 2048,
+      "batch": 16
+    },
+    {
+      "tile_length": 2048,
+      "batch": 64
+    },
+    {
+      "tile_length": 2048,
+      "batch": 256
+    },
+    {
+      "tile_length": 4096,
+      "batch": 1
+    },
+    {
+      "tile_length": 4096,
+      "batch": 2
+    },
+    {
+      "tile_length": 4096,
+      "batch": 4
+    },
+    {
+      "tile_length": 4096,
+      "batch": 16
+    },
+    {
+      "tile_length": 4096,
+      "batch": 64
+    },
+    {
+      "tile_length": 4096,
+      "batch": 256
+    },
+    {
+      "tile_length": 8192,
+      "batch": 1
+    },
+    {
+      "tile_length": 8192,
+      "batch": 2
+    },
+    {
+      "tile_length": 8192,
+      "batch": 4
+    },
+    {
+      "tile_length": 8192,
+      "batch": 16
+    },
+    {
+      "tile_length": 8192,
+      "batch": 64
+    },
+    {
+      "tile_length": 8192,
+      "batch": 256
+    },
+    {
+      "tile_length": 16384,
+      "batch": 1
+    },
+    {
+      "tile_length": 16384,
+      "batch": 2
+    },
+    {
+      "tile_length": 16384,
+      "batch": 4
+    },
+    {
+      "tile_length": 16384,
+      "batch": 16
+    },
+    {
+      "tile_length": 16384,
+      "batch": 64
+    },
+    {
+      "tile_length": 16384,
+      "batch": 256
+    },
+    {
+      "tile_length": 32768,
+      "batch": 1
+    },
+    {
+      "tile_length": 32768,
+      "batch": 2
+    },
+    {
+      "tile_length": 32768,
+      "batch": 4
+    },
+    {
+      "tile_length": 32768,
+      "batch": 16
+    },
+    {
+      "tile_length": 32768,
+      "batch": 64
+    },
+    {
+      "tile_length": 32768,
+      "batch": 256
+    }
+  ],
+  "acceptance": {
+    "requires_gpu_correctness": true,
+    "requires_resource_report": true,
+    "requires_complete_error_distribution": true,
+    "requires_fixed_core_organization_comparison": true,
+    "promote_local_tile_only_after": [
+      "tile-abi",
+      "same-contract-validation",
+      "resource-validation",
+      "gpu-timing",
+      "fixed-core-organization-ablation"
+    ],
+    "full_population_count": 90,
+    "quick_population_count": 9
+  },
+  "core_strategies": [
+    {
+      "id": "upstream-mma-fp16",
+      "kind": "external-local-strategy",
+      "status": "source-supported-complete-transform",
+      "arithmetic_contract": "fp16-mma-orthonormal-final-scale",
+      "same_contract_as_native_fp16_stage_rounding": false,
+      "requires_tile_abi": true
+    },
+    {
+      "id": "native-fp16-stage-rounded-radix2",
+      "kind": "internal-control",
+      "status": "compiled-existing",
+      "arithmetic_contract": "fp16-native-stage-rounding",
+      "same_contract_as_native_fp16_stage_rounding": true,
+      "requires_tile_abi": false
+    },
+    {
+      "id": "native-fp16-stage-rounded-radix4",
+      "kind": "internal-control",
+      "status": "compiled-existing",
+      "arithmetic_contract": "fp16-native-stage-rounding",
+      "same_contract_as_native_fp16_stage_rounding": true,
+      "requires_tile_abi": false
+    },
+    {
+      "id": "native-fp16-stage-rounded-radix8",
+      "kind": "internal-control",
+      "status": "candidate-support-domain",
+      "arithmetic_contract": "fp16-native-stage-rounding",
+      "same_contract_as_native_fp16_stage_rounding": true,
+      "requires_tile_abi": false
+    },
+    {
+      "id": "fp16-register-half2",
+      "kind": "strategy-candidate",
+      "status": "uncompiled",
+      "arithmetic_contract": "fp16-native-stage-rounding",
+      "same_contract_as_native_fp16_stage_rounding": true,
+      "requires_tile_abi": true
+    },
+    {
+      "id": "fp16-mma-tile",
+      "kind": "strategy-candidate",
+      "status": "uncompiled",
+      "arithmetic_contract": "fp16-mma-explicit",
+      "same_contract_as_native_fp16_stage_rounding": false,
+      "requires_tile_abi": true
+    },
+    {
+      "id": "fp32-register-shuffle",
+      "kind": "cross-precision-control",
+      "status": "compiled-existing",
+      "arithmetic_contract": "fp32-register-shuffle",
+      "same_contract_as_native_fp16_stage_rounding": false,
+      "requires_tile_abi": false
+    }
+  ],
+  "quick_cases": [
+    {
+      "tile_length": 256,
+      "batch": 1
+    },
+    {
+      "tile_length": 256,
+      "batch": 16
+    },
+    {
+      "tile_length": 256,
+      "batch": 256
+    },
+    {
+      "tile_length": 4096,
+      "batch": 1
+    },
+    {
+      "tile_length": 4096,
+      "batch": 16
+    },
+    {
+      "tile_length": 4096,
+      "batch": 256
+    },
+    {
+      "tile_length": 32768,
+      "batch": 1
+    },
+    {
+      "tile_length": 32768,
+      "batch": 16
+    },
+    {
+      "tile_length": 32768,
+      "batch": 256
+    }
+  ],
+  "selection_policy": {
+    "quick": "9 requests; three group-reuse settings per legal request",
+    "full": "90 requests; complete groups only; three group-reuse settings per legal request",
+    "never_default": "STRICT never selects MMA; ALLOW uses only matching validated paired calibration; otherwise native fallback"
+  },
+  "deferred_semantics": [
+    "inverse-normalized local composition",
+    "in-place local ABI validation",
+    "arbitrary-stride/swizzled boundary integration",
+    "multiple MMA stage groups"
+  ]
+}

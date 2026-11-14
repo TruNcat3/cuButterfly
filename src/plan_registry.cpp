@@ -1,5 +1,6 @@
 #include "plan_registry.hpp"
 #include "fwht_contract.hpp"
+#include "hadacore_provider.hpp"
 #include "temporal_tile_contract.hpp"
 #include "online_reorder_contract.hpp"
 #include "shared_tile_contract.hpp"
@@ -225,6 +226,10 @@ std::string mapping_id(const std::string& mapping) {
 
 std::string serialize_mapping(const ButterflyConfig& c) {
     Json j{{"schema_version", 1}, {"kind", "butterfly"}, {"stage_partition", c.stage_partition}, {"stage_overlap", c.stage_overlap}};
+    if (c.allow_fp16_mma) j["arithmetic_policy"] = "allow-fp16-mma";
+    if (c.local_core != "native") j["local_core"] = {{"name",c.local_core}, {"chunks",c.hadacore_chunks},
+        {"groups_per_block",c.hadacore_groups_per_block}, {"library_sha256",c.hadacore_library_sha256},
+        {"profile_sha256",c.hadacore_profile_sha256}};
     if (c.output_scale != 1.0 || c.final_storage_rounding)
         j["output_epilogue"] = {{"scale", c.output_scale}, {"final_storage_rounding", c.final_storage_rounding}};
     if (c.final_storage_rounding)
@@ -290,6 +295,15 @@ void apply_serialized_mapping(const std::string& value, ButterflyConfig& c) {
             e.at("scale").get<double>() != c.output_scale ||
             e.at("final_storage_rounding").get<bool>() != c.final_storage_rounding)
             throw std::invalid_argument("mapping output epilogue contract mismatch");
+    }
+    if (j.value("arithmetic_policy", "strict") != (c.allow_fp16_mma ? "allow-fp16-mma" : "strict"))
+        throw std::invalid_argument("mapping arithmetic policy mismatch");
+    c.local_core="native";
+    if (j.contains("local_core")) {
+        const auto& h=j.at("local_core");c.local_core=h.at("name");
+        if(c.local_core!="hadacore-local-tile"||!c.allow_fp16_mma)throw std::invalid_argument("invalid local core contract");
+        c.hadacore_chunks=h.at("chunks");c.hadacore_groups_per_block=h.at("groups_per_block");
+        c.hadacore_library_sha256=h.at("library_sha256");c.hadacore_profile_sha256=h.at("profile_sha256");
     }
     c.auto_select = false;
 #define ENUM_READ(member, name) if (j.contains(#member)) c.member = parse_##name(field(j, #member));
@@ -966,6 +980,10 @@ std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig
         }
     }
     finish_audit();
+    if (original.allow_fp16_mma) {
+        auto extras=hada_candidates(original,hada_profile(original));
+        candidates.insert(candidates.end(),extras.begin(),extras.end());
+    }
     return candidates;
 }
 
