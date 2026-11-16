@@ -102,6 +102,18 @@ Python descriptor validation and the public execution interface. The installer
 can detect the target and reuse compatible static profiles. Refresh and tuning
 are explicit operations; a bounded calibration is not exhaustive optimization.
 
+For a configured research platform, one entry prepares dependencies, builds the
+library, parallelizes CPU preparation, then calibrates and benchmarks an idle GPU:
+
+```bash
+python3 scripts/research_platform.py all --target config/platforms/pro6000_server96.json \
+  --gpu 0 --mode full --jobs 8
+```
+
+Use `--prepare-only` for CPU preparation or `--gpus 0,1` for independent cards.
+See the [platform workflow](docs/hardware/pro6000_server96.md#one-command-installation-and-comparison)
+for toolchain prerequisites, reuse, scope and reports.
+
 On an existing checkout, these checks need no GPU:
 
 ```bash

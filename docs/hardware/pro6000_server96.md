@@ -11,6 +11,73 @@ document the target and cuFFTDx 1.5 / MathDx 25.06 support. Use CUDA 12.8 and
 MathDx package 25.6.0 for this setup. The compiler and a small cuFFTDx compile
 probe must accept the target; a package version alone is insufficient.
 
+## One-command installation and comparison
+
+With Conda, Git, a C++ compiler and the target CUDA toolkit already available,
+run from the source checkout:
+
+```bash
+python3 scripts/research_platform.py all --gpu 0 --mode full --jobs 8
+```
+
+This creates or reuses `~/.conda/envs/cubutterfly-pro6000-server96`, prepares
+MathDx and pinned VkFFT/GPU-NTT/Dao dependencies, builds and installs the library,
+and prepares CPU references and local modules. Independent CPU tasks run in
+parallel within the requested job allocation. It then waits for an idle GPU,
+calibrates on that GPU, confirms the selected mappings, runs the comparison
+and writes the report. Index `0` is resolved to a physical UUID before binding
+measurements. An existing incompatible environment fails explicitly; the command
+does not replace its Torch or CUDA installation.
+
+Use `--prefix /path/to/conda/env` for an existing compatible environment and
+`--nvcc /path/to/cuda/bin/nvcc` for another toolkit location. The system toolkit
+and driver are prerequisites and are not installed or changed by this command.
+
+```bash
+# Inspect without installing, writing files or querying a GPU.
+python3 scripts/research_platform.py all --dry-run --mode full --jobs 8
+
+# Finish all CPU installation/preparation while GPUs are occupied.
+python3 scripts/research_platform.py all --prepare-only --mode full --jobs 8
+
+# Run independent calibrations/comparisons on two matching GPUs.
+python3 scripts/research_platform.py all --gpus 0,1 --mode full --jobs 8 --wait-hours 24
+```
+
+`--gpus` runs the declared population independently on each selected GPU. It
+does not split one population between devices or mix their measurements. GPU
+timing is exclusive per card; only CPU preparation and different cards run
+concurrently. Each card's report is under
+`results/pro6000-server96/devices/<UUID>/<mode>/report/summary.json`. CPU references
+and precompiled modules are shared read-only; calibration, search checkpoints,
+measurement logs and reports are separate.
+
+Repeat the same command to resume. A successful build receipt avoids rebuilding
+the bound binary; completed measurements retain the existing runner's identity
+checks. Changed build inputs require fresh `--build-dir` and `--output` paths.
+The wait budget stops new attempts after expiry and permits an active measurement
+to finish. Numerical, compilation and identity failures stop with logs rather
+than entering an automatic retry loop.
+
+Progress is recorded in `OUTPUT/workflow/status.json`, step logs in
+`OUTPUT/workflow/logs/`, and device progress in
+`OUTPUT/devices/<UUID>/<mode>/run/{status,monitor_status}.json`. After successful
+calibration and comparison, `runtime_environment.sh` beside each device report
+directory binds subsequent applications to that target's profiles and registry:
+
+```bash
+source results/pro6000-server96/devices/GPU-YOUR-UUID/full/runtime_environment.sh
+```
+
+Keep those referenced artifacts together. This explicit binding does not replace
+another GPU's conda defaults or imply exhaustive calibration. `full` retains the
+main 66 requests; `quick` retains the 12-request diagnostic. Extension, mechanism
+and application tracks keep their own configurations.
+
+The individual actions below remain available for a manually prepared or custom
+baseline environment. An existing manual run without an `all` build receipt
+continues through `run`; use fresh output/build paths when switching it to `all`.
+
 ## Install in a separate target environment
 
 Run from a transferred source checkout on local SSD or NAS. Keep the A100

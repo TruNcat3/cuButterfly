@@ -18,6 +18,19 @@ comparison and the [hardware profile guide](../docs/hardware_profile_install.md)
 for target-local preparation and calibration. A declared population is separate
 from measured coverage and model validation.
 
+For a configured platform, `scripts/research_platform.py all` connects dependency
+installation, parallel CPU preparation, target calibration and comparison:
+
+```bash
+python3 scripts/research_platform.py all --target config/platforms/pro6000_server96.json \
+  --gpu 0 --mode full --jobs 8
+```
+
+Use `--prepare-only` before a GPU is free, or `--gpus 0,1` to measure independent
+cards concurrently. `full` here is the [frozen main operator population](../config/paper_portability/README.md),
+not every benchmark track. See the [platform runbook](../docs/hardware/pro6000_server96.md#one-command-installation-and-comparison)
+for prerequisites, status, resume and output paths.
+
 New reports follow the repository-wide
 [reporting and evidence contract](../docs/reporting_contract.md): scope and
 question, protocol, complete result, attribution/limitations, and reproduction
