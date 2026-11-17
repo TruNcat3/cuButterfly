@@ -36,6 +36,8 @@ def verify(directory):
  source=ROOT/provenance['a100_snapshot']['path']
  assert sha(source)==provenance['a100_snapshot']['sha256']
  a100=load(source);requests={r['id']:r for r in a100['operators']['requests'] if r['cohort']=='main66'}
+ assert len(requests)==66
+ assert a100['coverage']['campaign']['operator_track_complete'] is True and a100['coverage']['campaign']['remaining']==0
  pairs=[p for p in a100['operators']['pairs'] if p['cohort']=='main66']
  assert a100['identities']['main66']==provenance['a100_identity']
  data=load(directory/'measurements.json');rows=data['rows'];cases=load(directory/'cases.json')
@@ -102,7 +104,16 @@ def verify_arrays(directory):
  print('Verified six lossless error arrays and regenerated four exact CPU inputs/references; no CUDA')
 def render(directory):
  rows,cases,requests,pairs,provenance,selected=verify(directory)
- records=[];comparison=[];main=[];mapping_lines=[];appendix=[];failures=[]
+ records=[];comparison=[];main=[];mapping_lines=[];appendix=[];failures=[];coverage=[]
+ for operator,name in enumerate(('FFT','NTT','FWHT','subset-zeta','superset-zeta','structured-2×2')):
+  source_cases=[r for r in requests.values() if r['semantics']['operator']==operator]
+  target_cases=[r for r in rows if r['descriptor']['semantics']['operator']==operator]
+  baselines={}
+  for pair in pairs:
+   if pair['semantics']['operator']==operator and pair.get('speedup') is not None:
+    baselines[pair['baseline']]=baselines.get(pair['baseline'],0)+1
+  baseline_text=', '.join(f'{name}: {count}' for name,count in sorted(baselines.items())) or 'no selected external comparator; CPU oracle'
+  coverage.append(f"| {name} | {len(source_cases)} | {len(target_cases)} | {sum(r['id'] in selected for r in target_cases)} | {baseline_text} |")
  for row in sorted(rows,key=lambda r:(r['descriptor']['semantics']['operator'],r['descriptor']['semantics']['storage'],math.prod(r['descriptor']['semantics']['shape']),r['descriptor']['semantics']['batch'],r['descriptor']['semantics']['inverse'])):
   own=median(row);a100=requests[row['id']];match=source_match(row,a100)
   is_selected=row['id'] in selected
@@ -133,6 +144,9 @@ def render(directory):
  text=['# PRO6000 fixed-mapping samples at A100 nominal-win workloads','',
   '**Status: measured target timings and derived comparisons; preliminary subset, not full acceptance.**','',
   'The four highlighted requests were chosen from the published A100 80GB main66 snapshot: cuButterfly was nominally faster than at least one external comparator, the complete semantics match, and every published mapping-summary field matches the PRO6000 execution. Selection uses A100 evidence, not PRO6000 speedups. All 25 measured fixed-seed requests remain in the appendix; the other 41 Full66 requests have no exact seed match and remain explicit gaps.','',
+  'The A100 frozen operator cohort is complete at 66/66 requests across all six operator categories, with the original comparator gaps and floating error-report status retained. This target publication also covers all six categories, at a smaller sampling density. Completing operator execution does not imply an external comparator exists for every request.','',
+  '| Operator | A100 frozen requests | PRO fixed-seed timings | Highlighted source samples | A100 measured external pairs |',
+  '|---|---:|---:|---:|---|',*coverage,'',
   '“Nominal win” means a source baseline/cuButterfly ratio greater than 1, without a statistical significance claim. The A100 snapshot publishes mapping summaries, not the complete original mappings. Matching those fields does **not** prove bit-for-bit transfer of a full A100 search winner. The repository seed catalog is a candidate portfolio, not a certified winner list. No A100 timings, binary, calibration or registry were imported into target selection.','',
   f"A100 source: {provenance['a100_identity']['gpu_name']}, UUID `{provenance['a100_identity']['gpu_uuid']}`, {provenance['a100_identity']['gpu_total_memory']} bytes, library SHA256 `{provenance['a100_identity']['library_sha256']}`. Source snapshot: [current_refresh](../snapshots/current_refresh/snapshot.json).",'',
   f"Target: {provenance['target']['gpu_name']}, UUID `{provenance['target']['gpu_uuid']}`, {provenance['target']['memory_bytes']} bytes, SM120; driver {provenance['target']['driver_version']}, CUDA 12.8. Library SHA256 `{provenance['target']['library_sha256']}`. Measured source commit `{provenance['measured_source_commit']}` with the archived build compatibility patch. The PR base is a newer documentation/workflow commit; it does not relabel the measured build.",'',

@@ -4,6 +4,17 @@
 
 The four highlighted requests were chosen from the published A100 80GB main66 snapshot: cuButterfly was nominally faster than at least one external comparator, the complete semantics match, and every published mapping-summary field matches the PRO6000 execution. Selection uses A100 evidence, not PRO6000 speedups. All 25 measured fixed-seed requests remain in the appendix; the other 41 Full66 requests have no exact seed match and remain explicit gaps.
 
+The A100 frozen operator cohort is complete at 66/66 requests across all six operator categories, with the original comparator gaps and floating error-report status retained. This target publication also covers all six categories, at a smaller sampling density. Completing operator execution does not imply an external comparator exists for every request.
+
+| Operator | A100 frozen requests | PRO fixed-seed timings | Highlighted source samples | A100 measured external pairs |
+|---|---:|---:|---:|---|
+| FFT | 17 | 8 | 2 | cufft: 17, vkfft: 17 |
+| NTT | 13 | 4 | 1 | gpu-ntt: 5 |
+| FWHT | 13 | 5 | 1 | daofht: 10 |
+| subset-zeta | 8 | 3 | 0 | no selected external comparator; CPU oracle |
+| superset-zeta | 8 | 3 | 0 | no selected external comparator; CPU oracle |
+| structured-2×2 | 7 | 2 | 0 | no selected external comparator; CPU oracle |
+
 “Nominal win” means a source baseline/cuButterfly ratio greater than 1, without a statistical significance claim. The A100 snapshot publishes mapping summaries, not the complete original mappings. Matching those fields does **not** prove bit-for-bit transfer of a full A100 search winner. The repository seed catalog is a candidate portfolio, not a certified winner list. No A100 timings, binary, calibration or registry were imported into target selection.
 
 A100 source: NVIDIA A100 80GB PCIe, UUID `GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02`, 84974239744 bytes, library SHA256 `fac10905e8c7d88a1c42f669545df6182e988409a297ee99f55d00e6d5e57778`. Source snapshot: [current_refresh](../snapshots/current_refresh/snapshot.json).
