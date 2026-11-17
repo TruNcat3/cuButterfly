@@ -18,11 +18,13 @@ jobs:
       - name: Check repository metadata and local links
         run: python3 scripts/check_repository.py
       - name: Verify frozen PRO6000 comparison evidence
-        run: python3 experiments/tools/report_pro6000_fixed_samples.py --check
+        run: |
+          python3 experiments/tools/report_pro6000_fixed_samples.py --check
+          python3 experiments/tools/report_pro6000_extensions.py --check
       - name: Test source-link and benchmark-scope validation
         run: |
           python3 -m pip install pytest
-          python3 -m pytest -q tests/test_repository_links.py tests/test_benchmark_scope.py tests/test_pro6000_fixed_samples.py
+          python3 -m pytest -q tests/test_repository_links.py tests/test_benchmark_scope.py tests/test_pro6000_fixed_samples.py tests/test_pro6000_extensions.py
       - name: Check shell syntax
         run: |
           for script in scripts/*.sh; do

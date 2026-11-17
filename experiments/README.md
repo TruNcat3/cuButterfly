@@ -16,3 +16,9 @@ publishes target measurements for 25 matching seed requests and highlights four
 requests with nominal A100 wins and matching published mapping fields. It retains
 target losses, integer baseline failures and the 41 unmatched Full66 requests;
 it does not close the comprehensive platform acceptance.
+
+The [PRO6000 FFT17/MMA9 report](reports/PRO6000_EXTENSIONS_20261117.md)
+adds the complete finite extension cohorts: 17 FFT requests with 47 measured
+external pairs and four provider gaps, plus nine ALLOW_FP16_MMA comparisons
+after local native/tile calibration and 68 public AUTO checks. Each cohort
+keeps its own GPU/build/profile identity and floating error-review scope.
