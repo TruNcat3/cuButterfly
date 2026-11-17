@@ -1,0 +1,24 @@
+{
+  "schema": "cubutterfly-pro6000-fixed-mapping-publication-v1",
+  "selected_case_ids": [
+    "0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9",
+    "65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f",
+    "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac",
+    "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548"
+  ],
+  "files": {
+    "cases.json": "75f2407b6428e2e589b826620278b41ddf1f6ec828b73a0d725c3fa65cdd09a6",
+    "errors/0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9-cubutterfly.npz": "9383a0adbbe8174710f7f91d5352023cb79ebfdaae9d74819752174498e8b51e",
+    "errors/65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f-cubutterfly.npz": "133174b3ca97734cc7094882068a0e3fd29f45620fa71e6fa8fb7bab438b5fa6",
+    "errors/65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f-gpu-ntt.npz": "1ffb3ca7abddc643c00906a2845b4ed4dd90ff1a4109a62c6377f3244d0685d6",
+    "errors/eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa-gpu-ntt.npz": "442249a24743633c8b098b40f22e4b4cc10f8bf3dcd5038ff60d65b38e2c58ab",
+    "errors/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac-cubutterfly.npz": "a9dba0240353bc3dad6f73307ceaca4133ad6184a131ef5a4e2e511f29915c3f",
+    "errors/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548-cubutterfly.npz": "a6702d368e48265888b2ae44bf1aa2efd86913dad3c977c652f4f1811579f95b",
+    "measurements.json": "731c1bcff5ee7203dce00e404b92b66e5b1858369c343f34e8e6aa55d6805fc1",
+    "population.json": "9a3da61efce043ff9f50ead6b6cb690798a9ecfc7de0155990c8ef7d3916778f",
+    "provenance/build.sh.txt": "63871864891dcfb6900e2b14978c3d70cb999783cf75f0b2b0a1c3ad4f1d422d",
+    "provenance/measurement_runner.py.txt": "e22e2afdd7d7009ab8198f4a6fff44701a92082c41b416fda5d9e7f4a47972b4",
+    "provenance.json": "3990210ade8916533bfd1cef164fa406803959fe536bcea9f3d8182d05913d81",
+    "provenance/build-compatibility.patch.gz": "a34b056a93ed07ea026da9d787136d31ca6b7dfabe34d139aa7c2c0afad11a28"
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "schema": "cubutterfly-pro6000-fixed-mapping-provenance-v1",
+  "exported_at": "2026-11-17T17:57:26.151365+08:00",
+  "measured_source_commit": "a305d97769a0c005591a8bbe4e14ae1a238b7e83",
+  "target": {
+    "gpu_uuid": "GPU-1067ab39-e411-e141-1775-64426bca5701",
+    "gpu_name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "memory_bytes": 101973950464,
+    "library_sha256": "3b0668f2530a75d1401dcbf5decea720f8e47db0c1357aafdf1680fa1bba6adb",
+    "driver_version": "580.159.04"
+  },
+  "python": "3.11.18 (main, Oct 26 2026, 18:19:35) [GCC 14.3.0]",
+  "numpy": "1.26.4",
+  "a100_snapshot": {
+    "path": "experiments/snapshots/current_refresh/snapshot.json",
+    "sha256": "8af841214c03793fc9455c512517341151337b3c4f9c61f16241a8d1c9051e91"
+  },
+  "a100_identity": {
+    "compile_mode": "research",
+    "gpu_name": "NVIDIA A100 80GB PCIe",
+    "gpu_total_memory": 84974239744,
+    "gpu_uuid": "GPU-2971e500-d3f6-d7e6-e5f2-cb67a06fff02",
+    "library": "/home/wt/git/cuButterfly/build-e13-cufftdx/libcuntt.so",
+    "library_sha256": "fac10905e8c7d88a1c42f669545df6182e988409a297ee99f55d00e6d5e57778",
+    "protocol": {
+      "comparison": "all elements; abs(a-e) <= atol+rtol*abs(e); finite required",
+      "excluded": [
+        "planning",
+        "allocation",
+        "compilation",
+        "reference",
+        "warmup"
+      ],
+      "float_verdict": "error-report",
+      "graph_calls": 20,
+      "in_place_timing": "single calls, input reset outside events",
+      "ntt_max_operations": 16777216,
+      "ntt_operation_budget_units": "radix-2 butterflies for all-power-of-two shapes; direct DFT terms otherwise",
+      "ntt_reference": "exact integer radix-2 butterflies; direct DFT for non-power-of-two axes",
+      "reference_max_elements": 1048576,
+      "replays": 7,
+      "warmup_calls": 10
+    },
+    "runner_revision": "0.9.3.4-async-experiments.4"
+  },
+  "bundled_error_arrays": [
+    {
+      "case_id": "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548",
+      "implementation": "cubutterfly",
+      "path": "errors/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548-cubutterfly.npz",
+      "sha256": "a6702d368e48265888b2ae44bf1aa2efd86913dad3c977c652f4f1811579f95b",
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/seed-priority/full/gpu0/attempts/1794906858529516177/errors/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548-cubutterfly.npz",
+      "original_sha256": "a6702d368e48265888b2ae44bf1aa2efd86913dad3c977c652f4f1811579f95b"
+    },
+    {
+      "case_id": "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac",
+      "implementation": "cubutterfly",
+      "path": "errors/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac-cubutterfly.npz",
+      "sha256": "a9dba0240353bc3dad6f73307ceaca4133ad6184a131ef5a4e2e511f29915c3f",
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/seed-priority/full/gpu0/attempts/1794906863057634299/errors/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac-cubutterfly.npz",
+      "original_sha256": "a9dba0240353bc3dad6f73307ceaca4133ad6184a131ef5a4e2e511f29915c3f"
+    },
+    {
+      "case_id": "0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9",
+      "implementation": "cubutterfly",
+      "path": "errors/0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9-cubutterfly.npz",
+      "sha256": "9383a0adbbe8174710f7f91d5352023cb79ebfdaae9d74819752174498e8b51e",
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/seed-priority/full/gpu0/attempts/1794906934791395295/errors/0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9-cubutterfly.npz",
+      "original_sha256": "9383a0adbbe8174710f7f91d5352023cb79ebfdaae9d74819752174498e8b51e"
+    },
+    {
+      "case_id": "65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f",
+      "implementation": "cubutterfly",
+      "path": "errors/65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f-cubutterfly.npz",
+      "sha256": "133174b3ca97734cc7094882068a0e3fd29f45620fa71e6fa8fb7bab438b5fa6",
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/seed-priority/full/gpu0/attempts/1794906958898947305/errors/65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f-cubutterfly.npz",
+      "original_sha256": "133174b3ca97734cc7094882068a0e3fd29f45620fa71e6fa8fb7bab438b5fa6"
+    },
+    {
+      "case_id": "65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f",
+      "implementation": "gpu-ntt",
+      "path": "errors/65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f-gpu-ntt.npz",
+      "sha256": "1ffb3ca7abddc643c00906a2845b4ed4dd90ff1a4109a62c6377f3244d0685d6",
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/seed-priority/full/gpu0/attempts/1794906958898947305/errors/65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f-gpu-ntt.npz",
+      "original_sha256": "1ffb3ca7abddc643c00906a2845b4ed4dd90ff1a4109a62c6377f3244d0685d6"
+    },
+    {
+      "case_id": "eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa",
+      "implementation": "gpu-ntt",
+      "path": "errors/eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa-gpu-ntt.npz",
+      "sha256": "442249a24743633c8b098b40f22e4b4cc10f8bf3dcd5038ff60d65b38e2c58ab",
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/seed-priority/full/gpu0/attempts/1794906962253425563/errors/eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa-gpu-ntt.npz",
+      "original_sha256": "442249a24743633c8b098b40f22e4b4cc10f8bf3dcd5038ff60d65b38e2c58ab"
+    }
+  ],
+  "selected_input_and_reference_hashes": {
+    "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548": {
+      "source": {
+        "dtype": "complex64",
+        "shape": [
+          32,
+          4096
+        ],
+        "sha256": "9323d48489aac26350ad92eea44073d2a27bce636a5905c0cd4ca4183856789d"
+      },
+      "expected": {
+        "dtype": "complex128",
+        "shape": [
+          32,
+          4096
+        ],
+        "sha256": "0c32b1107bf7b2d0e1447c6ed90a80b8e46d0f070e608d6b9250e7956a4d0973"
+      }
+    },
+    "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac": {
+      "source": {
+        "dtype": "complex64",
+        "shape": [
+          32,
+          4096
+        ],
+        "sha256": "9323d48489aac26350ad92eea44073d2a27bce636a5905c0cd4ca4183856789d"
+      },
+      "expected": {
+        "dtype": "complex128",
+        "shape": [
+          32,
+          4096
+        ],
+        "sha256": "2d0b47c0e6cd0008f4bd9ecbe6babe0ee34de9707ec6ac93e93ff95b68d468a2"
+      }
+    },
+    "0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9": {
+      "source": {
+        "dtype": "float32",
+        "shape": [
+          1,
+          256
+        ],
+        "sha256": "557926879ef43f48c4d9713f43962f5ac71a9827c387ec57acbb2eaaffe8596b"
+      },
+      "expected": {
+        "dtype": "float64",
+        "shape": [
+          1,
+          256
+        ],
+        "sha256": "ce3f091c376b8682d7a4363306d71aa723b065231ebbb2f08f0718b698378bdd"
+      }
+    },
+    "65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f": {
+      "source": {
+        "dtype": "uint64",
+        "shape": [
+          1,
+          4096
+        ],
+        "sha256": "19f4d3c1b49a2bb6605192b8fde5f88781bba75bdbe95c733bd28cd033675be2"
+      },
+      "expected": {
+        "dtype": "uint64",
+        "shape": [
+          1,
+          4096
+        ],
+        "sha256": "5709ee2c1c00c6ab70163cacd9a963ccbf5b4796cb83674da9c92fcbcd3d5ffe"
+      }
+    }
+  },
+  "selected_policy": "All measured rows with exact semantics and equality of every published A100 mapping-summary field, and an A100 baseline ratio >1; target timing is not used to select.",
+  "source_limit": "Published A100 mapping summaries are incomplete physical mappings; no full-winner or global-optimality claim. Source and target builds/timings remain separate.",
+  "artifact_limit": "Own arrays for four highlighted requests and both negative GPU-NTT arrays are bundled; other comparator arrays and binaries remain local, with original hashes in raw rows.",
+  "original_measurement_command": "source results/pro6000-issue9-setup/environment.sh; python3.11 results/pro6000-issue9-setup/seed-priority/runner.py prepare --suite full; python3.11 results/pro6000-issue9-setup/seed-priority/runner.py run --suite full --gpu gpu0",
+  "preparation_manifest_sha256": "043b877b2f03560d58db8b4a792a31e84ed295356b00fcf0b05f04aba3d0ae6b",
+  "source_build_log_sha256": "67f36f26b1fa96b41acda52fbda96f98a2891d5a0ab162d000be19f3a700d68b",
+  "build_patch_scope": "CMake/CuFFTDx and JIT compatibility differences captured at export; C++ arithmetic sources remain at the measured commit; automatic-search orchestration repairs are outside this fixed-mapping run.",
+  "build_compatibility_patch": {
+    "path": "provenance/build-compatibility.patch.gz",
+    "sha256": "a34b056a93ed07ea026da9d787136d31ca6b7dfabe34d139aa7c2c0afad11a28",
+    "uncompressed_sha256": "646d70b11b5cf097afc74169d8206d74723429b6ba53e0138486b3740f898c1f",
+    "encoding": "gzip; original patch bytes retained"
+  }
+}
