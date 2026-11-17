@@ -22,3 +22,12 @@ adds the complete finite extension cohorts: 17 FFT requests with 47 measured
 external pairs and four provider gaps, plus nine ALLOW_FP16_MMA comparisons
 after local native/tile calibration and 68 public AUTO checks. Each cohort
 keeps its own GPU/build/profile identity and floating error-review scope.
+
+The [PRO6000 Full66 report](reports/PRO6000_FULL66_20261118.md) covers the
+complete declared main request population across all six operators. It retains
+per-request public MEASURE selection, actual mappings, original checkpoint
+identities, unsupported comparators and three GPU-NTT integer failures. Measured
+requests preserve seven complete-call samples; a CPU audit replays the recorded
+metrics from lossless actual/reference arrays. Floating accuracy review and the
+original formal driver's status remain explicit. The snapshot also includes the
+measured workflow/build patch and CPU planning source receipts.
