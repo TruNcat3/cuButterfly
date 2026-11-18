@@ -1,0 +1,7 @@
+cohort,operator,precision,backend,metric,pairs,geomean,minimum,maximum,above_one,below_one,equal_one
+pro6000-cyclic-ntt8,NTT,word32,cubutterfly,cpu_normalized,4,262.62271708677133,102.90439683920118,667.76979424255,4,0,0
+pro6000-cyclic-ntt8,NTT,word32,gpu-ntt,cpu_normalized,4,198.07917578512365,97.52595561969343,404.8406066828723,4,0,0
+pro6000-cyclic-ntt8,NTT,word32,gpu-ntt,gpu_speedup,4,1.3258471822987818,1.0551488184384599,1.6494634757961437,4,0,0
+pro6000-cyclic-ntt8,NTT,word64,cubutterfly,cpu_normalized,4,230.8917299172328,96.96521274565951,547.604395908988,4,0,0
+pro6000-cyclic-ntt8,NTT,word64,gpu-ntt,cpu_normalized,2,192.30957356240364,101.93313695191293,362.8159908509463,2,0,0
+pro6000-cyclic-ntt8,NTT,word64,gpu-ntt,gpu_speedup,2,1.3461171488123542,1.200563700532956,1.509317146205822,2,0,0

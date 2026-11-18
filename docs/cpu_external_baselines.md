@@ -11,6 +11,7 @@ GPU/GPU speedups, with no pooled average.
 | --- | --- | --- |
 | FFT | FFTW 3.3.8 | C2C FP32/FP64, packed natural order, rank 1–8, full batch, forward/inverse; 1 and 8 threads reported separately |
 | FWHT | FXT 2026.05.19 | FP32/FP64, forward/inverse; original single-thread Walsh core |
+| FWHT, explicitly adapted | FXT 2026.05.19 | FP16 input/output, FP32 CPU arithmetic; widening, complete transform, inverse scale if requested and narrowing inside every timed call; not native FP16 |
 | Subset/superset zeta | FXT 2026.05.19 | uint32/uint64 modular arithmetic, forward/inverse; distinct original arithmetic/reversed-arithmetic cores |
 | NTT | Intel HEXL v1.2.5 | External word64 core with explicit cyclic-root/order and per-axis adapters; word32 requests use exact storage widening/narrowing |
 | Structured 2x2 | HazyResearch butterfly, commit `7217b5d93bc78e1229fed3761bcc70d943f604b7` | Original FP32/FP64 author CPU core, broadcast stage matrices and per-axis composition, forward/inverse |
@@ -21,6 +22,13 @@ implementation is an author baseline; it is not a claim about the fastest CPU
 implementation. HEXL performance on the current AMD EPYC host is not a claim
 about its performance on Intel CPUs with different vector instruction support.
 HEXL word32 rows explicitly remain **adapted storage**, not native word32.
+
+The FP16 adapter is a separately named comparator for an authorized FP16
+population. Its FP32 intermediate rounding differs from a per-stage FP16
+reference; complete error distributions remain `accuracy-review-required`.
+It does not extend the original Full66 population or authorize changing any
+GPU request to FP32 arithmetic. Preallocated work buffers are setup; both
+conversions and all arithmetic are repeated inside `execute()`.
 
 For FWHT and zeta, flattening packed multidimensional requests is exact:
 independent axes form a tensor product of the same binary transforms. FFT
@@ -92,6 +100,26 @@ This finite population does not establish support for every stride/order,
 real FFT, low floating precision, arbitrary lengths or other matrix families.
 
 ## Reproduction
+
+The separate [2026-11-18 PRO6000 Figure 9 run](../experiments/reports/PRO6000_FIGURE9_20261118.md)
+completed the same 83 local CPU requests plus nine explicitly adapted FP16
+references on an Intel Xeon Platinum 8488C. It builds official FFTW 3.3.10
+(FP32/FP64, threads, AVX2/AVX512), FXT and the pinned HEXL/Butterfly revisions
+locally. The CPU source and library receipts, all seven timing samples,
+input/reference hashes and errors are in that report's portable snapshot.
+FFTW eight threads is its predeclared primary denominator; the one-thread
+records remain available separately. These shared-host timings are provisional.
+They do not replace or relabel the AMD EPYC/A100-host measurements above.
+
+On the PRO6000 host the built dependencies are under
+`external/figure9-cpu` in the measured checkout, with shared libraries in
+`external/figure9-cpu/install/lib`. Pass `--fxt-root`, `--hexl-root` and
+`--butterfly-root` explicitly to the runner, use the actual prepared Full66
+manifest, and pin logical CPUs 16–23. The retained JSON identity records the
+resolved paths, loaded libraries and compiler/source hashes. Optional adapter
+tests accept `FXT_ROOT`, `HEXL_ROOT`, `BUTTERFLY_ROOT` and
+`CPU_BASELINE_MANIFEST` for this installation; they skip unavailable external
+dependencies rather than treating a missing historical directory as a failure.
 
 Use `/home/wt/yes/envs/cubutterfly/bin/python` on this host. System FFTW FP32,
 FP64 and thread runtimes are installed. FXT's original source and license are

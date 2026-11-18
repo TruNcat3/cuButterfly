@@ -1,0 +1,152 @@
+{
+  "schema": "pro6000-figure9-followup-publication-v1",
+  "scope_comment": {
+    "path": "records/3f17a35e52df5ee2c29298a9a6a9b4f96a514aaeea6f93fe8ebc236f9db08f8a.gz",
+    "sha256": "7dc273fdabffba87159456b568856a33312808754ce880788beaa18ea7795d60",
+    "uncompressed_sha256": "3f17a35e52df5ee2c29298a9a6a9b4f96a514aaeea6f93fe8ebc236f9db08f8a",
+    "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/scope-comment.json"
+  },
+  "cyclic_ntt8": {
+    "manifest": {
+      "path": "records/c285bebb91c3f7d87f51a4c8cfa27738443a965e016b78eaacd47eba14f32de8.gz",
+      "sha256": "d2abefb6f914e7f601b08f9e830c1ac82172955d2cb17df28b15bf76392e2682",
+      "uncompressed_sha256": "c285bebb91c3f7d87f51a4c8cfa27738443a965e016b78eaacd47eba14f32de8",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/manifest.json"
+    },
+    "preparation": {
+      "path": "records/898d6b8f98711ad3e4219c0a902382a227116dfa7bf20b1bcdf02d1eb5119d14.gz",
+      "sha256": "814d561483c3bf59d8a422a4146f981548608a60e81c15f3891cce9afb4abc05",
+      "uncompressed_sha256": "898d6b8f98711ad3e4219c0a902382a227116dfa7bf20b1bcdf02d1eb5119d14",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/preparation.json"
+    },
+    "input_hashes": {
+      "path": "records/4f59ea42b0fb1e9759206fa974ef2bbd2aaf194dff3bc42c6415576dc1788909.gz",
+      "sha256": "2320a811eea546ba64b884e7d8190b301c19a855d1635d1a72e3abd2cf594674",
+      "uncompressed_sha256": "4f59ea42b0fb1e9759206fa974ef2bbd2aaf194dff3bc42c6415576dc1788909",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/input-hashes.json"
+    },
+    "completion": {
+      "path": "records/ed49512b8a6f9400679bc40a2d8f72c19b94dfb2f7d8f1d5020a80147b31b06b.gz",
+      "sha256": "e0842b1065acd9843f0416fe20c08f92620bd2c2d836d022dadb459dcb9fa274",
+      "uncompressed_sha256": "ed49512b8a6f9400679bc40a2d8f72c19b94dfb2f7d8f1d5020a80147b31b06b",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/status.json"
+    },
+    "rows": [
+      {
+        "path": "records/ae08d4f778d10c4a1f425d976448dfc14faff802f7a9904d8aad5820a5fbf98d.gz",
+        "sha256": "8fd60253845a43f44ace5bf61d92b0c773ac226d15cd7c30dd711e6f6606056c",
+        "uncompressed_sha256": "ae08d4f778d10c4a1f425d976448dfc14faff802f7a9904d8aad5820a5fbf98d",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/rows/04a82eaac33704ba5fdbf53f1073fbd197a55b7b84277240ccce58946e244574.json"
+      },
+      {
+        "path": "records/ffe0e598223e8dcff6dbf1a2baeadde0f775787287a76778bb0e5b60da440195.gz",
+        "sha256": "90a8404a5253703512e02139cad36d19cd6dcca09df8abe8c77d5bd6cd24df1c",
+        "uncompressed_sha256": "ffe0e598223e8dcff6dbf1a2baeadde0f775787287a76778bb0e5b60da440195",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/rows/3cf5ad20f608fca7b3a1cec71d9aaaec586bec167b53bc37f2be20a0077ce565.json"
+      },
+      {
+        "path": "records/607ddd65ccb201976eb06eae96417ad23726f9574e20f407f54c644ba5e2e235.gz",
+        "sha256": "3ce0f5f36183a2c752b6ed1466b3c875ff05c291d98c5cc67e2e5cb14d49a22b",
+        "uncompressed_sha256": "607ddd65ccb201976eb06eae96417ad23726f9574e20f407f54c644ba5e2e235",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/rows/486ebac42647c99fe0cdb648ebd9b155f5576bcddb47f23241388cdd5c855707.json"
+      },
+      {
+        "path": "records/1ee8d06620d84b485e4180ced4a4000c53b35807bcd05e3ed37cab47b465d98c.gz",
+        "sha256": "4aacab68cbb2cafaab1549912c7e8b0faf141644fbb510d798a5704170fcf88e",
+        "uncompressed_sha256": "1ee8d06620d84b485e4180ced4a4000c53b35807bcd05e3ed37cab47b465d98c",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/rows/79a54263f75ccf920c9fc2dcd7084822e14b5afac5a594e7ad8d108630e1b783.json"
+      },
+      {
+        "path": "records/636be192197def6d24d6ee0e601c20e0beae73bdf90d4efbfb77ca84ea9d8e48.gz",
+        "sha256": "e6fb896740604fe66f1a4a129af9916c548466a67be6c2d45cf358024788b0b0",
+        "uncompressed_sha256": "636be192197def6d24d6ee0e601c20e0beae73bdf90d4efbfb77ca84ea9d8e48",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/rows/8b22dfc010e8d6045a9d2139daffc5e34f5d601ff3b870a6b147866310a7b261.json"
+      },
+      {
+        "path": "records/e0caa1a92aadb53f6529e0e32d5bad552bfb0315f79f4ca7bd810ea8fbb11b7e.gz",
+        "sha256": "124b097d53c5e9114c27229820e3aaf0efa6905f0b2d4584989b4bd7159fc263",
+        "uncompressed_sha256": "e0caa1a92aadb53f6529e0e32d5bad552bfb0315f79f4ca7bd810ea8fbb11b7e",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/rows/ad2b5c2b51d6d420c13d71186772abfa8b4d9e0239bd854a3b929516dc449d81.json"
+      },
+      {
+        "path": "records/a1cf8cd1149d7457a5fce01ae8a74abe68f4af34df3997ce99ba396e861a48e2.gz",
+        "sha256": "7d06d47441470c9ac807391986d38947183aa7cb32b9aa9a0a08c865e20f2c90",
+        "uncompressed_sha256": "a1cf8cd1149d7457a5fce01ae8a74abe68f4af34df3997ce99ba396e861a48e2",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/rows/d4b0e39341b4b0f05c12a4e2f104181e16f556b019af57b3fa124d2bbb400560.json"
+      },
+      {
+        "path": "records/6f9540f9971e10770a3c321d72113cfd6f4f2f88b3b39d1fc24710179ad61cd8.gz",
+        "sha256": "80355d8ccabe7565e50465e9aeea816be51409d3d7972c78b636590553b82a60",
+        "uncompressed_sha256": "6f9540f9971e10770a3c321d72113cfd6f4f2f88b3b39d1fc24710179ad61cd8",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/rows/db05a58bca42b08c97bc72e969e60e8801dee9c31a1f4a195fef31aa5d1b4083.json"
+      }
+    ],
+    "minimal_repros": [
+      {
+        "path": "records/052d5f7b8430809403d735ec85f274f1f1a0df0ba898c1c3d8e426e1edf0a50d.gz",
+        "sha256": "be60dd1e9f5af6e548031eb13dfcd89f655c13c5137b63a3f73a0f8487a398a4",
+        "uncompressed_sha256": "052d5f7b8430809403d735ec85f274f1f1a0df0ba898c1c3d8e426e1edf0a50d",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/minimal-repro/04a82eaac33704ba5fdbf53f1073fbd197a55b7b84277240ccce58946e244574.json"
+      },
+      {
+        "path": "records/93034594260b4a1b0b6101e98ad7e5c83e506efcdcdf19c2bf84f16cc595625c.gz",
+        "sha256": "3596be9b930f1f98a8a5ae43ce08320666dd6ee20040417094170d2ddf41fdf8",
+        "uncompressed_sha256": "93034594260b4a1b0b6101e98ad7e5c83e506efcdcdf19c2bf84f16cc595625c",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/minimal-repro/d4b0e39341b4b0f05c12a4e2f104181e16f556b019af57b3fa124d2bbb400560.json"
+      }
+    ],
+    "output_array_audit": {
+      "path": "records/871fa0d1bd72cb709e1a2f95d0d868b59ec4b5b3424a9b0096955ea4409d8dac.gz",
+      "sha256": "ae78ab2b605128d99611b95e0929ec3a61b270d9d4d25a21d4d1bedafe54e200",
+      "uncompressed_sha256": "871fa0d1bd72cb709e1a2f95d0d868b59ec4b5b3424a9b0096955ea4409d8dac",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cyclic-ntt8/output-array-audit.json"
+    },
+    "bridge_build": {
+      "path": "records/801866f7475b4d1e7048cd3a47ad0775298363f9ce67f13188ff5a6732d60234.gz",
+      "sha256": "33dfc12a57df858f51e2ede2fe8943909b694acd43debfff695c2b1215c90d16",
+      "uncompressed_sha256": "801866f7475b4d1e7048cd3a47ad0775298363f9ce67f13188ff5a6732d60234",
+      "original": "/home/wt/git/cuButterfly-issue9/build-pro6000-sm120/libgpuntt_semantic_bridge.so.manifest.json"
+    }
+  },
+  "cpu_confirmation": [
+    {
+      "path": "records/7f563ca5259dce85e0fd774125306e0f8463452fe228e1de7df0d7be5d1d0282.gz",
+      "sha256": "29fdeb57f10a4e4a973bcfe8f982aa2e588b495e663312c3dd1a589f4adeda3c",
+      "uncompressed_sha256": "7f563ca5259dce85e0fd774125306e0f8463452fe228e1de7df0d7be5d1d0282",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cpu-confirmation/process-1/publication.json"
+    },
+    {
+      "path": "records/ae361955309ad5963beb3ba2bd034d9da02cdfe6dc3d3a25c8a06218bb4e189d.gz",
+      "sha256": "28eb7a513b8858745dfb96e53f70e7db4a7f60cc14bac7fc7be31d6ae0ced581",
+      "uncompressed_sha256": "ae361955309ad5963beb3ba2bd034d9da02cdfe6dc3d3a25c8a06218bb4e189d",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cpu-confirmation/process-2/publication.json"
+    },
+    {
+      "path": "records/a3743d648a4a16597e21560e91d10073c91a355be5ff9d32dfbc7d7ad38cfabf.gz",
+      "sha256": "a25cbdc3a9d09583b4b99714f9440ef4013dbbe95d310096bc685fcc79dbfbf0",
+      "uncompressed_sha256": "a3743d648a4a16597e21560e91d10073c91a355be5ff9d32dfbc7d7ad38cfabf",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-figure9-followup-20261118/cpu-confirmation/process-3/publication.json"
+    }
+  ],
+  "sources": [
+    {
+      "path": "records/f80d2105dac81a6c4fb4a94732fc540473a60d6edc9206d9f2c098f25bcfd3ff.gz",
+      "sha256": "9108b4a814f87522a6bdafb6377b3aa0def33c5185db00e19c2c2332139b700d",
+      "uncompressed_sha256": "f80d2105dac81a6c4fb4a94732fc540473a60d6edc9206d9f2c098f25bcfd3ff",
+      "original": "/home/wt/git/cuButterfly-pro6000-pr/experiments/tools/run_pro6000_cyclic_ntt8.py"
+    },
+    {
+      "path": "records/bf9586bb01518d1e512e0aabf2e10f32be23a3718001c4e739aa14bac02422cc.gz",
+      "sha256": "30e778f37cad8a6836e21dce1027ddf6dddc69deaf604b92918f89def77f2026",
+      "uncompressed_sha256": "bf9586bb01518d1e512e0aabf2e10f32be23a3718001c4e739aa14bac02422cc",
+      "original": "/home/wt/git/cuButterfly-pro6000-pr/experiments/tools/confirm_pro6000_cpu.py"
+    },
+    {
+      "path": "records/728076f3ed5176ae6f91a55f0cce41d1e9241826f394efcc49202b0fcbaea723.gz",
+      "sha256": "77fabdd82d8ebfd7bc113e5bb55b34cb407062e6a9beeb1cac43812cdcf05a27",
+      "uncompressed_sha256": "728076f3ed5176ae6f91a55f0cce41d1e9241826f394efcc49202b0fcbaea723",
+      "original": "/home/wt/git/cuButterfly-pro6000-pr/experiments/tools/reproduce_pro6000_ntt8_failure.py"
+    }
+  ],
+  "scope": "Independent legal cyclic NTT8, exact own/external backend statuses, three CPU process medians. Shared host remains provisional. No old raw records or GPU measurements replaced."
+}

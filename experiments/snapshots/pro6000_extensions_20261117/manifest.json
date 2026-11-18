@@ -1,0 +1,2709 @@
+{
+  "schema": "cubutterfly-pro6000-extensions-publication-v1",
+  "exported_at": "2026-11-17T20:43:26.291989+08:00",
+  "campaigns": {
+    "fft17": {
+      "preparation": {
+        "path": "fft17/preparation.json.gz",
+        "sha256": "0163d677e4987ee17585bac8854ae7917deb4c83b0c6d40ef3cdd726b1d1fbec",
+        "uncompressed_sha256": "e917915c82ecf3453826e4f26add3502ffcfe517a3daae1c829d32da063b90c4",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/preparation.json"
+      },
+      "records": [
+        {
+          "path": "fft17/rows/c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7.json.gz",
+          "sha256": "0ff519b1b994ddd18702e622a0ae1eb42b2110885544eae7d28300d92aba17c0",
+          "uncompressed_sha256": "7eb776ea5d1fba6a9bba907248fcae9a7e6fb82316bd629a638fee932a89e0dd",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7.json"
+        },
+        {
+          "path": "fft17/rows/ba087fb33968396226e0479b872103d845d72ef4d9acbcd3a1d3a5cc191effa7.json.gz",
+          "sha256": "23055a3001d1a1b807665d131474dd2c3171aff0aaf72171f887cd0f23f29961",
+          "uncompressed_sha256": "448250a3c83634b53e324518962901536f4a45e91709b236a96b56896553a5a0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/ba087fb33968396226e0479b872103d845d72ef4d9acbcd3a1d3a5cc191effa7.json"
+        },
+        {
+          "path": "fft17/rows/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548.json.gz",
+          "sha256": "29936c8aa09e118d27636714098b8ad8823c290b7db60a6ab680d8dc868807a1",
+          "uncompressed_sha256": "2592560646e4fce7b8fd08cb829ff707fcde85a70617126317939942e074614a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548.json"
+        },
+        {
+          "path": "fft17/rows/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac.json.gz",
+          "sha256": "0a26458a2952eab9be986fc646a0cf01150a43309e1e51f3f486a209ec9c74a9",
+          "uncompressed_sha256": "93dd255771fc3a449bcf75c45a8e12ae97d17883635b265472c9d6226a8ad142",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac.json"
+        },
+        {
+          "path": "fft17/rows/44b2de6f8d8235eec266bf422af3826442f8250366e2b9fad29ac0576dbce3e3.json.gz",
+          "sha256": "19cee91460621fcee8fe51a48addd2a2ae9017f1f53dd288de99b4c11b995b52",
+          "uncompressed_sha256": "5e6142615fd9662f0ca0f76c60957d1aa1401a1aae6bcec98cdd52cf79a26c17",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/44b2de6f8d8235eec266bf422af3826442f8250366e2b9fad29ac0576dbce3e3.json"
+        },
+        {
+          "path": "fft17/rows/ee8b034b194dda38fb15fb59cbc30b48f3ecda99d875b90dcee2ec12956795dc.json.gz",
+          "sha256": "91e99e9c2147ec893fdc40d818430cdc71e32f88b3887e768ce25ce8066da834",
+          "uncompressed_sha256": "c2b5d059d6f31fbbd81782a5ef1129711940e19ca41883abe7a99831f31509aa",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/ee8b034b194dda38fb15fb59cbc30b48f3ecda99d875b90dcee2ec12956795dc.json"
+        },
+        {
+          "path": "fft17/rows/fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d.json.gz",
+          "sha256": "d6b348f3c3afc98290152bcc8f8792e4d032927551cd24f452756f565767fc2f",
+          "uncompressed_sha256": "31491d9145118977d7b3bd75fe3f38ec539f5c1326e7a67abe6b2b2eee3b2628",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d.json"
+        },
+        {
+          "path": "fft17/rows/cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0.json.gz",
+          "sha256": "9357b7895838d123467f178ef7e256ec13d2c9955c12a0dfe0762230c594c3f6",
+          "uncompressed_sha256": "263b5f5f642ff8b2839bdd88fd3da56144f688bdc8c465ff2432a856b8a2a41e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0.json"
+        },
+        {
+          "path": "fft17/rows/99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0.json.gz",
+          "sha256": "e3a9e81281626031021787b4103f9a94556dfeb45f8fb9799afd7994cda2b1e7",
+          "uncompressed_sha256": "9a87da624a1aace9e6918bcdf3cde18852de34a7394c2a07f85f54d00a91ea8a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0.json"
+        },
+        {
+          "path": "fft17/rows/6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f.json.gz",
+          "sha256": "f2f22f33ec9cff9c52ca1a22100bb8304248c042d0c311ff4a7e8f65a06755a6",
+          "uncompressed_sha256": "480cdf85e9785fc02f4fb994f552f93984124c6531e893011caf9ac19a924a3a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f.json"
+        },
+        {
+          "path": "fft17/rows/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a.json.gz",
+          "sha256": "bbf99e9aef03c1eb6664e044e4070f8268e49b27801b6fc77f57926288000866",
+          "uncompressed_sha256": "21876ced92671eb434dec47d85ab8ee2c1426d0dccae19877df3334f61fcc87b",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a.json"
+        },
+        {
+          "path": "fft17/rows/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb.json.gz",
+          "sha256": "dcf1d78e6343c3770eb17e6e3084cfd1e06fc51b93abb7e8c753b2e841b7f92f",
+          "uncompressed_sha256": "5bd4bc58ef8970fb88f6cde4cfdd2b2f9bb51224aba14733c00ffcc38dd5ca63",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb.json"
+        },
+        {
+          "path": "fft17/rows/2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9.json.gz",
+          "sha256": "30084132acad7773d28dca8aa8b94de59bc50c2c2f301ed7f104895bfa75baa6",
+          "uncompressed_sha256": "c1248f93b45d060c6efa6b0397686d2653ace74b95a0d8f7f7ac93505e861a66",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9.json"
+        },
+        {
+          "path": "fft17/rows/c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16.json.gz",
+          "sha256": "918eb0a186e39301a586449470b4feabeb60da28a6f9cd858ffd900bf7035204",
+          "uncompressed_sha256": "ef861a9916fd51793fad65da3a4ef19bb5867ee7789bc2920b7020d86c861323",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16.json"
+        },
+        {
+          "path": "fft17/rows/b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40.json.gz",
+          "sha256": "201a140f93dfb6d5d132ab8c86f058200638a65f25e597c5a079cd1dcca91458",
+          "uncompressed_sha256": "94039c02080a33f45ba17d34690bcb3ea902566b830f84d5fd895e7e964dbefa",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40.json"
+        },
+        {
+          "path": "fft17/rows/ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86.json.gz",
+          "sha256": "e30b645c41aaf27703499caff756978f019e48930e5bb60129ecf41dde9ecf37",
+          "uncompressed_sha256": "181e753e7383bb7ee3eb6931510465ce61150b4af19c13868a7e7f570c1a0be2",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86.json"
+        },
+        {
+          "path": "fft17/rows/1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963.json.gz",
+          "sha256": "f434a8ba097ed7a3258278f0c62e2be74c81c9f4f9d50cd29b0cedf037d5e796",
+          "uncompressed_sha256": "9b2fa35ecc5b691130cec7c0c82cfdfa8391b9471dc718ea06c235f31f1266c3",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-measured-cache-default/rows/1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963.json"
+        }
+      ],
+      "source_runtime_bindings": {
+        "/home/wt/git/cuButterfly-issue9/build/gpufft-sm120/libgpufft_baseline.so": "601e4bfa48ab25870b250d6a2922f0aa0d55abd2e445d0e3b9d3239d5f5cb358",
+        "/home/wt/git/cuButterfly-issue9/build/hadacore-sm120-native/libhadacore_baseline.so": "cfb624e2ad8be3ae64374d6c1a2cddcc9fc122be588347fd5b598d6938e36c0e",
+        "/home/wt/git/cuButterfly-issue9/build-pro6000-sm120/libcuntt.so": "3b0668f2530a75d1401dcbf5decea720f8e47db0c1357aafdf1680fa1bba6adb",
+        "/home/wt/git/cuButterfly-issue9/build-pro6000-sm120/libvkfft_xd_bridge.so": "26d4c234a496d2b7526e491b7f3feb99fdf85312dd4381130d1a47550e3a95bd",
+        "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/plans.json": "77b12fb990dde80852fbedab1703db503f6b2e1534a703beb7c7ad0c6748819f",
+        "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-quick-profile-runtime/NVIDIA-RTX-PRO-6000-Blackwell-Server-Edition-sm120-101973950464B/cost_model.json": "443f94f1682c1738af2f4187bcccfb4399a86a678368609bcd6b56d6e2a2e620",
+        "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-quick-profile-runtime/NVIDIA-RTX-PRO-6000-Blackwell-Server-Edition-sm120-101973950464B/hardware_model.json": "185b76a3ba75cbdaaa67242d24bd2b94939c45e2e688ca9e2de7dfda2706c643",
+        "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-quick-profile-runtime/NVIDIA-RTX-PRO-6000-Blackwell-Server-Edition-sm120-101973950464B/hardware_profile.json": "7d2c46136bbdc253ceebf8e869eff0157d096222b50a0d8c576afcb9b1bc62eb",
+        "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-quick-profile-runtime/NVIDIA-RTX-PRO-6000-Blackwell-Server-Edition-sm120-101973950464B/stage_service_profile.json": "b4b1e8c7b0a63f352f1fd33f0d0e01bf4b6889dbd10086d02226bddb29b22135",
+        "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/quick/run/calibration/finalized/registry.json": "614187cc634e4309054f9715818aae961d879075e5f5b7ba9fe181b26c524087"
+      },
+      "calibration_records": [
+        {
+          "path": "fft17/calibration/1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963.json.gz",
+          "sha256": "b120afd75d81d7215ff2229da0dac88cd1dd1cf38770d067704ae5957f77bddb",
+          "uncompressed_sha256": "76a9d29707f243fc94ea0cdaee4bb7ae2a33f115865d82f8b5a96adcc2c423ec",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963.json"
+        },
+        {
+          "path": "fft17/calibration/2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9.json.gz",
+          "sha256": "c4bfdb62e4f8a70493c0f80a2afe7dfbd30822316fe2cbde6298fe1c5b2d813d",
+          "uncompressed_sha256": "96042c8f1023cd85a83efcedf7f49e2b638866c83612b252cad01de545e3fb52",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9.json"
+        },
+        {
+          "path": "fft17/calibration/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a.json.gz",
+          "sha256": "0d34f6f58813e053ea66f70c139a75135a054dcd20189cad9b8f87f20a94644e",
+          "uncompressed_sha256": "e17e6c1c1ef599bd05b293c219bcdffc6b4ac56ad52004282cd7b52cbcd98af4",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a.json"
+        },
+        {
+          "path": "fft17/calibration/44b2de6f8d8235eec266bf422af3826442f8250366e2b9fad29ac0576dbce3e3.json.gz",
+          "sha256": "66c14c76a2e0fc2d0c725cf7d88383f2198270aa96b5f3d3c9998f2039d9637b",
+          "uncompressed_sha256": "70e6d4c47943199f4f35a0b116a152fe9816955afd9d6612d54fcc0dde799a8e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/44b2de6f8d8235eec266bf422af3826442f8250366e2b9fad29ac0576dbce3e3.json"
+        },
+        {
+          "path": "fft17/calibration/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb.json.gz",
+          "sha256": "0ddc43347a316f99d690bcc265a9d7e90625949a624161b4a7bdb46a4129ff2f",
+          "uncompressed_sha256": "a643c2fa43b1590c64f210ee9ca787cf04e9902d5b75be2541f66d420a09bd62",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb.json"
+        },
+        {
+          "path": "fft17/calibration/6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f.json.gz",
+          "sha256": "54758eee6e07df390a4a06bcbe6de4bd780db05f20327b212251d7044550faad",
+          "uncompressed_sha256": "6d36770542fde351d3b22495aa10b956ab38b8e6f28343d33f852302349530f5",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f.json"
+        },
+        {
+          "path": "fft17/calibration/99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0.json.gz",
+          "sha256": "54ceed39b9809cc726bf184682883e40ab6f06f22ccebf7fc44cf6bc6fb1f0c3",
+          "uncompressed_sha256": "bfd0f13647e24f0c248ddbd1b6d31ba76d58bc237ddb79e6eef725d8236f8968",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0.json"
+        },
+        {
+          "path": "fft17/calibration/b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40.json.gz",
+          "sha256": "528c40d726c8737c899c048c226f7de69962213d21326208650ccf2c98440d3b",
+          "uncompressed_sha256": "7ed52ca2d30c8b38733db27721e6cd4f8f39216a99a4b99c8edbf7e7b3cba014",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40.json"
+        },
+        {
+          "path": "fft17/calibration/ba087fb33968396226e0479b872103d845d72ef4d9acbcd3a1d3a5cc191effa7.json.gz",
+          "sha256": "97ffb4e237496ac1f3a81f625fdced2776ddc065ff674025345e59c3125b34cc",
+          "uncompressed_sha256": "daf633ff47887a384aa393daa1a766004a035d63d1f5d9f3eca9c468738de177",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/ba087fb33968396226e0479b872103d845d72ef4d9acbcd3a1d3a5cc191effa7.json"
+        },
+        {
+          "path": "fft17/calibration/c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16.json.gz",
+          "sha256": "4d254c1420a2177549e3068d703cd898710ff3933554ae6841421ba9b66a13f7",
+          "uncompressed_sha256": "93c23c717548cd6531243298a677a95252d4ef2e43d79e1a3d63cde28b6080ad",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16.json"
+        },
+        {
+          "path": "fft17/calibration/c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7.json.gz",
+          "sha256": "657ea4eb021063c80b81c4bdfa941fd2bc9cf4e32f048e52ae3115ba01617c39",
+          "uncompressed_sha256": "346a6271ea459731b3f83212054fe88de1d8f27503eadc60b161c14f4dc5d83f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7.json"
+        },
+        {
+          "path": "fft17/calibration/ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86.json.gz",
+          "sha256": "104dfb2af95d8d3a96f26b29d07139fe7beccaa54a4cbc96501ee69c32a9686b",
+          "uncompressed_sha256": "49f763d8340cb165cb05f1a8a19b7b3810f51e3cbce0c4f5c3a01b041c068e3a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86.json"
+        },
+        {
+          "path": "fft17/calibration/cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0.json.gz",
+          "sha256": "ece8b85469277ea2e4254adbabe063b2e8ebe47885ee08146851c2062efbfc5d",
+          "uncompressed_sha256": "373c9f6fd1e8b443d86a013e9eca3ec1cb8ee415d0fe10928dac1bca6ab716d8",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0.json"
+        },
+        {
+          "path": "fft17/calibration/ee8b034b194dda38fb15fb59cbc30b48f3ecda99d875b90dcee2ec12956795dc.json.gz",
+          "sha256": "019eee9adfb37750cc03c65bf08f54dcc7d9a452e8960ce629d8521d0ed06215",
+          "uncompressed_sha256": "768ba6ccc60f889e70e421ff65f3021b7e7c093ec2a18c6ce2eab6983456673c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/ee8b034b194dda38fb15fb59cbc30b48f3ecda99d875b90dcee2ec12956795dc.json"
+        },
+        {
+          "path": "fft17/calibration/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac.json.gz",
+          "sha256": "c9d99f40a2c3fedc8b9e708231888b12d66f3ba039e804b8f1667f02651e4bce",
+          "uncompressed_sha256": "8264b3411c5b0f923551a123e7b4f12bde45cf5c1619f82c0f909f3df827ec7c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac.json"
+        },
+        {
+          "path": "fft17/calibration/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548.json.gz",
+          "sha256": "fd974e3bd7a44b44fe9992ec4cf7907e9605155cc07044c31e658022d22c4a96",
+          "uncompressed_sha256": "d4aa273f34ca148fb13575af9db1c5fb6e845c370fe6def288fd102ede5ad858",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548.json"
+        },
+        {
+          "path": "fft17/calibration/fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d.json.gz",
+          "sha256": "20f5eb46c2f973f5de1f7efebde49527f3c0f16ac50f40849d0aae17f56b9f79",
+          "uncompressed_sha256": "934975c9724eeaa9400544e36dddc5831b091f162a63396d691474f279bc39a1",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/rows/fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d.json"
+        }
+      ],
+      "cache": {
+        "path": "fft17/plans.cache.gz",
+        "sha256": "02fdf342ea261e59baccdbfa35c6dea7d075974cee5b49c6b2907712c0b38242",
+        "uncompressed_sha256": "77b12fb990dde80852fbedab1703db503f6b2e1534a703beb7c7ad0c6748819f",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/fft17-exact-request-cache/plans.json"
+      },
+      "completion": {
+        "path": "fft17/completion-audit.json.gz",
+        "sha256": "0de024b881e887d50a5066a9ba02e3b2cd48a953f979eee7bc5bc5cd3f201de4",
+        "uncompressed_sha256": "75bba6b27970e8b51723d1628b12ec4d65b63052a08e0803ec9059c541a70603",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft17-cached-default/fft17-completion-audit.json"
+      }
+    },
+    "mma9": {
+      "preparation": {
+        "path": "mma9/preparation.json.gz",
+        "sha256": "e4eadf4067825a952b42fdc65a489bdc3547e44492df86a4463eee756f12a832",
+        "uncompressed_sha256": "5a4b3135be6a7b21dfd20b1dbc783e73b2e9646e617de215a43bb333aa5bcf83",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/mma9-local-paired/preparation.json"
+      },
+      "records": [
+        {
+          "path": "mma9/rows/fwht-fp16-n256-b1-allow-fp16-mma.json.gz",
+          "sha256": "b8966315ba86d8fbc320768f3720da59355392bc261dbe85cbcfc1d9461baee8",
+          "uncompressed_sha256": "1ea3827aa8c81f79cc2f95cb0e1cca2b33cee0016e74aa45b56c2fddcc54c8bd",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/mma9-local-paired/rows/fwht-fp16-n256-b1-allow-fp16-mma.json"
+        },
+        {
+          "path": "mma9/rows/fwht-fp16-n256-b16-allow-fp16-mma.json.gz",
+          "sha256": "dffbb3f38a87e8498f966efdec1651da721c56b0276f3ce638b32084ece56b86",
+          "uncompressed_sha256": "3359681a068fe91b58acd812593193787a96eebba82c489281996bb53ab70481",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/mma9-local-paired/rows/fwht-fp16-n256-b16-allow-fp16-mma.json"
+        },
+        {
+          "path": "mma9/rows/fwht-fp16-n256-b256-allow-fp16-mma.json.gz",
+          "sha256": "68b549d0502c6dad3aba1d7988ce7481fddbe82a474f6c4662a198f7684a05fe",
+          "uncompressed_sha256": "cb768fb617b728cbfc9abd822715f8415dd253d32e5c248b69f9ff9be94f65b2",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/mma9-local-paired/rows/fwht-fp16-n256-b256-allow-fp16-mma.json"
+        },
+        {
+          "path": "mma9/rows/fwht-fp16-n4096-b1-allow-fp16-mma.json.gz",
+          "sha256": "6cd7e729e79ecd11eb62d60b66fe77a013f98edfddb66a17860805cc0f400bf5",
+          "uncompressed_sha256": "081cc3489de935bf5a9c8b368445fe31c957e649236a6e8e799ed8b8bccf5539",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/mma9-local-paired/rows/fwht-fp16-n4096-b1-allow-fp16-mma.json"
+        },
+        {
+          "path": "mma9/rows/fwht-fp16-n4096-b16-allow-fp16-mma.json.gz",
+          "sha256": "c155356d8c8c9f75f8dda81b3c5ab117aaa069187243752e446b66e3bf11c46a",
+          "uncompressed_sha256": "43b5f7d0ec299313edbf34496db0238058740af93789978385fb52cf3e0fb68b",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/mma9-local-paired/rows/fwht-fp16-n4096-b16-allow-fp16-mma.json"
+        },
+        {
+          "path": "mma9/rows/fwht-fp16-n4096-b256-allow-fp16-mma.json.gz",
+          "sha256": "61b34b271548750a76ec707d6a9c39aa9ae601aabba1f50a8e0d665678b3be2e",
+          "uncompressed_sha256": "d6460c87cb75558512826f7c88a27633de3b09a75cb92c9c75a438fa35813557",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/mma9-local-paired/rows/fwht-fp16-n4096-b256-allow-fp16-mma.json"
+        },
+        {
+          "path": "mma9/rows/fwht-fp16-n32768-b1-allow-fp16-mma.json.gz",
+          "sha256": "9c7c140e574d2a6bf5e776924c22e083bab84b071c2d05260a3c60fd7c89ef52",
+          "uncompressed_sha256": "cf23a9de8ac9a3ac45ce111d49068b1648fd42ceb05d52d532f2d8a6d3d9cbb7",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/mma9-local-paired/rows/fwht-fp16-n32768-b1-allow-fp16-mma.json"
+        },
+        {
+          "path": "mma9/rows/fwht-fp16-n32768-b16-allow-fp16-mma.json.gz",
+          "sha256": "7ff1b8aa3179bb93c47d465e95973f68f2b6aba26647f254bcdfd7756d59b197",
+          "uncompressed_sha256": "97482000bc52a569e44ab8db7d9d71b808164dc008b2cd7d9857df9c3bab92fe",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/mma9-local-paired/rows/fwht-fp16-n32768-b16-allow-fp16-mma.json"
+        },
+        {
+          "path": "mma9/rows/fwht-fp16-n32768-b256-allow-fp16-mma.json.gz",
+          "sha256": "f0798aa6a723734699e5262281eec8740a93702a8c65840d3a7d8e31b7cacbe6",
+          "uncompressed_sha256": "d1e09ac2805f2dd5cda1a4173cbe82f78faab596fac33c6e32350d08d22b9c19",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/mma9-local-paired/rows/fwht-fp16-n32768-b256-allow-fp16-mma.json"
+        }
+      ],
+      "source_runtime_bindings": {
+        "/home/wt/git/cuButterfly-issue9/build/gpufft-sm120/libgpufft_baseline.so": "601e4bfa48ab25870b250d6a2922f0aa0d55abd2e445d0e3b9d3239d5f5cb358",
+        "/home/wt/git/cuButterfly-issue9/build/hadacore-sm120-native/libhadacore_baseline.so": "cfb624e2ad8be3ae64374d6c1a2cddcc9fc122be588347fd5b598d6938e36c0e",
+        "/home/wt/git/cuButterfly-issue9/build/hadacore-tile-sm120-native/libhadacore_tile.so": "88cfe3be19e18b220e743777ce03955f9165be838b3d3e3316df6ad68b68d440",
+        "/home/wt/git/cuButterfly-issue9/build-pro6000-sm120/libcuntt.so": "3b0668f2530a75d1401dcbf5decea720f8e47db0c1357aafdf1680fa1bba6adb",
+        "/home/wt/git/cuButterfly-issue9/build-pro6000-sm120/libvkfft_xd_bridge.so": "26d4c234a496d2b7526e491b7f3feb99fdf85312dd4381130d1a47550e3a95bd",
+        "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-local-paired/profile.json": "84afa2ea64f980c0c39aef7534afb8460e383ad41615ac9cf2a1a528fb88c445",
+        "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-local-profile-root/NVIDIA-RTX-PRO-6000-Blackwell-Server-Edition-sm120-101973950464B/hardware_model.json": "c4ded0bdd9c67c93d37f7a1438aeb3dd17cf60e2a6f2aac004d046617e2860ba",
+        "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-local-profile-root/NVIDIA-RTX-PRO-6000-Blackwell-Server-Edition-sm120-101973950464B/hardware_profile.json": "4c702ee29b94d0d550f235ab619a9c2a0c55ad8e8f412bb5314566bcc1a91c80"
+      },
+      "profile": {
+        "path": "mma9/paired-profile.json.gz",
+        "sha256": "0466102219f696a1ca1b697cf46865521fb657c9041f81a27627133dfa8d95f1",
+        "uncompressed_sha256": "84afa2ea64f980c0c39aef7534afb8460e383ad41615ac9cf2a1a528fb88c445",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-local-paired/profile.json"
+      },
+      "public_records": [
+        {
+          "path": "mma9/public/N1024xB1.json.gz",
+          "sha256": "8b22c584146acea95b036de5270d987767398f4990a3862d4b0c6e859275dbb3",
+          "uncompressed_sha256": "aca2dfb11eb0de072d6d59b3467d86ecd03dc6978a6e4b8c20924da8a3da1f58",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N1024xB1.json"
+        },
+        {
+          "path": "mma9/public/N1024xB16.json.gz",
+          "sha256": "70f53b3c16fa59d759a2091d62bde92942e37ac9e566e4a6c60972e69ccd94be",
+          "uncompressed_sha256": "5711029bd8b1bdc6a52dea37864babdd76acc8393bb6a8bd5f7aa5c4f5e9cc6e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N1024xB16.json"
+        },
+        {
+          "path": "mma9/public/N1024xB2.json.gz",
+          "sha256": "815f31164703af451ad6fa2442468f407eac9d9cfc9e17cc592982b8a7254b2c",
+          "uncompressed_sha256": "d7f5e1e04c818359fbc293b2b2ee44d26f062933adafdb6f0aa7f3546f9d967d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N1024xB2.json"
+        },
+        {
+          "path": "mma9/public/N1024xB256.json.gz",
+          "sha256": "9f1ae2c9bcabf12c694ed2462bbe281d7034bd9ccbb73f006f87827bfbd4fa41",
+          "uncompressed_sha256": "2d53ebd339044286a6773413318701814c6673daa6bcc7fd960219a53248c1d5",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N1024xB256.json"
+        },
+        {
+          "path": "mma9/public/N1024xB4.json.gz",
+          "sha256": "c7cb3cfa80c2231adb58e78a0ef5950c9b8f75e134cb267c201699583e291b07",
+          "uncompressed_sha256": "8016b9f2101d1ab894b2c4d7ffca05678bb94e11b72ee50b9352c2ab1b840ef5",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N1024xB4.json"
+        },
+        {
+          "path": "mma9/public/N1024xB64.json.gz",
+          "sha256": "9a6e4ee0ac2e34bc5247fc946c0de297d911433a36c38ff07d3bc069675a6361",
+          "uncompressed_sha256": "ece380b50b7536180423bfa51aee580677577d990e16d8e7aa2e764e1b4766a7",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N1024xB64.json"
+        },
+        {
+          "path": "mma9/public/N128xB16.json.gz",
+          "sha256": "ffa53704b4061648c28a36231da82e948b414cf5db966d3c1ab0db5d4e108510",
+          "uncompressed_sha256": "6253dcc4b479b74b1c1ac6c0a1df42eea8d8f5226b0753d46e25503848cdcad6",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N128xB16.json"
+        },
+        {
+          "path": "mma9/public/N128xB2.json.gz",
+          "sha256": "9190c8e13736c6d3c7ed7cea06cc7101013200001d6a056ed317bfaab1997ac9",
+          "uncompressed_sha256": "92fabae4bc2021ceffdccc756797d7dc989c8c6b63c3e1ae7b6ecd314dfb20a7",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N128xB2.json"
+        },
+        {
+          "path": "mma9/public/N128xB256.json.gz",
+          "sha256": "750685b1910c076064749faa483fc196a5658bfbde1807730d2de3442ec1bc53",
+          "uncompressed_sha256": "baa6828ae6dd360146705a6dfeb099bddad97ce15e855c018a945dec45930ee2",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N128xB256.json"
+        },
+        {
+          "path": "mma9/public/N128xB4.json.gz",
+          "sha256": "c7581e6c6dd3f6edfe7bca48af417e08d67b0cf97a09e5c128966074bb7040c1",
+          "uncompressed_sha256": "2efccc07e587715f29cf49faa07829d8573cd177e0f75f4de402f55a0ef751c1",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N128xB4.json"
+        },
+        {
+          "path": "mma9/public/N128xB64.json.gz",
+          "sha256": "cc13771a1415b42c92b5e3879f57077ce5c68ddb00c6316582bf6e2552e11266",
+          "uncompressed_sha256": "f795cf9da5b15050d7d3cbf97116588929d2f069c4e8ec9ad2b8c1fed65ff8db",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N128xB64.json"
+        },
+        {
+          "path": "mma9/public/N16384xB1.json.gz",
+          "sha256": "50a6d9a329ec813dcee834f57a08e2d19df8414e2ff8e5e946d968712489122d",
+          "uncompressed_sha256": "b119f58b81db1a859aea7fe2d2bd7a14c3b12d01c40d0f2eec77ee9e380a670d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N16384xB1.json"
+        },
+        {
+          "path": "mma9/public/N16384xB16.json.gz",
+          "sha256": "baef4befd49fc575b42a813234e7bf75323f3ec06681416d0e7975a91afe18b8",
+          "uncompressed_sha256": "7ac88c15792d83617d60b22413294c0854051be16c1962ddae3a27ae4d63ea8e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N16384xB16.json"
+        },
+        {
+          "path": "mma9/public/N16384xB2.json.gz",
+          "sha256": "6084771553da96c2316d993d8bba65cc9ac7cfa0cf0ae97561aacb2f46e5242b",
+          "uncompressed_sha256": "fb709e821b332048e8f46c6037c0b8aa55c73f48b3425088501ad2c853bb4ad7",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N16384xB2.json"
+        },
+        {
+          "path": "mma9/public/N16384xB256.json.gz",
+          "sha256": "8cdcb01a797a038712b0e78dff9a9c13e20dbc0cec332c16a0d559c95e406f63",
+          "uncompressed_sha256": "199e39704c24f5fa6531b955a370f50e676bd31fa507282599921459fe28ea8e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N16384xB256.json"
+        },
+        {
+          "path": "mma9/public/N16384xB4.json.gz",
+          "sha256": "d9793f178092de92a126fa253eebb4d99266e0237015dcb3caeed7ea16cfdac0",
+          "uncompressed_sha256": "dca3d7c5ce35f3401459b14571a204e02e9ff5107cbe56a52166325e1ca2d85c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N16384xB4.json"
+        },
+        {
+          "path": "mma9/public/N16384xB64.json.gz",
+          "sha256": "a50d32f7a9b03e7268586b1f1af603b36e3ed33c8edda1707e71fc1eef2314da",
+          "uncompressed_sha256": "19742902b9ec2649653b350c1d0b7742292b304379286e59f524680dbea879eb",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N16384xB64.json"
+        },
+        {
+          "path": "mma9/public/N16xB16.json.gz",
+          "sha256": "ec89fb59a9951448e27ced85540f6609797d12904e9132ea54125999ee4c9638",
+          "uncompressed_sha256": "36aecaaaa37db0ff60d573b0e0624f5578ee890f702e36f098b79ccf07e2d375",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N16xB16.json"
+        },
+        {
+          "path": "mma9/public/N16xB256.json.gz",
+          "sha256": "7c6a84bb82287043819154363aeebe997e9dc425a588381a6dfc27ea83066f7b",
+          "uncompressed_sha256": "e6364799408880b994750267474df0e8dc1268ccafdd19357b40aa2aa3a1ca7d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N16xB256.json"
+        },
+        {
+          "path": "mma9/public/N16xB64.json.gz",
+          "sha256": "b4922bb32da0212745d7d2659680bcf5fe57e38cf818adc2ca65496ac6a87dd8",
+          "uncompressed_sha256": "2f068293bcc4820097b674550e9d13ddde03ec222b344b18ba29465152579e00",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N16xB64.json"
+        },
+        {
+          "path": "mma9/public/N2048xB1.json.gz",
+          "sha256": "0f15c82fa9912c3eb0f596a5992f5817183bd311ee253d08e8ec355c80ad7e47",
+          "uncompressed_sha256": "119d410567307c5a6d7a9d89188352584ea2306fba5896d3012b91fc1aeeb395",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N2048xB1.json"
+        },
+        {
+          "path": "mma9/public/N2048xB16.json.gz",
+          "sha256": "ccd7ad763397817f164bdbecf1490136a1c52a2e80607455ef5377799f85c0ac",
+          "uncompressed_sha256": "84ad2df7a793d57d1c0c0741ce4a164e2cbe76d7b41cc27f90d53d4f8aea8f43",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N2048xB16.json"
+        },
+        {
+          "path": "mma9/public/N2048xB2.json.gz",
+          "sha256": "0f0dfa2e87530aea2ebb3fe5b75bd7215777d7e2919aab27575003f3e5158f1e",
+          "uncompressed_sha256": "1a05e23a08c8c371314efa141379a7c27a460c2ef6fdac8994ca50e24211017c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N2048xB2.json"
+        },
+        {
+          "path": "mma9/public/N2048xB256.json.gz",
+          "sha256": "ea404c0d9f310ecf2ad8e3aa6af62887971ad198598192d5044b7b503a80fef6",
+          "uncompressed_sha256": "48c1f529330ff4d44c033ebc6c8be7a52043464c8e93a398f091fa59db4049fb",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N2048xB256.json"
+        },
+        {
+          "path": "mma9/public/N2048xB4.json.gz",
+          "sha256": "b477402d9344a6f2fbc2f5cb9a51d589915a5ae8f6ae09baa846da7d6e7f5774",
+          "uncompressed_sha256": "f813095b99c18a879bacf1639ab66f9bf3bf2849139e656264036b22ef6b3295",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N2048xB4.json"
+        },
+        {
+          "path": "mma9/public/N2048xB64.json.gz",
+          "sha256": "54ec7e77d55d695a99b9816751238fad9e165f3d839b0c6e6fbedc6212b4c6bb",
+          "uncompressed_sha256": "83d7a618e96c9841b9dd7e8ad3f53d42fa3508677b1b1dd6aca4fd04f4e7e24c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N2048xB64.json"
+        },
+        {
+          "path": "mma9/public/N256xB1.json.gz",
+          "sha256": "596ea547403d3d30bbaddf01623557cf7b81b2adfd1296e53a1b3e066187de04",
+          "uncompressed_sha256": "236ecc923b9e87c8e24935c974a74350dd9f194d5cf71bbb3a027a17816cad80",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N256xB1.json"
+        },
+        {
+          "path": "mma9/public/N256xB16.json.gz",
+          "sha256": "1daa33123b5471b47cd6d9ab05a4bbf444a7a91836ef8c33ed52afe6d0c24f7d",
+          "uncompressed_sha256": "7b84e9b4fd1f7303bbd576edba4de51a1852e8cba1e2fdf605730a8101e9faf0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N256xB16.json"
+        },
+        {
+          "path": "mma9/public/N256xB2.json.gz",
+          "sha256": "f60977d938ca1ca4510b41d651290b740383c15ef5961e06fcb30f6021d05417",
+          "uncompressed_sha256": "35a7936a2e1e2aac3fd67d7a469b64bbf4f7f57a6a44be6bb961e8338ed67ac2",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N256xB2.json"
+        },
+        {
+          "path": "mma9/public/N256xB256.json.gz",
+          "sha256": "3532af97c09776b2386ae31024f98f81d35ce3041c8c6f182acf7bc5417d5c0d",
+          "uncompressed_sha256": "50f46ea76536df81b7db019598407512ed0cb2147fcb9997fba61385979bb21b",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N256xB256.json"
+        },
+        {
+          "path": "mma9/public/N256xB4.json.gz",
+          "sha256": "9a385f3ac548bebe18cbff0dca71e0d31c16da9fa7af5a962b0a0a01d1dd1da6",
+          "uncompressed_sha256": "8b844814f6967f5215e6a57855ca68c2c2695eefbce59e0d250d5e4b3660c38e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N256xB4.json"
+        },
+        {
+          "path": "mma9/public/N256xB64.json.gz",
+          "sha256": "1b6e7531859a6a0191098f93eb68b9907488f06f85cbd0836f72075d7d926e63",
+          "uncompressed_sha256": "b72cebd15737da2f0167b4da297c7eec57c02827afdfd7e23b99d035d283428b",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N256xB64.json"
+        },
+        {
+          "path": "mma9/public/N2xB256.json.gz",
+          "sha256": "4dc799abe711c8e22680b1597b56a8fd50afc01e347bd23d94bf9cf88d1f24fe",
+          "uncompressed_sha256": "21bc6f8db42aeeca1396064fb20885b545a082519d31c2a8bb5f21bd7b2b7859",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N2xB256.json"
+        },
+        {
+          "path": "mma9/public/N32768xB1.json.gz",
+          "sha256": "a10b9c93ad1491e7d55c3dd66247951f18f3fa608cfc62b09ef1d2d0f767cf6c",
+          "uncompressed_sha256": "1fb386b5d5c86c6d94169d650786e577894877bc34af7f3ef87929744989a779",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N32768xB1.json"
+        },
+        {
+          "path": "mma9/public/N32768xB16.json.gz",
+          "sha256": "695573dad51394a9c7f76b0955b2df5f97eba5cd11a2ff6faa373f9ff39da44d",
+          "uncompressed_sha256": "d752624cb7defb1cede0f99e9f0cecd6783689baa7f217b80ae26aed90d6994e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N32768xB16.json"
+        },
+        {
+          "path": "mma9/public/N32768xB2.json.gz",
+          "sha256": "2aa57e53aa8f6fe9bd488a70d38abc23628604ed91e7b340cb034368b60855ee",
+          "uncompressed_sha256": "24a0417b7c33b7e7d8bef69fd9f58f56c41dc7ff33e6b292ac768627a38849b5",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N32768xB2.json"
+        },
+        {
+          "path": "mma9/public/N32768xB256.json.gz",
+          "sha256": "822faaf7b3dade58088430c82179cd65f36ef5e71bd6bd87fee4882d65c00a5e",
+          "uncompressed_sha256": "a1411d71c09f46229ec2d539ed1c767a00ebe902c97a20cc54b3a7d70779b031",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N32768xB256.json"
+        },
+        {
+          "path": "mma9/public/N32768xB4.json.gz",
+          "sha256": "cd153a2fecc0ebce01a24c8aece8e88d045633a19e75e4c87056c70e6fb88589",
+          "uncompressed_sha256": "c3fd0cacfb3d3c302acd1ddf86a90f6db70154c84c0b50a949c1412ab5957d99",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N32768xB4.json"
+        },
+        {
+          "path": "mma9/public/N32768xB64.json.gz",
+          "sha256": "1a679ff841c7f3727326d9ca8990fab9eb0e34815af6f94d7e85cabb632f3be6",
+          "uncompressed_sha256": "4efb189120ddd62be49eb9541c1b7785c489c43c9840838322d605d78a07a9dd",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N32768xB64.json"
+        },
+        {
+          "path": "mma9/public/N32xB16.json.gz",
+          "sha256": "d3512bc23cd3d3e7cdf8c68fdd31f9d1be67062e46d2a8147969109397f386f1",
+          "uncompressed_sha256": "a675bf0dba65f4d580f9cdaadb2d22d18dd360ea50fb7b77c9e8ea9224e6063f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N32xB16.json"
+        },
+        {
+          "path": "mma9/public/N32xB256.json.gz",
+          "sha256": "1ffa791d5ee6144c5dd9d135e999235735710e652aa41e80cc60b9fd09ba6a2c",
+          "uncompressed_sha256": "f71b33ea63fc2cadb918b62d230c53afb20c5acf545b0ae07a5695a66ba06e8f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N32xB256.json"
+        },
+        {
+          "path": "mma9/public/N32xB64.json.gz",
+          "sha256": "dd7fcb27afa39c4061bcd58a03c3afc3cf25d80bf66d5316f66c023ba9a3ee15",
+          "uncompressed_sha256": "57d20ec405cb30e87c35723f6d3a11a191502f779c2ba59bb05196c11f869aab",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N32xB64.json"
+        },
+        {
+          "path": "mma9/public/N4096xB1.json.gz",
+          "sha256": "40c02b4efbe3ae52c2efac927e70386d44502c440914b4c5b3eb5fbf774e1864",
+          "uncompressed_sha256": "78b777537cae39c023590e0196aa3a96146cf242cc6b34b4d7f90130e98ed810",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N4096xB1.json"
+        },
+        {
+          "path": "mma9/public/N4096xB16.json.gz",
+          "sha256": "458af7b2d4d6a15af2d8dec5d7c85c76f2bb55ccf0a6e9455d24ddcf11bc8984",
+          "uncompressed_sha256": "c011ab3beb19b79b3a9696c5215043eb7d575e423f49b7f05ee82a18bb1f5674",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N4096xB16.json"
+        },
+        {
+          "path": "mma9/public/N4096xB2.json.gz",
+          "sha256": "e1d987644618930acffc835c397ddc1fa95e03fa312c865f24447d840d42db78",
+          "uncompressed_sha256": "cf5894b452a8422183bfb10ce7759204b4cdca1cb20b5332ab2fc6e800d2c5fc",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N4096xB2.json"
+        },
+        {
+          "path": "mma9/public/N4096xB256.json.gz",
+          "sha256": "72bae66727ceb2e6f93af188d92f34f3b589d8749cda88f58f7ac4d447a08094",
+          "uncompressed_sha256": "4214b21229ce782db12383a51f74a7d58f0d589a79104ed29227e03412ca31d0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N4096xB256.json"
+        },
+        {
+          "path": "mma9/public/N4096xB4.json.gz",
+          "sha256": "21d91815875e07f4a228147c3d34407046e42b9a513589d0aa0febc50721d2a3",
+          "uncompressed_sha256": "aa4a6477b74d3913bd7db0ec0fcfdfb6a6acb0c743f56cf6780a8e676c6dcabe",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N4096xB4.json"
+        },
+        {
+          "path": "mma9/public/N4096xB64.json.gz",
+          "sha256": "40114ecb2fb1bfd369a7c48c4cfd5e4eee0cbaff400ea44312bec958c6b98546",
+          "uncompressed_sha256": "351b8cbeb0e49ed173fa9b1325cf6e57bd74bb0b7f90853293c13fa17e2819a2",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N4096xB64.json"
+        },
+        {
+          "path": "mma9/public/N4xB256.json.gz",
+          "sha256": "208cc940952c63daac3eccba208906827c46e74d2fdddb27161e3e1e1dd5851d",
+          "uncompressed_sha256": "aa35b642dcd1133b1a0ac1923891281447c15a710cb8b4141b91f81f0eec9101",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N4xB256.json"
+        },
+        {
+          "path": "mma9/public/N4xB64.json.gz",
+          "sha256": "c1f34ee3adb511d0af9635490e5a46c8e7c0a21a0018bc9ebbcb2ecbf4065a6d",
+          "uncompressed_sha256": "2003c3fb2fe4d985ef76998d73986df7898619384ced1cb8d3d89b56f1976103",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N4xB64.json"
+        },
+        {
+          "path": "mma9/public/N512xB1.json.gz",
+          "sha256": "beb4f5cc08dfcb14d489297c4c404dccb82a957b2dbbb0944320517ce975dbe1",
+          "uncompressed_sha256": "b343b8e40942608a8d313aef6b90ca086ec3eb14413fc83abd3899edba1bafce",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N512xB1.json"
+        },
+        {
+          "path": "mma9/public/N512xB16.json.gz",
+          "sha256": "e7118a5bdeaeb299274db95b4daae0516fbe59e92aac808a3d6db35163470028",
+          "uncompressed_sha256": "315c4399b260e85bf22652aea0426c42bf36940a5ce7512811899dd23b450a81",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N512xB16.json"
+        },
+        {
+          "path": "mma9/public/N512xB2.json.gz",
+          "sha256": "6a34b1c755177a1599421487a49532628b285695a0c3475a06617a8b38bdfd77",
+          "uncompressed_sha256": "65b87e17d6e81feda46b61fa9332583b7b3c688059b15f0fe36a49f55a775cba",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N512xB2.json"
+        },
+        {
+          "path": "mma9/public/N512xB256.json.gz",
+          "sha256": "201f0d7aebe7890ff051c292fdd354454e990de18532807adec8cbb94aed014e",
+          "uncompressed_sha256": "4da5806067e387e9b9d457572c01eee705214ff1eae176b476fd58c13e39837c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N512xB256.json"
+        },
+        {
+          "path": "mma9/public/N512xB4.json.gz",
+          "sha256": "e6e30ddcb12e5478ff7f268cb0cda028822c6dd359417c6fa29ca1f159f0768c",
+          "uncompressed_sha256": "a77e1dc6fa9a95b152b92d2515b784ece24f2c06fbc2d4e62070fbaf90060783",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N512xB4.json"
+        },
+        {
+          "path": "mma9/public/N512xB64.json.gz",
+          "sha256": "0abe1092803eec64504dd03b813b1450430b129d8c523569057763ecfce41a7b",
+          "uncompressed_sha256": "35f9f9859fb2fe672e359f854e8a20839014c83504afc9bfa102dbac6af52914",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N512xB64.json"
+        },
+        {
+          "path": "mma9/public/N64xB16.json.gz",
+          "sha256": "f6a76eba6118b0f9ff62b945d6713886d0bad44d3216fb84398c41dc8c303afb",
+          "uncompressed_sha256": "6817832b3ebbafde3f6db895d374dd07d885a2cbb6d51fdd40229088ed3cdc05",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N64xB16.json"
+        },
+        {
+          "path": "mma9/public/N64xB256.json.gz",
+          "sha256": "dbc4867da6bd77c0999dd73c5027b09d4bc73dc370b16f487f78e2bc1a703694",
+          "uncompressed_sha256": "3e042f928ca89a9da51275c153223dc34fb35859aa47130bb0637443a34ddca0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N64xB256.json"
+        },
+        {
+          "path": "mma9/public/N64xB4.json.gz",
+          "sha256": "599292335b9ed5acfe2509781d5e1937ba0aa933fd8684db1b3908c202e19007",
+          "uncompressed_sha256": "3b23f1bcb1312409c4cfbb16d533469b0a2cd68c29682d56f41baed822b1d9ea",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N64xB4.json"
+        },
+        {
+          "path": "mma9/public/N64xB64.json.gz",
+          "sha256": "e1bdbd65299890e85a32fad3508bb679efd601c28341c83e5a47bdef416a4320",
+          "uncompressed_sha256": "ad91512e05df9073cb88c77de3ad8a80b11eda91bccb5463c1aaaa41b629fd76",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N64xB64.json"
+        },
+        {
+          "path": "mma9/public/N8192xB1.json.gz",
+          "sha256": "9843caa89fb4b875584b065e825edcd9389d4f5d3d1bef1a3df4477de9b75449",
+          "uncompressed_sha256": "4f4244ac16a125aa5b4730bf24af2344c9af658b59b14ea72f2195db74609eac",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N8192xB1.json"
+        },
+        {
+          "path": "mma9/public/N8192xB16.json.gz",
+          "sha256": "b53ffe72a7d6a9e99f244dea84ab068cadacfd5369c64d00f4441d097136651a",
+          "uncompressed_sha256": "dab8401317dbe71edd33f7070ec0f19c9e876d17705339821a1cfbfac49fb1fa",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N8192xB16.json"
+        },
+        {
+          "path": "mma9/public/N8192xB2.json.gz",
+          "sha256": "2a291f161e4382bcd78d18bd2c691776d469bf972563ac3026d0be0b9002edd7",
+          "uncompressed_sha256": "aa0559883f3800a8e20a9ba0c23c474865df53bfd61966822fc8cec39db08592",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N8192xB2.json"
+        },
+        {
+          "path": "mma9/public/N8192xB256.json.gz",
+          "sha256": "75357ed5f4bfd53cf37697c7ea2ff5d2a98cb79d2d771b9824c0913c3699794e",
+          "uncompressed_sha256": "1729710de82cd4e6b83a52177bc08deac98f17d4cc91cdfc4535c3b91c484654",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N8192xB256.json"
+        },
+        {
+          "path": "mma9/public/N8192xB4.json.gz",
+          "sha256": "4b8c2e3d67c1a9062c9c53bee8c1e00fd57be04cd7aca5c835224664a28e8966",
+          "uncompressed_sha256": "0eff4543c1bf8641ae83161caf902a98d6f0ac253f18f4ae44ecdc3e163722ff",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N8192xB4.json"
+        },
+        {
+          "path": "mma9/public/N8192xB64.json.gz",
+          "sha256": "b64b5bb933816cbaa4a22247db27672d1e39ff35590602d4bba3fc3e112eb9b0",
+          "uncompressed_sha256": "531c99634fa1b6d62840765cd7826d8a26558f6d193516671c9cfe2deede1af8",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N8192xB64.json"
+        },
+        {
+          "path": "mma9/public/N8xB256.json.gz",
+          "sha256": "c23acfd1035c905c348302509ecf939ec389f86cf1efb180561667f86211e2eb",
+          "uncompressed_sha256": "42d28e5d83f8fa0cfdcc81600ebd701e3fa98c30cbcf8d44b02687a5b4c5645c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N8xB256.json"
+        },
+        {
+          "path": "mma9/public/N8xB64.json.gz",
+          "sha256": "bae97146019e9aa37e7f2e0900610df949f857d405812a0909c0aa35713d5b6b",
+          "uncompressed_sha256": "08ccc89db216a48a4422a0b374c6916f6f3911ff9c3eafddc3ed9f7a1e8a6cd0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-public-local/rows/N8xB64.json"
+        }
+      ],
+      "public_audit": {
+        "path": "mma9/public-audit.json.gz",
+        "sha256": "3d7dc154927c065766f35da50d07bc1394a242670dccc8424981480fc0d99d01",
+        "uncompressed_sha256": "99f0466b6c34cfa9e4b52996a126a3c08e4631ff53666e1c563785888516bf16",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/external-baselines-20261117/hadacore-local-completion-audit.json"
+      },
+      "completion": {
+        "path": "mma9/completion-audit.json.gz",
+        "sha256": "85defe0c8fc75a1e28540ff9e4f13f328bfd735998056e4a60ab4ce5ba402a04",
+        "uncompressed_sha256": "1f8b2560e56177eb1d31e296b24dd078a495cbcbe78560d16cde7fbe823f9595",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/external-baselines-20261117/hadacore-mma9-paired-audit.json"
+      },
+      "calibration_records": [
+        {
+          "kind": "native",
+          "path": "mma9/native/N2xB256.json.gz",
+          "sha256": "d9ff6b1018a7c21c05bdda9dcc547698fe9c0114e01a932f0ee16e12fa77c6ee",
+          "uncompressed_sha256": "fcb6b58a2e51a2706a03d6b4751df7ba958cbcc4901f979ab7867829725058e9",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N2xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N4xB64.json.gz",
+          "sha256": "0c234b62db19c6e1fc50149dd32af6b4d401ae09bd3bf3f3431d9ceb357bb937",
+          "uncompressed_sha256": "eb18c838fea04d7437701b8fffa346a8d6f52d8970e1e2cf54539f7b2fb48fd3",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N4xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N4xB256.json.gz",
+          "sha256": "0c9f00f7dbcaa3f2d47e9365ed1d498c579c5b98681a5e3b7a10b3172c71c3bf",
+          "uncompressed_sha256": "7c9367bba1654634f471922bc6ec41defe7952da3c28e891a46e724d1ab2e158",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N4xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N8xB64.json.gz",
+          "sha256": "e3a291057d2c9f2c935442d80ad7bcff9196679ca1854f3a74fc30609ad1eedc",
+          "uncompressed_sha256": "8dae1db8b47941467b7c5f8427705f0a2f323638c3f19b23a4689cdb85041c5a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N8xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N8xB256.json.gz",
+          "sha256": "dd9e05ab3376996246bd117416bb40bd2c781895e338bda053138e7d3ac3983f",
+          "uncompressed_sha256": "5667ceb80a7a72039f75017022233fbcdf7da01dc391703534b30a1fd5a0c07c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N8xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N16xB16.json.gz",
+          "sha256": "befe20bcdac9d8a75fc168cc5f9f764145f1c821e6d222d40d1ceb028cbd8784",
+          "uncompressed_sha256": "ade6b40365c9a17b4059b79fe25ad4f16e0ef79edfedd824453f41d1489eb7c2",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N16xB16.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N16xB64.json.gz",
+          "sha256": "00b2ccf881dc5434053d5cd574530c9d923ea4f7dd0cc6846d1849a07fac5656",
+          "uncompressed_sha256": "7cf3effb4aa9417a4287cce56d075857d63b15f51f650eec75621a9734845174",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N16xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N16xB256.json.gz",
+          "sha256": "dc4f8179b641e688b0213121e597a98e114267d64669998f4a5a1371be08e12f",
+          "uncompressed_sha256": "c55d5aa7e2f4f4faebb4059fc13fb6c9a0ed6d721bcd147071975351d76c8190",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N16xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N32xB16.json.gz",
+          "sha256": "b4ec30f3c62d7102d79a5fdfeaab26585502c0fd43399951ee59f24fcfd37042",
+          "uncompressed_sha256": "d21851bfa2dffbb699a1e868a626aeba11f9a83d858c71a0616ddddd4e7687d0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N32xB16.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N32xB64.json.gz",
+          "sha256": "41dcbbd9f1f153626fa89ffd8a297ee3c7a92a8db19ca29ef607cfdbfacde8cb",
+          "uncompressed_sha256": "6b7e775766336043795b00a183240ed93d3492247ed273b32545be87e20aedd5",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N32xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N32xB256.json.gz",
+          "sha256": "6842d8482e43a1a7f39ed43ab7b5cafe93d00f15b7b14c23479879d308246247",
+          "uncompressed_sha256": "75c80ad3e4a039fe11056289d2d6912d6a63d45cb632c942253fd30fc668b1ea",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N32xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N64xB4.json.gz",
+          "sha256": "81ec7d5818a43abba1185bfc0cd28c4336a1483d43e313a65f0545340a331d20",
+          "uncompressed_sha256": "318dffc1e7b8dfca2c364f097672be50a181707879d19f5a9040538717cf4c16",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N64xB4.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N64xB16.json.gz",
+          "sha256": "57066947fa4afade8cac42e0e582d32e5962092f123c5c5a4753ada76fd5803b",
+          "uncompressed_sha256": "eaf918153b7717142ea60e6bc5f67d4cc4d18e18573f6f598bb5b2effa02bf77",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N64xB16.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N64xB64.json.gz",
+          "sha256": "91b53413b8963c79f03f0303ea3f1f5c66b55df631aaef6f91fb01055f9ef27f",
+          "uncompressed_sha256": "2be8cae41945dc1e8b0fc809fb5331f287c622c765471ed8c3c6efe82c3c939f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N64xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N64xB256.json.gz",
+          "sha256": "03ead536f7a3db18f6f2e133cc304e0a6804249711eb346d8b8c05bc4ceae91a",
+          "uncompressed_sha256": "82fa1f7cbcb02d8b916cf0c057279596c0bb963cc3f51cdd3fca05151516dfd6",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N64xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N128xB2.json.gz",
+          "sha256": "84f9cd3879d91f5c87d8f4dbccaeca184fde5171ecee8ad3448d3b736f532d58",
+          "uncompressed_sha256": "a5adba59df91571f97b22c852c628fd721b6e0d76e735f590b98a9eff60de1fb",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N128xB2.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N128xB4.json.gz",
+          "sha256": "c3523d2271f3b698d67cba44858ae74cc69fcb2407b1a66fd755dc49bc33327f",
+          "uncompressed_sha256": "60853b5d413a7b93da38feac663fe17f51a1f532f62fad3d3de63004194c76d4",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N128xB4.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N128xB16.json.gz",
+          "sha256": "9d2773391948b441a79adc2c2b58041a18be231e300d6080e98b77ef3300a68f",
+          "uncompressed_sha256": "9d349ed4257966c1e278ece3f4636790de9efa33a174b590a890cb37d5f03815",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N128xB16.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N128xB64.json.gz",
+          "sha256": "0c3c99db62ee46919be8c383ac7780d27df87097533af403ceefcc910cff4403",
+          "uncompressed_sha256": "76e27f8b2e5c33129b0aeba4614bd5c8e8206a376c6cac4456e6b43e4294b9a7",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N128xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N128xB256.json.gz",
+          "sha256": "766c06ccc76cec7b9e5be210baa492fae155cab9be660236bb2cd405d7f29d13",
+          "uncompressed_sha256": "1751a001274971341a284ae0bb8abc2294a4b5e01f1014e67bb143e48a41e3a4",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N128xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N256xB1.json.gz",
+          "sha256": "bfe464bd125fcf05b9009444590d1e2ec6a650e7dc66d01b79fc176c3764d57d",
+          "uncompressed_sha256": "8ef8440cdb617d594cb804d5d449891fbe7a9f4a77fa0526d6072a21421d1f2e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N256xB1.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N256xB2.json.gz",
+          "sha256": "d818249b2ada50fa614250eafd2df9f521cdc1ce3f099f696958f4ef71b7fb8f",
+          "uncompressed_sha256": "8ada277952bf60fa84fde540376874a7c05fb04d7a56814e1f0cdb93102b5f36",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N256xB2.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N256xB4.json.gz",
+          "sha256": "43d17d456c9901a75a8b81c9cc2562302ee37c80f0bd6e0b972c0f9e391b4223",
+          "uncompressed_sha256": "cc3559664bd50b0432dbc4c10c53f910db00b400d6aa3438a6efc766335de538",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N256xB4.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N256xB16.json.gz",
+          "sha256": "3aa9abaea617760917741be1322de37537691f0c803d1c085d4250bda22b2ba9",
+          "uncompressed_sha256": "66282bd081084e5c83262d75f642563f6c2a40f89ca45d67ef6a61d533a6c16c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N256xB16.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N256xB64.json.gz",
+          "sha256": "fdab86b1f536f8b2b88d5a7342e01033989e8d33644110a7cf4c730dd2403ee6",
+          "uncompressed_sha256": "2c6e2cf9e814fa0718ce8e9908e6c88bdab27242e42cc09472bd988918482321",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N256xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N256xB256.json.gz",
+          "sha256": "b01d57b9544d2f355d15dacc42faf291014e5a1070f6ef7a7cc1aa507221bc20",
+          "uncompressed_sha256": "4d7be528c7c3cfb0e3f999ad9902b2c8b1bd1e9f50134a7e36429627dea170c0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N256xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N512xB1.json.gz",
+          "sha256": "c1845bfd67ec7370f5a23c4ca7bf7737c48b6f0ab1b502c9b01e9a4006795486",
+          "uncompressed_sha256": "6f0ca369a505d143befb6ffd42ca7b67961ee35d5765cbad1dedb6275cc3a0f8",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N512xB1.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N512xB2.json.gz",
+          "sha256": "a51edd7d9408013b210e939884f10148d266422ea0b401c81a90a134582e053c",
+          "uncompressed_sha256": "594855c5414e6c343fa61c0bdb58b32b9ee42588944caf12d90207e9a228a4a4",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N512xB2.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N512xB4.json.gz",
+          "sha256": "f6c2a00628a36612398c72cd06c7b110318d11ad79e08925e89c3db83195f29e",
+          "uncompressed_sha256": "5a2a71edc9e2559127db915ab24151f9424f56fbed8aacd16bf593023b851376",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N512xB4.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N512xB16.json.gz",
+          "sha256": "8ae974f0734616928fe65e59a0904d4f725559d2c2e9fe987ae5a664ec572b73",
+          "uncompressed_sha256": "d6ff0abc32ebf3e9d4f3e4765965de008b3f6f9109c46ae8b37c7b6819bef689",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N512xB16.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N512xB64.json.gz",
+          "sha256": "b9c420bea28e6d27d38133df8a84529f9b866dedffba12e5a3c3236de2e67d89",
+          "uncompressed_sha256": "1ee8b0bf2d7ceaae48584d3853233c5ffe553f009e49d0223068f3890a71d394",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N512xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N512xB256.json.gz",
+          "sha256": "bfabee84eed442b9725882ced458ecf98e7ab93b055029aeb6ac06a8b63f6fc0",
+          "uncompressed_sha256": "2f07d900773625e6adc443d14639e16bf301c38dbb9292700fedda1bd903a798",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N512xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N1024xB1.json.gz",
+          "sha256": "4f907f76c09ac898d3098a3679e496f5f4ba92e637b5a2437797c663c50f2afc",
+          "uncompressed_sha256": "dc36d8dac56f8003642b55fb8b28702f21201a4d401953cd978fe769ba5db48c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N1024xB1.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N1024xB2.json.gz",
+          "sha256": "5cc3827a88999f5a05118839716af848f003d1c010d1c277731f441fc99e349e",
+          "uncompressed_sha256": "8d07bf24afe03f663afb9bbf7e7b2ca14b931c6cf1bb7991b397166892974912",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N1024xB2.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N1024xB4.json.gz",
+          "sha256": "5830f3ce3052d11daa6a88ce080c93563b05831b13392d70bcf272fded61df8a",
+          "uncompressed_sha256": "28ae5ac3807b40eca69893c9cd1c60099c27b09b84fe10072a5b64c3419d09bd",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N1024xB4.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N1024xB16.json.gz",
+          "sha256": "72c2641ae75dd56730942df33fb6b73b81b053bb06089a2128995cb389836ac0",
+          "uncompressed_sha256": "c3be2d90e6b445c88a23817a415b2105f148ab5d759f46ddc2c303f6abe15761",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N1024xB16.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N1024xB64.json.gz",
+          "sha256": "98d3d0355a3905ba367e1fceaab009165cbbe4fd39dcf7a4374d0e4887145306",
+          "uncompressed_sha256": "1bdb08139564e92528f4a166629a5c0c7af81756268e9dcf4dd89a4c513224c8",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N1024xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N1024xB256.json.gz",
+          "sha256": "adb6fed6037dc904abaacf64b81169ae5c52b54c430e2e8805e0510371013972",
+          "uncompressed_sha256": "ef2ad517525d81b0956be8d7ca94cb25c505f6c70a463a8267e68a9c85dab482",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N1024xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N2048xB1.json.gz",
+          "sha256": "a7793163568922cd5542961b8c54d576dfaa64df9f7caeb1657c635ab517fb85",
+          "uncompressed_sha256": "bda9c549c78dba14c2ef0c774ae151a0c9ec23319b87f179ec3730b12a03b65b",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N2048xB1.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N2048xB2.json.gz",
+          "sha256": "c3f9194da155060c17fb1224251d4a99906e798bd3954dcf71a519e0577acea6",
+          "uncompressed_sha256": "ff201378dea8bc1d61bc0f41468b63dc55ef277e08fa9fbed487a22e36620576",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N2048xB2.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N2048xB4.json.gz",
+          "sha256": "b2dae05302ee106faba2191d54c42316c9f0ce9b5947405c1334de66a5ae1083",
+          "uncompressed_sha256": "b04d8b7b5da6877306281bf244713646c4ceef2056f6b038eb81919f7ab479ec",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N2048xB4.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N2048xB16.json.gz",
+          "sha256": "e85c4a6d97b923263218e0a515984b98f90b2a4cb99a8a9efac962cf3bd4b5f3",
+          "uncompressed_sha256": "f5e4591d90ae83d56a4e6cd93323e4519d728185a1ac7dfbbb6d3c2d6423f56a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N2048xB16.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N2048xB64.json.gz",
+          "sha256": "f769beea1960d810dfa1d18d953b271a002f3430dc149a3e7fe44bca30b03772",
+          "uncompressed_sha256": "b9b0e77bcef2e5bf4b0ada82b726d701eccb81f8720da33ebea961ac8a073e0f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N2048xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N2048xB256.json.gz",
+          "sha256": "a88638165402535dac9e3c3c0f4d28168a362e09ba9bdddc032fbc16d7679f29",
+          "uncompressed_sha256": "ebb631bff813a62839b8928aeeb64189282c15ebbebae565d3aecdf8a1668a51",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N2048xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N4096xB1.json.gz",
+          "sha256": "4de458a0e032f5981dc6aaff321c198c9a08dea594918d47800763fd89294773",
+          "uncompressed_sha256": "fc75ad8d2fbd3472201436e3ded774fefbda13fc1cbd51f7ad86d6170a3df5df",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N4096xB1.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N4096xB2.json.gz",
+          "sha256": "c95f5cb19467436015997f33d377e8f223fd887f744f727d0b0e1953eb2e21cd",
+          "uncompressed_sha256": "555b31c6f92e5a38a437298ece1fffdf710b8ce60d4680075400337e5bfbfae3",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N4096xB2.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N4096xB4.json.gz",
+          "sha256": "5b64e5d68012790b420a049addf9e53d95dc4580c61ab21ed6dbd386b7a3cbfa",
+          "uncompressed_sha256": "457f930f76e5e9ce4defc0f84331ab9033218c4ba0c237a63c2899d7dd3eb4da",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N4096xB4.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N4096xB16.json.gz",
+          "sha256": "607a66dd6226e82e7c3b3e2baecf22a083999aabb2b61e8587e6cfb0fded6e66",
+          "uncompressed_sha256": "f827e2745c453a98e21dfaf5db497bf1c373fdc125ede76b3d8f3eab739beae2",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N4096xB16.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N4096xB64.json.gz",
+          "sha256": "abe8d00fb60f0f62bd853612a373102aa0d994fa0547f08dac202748f43c4175",
+          "uncompressed_sha256": "ab5312801e3e34eafa7a6d4673f287904e251c74a7c4ac69139699ba0c8896aa",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N4096xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N4096xB256.json.gz",
+          "sha256": "09a2cd0225e9f89382b9b144b3d23d0bcfe59ef51c147d354cf2d1871e29953d",
+          "uncompressed_sha256": "e43b63a19dcc8d4cd7fcccbc024e2c61d5aa1f8ea413029b033408cb982a47c7",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N4096xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N8192xB1.json.gz",
+          "sha256": "5d15cab7ea6b5df477dd6c3f63e5f6960a24125cf707a4241e764f63a58dec7a",
+          "uncompressed_sha256": "fd1e4ff2f548b1154d886130b00a75a3a255956329fea2fbc499696278bf6de0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N8192xB1.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N8192xB2.json.gz",
+          "sha256": "db814f87cc032815a020da197fcf29b883af938a6e17a1789ba608ffba3d8d2a",
+          "uncompressed_sha256": "711527061251bd661c2579b639a62e202944dccf313d6bb6cfbacdfc63b00450",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N8192xB2.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N8192xB4.json.gz",
+          "sha256": "f6954a4d7c00b57c4df7e4e11ac9dde48b1542dccecf5e816dc98e08af399a95",
+          "uncompressed_sha256": "9bb571cf32ff24ce3556ae26d0d47220971cc08e9e7de04919f50fec846b995b",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N8192xB4.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N8192xB16.json.gz",
+          "sha256": "2747c27f718b4f212f940820ac67d214c69e6b17279bfd952c1695fd01875a7b",
+          "uncompressed_sha256": "3a67cb45425eac6592a65fa2c5910b935958cfb4e1e76affa4962b6f0d5d17fc",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N8192xB16.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N8192xB64.json.gz",
+          "sha256": "150dbdd55901aa2ac513a057609cf9009a5f66b035eabfe56d621aad26254d4c",
+          "uncompressed_sha256": "ffe0b4623e7c75ddb8e36c4a1a615753b0055fef7d2ce2a46c79a5ac6cff19ab",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N8192xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N8192xB256.json.gz",
+          "sha256": "f6a10441dc3263e6924c6049021597fb9eeb138be3c1ab85cd66b39b6971ef7f",
+          "uncompressed_sha256": "42c8b94e25f0074601231c7d519966e770d9a82148d8ad731839df8fe1589590",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N8192xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N16384xB1.json.gz",
+          "sha256": "9c40bdb867ef0abe1c731998d93fc485d881de9ac6e54a4472ab75550221e58c",
+          "uncompressed_sha256": "7c5b9b8b296aec7647da15839b501965d3d6c6f016ed2453ac7c0e661a09e877",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N16384xB1.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N16384xB2.json.gz",
+          "sha256": "920118f669c109be5d1ecdaa7b330548b31d9f74cc9fe0a562a144261d97f5b8",
+          "uncompressed_sha256": "0f9bb8ee68026f9d63e8f608046f7edd1fe22ddebd36fba53fe3a22e40dd62fd",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N16384xB2.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N16384xB4.json.gz",
+          "sha256": "8e9aaa51bcdda5034b6dff02c80cacd551b0c201c256e052d8ca16b535da4472",
+          "uncompressed_sha256": "56911834e2d100c1df909f1d1fc705e661cdc06e1d22440a1fe03563c5d0f16c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N16384xB4.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N16384xB16.json.gz",
+          "sha256": "bbc3ace2be15d4cde005b31b00dde600932d1c4ccdf5d7d192a53b30a77b1ee5",
+          "uncompressed_sha256": "847287acd3b8d24dfbac4ddcba6b6ec87ed649e21eee881bb3e87725342d01f2",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N16384xB16.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N16384xB64.json.gz",
+          "sha256": "76e12ba572335b19fc84135d1ccba0bd707afc15018331ff7a4f99fb60f87147",
+          "uncompressed_sha256": "d98c1cef2304e1d7d6af27c9e154c0c59a40fadc7892ae485cda185ccadb82d4",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N16384xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N16384xB256.json.gz",
+          "sha256": "9470f86e48c0446878b02aaddf4a18de258ff2dfa8410e26b05f72c2137f12a7",
+          "uncompressed_sha256": "dd9ba87948ae7bbde0913aa8f64f6caecd86f96945d2f60b192f5ce492cc2f0a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N16384xB256.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N32768xB1.json.gz",
+          "sha256": "90ff08f3204581a97ff6d1599e590dd56e6cff06ab7e37f929cf30f8d891b778",
+          "uncompressed_sha256": "557ab44253bb80f510cd1714422161a21fb8f270d3d0da9bb09e351e7175d0ae",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N32768xB1.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N32768xB2.json.gz",
+          "sha256": "27bc7d1d6b603c12b3846527b31f22f56a7a759d4c0ec5f1f4f89825b1271eeb",
+          "uncompressed_sha256": "e0cc774f23e8ae13573e29885b5fb645b6ed3a4e06276f5b6d7aaebc09894fe9",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N32768xB2.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N32768xB4.json.gz",
+          "sha256": "70df60166ae2ea1f966711531954a4d45b89ada6ac531473ed5849e8d36211aa",
+          "uncompressed_sha256": "02a783eb31fdebde59a77bfa8311220555bccf7848a824a2a397cf98f8a259b1",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N32768xB4.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N32768xB16.json.gz",
+          "sha256": "25a0a85af7717b234c28e1ad81f8c4d914aade65de2ddb89a06d49bb36a5b5a4",
+          "uncompressed_sha256": "b04533c5e187f6dc18f6c6f4a5bce67a906b8e922941165d51698d4ca81452aa",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N32768xB16.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N32768xB64.json.gz",
+          "sha256": "92ba1a955cdf44e0a5fbce10171eb9388f208630684758be9ad21bf7c814dd98",
+          "uncompressed_sha256": "18df85b0f5f2bac7c253fc1883b751cb8c20610a515697ecf56ee1b5410a63d4",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N32768xB64.json"
+        },
+        {
+          "kind": "native",
+          "path": "mma9/native/N32768xB256.json.gz",
+          "sha256": "b3190a0b5c67f1c75830d919114fb6b7419ec9e25987f00502ef23675b254f88",
+          "uncompressed_sha256": "7ac854a28a7d8a3688bc8c0bfc570888eec4f20a5abb066382d34678cbcb90be",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-native-local/rows/N32768xB256.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2xB256-groups1.json.gz",
+          "sha256": "7e3e9db4278f54113504fbdf8b6a1d3edc58bd9bc7b7275ea622e8f052241adc",
+          "uncompressed_sha256": "40785ed5700eefcda51a892844d110460923275a179a754b4fc31de156eacac8",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2xB256-groups2.json.gz",
+          "sha256": "dafb600bb7b6774cad8d89ebb5473d168dedbab69ac0deb35dd5a8deeeb8bdb3",
+          "uncompressed_sha256": "0070fe23bc04d3746ff5f44b9231d95d75f992eaa172ee613bac1af45ef4cb3e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2xB256-groups4.json.gz",
+          "sha256": "d1acaf61feaa26d7532f3dddea8d22f999cf6e987773638878dd6b15cdf61d70",
+          "uncompressed_sha256": "ddefb878ad50194239d46029a77e0288ce3aff103d970250ccc3b6233b47a959",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4xB64-groups1.json.gz",
+          "sha256": "5b14d509d7325fc798872f8f8923ebbf79202ae96f6fbce2eb6a0aa385a0e125",
+          "uncompressed_sha256": "623773be816366123d196e27460716cdeeb3e668117e53089a67701bd4dae11c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4xB64-groups2.json.gz",
+          "sha256": "55d566c053541e9d2cdfea6cfc9b4f385750047a38ae30865cdbbcc1dead2cf9",
+          "uncompressed_sha256": "8e8802e70e90af3cfb973cc313868e0931732b65a172f9c1a904c518b99a5845",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4xB64-groups4.json.gz",
+          "sha256": "8df1cd93cb13a9ed0b60b61d3994ae8dc1da4e434d42f9f5c3c1f0423ff47003",
+          "uncompressed_sha256": "c9f14fa1c94c36a5b6070516bb9de0c32e7e7c7803b01c5b5029642bc2faea12",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4xB256-groups1.json.gz",
+          "sha256": "c8437ecb160d257db05b100e4a1e58fd9bb55dd00352132e5cc6906a0d717db9",
+          "uncompressed_sha256": "2ca46344f20bad5565861cfeb3d62ac31b2c5e1421cc31afe45ed98deeb13c79",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4xB256-groups2.json.gz",
+          "sha256": "535e28de9038269dd5cd297eeeaf741da7303ed4d294882d87966d8cb2cb9c3d",
+          "uncompressed_sha256": "1671d0643dde4dbb70725271f6a656f5d5db38a36bb88ee3857e07c084891ffb",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4xB256-groups4.json.gz",
+          "sha256": "30c2a27b63c766f3895a32beea661ba3bcdd5c46e0cfac3be8afdbc102d379d1",
+          "uncompressed_sha256": "67a7ca9b8e9280621f9703b4ae88f4b1b3682c05f52767592683cafc4d0b8392",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8xB64-groups1.json.gz",
+          "sha256": "c482bb151f3fe565a371ba6c8af1e716e90db8016c2416fd7279efdfb09f4f07",
+          "uncompressed_sha256": "fc9b591e783c9480782849af95a727fa1573568b71127eb2ca6e4c7cfacefed8",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8xB64-groups2.json.gz",
+          "sha256": "f75142a737cb042ff9447b02a2252799acd2c1b42e8785a962ea89d9bb616188",
+          "uncompressed_sha256": "eafefcc201d4d976175cdbf6f9425ce8ad63f598e5907e13c71993c2dc74eced",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8xB64-groups4.json.gz",
+          "sha256": "3f85a361b705c9a6e01339bf1ec16874deb13fbc3cd3766798f039d5ab470175",
+          "uncompressed_sha256": "ecf21266c4c2e435bf9ff89e2d23de6bbdb1dae38f4e2576eb6d525004ce3bc2",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8xB256-groups1.json.gz",
+          "sha256": "8bd744f8122f1502f7c5ba1d39b7cac7467e870429bca82edbb7db6800d1d96f",
+          "uncompressed_sha256": "6e25f70db950bcbc8836435aa5b79dcdfb7654f3d8199ab34a304a5139af2631",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8xB256-groups2.json.gz",
+          "sha256": "d0ec00294abf97362d54d4dcb0ff6e14ff4763976709f8402b601cd506a4f0ac",
+          "uncompressed_sha256": "aa8365688a088469cc63174678289f0bd4b4ab8c504a7fe0de94db0f497e758c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8xB256-groups4.json.gz",
+          "sha256": "d5bd8ec47206c61f2ce8ede236d8e891c8537f067ec513782618ed75dc851daf",
+          "uncompressed_sha256": "c50eb562b8ebf61913648af525e0a74396116daad5bb2c91a9586da8efad7130",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16xB16-groups1.json.gz",
+          "sha256": "7672983719d1bae71149ffae0921415d701fbeaddb1544d4de43c5ae3a1511cc",
+          "uncompressed_sha256": "1865caac3ba7dca607f6e5f5425f821e1e5a7cf63f83c144d00fe8dbd05059c1",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16xB16-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16xB16-groups2.json.gz",
+          "sha256": "c2f39cbab69956c76cc433bb968657bd9f4ef40c927f06e769ec6109c4a1d23d",
+          "uncompressed_sha256": "4e6f81a4b63b56d39704f15e9c4a7d13b0db3d918da05e5dbea6b22d3ca0c338",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16xB16-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16xB16-groups4.json.gz",
+          "sha256": "a5ecafb97f45896cb439ecea5dff497a7bd34016e22dc2f764223bb62665a42b",
+          "uncompressed_sha256": "80988ffd68eab9cb4b8e5d71cf21aafb2f85b23b6363315eb2ff4be128937b6c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16xB16-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16xB64-groups1.json.gz",
+          "sha256": "608ee2bad080cf9b00bf92f824c724ea1b3e2c087969476e4a908d37e137a786",
+          "uncompressed_sha256": "0b27c33741cd26b122e345f14733d368565d8c207dffc2645e1706120927dbd5",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16xB64-groups2.json.gz",
+          "sha256": "eab6f716a4a8dc375478548338d34841b95ea7969cf02d0e9067084e4634375f",
+          "uncompressed_sha256": "f9135032588ce7c581e55f2552990658036684094c071480af2f9befc3680b46",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16xB64-groups4.json.gz",
+          "sha256": "54b8ce3dcd2bdca31ca38544b56cdc62688c38f31b65fdeafa298f2959baf109",
+          "uncompressed_sha256": "55de4f716d17cc0ed89c6ec476b00c2f8f043ce5292b6a1df727713ca8865919",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16xB256-groups1.json.gz",
+          "sha256": "27d8055ff934a1e054af11dec910f81cc644a84f95f83275147cf02794808ce2",
+          "uncompressed_sha256": "a3769eab4459cdcc82841661a05f64c4998019f6a36178db0cb13e3c328d54e6",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16xB256-groups2.json.gz",
+          "sha256": "f4cc1de5d36cee9ba8695cf884fb4b3d0beff39a1f3f6db8090d0521247e0777",
+          "uncompressed_sha256": "f25f7371792f7974449de3416381d70a8fbb11b2c4c921e6b6d9bd314c964c8f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16xB256-groups4.json.gz",
+          "sha256": "13f32e8df5872c10d1b43d6ba7f2929c45bbaf6cbaa8469f15813f8d302ff387",
+          "uncompressed_sha256": "d4aec4a282350db6f3a8fb00503342ba11d94facde5d4d67472077f33262cd42",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32xB16-groups1.json.gz",
+          "sha256": "d332f09a0413de41b16cf4c34f5de41ffada8ccc27d5239e707b8e64d754e983",
+          "uncompressed_sha256": "93ee1fc4404f7d43cbfc529e16a62f288edc4d9294436350261f5f16e8eef447",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32xB16-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32xB16-groups2.json.gz",
+          "sha256": "8b71e87c9aacaa2d921b9f091dbf752e407840fb1ea3b23f72bf1109813b7029",
+          "uncompressed_sha256": "4442779b43858ef1bd10c703652e3f4b15f410390b2551c2bf57c0f30ee17816",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32xB16-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32xB16-groups4.json.gz",
+          "sha256": "7e0767cf80669c8c2164ecefa55b4d63f90ca53aa4ec2f5d73c802d7ff36cf44",
+          "uncompressed_sha256": "7dfb82f6c217a6e8927c4a3f3358a4e22d4cc23c36fe46e14ad0aa327700b71b",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32xB16-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32xB64-groups1.json.gz",
+          "sha256": "2ab6932e4e361831777a315dc52a0b56cc488425e31e77cac560af8888f6a577",
+          "uncompressed_sha256": "1d4ef7ec00fda15f98b8daea511cb0d08f47944417070f6e86dfb5d802d52b40",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32xB64-groups2.json.gz",
+          "sha256": "3875a8e88051a034121e62321d3c76aa22cecd6a5435b849383c6fdc393c4b40",
+          "uncompressed_sha256": "aa65cc12a0b7e6f8b03593a34f72f286c3ad2f1f4a44c655ffcaf69baff469d3",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32xB64-groups4.json.gz",
+          "sha256": "e263774eb1a30dabcfb4efd9cbadc247c36bb6df63f4553937f4f96bcd192d1e",
+          "uncompressed_sha256": "e5eb8a3bb2365fac16d91cd7ba7aee4f039f62780379eb9835eb2a2487961d6b",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32xB256-groups1.json.gz",
+          "sha256": "8a64f2cade40b59b0958cb519296aba0c43fd530d5b7c3571ef23f50958fea37",
+          "uncompressed_sha256": "b59f2ffebf39154733b9c7817e560bdabc969c5fda775957f8b175648d25c29a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32xB256-groups2.json.gz",
+          "sha256": "aa472ccf90bb3f2f89f05db1164bb465134ad40b0d03a20a95ae4eb29d09c39d",
+          "uncompressed_sha256": "4dffcc1191e2b45e6a0c76bcebb080d64d7d21590fe120b4096526620024a3b0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32xB256-groups4.json.gz",
+          "sha256": "29a1f74651b36bad1ac80c59367209013e61109983ac5ba0b42b1bde66cb731c",
+          "uncompressed_sha256": "18df3e85202bf419cd1153369e836b30414a7e7ee08d55669fdd3c37138f7aeb",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N64xB4-groups1.json.gz",
+          "sha256": "35cef20fc48967c7fd987fea36aca44d7b274373d59c525edf9b957dd11b6eb6",
+          "uncompressed_sha256": "1d1f2a8af49062fca49d131ce4ea6ffdddf1a0886c4317d8d99f6a983ce765e4",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N64xB4-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N64xB4-groups2.json.gz",
+          "sha256": "f983d879640fcf6e633213de25af2d0b892ba2863eecbd83eca233acc363cb6b",
+          "uncompressed_sha256": "11a0dbea983a7f04320b2e0393ee82631ea56657b0bbfeac92a192880d661143",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N64xB4-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N64xB4-groups4.json.gz",
+          "sha256": "40aa45beb697a3559d421eabda6f98c8d74df809d069c8619140d99611f07e52",
+          "uncompressed_sha256": "801fd8e7a2ac83dce4d46232777729e050d4d319965c9aa94c561bb5d0c4c1bd",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N64xB4-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N64xB16-groups1.json.gz",
+          "sha256": "567ea7824a2122a761baed087065709971c07a5879613f1cb34bb3c4be7974fc",
+          "uncompressed_sha256": "d2e6a3913de814fb04f8b4d49a55007e10532e35944327045337efc85143dffa",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N64xB16-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N64xB16-groups2.json.gz",
+          "sha256": "ddf4f14d19edcb3b22c4327b62b02124293c41b00da0533eea10c9fc34191f7f",
+          "uncompressed_sha256": "519ef5c1d23ab7105ace4035edb0315a17f1ceb43ceed010c109deac39ec72e1",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N64xB16-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N64xB16-groups4.json.gz",
+          "sha256": "a3bcaf41ff388a8e01494f8dee499254936173e77e8cf2767f61373d9adb88d3",
+          "uncompressed_sha256": "8d603448eac0d7d57dba02ff0b7e2d76a0696e35376c047649dedd92b2308743",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N64xB16-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N64xB64-groups1.json.gz",
+          "sha256": "80afdefdec0d2abbf4f255e8f940b97538dc15e0c4de1eed9f846386ba49c524",
+          "uncompressed_sha256": "04dcfcc6b1897e8033a2e8bf50d7620917fecc27bad7464a81b011eaebcd52e2",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N64xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N64xB64-groups2.json.gz",
+          "sha256": "94eedf8dc9e7f45252234aa9fe927f22a46112476f5b158467205d60de9c77ac",
+          "uncompressed_sha256": "a10ce6add73a60a14932b02d4b9298ebbd5cfff96df5f2d8173cd75747d98180",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N64xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N64xB64-groups4.json.gz",
+          "sha256": "3cae49cc2957faff87b126237a7ece2b24e908a1ae392fdbf9ea1e95ab6dc54f",
+          "uncompressed_sha256": "1a0f6ed92b3e82cf52f67fc66a7c0d4dbcfec83677fb27334758b0075005d107",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N64xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N64xB256-groups1.json.gz",
+          "sha256": "31b2ab058d68ef75d41d6989c9b48baad34dccbe3cec9d28e1a89c4c995cf447",
+          "uncompressed_sha256": "778ba14d761c05f9c0755d4788187e6517bc402a782e6ec0d70868ee8b8c5f12",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N64xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N64xB256-groups2.json.gz",
+          "sha256": "c1e5d26dd67ca64bf957c30cb058df6267294687af005f46e0e33d02d8df8abe",
+          "uncompressed_sha256": "ef59e6ad916ca38f5b3d16e0f504e3bc46f55721e5f067048464f624f9ed8f65",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N64xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N64xB256-groups4.json.gz",
+          "sha256": "f9a92e648ceacde6dfb6139bc5629d2ae0b12e01dd7ca18b0fbb201075685155",
+          "uncompressed_sha256": "f57d66576ed5bf8960b6b8cc9cb33d155a19db30b8f4cd4ca6807363fe1c65c3",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N64xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB2-groups1.json.gz",
+          "sha256": "9db7119c0a0b591b1e00550df805b78176ba1f3ba64d742cd0cf3ae3e8377d3d",
+          "uncompressed_sha256": "5a99b034fe92c5780809c19c49cc9ed5c11ec31f6636abe5277a94e254bc83ba",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB2-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB2-groups2.json.gz",
+          "sha256": "3af84a045801fe947f853debc5caf8e6f304caddb170756b902a295cdb44e5cb",
+          "uncompressed_sha256": "9fc4ee82479f2eb70e852f4f862b6d4feeca994e5858035c96a036df3ebb9c94",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB2-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB2-groups4.json.gz",
+          "sha256": "07c41829e7aab4b1b8c105370ed2cae2156684898ea8f7bca9597b66ddac964a",
+          "uncompressed_sha256": "05098ed86dc58c15fe546dda9e86f15a5153c2b5260d93125eeccb03f0b52e0c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB2-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB4-groups1.json.gz",
+          "sha256": "7dd8e5111bf32b944e8db262514bc468d2cc1aba856077fa570796e78612ccb2",
+          "uncompressed_sha256": "c0076fa8e0bf12244852e715c7024e60bf2b01c717f770b4d8e1241485e534f6",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB4-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB4-groups2.json.gz",
+          "sha256": "1f75d5001310800db2440826cf8052cc2531dfcef56164e43373db704e4a73d2",
+          "uncompressed_sha256": "0ce5251cd578378110ea7d74ddb5b445d2204ffccb0da9695cb44345a5dc588b",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB4-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB4-groups4.json.gz",
+          "sha256": "4382b08cfa2a5b1d4b99a3022627eb5d09ccc46f479c15adbabc562c61cf9dd8",
+          "uncompressed_sha256": "9b69c6d9b09c9b4fd9031a3c39df3a4ffc31a74992e7b23498e093a7d300fd6e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB4-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB16-groups1.json.gz",
+          "sha256": "b055f9ac9231e869c222af4c66a129d2803981602f4143a49ecb249b1509b40e",
+          "uncompressed_sha256": "2ff2d0807ba5f0979f360bdb16ce5c3e5ed877e63a48cf0192d8df9b031a93c6",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB16-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB16-groups2.json.gz",
+          "sha256": "6a6a56e18c14519c37120b3a9256e2e066a4415c9eb3271d169d7698f21d73c8",
+          "uncompressed_sha256": "feeae317e59d405b4fcfdfd8924dea4b9e2138b2721b3d268112c05b743c4224",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB16-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB16-groups4.json.gz",
+          "sha256": "8a7b393f6b7a1b6089f7651069351e7fbca347763a79b7c602375e23b5bf87a0",
+          "uncompressed_sha256": "73a1db804fe5245012e327d86d050b72f6d0f3bc05f5108db83fa697431aec5d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB16-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB64-groups1.json.gz",
+          "sha256": "1062c587273e1ca34bc7197998dff78cce1f69c0ef68c6d9795015122993ccd8",
+          "uncompressed_sha256": "d4e15aaa7da07e43b672cbf36c820a6f53e7d674e52e86f1f52bea90689eba60",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB64-groups2.json.gz",
+          "sha256": "fe3d2a16a842c9a541f91aab2e756e37d2a56ef853c9cc9492bfa6fe612131d7",
+          "uncompressed_sha256": "0585e2028195faf84cdfc8ad66ef2415b991be8328a3aaf4dcf1617c72f3c5b5",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB64-groups4.json.gz",
+          "sha256": "24dd33bcbdd421fd5ac27a487d3aff4da19f183bac0159be95259d625cb3cbf7",
+          "uncompressed_sha256": "a3750827da48b9d7dcad06bc27d5e75e85e0cb6222965fb5561ff6d12b12cda6",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB256-groups1.json.gz",
+          "sha256": "e4073d0f6f0f1385d7003011ec8ee7f24aabfb729d93e4ebe6e0e57e083bf701",
+          "uncompressed_sha256": "4855efbf64b3de7ae052231fbd7ca374532e8ee0b4e2bc479cfb1fa0692b7ee2",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB256-groups2.json.gz",
+          "sha256": "14a12dab4081baa8d063ca86ba5ff6970b1d496f560bcdb5736655ec5dec2cd2",
+          "uncompressed_sha256": "ac4e3ea8388e4b6d2d301f6c20a1726d2606de8263289327d457569754bbcd36",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N128xB256-groups4.json.gz",
+          "sha256": "83687a05b19148b84566d71581e2a155edfd63021ac8b9e2d84b4c7f930d7663",
+          "uncompressed_sha256": "44a805363af218bccef61e78ab584be732c1e733a756d0e01ab26769f74a29d8",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N128xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB1-groups1.json.gz",
+          "sha256": "229b9f7f337c1becfab459c59ea0a25f2ff32c18e17d35f24568f927be908fd9",
+          "uncompressed_sha256": "f92befa8e279ee85a3e7b504db2b3fb5b64718283a90f465172277e01bf52dbd",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB1-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB1-groups2.json.gz",
+          "sha256": "32da633cd48e38b713b893bee3d21edca3a331883340eef2db6cced335127e5e",
+          "uncompressed_sha256": "5eb4f773a4bee13f85031ad980b528053753baefbab67f365378c003ab39bd43",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB1-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB1-groups4.json.gz",
+          "sha256": "9475e9106ef24f4870dc2f53d81ee000d8d16d32c5f3466174ca0dfc4b3650bf",
+          "uncompressed_sha256": "85ece6130e5e3b5d14a84675317802af4d29c6c83e53b52c67726561bde022c6",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB1-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB2-groups1.json.gz",
+          "sha256": "6d8bc6b91010c90c2009e6425f327b8a7f4ec584d28678b04e0dca41b95e9856",
+          "uncompressed_sha256": "0623f32bc62213a305b5667e52709fb11f66df6cc6dc00e47835dfb5d21dc46e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB2-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB2-groups2.json.gz",
+          "sha256": "a2833b423376c8f9ace7a32ba3fc37209c6414ed315898991069546839537d32",
+          "uncompressed_sha256": "12514e662a5fbf921b16d35c566dd1557727ca319f0e6bf43b3afba75a0e5197",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB2-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB2-groups4.json.gz",
+          "sha256": "27c704ef33c69a96e6308ee473fb5e4ea353db9c7005652907377274aa588b7d",
+          "uncompressed_sha256": "c2ba545103a2dac96d594a398c82fedc4382bb8c0d91af40e3655baea8d639c5",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB2-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB4-groups1.json.gz",
+          "sha256": "d42bf3242e1ad4bfeca31a9d3c1b7369d3047999af8b5cbee018bcab6c9b933e",
+          "uncompressed_sha256": "6165376de360c3acaef05f79d2207b8ba31bd4b74478b61b748d8c55b598b149",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB4-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB4-groups2.json.gz",
+          "sha256": "7a256d1dc5ce0469f4bd86a9030f794b22a964c4850f08c9396fb0c514d8d1a4",
+          "uncompressed_sha256": "30c195b15d3ff049d9cc04d27b19851224aeb81a677d5c50a815c558adac37d3",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB4-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB4-groups4.json.gz",
+          "sha256": "72b886613b3ea9b6912a5a2d2b1c28f500184c1d69ed83fb81a09a149b8f2f21",
+          "uncompressed_sha256": "1ab4d6deef67c491ca8e8aed2a1095499e18fbf6280307ed6a8ebff6c5ebe149",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB4-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB16-groups1.json.gz",
+          "sha256": "601752302a5d6a7e0c047c8c4031830f37293697b84ca9912a17f22fe2fdc3fb",
+          "uncompressed_sha256": "f5dd7c0d0d2b69f847f443d3b6075589f139a1056642b7a9231efc3c4354232e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB16-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB16-groups2.json.gz",
+          "sha256": "e3c2806485d6aba3bbbd28c38dcef2ba729d8bf2a0fff0efede2f11eec1e4b42",
+          "uncompressed_sha256": "e776e608147099b1c804ac892a2e5fcf11c81edacc01e60bc8cee810d0f86646",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB16-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB16-groups4.json.gz",
+          "sha256": "50de6c568fd350fb7eb22c65e9a1c63e478cc09c2532216721246ffe299b0f94",
+          "uncompressed_sha256": "09becf681f456df084406d7620ed7ac041b52c02bf26948cf71e1295936f1570",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB16-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB64-groups1.json.gz",
+          "sha256": "642b0b42d5cd55db0b0dfa54559ac336a6b2b45859abdf88fc6faa58b13f02d2",
+          "uncompressed_sha256": "19d45c4c24c77b24d6171c44a267ae615d0ba390b110b68a1299e5a5a4d41e85",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB64-groups2.json.gz",
+          "sha256": "a072fb943a093ef420d7ce73dafba8187bd852149e4506dfe2732cbc696d853e",
+          "uncompressed_sha256": "5748cf9daa37872f5760e619e3801c2994f43e6dfaf433dad5ee1a9be3eca7fb",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB64-groups4.json.gz",
+          "sha256": "043dbc7cc91f46c683d57778aa0ecf26ef3b383b7fcfd3d3cdb0c9520f848999",
+          "uncompressed_sha256": "5be76c6e872907544e02d7ab0ec7eb0101725a1d25c2a9f37d27fd788cb56600",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB256-groups1.json.gz",
+          "sha256": "9473abd48848e17ac6378813bb62b486b91d6dc65d1a1c044d3251b8e6b84db7",
+          "uncompressed_sha256": "0634aee1bedc29954fb13a85a562d4917ddae6d082a29ecad0d9da081df11c2d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB256-groups2.json.gz",
+          "sha256": "8455e7515d44df7d6f2eeba9752abb26078b379b06ded39d46bb7db55af98b08",
+          "uncompressed_sha256": "3d2d0515c92c25a515fe6b2191f229b1bb51f6488da2d1871c4c673b8829da88",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N256xB256-groups4.json.gz",
+          "sha256": "98d2f1f34ad3551d7040a2d0053d7e023b15f4fb8633a96734bef75a28e0e2d2",
+          "uncompressed_sha256": "c89b5d973d411430570ac1db2e305c1f78491f2677e799265ac33e95cbe3a639",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N256xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB1-groups1.json.gz",
+          "sha256": "650909431910c6373c6a7e247c8e477ac7ef34bc300c6248680c66d20a73eb2f",
+          "uncompressed_sha256": "34046cef83cd5a34e484115242cf4f8d00436d3697b1956ed3ada958a9e4de8a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB1-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB1-groups2.json.gz",
+          "sha256": "469da1ce46d4e45ae92ea3f09627204c100aeb92801a3447d1b9bca1cb6bac6e",
+          "uncompressed_sha256": "e384233550e6ca5e2b3992958a2a13201365efe40f5273777a62b6da76ce993a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB1-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB1-groups4.json.gz",
+          "sha256": "62999ac947d68391ddda92a48fb685a787fd76c8b092e7772d0a7fea209bb499",
+          "uncompressed_sha256": "26527b8dc80ba15d232fc5294daf64af46a9517604ed3feccfec4b27556f3140",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB1-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB2-groups1.json.gz",
+          "sha256": "559c9b632f279eb31c59f66772857c1a1573fbafeeadca103c03d7e09e6c894c",
+          "uncompressed_sha256": "19028d051610e967d50ff81aa1858476d347879411338a8b6c8d6ba863ae2b1f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB2-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB2-groups2.json.gz",
+          "sha256": "c7a395eef504c3567bbc1d3d3e13e15629eba6b4c441fcff7c1784fd0eb8f0f2",
+          "uncompressed_sha256": "869a9b98c4ec6777e9ca81c64b01badb33f1aba0bc7fc7e0be99c4bcf2e9f168",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB2-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB2-groups4.json.gz",
+          "sha256": "d81ee370c8174d2655ccd1a10f25f81655a0ed1f033c86693a47d09a1ff6b299",
+          "uncompressed_sha256": "2616b8d4d52068bf192ef50548fdffc54b4f441a8f214b04decc9624375e2e7b",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB2-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB4-groups1.json.gz",
+          "sha256": "239cf9771dd661119409bf381101c7dbf1827b3bd7118ea0e0221e723c6633e3",
+          "uncompressed_sha256": "67624e3d3b5bf5fb8eee6527d23be6dc7c2857fc127cb51c77c343009cad7017",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB4-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB4-groups2.json.gz",
+          "sha256": "6100d22a374a4dd8d2082d1c8bd9885eaca4af603b8619e1f9905539631a9fbe",
+          "uncompressed_sha256": "0b9e7d068bdc300966fc6fe1ba27219fe2a26a354637163fa60b501f53be83c0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB4-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB4-groups4.json.gz",
+          "sha256": "c0d211a66246a6e11b4c1ed503914b58b345ea83b2101a00645f6353cb3a06b0",
+          "uncompressed_sha256": "73c60d9f686c7e3dbb208670dba25d357a467f2355dcb96aa4e7ab3dba8515dc",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB4-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB16-groups1.json.gz",
+          "sha256": "888caf8ee8cf147646f03dd53b63295db3203754ac7655869c134b33c346bf6f",
+          "uncompressed_sha256": "59e67797ab5bab65db897e6da160830c067a238c8541c236a983e9aba21b6219",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB16-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB16-groups2.json.gz",
+          "sha256": "b7900c8caf74225fb510140e264d4bb7543ba7fc9489c190e7edba069fb773bc",
+          "uncompressed_sha256": "d38c06c9dbf2563ac456b7d47bc5fccc22ff56ed6479c9c937c933ab98312371",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB16-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB16-groups4.json.gz",
+          "sha256": "9467aacfc74d51cd51c673cf98482b050469f61e83ef3bd9d066dba2d5ea943b",
+          "uncompressed_sha256": "67e4c2f0bd6a0a0427ab211c858c2f6e97dc7d6edfb4f4df8b8c4774c3a050ee",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB16-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB64-groups1.json.gz",
+          "sha256": "bc5779c42c780011f89a08079dbe8205da3b27b87c2065392d7783019afab78d",
+          "uncompressed_sha256": "b18fdd0f3e2bbc2729ab04408c5f14ba671fda3a3dbb9ca988c353d1d1145b20",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB64-groups2.json.gz",
+          "sha256": "67ef02b5bf7079aefb84ea1e922f98c921e066f3dc65959e34b455eea13cde9c",
+          "uncompressed_sha256": "23beafb4c98a7c165ffa56b54a01b006c3d5695d29374e55c8363877c8efd674",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB64-groups4.json.gz",
+          "sha256": "2160e03aaa16f5391e6ec6835e8d420f4d3cc033d6f334e3580ff085b227c364",
+          "uncompressed_sha256": "6b7e71fb9b8864059ed584c1a5e4c8446ba5c222ebb025ec9ac04447a86f11b7",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB256-groups1.json.gz",
+          "sha256": "1b74e7ac2b5e8cc2010cde084b43e9facbb7c67cf31c3ce44382da199116bd1e",
+          "uncompressed_sha256": "de3f65f2a276041d3182f065f096873fc0667f10b114244bc3f933202383a889",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB256-groups2.json.gz",
+          "sha256": "af0437247f30ff442610845d417be2941ea9a1879b8a0699d09939145521c6f7",
+          "uncompressed_sha256": "4cb40bb85be9732d40d9fd974bc31212fde90003ed63bd805b69d6a1d3ba3d35",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N512xB256-groups4.json.gz",
+          "sha256": "ce2a18fa4be81bf99eb702cddb4f6e842d9059098ede224e5893a485616e75b2",
+          "uncompressed_sha256": "06cc35b3a63658b7dd74bbd698c748e3d22de9f0734de5fa52bc147d8494d147",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N512xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB1-groups1.json.gz",
+          "sha256": "34d4c9fbca9f1e01848630ca63fc05b5706cb0fc55a2e4ae9100b1746d3be4fa",
+          "uncompressed_sha256": "11a780d861fbd1393dfbca74cafbae30464dbf94908cde615260fffc80d00364",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB1-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB1-groups2.json.gz",
+          "sha256": "77f30ddbe0341e69a6fe1dede0adf2fa80da89cfd7cee52e515842a1c91fa315",
+          "uncompressed_sha256": "080456fd67833b08db82dc89ef70fc2d2b7695d3858833285fb14db5e5ca6b06",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB1-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB1-groups4.json.gz",
+          "sha256": "80f46128d0ad67dd7861b5b7d80365a3e78f53acdbe6e5dd995d4dad327df447",
+          "uncompressed_sha256": "34e08d5f98d98513bcbbfe44fdefd2b25012ce66ded49e2c52c7e977b61ccf49",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB1-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB2-groups1.json.gz",
+          "sha256": "aeadd489e93d6e81dd9350e51347aac6d7e8d551085b61110205c0e9e5eef64f",
+          "uncompressed_sha256": "9dcd0937a654f48f589273e3e84bf7c6aa6fc095e95d1fb9fc7d1bed198395cc",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB2-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB2-groups2.json.gz",
+          "sha256": "fd2da126271c3133a1b97103c0ee216e1d83d2776eb1e835a7fa27483c866449",
+          "uncompressed_sha256": "1839420b285ea62a17a3443075ad2b3a4ad99e513bf0ac3e5887a394af1d4d74",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB2-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB2-groups4.json.gz",
+          "sha256": "de49a7cc385a7e161c4ffddfea4f5481085ed52b9f4a63dbaf62d625ad98936a",
+          "uncompressed_sha256": "d6fffafffb13d951f966b191ed8f48eb3282e780d43b725989fa08c024ff58c5",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB2-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB4-groups1.json.gz",
+          "sha256": "9fd259a34007565f8e5dd8775e9a85e4eedec92ff1e7e554eaa73d6d59520a81",
+          "uncompressed_sha256": "9fd03cad9bff2b7e21861a071da2799b3d6b4b1acb3020571eff2d542d18d804",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB4-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB4-groups2.json.gz",
+          "sha256": "122ff8293d7b350b6f9e79ab23e9a9695059b159b9b5fa40a07fad3bf96a0277",
+          "uncompressed_sha256": "8df2023bf783849e313aa3c4b4433734276a48345a6d76cd935350f76e023737",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB4-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB4-groups4.json.gz",
+          "sha256": "2526ba77a754ce4ddbaf28572065b6f12ebafcda90bffd1edce9e4328fe22587",
+          "uncompressed_sha256": "5064681b718eba1bb8e31825d35a538a00bb8063d5082284689439e611f50bf0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB4-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB16-groups1.json.gz",
+          "sha256": "1e18edeab1b16b551c013f38d8931ad4ba6d625294243477d73e267e1dca3695",
+          "uncompressed_sha256": "dc34400242de4db6be7f817cb5aefc0ed703a542eb78895d5c005b58c4913051",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB16-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB16-groups2.json.gz",
+          "sha256": "5eb9788be126a174445d7911452ec0ab1ca9ead10937da8ecb61117d661d937d",
+          "uncompressed_sha256": "c0f1f8c6d3737b8d171f06c303ead2037916a77d62a2897d63ebfcb9eaaf2f37",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB16-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB16-groups4.json.gz",
+          "sha256": "a8b6e15df30fe26954a3812d76f782dd7a5e17844104b6637f9c3b0709ec3cc1",
+          "uncompressed_sha256": "7fa3f0917fb938b6594840980b40bb28068efbe045bea583c219ce03694ac120",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB16-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB64-groups1.json.gz",
+          "sha256": "2d53cf1974a5214f09620813da3a05c520696a10e8ce8c719ab5f065cf1b9636",
+          "uncompressed_sha256": "e582f80373782a1649062b3264f7340d938b5a56c9ac09f62c010173226674f1",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB64-groups2.json.gz",
+          "sha256": "92c6a8c724b8ba775922440f4ae278ce4d77cba34c1e544c9d27d9cb736737f8",
+          "uncompressed_sha256": "3c6c92830de418609b44b58ba7e63f5c5daf346831b49457870fa2026c88d810",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB64-groups4.json.gz",
+          "sha256": "5fa06b59ec16a40dcbbf635c59756f803c79f5331b5f74240220712b54dba20e",
+          "uncompressed_sha256": "0c78ccc10c72b4d54af8f052ade3164715ffc0d469f22ef5d3ea96481b43665d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB256-groups1.json.gz",
+          "sha256": "88b5caefee15001cd2d065b78e839d6653e656b4ab3958c0641f930406a0508c",
+          "uncompressed_sha256": "35d3afa7cb05caa6b8518c69bc813eca37457c93b7225ac3cbe727c234f0aa9d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB256-groups2.json.gz",
+          "sha256": "5610019ec86f01cd77ca8beca89d46ccc0f8eef4d91dada0e1c7bbad90551277",
+          "uncompressed_sha256": "aaf3d774409abf75444c40cc8ec3076a77bb416250e1b4ff943ce4a461511eab",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N1024xB256-groups4.json.gz",
+          "sha256": "857b5be9ddf3e0fd8cc822f334541fa68eb1b9aa8be01e50814b51862c3a4edb",
+          "uncompressed_sha256": "64c82d9954c9870ed3122b9c41b24e0f23a057b7f5aa876ed9ff8fce34c82a92",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N1024xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB1-groups1.json.gz",
+          "sha256": "0818482ac99b2bbc7b37e9bd7ceea3416a5c084559c107deaddc8a4eb542eadd",
+          "uncompressed_sha256": "96ac3be02b4c474936ddb91f5adc7d11c82c2c0a0b7d72270a62a948d24ebe0f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB1-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB1-groups2.json.gz",
+          "sha256": "5fed0576f08928b87e5975d1451ce27768caf27300b5d1d36648e4351fa38ede",
+          "uncompressed_sha256": "70ded486f521499dd92a331164e120bfabea5094e86fe4711fe87d959a2f4750",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB1-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB1-groups4.json.gz",
+          "sha256": "a742a0698aac4604793967b84416f039b13a5af88062e0564494d4c3c37fbcd8",
+          "uncompressed_sha256": "614377e39fde4c2a9aff6e76997a92676d88fb6212e7afa358f8ca2c2ed9fae9",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB1-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB2-groups1.json.gz",
+          "sha256": "093ebf837ece4228547a0b9f3e66b1d267b20b413da5cd279ff1800de5f61578",
+          "uncompressed_sha256": "210cd3e41c3ece22d008a21d9ec0e180e1ad1997770979957e2ac93f274316af",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB2-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB2-groups2.json.gz",
+          "sha256": "abde1146e7d3a42f3f3b4167bda4cf8977ff9095b68ddab8e1b60f549b648df8",
+          "uncompressed_sha256": "2cf44d865741510b41725935a945dded0585e610dc5d42ba5d3eca6bf0c27a7d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB2-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB2-groups4.json.gz",
+          "sha256": "40c26ae474c21ef136f84c48bd366d5df486c750d46239b8dcaacf247dfbf7f1",
+          "uncompressed_sha256": "a927f6376d27f0c02cddbcb525cd16d0415b46bd38359b4c82c3dcb1e9c72367",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB2-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB4-groups1.json.gz",
+          "sha256": "6a177caa329dff33fc62253178f767f1cdcb9b33ab21a498bab709838c9ab87f",
+          "uncompressed_sha256": "a891ec4efd6da84aa1ae9418a4a60075e358fa8fbfd2022990c0bea83f92d37b",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB4-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB4-groups2.json.gz",
+          "sha256": "7d4ae5e6d32c614176b4563d984665a7515e200c3c19fa10b0441ea44a18acd5",
+          "uncompressed_sha256": "978a6cfefe8d06b12c3c3c6139bda35caf68bee5b1dcc24c90950d18afe97bb7",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB4-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB4-groups4.json.gz",
+          "sha256": "85dcf2e9d1ad293a7cc495d35fddf0abc14147902357d181a4e08fb37c9ccf13",
+          "uncompressed_sha256": "4cb35538b9aa0d9403e27688fd4f736c813941990f92cd1d261938662c527483",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB4-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB16-groups1.json.gz",
+          "sha256": "7d7a9719c8a4c790730ecb62d7406f288789e9ce91fd6ff8679d64823516a3ae",
+          "uncompressed_sha256": "23b3eef70d3e3f23ce87e4149f35604ed7e63bbea03bf6bada361373cb54ea1f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB16-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB16-groups2.json.gz",
+          "sha256": "d721928dc28505c3d0fb54ffc4fd7c05c5d3bc93737090988081d41a00af2585",
+          "uncompressed_sha256": "432bfdc6f2b24c5314178f5de607649b8a7ad1d57cc7d4ba7a120db8d7af4c7b",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB16-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB16-groups4.json.gz",
+          "sha256": "39b83b7232eaa92977b5c040474310c2f765c3523a9fcb7aa1b2b4ebd1017182",
+          "uncompressed_sha256": "9f98568b01fcfd9115763cea5ebb35e98be7277a2882e352b043912829b22ffe",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB16-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB64-groups1.json.gz",
+          "sha256": "371379a71ba3dfba6d6fe21b42fee5cb402f70adcb01e94879acbd7c31fdfb37",
+          "uncompressed_sha256": "0e1c974220d3449e4b23a399c6f997d143ff0f7911f18b929a7c42e486f1a357",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB64-groups2.json.gz",
+          "sha256": "467f361d989b54be2ddbc5de6f84d87979f5d8a44e57461f337e1dc5ef48ab98",
+          "uncompressed_sha256": "5bb483e652e55cfe36085467df008bd3416a1b19d8e52d712482726fb3d84fcf",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB64-groups4.json.gz",
+          "sha256": "86f1bc8dbf79e096c28781143ac9d585adae72e3de82a8678da254f9d51209e6",
+          "uncompressed_sha256": "cdceb63041c669f39498c2591f67894f7b340fa5e064c024b6b23e44dea45f9e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB256-groups1.json.gz",
+          "sha256": "f9d15fc725f2650bd2e3622039d2793dcead33c3065d1b029bb67221196c05a9",
+          "uncompressed_sha256": "eb53d00b563b5573043937bc95bd374787511e9a4d1ce397fdc803c8616371ab",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB256-groups2.json.gz",
+          "sha256": "eb2f9eaf65eef72369a45980103be9912f2d274a1a40bab97e2ef084d5cedb29",
+          "uncompressed_sha256": "cd39b2c87b9921106f538569f38096e120b16ec9bf276afa6011c81d3148c940",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N2048xB256-groups4.json.gz",
+          "sha256": "07775dc493d84977543cc0cd52331cf8945e566f144cdb8dffb35b1a56e65096",
+          "uncompressed_sha256": "9d93d4f39055400ff50b35b4eea38947abde62863246a0acdb02b6377a3b4c25",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N2048xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB1-groups1.json.gz",
+          "sha256": "f5840bfc1f9d1783b578213c2c8eb0d7aa736c41bdfedce1b6ed9e233cd72bcc",
+          "uncompressed_sha256": "68243c094962f263979d10ed54f6d6d00abc41c58edc06d8a8087b3ca2c85487",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB1-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB1-groups2.json.gz",
+          "sha256": "59f9276f18dbb547855506d052c928b32e3b1b82999ed155879312d0517daa06",
+          "uncompressed_sha256": "37065b0ca8c2b669cfa9e656a10d2e853b3dff1ae8e766effa3ee74e4b8d94df",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB1-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB1-groups4.json.gz",
+          "sha256": "786d2e9f376f7ae34352f6f398ff993cb6b04753ba45dc6478d929ca15c2b005",
+          "uncompressed_sha256": "0d113bf2cee07f12b3f4dc2fdf63c679d809c8fe02a5d712063305ddb9a4eafb",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB1-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB2-groups1.json.gz",
+          "sha256": "76acf5beebd6c8cf821e63bb7f5b61fd9221cd8f5c29c1288aad65b2bc7d3f82",
+          "uncompressed_sha256": "85fcbb3401a2201d7b2e2871acd088576e7b337613a8d08d54c838e486d84169",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB2-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB2-groups2.json.gz",
+          "sha256": "f94970bfbc707c905b948b11fe8324a75bd85528109cc5d5599dfe67b015e298",
+          "uncompressed_sha256": "6876a0fcb6291bdee790b66757c67a034c86ccf208a7f2979bbd1d16d5fd5bdb",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB2-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB2-groups4.json.gz",
+          "sha256": "4d97a73df10c5c4d229a805dfc4c1eb01a486e3cbb436b175df59a3fdfbe6847",
+          "uncompressed_sha256": "9363e55df80eb33b546f3f7d7b6efae0d5b9ce276f79c05d7e151d6d532da5a7",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB2-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB4-groups1.json.gz",
+          "sha256": "8a8404614cfce6724ecb60f172eec96a4ce162603699480418454e71cd200ee7",
+          "uncompressed_sha256": "5715fb5e5f7f6c5ab50b4622181681a61bf0e7e6239cfb45691d98e5a5dd97e9",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB4-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB4-groups2.json.gz",
+          "sha256": "09a2d089c60d8542bd7a6135ffd2c9ada6d022551aaaf0f2e31401863c8088eb",
+          "uncompressed_sha256": "4c2380f5dd67fbbdc619c68c4c14b34d8f5b629514273ce8dd94406e0aa05e23",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB4-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB4-groups4.json.gz",
+          "sha256": "64894ca4adeaea19f68a170f3505bded4e5765ec2ce3170065b614c229af95e5",
+          "uncompressed_sha256": "c42711639a1407950793e9748c0bb11ea42b5c4cfc13617c56c0a6ab4b31b85e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB4-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB16-groups1.json.gz",
+          "sha256": "90ebee7cd1bc163b33c6884ea8e38335c6703087cc9bf4d87b59a172adcbeb44",
+          "uncompressed_sha256": "2214865f9bc009370f7c31503c08ff8f263e3553ab88af403c03e80e4640630c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB16-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB16-groups2.json.gz",
+          "sha256": "1db419cbd315d4281691966c5cc32b4bc640877d1b5ab0f5f7c8006cb8f62f37",
+          "uncompressed_sha256": "9644b08a9205cae932c3f1bd8660e64f759aba2d297ff476d892bea9c6f2439d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB16-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB16-groups4.json.gz",
+          "sha256": "8f85d5ee88de261532cf0da23cbcd4ca0e94b3e0f5122a05f8d20252b1e71ad6",
+          "uncompressed_sha256": "60258c152384ea49abf1f9a218b769b168942e1d2f08868b3000681c587acdbf",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB16-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB64-groups1.json.gz",
+          "sha256": "4f550191260de65b1f88c02242583232b15c4c5b82ff8cfbc954be0bc4576292",
+          "uncompressed_sha256": "63cc7e4f56a49ecfaec538c004cb8d104e7999f11d777aebdf4aaff636342a64",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB64-groups2.json.gz",
+          "sha256": "3a773847229a718eac8fd83af35622887d3cae2753ae6535d163ed76539da66b",
+          "uncompressed_sha256": "597d4a79e8bfd095e0cc86f63e61ae247a6da29b42f62621ad23b2e7c7deb008",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB64-groups4.json.gz",
+          "sha256": "6d438c91027d924b98204a28f94499fce9054c41b9b62d6665bba0a4e6f35e92",
+          "uncompressed_sha256": "1a6a9ea87b0252361ec9d0aea803c783f5d0b856204f32bedfcfe02b2dc85aaf",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB256-groups1.json.gz",
+          "sha256": "1bec9c07f90512ea4aa7e5d94ebc45e18421b6bbe264839aac637f9c01ea7fbb",
+          "uncompressed_sha256": "81e0879e7daf4a97137be8864b009afd024df155a97a34f9d1774a73eaa79377",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB256-groups2.json.gz",
+          "sha256": "9e10e31b3c631c1d72a4c3f946fcd2464624ae6651e94e63ebf8ab8eb06e99d2",
+          "uncompressed_sha256": "7f44be27ca98ae61fc80ef9c80a9278033ccca3b1479e600d40ffed9adcd8484",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N4096xB256-groups4.json.gz",
+          "sha256": "134d695cc13b2a6a111bf3a7a176d1f54cb15ad220f673c021fbd7c65631b370",
+          "uncompressed_sha256": "2e2f2b65f976ca7f68950b98793c6633e42ed2ba005cb2bfbb903fba2ec24a0e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N4096xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB1-groups1.json.gz",
+          "sha256": "a5d8db1b9b32a77aae92207c7882917e562d2065cfdf4a3ae21c9ba54a460258",
+          "uncompressed_sha256": "a5fac6f62d6e4c50c764e6958ca091cb6e4075b1fe16c94bda941dcce088e83a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB1-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB1-groups2.json.gz",
+          "sha256": "4dadd80338d1df087d80c5c9c447db8f8310a250ba8a2a780189b1d9989a0c44",
+          "uncompressed_sha256": "b7c90f3ded9d5b31f7440523d353bc193734989823ce3a9d97deb7f132e74b63",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB1-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB1-groups4.json.gz",
+          "sha256": "2a9f65fe887dd432f4825f459cb24a063c3ab8731410111eb2a4ad542f93846d",
+          "uncompressed_sha256": "c0f09159544e0513413de96a40912e6581fd122ce5f0d8fab26ad4464121ee13",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB1-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB2-groups1.json.gz",
+          "sha256": "e77419b4d8ee5907294f04db3d04d9b3473f78a57abc67e1d856a6b6bf1c6c36",
+          "uncompressed_sha256": "5eebace2568171f423a5f7d786296d1e14c3be0c50efd7b61cc3080ef988e244",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB2-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB2-groups2.json.gz",
+          "sha256": "014433bdea658d2b91bffbc5ff31c8ee5c669a12883c142c4693968920c2a627",
+          "uncompressed_sha256": "2a68494c105ff21c41114750b9d4fa5d9579326d8c804dbd9bce4aebcac7705f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB2-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB2-groups4.json.gz",
+          "sha256": "6dddda34f3ee593f0f4c8d18740c9eb80d0c6682ef126b3c6e91497ac618c614",
+          "uncompressed_sha256": "0f4b72fbbda99c429e8a1a67b7f2061a18695a26aae39cb57939aec299592d70",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB2-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB4-groups1.json.gz",
+          "sha256": "41a0d691ad45ebc9bf0a0ad3619f2fe79ddffff296a8940dcbebc2ac7ec00c57",
+          "uncompressed_sha256": "9cedfd4684de24716be0652bf2d317edff9848bb96af26fd387be5d8fb648432",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB4-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB4-groups2.json.gz",
+          "sha256": "24121341f9fd8aeb482823a2d1a266a9f612213ec87656612dbc7413ef06cb44",
+          "uncompressed_sha256": "1210efdf24befdcaad7f1313dc2e0ca14bbf210f8002ede5e4ea251bcd1e95aa",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB4-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB4-groups4.json.gz",
+          "sha256": "13b2aff26a55fe2fa1422b2ae5df6331e82d8a1d74260eda8d9e7e3649da84f0",
+          "uncompressed_sha256": "96a9248c518dfb226ee68f99040dd3220bc9fe6f67d21a3b9bdc3b6bf6e52b1d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB4-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB16-groups1.json.gz",
+          "sha256": "6f5e0a092f0e4b5512a5d8b962f9391e5207a3f050bdbc6a52606ba3eef64146",
+          "uncompressed_sha256": "45b9318a87dd217275c3019cd27ae80bf609ef1b01d772c5fa792c05f9da8f17",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB16-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB16-groups2.json.gz",
+          "sha256": "6a9bfd86ad9a9844a0aa5169b82e8a3ca9f5382bddea3a4356f637532548a504",
+          "uncompressed_sha256": "35b04534d56c62f92bfd73bb432c8bcc2a4ebb9fa34688d0f70871665b821473",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB16-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB16-groups4.json.gz",
+          "sha256": "e0552c565c154b3aac2c39c1aaa4bf5e2bb8b5586976964c1dc38b687a7dc26c",
+          "uncompressed_sha256": "ef11dedd62ea4caa26deba83dcd23985d305310459ece4f5dd6f46b94b6f84d1",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB16-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB64-groups1.json.gz",
+          "sha256": "0571fafd69147f783eecb156d8201e384df488acd93c531830d9f3a6937a9e22",
+          "uncompressed_sha256": "d8fda825044d6cd49c40377781136eead355fa691e7b12af270c83a97452e770",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB64-groups2.json.gz",
+          "sha256": "34db318205572837c4cc33b786d34e2bc993aaf0c06907680acc4a7d91da7b74",
+          "uncompressed_sha256": "1c0b390b473894dd578f784e5ab765e0c8c06715194228f498027bf4d89055d1",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB64-groups4.json.gz",
+          "sha256": "9c898a9de8aad24ea797258bd0e58f4246a58f553dcba3334106bb6804fe3a93",
+          "uncompressed_sha256": "7f65fe0894d45d67a5791b12b94c5a24e9dbd317d8fd1139e9f50360a6ccda17",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB256-groups1.json.gz",
+          "sha256": "e113cd2a40904ee476b3b50b23892c2a4a4f37a890cdbaf1d6705841399899df",
+          "uncompressed_sha256": "464b7cd0b917fcf055be0da92faa1c485e95896257584a6fb8e908dea400923c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB256-groups2.json.gz",
+          "sha256": "f9d94fa92f2ef70c743055c433d118da0662a8101d632017d592e4a91f4ae36b",
+          "uncompressed_sha256": "4e21f9b6fe4268e69669c7e596483930dcc48b00c65659275bb5bb5793fc0774",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N8192xB256-groups4.json.gz",
+          "sha256": "0dc6aaedf4cad83019398002a87bb9a3ca9b22aa3a07526b06e14edb4e5b849b",
+          "uncompressed_sha256": "b9ace3cf61273cc22ca20d48ad4e305c57316c038a3ce15125f505800e8be0be",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N8192xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB1-groups1.json.gz",
+          "sha256": "f40f43ea46a5f80a9fc9b022e8a11d05ef1bb6f456b63e72ee40a3b22ba8e4e1",
+          "uncompressed_sha256": "5240ab324485c4eb6dd197c459c54a9c59baeb86b921d153a74844845ce2a6bf",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB1-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB1-groups2.json.gz",
+          "sha256": "9567dfde90e5a520b0a91a22e5e0ef64cf9e9ad30f6a931a75dd5c42ad3950a8",
+          "uncompressed_sha256": "a4d1c8c3b89e70530f34a89a0565898725757c8b9b7032677d0e729d651a9175",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB1-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB1-groups4.json.gz",
+          "sha256": "383d4a0d49cdf7d23a5c54c710492e4126f3c0297594c46819af1fa43ed5b5e4",
+          "uncompressed_sha256": "e2d280517358c60d52533f85537f34ff019f14a1a58a51fc84dd1db1965b747a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB1-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB2-groups1.json.gz",
+          "sha256": "90b65d1d1c489cef48d91443e63ef0dc060d56d77301d296f71e05fd57e75561",
+          "uncompressed_sha256": "5ec7c8007030f32a5e1badc02a9a7aa806ae1b5aed1d306f46d0c5980fc0b9ee",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB2-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB2-groups2.json.gz",
+          "sha256": "4c013abe7429e3d2a92acef19fe50ea81981966355496ff117289ee2d4d5d0c7",
+          "uncompressed_sha256": "a1fe2877836056f900e0a4c808ab14d600af827c534edde587fee2248492454d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB2-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB2-groups4.json.gz",
+          "sha256": "74d8ab7896213a1739486d6ffc960b28e34ff3a06c061e2eab5c84a41706b0a6",
+          "uncompressed_sha256": "62088092f9b3017c5c6c465d3091d627299a0bd433823f7dc5b0bd4e87bf02b3",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB2-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB4-groups1.json.gz",
+          "sha256": "371d82692f99a3d5ea28700d77131b025d956d94eb6944ea693cebbb49380c32",
+          "uncompressed_sha256": "e7b7d124e39b3fd47d4c840eab3c9e477353f0ff22295ee7bcd3b13ffd03b3c6",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB4-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB4-groups2.json.gz",
+          "sha256": "afeeab7620fd30a4616b5c5250f253460da140887e39a34c4156c37faf49e95c",
+          "uncompressed_sha256": "d60ae358bb831234c39fd69bbf020f50c8a8b3d56125ece6b95d135fd97edb85",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB4-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB4-groups4.json.gz",
+          "sha256": "36de5b1279bafde42e04e67ad6c667533e03922805d8f7710b70a0992c31f987",
+          "uncompressed_sha256": "e4e451a1fcb51f2ab756df8fbe12f85613ae8b5ec399f904426b0c5c38a67cb2",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB4-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB16-groups1.json.gz",
+          "sha256": "8740e1f4deb9a0742c9e34c8a07a57223a7e350d1e9f319821966aafe29d7b75",
+          "uncompressed_sha256": "eaac2aec1b97711cb3969aa3eb6ca7e17951571eabd16b21d45e1f21a15d7b17",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB16-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB16-groups2.json.gz",
+          "sha256": "34a77e6dd4f8fe9aa4ede116951c45bfed2ba81298d594f51bfb02ef5069d31a",
+          "uncompressed_sha256": "752b855a87bcafb41b5f1cefe7becc2a7696eb2b37e09ecf2aa50550e051b05d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB16-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB16-groups4.json.gz",
+          "sha256": "902010302ff7e7ebdb17403a0592d8351f785a27deb47b90886ebc00e5c830c4",
+          "uncompressed_sha256": "93960fbbd2a6e5a5515b1a49543aa5971eb3d95b3364532cb55ce87a74e3402e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB16-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB64-groups1.json.gz",
+          "sha256": "9f0d1ab4233eefd56ef7a3dc5eeedc1ce1507c1488deade37c7834053de7eb3e",
+          "uncompressed_sha256": "864eec9df557e6cc30405c17052825bcdf9cd2bf6dce7af8f64a72a6de37cbdc",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB64-groups2.json.gz",
+          "sha256": "e9de4b172927d43aadc74d510d160da31de9292bd440b57d4b3cf1399f006be5",
+          "uncompressed_sha256": "582af0f66c87f379a02908ad5700ac8ae9f94874c2cae372c7a542e67b19199e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB64-groups4.json.gz",
+          "sha256": "8b2609f3a54896bec5b7c38ca7b99d1a3ba4f92dad74bc1ab2b0d06e3ec89724",
+          "uncompressed_sha256": "f0efb73152e09c351208210a5a2d66b63dc634b0fc45c69c2a4994647cc2ac10",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB256-groups1.json.gz",
+          "sha256": "6b9f0a3e97036191346439351528019662f34b2939f74b6bfbbf3bfa727c407e",
+          "uncompressed_sha256": "1435d6695a1a08628f164e04a33e945336c49f9bbffce75d41587c5ebfc503be",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB256-groups2.json.gz",
+          "sha256": "05629ea127f1e5e3dd8acb94b4b28475817f9f84fd4ef41a22e6e134d8966abc",
+          "uncompressed_sha256": "b93330d9b5b8b3395c74f60b44153aec534d5ff1403797dd7504abb82c5895a6",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N16384xB256-groups4.json.gz",
+          "sha256": "4f6d52feb60df0bbcc5772215e2789efaac707b1d091c1e6d047c7e633a20fb2",
+          "uncompressed_sha256": "09c420d1df3258e16b78ad97aee688a0c72e09d1ddbd3fb03f1c705e6b81047a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N16384xB256-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB1-groups1.json.gz",
+          "sha256": "e178a103fa52eb974fb6125e4a1b380177c178d03c81daabf10bb9a9014b44e9",
+          "uncompressed_sha256": "c9ae90791b3507147e6db8cf726511c5e660439681c76c113b52a8505d288975",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB1-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB1-groups2.json.gz",
+          "sha256": "0829ce4946beba37b2aab195ce786990d6388d3aee803947c0e458c45e00ed20",
+          "uncompressed_sha256": "ae387daaad5a9cf467beddb993c8b8952244f9fdd227491542434d103495311e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB1-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB1-groups4.json.gz",
+          "sha256": "b6a54c6d619154f0a9f943e712d874af9f88602ae70b835e3b6baa7c8809bc0d",
+          "uncompressed_sha256": "e7d1f8c4a64c0aa4a4bb8350ef0efd0ecc555554b6617f2df935674023d25d7d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB1-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB2-groups1.json.gz",
+          "sha256": "3753677c81a38da28cf9aaeb4c0a32f760a410bd2ed418f44d35f4856f9c9849",
+          "uncompressed_sha256": "3eaf56fb60ad5f51637df286c5a9a915ad29ae670ef4c2e3ac8c884a9559e08f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB2-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB2-groups2.json.gz",
+          "sha256": "df9887cb42b1bb169d864d7184a8f694cb46783a2a702cbd580e99ff44c092fe",
+          "uncompressed_sha256": "8d5697c0a089ec63ec2eac2f1dd697efdfb9da9e6488d7240af96bac9ec96ee4",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB2-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB2-groups4.json.gz",
+          "sha256": "eeb7cac19a3d4b5453de893c1bc5404e928009f765a54030a9218a924619fbfd",
+          "uncompressed_sha256": "ae46aad9372899d7c651088572bc941e5836f22724e2583d375878e931ad29ad",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB2-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB4-groups1.json.gz",
+          "sha256": "97e69ee3c250b0966ae6fa88e313809ee07628eb4483f2ad2b90e8e8db2e2737",
+          "uncompressed_sha256": "ba95dacb63a552d18ea1d76f4ee273c1364b0cb149ed98ef6542af7754df731f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB4-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB4-groups2.json.gz",
+          "sha256": "5db0a73a180415ce7fb3319a062bc0932b272529e5241dd5cab08b351a36cce1",
+          "uncompressed_sha256": "a0b008b94ea62c6f7525adaf7268eacb6990d4ec6c1be84559e4bd1aaf69a33c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB4-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB4-groups4.json.gz",
+          "sha256": "ca31c06ae57bc040179a40e1783495d87531a10504e5c85cc2c38eeb2c0b8db1",
+          "uncompressed_sha256": "a4a8f1f331810c0783236a53690724de644e10c40ad1aa6764e6720861fa3d39",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB4-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB16-groups1.json.gz",
+          "sha256": "12ed6e8da315294d0bf232e587fe3f5e4b1cd13b1d2d14d9db9d2490cff379f9",
+          "uncompressed_sha256": "28449d955b3d6455a3ed34cab1be358302232f96db6aa7c61fe564fd66a8bb85",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB16-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB16-groups2.json.gz",
+          "sha256": "0abbc78eb18d086c7b299f9b1d6ac1f9bbc82158d02e555538cd7557fedb0280",
+          "uncompressed_sha256": "9d7e26de67874a47d2ba0c86c3cc233674481bc693a575429225c7678fa0ece9",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB16-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB16-groups4.json.gz",
+          "sha256": "ba704a9d64e9e9e3d6d7453dcf127b7bdecb2ccc0aaa5030167c55b08460ed70",
+          "uncompressed_sha256": "351099f6cae3eb5a77b3209dc55dc2c4266aedc30023253185313b70884283de",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB16-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB64-groups1.json.gz",
+          "sha256": "6bc6056271212c2772ae3d3751e05718e69c0285c2429468f7fea6a6525407d6",
+          "uncompressed_sha256": "8f54a410a05a96ccdbb1e4e7179d247140adc384b81fde86c31ad70f8619da65",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB64-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB64-groups2.json.gz",
+          "sha256": "590cd457c2fe08be351c5428c17e2445790e2c5eaa12f508fb894ed67e9ddc33",
+          "uncompressed_sha256": "e897335d1ef6f3ca045b8cd82d2f111f00e4c58bc703090e2fdb4bd6172d07c2",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB64-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB64-groups4.json.gz",
+          "sha256": "d1f7fb5aee55832be4f57de6f48bc27946056b4c77db0f3ca3f87c1338b13cff",
+          "uncompressed_sha256": "789f7f1ca624c389de15416846cfeb2c46851e97bcf5cbc132a29ee2200fe680",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB64-groups4.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB256-groups1.json.gz",
+          "sha256": "47344ed684abef6906e540b733dab2c573356ae720c030db4d61781c980ba56c",
+          "uncompressed_sha256": "81c711565f33c38e0fd523ad78fe7f6d520cea6b82d5266ac32fe9179b9b2560",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB256-groups1.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB256-groups2.json.gz",
+          "sha256": "4ce152ae324ba5d1d28e79a5d5fd19a1f9119f3f29319005a0b34cc7e31cb4cf",
+          "uncompressed_sha256": "b5bf04fd6dbd3a881dd7fe80e1600b08aea15b0a0e551eaf80efe01dd915c682",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB256-groups2.json"
+        },
+        {
+          "kind": "tile",
+          "path": "mma9/tile/N32768xB256-groups4.json.gz",
+          "sha256": "740c32cc9a729c567bbc63814576abd35a8d7a6aa3a7d32e4352426f3693059b",
+          "uncompressed_sha256": "68a155cd591751189eafd12ec543f53769108f50f7a5e8f3e11d3711631a24ca",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-gpu0/hadacore-validation-native/rows/N32768xB256-groups4.json"
+        }
+      ]
+    }
+  },
+  "array_samples": [
+    {
+      "campaign": "fft17",
+      "case": "c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7",
+      "implementation": "cubutterfly",
+      "path": "array_samples/fft17-cubutterfly.npz",
+      "sha256": "5e22d58594145629ec94978015d8e9fb354ceb7e669a905318fca3f6d0860921",
+      "original_sha256": "5e22d58594145629ec94978015d8e9fb354ceb7e669a905318fca3f6d0860921"
+    },
+    {
+      "campaign": "fft17",
+      "case": "c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7",
+      "implementation": "cufft",
+      "path": "array_samples/fft17-cufft.npz",
+      "sha256": "a8b3a94e16f71559b8c317cc6b379f2730fbbf6984e2c263fa6a1f4039e221df",
+      "original_sha256": "a8b3a94e16f71559b8c317cc6b379f2730fbbf6984e2c263fa6a1f4039e221df"
+    },
+    {
+      "campaign": "fft17",
+      "case": "c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7",
+      "implementation": "vkfft",
+      "path": "array_samples/fft17-vkfft.npz",
+      "sha256": "86e0b7954b3c7b87b4525c2d7595237d385abc0b79d5941b0e02dd802df1dc2d",
+      "original_sha256": "86e0b7954b3c7b87b4525c2d7595237d385abc0b79d5941b0e02dd802df1dc2d"
+    },
+    {
+      "campaign": "fft17",
+      "case": "c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7",
+      "implementation": "gpu-fft",
+      "path": "array_samples/fft17-gpu-fft.npz",
+      "sha256": "b089befed124e3d73078f2bc5a67e9574df7974f82186f011df13970fca17b66",
+      "original_sha256": "b089befed124e3d73078f2bc5a67e9574df7974f82186f011df13970fca17b66"
+    },
+    {
+      "campaign": "mma9",
+      "case": "fwht-fp16-n256-b1-allow-fp16-mma",
+      "implementation": "cubutterfly",
+      "path": "array_samples/mma9-cubutterfly.npz",
+      "sha256": "7f98b7dd27dabb890b6f64af2cf8466edd9cceb5ad07ba033b061c3115efafc1",
+      "original_sha256": "7f98b7dd27dabb890b6f64af2cf8466edd9cceb5ad07ba033b061c3115efafc1"
+    },
+    {
+      "campaign": "mma9",
+      "case": "fwht-fp16-n256-b1-allow-fp16-mma",
+      "implementation": "hadacore",
+      "path": "array_samples/mma9-hadacore.npz",
+      "sha256": "7f98b7dd27dabb890b6f64af2cf8466edd9cceb5ad07ba033b061c3115efafc1",
+      "original_sha256": "7f98b7dd27dabb890b6f64af2cf8466edd9cceb5ad07ba033b061c3115efafc1"
+    }
+  ],
+  "measured_source_commit": "a305d97769a0c005591a8bbe4e14ae1a238b7e83",
+  "library_sha256": "3b0668f2530a75d1401dcbf5decea720f8e47db0c1357aafdf1680fa1bba6adb",
+  "scope": "Original FFT17 and ALLOW_FP16_MMA9 requests; same-GPU exact-request selection and complete-call external comparisons; no Full66 acceptance or globally validated cost model inferred",
+  "arrays_scope": "Six smallest-request implementation arrays bundled; all other lossless arrays and compiled binaries remain on the measurement host with original hashes and full error distributions in raw rows",
+  "calibration_scope": "FFT17 MEASURE-to-DEFAULT exact cache; MMA9 public AUTO from 68 native endpoints and 204 validated tile candidates, with 68 public selection records bundled"
+}

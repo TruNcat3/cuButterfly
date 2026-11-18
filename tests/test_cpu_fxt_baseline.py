@@ -62,6 +62,35 @@ def analytic(source, op, inverse, normalize):
     return result.reshape(source.shape)
 
 
+@pytest.mark.parametrize('inverse,normalize', [(False,False), (True,False), (True,True)])
+@pytest.mark.parametrize('shape,batch', [((8,),3), ((2,4),2)])
+def test_explicit_fp16_io_fp32_adapter(library, inverse, normalize, shape, batch):
+    s = semantics(2, np.float32, shape, batch, inverse, normalize)
+    s.update(storage=0, compute=0)
+    source = (((np.arange(batch*int(np.prod(shape)))*7)%19-9)/4).astype(np.float16).reshape(batch,*shape)
+    saved = source.copy()
+    core = fxt.FP16FWHTAdapter(s, source, library)
+    expected = analytic(source.astype(np.float32),2,inverse,normalize).astype(np.float16)
+    for _ in range(2):
+        core.output.view(np.uint8).fill(0xA5)
+        np.testing.assert_array_equal(core.execute(),expected)
+        np.testing.assert_array_equal(source.view(np.uint8),saved.view(np.uint8))
+    metadata = core.metadata()
+    assert metadata['native_fp16'] is False
+    assert metadata['external_core_storage']=='float32'
+    assert metadata['all_conversion_and_scaling_timed']
+    core.close()
+
+
+def test_fp16_adapter_rejects_precision_or_operator_substitution(library):
+    s=semantics(2,np.float32,(8,),1);s.update(storage=0,compute=0)
+    with pytest.raises(ValueError,match='original FP16'):
+        fxt.FP16FWHTAdapter(s,np.ones((1,8),dtype=np.float32),library)
+    for changes in [dict(operator=3),dict(storage=2),dict(compute=1)]:
+        with pytest.raises(ValueError,match='requires FWHT'):
+            fxt.FP16FWHTAdapter(dict(s,**changes),np.ones((1,8),dtype=np.float16),library)
+
+
 @pytest.mark.parametrize("dtype", [np.uint32, np.uint64])
 @pytest.mark.parametrize("op", [3, 4])
 @pytest.mark.parametrize("inverse", [False, True])

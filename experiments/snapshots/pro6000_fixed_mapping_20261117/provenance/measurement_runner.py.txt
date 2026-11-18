@@ -1,0 +1,152 @@
+"""Prepared explicit-mapping retest. This file never searches or edits formal results."""
+from __future__ import annotations
+import argparse,copy,datetime,fcntl,hashlib,json,math,os,pathlib,subprocess,sys,time
+from contextlib import ExitStack
+ROOT=pathlib.Path(__file__).resolve().parents[3]
+sys.path[:0]=[str(ROOT/'scripts'),str(ROOT/'python')]
+import run_semantic_campaign as campaign
+import semantic_preparation_queue as preparation
+GPUS={'gpu1':'GPU-a257f4db-8c62-f26b-9c08-a4045615a140','gpu0':'GPU-1067ab39-e411-e141-1775-64426bca5701'}
+BASE=ROOT/'results/pro6000-issue9/seed-priority'
+BUILD=ROOT/'build-pro6000-sm120'
+CATALOG=ROOT/'config/research_campaign/mapping_seeds.json'
+MANIFEST=ROOT/'results/pro6000-issue9/main/quick/manifest.json'
+PREP=ROOT/'results/pro6000-issue9/main/quick/prepared'
+SUITE='quick'
+
+def sha(p):return hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()
+def now():return datetime.datetime.now().astimezone().isoformat()
+def write(p,value):
+ p=pathlib.Path(p);p.parent.mkdir(parents=True,exist_ok=True)
+ tmp=p.with_suffix(p.suffix+'.tmp');tmp.write_text(json.dumps(value,indent=2,allow_nan=False)+'\n');tmp.replace(p)
+def semantic_key(s):
+ if len(s['shape'])!=1 or s['fft_type']!=0 or s['length_mode']!=0:return None
+ n=s['shape'][0]
+ if n<1 or n&(n-1):return None
+ op={0:'fft',1:'ntt',2:'fwht',3:'subset-zeta',4:'superset-zeta',5:'structured-2x2'}.get(s['operator'])
+ if s['operator']==5 and not any(s['matrices']):op='xor-zeta'
+ storage={0:'fp16',1:'bf16',2:'fp32',3:'fp64',4:'fp16',5:'bf16',6:'fp32',7:'fp64',8:'uint32',9:'uint64'}[s['storage']]
+ if s['operator']==1:storage='word'+str(s['word_bits'])
+ return dict(operator=op,precision=storage,logN=n.bit_length()-1,batch=s['batch'],placement='in-place' if s['placement'] else 'out-of-place',direction='inverse' if s['inverse'] else 'forward',normalization='inverse' if s['normalize_inverse'] else 'none')
+def compatible(seed,s):
+ wanted=semantic_key(s)
+ if wanted is None:return False
+ a=seed['semantics']
+ if any(a.get(k)!=wanted[k] for k in ('operator','precision','logN','batch')):return False
+ if any(a.get(k,default)!=wanted[k] for k,default in [('direction','forward'),('normalization','none'),('placement','out-of-place')]):return False
+ if s['input_strides']!=[int(a.get('element_stride',1))] or s['output_strides']!=s['input_strides']:return False
+ if s['input_batch_stride']!=int(a.get('batch_stride',s['shape'][0])) or s['output_batch_stride']!=s['input_batch_stride']:return False
+ if s['input_orders']!=[0 if a.get('input_order','natural')=='natural' else 1] or s['output_orders']!=[0 if a.get('output_order','natural')=='natural' else 1]:return False
+ if s['operator']==1 and (int(a.get('modulus',0))!=s['modulus'] or s['ntt_input_layout'] or s['ntt_output_layout']):return False
+ if wanted['operator']=='structured-2x2':
+  matrix=[float(x) for x in a.get('stage_matrix','').split(',') if x]
+  if s['matrices']!=[[matrix]]:return False
+ return True
+
+def selector(seed_mapping,original):
+ def select(descriptor,timing=False,mapping=None):
+  # Initial construction uses the frozen seed. Replay must use the resolved
+  # mapping supplied by the normal verifier, with the explicit policy intact.
+  return original(descriptor,timing=False,mapping=copy.deepcopy(seed_mapping) if mapping is None else mapping)
+ return select
+
+def prepare():
+ catalog=json.loads(CATALOG.read_text());manifest=json.loads(MANIFEST.read_text());tasks=[];gaps=[]
+ for case in manifest['cases']:
+  found=[(i,x) for i,x in enumerate(catalog['seeds']) if compatible(x,case['descriptor']['semantics'])]
+  if not found:
+   gaps.append(dict(id=case['id'],semantics=case['descriptor']['semantics'],reason='No matching rank-one mapping in repository seed catalog'));continue
+  i,seed=found[0];prepared=preparation.load_case(PREP,case)
+  assert prepared['s']==case['descriptor']['semantics']
+  tasks.append(dict(case=case,seed_index=i,seed=seed,reference_preparation=str(PREP),source_catalog_sha256=sha(CATALOG)))
+ result=dict(at=now(),suite=SUITE,scope='Repository portable mapping catalog transferred to PRO6000; original seed GPU is not recorded per entry; no source timings or profiles imported',catalog=str(CATALOG),catalog_sha256=sha(CATALOG),manifest_sha256=sha(MANIFEST),library_sha256=sha(BUILD/'libcuntt.so'),tasks=tasks,gaps=gaps,declared_cases=len(manifest['cases']))
+ write(BASE/'prepared.json',result);print(json.dumps(dict(prepared=len(tasks),gaps=len(gaps),cpu_only=True)),flush=True);return result
+
+def child(gpu,case_id,destination):
+ task=next(x for x in json.loads((BASE/'prepared.json').read_text())['tasks'] if x['case']['id']==case_id)
+ assert sha(CATALOG)==task['source_catalog_sha256']
+ os.environ['CUDA_VISIBLE_DEVICES']=GPUS[gpu]
+ for key in ('CUBUTTERFLY_REGISTRY','CUBUTTERFLY_CALIBRATION_BROKER','CUBUTTERFLY_PREPARE_BROKER','CUBUTTERFLY_PREPARE_EVENTS') :os.environ.pop(key,None)
+ os.environ.update(CUBUTTERFLY_COMPILE_MODE='research',CUBUTTERFLY_TEMPLATE_ROOT=str(ROOT),CUBUTTERFLY_JIT_PYTHON=sys.executable,CUBUTTERFLY_JIT_CACHE=str(ROOT/'results/pro6000-issue9/main/modules'))
+ os.environ['CUBUTTERFLY_GPUFFT_LIBRARY']=str(ROOT/'build/gpufft-sm120/libgpufft_baseline.so')
+ os.environ['CUBUTTERFLY_HADACORE_LIBRARY']=str(ROOT/'build/hadacore-sm120-native/libhadacore_baseline.so')
+ import torch,cubutterfly as cb
+ torch.cuda.set_device(0);props=torch.cuda.get_device_properties(0)
+ assert campaign.same_gpu_uuid(GPUS[gpu],str(props.uuid))
+ campaign.exclusive_gpu(GPUS[gpu]);prepared=preparation.load_case(PREP,task['case']);library=cb.Library(BUILD/'libcuntt.so');original=campaign.selection_descriptor
+ started=now()
+ try:
+  campaign.selection_descriptor=selector(task['seed']['mapping'],original)
+  stream=torch.cuda.Stream()
+  with torch.cuda.stream(stream):
+   row=campaign.run_case(task['case'],library,torch,stream,timing=True,prepared=prepared,selection_policy=None,baseline_names=(*campaign.DEFAULT_BASELINES,*campaign.EXTERNAL_CORE_PLUGINS),vkfft_library=BUILD/'libvkfft_xd_bridge.so',gpuntt_library=BUILD/'libgpuntt_semantic_bridge.so',error_dir=pathlib.Path(destination).parent/'errors')
+  campaign.exclusive_gpu(GPUS[gpu])
+  row.update(fixed_seed=task['seed'],source_catalog_sha256=sha(CATALOG),gpu_uuid=GPUS[gpu],gpu_name=props.name,gpu_memory=props.total_memory,library_sha256=sha(BUILD/'libcuntt.so'),started_at=started,ended_at=now(),scope='Fixed seed replay on target GPU; no automatic search',guards=dict(before=True,after=True))
+  if 'plan_descriptor' in row and row['plan_descriptor']['selection']['algorithm_policy']!=2:raise ValueError('explicit selection was not retained')
+  row['selection_scope']='Explicit fixed seed; no automatic search or source timing reuse'
+  write(destination,row)
+ finally:campaign.selection_descriptor=original
+
+
+def foreign(gpu,allowed=()):
+ output=subprocess.check_output(['nvidia-smi',f'--id={GPUS[gpu]}','--query-compute-apps=gpu_uuid,pid,process_name','--format=csv,noheader,nounits'],text=True,timeout=15)
+ rows=[]
+ for line in output.splitlines():
+  fields=[x.strip() for x in line.split(',',2)]
+  if len(fields)!=3 or fields[0]!=GPUS[gpu]:raise ValueError('unexpected NVIDIA process row')
+  pid=int(fields[1])
+  if pathlib.Path('/proc',str(pid)).exists() and pid not in allowed:rows.append(pid)
+ return rows
+
+def run(gpu):
+ from run_isolated_gpu import descendant,stop_owned
+ prepared=json.loads((BASE/'prepared.json').read_text());assert prepared['library_sha256']==sha(BUILD/'libcuntt.so')
+ out=BASE/gpu;out.mkdir(parents=True,exist_ok=True)
+ until=json.loads((ROOT.parent/'cuButterfly/results/pro6000-setup/monitor/config.json').read_text())['deadline_unix']
+ campaign_root=ROOT/'results'/('pro6000-issue9' if gpu=='gpu1' else 'pro6000-issue9-gpu0')/'main'
+ with ExitStack() as locks:
+  for mode in ('quick','full'):
+   lock=locks.enter_context((campaign_root/mode/'run/driver.lock').open('a'));fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+  for task in prepared['tasks']:
+   case_id=task['case']['id'];accepted=out/'rows'/f'{case_id}.json'
+   if accepted.exists():continue
+   while time.time()<until:
+    try:busy=foreign(gpu)
+    except (ValueError,subprocess.SubprocessError):busy=['unknown']
+    if busy:
+     write(out/'status.json',dict(status='waiting-for-exclusive-gpu',at=now(),gpu_uuid=GPUS[gpu],foreign_pids=busy,case=case_id));time.sleep(1);continue
+    attempt=out/'attempts'/str(time.time_ns());attempt.mkdir(parents=True)
+    destination=attempt/'result.json'
+    command=[sys.executable,__file__,'child','--suite',SUITE,'--gpu',gpu,'--case',case_id,'--destination',str(destination)]
+    with (attempt/'run.log').open('w') as log:
+     process=subprocess.Popen(command,env=dict(os.environ,CUDA_VISIBLE_DEVICES=GPUS[gpu]),stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+     write(out/'status.json',dict(status='running',at=now(),gpu_uuid=GPUS[gpu],case=case_id,pid=process.pid,command=command))
+     interrupted=False
+     try:
+      while process.poll() is None:
+       other=[p for p in foreign(gpu) if not descendant(p,process.pid)]
+       if other or time.time()>=until:interrupted=True;break
+       time.sleep(.25)
+      other=[p for p in foreign(gpu) if not descendant(p,process.pid)]
+      if other:interrupted=True
+     finally:stop_owned(process)
+    if interrupted:
+     write(attempt/'interrupted.json',dict(at=now(),reason='foreign GPU context observed',foreign_pids=other));continue
+    if process.returncode!=0:
+     write(out/'status.json',dict(status='failed',case=case_id,at=now(),log=str(attempt/'run.log')));return 1
+    row=json.loads(destination.read_text());assert row['guards']==dict(before=True,after=True)
+    write(accepted,row);break
+   else:return 75
+ rows=[json.loads((out/'rows'/f"{task['case']['id']}.json").read_text()) for task in prepared['tasks']]
+ measured=sum('timing' in row for row in rows)
+ statuses={status:sum(row['status']==status for row in rows) for status in sorted({row['status'] for row in rows})}
+ write(out/'status.json',dict(status='finished-with-results-and-gaps',at=now(),gpu_uuid=GPUS[gpu],processed_cases=len(rows),measured_cases=measured,result_status_counts=statuses,gaps=prepared['gaps'],scope=prepared['scope']));return 0
+
+if __name__=='__main__':
+ parser=argparse.ArgumentParser();parser.add_argument('action',choices=['prepare','run','child']);parser.add_argument('--suite',choices=['quick','full'],default='quick');parser.add_argument('--gpu',choices=GPUS,default='gpu1');parser.add_argument('--case');parser.add_argument('--destination');args=parser.parse_args()
+ SUITE=args.suite
+ if SUITE=='full':
+  BASE=BASE/'full';MANIFEST=ROOT/'results/pro6000-issue9/main/full/manifest.json';PREP=ROOT/'results/pro6000-issue9/main/full/prepared'
+ if args.action=='prepare':prepare()
+ elif args.action=='child':child(args.gpu,args.case,args.destination)
+ else:raise SystemExit(run(args.gpu))

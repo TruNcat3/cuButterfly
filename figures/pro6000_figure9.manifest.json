@@ -1,0 +1,40 @@
+{
+  "main": {
+    "files": [
+      {
+        "path": "pro6000_figure9.svg",
+        "sha256": "1f0df1506c7dcaef315fa559abe1566a47c6a3a659cd06dc3c1a9cfad8e763ad"
+      },
+      {
+        "path": "pro6000_figure9.pdf",
+        "sha256": "1c89a93276816fc022888dcac67d920a49f94d2bd20141fd0e35bdab53a74f3f"
+      },
+      {
+        "path": "pro6000_figure9.png",
+        "sha256": "bcfdfd7b8cdee977083a10a3a52929b43997f32d104fda51b97cc18de52f7949"
+      }
+    ],
+    "matplotlib_version": "3.11.2",
+    "source_sha256": "61e82bad4aabc8ee51a236006a0a15e916fde625060962dca600a61ba6cb489f",
+    "tables_sha256": "cfce40b115a31ffada00c0e15e36ed66e9911a61a58bb0fb4d8ae09ff28ca079"
+  },
+  "mma9": {
+    "files": [
+      {
+        "path": "pro6000_figure9_mma9.svg",
+        "sha256": "6b1cb093806bd947931f5d8f46468b76ad1df19af00d5675ca98055b3195f145"
+      },
+      {
+        "path": "pro6000_figure9_mma9.pdf",
+        "sha256": "9334cd03890e996425939539ebbb9c2ddd8735d705cac56b10509606e869bc56"
+      },
+      {
+        "path": "pro6000_figure9_mma9.png",
+        "sha256": "e557687ca4ff3c445bcb4930d9c48ef4a9e8250c912b421f8bf4b46679f1b0a2"
+      }
+    ],
+    "matplotlib_version": "3.11.2",
+    "source_sha256": "61e82bad4aabc8ee51a236006a0a15e916fde625060962dca600a61ba6cb489f",
+    "tables_sha256": "cfce40b115a31ffada00c0e15e36ed66e9911a61a58bb0fb4d8ae09ff28ca079"
+  }
+}

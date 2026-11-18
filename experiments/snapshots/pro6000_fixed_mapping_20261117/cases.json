@@ -1,0 +1,7195 @@
+{
+  "at": "2026-11-17T17:14:13.917015+08:00",
+  "suite": "full",
+  "scope": "Repository portable mapping catalog transferred to PRO6000; original seed GPU is not recorded per entry; no source timings or profiles imported",
+  "catalog": "/home/wt/git/cuButterfly-issue9/config/research_campaign/mapping_seeds.json",
+  "catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb",
+  "manifest_sha256": "9a3da61efce043ff9f50ead6b6cb690798a9ecfc7de0155990c8ef7d3916778f",
+  "library_sha256": "3b0668f2530a75d1401dcbf5decea720f8e47db0c1357aafdf1680fa1bba6adb",
+  "tasks": [
+    {
+      "case": {
+        "id": "c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7",
+        "populations": [
+          "e1-00-fft-fp32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 256,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 256,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              256
+            ],
+            "storage": 6,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 256,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 256,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              256
+            ],
+            "storage": 6,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-00-fft-fp32",
+            "regime": "fp32",
+            "shape": [
+              256
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              256
+            ],
+            "output_extents": [
+              256
+            ]
+          }
+        ]
+      },
+      "seed_index": 3,
+      "seed": {
+        "mapping": {
+          "backend": "temporal-tile",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "auto",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "cufftdx-block",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 0,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            8
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 128,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 8,
+          "normalization": "none",
+          "operator": "fft",
+          "placement": "out-of-place",
+          "precision": "fp32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548",
+        "populations": [
+          "e1-02-fft-fp32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 32,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 6,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 32,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 6,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-02-fft-fp32",
+            "regime": "fp32",
+            "shape": [
+              4096
+            ],
+            "batch": 32,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              4096
+            ],
+            "output_extents": [
+              4096
+            ]
+          }
+        ]
+      },
+      "seed_index": 0,
+      "seed": {
+        "mapping": {
+          "backend": "temporal-tile",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "auto",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "cufftdx-direct",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 0,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            12
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 256,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 32,
+          "logN": 12,
+          "normalization": "none",
+          "operator": "fft",
+          "placement": "out-of-place",
+          "precision": "fp32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac",
+        "populations": [
+          "e1-03-fft-fp32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 32,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 1,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": true,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 6,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 32,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 1,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": true,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 6,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-03-fft-fp32",
+            "regime": "fp32",
+            "shape": [
+              4096
+            ],
+            "batch": 32,
+            "direction": "inverse",
+            "normalization": "inverse",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              3,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              4096
+            ],
+            "output_extents": [
+              4096
+            ]
+          }
+        ]
+      },
+      "seed_index": 26,
+      "seed": {
+        "mapping": {
+          "backend": "temporal-tile",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "auto",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "cufftdx-direct",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 0,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            12
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 256,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 32,
+          "direction": "inverse",
+          "logN": 12,
+          "normalization": "inverse",
+          "operator": "fft",
+          "placement": "out-of-place",
+          "precision": "fp32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "44b2de6f8d8235eec266bf422af3826442f8250366e2b9fad29ac0576dbce3e3",
+        "populations": [
+          "e1-04-fft-fp32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 65536,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 65536,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              65536
+            ],
+            "storage": 6,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 65536,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 65536,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              65536
+            ],
+            "storage": 6,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-04-fft-fp32",
+            "regime": "fp32",
+            "shape": [
+              65536
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              4,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              65536
+            ],
+            "output_extents": [
+              65536
+            ]
+          }
+        ]
+      },
+      "seed_index": 9,
+      "seed": {
+        "mapping": {
+          "backend": "online-reorder",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "recurrence"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "auto",
+          "cross_twiddle": "recurrence",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [
+            {
+              "core": "register-tile",
+              "ept": 16,
+              "exchange": "shared",
+              "threads": 128
+            },
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 64
+            }
+          ],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "register-tile",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 8,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 16,
+          "prefix_threads": 128,
+          "prefix_units_per_cta": 8,
+          "reorder_columns": 1,
+          "schema_version": 1,
+          "segment_mappings": [
+            {
+              "core": "register-tile",
+              "ept": 16,
+              "exchange": "shared",
+              "threads": 128
+            },
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 64
+            }
+          ],
+          "shared_layout": "writer-aligned",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            8,
+            8
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 64,
+          "suffix_units_per_cta": 2,
+          "tile_threads": 128,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 16,
+          "normalization": "none",
+          "operator": "fft",
+          "placement": "out-of-place",
+          "precision": "fp32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0",
+        "populations": [
+          "e1-06-fft-fp64"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 2,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 7,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 2,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 7,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-06-fft-fp64",
+            "regime": "fp64",
+            "shape": [
+              4096
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              6,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              4096
+            ],
+            "output_extents": [
+              4096
+            ]
+          }
+        ]
+      },
+      "seed_index": 18,
+      "seed": {
+        "mapping": {
+          "backend": "factor-streamed",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "auto",
+          "cross_twiddle": "recurrence",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [
+            {
+              "core": "register-tile",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 64
+            },
+            {
+              "core": "register-tile",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 64
+            }
+          ],
+          "factor_columns": 8,
+          "factor_ept": 8,
+          "factor_overlap": false,
+          "factor_partition": [
+            6,
+            6
+          ],
+          "factor_slices": 1,
+          "fft_core": "register-tile",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 6,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "writer-aligned",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            12
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 64,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 12,
+          "normalization": "none",
+          "operator": "fft",
+          "placement": "out-of-place",
+          "precision": "fp64"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d",
+        "populations": [
+          "e1-08-fft-fp64"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 2,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 65536,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 65536,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              65536
+            ],
+            "storage": 7,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 2,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 65536,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 65536,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              65536
+            ],
+            "storage": 7,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-08-fft-fp64",
+            "regime": "fp64",
+            "shape": [
+              65536
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              8,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              65536
+            ],
+            "output_extents": [
+              65536
+            ]
+          }
+        ]
+      },
+      "seed_index": 20,
+      "seed": {
+        "mapping": {
+          "backend": "online-reorder",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "recurrence"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "auto",
+          "cross_twiddle": "recurrence",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [
+            {
+              "core": "cufftdx-block",
+              "ept": 4,
+              "exchange": "shared",
+              "threads": 128
+            },
+            {
+              "core": "cufftdx-block",
+              "ept": 4,
+              "exchange": "shared",
+              "threads": 128
+            }
+          ],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "cufftdx-block",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 7,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 4,
+          "prefix_threads": 128,
+          "prefix_units_per_cta": 4,
+          "reorder_columns": 1,
+          "schema_version": 1,
+          "segment_mappings": [
+            {
+              "core": "cufftdx-block",
+              "ept": 4,
+              "exchange": "shared",
+              "threads": 128
+            },
+            {
+              "core": "cufftdx-block",
+              "ept": 4,
+              "exchange": "shared",
+              "threads": 128
+            }
+          ],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            7,
+            9
+          ],
+          "stage_space": 0,
+          "suffix_ept": 4,
+          "suffix_threads": 128,
+          "suffix_units_per_cta": 1,
+          "tile_threads": 128,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 16,
+          "normalization": "none",
+          "operator": "fft",
+          "placement": "out-of-place",
+          "precision": "fp64"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a",
+        "populations": [
+          "e1-10-fft-fp64"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 2,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 262144,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 262144,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              262144
+            ],
+            "storage": 7,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 2,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 262144,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 262144,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              262144
+            ],
+            "storage": 7,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-10-fft-fp64",
+            "regime": "fp64",
+            "shape": [
+              262144
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              10,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              262144
+            ],
+            "output_extents": [
+              262144
+            ]
+          }
+        ]
+      },
+      "seed_index": 22,
+      "seed": {
+        "mapping": {
+          "backend": "factor-streamed",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "auto",
+          "cross_twiddle": "recurrence",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 128
+            },
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 128
+            }
+          ],
+          "factor_columns": 2,
+          "factor_ept": 8,
+          "factor_overlap": false,
+          "factor_partition": [
+            9,
+            9
+          ],
+          "factor_slices": 1,
+          "fft_core": "cufftdx-block",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 9,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "writer-aligned",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            18
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 128,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 18,
+          "normalization": "none",
+          "operator": "fft",
+          "placement": "out-of-place",
+          "precision": "fp64"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9",
+        "populations": [
+          "e1-12-fwht-fp32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 256,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 2,
+            "output_batch_stride": 256,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              256
+            ],
+            "storage": 2,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 256,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 2,
+            "output_batch_stride": 256,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              256
+            ],
+            "storage": 2,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-12-fwht-fp32",
+            "regime": "fp32",
+            "shape": [
+              256
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              12,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              256
+            ],
+            "output_extents": [
+              256
+            ]
+          }
+        ]
+      },
+      "seed_index": 30,
+      "seed": {
+        "mapping": {
+          "backend": "temporal-tile",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "warp-register",
+          "local_stages": 0,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            8
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 32,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 8,
+          "normalization": "none",
+          "operator": "fwht",
+          "placement": "out-of-place",
+          "precision": "fp32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485",
+        "populations": [
+          "e1-14-fwht-fp32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 32,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 2,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 2,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 32,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 2,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 2,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-14-fwht-fp32",
+            "regime": "fp32",
+            "shape": [
+              4096
+            ],
+            "batch": 32,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              14,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              4096
+            ],
+            "output_extents": [
+              4096
+            ]
+          }
+        ]
+      },
+      "seed_index": 2,
+      "seed": {
+        "mapping": {
+          "backend": "temporal-tile",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "warp-register",
+          "local_stages": 0,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            12
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 256,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 32,
+          "logN": 12,
+          "normalization": "none",
+          "operator": "fwht",
+          "placement": "out-of-place",
+          "precision": "fp32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043",
+        "populations": [
+          "e1-15-fwht-fp32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 32,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 1,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": true,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 2,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 2,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 32,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 1,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": true,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 2,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 2,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-15-fwht-fp32",
+            "regime": "fp32",
+            "shape": [
+              4096
+            ],
+            "batch": 32,
+            "direction": "inverse",
+            "normalization": "inverse",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              15,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              4096
+            ],
+            "output_extents": [
+              4096
+            ]
+          }
+        ]
+      },
+      "seed_index": 40,
+      "seed": {
+        "mapping": {
+          "backend": "temporal-tile",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "warp-register",
+          "local_stages": 0,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            12
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 256,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 32,
+          "direction": "inverse",
+          "logN": 12,
+          "normalization": "inverse",
+          "operator": "fwht",
+          "placement": "out-of-place",
+          "precision": "fp32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51",
+        "populations": [
+          "e1-16-fwht-fp32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 32768,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 2,
+            "output_batch_stride": 32768,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              32768
+            ],
+            "storage": 2,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 32768,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 2,
+            "output_batch_stride": 32768,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              32768
+            ],
+            "storage": 2,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-16-fwht-fp32",
+            "regime": "fp32",
+            "shape": [
+              32768
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              16,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              32768
+            ],
+            "output_extents": [
+              32768
+            ]
+          }
+        ]
+      },
+      "seed_index": 34,
+      "seed": {
+        "mapping": {
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "table"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 8,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "writer-aligned",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            8,
+            7
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 128,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 15,
+          "normalization": "none",
+          "operator": "fwht",
+          "placement": "out-of-place",
+          "precision": "fp32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "c669da86891cf10a56120b86d30dd00dd4277774d8da49ce61673f73d6416d32",
+        "populations": [
+          "e1-18-fwht-fp64"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 2,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 2,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 3,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 2,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 2,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 3,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-18-fwht-fp64",
+            "regime": "fp64",
+            "shape": [
+              4096
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              18,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              4096
+            ],
+            "output_extents": [
+              4096
+            ]
+          }
+        ]
+      },
+      "seed_index": 38,
+      "seed": {
+        "mapping": {
+          "backend": "online-reorder",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "table"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix8",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 0
+            },
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 0
+            }
+          ],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 6,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 1,
+          "schema_version": 1,
+          "segment_mappings": [
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 0
+            },
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 0
+            }
+          ],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 64,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 12,
+          "normalization": "none",
+          "operator": "fwht",
+          "placement": "out-of-place",
+          "precision": "fp64"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "474bd15c6b8f88b7d6ccdae7409b0ca2344280481464fd3ac6d1990cd14b3700",
+        "populations": [
+          "e1-20-ntt-word32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": 2013265921,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 1,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 8,
+            "word_bits": 32
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": 2013265921,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 1,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 8,
+            "word_bits": 32
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-20-ntt-word32",
+            "regime": "word32",
+            "shape": [
+              4096
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              20,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              4096
+            ],
+            "output_extents": [
+              4096
+            ]
+          }
+        ]
+      },
+      "seed_index": 41,
+      "seed": {
+        "mapping": {
+          "appt_role_mapping": {
+            "data_time_role_mask": 7,
+            "fragment_width": 0,
+            "producer_weight": 0,
+            "tail_weight": 0,
+            "writer_tiles_per_cta": 0,
+            "writer_weight": 0
+          },
+          "backend": "hybrid2d",
+          "batch_tile_count": 1,
+          "boundary_mappings": [],
+          "compute_unit": "radix4",
+          "cross_twiddle_placement": "fused",
+          "data_space": 0,
+          "data_time": 0,
+          "dataflow_layout": "hermes-xor",
+          "dataflow_state_mode": "inplace",
+          "execution_group_mappings": [],
+          "flow_tile_log_n": 0,
+          "hierarchical_core": "dataflow-radix4",
+          "kind": "ntt",
+          "modular_multiply": "shoup",
+          "n1_log": 6,
+          "packet_compute_layout": "interleaved-rows",
+          "packet_fold_wave_barriers": false,
+          "packet_readiness_mode": "per-packet",
+          "pipeline_buffers": 0,
+          "profile_appt_roles": false,
+          "ready_window": 0,
+          "role_stages": 0,
+          "rows_per_block": 4,
+          "schema_version": 1,
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [],
+          "stage_space": 0,
+          "subgraph_mappings": [],
+          "target_ctas_per_sm": 0,
+          "threads_per_block": 256,
+          "token_interleave": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "input_order": "natural",
+          "logN": 12,
+          "modulus": "2013265921",
+          "operator": "ntt",
+          "output_order": "natural",
+          "precision": "word32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "e1b431aba007644d4adf24c062c794d8b59d7145e0a5c0181ad787c39f2ab7e1",
+        "populations": [
+          "e1-22-ntt-word32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 65536,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": 2013265921,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 1,
+            "output_batch_stride": 65536,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              65536
+            ],
+            "storage": 8,
+            "word_bits": 32
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 65536,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": 2013265921,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 1,
+            "output_batch_stride": 65536,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              65536
+            ],
+            "storage": 8,
+            "word_bits": 32
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-22-ntt-word32",
+            "regime": "word32",
+            "shape": [
+              65536
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              22,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              65536
+            ],
+            "output_extents": [
+              65536
+            ]
+          }
+        ]
+      },
+      "seed_index": 43,
+      "seed": {
+        "mapping": {
+          "appt_role_mapping": {
+            "data_time_role_mask": 7,
+            "fragment_width": 0,
+            "producer_weight": 0,
+            "tail_weight": 0,
+            "writer_tiles_per_cta": 0,
+            "writer_weight": 0
+          },
+          "backend": "hybrid2d",
+          "batch_tile_count": 1,
+          "boundary_mappings": [],
+          "compute_unit": "radix8",
+          "cross_twiddle_placement": "fused",
+          "data_space": 2,
+          "data_time": 0,
+          "dataflow_layout": "hermes-xor",
+          "dataflow_state_mode": "inplace",
+          "execution_group_mappings": [],
+          "flow_tile_log_n": 0,
+          "hierarchical_core": "dataflow-radix4",
+          "kind": "ntt",
+          "modular_multiply": "shoup",
+          "n1_log": 8,
+          "packet_compute_layout": "interleaved-rows",
+          "packet_fold_wave_barriers": false,
+          "packet_readiness_mode": "per-packet",
+          "pipeline_buffers": 0,
+          "profile_appt_roles": false,
+          "ready_window": 0,
+          "role_stages": 0,
+          "rows_per_block": 4,
+          "schema_version": 1,
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [],
+          "stage_space": 0,
+          "subgraph_mappings": [],
+          "target_ctas_per_sm": 0,
+          "threads_per_block": 256,
+          "token_interleave": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "input_order": "natural",
+          "logN": 16,
+          "modulus": "2013265921",
+          "operator": "ntt",
+          "output_order": "natural",
+          "precision": "word32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f",
+        "populations": [
+          "e1-24-ntt-word64"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 4,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": 576460756061519873,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 1,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 9,
+            "word_bits": 64
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 4,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": 576460756061519873,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 1,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 9,
+            "word_bits": 64
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-24-ntt-word64",
+            "regime": "word64",
+            "shape": [
+              4096
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              24,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              4096
+            ],
+            "output_extents": [
+              4096
+            ]
+          }
+        ]
+      },
+      "seed_index": 47,
+      "seed": {
+        "mapping": {
+          "appt_role_mapping": {
+            "data_time_role_mask": 7,
+            "fragment_width": 0,
+            "producer_weight": 0,
+            "tail_weight": 0,
+            "writer_tiles_per_cta": 0,
+            "writer_weight": 0
+          },
+          "backend": "hybrid2d",
+          "batch_tile_count": 1,
+          "boundary_mappings": [],
+          "compute_unit": "radix4",
+          "cross_twiddle_placement": "fused",
+          "data_space": 0,
+          "data_time": 0,
+          "dataflow_layout": "hermes-xor",
+          "dataflow_state_mode": "inplace",
+          "execution_group_mappings": [],
+          "flow_tile_log_n": 0,
+          "hierarchical_core": "dataflow-radix4",
+          "kind": "ntt",
+          "modular_multiply": "shoup",
+          "n1_log": 6,
+          "packet_compute_layout": "interleaved-rows",
+          "packet_fold_wave_barriers": false,
+          "packet_readiness_mode": "per-packet",
+          "pipeline_buffers": 0,
+          "profile_appt_roles": false,
+          "ready_window": 0,
+          "role_stages": 0,
+          "rows_per_block": 1,
+          "schema_version": 1,
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [],
+          "stage_space": 0,
+          "subgraph_mappings": [],
+          "target_ctas_per_sm": 0,
+          "threads_per_block": 128,
+          "token_interleave": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "input_order": "natural",
+          "logN": 12,
+          "modulus": "576460756061519873",
+          "operator": "ntt",
+          "output_order": "natural",
+          "precision": "word64"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa",
+        "populations": [
+          "e1-26-ntt-word64"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 4,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 65536,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": 576460756061519873,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 1,
+            "output_batch_stride": 65536,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              65536
+            ],
+            "storage": 9,
+            "word_bits": 64
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 4,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 65536,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": 576460756061519873,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 1,
+            "output_batch_stride": 65536,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              65536
+            ],
+            "storage": 9,
+            "word_bits": 64
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-26-ntt-word64",
+            "regime": "word64",
+            "shape": [
+              65536
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              26,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              65536
+            ],
+            "output_extents": [
+              65536
+            ]
+          }
+        ]
+      },
+      "seed_index": 49,
+      "seed": {
+        "mapping": {
+          "appt_role_mapping": {
+            "data_time_role_mask": 7,
+            "fragment_width": 0,
+            "producer_weight": 0,
+            "tail_weight": 0,
+            "writer_tiles_per_cta": 0,
+            "writer_weight": 0
+          },
+          "backend": "hybrid2d",
+          "batch_tile_count": 1,
+          "boundary_mappings": [],
+          "compute_unit": "radix4",
+          "cross_twiddle_placement": "fused",
+          "data_space": 0,
+          "data_time": 0,
+          "dataflow_layout": "hermes-xor",
+          "dataflow_state_mode": "inplace",
+          "execution_group_mappings": [],
+          "flow_tile_log_n": 0,
+          "hierarchical_core": "dataflow-radix4",
+          "kind": "ntt",
+          "modular_multiply": "shoup",
+          "n1_log": 8,
+          "packet_compute_layout": "interleaved-rows",
+          "packet_fold_wave_barriers": false,
+          "packet_readiness_mode": "per-packet",
+          "pipeline_buffers": 0,
+          "profile_appt_roles": false,
+          "ready_window": 0,
+          "role_stages": 0,
+          "rows_per_block": 4,
+          "schema_version": 1,
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [],
+          "stage_space": 0,
+          "subgraph_mappings": [],
+          "target_ctas_per_sm": 0,
+          "threads_per_block": 256,
+          "token_interleave": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "input_order": "natural",
+          "logN": 16,
+          "modulus": "576460756061519873",
+          "operator": "ntt",
+          "output_order": "natural",
+          "precision": "word64"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "98f376d818554db22ad6c24414dd94814ab09083d7841f3bcbbd7f8c89353dcf",
+        "populations": [
+          "e1-28-subset-zeta-uint32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 256,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 3,
+            "output_batch_stride": 256,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              256
+            ],
+            "storage": 8,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 256,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 3,
+            "output_batch_stride": 256,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              256
+            ],
+            "storage": 8,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-28-subset-zeta-uint32",
+            "regime": "uint32",
+            "shape": [
+              256
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              28,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              256
+            ],
+            "output_extents": [
+              256
+            ]
+          }
+        ]
+      },
+      "seed_index": 54,
+      "seed": {
+        "mapping": {
+          "backend": "temporal-tile",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix4",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 0,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            8
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 128,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 8,
+          "normalization": "none",
+          "operator": "subset-zeta",
+          "placement": "out-of-place",
+          "precision": "uint32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "2b9e64d11619319d00c7ae7ce3d2b6df2004af6e068c5f00dd082311a7342d53",
+        "populations": [
+          "e1-29-subset-zeta-uint32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 3,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 8,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 3,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 8,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-29-subset-zeta-uint32",
+            "regime": "uint32",
+            "shape": [
+              4096
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              29,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              4096
+            ],
+            "output_extents": [
+              4096
+            ]
+          }
+        ]
+      },
+      "seed_index": 56,
+      "seed": {
+        "mapping": {
+          "backend": "online-reorder",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "table"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix8",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 0
+            },
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 0
+            }
+          ],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 6,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 1,
+          "schema_version": 1,
+          "segment_mappings": [
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 0
+            },
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 0
+            }
+          ],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 64,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 12,
+          "normalization": "none",
+          "operator": "subset-zeta",
+          "placement": "out-of-place",
+          "precision": "uint32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "4265f98bd655de47a813b28de672bc4aff8faf03e830f164b24ddbef42c783a9",
+        "populations": [
+          "e1-30-subset-zeta-uint32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 256,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 3,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 8,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 256,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 3,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 8,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-30-subset-zeta-uint32",
+            "regime": "uint32",
+            "shape": [
+              4096
+            ],
+            "batch": 256,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              30,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              4096
+            ],
+            "output_extents": [
+              4096
+            ]
+          }
+        ]
+      },
+      "seed_index": 57,
+      "seed": {
+        "mapping": {
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 0,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            12
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 256,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 256,
+          "logN": 12,
+          "normalization": "none",
+          "operator": "subset-zeta",
+          "placement": "out-of-place",
+          "precision": "uint32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "6ff0996fdc68791dfac7a07d04200cb7ebbd235012b4224f2d4947614ca865a8",
+        "populations": [
+          "e1-31-superset-zeta-uint32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 256,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 4,
+            "output_batch_stride": 256,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              256
+            ],
+            "storage": 8,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 256,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 4,
+            "output_batch_stride": 256,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              256
+            ],
+            "storage": 8,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-31-superset-zeta-uint32",
+            "regime": "uint32",
+            "shape": [
+              256
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              31,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              256
+            ],
+            "output_extents": [
+              256
+            ]
+          }
+        ]
+      },
+      "seed_index": 59,
+      "seed": {
+        "mapping": {
+          "backend": "temporal-tile",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix4",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 0,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            8
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 128,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 8,
+          "normalization": "none",
+          "operator": "superset-zeta",
+          "placement": "out-of-place",
+          "precision": "uint32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "34d94ef04b5155f2b7ab7ffccc60d6f19dee261754ffa8699c250637c2e09c7b",
+        "populations": [
+          "e1-32-superset-zeta-uint32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 4,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 8,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 4,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 8,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-32-superset-zeta-uint32",
+            "regime": "uint32",
+            "shape": [
+              4096
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              32,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              4096
+            ],
+            "output_extents": [
+              4096
+            ]
+          }
+        ]
+      },
+      "seed_index": 61,
+      "seed": {
+        "mapping": {
+          "backend": "online-reorder",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "table"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix8",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 0
+            },
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 0
+            }
+          ],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 6,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 1,
+          "schema_version": 1,
+          "segment_mappings": [
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 0
+            },
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 0
+            }
+          ],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            6
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 64,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 12,
+          "normalization": "none",
+          "operator": "superset-zeta",
+          "placement": "out-of-place",
+          "precision": "uint32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "e268b6b96b5f514d676e324f5e2c5b152b7e491a9e6c1edbd58674974ba02e71",
+        "populations": [
+          "e1-33-superset-zeta-uint32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 256,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 4,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 8,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 256,
+            "compute": 3,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 4,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 8,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-33-superset-zeta-uint32",
+            "regime": "uint32",
+            "shape": [
+              4096
+            ],
+            "batch": 256,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              33,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              4096
+            ],
+            "output_extents": [
+              4096
+            ]
+          }
+        ]
+      },
+      "seed_index": 62,
+      "seed": {
+        "mapping": {
+          "backend": "shared-iterative",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 12,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 32,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            12
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 256,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 256,
+          "logN": 12,
+          "normalization": "none",
+          "operator": "superset-zeta",
+          "placement": "out-of-place",
+          "precision": "uint32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "fe45e67fcef5f2c4d8817a5347219cadc6bc82e0f18d492e11449ae72f5161ef",
+        "populations": [
+          "e1-34-structured-2x2-fp32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 256,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              [
+                [
+                  1.0,
+                  0.25,
+                  -0.5,
+                  1.0
+                ]
+              ]
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 5,
+            "output_batch_stride": 256,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              256
+            ],
+            "storage": 2,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 256,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              [
+                [
+                  1.0,
+                  0.25,
+                  -0.5,
+                  1.0
+                ]
+              ]
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 5,
+            "output_batch_stride": 256,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              256
+            ],
+            "storage": 2,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-34-structured-2x2-fp32",
+            "regime": "fp32",
+            "shape": [
+              256
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              34,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              256
+            ],
+            "output_extents": [
+              256
+            ]
+          }
+        ]
+      },
+      "seed_index": 64,
+      "seed": {
+        "mapping": {
+          "backend": "temporal-tile",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "warp-register",
+          "local_stages": 0,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            8
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 32,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 8,
+          "normalization": "none",
+          "operator": "structured-2x2",
+          "placement": "out-of-place",
+          "precision": "fp32",
+          "stage_matrix": "1,0.25,-0.5,1"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "53572661c2e954a03ba494ef94872a0ec67581e4305b1ce4f2f1a5f64625c9d9",
+        "populations": [
+          "e1-35-structured-2x2-fp32"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 1,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              [
+                [
+                  1.0,
+                  0.25,
+                  -0.5,
+                  1.0
+                ]
+              ]
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 5,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 2,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 1,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 4096,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              [
+                [
+                  1.0,
+                  0.25,
+                  -0.5,
+                  1.0
+                ]
+              ]
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 5,
+            "output_batch_stride": 4096,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              4096
+            ],
+            "storage": 2,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "e1-35-structured-2x2-fp32",
+            "regime": "fp32",
+            "shape": [
+              4096
+            ],
+            "batch": 1,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              35,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              4096
+            ],
+            "output_extents": [
+              4096
+            ]
+          }
+        ]
+      },
+      "seed_index": 66,
+      "seed": {
+        "mapping": {
+          "backend": "temporal-tile",
+          "batch_tile_count": 1,
+          "boundaries": [],
+          "complex_multiply": "four-mul",
+          "compute_unit": "radix2",
+          "cross_twiddle": "table",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "scalar",
+          "kind": "butterfly",
+          "local_exchange": "warp-register",
+          "local_stages": 0,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 0,
+          "prefix_units_per_cta": 0,
+          "reorder_columns": 0,
+          "schema_version": 1,
+          "segment_mappings": [],
+          "shared_layout": "linear",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            12
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 0,
+          "suffix_units_per_cta": 0,
+          "tile_threads": 256,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 1,
+          "logN": 12,
+          "normalization": "none",
+          "operator": "structured-2x2",
+          "placement": "out-of-place",
+          "precision": "fp32",
+          "stage_matrix": "1,0.25,-0.5,1"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    },
+    {
+      "case": {
+        "id": "1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963",
+        "populations": [
+          "extension-fft-rank1"
+        ],
+        "descriptor": {
+          "schema": "cubutterfly-descriptor-v1",
+          "selection": {
+            "algorithm_policy": 0,
+            "execution_mode": 0,
+            "explicit_algorithm": ""
+          },
+          "semantics": {
+            "batch": 4,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 65536,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 65536,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              65536
+            ],
+            "storage": 6,
+            "word_bits": null
+          }
+        },
+        "capabilities": {
+          "boundary_adapter": false,
+          "gaps": [],
+          "performance_verified": false,
+          "schema": "cubutterfly-capabilities-v1",
+          "semantic_contract": {
+            "batch": 4,
+            "compute": 1,
+            "fft_output_scale": 1.0,
+            "fft_type": 0,
+            "input_batch_stride": 65536,
+            "input_orders": [
+              0
+            ],
+            "input_strides": [
+              1
+            ],
+            "inverse": 0,
+            "length_mode": 0,
+            "matrices": [
+              []
+            ],
+            "modulus": null,
+            "normalize_inverse": false,
+            "ntt_input_layout": 0,
+            "ntt_output_layout": 0,
+            "operator": 0,
+            "output_batch_stride": 65536,
+            "output_orders": [
+              0
+            ],
+            "output_strides": [
+              1
+            ],
+            "placement": 0,
+            "schema": "cubutterfly-semantic-v1",
+            "shape": [
+              65536
+            ],
+            "storage": 6,
+            "word_bits": null
+          },
+          "status": "eligible",
+          "validation_scope": "CPU structural semantics and static lowering constraints; target resources and arithmetic roots checked at plan creation"
+        },
+        "requested_variants": [
+          {
+            "population": "extension-fft-rank1",
+            "regime": "fft",
+            "shape": [
+              65536
+            ],
+            "batch": 4,
+            "direction": "forward",
+            "normalization": "none",
+            "placement": "out-of-place",
+            "input_order_pattern": "natural",
+            "output_order_pattern": "natural",
+            "layout": "packed",
+            "config_indices": [
+              36,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "input_extents": [
+              65536
+            ],
+            "output_extents": [
+              65536
+            ]
+          }
+        ]
+      },
+      "seed_index": 10,
+      "seed": {
+        "mapping": {
+          "backend": "online-reorder",
+          "batch_tile_count": 1,
+          "boundaries": [
+            {
+              "layout": "direct-strided",
+              "residency": "global-scratch",
+              "twiddle": "recurrence"
+            }
+          ],
+          "complex_multiply": "four-mul",
+          "compute_unit": "auto",
+          "cross_twiddle": "recurrence",
+          "data_tiles_per_cta": 1,
+          "direct_boundary": "direct-strided",
+          "execution_group_mappings": [
+            {
+              "core": "register-tile",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 32
+            },
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 512
+            }
+          ],
+          "factor_columns": 8,
+          "factor_ept": 16,
+          "factor_overlap": false,
+          "factor_partition": [],
+          "factor_slices": 1,
+          "fft_core": "register-tile",
+          "kind": "butterfly",
+          "local_exchange": "shared",
+          "local_stages": 6,
+          "pipeline_warps": 0,
+          "prefetch_depth": 0,
+          "prefix_ept": 8,
+          "prefix_threads": 32,
+          "prefix_units_per_cta": 4,
+          "reorder_columns": 1,
+          "schema_version": 1,
+          "segment_mappings": [
+            {
+              "core": "register-tile",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 32
+            },
+            {
+              "core": "cufftdx-block",
+              "ept": 8,
+              "exchange": "shared",
+              "threads": 512
+            }
+          ],
+          "shared_layout": "writer-aligned",
+          "stage_handoff": "named-barrier",
+          "stage_overlap": false,
+          "stage_partition": [
+            6,
+            10
+          ],
+          "stage_space": 0,
+          "suffix_ept": 8,
+          "suffix_threads": 512,
+          "suffix_units_per_cta": 4,
+          "tile_threads": 128,
+          "warp_stages": 0
+        },
+        "semantics": {
+          "batch": 4,
+          "logN": 16,
+          "normalization": "none",
+          "operator": "fft",
+          "placement": "out-of-place",
+          "precision": "fp32"
+        }
+      },
+      "reference_preparation": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/prepared",
+      "source_catalog_sha256": "fa2c54c6c90c33fc6ad2f8273a743edc152a958ccd4f3f703e0a6a620ad803fb"
+    }
+  ],
+  "gaps": [
+    {
+      "id": "ba087fb33968396226e0479b872103d845d72ef4d9acbcd3a1d3a5cc191effa7",
+      "semantics": {
+        "batch": 1,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          256
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "ee8b034b194dda38fb15fb59cbc30b48f3ecda99d875b90dcee2ec12956795dc",
+      "semantics": {
+        "batch": 1,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 262144,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 262144,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          262144
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c",
+      "semantics": {
+        "batch": 1,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          256
+        ],
+        "storage": 2,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2",
+      "semantics": {
+        "batch": 1,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 32768,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 32768,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          32768
+        ],
+        "storage": 2,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "d65c1cc9eb23f8609e815cb74f2318e0b8127870aa4b601b61b45ccebcb03a58",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 3,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "7e8759ca9ea1f2afd2253a35da5a0849774510385e164faa1db09709e43a0dc8",
+      "semantics": {
+        "batch": 1,
+        "compute": 3,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": 2013265921,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 1,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 8,
+        "word_bits": 32
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "16a35eaba8877d371a495169cf5b3493aa69dc97b9acc64616838e7b850a2bec",
+      "semantics": {
+        "batch": 1,
+        "compute": 3,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": 2013265921,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 1,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 8,
+        "word_bits": 32
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e",
+      "semantics": {
+        "batch": 1,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": 576460756061519873,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 1,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 9,
+        "word_bits": 64
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b",
+      "semantics": {
+        "batch": 1,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": 576460756061519873,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 1,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 9,
+        "word_bits": 64
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9",
+      "semantics": {
+        "batch": 4,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 16384,
+        "input_orders": [
+          0,
+          0
+        ],
+        "input_strides": [
+          128,
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 16384,
+        "output_orders": [
+          0,
+          0
+        ],
+        "output_strides": [
+          128,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          128,
+          128
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16",
+      "semantics": {
+        "batch": 4,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 32768,
+        "input_orders": [
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          1024,
+          32,
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 32768,
+        "output_orders": [
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          1024,
+          32,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          32,
+          32,
+          32
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40",
+      "semantics": {
+        "batch": 4,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          512,
+          64,
+          8,
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          512,
+          64,
+          8,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          8,
+          8,
+          8,
+          8
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86",
+      "semantics": {
+        "batch": 16,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          128,
+          64,
+          32,
+          16,
+          8,
+          4,
+          2,
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          128,
+          64,
+          32,
+          16,
+          8,
+          4,
+          2,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "5e296849a754f51f2c951977f778472f3047e3e65616086309f8d8c873078cb5",
+      "semantics": {
+        "batch": 4,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 2,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d",
+      "semantics": {
+        "batch": 4,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 16384,
+        "input_orders": [
+          0,
+          0
+        ],
+        "input_strides": [
+          128,
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 16384,
+        "output_orders": [
+          0,
+          0
+        ],
+        "output_strides": [
+          128,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          128,
+          128
+        ],
+        "storage": 2,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a",
+      "semantics": {
+        "batch": 4,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 32768,
+        "input_orders": [
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          1024,
+          32,
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 32768,
+        "output_orders": [
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          1024,
+          32,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          32,
+          32,
+          32
+        ],
+        "storage": 2,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3",
+      "semantics": {
+        "batch": 4,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          512,
+          64,
+          8,
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          512,
+          64,
+          8,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          8,
+          8,
+          8,
+          8
+        ],
+        "storage": 2,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be",
+      "semantics": {
+        "batch": 16,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          128,
+          64,
+          32,
+          16,
+          8,
+          4,
+          2,
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          128,
+          64,
+          32,
+          16,
+          8,
+          4,
+          2,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "storage": 2,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e",
+      "semantics": {
+        "batch": 4,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": 576460756061519873,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 1,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 9,
+        "word_bits": 64
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "f203848e8822bfdc470ef962d01148ef86b65bf6bbfb3d4c67a348c96a340f94",
+      "semantics": {
+        "batch": 4,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 16384,
+        "input_orders": [
+          0,
+          0
+        ],
+        "input_strides": [
+          128,
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          []
+        ],
+        "modulus": 576460756061519873,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 1,
+        "output_batch_stride": 16384,
+        "output_orders": [
+          0,
+          0
+        ],
+        "output_strides": [
+          128,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          128,
+          128
+        ],
+        "storage": 9,
+        "word_bits": 64
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "a2464b5b52504a97b847b7b8ce5f640a1159307524a148bf594b1bec0b1dc69a",
+      "semantics": {
+        "batch": 4,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 32768,
+        "input_orders": [
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          1024,
+          32,
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          []
+        ],
+        "modulus": 576460756061519873,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 1,
+        "output_batch_stride": 32768,
+        "output_orders": [
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          1024,
+          32,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          32,
+          32,
+          32
+        ],
+        "storage": 9,
+        "word_bits": 64
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "bc18c585abdad31d5b0fac1ff526b32008cf34009b687e5d9252a0c2e953ccc6",
+      "semantics": {
+        "batch": 4,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          512,
+          64,
+          8,
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          [],
+          []
+        ],
+        "modulus": 576460756061519873,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 1,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          512,
+          64,
+          8,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          8,
+          8,
+          8,
+          8
+        ],
+        "storage": 9,
+        "word_bits": 64
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "168d2b19ad493d5c6927f65758a4aec025a0c7990dfd5e1bbb340d4d0d96e415",
+      "semantics": {
+        "batch": 16,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          128,
+          64,
+          32,
+          16,
+          8,
+          4,
+          2,
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "modulus": 576460756061519873,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 1,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          128,
+          64,
+          32,
+          16,
+          8,
+          4,
+          2,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "storage": 9,
+        "word_bits": 64
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "e27f514c699063a6e614453b996470f8cb43b80a3ba78aa5ed04ec5e6f939de0",
+      "semantics": {
+        "batch": 4,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 3,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 9,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "07404144bfa36ce114dc64679c9d5e9381e13967443ea4f841ccdf761df90910",
+      "semantics": {
+        "batch": 4,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 16384,
+        "input_orders": [
+          0,
+          0
+        ],
+        "input_strides": [
+          128,
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 3,
+        "output_batch_stride": 16384,
+        "output_orders": [
+          0,
+          0
+        ],
+        "output_strides": [
+          128,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          128,
+          128
+        ],
+        "storage": 9,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "8871006ffb75b4c1ad431cac7d57bf43ac4ae7dbab01f020cf81aa00911b3cfe",
+      "semantics": {
+        "batch": 4,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 32768,
+        "input_orders": [
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          1024,
+          32,
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 3,
+        "output_batch_stride": 32768,
+        "output_orders": [
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          1024,
+          32,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          32,
+          32,
+          32
+        ],
+        "storage": 9,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "f117ce29c648bf2fdc20b14c8eafeb512f561f55f88702be024d6ec94c9016a3",
+      "semantics": {
+        "batch": 4,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          512,
+          64,
+          8,
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 3,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          512,
+          64,
+          8,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          8,
+          8,
+          8,
+          8
+        ],
+        "storage": 9,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "1321f6f841e2dd85f4881bb95f251a165a2439ba76d9cb05293936ae04a7e54e",
+      "semantics": {
+        "batch": 16,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          128,
+          64,
+          32,
+          16,
+          8,
+          4,
+          2,
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 3,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          128,
+          64,
+          32,
+          16,
+          8,
+          4,
+          2,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "storage": 9,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "c5950c9acb8c519ffcb9127e8f9bef0e450b5998833448f14df8ac80d89c7938",
+      "semantics": {
+        "batch": 4,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 4,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 9,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "9527a8c264ca4a519acc9c5df23642952f7b72c6ac9de8fced7d4ea253842225",
+      "semantics": {
+        "batch": 4,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 16384,
+        "input_orders": [
+          0,
+          0
+        ],
+        "input_strides": [
+          128,
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 4,
+        "output_batch_stride": 16384,
+        "output_orders": [
+          0,
+          0
+        ],
+        "output_strides": [
+          128,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          128,
+          128
+        ],
+        "storage": 9,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "2b06fa7d9ff2c791936f527661f7032b765e34899140f405f1cdff1b703a9baa",
+      "semantics": {
+        "batch": 4,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 32768,
+        "input_orders": [
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          1024,
+          32,
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 4,
+        "output_batch_stride": 32768,
+        "output_orders": [
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          1024,
+          32,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          32,
+          32,
+          32
+        ],
+        "storage": 9,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "749708f24939c6d2b1f191c4c527944e6fb0caa1329430f45938be05ecbbbb30",
+      "semantics": {
+        "batch": 4,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          512,
+          64,
+          8,
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 4,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          512,
+          64,
+          8,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          8,
+          8,
+          8,
+          8
+        ],
+        "storage": 9,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "5afa13b20affe0fe852a5bc6c90745381da9d3a297b1cc86a51b1a9c0931bb87",
+      "semantics": {
+        "batch": 16,
+        "compute": 4,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          128,
+          64,
+          32,
+          16,
+          8,
+          4,
+          2,
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 4,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          128,
+          64,
+          32,
+          16,
+          8,
+          4,
+          2,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "storage": 9,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "124c1b27b0816609f759c112e1d7c83e7fbf56a2c927c8f2ccf93dfdf5b58e0c",
+      "semantics": {
+        "batch": 4,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ]
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 5,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 3,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "c54a46f5fa929a3834ef13db0389e4b21ac80ecdd5aabdbdb6f7f99b18dc313a",
+      "semantics": {
+        "batch": 4,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 16384,
+        "input_orders": [
+          0,
+          0
+        ],
+        "input_strides": [
+          128,
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ]
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 5,
+        "output_batch_stride": 16384,
+        "output_orders": [
+          0,
+          0
+        ],
+        "output_strides": [
+          128,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          128,
+          128
+        ],
+        "storage": 3,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "e57159fa02783b0d266ebcc670ae9bc4f600ceffc25aab82ecb3ce5469ccec66",
+      "semantics": {
+        "batch": 4,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 32768,
+        "input_orders": [
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          1024,
+          32,
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ]
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 5,
+        "output_batch_stride": 32768,
+        "output_orders": [
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          1024,
+          32,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          32,
+          32,
+          32
+        ],
+        "storage": 3,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "570cbfc0749bcc7cf88d8699299c9697956d1a36d1687848d234d12a24f0100c",
+      "semantics": {
+        "batch": 4,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          512,
+          64,
+          8,
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ]
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 5,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          512,
+          64,
+          8,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          8,
+          8,
+          8,
+          8
+        ],
+        "storage": 3,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    },
+    {
+      "id": "3042bd7fb43640f328d3b7231edf653e123ef3be26cbac58fc499098d05cdba7",
+      "semantics": {
+        "batch": 16,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "input_strides": [
+          128,
+          64,
+          32,
+          16,
+          8,
+          4,
+          2,
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.25,
+              -0.5,
+              1.0
+            ]
+          ]
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 5,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "output_strides": [
+          128,
+          64,
+          32,
+          16,
+          8,
+          4,
+          2,
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "storage": 3,
+        "word_bits": null
+      },
+      "reason": "No matching rank-one mapping in repository seed catalog"
+    }
+  ],
+  "declared_cases": 66
+}

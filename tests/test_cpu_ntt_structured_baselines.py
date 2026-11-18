@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import sys
 import unittest
@@ -17,7 +18,15 @@ from semantic_ntt_reference import radix2_ntt_reference
 class CPUExternalTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.cases = json.loads((ROOT/'results/install_compare_20261013/manifest.json').read_text())['cases']
+        manifest = Path(os.environ.get('CPU_BASELINE_MANIFEST', ROOT/'results/install_compare_20261013/manifest.json'))
+        import cpu_ntt_baseline, cpu_structured_baseline
+        cls.ntt_root = Path(os.environ.get('HEXL_ROOT', cpu_ntt_baseline.ROOT))
+        cls.structured_root = Path(os.environ.get('BUTTERFLY_ROOT', cpu_structured_baseline.ROOT))
+        if not (cls.ntt_root/'libhexl_adapter.so').is_file() or not (cls.structured_root/'libbutterfly_adapter.so').is_file():
+            raise unittest.SkipTest('build pinned HEXL and author Butterfly adapters; set HEXL_ROOT/BUTTERFLY_ROOT')
+        if not manifest.is_file():
+            raise unittest.SkipTest('set CPU_BASELINE_MANIFEST to a resolved semantic request manifest')
+        cls.cases = json.loads(manifest.read_text())['cases']
 
     def semantic(self, op, storage, shape, inverse=False):
         s = copy.deepcopy(next(c['descriptor']['semantics'] for c in self.cases if c['descriptor']['semantics']['operator']==op and c['descriptor']['semantics']['storage']==storage))
@@ -42,7 +51,7 @@ class CPUExternalTests(unittest.TestCase):
                         # Exercise full residues, not only small integer inputs.
                         rng = np.random.default_rng(19)
                         source = rng.integers(0,s['modulus'],size=(2,*shape),dtype=dtype)
-                        core = NTTCore(s,source)
+                        core = NTTCore(s,source,root=self.ntt_root)
                         try:
                             original = source.copy()
                             actual = core.execute().copy()
@@ -75,7 +84,7 @@ class CPUExternalTests(unittest.TestCase):
                             blocks[:,half:] = c*left + d*right
                             half *= 2
                         expected = np.moveaxis(moved,-1,axis)
-                    core = StructuredCore(s,source)
+                    core = StructuredCore(s,source,root=self.structured_root)
                     try:
                         self.check_provenance(core.metadata)
                         np.testing.assert_allclose(core.execute(),expected,rtol=2e-6 if storage==2 else 2e-14,atol=2e-6 if storage==2 else 2e-14)

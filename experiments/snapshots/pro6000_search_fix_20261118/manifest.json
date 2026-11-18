@@ -1,0 +1,239 @@
+{
+  "schema": "cubutterfly-pro6000-search-fix-evidence-v1",
+  "gpu_uuid": "GPU-1067ab39-e411-e141-1775-64426bca5701",
+  "library_sha256": "a00188ff3415760359a52eb2e812153e0189c957ce5139c9ed4963d7d15c2c0b",
+  "measured_native_base_source": "a305d97769a0c005591a8bbe4e14ae1a238b7e83",
+  "native_base_library_sha256": "3b0668f2530a75d1401dcbf5decea720f8e47db0c1357aafdf1680fa1bba6adb",
+  "original_scientific_files_unchanged": 57,
+  "records": [
+    {
+      "path": "records/5176a7b1627bd054d13e5e2fb62187667af5d3f622887525ed94674dfedfc227.gz",
+      "sha256": "695d575dfac8ffaf036d6a00405d4873cf7ffc822881c31ebf51cc21b35b4461",
+      "uncompressed_sha256": "5176a7b1627bd054d13e5e2fb62187667af5d3f622887525ed94674dfedfc227",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial1-0-default.json"
+    },
+    {
+      "path": "records/b95826cc68d2a188eadf657e5b5539bbdc98e78b3e944ad64eef836f91c5ba15.gz",
+      "sha256": "ac5a9d150669268e4e5ae0085613446c1c06a9992954db4cddfd9dcd958633a4",
+      "uncompressed_sha256": "b95826cc68d2a188eadf657e5b5539bbdc98e78b3e944ad64eef836f91c5ba15",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial1-0-gpu-fft.json"
+    },
+    {
+      "path": "records/fcb15743f27ced02d22b43c370da3d89013211f55250ba6d486fc695effb88fd.gz",
+      "sha256": "e7939a101d4f3a78154ce7ee81032d0422fc5886be26663779613d71c10e3e4a",
+      "uncompressed_sha256": "fcb15743f27ced02d22b43c370da3d89013211f55250ba6d486fc695effb88fd",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial1-0-recorded.json"
+    },
+    {
+      "path": "records/62a09916ef9599410d6bf4797316f966c3ef5bf58ed7a707e2ec38a90eefac86.gz",
+      "sha256": "d1ab5b40f656143a5a544685743b050f2aab3134f2979ad489d90aa8340a7828",
+      "uncompressed_sha256": "62a09916ef9599410d6bf4797316f966c3ef5bf58ed7a707e2ec38a90eefac86",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial1-1-default.json"
+    },
+    {
+      "path": "records/218b99986cd89e84627dd26863414d3a223cf08adf5e3a28c89f02670542d4e1.gz",
+      "sha256": "f7b4db34f15b4bc976c795e26319f4e576a8ca1730b53dee65d4cc576552761d",
+      "uncompressed_sha256": "218b99986cd89e84627dd26863414d3a223cf08adf5e3a28c89f02670542d4e1",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial1-1-gpu-fft.json"
+    },
+    {
+      "path": "records/f979d5908b2970a90b757f5f90a2ba3a83f15de549131c766f29414ee7dd7989.gz",
+      "sha256": "7df83ccbbc7c3596d2a683ca4b63b7b11ab068e71173ec23a9d21c91fc995d05",
+      "uncompressed_sha256": "f979d5908b2970a90b757f5f90a2ba3a83f15de549131c766f29414ee7dd7989",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial1-1-recorded.json"
+    },
+    {
+      "path": "records/5c89f086378a7bbe9465d3afcb08a1ede4b0280aa39fa40c39190a5588d786fc.gz",
+      "sha256": "820394debcca1cfe86b3b205de2395d607adc3ff266d643e4b8ed9c8c895fa0c",
+      "uncompressed_sha256": "5c89f086378a7bbe9465d3afcb08a1ede4b0280aa39fa40c39190a5588d786fc",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial2-0-default.json"
+    },
+    {
+      "path": "records/badab41dadc15667fec3f562692099df9359ac266ba1e8f4e75421c54968eb33.gz",
+      "sha256": "4caef7b8a65b616c800cc88b0ada0947525578269f5c8568a41cf477038bfd27",
+      "uncompressed_sha256": "badab41dadc15667fec3f562692099df9359ac266ba1e8f4e75421c54968eb33",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial2-0-gpu-fft.json"
+    },
+    {
+      "path": "records/c5d926941b153c2da561d811e6cd20c3861093d34e605d645c017be836bec7d9.gz",
+      "sha256": "252e18681dd50e554d782c7cfb6a9a7a213475a53809b6a8275c48cf94d34da3",
+      "uncompressed_sha256": "c5d926941b153c2da561d811e6cd20c3861093d34e605d645c017be836bec7d9",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial2-0-recorded.json"
+    },
+    {
+      "path": "records/19564dfdf1de3f1015593fd1f85c54cb0ae0015d5d3b79811d45ce9e43705e7d.gz",
+      "sha256": "2063e6d98660b434cacee47c7cf7511f62b270fe3e2818452ed011c2324b7ee1",
+      "uncompressed_sha256": "19564dfdf1de3f1015593fd1f85c54cb0ae0015d5d3b79811d45ce9e43705e7d",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial2-1-default.json"
+    },
+    {
+      "path": "records/759cb124aa90e6635612c29ae2534fbd46257fafc26c1fdce478fb83777b0b41.gz",
+      "sha256": "7f44b32ced2fcc362d33d6fe1863df4245dee54d2bb456c6b68d731113bdb765",
+      "uncompressed_sha256": "759cb124aa90e6635612c29ae2534fbd46257fafc26c1fdce478fb83777b0b41",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial2-1-gpu-fft.json"
+    },
+    {
+      "path": "records/fdf0238a297a5e8b8f0d8caa58af59844633aa5abb820565843164f71208d9b1.gz",
+      "sha256": "9d806d2509fa183c1fd7d3ab6fb212e45a4fd1d75fd74df95db7e6f6e4d99b95",
+      "uncompressed_sha256": "fdf0238a297a5e8b8f0d8caa58af59844633aa5abb820565843164f71208d9b1",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial2-1-recorded.json"
+    },
+    {
+      "path": "records/2f09006fce855b8e1039fe78e2d1567d50bf42b8df2445f0e38da1a042183638.gz",
+      "sha256": "a22154aa3f81657519471d0c4c61caba202b7c400692337bc1f1fcd7dadfb230",
+      "uncompressed_sha256": "2f09006fce855b8e1039fe78e2d1567d50bf42b8df2445f0e38da1a042183638",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial3-0-default.json"
+    },
+    {
+      "path": "records/242ceac0be0ed46559286939f7d0e0c1416a8f3310b3730fff65a8711ca0637a.gz",
+      "sha256": "6e261bd670c6654d12d438f8b641beb771a9d758cc9ceb7d4c91e65cc235951e",
+      "uncompressed_sha256": "242ceac0be0ed46559286939f7d0e0c1416a8f3310b3730fff65a8711ca0637a",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial3-0-gpu-fft.json"
+    },
+    {
+      "path": "records/88caf4bf6edc483fcd1e5061f9666317c2d34635687721c9288cbf7955c43ca3.gz",
+      "sha256": "b844ff0d5f7f8b38c0dcb00cee1dbc6c805f39244bf170c17b4b4c904f846beb",
+      "uncompressed_sha256": "88caf4bf6edc483fcd1e5061f9666317c2d34635687721c9288cbf7955c43ca3",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial3-0-recorded.json"
+    },
+    {
+      "path": "records/670a6c82e670f51472f35d5643de1b484386049f229e2e4fb2117d2ea9160ed0.gz",
+      "sha256": "ea362ae6465300529b913c946c9c42407293f8d1b9310bcdd9e4e558e4f69f3a",
+      "uncompressed_sha256": "670a6c82e670f51472f35d5643de1b484386049f229e2e4fb2117d2ea9160ed0",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial3-1-default.json"
+    },
+    {
+      "path": "records/72ce4095bf486dbab7fe094648b72afd1417531d0da001c9affe933182056c9f.gz",
+      "sha256": "bc31fdcaf8563659d78901ea61ba534ea02257b42e2665322fb3b398ee2b722d",
+      "uncompressed_sha256": "72ce4095bf486dbab7fe094648b72afd1417531d0da001c9affe933182056c9f",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial3-1-gpu-fft.json"
+    },
+    {
+      "path": "records/c3e87b2ac2f9706b05276f9701ec6bf5fa5f5d4b398d0926c618727cb6cc0a52.gz",
+      "sha256": "ee7ed48bd720067554fed0447ca98c04f4649363a0f5b52116dee0f9f4cb88fb",
+      "uncompressed_sha256": "c3e87b2ac2f9706b05276f9701ec6bf5fa5f5d4b398d0926c618727cb6cc0a52",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired/trial3-1-recorded.json"
+    },
+    {
+      "path": "records/9702fca77877b43364aab221546642ce49411b09050334ceaa3812a420e5f90d.gz",
+      "sha256": "e20a1f5baf11888143297a1aab3a4978f099890e9ad1dfe495152c4963d52e85",
+      "uncompressed_sha256": "9702fca77877b43364aab221546642ce49411b09050334ceaa3812a420e5f90d",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/search-GPU-1067ab39-e411-e141-1775-64426bca5701-0.jsonl"
+    },
+    {
+      "path": "records/829895e60739f40a0e9ad18fa84658a7e7f85e1e975360d4dae524a1b55410b8.gz",
+      "sha256": "23706a58aaf8a8d7a7445527655a3ab30f40062193e226adb1004da141e8bcc5",
+      "uncompressed_sha256": "829895e60739f40a0e9ad18fa84658a7e7f85e1e975360d4dae524a1b55410b8",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/search-GPU-1067ab39-e411-e141-1775-64426bca5701-1.jsonl"
+    },
+    {
+      "path": "records/c7da0826853767b3c20fdee1e7470d04cb50e6568b5bc3f0378da261e6a18f0d.gz",
+      "sha256": "f0155d48f6686aef2268bf2e1971150bffab860436f3d198ef7a0c33562a1941",
+      "uncompressed_sha256": "c7da0826853767b3c20fdee1e7470d04cb50e6568b5bc3f0378da261e6a18f0d",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/GPU-1067ab39-e411-e141-1775-64426bca5701/0-remeasure-timing.json"
+    },
+    {
+      "path": "records/7fe92fcd051412830fc1600eb5de80cae9d10be4f3e9036c2c3ca65fb245939c.gz",
+      "sha256": "1f26d7886da51ef63d0d78aa1b2c43b3a0c19aee4da1f0573763c0d5af3d4fe7",
+      "uncompressed_sha256": "7fe92fcd051412830fc1600eb5de80cae9d10be4f3e9036c2c3ca65fb245939c",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/GPU-1067ab39-e411-e141-1775-64426bca5701/1-remeasure-timing.json"
+    },
+    {
+      "path": "records/3b46004d8c0cba7b0efcf5c3037fcb20fba587ff02a498689291868465d96f33.gz",
+      "sha256": "b4cf2c0a1a08fedc4a69b5c3de5d1b37111174734e987ee6b923493b9e732d45",
+      "uncompressed_sha256": "3b46004d8c0cba7b0efcf5c3037fcb20fba587ff02a498689291868465d96f33",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/paired-summary.json"
+    },
+    {
+      "path": "records/fe9d49d69e58531dad1dd66d9b181f0abb45c9190d74eaac9011a469e70c2efd.gz",
+      "sha256": "258421445fe896be9f5a3b329da0a74831f18cce8af0d4f67885037892e9f54c",
+      "uncompressed_sha256": "fe9d49d69e58531dad1dd66d9b181f0abb45c9190d74eaac9011a469e70c2efd",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-search-fix-20261118/cross-operator-smoke.json"
+    },
+    {
+      "path": "records/0bf24dbf4d32e5b7d138768a81f9d837ef35016566412c453e1c9183d8562d18.gz",
+      "sha256": "f956f08367386b2c6d0626126342a59f9733da8fbf6a7003aba4c8593765c3b8",
+      "uncompressed_sha256": "0bf24dbf4d32e5b7d138768a81f9d837ef35016566412c453e1c9183d8562d18",
+      "original": "/home/wt/git/cuButterfly-issue9/build-pro6000-search-coverage/build-manifest.json"
+    },
+    {
+      "path": "records/89532977328b870bd74b2ae1f55594cd97273ba5dd56611957962b49c9045b01.gz",
+      "sha256": "8f8def95afbc94dc535f34d3a69d96c460e38c7f61bc2f66dd4fb8cf9cc85e07",
+      "uncompressed_sha256": "89532977328b870bd74b2ae1f55594cd97273ba5dd56611957962b49c9045b01",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/validate_fft4096_search_fix.py"
+    },
+    {
+      "path": "records/517a5049ff39ee761f5dfd049f108757bf57682dca7a8207dfb0a5295c4083af.gz",
+      "sha256": "954174c1d9af74f183c5ae8076b22a55f9db53bc65ac17ac00d83bcc5d84f191",
+      "uncompressed_sha256": "517a5049ff39ee761f5dfd049f108757bf57682dca7a8207dfb0a5295c4083af",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/pair_fft4096_search_fix.py"
+    },
+    {
+      "path": "records/12dd43dc79c44ff331ce04c4c53f594d6e9060d2479080cd345e7cfadd3acdc3.gz",
+      "sha256": "488d4e135fa3272c71622f45f53fd830085f4d4fb7f9a650a36b46d29e98e6b9",
+      "uncompressed_sha256": "12dd43dc79c44ff331ce04c4c53f594d6e9060d2479080cd345e7cfadd3acdc3",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/smoke_search_fix.py"
+    },
+    {
+      "path": "records/a464547b952a5375e2854158baf7ada4d7fa7668508a2bfac0198969b2a07f4f.gz",
+      "sha256": "c0b7d632d76e694c46fe91cca603f53aab5c7db654abf17c9cf2032a883b9207",
+      "uncompressed_sha256": "a464547b952a5375e2854158baf7ada4d7fa7668508a2bfac0198969b2a07f4f",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-trace-20261118/audit.json"
+    },
+    {
+      "path": "records/4f5dacc9f9a6e1f4ca0883168bcbede6d4eb50262585466ec987257bbf854fc8.gz",
+      "sha256": "968ff1bbe3bfe7ed3f9f8fdba6be36c33bd3eab28350b8f77ccba8c5283483ee",
+      "uncompressed_sha256": "4f5dacc9f9a6e1f4ca0883168bcbede6d4eb50262585466ec987257bbf854fc8",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-trace-20261118/gpu1-0-gpu-fft_cuda_gpu_kern_sum.csv"
+    },
+    {
+      "path": "records/d00f08547cb91b5bf8a78ca06984b8b30b1ba907b8f3f1c75635ffb4d3dab58c.gz",
+      "sha256": "066b109e04a98efb51e3e50908d3416ee075f99dc1fdabf277b0870de82906bb",
+      "uncompressed_sha256": "d00f08547cb91b5bf8a78ca06984b8b30b1ba907b8f3f1c75635ffb4d3dab58c",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-trace-20261118/gpu1-0-default_cuda_gpu_kern_sum.csv"
+    },
+    {
+      "path": "records/0550d815ff2b2136632da460c99ab4bbc8a713e52b6a09d558b3758102f4db56.gz",
+      "sha256": "9022ab8ddf5524af566b54cab78280080aa3eb03be7d1cfed93d1197c742b15e",
+      "uncompressed_sha256": "0550d815ff2b2136632da460c99ab4bbc8a713e52b6a09d558b3758102f4db56",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-trace-20261118/gpu1-0-balanced_cuda_gpu_kern_sum.csv"
+    },
+    {
+      "path": "records/df9ce7f7d26d71726bce5f58fbabe851eb5e82bffba838c8d18ccf65a96414fb.gz",
+      "sha256": "f824f004652ccb59e811ee575697e10fb043b4fb6c31036818a0c9504d04086b",
+      "uncompressed_sha256": "df9ce7f7d26d71726bce5f58fbabe851eb5e82bffba838c8d18ccf65a96414fb",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-trace-20261118/gpu0-0-gpu-fft_cuda_gpu_kern_sum.csv"
+    },
+    {
+      "path": "records/0a8c93090c05668fa1d57fdb926006d5d3594917c356714c02d1501d86554d18.gz",
+      "sha256": "a5e595faed1c020956854abe0ffb16ba1ce2f2ced17a79b6ad949795285eeb25",
+      "uncompressed_sha256": "0a8c93090c05668fa1d57fdb926006d5d3594917c356714c02d1501d86554d18",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-trace-20261118/gpu0-0-recorded_cuda_gpu_kern_sum.csv"
+    },
+    {
+      "path": "records/6dbda95a87b3e65f417afe8b1ce3d4fc9a20a568f7face46a19f306c7f70dab3.gz",
+      "sha256": "e731dae696e93bdb1e8dc8abd361ae28a74dff9b0843bc2680fb3ca8207748b4",
+      "uncompressed_sha256": "6dbda95a87b3e65f417afe8b1ce3d4fc9a20a568f7face46a19f306c7f70dab3",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-trace-20261118/gpu0-1-recorded_cuda_gpu_kern_sum.csv"
+    },
+    {
+      "path": "records/cd47d22dcfab3bf33d8a1dc23ed0d599b480bd022b0cb4ac3c73b2d40d35c22c.gz",
+      "sha256": "c5ef1fa072315b7ca7817bcacf4d8e65b4d1ee9a18da4fbd5a8de9aac54dbfa2",
+      "uncompressed_sha256": "cd47d22dcfab3bf33d8a1dc23ed0d599b480bd022b0cb4ac3c73b2d40d35c22c",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-trace-20261118/gpu0-0-balanced_cuda_gpu_kern_sum.csv"
+    },
+    {
+      "path": "records/83e5905ff20315228e9115afb419a70c0923ddb0ab6d419c8902740d3724f9f3.gz",
+      "sha256": "68da025ff26a0aa249c1170a3aff4a79a7b434bc7968cfccbde91215202970a7",
+      "uncompressed_sha256": "83e5905ff20315228e9115afb419a70c0923ddb0ab6d419c8902740d3724f9f3",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-trace-20261118/gpu0-0-recorded-ncu.raw.csv"
+    },
+    {
+      "path": "records/c752fa138918992fa169c118cd0b9e2defc1cd88b108a7d6c01926ab4ca166b1.gz",
+      "sha256": "8143b968657b7e02b3827d054a400b8cfaaf567ad4a4b61372e43d6325c0973d",
+      "uncompressed_sha256": "c752fa138918992fa169c118cd0b9e2defc1cd88b108a7d6c01926ab4ca166b1",
+      "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/fft4096-trace-20261118/gpu0-0-balanced-ncu.raw.csv"
+    }
+  ],
+  "scope": "Two FP64 4096 B1 automatic searches, independent new caches, three alternating timing rounds within one process, four non-FFT butterfly smoke requests. New library with two changed host translation units and unchanged native CUDA objects. Original Full66 and other published cohorts remain unchanged; no refreshed global geometric mean or global-model validation claimed."
+}

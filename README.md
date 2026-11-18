@@ -94,6 +94,16 @@ populations. The [results guide](docs/benchmarks/results.md#reading-performance-
 describes coverage, modulus limits, numerical reports and interface contracts.
 Missing external comparisons remain gaps, not zero-valued measurements.
 
+The separate [PRO6000 Figure 9 extension](experiments/reports/PRO6000_FIGURE9_20261118.md)
+provides all six Full66 operator families, local Xeon CPU denominators,
+an independent final-build FFT17 comparison and an explicitly adapted FP16
+MMA9 panel. It retains unsupported cells, GPU-NTT failures and floating review;
+its PRO6000 and historical A100 measurements are never pooled.
+The [finite follow-up](experiments/reports/PRO6000_FIGURE9_FOLLOWUP_20261118.md)
+adds legal cyclic NTT8, three-process CPU confirmation and a self-contained
+record package; backend-specific status keeps exact cuButterfly results distinct
+from external GPU-NTT failures.
+
 ## Installation and first checks
 
 Use a CUDA toolkit and compiler compatible with the target GPU. Follow

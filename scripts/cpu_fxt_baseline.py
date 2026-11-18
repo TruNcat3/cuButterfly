@@ -124,3 +124,44 @@ class FXTCore:
 
     def close(self):
         self.closed = True
+
+
+class FP16FWHTAdapter:
+    """Explicit FP16 I/O / FP32 FXT arithmetic comparator, not native FP16.
+
+    Each execute includes both conversions, the complete transform, and any
+    requested inverse normalization. Only setup buffers are allocated in advance.
+    """
+
+    def __init__(self, s, source, library, threads=1):
+        if (s.get('operator'), s.get('storage'), s.get('compute')) != (2, 0, 0):
+            raise ValueError('adapter requires FWHT with FP16 storage/native requested compute')
+        if (not isinstance(source, np.ndarray) or source.dtype != np.float16 or
+                source.shape != (s['batch'], *s['shape']) or not source.flags.c_contiguous):
+            raise ValueError('adapter requires packed original FP16 input without substitution')
+        native = dict(s, storage=2, compute=1)
+        self.source = source
+        self.output = np.empty_like(source)
+        self._work = np.empty(source.shape, dtype=np.float32)
+        self._core = FXTCore(native, self._work, library, threads=threads)
+        self._metadata = dict(self._core.metadata(),
+            backend='fxt-fp16-io-fp32-cpu', native_fp16=False,
+            requested_storage='float16', external_core_storage='float32',
+            precision_status='adapted-FP16-IO-FP32-arithmetic',
+            conversion='FP16 input -> FP32 FXT -> FP16 output',
+            rounding='FP32 CPU transform and inverse scaling, then final FP16 narrowing',
+            all_conversion_and_scaling_timed=True,
+            timing_scope='input widening, complete FP32 FXT including inverse scale, output narrowing; no initial host/device transfer',
+            adapter_source_sha256=_hash(Path(__file__)))
+
+    def metadata(self):
+        return dict(self._metadata)
+
+    def execute(self):
+        np.copyto(self._work, self.source, casting='safe')
+        self._core.execute()
+        np.copyto(self.output, self._core.output, casting='unsafe')
+        return self.output
+
+    def close(self):
+        self._core.close()

@@ -1,0 +1,1900 @@
+{
+  "schema": "cubutterfly-pro6000-full66-publication-v1",
+  "requested_baselines": [
+    "cufft",
+    "vkfft",
+    "daofht",
+    "gpu-ntt"
+  ],
+  "frozen_at": "2026-11-18T07:20:12.057649+08:00",
+  "gpu_uuid": "GPU-a257f4db-8c62-f26b-9c08-a4045615a140",
+  "library_sha256": "3b0668f2530a75d1401dcbf5decea720f8e47db0c1357aafdf1680fa1bba6adb",
+  "population": {
+    "path": "records/9a3da61efce043ff9f50ead6b6cb690798a9ecfc7de0155990c8ef7d3916778f.json.gz",
+    "sha256": "1c220082ccb9e013b9f2c969a0a15a8ed0a2e22846f92bd56abf688804a71a0b",
+    "uncompressed_sha256": "9a3da61efce043ff9f50ead6b6cb690798a9ecfc7de0155990c8ef7d3916778f",
+    "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/manifest.json",
+    "encoding": "json"
+  },
+  "observations": {
+    "path": "records/747c6c8bddbfb70407d6b80e7ee1664c7f5a8c259898d2f6d5d4ba4ec0ebafbf.json.gz",
+    "sha256": "94272e6a53f0279582f2f5955a61dba27c01390d08d131b32303025668c66049",
+    "uncompressed_sha256": "747c6c8bddbfb70407d6b80e7ee1664c7f5a8c259898d2f6d5d4ba4ec0ebafbf",
+    "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/observations.json",
+    "encoding": "json"
+  },
+  "calibration_manifest": {
+    "path": "records/fed9c48d0a181c73bfc3efb22e0ec59b5392ef0e3524b5a5bdc0ce336791849e.json.gz",
+    "sha256": "61a4f35ec16246b4cad36359fe436f6b2a4fb5ed907ad1ca354372222e20decd",
+    "uncompressed_sha256": "fed9c48d0a181c73bfc3efb22e0ec59b5392ef0e3524b5a5bdc0ce336791849e",
+    "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/calibration/finalized/calibration_manifest.json",
+    "encoding": "json"
+  },
+  "sources": [
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/measurement/results.json",
+      "original_sha256": "dea76578d89061c30d9cd955cd9af00b06bbe625ae77a0ff83410ebc57ce37a6",
+      "checkpoint": {
+        "path": "records/dea76578d89061c30d9cd955cd9af00b06bbe625ae77a0ff83410ebc57ce37a6.json.gz",
+        "sha256": "0fd54ac9d7e8880467d7859b8e674e03ac4dbe34275c26d5553d9aa20826dc28",
+        "uncompressed_sha256": "dea76578d89061c30d9cd955cd9af00b06bbe625ae77a0ff83410ebc57ce37a6",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/9a3da61efce043ff9f50ead6b6cb690798a9ecfc7de0155990c8ef7d3916778f.json.gz",
+        "sha256": "1c220082ccb9e013b9f2c969a0a15a8ed0a2e22846f92bd56abf688804a71a0b",
+        "uncompressed_sha256": "9a3da61efce043ff9f50ead6b6cb690798a9ecfc7de0155990c8ef7d3916778f",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "ba087fb33968396226e0479b872103d845d72ef4d9acbcd3a1d3a5cc191effa7": {
+          "path": "records/ab99bd69d7b9e96771f50c38720a131fef15f4c56fd105749e028443c0266176.json.gz",
+          "sha256": "7b1507eb458d9470ed3103d112d07a53624172553c19019e81f066b550b51717",
+          "uncompressed_sha256": "ab99bd69d7b9e96771f50c38720a131fef15f4c56fd105749e028443c0266176",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/measurement/rows/ba087fb33968396226e0479b872103d845d72ef4d9acbcd3a1d3a5cc191effa7.json",
+          "encoding": "json"
+        },
+        "c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7": {
+          "path": "records/5ee491c39e8ae596551866d7dc8a34ae49d42072f1b56c563219ee287e16d918.json.gz",
+          "sha256": "3adac11c4fc2b673171d2f7697fa77db21015a1db511c9aedfbdff250f4b5e0a",
+          "uncompressed_sha256": "5ee491c39e8ae596551866d7dc8a34ae49d42072f1b56c563219ee287e16d918",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/measurement/rows/c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7.json",
+          "encoding": "json"
+        },
+        "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac": {
+          "path": "records/73d74bc41b9bfdf07c7f26d2fa86926b4d167a84a5bc606d68e4bfed59689fa0.json.gz",
+          "sha256": "14346b8564bb528ff97fe4bb8eaee859ac33fa0e487134e19a7bcbe7b8f36c1b",
+          "uncompressed_sha256": "73d74bc41b9bfdf07c7f26d2fa86926b4d167a84a5bc606d68e4bfed59689fa0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/measurement/rows/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac.json",
+          "encoding": "json"
+        },
+        "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548": {
+          "path": "records/b0ee2b1760d9c42ad1b57382c7350ab9e67170254f452db7b63b3f8815892bd9.json.gz",
+          "sha256": "eaca69fc54be7b9f2fc038288d6dce42e2dac4f5cabda73e9e37d0de8abdc889",
+          "uncompressed_sha256": "b0ee2b1760d9c42ad1b57382c7350ab9e67170254f452db7b63b3f8815892bd9",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/measurement/rows/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548.json",
+          "encoding": "json"
+        },
+        "ee8b034b194dda38fb15fb59cbc30b48f3ecda99d875b90dcee2ec12956795dc": {
+          "path": "records/fad87010341be0b01e0e90abbd0b766734cc811b4191616c67480f92e21faf66.json.gz",
+          "sha256": "d5d17e8f7a7f8df627ab6bdb6f792c5a32f6c204ab2f73e13d8ab57a9296b715",
+          "uncompressed_sha256": "fad87010341be0b01e0e90abbd0b766734cc811b4191616c67480f92e21faf66",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/measurement/rows/ee8b034b194dda38fb15fb59cbc30b48f3ecda99d875b90dcee2ec12956795dc.json",
+          "encoding": "json"
+        },
+        "44b2de6f8d8235eec266bf422af3826442f8250366e2b9fad29ac0576dbce3e3": {
+          "path": "records/316643e4c313b81ef71ea9bc3f3c012b93713fd9e752b3c1ab60bf94e464a40f.json.gz",
+          "sha256": "f8de5b6575beca696d89a8e0441846f47607ecca3951893530ba134b119123a3",
+          "uncompressed_sha256": "316643e4c313b81ef71ea9bc3f3c012b93713fd9e752b3c1ab60bf94e464a40f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/measurement/rows/44b2de6f8d8235eec266bf422af3826442f8250366e2b9fad29ac0576dbce3e3.json",
+          "encoding": "json"
+        },
+        "cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0": {
+          "path": "records/bb2137cb0eb76c833698392de2ef9f16fe04c2c218b7b11823c005ff4ccca010.json.gz",
+          "sha256": "b944d8e9c520a601dd248358934c3a8d34bec26a5eca5c191bade534abad7333",
+          "uncompressed_sha256": "bb2137cb0eb76c833698392de2ef9f16fe04c2c218b7b11823c005ff4ccca010",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/measurement/rows/cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0.json",
+          "encoding": "json"
+        },
+        "99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0": {
+          "path": "records/2ee516f43312640e6993e3a44a69bde0cdd7300269a479e57b56236eea588eb6.json.gz",
+          "sha256": "4db227b34192ef707f4f5ff3d51fbb6c48d6446f57c3b12d1c294d53244f564e",
+          "uncompressed_sha256": "2ee516f43312640e6993e3a44a69bde0cdd7300269a479e57b56236eea588eb6",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/measurement/rows/99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0.json",
+          "encoding": "json"
+        },
+        "6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f": {
+          "path": "records/4d115b3436235d7ac60683f974a87afc89af50f7b27ee87d7c37dfa04025f944.json.gz",
+          "sha256": "bf74b768bf839600cbe83efa178b7d1b1a879dd764d0a155e912ec835023d664",
+          "uncompressed_sha256": "4d115b3436235d7ac60683f974a87afc89af50f7b27ee87d7c37dfa04025f944",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/measurement/rows/6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f.json",
+          "encoding": "json"
+        },
+        "fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d": {
+          "path": "records/2084ca4c74290965a068eb9312501fcba4dfcd0e98c007234829923483814c49.json.gz",
+          "sha256": "878912feffb8b94473471b608bd738640ca278b78ccc10002bb4bb2bd4c4e9be",
+          "uncompressed_sha256": "2084ca4c74290965a068eb9312501fcba4dfcd0e98c007234829923483814c49",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/measurement/rows/fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a/measurement/results.json",
+      "original_sha256": "772207e1d71791f8c8502d240bb5db585ab606da4dfec882041a92675500e5d4",
+      "checkpoint": {
+        "path": "records/772207e1d71791f8c8502d240bb5db585ab606da4dfec882041a92675500e5d4.json.gz",
+        "sha256": "3c6dc4e18796780eb9ab75778db729e166de078695e5822b08dce435fbf95fec",
+        "uncompressed_sha256": "772207e1d71791f8c8502d240bb5db585ab606da4dfec882041a92675500e5d4",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/9f7f06fe788d9b3e5e6bbda60806fc18bc0e7d937f2a0846b821306e08c8c935.json.gz",
+        "sha256": "fce486dfa44f2a471d4caf854c829d5d3cc6e102d87bd611db23f8206c8811b6",
+        "uncompressed_sha256": "9f7f06fe788d9b3e5e6bbda60806fc18bc0e7d937f2a0846b821306e08c8c935",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a": {
+          "path": "records/f68ba49be90111d53da900a3e154b97875ed9f8cbe1b55843f00c8775138671e.json.gz",
+          "sha256": "369d837211f4077b4efdee67a25609f35de10c480e2c0185283d3426c499e7b7",
+          "uncompressed_sha256": "f68ba49be90111d53da900a3e154b97875ed9f8cbe1b55843f00c8775138671e",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a/measurement/rows/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb/measurement/results.json",
+      "original_sha256": "dc0faeb47b2c7040f5e4e32c62aae855307c5a060bc36d57caca3557e24a3c19",
+      "checkpoint": {
+        "path": "records/dc0faeb47b2c7040f5e4e32c62aae855307c5a060bc36d57caca3557e24a3c19.json.gz",
+        "sha256": "9dccb8cae160a014b447b479720e946adce91fde3759dc24db005d7b24fbf30a",
+        "uncompressed_sha256": "dc0faeb47b2c7040f5e4e32c62aae855307c5a060bc36d57caca3557e24a3c19",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/96507739af617d140a4c7596b303e3ca393227249d994a11e4a1fb3a9290aee5.json.gz",
+        "sha256": "06a6781ce0c28295cdf19657d60840de7b35e8f97f427e434c5599041d1f827b",
+        "uncompressed_sha256": "96507739af617d140a4c7596b303e3ca393227249d994a11e4a1fb3a9290aee5",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb": {
+          "path": "records/68523aff31187f6f1ddac5bb80438bfda937b9d2ebd17647884da99066750615.json.gz",
+          "sha256": "51e743870c65ab8a47ce6ab98da866101d5a15bed1549eb0fa36cbb2a3ad081f",
+          "uncompressed_sha256": "68523aff31187f6f1ddac5bb80438bfda937b9d2ebd17647884da99066750615",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb/measurement/rows/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9/measurement/results.json",
+      "original_sha256": "5c5d7e19cef4d52eea1b72a5dce0ea290bd89dc63f9b41f168ad0ef7a8aa3226",
+      "checkpoint": {
+        "path": "records/5c5d7e19cef4d52eea1b72a5dce0ea290bd89dc63f9b41f168ad0ef7a8aa3226.json.gz",
+        "sha256": "844289f37192db21af7ef6b9ebab937d1bf2fb78fce768a19abed8ac3f1e3621",
+        "uncompressed_sha256": "5c5d7e19cef4d52eea1b72a5dce0ea290bd89dc63f9b41f168ad0ef7a8aa3226",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/8c645cfad6e04d7c41916f4550922eae6857446a2c02b3f24fddf679bd6ea67e.json.gz",
+        "sha256": "1cad7ee15d94112b8c3081f07864f487ebcab40bf21be0488b2417f093b6162f",
+        "uncompressed_sha256": "8c645cfad6e04d7c41916f4550922eae6857446a2c02b3f24fddf679bd6ea67e",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9": {
+          "path": "records/d96631cec7d931e992ee5816a035641b15107341f2bb2590269ea60555203c08.json.gz",
+          "sha256": "932f7a12dae5517274ae4954db3bed4f502a927c82398458695e76fe1f37fdad",
+          "uncompressed_sha256": "d96631cec7d931e992ee5816a035641b15107341f2bb2590269ea60555203c08",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9/measurement/rows/0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c/measurement/results.json",
+      "original_sha256": "65d5a142721182df166ddbfa7e00b00a4de24c704efd7f17f3b41d0c032be9a5",
+      "checkpoint": {
+        "path": "records/65d5a142721182df166ddbfa7e00b00a4de24c704efd7f17f3b41d0c032be9a5.json.gz",
+        "sha256": "333d709dd1f7e4ba2ae59f4059028c58a773fd6f21ea9a357969b9664585b55f",
+        "uncompressed_sha256": "65d5a142721182df166ddbfa7e00b00a4de24c704efd7f17f3b41d0c032be9a5",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/c92f165ab27456cee9ebe233e5b1a68de5a4fdac9e4d3fefcb5a7de33d1126b8.json.gz",
+        "sha256": "a0182423b5a299b482e6ca311e9b4fa3b44e62b44e91c33f3acfe340dab734a6",
+        "uncompressed_sha256": "c92f165ab27456cee9ebe233e5b1a68de5a4fdac9e4d3fefcb5a7de33d1126b8",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c": {
+          "path": "records/8160d05027913cf8ca2c9234d40f793b4e066dade09aa8309e0f9a95ab0358e6.json.gz",
+          "sha256": "6c2bf29a2330b5eb9a4c18ea77d03bdb5f198d5540ff2510da3afe3038321f3e",
+          "uncompressed_sha256": "8160d05027913cf8ca2c9234d40f793b4e066dade09aa8309e0f9a95ab0358e6",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c/measurement/rows/bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485/measurement/results.json",
+      "original_sha256": "65b7b46974ab3de968b2c32186075d91dfc7e2abcb394e7822fff38e3420c0a8",
+      "checkpoint": {
+        "path": "records/65b7b46974ab3de968b2c32186075d91dfc7e2abcb394e7822fff38e3420c0a8.json.gz",
+        "sha256": "122eb8dc9aa41d926a327be5377c70a0da4ac953c33d62c837225a7832a87649",
+        "uncompressed_sha256": "65b7b46974ab3de968b2c32186075d91dfc7e2abcb394e7822fff38e3420c0a8",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/47b1a38ad74f95cc0ea52b51898f537b9af5c7a98b31a74413ac1a151bd39b81.json.gz",
+        "sha256": "5e0ea8c7ebe4d81d52ebfe22662e2c0598bd26cc5a7042290b98f960394524f2",
+        "uncompressed_sha256": "47b1a38ad74f95cc0ea52b51898f537b9af5c7a98b31a74413ac1a151bd39b81",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485": {
+          "path": "records/9f9698a9fbac64390ca67af01d8812f3ba852dd5384f55e6f482132fc31ea9c0.json.gz",
+          "sha256": "702b6008c5bb22730c448e046b63d06ae66b5a09f7d72e1e0a89d1d936abfffd",
+          "uncompressed_sha256": "9f9698a9fbac64390ca67af01d8812f3ba852dd5384f55e6f482132fc31ea9c0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485/measurement/rows/3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043/measurement/results.json",
+      "original_sha256": "0eb79707a7b2f53c91652ffc5bc98dfb8aa34f387227d53b19fb8491559f598d",
+      "checkpoint": {
+        "path": "records/0eb79707a7b2f53c91652ffc5bc98dfb8aa34f387227d53b19fb8491559f598d.json.gz",
+        "sha256": "5197d81960acda66ee608126418e151e7f96a142da00d79cbb53dd99975efb22",
+        "uncompressed_sha256": "0eb79707a7b2f53c91652ffc5bc98dfb8aa34f387227d53b19fb8491559f598d",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/cb49e6316c1d4cd87bb1ae0694486dff08e52d75eefc8055fd95310810a6fe74.json.gz",
+        "sha256": "e8c5ecf4ffe09fd3a9c7a1bd6cf0f60db2b4fe9e93a764bfdcd24b6fa93f51f6",
+        "uncompressed_sha256": "cb49e6316c1d4cd87bb1ae0694486dff08e52d75eefc8055fd95310810a6fe74",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043": {
+          "path": "records/367c32c721e2d0837427a34f5306ddc0b3268e82f9fb84b696ab37133d6753e9.json.gz",
+          "sha256": "d419b80477682b4e900e8356608cdd6e22a47ae4299dd86b2b86d6237bd9ba39",
+          "uncompressed_sha256": "367c32c721e2d0837427a34f5306ddc0b3268e82f9fb84b696ab37133d6753e9",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043/measurement/rows/0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51/measurement/results.json",
+      "original_sha256": "a19dfbf1da06e4fbfe02558dddaa0818ab684956ea2af2522d059db34d8de4df",
+      "checkpoint": {
+        "path": "records/a19dfbf1da06e4fbfe02558dddaa0818ab684956ea2af2522d059db34d8de4df.json.gz",
+        "sha256": "9817dea0be40df40d4e76f095e0152a52d7abeb51c6b0af93a007e91f4ce722b",
+        "uncompressed_sha256": "a19dfbf1da06e4fbfe02558dddaa0818ab684956ea2af2522d059db34d8de4df",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/2b3d65597055fc71dee412efcd727bf939bc9f4f3de692a9481821065f193866.json.gz",
+        "sha256": "d15cecc0adebe06f75060686a1aae2283c46f636f1bfd06b7866eac4ba095f90",
+        "uncompressed_sha256": "2b3d65597055fc71dee412efcd727bf939bc9f4f3de692a9481821065f193866",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51": {
+          "path": "records/4e4df182011af3ea3b5663b3ab12d89f7b0ad02ee6ae2062a306d4ba0afb6a35.json.gz",
+          "sha256": "e250d8750a730d49ddb51b9a290fbe0671e15ab6a5545af0c8759e13013e1b05",
+          "uncompressed_sha256": "4e4df182011af3ea3b5663b3ab12d89f7b0ad02ee6ae2062a306d4ba0afb6a35",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51/measurement/rows/dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2/measurement/results.json",
+      "original_sha256": "3c466148d96aa8020a6a3a53d10dadc702f643fefe410b396cfb436426ded1a1",
+      "checkpoint": {
+        "path": "records/3c466148d96aa8020a6a3a53d10dadc702f643fefe410b396cfb436426ded1a1.json.gz",
+        "sha256": "e5f70396cfeec812c8cd744e796691174967a227ec2109dd03cf063f23d350a0",
+        "uncompressed_sha256": "3c466148d96aa8020a6a3a53d10dadc702f643fefe410b396cfb436426ded1a1",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/066c2cb81c3d58c1b9a4455a652d6b33ff4abdfd901f52b2221f7ba046e60733.json.gz",
+        "sha256": "e9740480b3b98385fac3a7b94842cdfebf8b1dd8e86d88cba2c85c066c91f311",
+        "uncompressed_sha256": "066c2cb81c3d58c1b9a4455a652d6b33ff4abdfd901f52b2221f7ba046e60733",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2": {
+          "path": "records/726cfe4868a2b22a7fcc478b37de1290c3e6d7307cf2ee575c19334507ee8162.json.gz",
+          "sha256": "65252509515d4794483d2281bfaa29e89f11a9371f48b5be9de16ee0d4b97e71",
+          "uncompressed_sha256": "726cfe4868a2b22a7fcc478b37de1290c3e6d7307cf2ee575c19334507ee8162",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2/measurement/rows/e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c669da86891cf10a56120b86d30dd00dd4277774d8da49ce61673f73d6416d32/measurement/results.json",
+      "original_sha256": "4c8330e93a4da0fb6c6711b9456d1c86692e6b911935f9f58c3852d6c6f2f88d",
+      "checkpoint": {
+        "path": "records/4c8330e93a4da0fb6c6711b9456d1c86692e6b911935f9f58c3852d6c6f2f88d.json.gz",
+        "sha256": "b030135262c046184e3ad31cc13ef3fd734c69cceeea7918bbe1849b3bdc94b8",
+        "uncompressed_sha256": "4c8330e93a4da0fb6c6711b9456d1c86692e6b911935f9f58c3852d6c6f2f88d",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c669da86891cf10a56120b86d30dd00dd4277774d8da49ce61673f73d6416d32/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/f7390251a3e2d15fbb9f7f51c287088b7a1bc98f58cfd7a12f394728d03703c0.json.gz",
+        "sha256": "f004e39bdfa6c184667c1f79b35d036e79b1464a29a519428a021cc9a37bd7c5",
+        "uncompressed_sha256": "f7390251a3e2d15fbb9f7f51c287088b7a1bc98f58cfd7a12f394728d03703c0",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c669da86891cf10a56120b86d30dd00dd4277774d8da49ce61673f73d6416d32/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "c669da86891cf10a56120b86d30dd00dd4277774d8da49ce61673f73d6416d32": {
+          "path": "records/107c8e17086f7047829a03f6ffa589a685c85534e4a6038caf370a554d615b18.json.gz",
+          "sha256": "080f587692d6ec5384d2a8966af605d277c23a40555f0d63bbcd956c994a89b7",
+          "uncompressed_sha256": "107c8e17086f7047829a03f6ffa589a685c85534e4a6038caf370a554d615b18",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c669da86891cf10a56120b86d30dd00dd4277774d8da49ce61673f73d6416d32/measurement/rows/c669da86891cf10a56120b86d30dd00dd4277774d8da49ce61673f73d6416d32.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/d65c1cc9eb23f8609e815cb74f2318e0b8127870aa4b601b61b45ccebcb03a58/measurement/results.json",
+      "original_sha256": "0e6a59224a8015c6837f0b4bc391294c156efbbd1c80f1f7e7fe1010ce33481d",
+      "checkpoint": {
+        "path": "records/0e6a59224a8015c6837f0b4bc391294c156efbbd1c80f1f7e7fe1010ce33481d.json.gz",
+        "sha256": "6bde9745701668c689e82fb7ced23c7a0d00282c4cf2c753ad80350ee4a115fb",
+        "uncompressed_sha256": "0e6a59224a8015c6837f0b4bc391294c156efbbd1c80f1f7e7fe1010ce33481d",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/d65c1cc9eb23f8609e815cb74f2318e0b8127870aa4b601b61b45ccebcb03a58/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/a209768d7a07a9366dddd805a90cb2ac1defd315b8ef64edc9f6c33935b02419.json.gz",
+        "sha256": "4e04cea835af83e98cbf173e4f06fb7725d0f5ebaeca5c71f6ec1a4035252642",
+        "uncompressed_sha256": "a209768d7a07a9366dddd805a90cb2ac1defd315b8ef64edc9f6c33935b02419",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/d65c1cc9eb23f8609e815cb74f2318e0b8127870aa4b601b61b45ccebcb03a58/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "d65c1cc9eb23f8609e815cb74f2318e0b8127870aa4b601b61b45ccebcb03a58": {
+          "path": "records/9b3cf23ff35cae6a14e025bd2457327430bc88e555fd0c5df8fdd53f7a9d210a.json.gz",
+          "sha256": "48316dafbbab7f149b39ad41d63ba415845b17efb8b0f39558d43c969f834532",
+          "uncompressed_sha256": "9b3cf23ff35cae6a14e025bd2457327430bc88e555fd0c5df8fdd53f7a9d210a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/d65c1cc9eb23f8609e815cb74f2318e0b8127870aa4b601b61b45ccebcb03a58/measurement/rows/d65c1cc9eb23f8609e815cb74f2318e0b8127870aa4b601b61b45ccebcb03a58.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/474bd15c6b8f88b7d6ccdae7409b0ca2344280481464fd3ac6d1990cd14b3700/measurement/results.json",
+      "original_sha256": "d7dd5cd8cb697f251651bf0372d7fadc74c2eb36843b3e0d8704e623cf80f773",
+      "checkpoint": {
+        "path": "records/d7dd5cd8cb697f251651bf0372d7fadc74c2eb36843b3e0d8704e623cf80f773.json.gz",
+        "sha256": "b76270ca929bbadea0c05a694a50cce7fc34fec40e92e4b984ada198cff9f335",
+        "uncompressed_sha256": "d7dd5cd8cb697f251651bf0372d7fadc74c2eb36843b3e0d8704e623cf80f773",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/474bd15c6b8f88b7d6ccdae7409b0ca2344280481464fd3ac6d1990cd14b3700/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/ac137c659e1b7cd62ca29e434e01ec968546f535ca9effd63261f0df8fe1a508.json.gz",
+        "sha256": "2af015ff333868b7293ecf788cb5fa077d0425c93b63095a670b16731d4d42f1",
+        "uncompressed_sha256": "ac137c659e1b7cd62ca29e434e01ec968546f535ca9effd63261f0df8fe1a508",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/474bd15c6b8f88b7d6ccdae7409b0ca2344280481464fd3ac6d1990cd14b3700/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "474bd15c6b8f88b7d6ccdae7409b0ca2344280481464fd3ac6d1990cd14b3700": {
+          "path": "records/a653ea49889fc2fb1ee03a7f60af423db2826618a23aad271b0dccb5a58bdf43.json.gz",
+          "sha256": "74e10d0e0070156947d2db08d27bd33d785bc5e0be1d03b7c8a9ec150e370cff",
+          "uncompressed_sha256": "a653ea49889fc2fb1ee03a7f60af423db2826618a23aad271b0dccb5a58bdf43",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/474bd15c6b8f88b7d6ccdae7409b0ca2344280481464fd3ac6d1990cd14b3700/measurement/rows/474bd15c6b8f88b7d6ccdae7409b0ca2344280481464fd3ac6d1990cd14b3700.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/7e8759ca9ea1f2afd2253a35da5a0849774510385e164faa1db09709e43a0dc8/measurement/results.json",
+      "original_sha256": "fc4b265f6f56900df042ae9f03b442516b8aaa5e9a147142faabafd795a12f3a",
+      "checkpoint": {
+        "path": "records/fc4b265f6f56900df042ae9f03b442516b8aaa5e9a147142faabafd795a12f3a.json.gz",
+        "sha256": "efee983ca4c0fbc9171abf2577c32682e17f08e77bc5c7ac4b389850f8864218",
+        "uncompressed_sha256": "fc4b265f6f56900df042ae9f03b442516b8aaa5e9a147142faabafd795a12f3a",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/7e8759ca9ea1f2afd2253a35da5a0849774510385e164faa1db09709e43a0dc8/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/e73453adf27bb8cade7751ed543b279db641024c94402a6ac099754bb6d9a62d.json.gz",
+        "sha256": "891d967f777870e27f5cbe10980b88a96445cbcd9470db6e95c3aefaa02429f7",
+        "uncompressed_sha256": "e73453adf27bb8cade7751ed543b279db641024c94402a6ac099754bb6d9a62d",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/7e8759ca9ea1f2afd2253a35da5a0849774510385e164faa1db09709e43a0dc8/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "7e8759ca9ea1f2afd2253a35da5a0849774510385e164faa1db09709e43a0dc8": {
+          "path": "records/80a7da4c619473bceac02e782cad459f23d7ff2a0b0a27962920967dd88da67c.json.gz",
+          "sha256": "4f9ba37bb5334da8ea3053b02c6c61dc3c4f0366843a618c8563e9c9fcc3326f",
+          "uncompressed_sha256": "80a7da4c619473bceac02e782cad459f23d7ff2a0b0a27962920967dd88da67c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/7e8759ca9ea1f2afd2253a35da5a0849774510385e164faa1db09709e43a0dc8/measurement/rows/7e8759ca9ea1f2afd2253a35da5a0849774510385e164faa1db09709e43a0dc8.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e1b431aba007644d4adf24c062c794d8b59d7145e0a5c0181ad787c39f2ab7e1/measurement/results.json",
+      "original_sha256": "bd5506f0964a46228719985a5beb29865a471bc6e9600f5c635dbd7c449d0481",
+      "checkpoint": {
+        "path": "records/bd5506f0964a46228719985a5beb29865a471bc6e9600f5c635dbd7c449d0481.json.gz",
+        "sha256": "6e4b0b17adfb6c070145dbe846ff8c01410fb2196ed464106f68f6cf1b9bc0f3",
+        "uncompressed_sha256": "bd5506f0964a46228719985a5beb29865a471bc6e9600f5c635dbd7c449d0481",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e1b431aba007644d4adf24c062c794d8b59d7145e0a5c0181ad787c39f2ab7e1/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/ec4277635989bdd0ba35f191386011fbcd985ec2bda060ce20557874b01ce2b1.json.gz",
+        "sha256": "35ab66d8cff14408fda47eb0ef9473026bf88ce1830d3fca77e88eb7e6d38700",
+        "uncompressed_sha256": "ec4277635989bdd0ba35f191386011fbcd985ec2bda060ce20557874b01ce2b1",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e1b431aba007644d4adf24c062c794d8b59d7145e0a5c0181ad787c39f2ab7e1/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "e1b431aba007644d4adf24c062c794d8b59d7145e0a5c0181ad787c39f2ab7e1": {
+          "path": "records/12e7b09d9ef1addc04e23123d4af4ab1b6e2c03dca0b31e4d71ac6c4e80b58bb.json.gz",
+          "sha256": "34ce09df95770af140b795ecf51b5a82af38c79379c06f609c5c3e88f59f77a3",
+          "uncompressed_sha256": "12e7b09d9ef1addc04e23123d4af4ab1b6e2c03dca0b31e4d71ac6c4e80b58bb",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e1b431aba007644d4adf24c062c794d8b59d7145e0a5c0181ad787c39f2ab7e1/measurement/rows/e1b431aba007644d4adf24c062c794d8b59d7145e0a5c0181ad787c39f2ab7e1.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/16a35eaba8877d371a495169cf5b3493aa69dc97b9acc64616838e7b850a2bec/measurement/results.json",
+      "original_sha256": "98029d450b4a0bbfae400ac61731b178ea076946eca520c0d64842e5620383f4",
+      "checkpoint": {
+        "path": "records/98029d450b4a0bbfae400ac61731b178ea076946eca520c0d64842e5620383f4.json.gz",
+        "sha256": "c5dfcd0d3117fd4f13bcbbb1de5b1c9470bc9eb2a21d4fd2eb9b84c1c0cd1048",
+        "uncompressed_sha256": "98029d450b4a0bbfae400ac61731b178ea076946eca520c0d64842e5620383f4",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/16a35eaba8877d371a495169cf5b3493aa69dc97b9acc64616838e7b850a2bec/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/36e2bbec2a30298902a75442924d51bdcd1c0a2e5fbf80a4748092523f4e5d70.json.gz",
+        "sha256": "48fc73415f2be813cec83388c42b10b1ac4e6a970a28c25d2ba2ab05a43f0153",
+        "uncompressed_sha256": "36e2bbec2a30298902a75442924d51bdcd1c0a2e5fbf80a4748092523f4e5d70",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/16a35eaba8877d371a495169cf5b3493aa69dc97b9acc64616838e7b850a2bec/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "16a35eaba8877d371a495169cf5b3493aa69dc97b9acc64616838e7b850a2bec": {
+          "path": "records/123ef154c3ccc803e90e51fa5a8ba6c6ccdb19ec09a45a513c176814987b587c.json.gz",
+          "sha256": "b38b9aa2b938c2a9539a995f1dcafdb67fcf251394188697131b405b9c8126b5",
+          "uncompressed_sha256": "123ef154c3ccc803e90e51fa5a8ba6c6ccdb19ec09a45a513c176814987b587c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/16a35eaba8877d371a495169cf5b3493aa69dc97b9acc64616838e7b850a2bec/measurement/rows/16a35eaba8877d371a495169cf5b3493aa69dc97b9acc64616838e7b850a2bec.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f/measurement/results.json",
+      "original_sha256": "234b16be7aebeeca9795bc02e2e0781b195a4b12f59a96a1d92364ab76216c52",
+      "checkpoint": {
+        "path": "records/234b16be7aebeeca9795bc02e2e0781b195a4b12f59a96a1d92364ab76216c52.json.gz",
+        "sha256": "642d33e8a9902bd546ea7e762b6fafc00d2c14fbf6f1a84df038261e4dd8f9ec",
+        "uncompressed_sha256": "234b16be7aebeeca9795bc02e2e0781b195a4b12f59a96a1d92364ab76216c52",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/6f31532c2e98d70ef84775b4ed45ef49c61c16dfa60e82a9eebfd8abac03d393.json.gz",
+        "sha256": "5103417e1cd6d7255409c0df25f9786dee10fd9319398d7f7cb239628a09a635",
+        "uncompressed_sha256": "6f31532c2e98d70ef84775b4ed45ef49c61c16dfa60e82a9eebfd8abac03d393",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f": {
+          "path": "records/4366e342b4b346dc9e2071aee0b377e28bd9814aa03ea2677541449b1503aca0.json.gz",
+          "sha256": "fdb8815a6c8790dce9f3bf726869fa569f17e2dc486a204cb75e0743285ba9a3",
+          "uncompressed_sha256": "4366e342b4b346dc9e2071aee0b377e28bd9814aa03ea2677541449b1503aca0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f/measurement/rows/65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e/measurement/results.json",
+      "original_sha256": "255bf7fba2decfc0b7f3e6bdec7d19e7739e0d183061a44b8a8e8f83c62bda62",
+      "checkpoint": {
+        "path": "records/255bf7fba2decfc0b7f3e6bdec7d19e7739e0d183061a44b8a8e8f83c62bda62.json.gz",
+        "sha256": "e59a8b17dc21dedc432a1eb261ee6e22241b9e0a044cf0ae05dd1217f1a7de75",
+        "uncompressed_sha256": "255bf7fba2decfc0b7f3e6bdec7d19e7739e0d183061a44b8a8e8f83c62bda62",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/10f5e3cbbf9d5c2a03d964fe517cec98e7fc4461151131e56ad91bf9bbb267e5.json.gz",
+        "sha256": "42938aebdc628c864fa9dc80922ba465f0501ae62820ea9d2ff030abb1e10d4b",
+        "uncompressed_sha256": "10f5e3cbbf9d5c2a03d964fe517cec98e7fc4461151131e56ad91bf9bbb267e5",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e": {
+          "path": "records/dfdca67a9b1d1ec0e72445b4023af6cecebd2b309cdb89bf1f1976ef607205bc.json.gz",
+          "sha256": "1a01fb8ee298089b8eeb8c74f5647b48414d45c4f7c7dc744a949a2563517ef9",
+          "uncompressed_sha256": "dfdca67a9b1d1ec0e72445b4023af6cecebd2b309cdb89bf1f1976ef607205bc",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e/measurement/rows/5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa/measurement/results.json",
+      "original_sha256": "f3f963b68c18bf701a16d4eda8f0973259bb818e882c8c1bcedd393b9ea2b992",
+      "checkpoint": {
+        "path": "records/f3f963b68c18bf701a16d4eda8f0973259bb818e882c8c1bcedd393b9ea2b992.json.gz",
+        "sha256": "d8129d92a8574c38c9f0567087a92efd3685ccfc69016b1eb3b4a1669b75fe6f",
+        "uncompressed_sha256": "f3f963b68c18bf701a16d4eda8f0973259bb818e882c8c1bcedd393b9ea2b992",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/75188d6a7d93d4a57dde31f419132db451aaad7d30f50dd50e2e39358bb92f42.json.gz",
+        "sha256": "e7528527ce25f9e15eaacd010b24ef1dbdfcfd8df3820cdc881ba3d907f83b50",
+        "uncompressed_sha256": "75188d6a7d93d4a57dde31f419132db451aaad7d30f50dd50e2e39358bb92f42",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa": {
+          "path": "records/acbf6bf1ebac256a3f5c5490679103cd7518473d2260dca70419b31c9c2cbbc0.json.gz",
+          "sha256": "a3a91061bcc3605cff50502e14bd4821dc73c17c7f9a59d2aa51ec68e28d52cb",
+          "uncompressed_sha256": "acbf6bf1ebac256a3f5c5490679103cd7518473d2260dca70419b31c9c2cbbc0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa/measurement/rows/eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b/measurement/results.json",
+      "original_sha256": "5707bf91d09474a5c9674a98e5e6f5c8a47825dc52347c1c7bc64ed0a71a71eb",
+      "checkpoint": {
+        "path": "records/5707bf91d09474a5c9674a98e5e6f5c8a47825dc52347c1c7bc64ed0a71a71eb.json.gz",
+        "sha256": "8dc076fe533fbdbbe598ba7af5794fcd7ef5fd061d7f6179200b176819f7c93c",
+        "uncompressed_sha256": "5707bf91d09474a5c9674a98e5e6f5c8a47825dc52347c1c7bc64ed0a71a71eb",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/4927a37c294c74537816467c7c224ccde176851326ac1ac54469bde19525b7e4.json.gz",
+        "sha256": "52d8d892fa7c990a93746d621e2dd4989534b8ad9d5a05cf65a8985b9828b370",
+        "uncompressed_sha256": "4927a37c294c74537816467c7c224ccde176851326ac1ac54469bde19525b7e4",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b": {
+          "path": "records/a634d24000373cd187126b346fec0d0d04b461deac88596334f5e25b5a7053c4.json.gz",
+          "sha256": "4fdee3e7badc126bd8cef83a2f408e422b070388c0ba04e62002ce94da5f80ee",
+          "uncompressed_sha256": "a634d24000373cd187126b346fec0d0d04b461deac88596334f5e25b5a7053c4",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b/measurement/rows/83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/98f376d818554db22ad6c24414dd94814ab09083d7841f3bcbbd7f8c89353dcf/measurement/results.json",
+      "original_sha256": "ba7528c06e03e80d1f50d949eee03b1fbb45b97dc340eba67c32baa14ab4b972",
+      "checkpoint": {
+        "path": "records/ba7528c06e03e80d1f50d949eee03b1fbb45b97dc340eba67c32baa14ab4b972.json.gz",
+        "sha256": "dc6a34c8b772f0165b03c4fafa20d0902f8311d80c89fdbe0575cc4c4ad0034b",
+        "uncompressed_sha256": "ba7528c06e03e80d1f50d949eee03b1fbb45b97dc340eba67c32baa14ab4b972",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/98f376d818554db22ad6c24414dd94814ab09083d7841f3bcbbd7f8c89353dcf/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/3eb1a1da138056a3aa1e88ee58c712cd4c03cf42c834038d6bdf204d00eae348.json.gz",
+        "sha256": "a45ea8b85b351f6657155e74b088492e4b62c3302a98b950a4b32303c61c4de4",
+        "uncompressed_sha256": "3eb1a1da138056a3aa1e88ee58c712cd4c03cf42c834038d6bdf204d00eae348",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/98f376d818554db22ad6c24414dd94814ab09083d7841f3bcbbd7f8c89353dcf/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "98f376d818554db22ad6c24414dd94814ab09083d7841f3bcbbd7f8c89353dcf": {
+          "path": "records/6cb0acb096a58195408f72df639041dd7b0a95282b20df0f191567908e06e0a0.json.gz",
+          "sha256": "b2be0ed9ffc68c864bfd04c8a8f73b8e3c14f1b2e510be728b537a0128c73ff4",
+          "uncompressed_sha256": "6cb0acb096a58195408f72df639041dd7b0a95282b20df0f191567908e06e0a0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/98f376d818554db22ad6c24414dd94814ab09083d7841f3bcbbd7f8c89353dcf/measurement/rows/98f376d818554db22ad6c24414dd94814ab09083d7841f3bcbbd7f8c89353dcf.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/2b9e64d11619319d00c7ae7ce3d2b6df2004af6e068c5f00dd082311a7342d53/measurement/results.json",
+      "original_sha256": "bdcddae30f009f065f9e5000f48754b78b1724ee6a404c5165e60619309a5551",
+      "checkpoint": {
+        "path": "records/bdcddae30f009f065f9e5000f48754b78b1724ee6a404c5165e60619309a5551.json.gz",
+        "sha256": "505a8233d98935f06732811ecb3900715df4bab714f19e5f34b318a230edffbb",
+        "uncompressed_sha256": "bdcddae30f009f065f9e5000f48754b78b1724ee6a404c5165e60619309a5551",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/2b9e64d11619319d00c7ae7ce3d2b6df2004af6e068c5f00dd082311a7342d53/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/72c0f362d6bcefc51624a5918cbc2d60f372d9ed13a7f0cf5910ccf3776c30ab.json.gz",
+        "sha256": "e45b726a4f4e220bf3da4fb20b06ed31fc3b5dda74bfdba7d1a2d5d63c62241e",
+        "uncompressed_sha256": "72c0f362d6bcefc51624a5918cbc2d60f372d9ed13a7f0cf5910ccf3776c30ab",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/2b9e64d11619319d00c7ae7ce3d2b6df2004af6e068c5f00dd082311a7342d53/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "2b9e64d11619319d00c7ae7ce3d2b6df2004af6e068c5f00dd082311a7342d53": {
+          "path": "records/1d8cc53d001539e866552dc9b511b3031dfdf400127cd5025f62b8db44009c7b.json.gz",
+          "sha256": "0246478adec3f5a0356c6d87ddf948538f96c5fc23b741b7190a906280ea4a1a",
+          "uncompressed_sha256": "1d8cc53d001539e866552dc9b511b3031dfdf400127cd5025f62b8db44009c7b",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/2b9e64d11619319d00c7ae7ce3d2b6df2004af6e068c5f00dd082311a7342d53/measurement/rows/2b9e64d11619319d00c7ae7ce3d2b6df2004af6e068c5f00dd082311a7342d53.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/4265f98bd655de47a813b28de672bc4aff8faf03e830f164b24ddbef42c783a9/measurement/results.json",
+      "original_sha256": "83091805937443d52d4467f14d47e4f4fc23453b38c7da3aff7f0e8526acaf21",
+      "checkpoint": {
+        "path": "records/83091805937443d52d4467f14d47e4f4fc23453b38c7da3aff7f0e8526acaf21.json.gz",
+        "sha256": "9425ff3bcd603f19ba943e32f4ef72e226a320d9489fc68d585e1da0dc59ed05",
+        "uncompressed_sha256": "83091805937443d52d4467f14d47e4f4fc23453b38c7da3aff7f0e8526acaf21",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/4265f98bd655de47a813b28de672bc4aff8faf03e830f164b24ddbef42c783a9/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/019dff5fe6ba91570d023ac08fbec50264ecc04e3b5be62c35c0775dbea74dc2.json.gz",
+        "sha256": "536be5edbd8bd1a4aec8b099b9e8a70652ace3cd6d3725f2bc0532ff6f99ed8e",
+        "uncompressed_sha256": "019dff5fe6ba91570d023ac08fbec50264ecc04e3b5be62c35c0775dbea74dc2",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/4265f98bd655de47a813b28de672bc4aff8faf03e830f164b24ddbef42c783a9/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "4265f98bd655de47a813b28de672bc4aff8faf03e830f164b24ddbef42c783a9": {
+          "path": "records/783e65eec0089d4d37eb7118f70a409be99bbcbbcabb4d80703760b5cc9157c4.json.gz",
+          "sha256": "f4590a608e1c8d254f8f992edd337665305dd2b3b069521e14bfe9cc15a76212",
+          "uncompressed_sha256": "783e65eec0089d4d37eb7118f70a409be99bbcbbcabb4d80703760b5cc9157c4",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/4265f98bd655de47a813b28de672bc4aff8faf03e830f164b24ddbef42c783a9/measurement/rows/4265f98bd655de47a813b28de672bc4aff8faf03e830f164b24ddbef42c783a9.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/6ff0996fdc68791dfac7a07d04200cb7ebbd235012b4224f2d4947614ca865a8/measurement/results.json",
+      "original_sha256": "711bf0f04148fbf7d17f526b0be11e72d142f2ab0086415c87566c0dc7b3a839",
+      "checkpoint": {
+        "path": "records/711bf0f04148fbf7d17f526b0be11e72d142f2ab0086415c87566c0dc7b3a839.json.gz",
+        "sha256": "2eb3f1138d3a89360df9423b610cd61afb9b03010e961d947d7a60c1f1c5fc09",
+        "uncompressed_sha256": "711bf0f04148fbf7d17f526b0be11e72d142f2ab0086415c87566c0dc7b3a839",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/6ff0996fdc68791dfac7a07d04200cb7ebbd235012b4224f2d4947614ca865a8/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/332bb7303e06fee3c513fed90355ca1615779783d0f9bfe90e5c53cb88be213f.json.gz",
+        "sha256": "f7d5c2c82c5ace7d8bb43cefc91611f2435680a1cee0d10065d3ce1a2d760343",
+        "uncompressed_sha256": "332bb7303e06fee3c513fed90355ca1615779783d0f9bfe90e5c53cb88be213f",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/6ff0996fdc68791dfac7a07d04200cb7ebbd235012b4224f2d4947614ca865a8/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "6ff0996fdc68791dfac7a07d04200cb7ebbd235012b4224f2d4947614ca865a8": {
+          "path": "records/7de8c0ce2e114ea1ed64f26f935fd8c6bb6d3a647a6ebbc4319fc3f3c67070fd.json.gz",
+          "sha256": "cf9a7369d720c1aa7ce7e086841f4a665f81477bb152c22d3a93e89a81aeed62",
+          "uncompressed_sha256": "7de8c0ce2e114ea1ed64f26f935fd8c6bb6d3a647a6ebbc4319fc3f3c67070fd",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/6ff0996fdc68791dfac7a07d04200cb7ebbd235012b4224f2d4947614ca865a8/measurement/rows/6ff0996fdc68791dfac7a07d04200cb7ebbd235012b4224f2d4947614ca865a8.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/34d94ef04b5155f2b7ab7ffccc60d6f19dee261754ffa8699c250637c2e09c7b/measurement/results.json",
+      "original_sha256": "eaecd9f7bfdb77a7b5be54aa856db40c7d53d93174ba973720185f56c71ddad5",
+      "checkpoint": {
+        "path": "records/eaecd9f7bfdb77a7b5be54aa856db40c7d53d93174ba973720185f56c71ddad5.json.gz",
+        "sha256": "8d10d34e92f0f2ce24f7765f79da02543965d0a80ec2924c82dcf82e3cd96d2f",
+        "uncompressed_sha256": "eaecd9f7bfdb77a7b5be54aa856db40c7d53d93174ba973720185f56c71ddad5",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/34d94ef04b5155f2b7ab7ffccc60d6f19dee261754ffa8699c250637c2e09c7b/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/83e52305f06eed55d6dd2b07cbdcd4a2fa08272b5b97ae39c102230a4b2e6cdd.json.gz",
+        "sha256": "d1b61d61ad3ca3c9fc9c9ecdc4904aa808b4f89195a4d6b5aa91a0641a8c2ea8",
+        "uncompressed_sha256": "83e52305f06eed55d6dd2b07cbdcd4a2fa08272b5b97ae39c102230a4b2e6cdd",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/34d94ef04b5155f2b7ab7ffccc60d6f19dee261754ffa8699c250637c2e09c7b/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "34d94ef04b5155f2b7ab7ffccc60d6f19dee261754ffa8699c250637c2e09c7b": {
+          "path": "records/afe40231a95d02b353bec81fd764149b7940415221a5bf968a451f5f02b6529a.json.gz",
+          "sha256": "3e9c4c8926db92197f9de4e03f7ef662b660f5cb45a9c57a45ea15de176486ea",
+          "uncompressed_sha256": "afe40231a95d02b353bec81fd764149b7940415221a5bf968a451f5f02b6529a",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/34d94ef04b5155f2b7ab7ffccc60d6f19dee261754ffa8699c250637c2e09c7b/measurement/rows/34d94ef04b5155f2b7ab7ffccc60d6f19dee261754ffa8699c250637c2e09c7b.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e268b6b96b5f514d676e324f5e2c5b152b7e491a9e6c1edbd58674974ba02e71/measurement/results.json",
+      "original_sha256": "5342c86ab24b6d814bb09f0dc9ce3d67655b7dab6c1a69f0f6a9b7cdc45666c1",
+      "checkpoint": {
+        "path": "records/5342c86ab24b6d814bb09f0dc9ce3d67655b7dab6c1a69f0f6a9b7cdc45666c1.json.gz",
+        "sha256": "9febf75bd1efd77f1af339c72735ef665a9a11333a48c8fe91f3b1dd8192ba43",
+        "uncompressed_sha256": "5342c86ab24b6d814bb09f0dc9ce3d67655b7dab6c1a69f0f6a9b7cdc45666c1",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e268b6b96b5f514d676e324f5e2c5b152b7e491a9e6c1edbd58674974ba02e71/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/114c277c265a5aaeaeb9fb86474cbedcfa2dbc4569ce172d511ec9703f9bede1.json.gz",
+        "sha256": "c6b3f6df660e717835cb9bda5de4c179bedeb7e92844f3d4bc831b49e3e61ecb",
+        "uncompressed_sha256": "114c277c265a5aaeaeb9fb86474cbedcfa2dbc4569ce172d511ec9703f9bede1",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e268b6b96b5f514d676e324f5e2c5b152b7e491a9e6c1edbd58674974ba02e71/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "e268b6b96b5f514d676e324f5e2c5b152b7e491a9e6c1edbd58674974ba02e71": {
+          "path": "records/4d769c7fdd5d0ce985fe3469fbb9e12e165d084b62981c5c494e4070258f35f6.json.gz",
+          "sha256": "2cbb0c1e1c49a0544af3b194989a1ffbadea0af1bc7ed20dac35bbb61c8deca9",
+          "uncompressed_sha256": "4d769c7fdd5d0ce985fe3469fbb9e12e165d084b62981c5c494e4070258f35f6",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e268b6b96b5f514d676e324f5e2c5b152b7e491a9e6c1edbd58674974ba02e71/measurement/rows/e268b6b96b5f514d676e324f5e2c5b152b7e491a9e6c1edbd58674974ba02e71.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/fe45e67fcef5f2c4d8817a5347219cadc6bc82e0f18d492e11449ae72f5161ef/measurement/results.json",
+      "original_sha256": "ac2eccc012880a6545c0684e65ebe9de2c7c35a1a90db1801bdd2d6d47999c02",
+      "checkpoint": {
+        "path": "records/ac2eccc012880a6545c0684e65ebe9de2c7c35a1a90db1801bdd2d6d47999c02.json.gz",
+        "sha256": "e24a10cd37750184c921c4adeb2c72df6751480725279af4c6c7d4adc5781571",
+        "uncompressed_sha256": "ac2eccc012880a6545c0684e65ebe9de2c7c35a1a90db1801bdd2d6d47999c02",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/fe45e67fcef5f2c4d8817a5347219cadc6bc82e0f18d492e11449ae72f5161ef/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/d026712aa027779c51caa73d2c60c0ef34c489dddfc088f01c7daf4b5fd300e7.json.gz",
+        "sha256": "25f7845b46b0d7db64ccf8d0d6d981bdeaae5b43cee1fccd76f7af7d06ec0371",
+        "uncompressed_sha256": "d026712aa027779c51caa73d2c60c0ef34c489dddfc088f01c7daf4b5fd300e7",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/fe45e67fcef5f2c4d8817a5347219cadc6bc82e0f18d492e11449ae72f5161ef/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "fe45e67fcef5f2c4d8817a5347219cadc6bc82e0f18d492e11449ae72f5161ef": {
+          "path": "records/4979b9ee69aa5fd6b136efb1df595a720836b6a906972c56d2b43deba30decf5.json.gz",
+          "sha256": "52477318727a8091b2761d04389957772ac5be15ac865605b0664e260b504134",
+          "uncompressed_sha256": "4979b9ee69aa5fd6b136efb1df595a720836b6a906972c56d2b43deba30decf5",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/fe45e67fcef5f2c4d8817a5347219cadc6bc82e0f18d492e11449ae72f5161ef/measurement/rows/fe45e67fcef5f2c4d8817a5347219cadc6bc82e0f18d492e11449ae72f5161ef.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/53572661c2e954a03ba494ef94872a0ec67581e4305b1ce4f2f1a5f64625c9d9/measurement/results.json",
+      "original_sha256": "5ee4d87753f25bd407044cf81aca9c7c804ec2489a66116e0f08c0b7db4d7765",
+      "checkpoint": {
+        "path": "records/5ee4d87753f25bd407044cf81aca9c7c804ec2489a66116e0f08c0b7db4d7765.json.gz",
+        "sha256": "3ff2d347773f543c7dd079be855cc5fa7c7f170a436bfac15625aa29b621939f",
+        "uncompressed_sha256": "5ee4d87753f25bd407044cf81aca9c7c804ec2489a66116e0f08c0b7db4d7765",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/53572661c2e954a03ba494ef94872a0ec67581e4305b1ce4f2f1a5f64625c9d9/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/2242cc45b19bd5bbded464905f464a9f0962db2fac9f8e24cd9cb50e01bf5425.json.gz",
+        "sha256": "4045b7f6b093bf95d3c90c331ca713e2c19499bd587ed3535b811659aa8c6e7f",
+        "uncompressed_sha256": "2242cc45b19bd5bbded464905f464a9f0962db2fac9f8e24cd9cb50e01bf5425",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/53572661c2e954a03ba494ef94872a0ec67581e4305b1ce4f2f1a5f64625c9d9/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "53572661c2e954a03ba494ef94872a0ec67581e4305b1ce4f2f1a5f64625c9d9": {
+          "path": "records/68e5842a1bb1087a5f0339c36281b1fa12b87e4e37bc2ecd424076a881e55175.json.gz",
+          "sha256": "0d9c1179100845ded16917487332095938ab4a854275f430ceb83da5175cf81a",
+          "uncompressed_sha256": "68e5842a1bb1087a5f0339c36281b1fa12b87e4e37bc2ecd424076a881e55175",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/53572661c2e954a03ba494ef94872a0ec67581e4305b1ce4f2f1a5f64625c9d9/measurement/rows/53572661c2e954a03ba494ef94872a0ec67581e4305b1ce4f2f1a5f64625c9d9.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963/measurement/results.json",
+      "original_sha256": "f64540f732a82d32e400360b5855cad5e25ff85bfc381bb9915a16864320bdc0",
+      "checkpoint": {
+        "path": "records/f64540f732a82d32e400360b5855cad5e25ff85bfc381bb9915a16864320bdc0.json.gz",
+        "sha256": "54441179bba7a17de21957264fef1344111af74effb7ef84de0d285f62a7ad0a",
+        "uncompressed_sha256": "f64540f732a82d32e400360b5855cad5e25ff85bfc381bb9915a16864320bdc0",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/42e5446de7f0c641e12d7d1412952e7901594b53c81e7210538790f6d2283dba.json.gz",
+        "sha256": "faaa07ce0e59a4c44ee130744f7295bfeffb209112dbc0997ea0fa5ed3802a23",
+        "uncompressed_sha256": "42e5446de7f0c641e12d7d1412952e7901594b53c81e7210538790f6d2283dba",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963": {
+          "path": "records/f4a171ccc0ffbfe0c49a7aa7ab669c24ee4eb5a4ecfcf1e59d0c4c0f170c0a89.json.gz",
+          "sha256": "310b7ba074f2b0d23655ae21028bd4f18bacce73f5e68909ec30996018b6e70c",
+          "uncompressed_sha256": "f4a171ccc0ffbfe0c49a7aa7ab669c24ee4eb5a4ecfcf1e59d0c4c0f170c0a89",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963/measurement/rows/1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9/measurement/results.json",
+      "original_sha256": "93a637d2f4014650fc76dbb14d0959f05b59e04682841257dbfd8802cea3c97d",
+      "checkpoint": {
+        "path": "records/93a637d2f4014650fc76dbb14d0959f05b59e04682841257dbfd8802cea3c97d.json.gz",
+        "sha256": "b509c09edae43b88100802916ca128c0ca9f673328eb3ff994a0546aa3b2ba62",
+        "uncompressed_sha256": "93a637d2f4014650fc76dbb14d0959f05b59e04682841257dbfd8802cea3c97d",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/3b31540706407c9031527c4727f504fd81a77615ae52dc2ed7fe0b7378371d9b.json.gz",
+        "sha256": "b147d82aa893cc58a1aada5d9d9c6df13becbff42e5524078bedad30a225c344",
+        "uncompressed_sha256": "3b31540706407c9031527c4727f504fd81a77615ae52dc2ed7fe0b7378371d9b",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9": {
+          "path": "records/4356c6ad903216c7419bea40ac17ad39fd4e2af31be911955318ebc098fdac8d.json.gz",
+          "sha256": "9bfc2c57691f225c4ceea223d4af62cbb58df640fe054bde400754c23059cbcf",
+          "uncompressed_sha256": "4356c6ad903216c7419bea40ac17ad39fd4e2af31be911955318ebc098fdac8d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9/measurement/rows/2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16/measurement/results.json",
+      "original_sha256": "9ce908da4c7e47ca4a7247f23c3494d573466dc802a301a01d74fad3506c2a1c",
+      "checkpoint": {
+        "path": "records/9ce908da4c7e47ca4a7247f23c3494d573466dc802a301a01d74fad3506c2a1c.json.gz",
+        "sha256": "1316e895df389476a717e8f2cadfd79515daa295c45017e7cd3ca36e7f27cbca",
+        "uncompressed_sha256": "9ce908da4c7e47ca4a7247f23c3494d573466dc802a301a01d74fad3506c2a1c",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/016599da0572f53631d5cb81ef1fde663e707a9d773197f78ab611b50ec225c7.json.gz",
+        "sha256": "dc8dfdbb197c30196909b6e8b1fe4371b884fa92c63664a527a5fb8b81a2698e",
+        "uncompressed_sha256": "016599da0572f53631d5cb81ef1fde663e707a9d773197f78ab611b50ec225c7",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16": {
+          "path": "records/1754c9f48dd215a871ded2ab460c4012cdf27e17306e25789d77da1258dccbcb.json.gz",
+          "sha256": "e1025808876376a717ee16d5930061d481a4af945f29f0fc69d47376659c73ca",
+          "uncompressed_sha256": "1754c9f48dd215a871ded2ab460c4012cdf27e17306e25789d77da1258dccbcb",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16/measurement/rows/c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40/measurement/results.json",
+      "original_sha256": "a03f591d6e712285900b3d833533855a5de057c22d39e70eb00472f1244223ad",
+      "checkpoint": {
+        "path": "records/a03f591d6e712285900b3d833533855a5de057c22d39e70eb00472f1244223ad.json.gz",
+        "sha256": "5c7ca23128a562d8944968097a6a37c178eb7e64d37121fa022f7fc40539ca71",
+        "uncompressed_sha256": "a03f591d6e712285900b3d833533855a5de057c22d39e70eb00472f1244223ad",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/015c22e757709998dad3d33ca4f54f4046b88944a085fcf5f73ab52df0fdf7d9.json.gz",
+        "sha256": "4c59d2e9ed0634404c65d39200600308abc504fe0f4310e76960503064e31154",
+        "uncompressed_sha256": "015c22e757709998dad3d33ca4f54f4046b88944a085fcf5f73ab52df0fdf7d9",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40": {
+          "path": "records/e8bb16d777be3cdb4230fd9eb0105e512c3901291ee37b6b37e8eb4a8f132e5c.json.gz",
+          "sha256": "220268d39de81b04dfffdeb74d7d9f71fe0f585b436678db2508d6217a3ff50a",
+          "uncompressed_sha256": "e8bb16d777be3cdb4230fd9eb0105e512c3901291ee37b6b37e8eb4a8f132e5c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40/measurement/rows/b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86/measurement/results.json",
+      "original_sha256": "3a59f63332c1bb6ad46ad4cf22bbf66d8826f3b09b54fa0cbd4b744c32fc9952",
+      "checkpoint": {
+        "path": "records/3a59f63332c1bb6ad46ad4cf22bbf66d8826f3b09b54fa0cbd4b744c32fc9952.json.gz",
+        "sha256": "df93776dd94f3e4e64e305795531be3df28affe9378a18977bc03892dbf32f23",
+        "uncompressed_sha256": "3a59f63332c1bb6ad46ad4cf22bbf66d8826f3b09b54fa0cbd4b744c32fc9952",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/ace800331b0378fbacde5c8e0640fc0b0e11faf11c17a708ef2cc18cc2e68704.json.gz",
+        "sha256": "8bccca532c51c5807ce83d5686b69dae2b02e2d5970c8f1d512e363dffda0e8e",
+        "uncompressed_sha256": "ace800331b0378fbacde5c8e0640fc0b0e11faf11c17a708ef2cc18cc2e68704",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86": {
+          "path": "records/07d45ebb17ef3b8793e64b381397310bd68ef094340c8e1d6cd40358e8d0c6e3.json.gz",
+          "sha256": "a97c210d8fd43ffe0f876cb744b40c3958249eb2d540b2d87e67768bfb290f8f",
+          "uncompressed_sha256": "07d45ebb17ef3b8793e64b381397310bd68ef094340c8e1d6cd40358e8d0c6e3",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86/measurement/rows/ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5e296849a754f51f2c951977f778472f3047e3e65616086309f8d8c873078cb5/measurement/results.json",
+      "original_sha256": "4e10a580efcf35dbdece649dd931eb1e1c8f3cd08cbcddd8e8c11cd618ed98d3",
+      "checkpoint": {
+        "path": "records/4e10a580efcf35dbdece649dd931eb1e1c8f3cd08cbcddd8e8c11cd618ed98d3.json.gz",
+        "sha256": "c09a85287bf42edaf22caa80beac0ebab2a61a80c9e292cd254429f7679d224b",
+        "uncompressed_sha256": "4e10a580efcf35dbdece649dd931eb1e1c8f3cd08cbcddd8e8c11cd618ed98d3",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5e296849a754f51f2c951977f778472f3047e3e65616086309f8d8c873078cb5/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/c451cc093f53629d4b0cfa5d8275e24e9ab7b59fb5ae872d8844dbe49a2a4462.json.gz",
+        "sha256": "4caf316398f6dae3bafb0274aa935786449638d59afe3988c38183e2782036a6",
+        "uncompressed_sha256": "c451cc093f53629d4b0cfa5d8275e24e9ab7b59fb5ae872d8844dbe49a2a4462",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5e296849a754f51f2c951977f778472f3047e3e65616086309f8d8c873078cb5/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "5e296849a754f51f2c951977f778472f3047e3e65616086309f8d8c873078cb5": {
+          "path": "records/26ff3b7c0dbf1c07e2f5a0d4cae4daa002dcb768666a1b53d0d98753b23911cd.json.gz",
+          "sha256": "48757ccc182c4d607be59a7c4160c8be4642d26274b379d7036e814bb2bace2e",
+          "uncompressed_sha256": "26ff3b7c0dbf1c07e2f5a0d4cae4daa002dcb768666a1b53d0d98753b23911cd",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5e296849a754f51f2c951977f778472f3047e3e65616086309f8d8c873078cb5/measurement/rows/5e296849a754f51f2c951977f778472f3047e3e65616086309f8d8c873078cb5.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d/measurement/results.json",
+      "original_sha256": "b24c2ac696d98bae1288f6c04409b7b02595636903e516f097c3fdd4fd649074",
+      "checkpoint": {
+        "path": "records/b24c2ac696d98bae1288f6c04409b7b02595636903e516f097c3fdd4fd649074.json.gz",
+        "sha256": "3ac55634dc61c1bb410798a4e6ce26b838960c344f554ffdb684d344774767e4",
+        "uncompressed_sha256": "b24c2ac696d98bae1288f6c04409b7b02595636903e516f097c3fdd4fd649074",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/7307fe77989cad789933485e06310fcde1bf3120804df7aabe32c1eda5eefd9e.json.gz",
+        "sha256": "e07a3d34647e9f85d2b68446e4ab29500222901d4205df2305758a98b625bf63",
+        "uncompressed_sha256": "7307fe77989cad789933485e06310fcde1bf3120804df7aabe32c1eda5eefd9e",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d": {
+          "path": "records/7319700613a89c7c19ef12d4556943f5eb0d87529b8fe326639f3e07dd9df470.json.gz",
+          "sha256": "631b40c341a088e18f37e367935be8bf69ed5449f27c64bee7438c57151f740c",
+          "uncompressed_sha256": "7319700613a89c7c19ef12d4556943f5eb0d87529b8fe326639f3e07dd9df470",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d/measurement/rows/f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a/measurement/results.json",
+      "original_sha256": "d589a390a63ac9e014df40c4ca667dcad5178c8f6a14f465d5900a1d1f0bbcd0",
+      "checkpoint": {
+        "path": "records/d589a390a63ac9e014df40c4ca667dcad5178c8f6a14f465d5900a1d1f0bbcd0.json.gz",
+        "sha256": "6d0082cdc2560cad1de50b34656f6c58a0357147a9c6186d809cf8bc42acaae2",
+        "uncompressed_sha256": "d589a390a63ac9e014df40c4ca667dcad5178c8f6a14f465d5900a1d1f0bbcd0",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/564d20d36f243a1719a8c64df7eace5900dfb4b732f203e35ce2737dd3a9824c.json.gz",
+        "sha256": "419d4e5463cf3d594a9324d8f1ebfcb59b1b780bc1d8713ac3832853cfd1e871",
+        "uncompressed_sha256": "564d20d36f243a1719a8c64df7eace5900dfb4b732f203e35ce2737dd3a9824c",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a": {
+          "path": "records/c18b67c9afe1d018a322ba7d157784d34d88fb2d6300423d904512f6aacf7d71.json.gz",
+          "sha256": "2611521c23edc14a599ce49914309d93c5d5beb6054e7323343f4ac66eaca7aa",
+          "uncompressed_sha256": "c18b67c9afe1d018a322ba7d157784d34d88fb2d6300423d904512f6aacf7d71",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a/measurement/rows/eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3/measurement/results.json",
+      "original_sha256": "2fc68b49aeffbd89dd3a83119cf54ebf9b51058e6b30c6abf4d8adfe44909233",
+      "checkpoint": {
+        "path": "records/2fc68b49aeffbd89dd3a83119cf54ebf9b51058e6b30c6abf4d8adfe44909233.json.gz",
+        "sha256": "f56068e038d2d7b7c6feba8dabe082205df2ba05602ce05b28aa714f31285772",
+        "uncompressed_sha256": "2fc68b49aeffbd89dd3a83119cf54ebf9b51058e6b30c6abf4d8adfe44909233",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/42b8ac1757a994e9c1a70ecaa0bb82350e5105ab3213a0a26223ac1c32350397.json.gz",
+        "sha256": "4dc5f289597deb8a656415f737b2eb82a7fa98dcd63388b8b4b9549d629840b5",
+        "uncompressed_sha256": "42b8ac1757a994e9c1a70ecaa0bb82350e5105ab3213a0a26223ac1c32350397",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3": {
+          "path": "records/07b04558f3e159b50e4b61d3c78e334842ac16da1d562fb37a602c8de32edaab.json.gz",
+          "sha256": "5c9c1a1675518180edfbdb4defc4527d3e6eb9e9715d086027d4aa059e2e4282",
+          "uncompressed_sha256": "07b04558f3e159b50e4b61d3c78e334842ac16da1d562fb37a602c8de32edaab",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3/measurement/rows/4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be/measurement/results.json",
+      "original_sha256": "7ccb8b407a2f102053e373954a35fcc47babf2412fe77086ca39a0fd00df3810",
+      "checkpoint": {
+        "path": "records/7ccb8b407a2f102053e373954a35fcc47babf2412fe77086ca39a0fd00df3810.json.gz",
+        "sha256": "79637350e4e1090c723edee2d2d404c981fc26d40a70db19c8c3cb8f213ce43d",
+        "uncompressed_sha256": "7ccb8b407a2f102053e373954a35fcc47babf2412fe77086ca39a0fd00df3810",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/3d2ec03fc849da0c35dbabfa850205cf8cd02b49902ccea0d2823fdddbd23dd3.json.gz",
+        "sha256": "b8f8955d84f87aec5cda53858edb6b84b614bbd36a5f4040c93f35b98091c0bd",
+        "uncompressed_sha256": "3d2ec03fc849da0c35dbabfa850205cf8cd02b49902ccea0d2823fdddbd23dd3",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be": {
+          "path": "records/f23d9e90ac723bff786a157acf875f439246f339d9d0a4993713aa1bb805d903.json.gz",
+          "sha256": "363812319e267f722607f2bb60c0d07ae6ef7b0c11891c7352f2dec6d556e66c",
+          "uncompressed_sha256": "f23d9e90ac723bff786a157acf875f439246f339d9d0a4993713aa1bb805d903",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be/measurement/rows/db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e/measurement/results.json",
+      "original_sha256": "049ebfe01a3f3e4128a95938669c0d8d1e5c6607ca4d2fb761c80e2878653ebe",
+      "checkpoint": {
+        "path": "records/049ebfe01a3f3e4128a95938669c0d8d1e5c6607ca4d2fb761c80e2878653ebe.json.gz",
+        "sha256": "75e5bcf6777e9813c42b4ac10793673f4b044bbcc74943d10bb5dc8bc5835bcb",
+        "uncompressed_sha256": "049ebfe01a3f3e4128a95938669c0d8d1e5c6607ca4d2fb761c80e2878653ebe",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/dda59f401a6f120b96f9fcce4381fdd8df55ca0a052c05c7a2f88f1f8b263f6c.json.gz",
+        "sha256": "68fa8274516472e06c583382dfce780ec9121ee1c93f6b2c2ea85b09ff5f91e3",
+        "uncompressed_sha256": "dda59f401a6f120b96f9fcce4381fdd8df55ca0a052c05c7a2f88f1f8b263f6c",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e": {
+          "path": "records/095ebb12bea96b5bcfcaaa50ed9865fcdbea2c7db2a880cd0fbd658a8a47afe0.json.gz",
+          "sha256": "b6a64c742870cc05f8bd326283b3a3eae50e52a46f5c10c3f1be7ad2c03ee118",
+          "uncompressed_sha256": "095ebb12bea96b5bcfcaaa50ed9865fcdbea2c7db2a880cd0fbd658a8a47afe0",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e/measurement/rows/38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/f203848e8822bfdc470ef962d01148ef86b65bf6bbfb3d4c67a348c96a340f94/measurement/results.json",
+      "original_sha256": "0a021515f564686f2b1a02672ab2106839585490943765e4c6a41fa3f25ec059",
+      "checkpoint": {
+        "path": "records/0a021515f564686f2b1a02672ab2106839585490943765e4c6a41fa3f25ec059.json.gz",
+        "sha256": "4cc5454d054af9f0ec711c7224bebd3ed2dded81d973cda6993631c2ee72afde",
+        "uncompressed_sha256": "0a021515f564686f2b1a02672ab2106839585490943765e4c6a41fa3f25ec059",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/f203848e8822bfdc470ef962d01148ef86b65bf6bbfb3d4c67a348c96a340f94/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/768769466b62ab9daa8e69410a52ae7ec81db0835871c15f16c7f499cd43914b.json.gz",
+        "sha256": "fcb0d4274825f347e65d68d551775a975a10259374a2fb6b82ef52de88754ea9",
+        "uncompressed_sha256": "768769466b62ab9daa8e69410a52ae7ec81db0835871c15f16c7f499cd43914b",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/f203848e8822bfdc470ef962d01148ef86b65bf6bbfb3d4c67a348c96a340f94/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "f203848e8822bfdc470ef962d01148ef86b65bf6bbfb3d4c67a348c96a340f94": {
+          "path": "records/8129411762f0540015450872a68b49e12d377e7fe95e540083ad5f3e8b968242.json.gz",
+          "sha256": "2b36fb9f5005bb7d2f58e4bd5ea4fbb2114360fcdb37754a6ddddbdb9feb11c3",
+          "uncompressed_sha256": "8129411762f0540015450872a68b49e12d377e7fe95e540083ad5f3e8b968242",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/f203848e8822bfdc470ef962d01148ef86b65bf6bbfb3d4c67a348c96a340f94/measurement/rows/f203848e8822bfdc470ef962d01148ef86b65bf6bbfb3d4c67a348c96a340f94.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/a2464b5b52504a97b847b7b8ce5f640a1159307524a148bf594b1bec0b1dc69a/measurement/results.json",
+      "original_sha256": "923f620601f6f809cbb2ea7c2a0cca74d9b71f7f29888286e260e9d0fbb0c514",
+      "checkpoint": {
+        "path": "records/923f620601f6f809cbb2ea7c2a0cca74d9b71f7f29888286e260e9d0fbb0c514.json.gz",
+        "sha256": "657d5cd6d551db63b18f059480ac1591a8a198a92e1cf4d13ec4e0fa3e2e3bfe",
+        "uncompressed_sha256": "923f620601f6f809cbb2ea7c2a0cca74d9b71f7f29888286e260e9d0fbb0c514",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/a2464b5b52504a97b847b7b8ce5f640a1159307524a148bf594b1bec0b1dc69a/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/8b9b470cbefa9803bfcdedff73a66ccdf00391433715e5d1d71569f41abc2ec0.json.gz",
+        "sha256": "fd7f727329d68e49bfcb48d0dfdedf0d9ab68d775e8f7b188a98ae023d5ed9d0",
+        "uncompressed_sha256": "8b9b470cbefa9803bfcdedff73a66ccdf00391433715e5d1d71569f41abc2ec0",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/a2464b5b52504a97b847b7b8ce5f640a1159307524a148bf594b1bec0b1dc69a/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "a2464b5b52504a97b847b7b8ce5f640a1159307524a148bf594b1bec0b1dc69a": {
+          "path": "records/f2d3e320b13713ecc2f486d6942e8c0cbc21137b5db6a1ca2d538a966e8e782c.json.gz",
+          "sha256": "fa23aa004ae3470e26760d6d9af2f6bc885da4f32260531f29d610997c3f0b8c",
+          "uncompressed_sha256": "f2d3e320b13713ecc2f486d6942e8c0cbc21137b5db6a1ca2d538a966e8e782c",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/a2464b5b52504a97b847b7b8ce5f640a1159307524a148bf594b1bec0b1dc69a/measurement/rows/a2464b5b52504a97b847b7b8ce5f640a1159307524a148bf594b1bec0b1dc69a.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/bc18c585abdad31d5b0fac1ff526b32008cf34009b687e5d9252a0c2e953ccc6/measurement/results.json",
+      "original_sha256": "5ca29b03c5171977d3f55997dfd6cd7b84fc478aca7548e7d76a07528b248bd9",
+      "checkpoint": {
+        "path": "records/5ca29b03c5171977d3f55997dfd6cd7b84fc478aca7548e7d76a07528b248bd9.json.gz",
+        "sha256": "88facaf4204779c3dda6e90ca979d62d810177619191b0376b45c9468ef545bd",
+        "uncompressed_sha256": "5ca29b03c5171977d3f55997dfd6cd7b84fc478aca7548e7d76a07528b248bd9",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/bc18c585abdad31d5b0fac1ff526b32008cf34009b687e5d9252a0c2e953ccc6/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/a3416137aa4125679c489b487d00686d068facb69675e95d8b0ea5dccc0bd7a0.json.gz",
+        "sha256": "5e4838d240bb7dc2e46818f0d6d40dd473d1665129290b9bf3ddf443dec59ad3",
+        "uncompressed_sha256": "a3416137aa4125679c489b487d00686d068facb69675e95d8b0ea5dccc0bd7a0",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/bc18c585abdad31d5b0fac1ff526b32008cf34009b687e5d9252a0c2e953ccc6/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "bc18c585abdad31d5b0fac1ff526b32008cf34009b687e5d9252a0c2e953ccc6": {
+          "path": "records/a4ff522f8a99368d0ddf9f5ac92534f63de4732a37ae7712a7a8150aebe8c950.json.gz",
+          "sha256": "79c85713683521b285b47aace79b94658e34487f3598d0ddc3096e6f24804ab1",
+          "uncompressed_sha256": "a4ff522f8a99368d0ddf9f5ac92534f63de4732a37ae7712a7a8150aebe8c950",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/bc18c585abdad31d5b0fac1ff526b32008cf34009b687e5d9252a0c2e953ccc6/measurement/rows/bc18c585abdad31d5b0fac1ff526b32008cf34009b687e5d9252a0c2e953ccc6.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/168d2b19ad493d5c6927f65758a4aec025a0c7990dfd5e1bbb340d4d0d96e415/measurement/results.json",
+      "original_sha256": "4e5fdf13e5ba9d245d43c03917ccc7e3bdfc00f640dd8dcd03a55c8134fdede7",
+      "checkpoint": {
+        "path": "records/4e5fdf13e5ba9d245d43c03917ccc7e3bdfc00f640dd8dcd03a55c8134fdede7.json.gz",
+        "sha256": "be7e834862c7f5ff7e7322bb8acefbae7cb68497892c2c2fe9ef2074d5d34540",
+        "uncompressed_sha256": "4e5fdf13e5ba9d245d43c03917ccc7e3bdfc00f640dd8dcd03a55c8134fdede7",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/168d2b19ad493d5c6927f65758a4aec025a0c7990dfd5e1bbb340d4d0d96e415/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/1420e45c3911b50d79d39f77119c8cf97ca662a3ce5caecabb9b3952b94f9292.json.gz",
+        "sha256": "505c12aa682876bd39a0b2e9d9a238b4f77bc2559ea094fe66f0b4b6e6f42da2",
+        "uncompressed_sha256": "1420e45c3911b50d79d39f77119c8cf97ca662a3ce5caecabb9b3952b94f9292",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/168d2b19ad493d5c6927f65758a4aec025a0c7990dfd5e1bbb340d4d0d96e415/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "168d2b19ad493d5c6927f65758a4aec025a0c7990dfd5e1bbb340d4d0d96e415": {
+          "path": "records/decb904b3c1e292d00b2f3396e7f289e6d77c4587ef50178ee8512c77a9f947f.json.gz",
+          "sha256": "0707a3b7e88698e9d4393deb173232f75743ba4a0315befe682102c42b503f16",
+          "uncompressed_sha256": "decb904b3c1e292d00b2f3396e7f289e6d77c4587ef50178ee8512c77a9f947f",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/168d2b19ad493d5c6927f65758a4aec025a0c7990dfd5e1bbb340d4d0d96e415/measurement/rows/168d2b19ad493d5c6927f65758a4aec025a0c7990dfd5e1bbb340d4d0d96e415.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e27f514c699063a6e614453b996470f8cb43b80a3ba78aa5ed04ec5e6f939de0/measurement/results.json",
+      "original_sha256": "cad7ccda61b58f15486ac4828befdd8e1d0fc4eccbcb1f17d600c76a49161dae",
+      "checkpoint": {
+        "path": "records/cad7ccda61b58f15486ac4828befdd8e1d0fc4eccbcb1f17d600c76a49161dae.json.gz",
+        "sha256": "6794a67020ec925b950e3a7822da32600d653d6ba1c6c668577ecee8b2a9b656",
+        "uncompressed_sha256": "cad7ccda61b58f15486ac4828befdd8e1d0fc4eccbcb1f17d600c76a49161dae",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e27f514c699063a6e614453b996470f8cb43b80a3ba78aa5ed04ec5e6f939de0/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/1630bfaa33fe44a380cf21e9a9f30dd76ada7d7b618bea659c775d9f6524c41c.json.gz",
+        "sha256": "9cea0d6903140e0f5917eed8c6113e6efc2ef4ee29b82d0fa5b342475f12a8a0",
+        "uncompressed_sha256": "1630bfaa33fe44a380cf21e9a9f30dd76ada7d7b618bea659c775d9f6524c41c",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e27f514c699063a6e614453b996470f8cb43b80a3ba78aa5ed04ec5e6f939de0/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "e27f514c699063a6e614453b996470f8cb43b80a3ba78aa5ed04ec5e6f939de0": {
+          "path": "records/c350455e9eb5d50c9a78a188062e8cb1eaa269b373bc5c46c4d71939d8cbf0ad.json.gz",
+          "sha256": "ea7b6f8d478a47445bdac0ff0c41f633ebea5987201420a4d3a27c0843446b53",
+          "uncompressed_sha256": "c350455e9eb5d50c9a78a188062e8cb1eaa269b373bc5c46c4d71939d8cbf0ad",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e27f514c699063a6e614453b996470f8cb43b80a3ba78aa5ed04ec5e6f939de0/measurement/rows/e27f514c699063a6e614453b996470f8cb43b80a3ba78aa5ed04ec5e6f939de0.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/07404144bfa36ce114dc64679c9d5e9381e13967443ea4f841ccdf761df90910/measurement/results.json",
+      "original_sha256": "9e1b6178f362dd15e6dda384ac77c7ae06632d4214738f8053c0c6a22d061f4b",
+      "checkpoint": {
+        "path": "records/9e1b6178f362dd15e6dda384ac77c7ae06632d4214738f8053c0c6a22d061f4b.json.gz",
+        "sha256": "52484b4915777679a9344875514b4e65367e8c75c438f7f159fb06897770717b",
+        "uncompressed_sha256": "9e1b6178f362dd15e6dda384ac77c7ae06632d4214738f8053c0c6a22d061f4b",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/07404144bfa36ce114dc64679c9d5e9381e13967443ea4f841ccdf761df90910/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/033118bb87a5e5957a61938afd715d4b3063a453c57fb6c761b5a250b7b6da5b.json.gz",
+        "sha256": "43145c53166384f212e5ff72680dd7691dfeb9ead82f301e3fa74f9a054eb0f3",
+        "uncompressed_sha256": "033118bb87a5e5957a61938afd715d4b3063a453c57fb6c761b5a250b7b6da5b",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/07404144bfa36ce114dc64679c9d5e9381e13967443ea4f841ccdf761df90910/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "07404144bfa36ce114dc64679c9d5e9381e13967443ea4f841ccdf761df90910": {
+          "path": "records/63803d46987a13c11b51a04533a68878082112b7f52a624da572a8c4b791a422.json.gz",
+          "sha256": "20e3cce94f329af88faa0cfc84acf4ca47d6bad8767846d95ffb937150eee19c",
+          "uncompressed_sha256": "63803d46987a13c11b51a04533a68878082112b7f52a624da572a8c4b791a422",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/07404144bfa36ce114dc64679c9d5e9381e13967443ea4f841ccdf761df90910/measurement/rows/07404144bfa36ce114dc64679c9d5e9381e13967443ea4f841ccdf761df90910.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/8871006ffb75b4c1ad431cac7d57bf43ac4ae7dbab01f020cf81aa00911b3cfe/measurement/results.json",
+      "original_sha256": "ba940046a2c088ac5883055cc081bbabc8e5741a3cf19a025fd61ffd7ff0d293",
+      "checkpoint": {
+        "path": "records/ba940046a2c088ac5883055cc081bbabc8e5741a3cf19a025fd61ffd7ff0d293.json.gz",
+        "sha256": "96ddd0be22a93d41a25057a4df0861eb50345bff4ae393b82c371d9093e8e2d2",
+        "uncompressed_sha256": "ba940046a2c088ac5883055cc081bbabc8e5741a3cf19a025fd61ffd7ff0d293",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/8871006ffb75b4c1ad431cac7d57bf43ac4ae7dbab01f020cf81aa00911b3cfe/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/eb25e67811784f8d8be3e28188ed8fd8c999441e056f30ed9b134e57cfe30314.json.gz",
+        "sha256": "b33e4f561914574fc100045791c2617ead7a8766717ba14bd4f5786836a3ca4a",
+        "uncompressed_sha256": "eb25e67811784f8d8be3e28188ed8fd8c999441e056f30ed9b134e57cfe30314",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/8871006ffb75b4c1ad431cac7d57bf43ac4ae7dbab01f020cf81aa00911b3cfe/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "8871006ffb75b4c1ad431cac7d57bf43ac4ae7dbab01f020cf81aa00911b3cfe": {
+          "path": "records/dfe9caf639ee9b6c2a88426fbb7b11659737162f570776e713c1e91bfa4f6f09.json.gz",
+          "sha256": "b277a31e110c2562ac7652d553183fc57ee05891c291d58e10262fc33a369b3f",
+          "uncompressed_sha256": "dfe9caf639ee9b6c2a88426fbb7b11659737162f570776e713c1e91bfa4f6f09",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/8871006ffb75b4c1ad431cac7d57bf43ac4ae7dbab01f020cf81aa00911b3cfe/measurement/rows/8871006ffb75b4c1ad431cac7d57bf43ac4ae7dbab01f020cf81aa00911b3cfe.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/f117ce29c648bf2fdc20b14c8eafeb512f561f55f88702be024d6ec94c9016a3/measurement/results.json",
+      "original_sha256": "c83458a2246520b5ebe39b7597c6f2f85f30eca66c016a2426d3ae4d7d1f613f",
+      "checkpoint": {
+        "path": "records/c83458a2246520b5ebe39b7597c6f2f85f30eca66c016a2426d3ae4d7d1f613f.json.gz",
+        "sha256": "06dc46fd9b8baadcbc671820a3c97782a70b604785a2852cc90da0f5768a485a",
+        "uncompressed_sha256": "c83458a2246520b5ebe39b7597c6f2f85f30eca66c016a2426d3ae4d7d1f613f",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/f117ce29c648bf2fdc20b14c8eafeb512f561f55f88702be024d6ec94c9016a3/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/d73ecdda7548818fb7545c858554c09fed78f4a33ea93812f734993046591252.json.gz",
+        "sha256": "f237fa498c90e119e9ab8a3d5b37f3ad6a477cfab6d4b79d1769bab3b1097e00",
+        "uncompressed_sha256": "d73ecdda7548818fb7545c858554c09fed78f4a33ea93812f734993046591252",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/f117ce29c648bf2fdc20b14c8eafeb512f561f55f88702be024d6ec94c9016a3/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "f117ce29c648bf2fdc20b14c8eafeb512f561f55f88702be024d6ec94c9016a3": {
+          "path": "records/0c571a29f0c891fa61479416710de235df1c42402ee3d21f926724e971d37207.json.gz",
+          "sha256": "bd69c51029a6014075f580d777fdd122f25a9b055db24f8a07ee92d38cc3321a",
+          "uncompressed_sha256": "0c571a29f0c891fa61479416710de235df1c42402ee3d21f926724e971d37207",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/f117ce29c648bf2fdc20b14c8eafeb512f561f55f88702be024d6ec94c9016a3/measurement/rows/f117ce29c648bf2fdc20b14c8eafeb512f561f55f88702be024d6ec94c9016a3.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/1321f6f841e2dd85f4881bb95f251a165a2439ba76d9cb05293936ae04a7e54e/measurement/results.json",
+      "original_sha256": "2d4ba61fccfada5def1c5283a79f01750c155280d61fe41707eddfbe6e3ba860",
+      "checkpoint": {
+        "path": "records/2d4ba61fccfada5def1c5283a79f01750c155280d61fe41707eddfbe6e3ba860.json.gz",
+        "sha256": "91233104c443e3d3d09171e42d7f3752747c0f72a0ed9b7815e535aa0f704ef7",
+        "uncompressed_sha256": "2d4ba61fccfada5def1c5283a79f01750c155280d61fe41707eddfbe6e3ba860",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/1321f6f841e2dd85f4881bb95f251a165a2439ba76d9cb05293936ae04a7e54e/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/7a94d589b41627c537e518bb77b931334ba12ae0b7951515054f1acc5ab60c38.json.gz",
+        "sha256": "c699872c750cb47d511cbbfd02a641b8425fae255593d52bc654f03484f824e4",
+        "uncompressed_sha256": "7a94d589b41627c537e518bb77b931334ba12ae0b7951515054f1acc5ab60c38",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/1321f6f841e2dd85f4881bb95f251a165a2439ba76d9cb05293936ae04a7e54e/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "1321f6f841e2dd85f4881bb95f251a165a2439ba76d9cb05293936ae04a7e54e": {
+          "path": "records/b7cf3a4c935eac598fa56cf2c02e9c62d0fc761714b74b0d4bff0e5e06b6c0b5.json.gz",
+          "sha256": "b5e663dc9978a9f8f6858bb2f5fc1536dd06a7eaa937f986d4e46654d8cd855f",
+          "uncompressed_sha256": "b7cf3a4c935eac598fa56cf2c02e9c62d0fc761714b74b0d4bff0e5e06b6c0b5",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/1321f6f841e2dd85f4881bb95f251a165a2439ba76d9cb05293936ae04a7e54e/measurement/rows/1321f6f841e2dd85f4881bb95f251a165a2439ba76d9cb05293936ae04a7e54e.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c5950c9acb8c519ffcb9127e8f9bef0e450b5998833448f14df8ac80d89c7938/measurement/results.json",
+      "original_sha256": "0aec9bff8d76a6bf811507238bebd62ffacb8076fb17e488209aea9a05cd24d3",
+      "checkpoint": {
+        "path": "records/0aec9bff8d76a6bf811507238bebd62ffacb8076fb17e488209aea9a05cd24d3.json.gz",
+        "sha256": "35bcb5b20e5abf23795fcb10b3ef9cc3fa7ce8d9f9384bfdd4d7ba893fe29031",
+        "uncompressed_sha256": "0aec9bff8d76a6bf811507238bebd62ffacb8076fb17e488209aea9a05cd24d3",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c5950c9acb8c519ffcb9127e8f9bef0e450b5998833448f14df8ac80d89c7938/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/f809baab9f2f17ac1b5cfe7868e1eaa97fc206c1b01efac1b7a024a7590bbca6.json.gz",
+        "sha256": "2f7395b208321e4221c28316371518fdd4974434482e2329c6eff62169942c2c",
+        "uncompressed_sha256": "f809baab9f2f17ac1b5cfe7868e1eaa97fc206c1b01efac1b7a024a7590bbca6",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c5950c9acb8c519ffcb9127e8f9bef0e450b5998833448f14df8ac80d89c7938/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "c5950c9acb8c519ffcb9127e8f9bef0e450b5998833448f14df8ac80d89c7938": {
+          "path": "records/48fbf497196635b2c06402d3f8319c874021856c876fc92708d49d8483d044ed.json.gz",
+          "sha256": "a0d07ad576788ad91beee85b817b36cb7e19b1e324ec99a4ff14b98631e50e25",
+          "uncompressed_sha256": "48fbf497196635b2c06402d3f8319c874021856c876fc92708d49d8483d044ed",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c5950c9acb8c519ffcb9127e8f9bef0e450b5998833448f14df8ac80d89c7938/measurement/rows/c5950c9acb8c519ffcb9127e8f9bef0e450b5998833448f14df8ac80d89c7938.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/9527a8c264ca4a519acc9c5df23642952f7b72c6ac9de8fced7d4ea253842225/measurement/results.json",
+      "original_sha256": "b78269f6c24792ea5929ce6d7c3e0d5f32ef53a69d0675eba8cbae7f4d2025e8",
+      "checkpoint": {
+        "path": "records/b78269f6c24792ea5929ce6d7c3e0d5f32ef53a69d0675eba8cbae7f4d2025e8.json.gz",
+        "sha256": "b661f4c36fbea9d25fa58b81ae92e022296c114753b1b384df4589f028a174be",
+        "uncompressed_sha256": "b78269f6c24792ea5929ce6d7c3e0d5f32ef53a69d0675eba8cbae7f4d2025e8",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/9527a8c264ca4a519acc9c5df23642952f7b72c6ac9de8fced7d4ea253842225/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/8294db096fd9439b3eb9a92fb93786473e2992e6d113fcd4e6e3ddd1de13bdb0.json.gz",
+        "sha256": "05adaf95779aad491b7f94b051b969c9e20653966c37853811e14e5b4509f122",
+        "uncompressed_sha256": "8294db096fd9439b3eb9a92fb93786473e2992e6d113fcd4e6e3ddd1de13bdb0",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/9527a8c264ca4a519acc9c5df23642952f7b72c6ac9de8fced7d4ea253842225/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "9527a8c264ca4a519acc9c5df23642952f7b72c6ac9de8fced7d4ea253842225": {
+          "path": "records/bcd41ac1d15e5548391a3f75e419e0f8352cac3767db23fc0427716c1f9745ff.json.gz",
+          "sha256": "d9adb7142627c53d348be440342b02d739995e82efe43722c072d29cdc85940a",
+          "uncompressed_sha256": "bcd41ac1d15e5548391a3f75e419e0f8352cac3767db23fc0427716c1f9745ff",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/9527a8c264ca4a519acc9c5df23642952f7b72c6ac9de8fced7d4ea253842225/measurement/rows/9527a8c264ca4a519acc9c5df23642952f7b72c6ac9de8fced7d4ea253842225.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/2b06fa7d9ff2c791936f527661f7032b765e34899140f405f1cdff1b703a9baa/measurement/results.json",
+      "original_sha256": "40329e63eed459e9da6d02f7dda1554ca2a338db9cbb0ea39ba8c3f9e4f1830f",
+      "checkpoint": {
+        "path": "records/40329e63eed459e9da6d02f7dda1554ca2a338db9cbb0ea39ba8c3f9e4f1830f.json.gz",
+        "sha256": "1c462ebee58d2ed9eb0507d2ad5bb4cc806dff77eecc2b450523e03d8b957ce4",
+        "uncompressed_sha256": "40329e63eed459e9da6d02f7dda1554ca2a338db9cbb0ea39ba8c3f9e4f1830f",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/2b06fa7d9ff2c791936f527661f7032b765e34899140f405f1cdff1b703a9baa/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/83b8fa0fb7e40e961ba7c668e200fb5faba877522959c869ba958a4f4a304ea0.json.gz",
+        "sha256": "2d42a3e427af642f3622caaa5425f02ef873b5a7e67b9954621fb73f8cb3b3e5",
+        "uncompressed_sha256": "83b8fa0fb7e40e961ba7c668e200fb5faba877522959c869ba958a4f4a304ea0",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/2b06fa7d9ff2c791936f527661f7032b765e34899140f405f1cdff1b703a9baa/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "2b06fa7d9ff2c791936f527661f7032b765e34899140f405f1cdff1b703a9baa": {
+          "path": "records/a6dafde4792e83cd57acf7f29414bc2d79972720745ec3f0a274fc81068805e8.json.gz",
+          "sha256": "2469b5a4bbdbcdc92adaa1814db02e8dfcaa3e0fda0d35dab73f076996576a04",
+          "uncompressed_sha256": "a6dafde4792e83cd57acf7f29414bc2d79972720745ec3f0a274fc81068805e8",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/2b06fa7d9ff2c791936f527661f7032b765e34899140f405f1cdff1b703a9baa/measurement/rows/2b06fa7d9ff2c791936f527661f7032b765e34899140f405f1cdff1b703a9baa.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/749708f24939c6d2b1f191c4c527944e6fb0caa1329430f45938be05ecbbbb30/measurement/results.json",
+      "original_sha256": "5f9e8e9ec5c69612fa3b0b81b99214c9af4ff0c459099bf8ba957a483cab81e0",
+      "checkpoint": {
+        "path": "records/5f9e8e9ec5c69612fa3b0b81b99214c9af4ff0c459099bf8ba957a483cab81e0.json.gz",
+        "sha256": "c0124a3ebc839c9c0ef4f8f5b9e8bf35f0db39e8e068514084fca0e635d5fd6c",
+        "uncompressed_sha256": "5f9e8e9ec5c69612fa3b0b81b99214c9af4ff0c459099bf8ba957a483cab81e0",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/749708f24939c6d2b1f191c4c527944e6fb0caa1329430f45938be05ecbbbb30/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/814aadfbc7304b8a3103f2da97126aeb65ef7951b4b145ea23a4db6d4b914de8.json.gz",
+        "sha256": "ad423f41646146ac5a89bfea5bf8d0c2928beedfd28d59d4098befe73714e1db",
+        "uncompressed_sha256": "814aadfbc7304b8a3103f2da97126aeb65ef7951b4b145ea23a4db6d4b914de8",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/749708f24939c6d2b1f191c4c527944e6fb0caa1329430f45938be05ecbbbb30/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "749708f24939c6d2b1f191c4c527944e6fb0caa1329430f45938be05ecbbbb30": {
+          "path": "records/4f058846da12121a1b999f3300432f24bffbb87a0f636aaf1435ca8558e3c14d.json.gz",
+          "sha256": "84daa0bc71b274cbff84581c2367c2cac7946dd1101b6b8380b8e20aa9c8355f",
+          "uncompressed_sha256": "4f058846da12121a1b999f3300432f24bffbb87a0f636aaf1435ca8558e3c14d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/749708f24939c6d2b1f191c4c527944e6fb0caa1329430f45938be05ecbbbb30/measurement/rows/749708f24939c6d2b1f191c4c527944e6fb0caa1329430f45938be05ecbbbb30.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5afa13b20affe0fe852a5bc6c90745381da9d3a297b1cc86a51b1a9c0931bb87/measurement/results.json",
+      "original_sha256": "eaa5fa33c7416484b9fbe02649644c4f63d5981597a993e1cd3f2001b8115468",
+      "checkpoint": {
+        "path": "records/eaa5fa33c7416484b9fbe02649644c4f63d5981597a993e1cd3f2001b8115468.json.gz",
+        "sha256": "ba6cd9ce2132db4406dce4328e14320ec47f637bc943b63d132eb54cb70349ec",
+        "uncompressed_sha256": "eaa5fa33c7416484b9fbe02649644c4f63d5981597a993e1cd3f2001b8115468",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5afa13b20affe0fe852a5bc6c90745381da9d3a297b1cc86a51b1a9c0931bb87/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/14ce86c22e1f7f8929f689a8ea81d7dae0b1dbe53b04103302af8de52d7969a2.json.gz",
+        "sha256": "2e93c36844cbc05e7039b48d1371949252f4b71fbffc87adf17c52f6868855fa",
+        "uncompressed_sha256": "14ce86c22e1f7f8929f689a8ea81d7dae0b1dbe53b04103302af8de52d7969a2",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5afa13b20affe0fe852a5bc6c90745381da9d3a297b1cc86a51b1a9c0931bb87/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "5afa13b20affe0fe852a5bc6c90745381da9d3a297b1cc86a51b1a9c0931bb87": {
+          "path": "records/f56c67179d7298fa9f6a1b3c13bc1b4d3bff29bcad1247ed4595cb81dbd6c06d.json.gz",
+          "sha256": "01cfd87562e53b1202273c454ee31ac2981c5396a1d7b02640fcb6a09f49ee6f",
+          "uncompressed_sha256": "f56c67179d7298fa9f6a1b3c13bc1b4d3bff29bcad1247ed4595cb81dbd6c06d",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/5afa13b20affe0fe852a5bc6c90745381da9d3a297b1cc86a51b1a9c0931bb87/measurement/rows/5afa13b20affe0fe852a5bc6c90745381da9d3a297b1cc86a51b1a9c0931bb87.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/124c1b27b0816609f759c112e1d7c83e7fbf56a2c927c8f2ccf93dfdf5b58e0c/measurement/results.json",
+      "original_sha256": "69ebad934d3b9ff03e662bf0a090ff56516b854ce6ffc693c4ad2520756776be",
+      "checkpoint": {
+        "path": "records/69ebad934d3b9ff03e662bf0a090ff56516b854ce6ffc693c4ad2520756776be.json.gz",
+        "sha256": "829e2c40d4c472d77250f28be461d650bb0f63fc49a5ba1d204bbe511df7d8f0",
+        "uncompressed_sha256": "69ebad934d3b9ff03e662bf0a090ff56516b854ce6ffc693c4ad2520756776be",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/124c1b27b0816609f759c112e1d7c83e7fbf56a2c927c8f2ccf93dfdf5b58e0c/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/02f436b059e38f413585f82fe1a6d3b249388e763388e826302a27ad0c9d8621.json.gz",
+        "sha256": "3524f67be4de958b5e3426b1fce9b2c4bc7f81f13fba81271befe8d140f43e26",
+        "uncompressed_sha256": "02f436b059e38f413585f82fe1a6d3b249388e763388e826302a27ad0c9d8621",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/124c1b27b0816609f759c112e1d7c83e7fbf56a2c927c8f2ccf93dfdf5b58e0c/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "124c1b27b0816609f759c112e1d7c83e7fbf56a2c927c8f2ccf93dfdf5b58e0c": {
+          "path": "records/54e4f92b3df111a56fd95c1b9120ee97d5ceee300dacea5f0d4423d5f1811fb1.json.gz",
+          "sha256": "cde1cf19ea50f928a778826e34f9cc57c26c0c6bb4f17304baa12083c76fbc45",
+          "uncompressed_sha256": "54e4f92b3df111a56fd95c1b9120ee97d5ceee300dacea5f0d4423d5f1811fb1",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/124c1b27b0816609f759c112e1d7c83e7fbf56a2c927c8f2ccf93dfdf5b58e0c/measurement/rows/124c1b27b0816609f759c112e1d7c83e7fbf56a2c927c8f2ccf93dfdf5b58e0c.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c54a46f5fa929a3834ef13db0389e4b21ac80ecdd5aabdbdb6f7f99b18dc313a/measurement/results.json",
+      "original_sha256": "deef37b00d34cc718b2faa17304f44725c2401f68eaa9fb0667b9baf71c0dcc9",
+      "checkpoint": {
+        "path": "records/deef37b00d34cc718b2faa17304f44725c2401f68eaa9fb0667b9baf71c0dcc9.json.gz",
+        "sha256": "584b439ba0c12778b1d88964985731b856a427083f00ef3f506f09a74b0d1c2c",
+        "uncompressed_sha256": "deef37b00d34cc718b2faa17304f44725c2401f68eaa9fb0667b9baf71c0dcc9",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c54a46f5fa929a3834ef13db0389e4b21ac80ecdd5aabdbdb6f7f99b18dc313a/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/ad8fc1ae088bf471d8d168c2f3d19529aecf9028cc8e24da12aca89de6a3f913.json.gz",
+        "sha256": "4c49a97c0fad8aa5461bb718070bde46ad7042456b231872072797884df8d636",
+        "uncompressed_sha256": "ad8fc1ae088bf471d8d168c2f3d19529aecf9028cc8e24da12aca89de6a3f913",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c54a46f5fa929a3834ef13db0389e4b21ac80ecdd5aabdbdb6f7f99b18dc313a/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "c54a46f5fa929a3834ef13db0389e4b21ac80ecdd5aabdbdb6f7f99b18dc313a": {
+          "path": "records/ae88423fd41df00d58f099dd2d6118c396df1cb0ff6a5052b8440d2e0d5a05ca.json.gz",
+          "sha256": "dcbad653a61777a588aa9f89cb2ff0240d837f244713bfc105b6fba22ef2394c",
+          "uncompressed_sha256": "ae88423fd41df00d58f099dd2d6118c396df1cb0ff6a5052b8440d2e0d5a05ca",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/c54a46f5fa929a3834ef13db0389e4b21ac80ecdd5aabdbdb6f7f99b18dc313a/measurement/rows/c54a46f5fa929a3834ef13db0389e4b21ac80ecdd5aabdbdb6f7f99b18dc313a.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e57159fa02783b0d266ebcc670ae9bc4f600ceffc25aab82ecb3ce5469ccec66/measurement/results.json",
+      "original_sha256": "02e64c30281a7069b73ba2145feba6945b8cbfce4b044011e35599fd16c65e7e",
+      "checkpoint": {
+        "path": "records/02e64c30281a7069b73ba2145feba6945b8cbfce4b044011e35599fd16c65e7e.json.gz",
+        "sha256": "25aab94864b32d1fb305b7e397be314ad358c72e5699c615af266bace5bc0687",
+        "uncompressed_sha256": "02e64c30281a7069b73ba2145feba6945b8cbfce4b044011e35599fd16c65e7e",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e57159fa02783b0d266ebcc670ae9bc4f600ceffc25aab82ecb3ce5469ccec66/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/3193798a2fad79843db904cd468e540bbe09e19a2afb3a2bf65a0696e3ceb84a.json.gz",
+        "sha256": "22bf764a412cfe6b910338938bbef4fd3ad4fab851fd63186d3c0b347cf0371d",
+        "uncompressed_sha256": "3193798a2fad79843db904cd468e540bbe09e19a2afb3a2bf65a0696e3ceb84a",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e57159fa02783b0d266ebcc670ae9bc4f600ceffc25aab82ecb3ce5469ccec66/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "e57159fa02783b0d266ebcc670ae9bc4f600ceffc25aab82ecb3ce5469ccec66": {
+          "path": "records/ccd5cac99e68ccc48bc5f69777f211d15f86f61b98ed42f84dc7561fd9ce8adc.json.gz",
+          "sha256": "5b8af4ccbeb4562eeff8d60a918e09e1269059bb2e7cc7061dd523ec6766bd56",
+          "uncompressed_sha256": "ccd5cac99e68ccc48bc5f69777f211d15f86f61b98ed42f84dc7561fd9ce8adc",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/e57159fa02783b0d266ebcc670ae9bc4f600ceffc25aab82ecb3ce5469ccec66/measurement/rows/e57159fa02783b0d266ebcc670ae9bc4f600ceffc25aab82ecb3ce5469ccec66.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/570cbfc0749bcc7cf88d8699299c9697956d1a36d1687848d234d12a24f0100c/measurement/results.json",
+      "original_sha256": "d451282bd129096c0cc8cef8d81dc5c53c939bcd0f291ad3a0312e6f1afb49de",
+      "checkpoint": {
+        "path": "records/d451282bd129096c0cc8cef8d81dc5c53c939bcd0f291ad3a0312e6f1afb49de.json.gz",
+        "sha256": "68ac9ab8049670d45af4fcaa79f71c7e5ce12553d9e3fe1a237e4f7f50479ad5",
+        "uncompressed_sha256": "d451282bd129096c0cc8cef8d81dc5c53c939bcd0f291ad3a0312e6f1afb49de",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/570cbfc0749bcc7cf88d8699299c9697956d1a36d1687848d234d12a24f0100c/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/4e71d270441cd9d8580f46bea3e148019c423d1a3b0b2c05c0dbbfb34173f5cf.json.gz",
+        "sha256": "68406e6687f8c3f09da6b5a8d83d235f2c48f32e8c7b2354f308902ff2a906c4",
+        "uncompressed_sha256": "4e71d270441cd9d8580f46bea3e148019c423d1a3b0b2c05c0dbbfb34173f5cf",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/570cbfc0749bcc7cf88d8699299c9697956d1a36d1687848d234d12a24f0100c/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "570cbfc0749bcc7cf88d8699299c9697956d1a36d1687848d234d12a24f0100c": {
+          "path": "records/d508b75adafd8eb1a2a8411fc17c8dee459008c3c5a23e5b2bd24a1da5680387.json.gz",
+          "sha256": "e1ec02298aaa7742e35551204b27dfb04c4fc1aa598c444c4a334a87ab9c190f",
+          "uncompressed_sha256": "d508b75adafd8eb1a2a8411fc17c8dee459008c3c5a23e5b2bd24a1da5680387",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/570cbfc0749bcc7cf88d8699299c9697956d1a36d1687848d234d12a24f0100c/measurement/rows/570cbfc0749bcc7cf88d8699299c9697956d1a36d1687848d234d12a24f0100c.json",
+          "encoding": "json"
+        }
+      }
+    },
+    {
+      "original_path": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/3042bd7fb43640f328d3b7231edf653e123ef3be26cbac58fc499098d05cdba7/measurement/results.json",
+      "original_sha256": "00fb44262085dadbd5dcdd8a245cda0ef09fb33671762153a2975d467b3a79da",
+      "checkpoint": {
+        "path": "records/00fb44262085dadbd5dcdd8a245cda0ef09fb33671762153a2975d467b3a79da.json.gz",
+        "sha256": "6860dac6f7be481070ab6d4f57078504f98627f274151ab7b1cf3343a0c84659",
+        "uncompressed_sha256": "00fb44262085dadbd5dcdd8a245cda0ef09fb33671762153a2975d467b3a79da",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/3042bd7fb43640f328d3b7231edf653e123ef3be26cbac58fc499098d05cdba7/measurement/results.json",
+        "encoding": "json"
+      },
+      "population": {
+        "path": "records/01f468b8934a8d6698bd9aec0d72c7b22e98f14466158d9ff323bf158dd0a233.json.gz",
+        "sha256": "f11f56066d4ec76e169e467072d0422076ada8d26eaeda3268c4904732b7adce",
+        "uncompressed_sha256": "01f468b8934a8d6698bd9aec0d72c7b22e98f14466158d9ff323bf158dd0a233",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/3042bd7fb43640f328d3b7231edf653e123ef3be26cbac58fc499098d05cdba7/manifest.json",
+        "encoding": "json"
+      },
+      "rows": {
+        "3042bd7fb43640f328d3b7231edf653e123ef3be26cbac58fc499098d05cdba7": {
+          "path": "records/aec62d8e2542089eb329b20f1cb40bd860b2be3d834b5163fba525ee03d716df.json.gz",
+          "sha256": "762bc93630be2d5a14ee22bbef1a24c2b9adda1e7adb16fb5498a241f693eb81",
+          "uncompressed_sha256": "aec62d8e2542089eb329b20f1cb40bd860b2be3d834b5163fba525ee03d716df",
+          "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cases/3042bd7fb43640f328d3b7231edf653e123ef3be26cbac58fc499098d05cdba7/measurement/rows/3042bd7fb43640f328d3b7231edf653e123ef3be26cbac58fc499098d05cdba7.json",
+          "encoding": "json"
+        }
+      }
+    }
+  ],
+  "measured_source_commit": "a305d97769a0c005591a8bbe4e14ae1a238b7e83",
+  "cpu_ranker_source": {
+    "path": "records/5e5de1e502bf114c88e27f3c3bdda425f8ed198896e0827d0f4f412faac1aa34.txt.gz",
+    "sha256": "95999878a3002f192f3faaf1d41777b0c211aea07974dcb2848de79daa76a639",
+    "uncompressed_sha256": "5e5de1e502bf114c88e27f3c3bdda425f8ed198896e0827d0f4f412faac1aa34",
+    "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/parallel_static_ranker.py",
+    "encoding": "utf8"
+  },
+  "publication_gate": "complete-with-array-replay-audit",
+  "numerical_array_audit": {
+    "path": "records/34d5beb6cdb3a403285027c82e03adc2be98d487659d875d157a8b7e2377fc8d.json.gz",
+    "sha256": "b961f11271f9bac38e202a5d5a0940807c4fa09e9da76758f3374140583f2e0b",
+    "uncompressed_sha256": "34d5beb6cdb3a403285027c82e03adc2be98d487659d875d157a8b7e2377fc8d",
+    "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/full66-array-audit/status.json",
+    "encoding": "json"
+  },
+  "supporting_evidence": [
+    {
+      "label": "calibration_release",
+      "record": {
+        "path": "records/11666eb427aabc39e97ea913a6995c12c77a62564c78bafa8c3d56310941c7ce.json.gz",
+        "sha256": "961edef28d84e8dfbca842df768a1bec8e92b410e4b58c2e4826650b3f48216e",
+        "uncompressed_sha256": "11666eb427aabc39e97ea913a6995c12c77a62564c78bafa8c3d56310941c7ce",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/full66-normal/released-calibration-audit.json",
+        "encoding": "json"
+      }
+    },
+    {
+      "label": "cpu_ranker_equivalence",
+      "record": {
+        "path": "records/5262c9c8f268a1c655e4bda22550407d9dc693bc45343de2d735732594d550a5.json.gz",
+        "sha256": "b937d2be806757280f0141f2cfe5906866434c2f472d3f0f28366b6af089ab68",
+        "uncompressed_sha256": "5262c9c8f268a1c655e4bda22550407d9dc693bc45343de2d735732594d550a5",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/full66-normal/parallel-ranker-validation/equivalence.json",
+        "encoding": "json"
+      }
+    },
+    {
+      "label": "cpu_ranker_performance",
+      "record": {
+        "path": "records/1392b90583c7a8a6ba10914a7defafcca2847f73de00708ceb92042e4fbe9068.json.gz",
+        "sha256": "5749a4065e2a4eda86d01a8eecba859d68878686cd63d59108c8fd1e828cfa04",
+        "uncompressed_sha256": "1392b90583c7a8a6ba10914a7defafcca2847f73de00708ceb92042e4fbe9068",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/full66-normal/parallel-ranker-validation/performance.json",
+        "encoding": "json"
+      }
+    },
+    {
+      "label": "cpu_ranker_release",
+      "record": {
+        "path": "records/c2c0bd37abf9233a40439e56ea9a428606e48491b9d408026fe51e5c62a5f4e0.json.gz",
+        "sha256": "077835e8a34fae111ba618b7b24c030755de88fb322b81ec7c21301f50aa21bb",
+        "uncompressed_sha256": "c2c0bd37abf9233a40439e56ea9a428606e48491b9d408026fe51e5c62a5f4e0",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/full66-normal/parallel-ranker-release.json",
+        "encoding": "json"
+      }
+    },
+    {
+      "label": "cpu_ranker_transition",
+      "record": {
+        "path": "records/a1129bfc72344653f060e9121ed606fdeddb358e81e69b30b6a55082796f7646.json.gz",
+        "sha256": "d77d39cc95252d8014ece35b6a56da0eaa3f3af7be93622c9a0d2ab8e8b394d4",
+        "uncompressed_sha256": "a1129bfc72344653f060e9121ed606fdeddb358e81e69b30b6a55082796f7646",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/full66-isolated/cpu-planning-transition.json",
+        "encoding": "json"
+      }
+    },
+    {
+      "label": "original_status",
+      "record": {
+        "path": "records/02ac1d733f69938c9d565f400017bf1dd33c852b897f332b30f9bc0745485cc1.json.gz",
+        "sha256": "af4ef92583efa277a50fa8fe30423b3a8a88462e736d7542f6e7c63a23ca9e49",
+        "uncompressed_sha256": "02ac1d733f69938c9d565f400017bf1dd33c852b897f332b30f9bc0745485cc1",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/status.json",
+        "encoding": "json"
+      }
+    },
+    {
+      "label": "registry.json",
+      "record": {
+        "path": "records/e0cf2c39abf69ed502318f6749e03ddb0583804e3b91ddda2d55e60bc7f1b2d7.json.gz",
+        "sha256": "103127bc5ad89d3fc04deaf48fe30eecbdb3e667fb075d73e2231f3d19a09985",
+        "uncompressed_sha256": "e0cf2c39abf69ed502318f6749e03ddb0583804e3b91ddda2d55e60bc7f1b2d7",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/calibration/finalized/registry.json",
+        "encoding": "json"
+      }
+    },
+    {
+      "label": "selector_replay.json",
+      "record": {
+        "path": "records/f566ddc6c5b74ed3f3e53246556622de923333b56b4ac3047b34d386fe21e39c.json.gz",
+        "sha256": "799d807f0ffa9b442efc3bdde2c648b480798e30574dfc8b31c5c7936804b67d",
+        "uncompressed_sha256": "f566ddc6c5b74ed3f3e53246556622de923333b56b4ac3047b34d386fe21e39c",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/calibration/finalized/selector_replay.json",
+        "encoding": "json"
+      }
+    },
+    {
+      "label": "cost_model.json",
+      "record": {
+        "path": "records/8b82da0fa71fb6f807abb3b3f9452faa0cb973720a01c4d15bc93852f2491c43.json.gz",
+        "sha256": "d726eb844faa91335173b65ed4345f20e9fe6797bcf390f6846394494807e674",
+        "uncompressed_sha256": "8b82da0fa71fb6f807abb3b3f9452faa0cb973720a01c4d15bc93852f2491c43",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/calibration/finalized/cost_model.json",
+        "encoding": "json"
+      }
+    },
+    {
+      "label": "calibration_device.json",
+      "record": {
+        "path": "records/7512134c2514b77a04c6e0ea008d29ebbb34c1ed1f6391443eb0c7fe2ff6fa22.json.gz",
+        "sha256": "0785832c629864196bd1a1c2800625d82339149426732ea8f3a483c127adfadb",
+        "uncompressed_sha256": "7512134c2514b77a04c6e0ea008d29ebbb34c1ed1f6391443eb0c7fe2ff6fa22",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9/main/full/run/calibration/finalized/calibration_device.json",
+        "encoding": "json"
+      }
+    },
+    {
+      "label": "full66_workflow_build_patch",
+      "record": {
+        "path": "records/1b5e77d38f6ca96b98533933784b9e8e2fe37b1e0ba97eb4cb59a33851d4e1d0.txt.gz",
+        "sha256": "38032203a5dde85415641cf911fc133861f44837efa9ff1421d33acf4655888f",
+        "uncompressed_sha256": "1b5e77d38f6ca96b98533933784b9e8e2fe37b1e0ba97eb4cb59a33851d4e1d0",
+        "original": "git diff --binary a305d97769a0c005591a8bbe4e14ae1a238b7e83",
+        "encoding": "utf8"
+      }
+    },
+    {
+      "label": "untracked_source:build-pro6000-sm120/generated/build_fingerprint.hpp",
+      "record": {
+        "path": "records/b2815e163f9b5628037701efea717f5e01dba69b981c83c21fc9f8d0ba646c56.txt.gz",
+        "sha256": "78e9f11599984ea801b0ecfc21b7e9d83dd4abafe01013739f68e5d502c7b18e",
+        "uncompressed_sha256": "b2815e163f9b5628037701efea717f5e01dba69b981c83c21fc9f8d0ba646c56",
+        "original": "/home/wt/git/cuButterfly-issue9/build-pro6000-sm120/generated/build_fingerprint.hpp",
+        "encoding": "utf8"
+      }
+    },
+    {
+      "label": "untracked_source:scripts/online_score_cache.py",
+      "record": {
+        "path": "records/f6265c5bd1abc37c306b00e89172c6ed2238c09d783d7609bd38bb6d4671e093.txt.gz",
+        "sha256": "4393a009a667a38f0892637b9b3827f50a0bbec87978c85b60a2cbd96ee19208",
+        "uncompressed_sha256": "f6265c5bd1abc37c306b00e89172c6ed2238c09d783d7609bd38bb6d4671e093",
+        "original": "/home/wt/git/cuButterfly-issue9/scripts/online_score_cache.py",
+        "encoding": "utf8"
+      }
+    },
+    {
+      "label": "untracked_source:scripts/search_frontier_cache.py",
+      "record": {
+        "path": "records/c55df73b09f515889b850aa4dcf5852b1c6cc937a5d3b8257df93df5214aa672.txt.gz",
+        "sha256": "f00dd5c4729fe80da35fea0fd54ec4cbdee95bb2ceb033aabb5e482bdfccaf11",
+        "uncompressed_sha256": "c55df73b09f515889b850aa4dcf5852b1c6cc937a5d3b8257df93df5214aa672",
+        "original": "/home/wt/git/cuButterfly-issue9/scripts/search_frontier_cache.py",
+        "encoding": "utf8"
+      }
+    },
+    {
+      "label": "host_orchestration_source:run_isolated_full66.py",
+      "record": {
+        "path": "records/9650cf9864d8c8f6539e456ec545345ecd9388ab0eed922f77e060786d352312.txt.gz",
+        "sha256": "cef7607ffd5468bc9e5f8dee1608e6ca6e51170c2fb0f5d9885bbae3e2021d80",
+        "uncompressed_sha256": "9650cf9864d8c8f6539e456ec545345ecd9388ab0eed922f77e060786d352312",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/run_isolated_full66.py",
+        "encoding": "utf8"
+      }
+    },
+    {
+      "label": "host_orchestration_source:prepare_isolated_full66.py",
+      "record": {
+        "path": "records/20c10a1faf19f09b7f923822a904bf61dbb8575d5b5678bdd467eacaa575ac3d.txt.gz",
+        "sha256": "e83c209cfa1eb0a604fc3f63df9015ba4c9ee69004118f1511d106ec052aaab3",
+        "uncompressed_sha256": "20c10a1faf19f09b7f923822a904bf61dbb8575d5b5678bdd467eacaa575ac3d",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/prepare_isolated_full66.py",
+        "encoding": "utf8"
+      }
+    },
+    {
+      "label": "host_orchestration_source:report_isolated_full66.py",
+      "record": {
+        "path": "records/85ccd05096dd84c93ec6f6ca484c1443ef61614aef3e7f08b45fa3aed2d35190.txt.gz",
+        "sha256": "49a643e149121f9d2c9239172be7234432cdcff8c51a5dab1cbe8e47a3aef75c",
+        "uncompressed_sha256": "85ccd05096dd84c93ec6f6ca484c1443ef61614aef3e7f08b45fa3aed2d35190",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/report_isolated_full66.py",
+        "encoding": "utf8"
+      }
+    },
+    {
+      "label": "host_orchestration_source:recover_parallel_ranker_signal.py",
+      "record": {
+        "path": "records/c02e00070578530ca7bcd601c7b4b2ad1f47f743d266804617eef06f14cfde68.txt.gz",
+        "sha256": "b1b1678f949ac7ebc084892d005cfba6b079fa5001140b34bcac54f92277fb0d",
+        "uncompressed_sha256": "c02e00070578530ca7bcd601c7b4b2ad1f47f743d266804617eef06f14cfde68",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/recover_parallel_ranker_signal.py",
+        "encoding": "utf8"
+      }
+    },
+    {
+      "label": "host_orchestration_source:recover_cpu_verification_pool.py",
+      "record": {
+        "path": "records/e9e46cde11cf8268d853bf5f3f6eab69eb062780139d9c5e009a7a0b64dd82fe.txt.gz",
+        "sha256": "ab9d58ff7d2e01121c7abc9c9c19c1acdbf605f07ed887db915fbd2eebf7d3ba",
+        "uncompressed_sha256": "e9e46cde11cf8268d853bf5f3f6eab69eb062780139d9c5e009a7a0b64dd82fe",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/recover_cpu_verification_pool.py",
+        "encoding": "utf8"
+      }
+    },
+    {
+      "label": "host_orchestration_source:retry_interrupted_compilation.py",
+      "record": {
+        "path": "records/fc4d1a5023a54b9ade1581c42bdf825d3ad6239fc1dde19ca81bd2c34aa4328a.txt.gz",
+        "sha256": "3aee802c772bc23774eb4877a205cd14d8966974d5c71d2e1ea8731873b57e89",
+        "uncompressed_sha256": "fc4d1a5023a54b9ade1581c42bdf825d3ad6239fc1dde19ca81bd2c34aa4328a",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/retry_interrupted_compilation.py",
+        "encoding": "utf8"
+      }
+    },
+    {
+      "label": "host_orchestration_source:run_full66_compile_boost.py",
+      "record": {
+        "path": "records/9ffc233921ad2b050a81afb12190d58670f98bd3473556fd4cbba69f14c79995.txt.gz",
+        "sha256": "beda09a3c35fb4279066790bdb02284ffb8acf8bfbae822ff900aedb487dde0c",
+        "uncompressed_sha256": "9ffc233921ad2b050a81afb12190d58670f98bd3473556fd4cbba69f14c79995",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/run_full66_compile_boost.py",
+        "encoding": "utf8"
+      }
+    },
+    {
+      "label": "host_orchestration_source:verified_ranker_environment.py",
+      "record": {
+        "path": "records/02b49b323fb6f21b38c9161caf0769a0c993db5e3e60e2a76398ef1d6566d4c4.txt.gz",
+        "sha256": "48163ac6125de40a7a3cf5667144e2bffdc7703414832464b1d49b21f812c374",
+        "uncompressed_sha256": "02b49b323fb6f21b38c9161caf0769a0c993db5e3e60e2a76398ef1d6566d4c4",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/verified_ranker_environment.py",
+        "encoding": "utf8"
+      }
+    },
+    {
+      "label": "host_orchestration_source:cpu_ranker_transition.py",
+      "record": {
+        "path": "records/bf9e2b2a830fbecab1cc0045f1173e57646ede978a6c4494f8670eb50432a208.txt.gz",
+        "sha256": "9109cb1060d95fffb2637f863ff8001d65ce4d75167a295e7a97da6187751bf6",
+        "uncompressed_sha256": "bf9e2b2a830fbecab1cc0045f1173e57646ede978a6c4494f8670eb50432a208",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/cpu_ranker_transition.py",
+        "encoding": "utf8"
+      }
+    },
+    {
+      "label": "array_replay_verifier_source",
+      "record": {
+        "path": "records/6e79a8532d7d1829d853a236f618fdec8960ec32abc8354b23ae5b76b66041f3.txt.gz",
+        "sha256": "369436bfaa0be0ef7f2c15941f9bc580c10ef6f5ded333081b3cababc2ca74c8",
+        "uncompressed_sha256": "6e79a8532d7d1829d853a236f618fdec8960ec32abc8354b23ae5b76b66041f3",
+        "original": "/home/wt/git/cuButterfly-issue9/results/pro6000-issue9-setup/audit_full66_arrays.py",
+        "encoding": "utf8"
+      }
+    }
+  ],
+  "local_verification": {
+    "observed_cases": 66,
+    "verified_error_artifacts": true,
+    "scope": "Original checkpoint loader verified every source row and full lossless error-array file hash before export. Arrays remain local; row error distributions and source identities are bundled. A partial export is a CPU preview, not Full66 completion."
+  }
+}

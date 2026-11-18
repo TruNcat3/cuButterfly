@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+cd /home/wt/git/cuButterfly-issue9
+source results/pro6000-issue9-setup/environment.sh
+export CUDA_VISIBLE_DEVICES=
+trap 'code=$?; echo "$code" > results/pro6000-issue9-setup/build.exit' EXIT
+bash scripts/prepare_research_target.sh --build-dir "$ISSUE9_BUILD" \
+  --cuda-arch 120 --prefix "$ISSUE9_BUILD/install" \
+  --python /home/wt/git/envs/cubutterfly-pro6000/bin/python3.11 \
+  --nvcc "$CUBUTTERFLY_NVCC" --mathdx-root "$CUBUTTERFLY_MATHDX_ROOT" \
+  --json-root /home/wt/git/cuButterfly/build-pro6000-sm120/_deps/nlohmann_json-src \
+  --shared --fft-codegen-mode on-demand --with-vkfft --jobs 4
