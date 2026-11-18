@@ -31,3 +31,8 @@ requests preserve seven complete-call samples; a CPU audit replays the recorded
 metrics from lossless actual/reference arrays. Floating accuracy review and the
 original formal driver's status remain explicit. The snapshot also includes the
 measured workflow/build patch and CPU planning source receipts.
+
+The [PRO6000 raw performance download](reports/PRO6000_RAW_DATA_20261118.md)
+provides CSV tables and 1,729 original timing samples, plus the published raw
+JSON records in a small ZIP with checksums. Large output arrays and binaries
+remain separate on the measurement host; numerical review and failures are retained.

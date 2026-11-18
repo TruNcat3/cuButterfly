@@ -1,0 +1,59 @@
+{
+  "schema": "cubutterfly-pro6000-performance-release-v1",
+  "release": "https://github.com/TruNcat3/cuButterfly/releases/tag/pro6000-performance-20261118",
+  "result_source_commit": "9731b35e01567efa4213a1beebab759bcb261b8a",
+  "original_timing_sample_rows": 1729,
+  "assets": [
+    {
+      "name": "PERFORMANCE_MANIFEST.json",
+      "bytes": 121747,
+      "sha256": "3b2417e36558b47f3530c82a009bb87836799d8f3dcb370b102fdb81d69a1677"
+    },
+    {
+      "name": "README.txt",
+      "bytes": 1595,
+      "sha256": "5b1720a2cb97d3f3755c4fab4f3d6d1c8fb193807721945e53be04dd0cc0515d"
+    },
+    {
+      "name": "SHA256SUMS",
+      "bytes": 806,
+      "sha256": "dfd2f1bc004fa42e2e7e2c9c71ac3204cbf5483c23909ac27f5735c946a3788e"
+    },
+    {
+      "name": "extensions_comparisons.csv",
+      "bytes": 144543,
+      "sha256": "62d4ddbeec0e3c7ebc453c72e4fc628e7ebf60407304df25ba375aac3ac4fd1d"
+    },
+    {
+      "name": "fixed_mapping_baselines.csv",
+      "bytes": 32717,
+      "sha256": "a6c84c4bc3c3b99ce255b08f2b72f9d6f97d86fa35a9346ad194c13b390cf00e"
+    },
+    {
+      "name": "fixed_mapping_performance.csv",
+      "bytes": 47332,
+      "sha256": "c4bb5813c227828ee608672165145623be9c7a708783c80e2aba2e53dc780d44"
+    },
+    {
+      "name": "full66_baselines.csv",
+      "bytes": 184826,
+      "sha256": "1ffe3e936a344a3c11303a7d9bcc8c19d4deb71bb3fb0a262281c1950ce4af15"
+    },
+    {
+      "name": "full66_cases.csv",
+      "bytes": 323057,
+      "sha256": "4f6d4410d329c72cbb10321864ac2e9c217cb925b3df40ca5858aa070682b582"
+    },
+    {
+      "name": "pro6000-performance-20261118.zip",
+      "bytes": 2750310,
+      "sha256": "07eef939da0abed61448de893f3f1bda14f9ed57957819f594e0b53eb99b7abe"
+    },
+    {
+      "name": "timing_samples.csv",
+      "bytes": 353115,
+      "sha256": "7bd236f3c4a373f74bd78f70cab523b44e67c7cfc297f2d06524d3e1bf489cb3"
+    }
+  ],
+  "scope": "Raw CSV tables and original timing JSON/JSON.gz records; excludes output-array payloads and runtime binaries. Cohorts, failures, unsupported comparators and floating error review remain separate."
+}
