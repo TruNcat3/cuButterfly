@@ -1,0 +1,59 @@
+{
+  "cyclic_ntt8": {
+    "files": [
+      {
+        "path": "pro6000_figure9_cyclic_ntt8.svg",
+        "sha256": "42e3cb13ab1840981340d7c7f6b5b11ebc6498ecc806591b2332db2ae920aa8e"
+      },
+      {
+        "path": "pro6000_figure9_cyclic_ntt8.pdf",
+        "sha256": "f914e4d178bb89bc2d907465633c845a60ba7d38fa6cc59f9c78fe2b9b026e95"
+      },
+      {
+        "path": "pro6000_figure9_cyclic_ntt8.png",
+        "sha256": "6fbd7a8895cc686f1012bf3aa8dd855e6d299e4c30821807b63da8021b73f7f5"
+      }
+    ],
+    "matplotlib_version": "3.11.2",
+    "source_sha256": "61e82bad4aabc8ee51a236006a0a15e916fde625060962dca600a61ba6cb489f",
+    "tables_sha256": "cc528104f717f8d967ecaca8dfc1898ae24c648d7c71bc64d23cabaa17085fb7"
+  },
+  "main": {
+    "files": [
+      {
+        "path": "pro6000_figure9_confirmed.svg",
+        "sha256": "8d3bc2d01f905f33a13d2fbfe02b26bb7aef66b07b5d47a66ec7712e0c8b10e4"
+      },
+      {
+        "path": "pro6000_figure9_confirmed.pdf",
+        "sha256": "ac2645ead912de773042f010055a21b2b88129754bda954a4ffbbd958a3c2487"
+      },
+      {
+        "path": "pro6000_figure9_confirmed.png",
+        "sha256": "0a2ce42e6d2f58e1229535b32e27f18efc63ad42a1aa71a6e590df367402aafd"
+      }
+    ],
+    "matplotlib_version": "3.11.2",
+    "source_sha256": "61e82bad4aabc8ee51a236006a0a15e916fde625060962dca600a61ba6cb489f",
+    "tables_sha256": "cc528104f717f8d967ecaca8dfc1898ae24c648d7c71bc64d23cabaa17085fb7"
+  },
+  "mma9": {
+    "files": [
+      {
+        "path": "pro6000_figure9_mma9_confirmed.svg",
+        "sha256": "a80b24535794b8849f1be20be8b9f750a1313856f3449643a6c48520e9fdddea"
+      },
+      {
+        "path": "pro6000_figure9_mma9_confirmed.pdf",
+        "sha256": "ce938f8012eb7923d4be1e736c997324b94f20985e80db4045620040ce8ca903"
+      },
+      {
+        "path": "pro6000_figure9_mma9_confirmed.png",
+        "sha256": "8f9c910098618bea3f4a8ae01d600e1775b1a37ee09712008a55c601fad9ce06"
+      }
+    ],
+    "matplotlib_version": "3.11.2",
+    "source_sha256": "61e82bad4aabc8ee51a236006a0a15e916fde625060962dca600a61ba6cb489f",
+    "tables_sha256": "cc528104f717f8d967ecaca8dfc1898ae24c648d7c71bc64d23cabaa17085fb7"
+  }
+}

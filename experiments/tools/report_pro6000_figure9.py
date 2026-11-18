@@ -103,7 +103,7 @@ def verify():
         for b in r['baselines']:
             if b.get('timing'):assert b['status']=='accuracy-review-required' and timing(b)
     cohorts['fft17-final']=[(e['row'],e['identity']) for e in records]
-    frows,_,_,_,provenance,_=fixed.verify(ROOT/'experiments/snapshots/pro6000_fixed_mapping_20261117')
+    frows,_,_,_,provenance,_=fixed.verify(ROOT/'experiments/snapshots/pro6000_fixed_mapping_20261117',require_array_payloads=False)
     cohorts['fixed-mapping']=[(r,dict(gpu_uuid=r['gpu_uuid'],gpu_name=r['gpu_name'],gpu_memory=r['gpu_memory'],library_sha256=r['library_sha256'],provenance=provenance)) for r in frows]
     audit=unpack(manifest['ntt_adapter_audit']);assert len(audit['rows'])==13
     for row in audit['rows']:
@@ -129,6 +129,12 @@ def own_valid(row):
             and row.get('correctness',{}).get('exact') is True
             and row.get('mapping_replay_correctness',{}).get('exact') is True
             and any(b['name']=='gpu-ntt' and b['status']=='correctness-failure' for b in row['baselines']))
+
+def backend_status(row):
+    """An external failure changes the campaign, not an exact own/replay verdict."""
+    if row['status']=='correctness-failure' and own_valid(row):
+        return 'pass'
+    return row['status']
 
 def reference_identity(cohort,info):
     """Keep native extension references distinct from historical wide diagnostics."""
@@ -172,7 +178,7 @@ def render():
                 input_orders=js(s['input_orders']),output_orders=js(s['output_orders']),placement=s['placement'],
                 input_strides=js(s['input_strides']),output_strides=js(s['output_strides']),input_batch_stride=s['input_batch_stride'],output_batch_stride=s['output_batch_stride'],
                 modulus=s.get('modulus'),modulus_bits=s['modulus'].bit_length() if s.get('modulus') else None,word_bits=s.get('word_bits'),roots=js(roots),
-                semantics=js(s),campaign_status=row['status'],own_usable=valid,input_sha256=input_info['input_sha256'],reference_sha256=reference_sha,reference_role=reference_role,
+                semantics=js(s),campaign_status=row['status'],own_backend_status=backend_status(row),own_usable=valid,input_sha256=input_info['input_sha256'],reference_sha256=reference_sha,reference_role=reference_role,
                 cubutterfly_selected_mapping=js(row.get('mapping')),gpu_uuid=identity.get('gpu_uuid'),gpu_name=identity.get('gpu_name'),gpu_memory=identity.get('gpu_memory',identity.get('gpu_total_memory')),
                 library_sha256=identity.get('library_sha256',identity.get('libraries',{}).get('main',{}).get('sha256')),
                 source_identity_sha256=intern(identity),source_row_sha256=digest(row),cpu_reference_backend=cpu_row['backend'],cpu_reference_us=cpu_us,
@@ -187,7 +193,9 @@ def render():
                     item=dict(status=('unsupported-semantic' if info and not info['supported'] else 'not-measured-in-this-cohort') if relevant else 'not-applicable',
                               reason=info.get('reason','') if info else ('No selected same-semantic GPU comparator for this operator/cohort' if relevant else 'Operator outside backend domain'))
                 value=timing(item);usable=(valid if name=='cubutterfly' else item['status'] in GOOD) and value is not None
-                backend_rows.append(dict(common,backend=name,status=item['status'],support_status=item.get('support_status',''),backend_usable=usable,reason=item.get('error',item.get('reason','')),
+                status=backend_status(row) if name=='cubutterfly' else item['status']
+                reason=('' if name=='cubutterfly' and status=='pass' else item.get('error',item.get('reason','')))
+                backend_rows.append(dict(common,backend=name,status=status,backend_status=status,source_backend_status=item['status'],support_status=item.get('support_status',''),backend_usable=usable,reason=reason,
                     latency_us=value,samples_ms=js(item.get('timing',{}).get('samples_ms')),timing_protocol=item.get('timing',{}).get('protocol',''),
                     correctness=js(item.get('correctness')),backend_metadata_sha256=intern(item.get('metadata',item.get('support_metadata',{}))),
                     gpu_speedup=value/own if name!='cubutterfly' and usable and valid else None,
@@ -201,8 +209,8 @@ def render():
     coverage=[]
     for cohort,rows in cohorts.items():
         selected=[r for r in backend_rows if r['cohort']==cohort]
-        counts=collections.Counter((r['operator'],r['precision'],r['backend'],r['status']) for r in selected)
-        coverage += [dict(cohort=cohort,operator=k[0],precision=k[1],backend=k[2],status=k[3],requests=v) for k,v in sorted(counts.items())]
+        counts=collections.Counter((r['operator'],r['precision'],r['backend'],r['backend_status']) for r in selected)
+        coverage += [dict(cohort=cohort,operator=k[0],precision=k[1],backend=k[2],status=k[3],backend_status=k[3],requests=v) for k,v in sorted(counts.items())]
     text=['# PRO6000 figure 9 operator comparison extension','',
       'The declared Full66 population remains FFT17, NTT13, FWHT13, subset-zeta8, superset-zeta8 and structured-2x2 seven. All 66 original requests, including negative results, are retained. The original FFT17, independent final-build FFT17, explicit ALLOW_FP16_MMA9 and fixed-mapping samples remain separate cohorts; overlapping requests never add weight to a combined mean.','',
       'The final-build FFT17 completes 17 exact-request MEASURE selections and typed DEFAULT cache replay checks on GPU0, then 47 matched complete-call pairs against cuFFT, VkFFT and GPU-FFT. Four GPU-FFT multi-axis requests remain unsupported. The measured library is a00188ff3415760359a52eb2e812153e0189c957ce5139c9ed4963d7d15c2c0b, using unchanged native SM120 CUDA objects and the documented host search fix. GPU1 calibration/profile files were bound as same-SKU priors; every selected request was actually measured on GPU0. This is not a validated static fallback or globally validated cost model.','',
@@ -219,6 +227,8 @@ def render():
       'Full66 FWHT FP32/FP64 requests do not match the current FP16-only HadaCore adapter; the gaps are explicit. Dao FHT has ten legal FP32 matches; the length limit and missing FP64 arithmetic explain the other three cells. MMA9 retains nine HadaCore pairs; Dao native-FP32 arithmetic cannot substitute for the requested native-FP16/MMA contract. Zeta and structured operators have native CPU baselines but no selected high-performance external GPU comparator.','',
       'The four main word32 NTT requests use q=2013265921 (31 bits), outside the pinned GPU-NTT Data32 q<2^30 range. No modulus or storage width was changed. The five rank-one word64 requests use a 60-bit modulus inside the Data64 q<2^61 range; two inverse pairs pass and three forward cases remain failed. Four multidimensional word64 requests are outside the bridge rank-one support. NTT word64 is never labeled FP64.','',
       'The canonical primitive root and inverse root are recorded per axis. The pinned bridge returns the canonical root. Applying mod-q reduction or bit reversal to the three original wrong outputs does not repair them. Existing hash-verified stage evidence shows correct first launches and divergence after the second; the isolated synchronized prefix diagnostic is exact. This does not identify or repair the internal kernel defect. The three external failures retain their original error states and no speedup; cuButterfly and its mapping replay are independently exact.','',
+      'Derived tables distinguish original campaign_status from each backend_status. For the three Full66 and two fixed-mapping external GPU-NTT failures, cuButterfly is pass because its own and mapping-replay integer checks are exact. GPU-NTT remains correctness-failure with no ratio. Original source rows and their hashes are unchanged; source_backend_status retains their original aggregate label. Coverage counts use backend_status.','',
+      'The [finite follow-up](PRO6000_FIGURE9_FOLLOWUP_20261118.md) adds a separately predeclared legal cyclic NTT8 population and three independent CPU confirmation processes. Original cohort timings, CPU records and GPU/GPU statistics above remain unchanged.','',
       '## Auditable tables','',
       '[Every request and full semantics](../snapshots/pro6000_figure9_20261118/requests.csv), [every GPU backend cell](../snapshots/pro6000_figure9_20261118/backends.csv), [local CPU records](../snapshots/pro6000_figure9_20261118/cpu.csv), [per-cohort statistics](../snapshots/pro6000_figure9_20261118/statistics.csv), [support counts](../snapshots/pro6000_figure9_20261118/coverage.csv), [A100 exact semantic intersections](../snapshots/pro6000_figure9_20261118/a100_intersections.csv), [CPU/GPU/library identity registry](../snapshots/pro6000_figure9_20261118/identities.json), and [source/checksum manifest](../snapshots/pro6000_figure9_20261118/manifest.json). Identity/metadata SHA columns resolve to complete records in identities.json, avoiding duplicated source inventories in every CSV cell.','',
       'A100 and PRO6000 retain their own build/device/cohort identities. The cross-platform table admits only exact semantic matches and keeps each PRO6000 cohort separate. The historical A100 snapshot does not include per-request input hashes here; those cells are explicitly unavailable, not invented. No pooled platform mean or claim of identical physical mappings is made.','',
@@ -247,5 +257,8 @@ def main():
             assert gzip.decompress(path.read_bytes())==gzip.decompress(raw),'Derived figure9 JSON differs: '+str(path)
         else:assert path.read_bytes()==raw,'Derived figure9 output differs: '+str(path)
     print('Verified figure9 complete cohorts, exact CPU input joins, timings, gaps, failures and independent denominators')
+    if (ROOT/'experiments/snapshots/pro6000_figure9_followup_20261118/manifest.json').exists() and not a.write:
+        import report_pro6000_figure9_followup
+        report_pro6000_figure9_followup.check()
 
 if __name__=='__main__':main()

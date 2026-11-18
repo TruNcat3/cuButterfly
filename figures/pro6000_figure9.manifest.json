@@ -15,8 +15,8 @@
       }
     ],
     "matplotlib_version": "3.11.2",
-    "source_sha256": "a55f54966adb37337081ff41942cab2ea96e47e8bf72975b778cf720a721e131",
-    "tables_sha256": "af4a0e40e5b466f053f0801f2ace8f12a6115100d2dacb533acad2d9631047ec"
+    "source_sha256": "61e82bad4aabc8ee51a236006a0a15e916fde625060962dca600a61ba6cb489f",
+    "tables_sha256": "cfce40b115a31ffada00c0e15e36ed66e9911a61a58bb0fb4d8ae09ff28ca079"
   },
   "mma9": {
     "files": [
@@ -34,7 +34,7 @@
       }
     ],
     "matplotlib_version": "3.11.2",
-    "source_sha256": "a55f54966adb37337081ff41942cab2ea96e47e8bf72975b778cf720a721e131",
-    "tables_sha256": "af4a0e40e5b466f053f0801f2ace8f12a6115100d2dacb533acad2d9631047ec"
+    "source_sha256": "61e82bad4aabc8ee51a236006a0a15e916fde625060962dca600a61ba6cb489f",
+    "tables_sha256": "cfce40b115a31ffada00c0e15e36ed66e9911a61a58bb0fb4d8ae09ff28ca079"
   }
 }

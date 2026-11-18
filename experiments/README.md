@@ -49,3 +49,12 @@ It publishes every request/backend cell, CPU-normalized figures, source/input
 identities, support boundaries and the root/order/residue audit of the three
 retained GPU-NTT failures. Original and final-build cohorts remain separate.
 Verify with `python3 experiments/tools/report_pro6000_figure9.py --check`.
+
+The [finite Figure9 follow-up](reports/PRO6000_FIGURE9_FOLLOWUP_20261118.md)
+separates backend status from campaign status, adds the predeclared legal
+cyclic NTT8 population (six valid GPU-NTT pairs, two retained external failures),
+and confirms only the 83 plot CPU denominators with three independent processes.
+CPU medians remain provisional because selected cores had observed interference.
+The standalone record package includes all earlier source checkpoints and
+verifier dependencies; it runs the same `--check` from an empty directory
+without GPU, external Python packages, output-array payloads or binaries.

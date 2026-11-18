@@ -69,7 +69,20 @@ def test_external_ntt_failure_does_not_poison_exact_own_or_create_ratio(tables):
     assert all(r['status'] == 'correctness-failure' and r['gpu_speedup'] is None
                and r['cpu_normalized'] is None and not r['backend_usable'] for r in bad)
     assert all(r['own_usable'] and r['backend_usable'] and r['cpu_normalized'] > 0
-               and json.loads(r['correctness'])['exact'] for r in own)
+               and json.loads(r['correctness'])['exact'] and r['backend_status']=='pass'
+               and r['status']=='pass' and r['source_backend_status']=='correctness-failure'
+               and not r['reason'] for r in own)
+
+
+def test_all_derived_statuses_respect_backend_ownership(tables):
+    for cohort, expected in [('full66',3),('fixed-mapping',2)]:
+        requests=[r for r in tables['requests'] if r['cohort']==cohort and r['campaign_status']=='correctness-failure']
+        assert len(requests)==expected
+        assert all(r['own_backend_status']=='pass' for r in requests)
+        assert not any(r['backend']=='cubutterfly' and r['backend_status']=='correctness-failure'
+                       for r in tables['coverage'] if r['cohort']==cohort)
+        assert sum(r['requests'] for r in tables['coverage'] if r['cohort']==cohort
+                   and r['backend']=='gpu-ntt' and r['backend_status']=='correctness-failure')==expected
 
 
 def test_statistics_never_pool_cohorts_precisions_or_metrics():

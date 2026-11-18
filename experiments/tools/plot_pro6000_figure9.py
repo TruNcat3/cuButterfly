@@ -75,13 +75,18 @@ def save(fig, output, stem, tables):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-dir', type=Path, default=report.ROOT / 'figures')
+    parser.add_argument('--confirmed', action='store_true', help='Use separate three-process CPU confirmation records')
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     plt.rcParams.update({'font.family': 'DejaVu Sans', 'svg.fonttype': 'none',
                          'svg.hashsalt': 'pro6000-figure9-20261118', 'font.size': 9,
                          'pdf.fonttype': 42})
-    tables, _ = report.render()
-    rows = tables['backends']
+    if args.confirmed:
+        import report_pro6000_figure9_followup as followup
+        tables,_=followup.render();rows=tables['normalized_backends']
+    else:
+        tables, _ = report.render();rows=tables['backends']
+    postfix='_confirmed' if args.confirmed else ''
     fig, axes = plt.subplots(6, 2, figsize=(12.8, 18))
     for op, pair, axis_row in zip(report.OPS,
             [('FP32', 'FP64'), ('word32', 'word64'), ('FP32', 'FP64'),
@@ -113,7 +118,9 @@ def main():
         'Floating results remain accuracy-review-required. HadaCore FP16 is outside Full66 FP32/FP64; see separate MMA9 panel.\n'
         'CPU/GPU values include required adapters; word32 HEXL is storage adapted. Request identities and all gaps are in the tables.',
         fontsize=9, linespacing=1.5)
-    receipts = {'main': save(fig, args.output_dir, 'pro6000_figure9', tables)}
+    if args.confirmed:
+        fig.text(.5,.952,'CPU: median of three process medians; observed interference retained; provisional',ha='center',fontsize=9)
+    receipts = {'main': save(fig, args.output_dir, 'pro6000_figure9'+postfix, tables)}
     fig, ax = plt.subplots(figsize=(6.9, 5.8))
     panel(ax, [r for r in rows if r['cohort'] == 'mma9-original'],
           ['cubutterfly', 'hadacore'], 'ALLOW_FP16_MMA9 · independent GPU0 cohort',
@@ -125,8 +132,22 @@ def main():
         'GPU library 3b0668f2…; all 9 requests retained; floating accuracy review pending.\n'
         'Box/range/dots: workloads, not confidence intervals. No pooled main/MMA9 mean.',
         fontsize=9, linespacing=1.5)
-    receipts['mma9'] = save(fig, args.output_dir, 'pro6000_figure9_mma9', tables)
-    (args.output_dir / 'pro6000_figure9.manifest.json').write_text(
+    if args.confirmed:
+        fig.text(.14,.01,'CPU: median of three process medians; shared-host provisional',fontsize=8)
+    receipts['mma9'] = save(fig, args.output_dir, 'pro6000_figure9_mma9'+postfix, tables)
+    if args.confirmed:
+        fig,axes=plt.subplots(1,2,figsize=(10,5.3))
+        for ax,precision in zip(axes,('word32','word64')):
+            panel(ax,[r for r in rows if r['cohort']=='pro6000-cyclic-ntt8' and r['precision']==precision],
+                  ['cubutterfly','gpu-ntt'],f'Independent cyclic NTT8 / {precision}',
+                  'HEXL, 1 thread; uint32 I/O → uint64 core' if precision=='word32' else 'HEXL, native uint64 core, 1 thread')
+        fig.subplots_adjust(left=.085,right=.98,top=.83,bottom=.29,wspace=.27)
+        fig.text(.085,.055,'N=65536, B=1/16, both directions; fixed independent 8-request population.\n'
+                 'GPU1 / 3b0668f2…; two GPU-NTT word64 forward failures excluded from ratios, own/replay exact.\n'
+                 'CPU: median of three process medians, shared-host provisional; all width conversions timed.\n'
+                 'Workload IQR, median, full range and individual requests; n differs where external calls fail.',fontsize=8,linespacing=1.5)
+        receipts['cyclic_ntt8']=save(fig,args.output_dir,'pro6000_figure9_cyclic_ntt8',tables)
+    (args.output_dir / ('pro6000_figure9'+postfix+'.manifest.json')).write_text(
         json.dumps(receipts, indent=2, sort_keys=True) + '\n')
     print('Exported verified main and adapted-MMA9 plots as SVG, PDF and PNG')
 

@@ -27,12 +27,16 @@ def source_wins(pairs,case_id):
 def label(row):
  s=row['descriptor']['semantics'];seed=row['fixed_seed']['semantics']
  return f"{seed['operator']} {seed['precision']} N={math.prod(s['shape'])} B={s['batch']} {'inverse' if s['inverse'] else 'forward'}"
-def verify(directory):
+def verify(directory,require_array_payloads=True):
  directory=Path(directory);manifest=load(directory/'manifest.json')
+ provenance=load(directory/'provenance.json')
+ array_files={a['path']:a for a in provenance['bundled_error_arrays']}
  for relative,checksum in manifest['files'].items():
   path=Path(relative);assert not path.is_absolute() and '..' not in path.parts
+  if relative in array_files and not require_array_payloads:
+   assert checksum==array_files[relative]['sha256']==array_files[relative]['original_sha256']
+   continue
   assert sha(directory/path)==checksum,relative
- provenance=load(directory/'provenance.json')
  source=ROOT/provenance['a100_snapshot']['path']
  assert sha(source)==provenance['a100_snapshot']['sha256']
  a100=load(source);requests={r['id']:r for r in a100['operators']['requests'] if r['cohort']=='main66'}
@@ -73,7 +77,10 @@ def verify(directory):
   if source_match(row,requests[row['id']]) and source_wins(pairs,row['id']):selected.append(row['id'])
  assert sorted(selected)==manifest['selected_case_ids'] and len(selected)==4
  for artifact in provenance['bundled_error_arrays']:
-  assert sha(directory/artifact['path'])==artifact['sha256']==artifact['original_sha256']
+  if require_array_payloads:
+   assert sha(directory/artifact['path'])==artifact['sha256']==artifact['original_sha256']
+  else:
+   assert manifest['files'][artifact['path']]==artifact['sha256']==artifact['original_sha256']
   row=next(r for r in rows if r['id']==artifact['case_id'])
   implementation=row if artifact['implementation']=='cubutterfly' else next(b for b in row['baselines'] if b['name']==artifact['implementation'])
   assert implementation['error_artifact']['sha256']==artifact['sha256']
