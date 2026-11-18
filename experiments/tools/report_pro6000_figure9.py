@@ -69,7 +69,7 @@ def verify():
         assert row['metadata']['all_conversion_and_scaling_timed'] is True
     _,population,original,_=main66.verify(ROOT/'experiments/snapshots/pro6000_full66_20261118')
     cohorts={'full66':[(r,i) for r,_,i in original]}
-    _,ext=extensions.verify(ROOT/'experiments/snapshots/pro6000_extensions_20261117')
+    _,ext=extensions.verify(ROOT/'experiments/snapshots/pro6000_extensions_20261117',require_array_payloads=False)
     ext_manifest=json.loads((ROOT/'experiments/snapshots/pro6000_extensions_20261117/manifest.json').read_text())
     assert mma_cpu['identity']['source_sha256']==ext_manifest['campaigns']['mma9']['preparation']['uncompressed_sha256']
     for name in ['fft17','mma9']:

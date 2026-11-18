@@ -78,6 +78,17 @@ def test_metadata_only_fixed_verifier_does_not_claim_array_replay(tmp_path):
     with pytest.raises(AssertionError):prior.fixed.verify(root,require_array_payloads=False)
 
 
+def test_metadata_only_extension_checks_array_receipts_without_payloads(tmp_path):
+    root=tmp_path/'extensions';shutil.copytree(prior.extensions.DEFAULT,root)
+    for path in (root/'array_samples').glob('*.npz'):path.unlink()
+    with pytest.raises(FileNotFoundError):prior.extensions.verify(root)
+    manifest,data=prior.extensions.verify(root,require_array_payloads=False)
+    assert len(data['fft17']['records'])==17 and len(data['mma9']['records'])==9
+    manifest['array_samples'][0]['sha256']='0'*64
+    (root/'manifest.json').write_text(json.dumps(manifest))
+    with pytest.raises(AssertionError):prior.extensions.verify(root,require_array_payloads=False)
+
+
 def test_published_json_matches_verified_derived_tables(tables):
     assert json.loads(gzip.decompress((followup.SNAP/'tables.json.gz').read_bytes()))==tables
 

@@ -26,7 +26,7 @@ def native_mapping(value):
  value=copy.deepcopy(value);value.pop('arithmetic_policy',None)
  if isinstance(value.get('contract'),dict):value['contract'].pop('arithmetic_policy',None)
  return value
-def verify(root):
+def verify(root,require_array_payloads=True):
  root=Path(root);manifest=json.loads((root/'manifest.json').read_text());data={}
  assert manifest['schema']=='cubutterfly-pro6000-extensions-publication-v1'
  for name,count in [('fft17',17),('mma9',9)]:
@@ -117,7 +117,9 @@ def verify(root):
   assert row['mapping']['local_core']['profile_sha256']==mma['profile']['uncompressed_sha256']
   assert timing(row['baselines'][0]) is not None
  for artifact in manifest['array_samples']:
-  assert sha((root/artifact['path']).read_bytes())==artifact['sha256']==artifact['original_sha256']
+  relative=Path(artifact['path']);assert not relative.is_absolute() and '..' not in relative.parts
+  assert artifact['sha256']==artifact['original_sha256']
+  if require_array_payloads:assert sha((root/relative).read_bytes())==artifact['sha256']
   row=next(r['row'] for r in data[artifact['campaign']]['records'] if r['row']['id']==artifact['case'])
   implementation=row if artifact['implementation']=='cubutterfly' else next(b for b in row['baselines'] if b['name']==artifact['implementation'])
   assert implementation['error_artifact']['sha256']==artifact['sha256']

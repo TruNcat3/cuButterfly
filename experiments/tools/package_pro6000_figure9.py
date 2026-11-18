@@ -98,7 +98,7 @@ def main():
                 '  python3 experiments/tools/report_pro6000_figure9.py --check\n\n'
                 'No source checkout, downloads, third-party Python dependencies, GPU, output\n'
                 'arrays or library binaries are required. Every prior cohort source record,\n'
-                'the four report verifiers and required A100 snapshot/mapping catalog are included.\n'
+                'all five report verifiers and required A100 snapshot/mapping catalog are included.\n'
                 'Both the original Figure9 derived tables and the finite follow-up are checked.\n'
                 'Original array SHA receipts are verified against their source metadata; absent\n'
                 'array payloads are not claimed to have been replayed. All compressed source\n'
