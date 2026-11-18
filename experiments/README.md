@@ -41,3 +41,11 @@ The [bounded-search regression report](reports/PRO6000_SEARCH_FIX_20261118.md)
 records the subsequent FP64 N=4096 diagnosis and new-build automatic-search fix,
 with separate GPU0 paired measurements and original search/timing records.
 These two-request results do not replace the frozen main or extension cohorts.
+
+The [PRO6000 Figure 9 extension](reports/PRO6000_FIGURE9_20261118.md)
+adds all 83 local CPU Full66 measurements, nine explicit FP16-I/O/FP32-CPU
+adapted references and a full independent final-build FFT17 paired rerun.
+It publishes every request/backend cell, CPU-normalized figures, source/input
+identities, support boundaries and the root/order/residue audit of the three
+retained GPU-NTT failures. Original and final-build cohorts remain separate.
+Verify with `python3 experiments/tools/report_pro6000_figure9.py --check`.
