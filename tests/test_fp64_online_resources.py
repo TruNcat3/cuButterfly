@@ -26,6 +26,8 @@ def test_resource_query_combines_actual_static_and_dynamic_bytes_and_reports_fai
 #include <stdexcept>
 struct ExecutionGroup {
     std::size_t live_shared_bytes=0, compiler_local_bytes_per_thread=0;
+    std::size_t static_shared_bytes=0, dynamic_shared_bytes=0;
+    bool shared_components_known=false;
     int compiler_registers_per_thread=0;
     bool compiler_resources_known=false, compiler_local_resources_known=false;
 };
@@ -42,6 +44,8 @@ int main() {
     ExecutionGroup group;
     query_online_resources(1, 8192, group);
     assert(group.live_shared_bytes == 8448);
+    assert(group.static_shared_bytes == 256 && group.dynamic_shared_bytes == 8192);
+    assert(group.shared_components_known);
     assert(group.compiler_registers_per_thread == 37);
     assert(group.compiler_local_bytes_per_thread == 16);
     assert(group.compiler_resources_known && group.compiler_local_resources_known);

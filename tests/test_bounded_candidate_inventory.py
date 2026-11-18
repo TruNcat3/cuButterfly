@@ -155,6 +155,42 @@ void deterministic() {
     assert((select(one_family, 5) == std::vector<std::size_t>{0, 24, 49, 74, 99}));
 }
 
+void geometry_and_replacements() {
+    struct Geometry { int family, organization, stages, total; };
+    const auto family=[](const Geometry& c) { return c.family; };
+    const auto organization=[](const Geometry& c) { return c.organization; };
+    const auto preference=[](const Geometry& c) { return std::abs(c.total-2*c.stages); };
+    for (int total : {12,15,16,18}) {
+        std::vector<Geometry> inventory{{9,9,total-2,total}};
+        for (int f=0;f<3;++f)
+            for (int stages=total-2;stages>=2;--stages)
+                inventory.push_back({f,f,stages,total});
+        const auto selected=cuntt::detail::bounded_candidate_indices(inventory,4,family,organization,preference);
+        check_indices(selected,inventory.size(),4);
+        for (auto i:selected) if (i) assert(preference(inventory[i])<=1);
+        const auto schedule=cuntt::detail::bounded_candidate_schedule(inventory,4,family,organization,preference);
+        assert(schedule.size()<=16);
+        assert(std::vector<std::size_t>(schedule.begin(),schedule.begin()+4)==selected);
+        auto unique=schedule;std::sort(unique.begin(),unique.end());
+        assert(std::adjacent_find(unique.begin(),unique.end())==unique.end());
+        assert(schedule==cuntt::detail::bounded_candidate_schedule(inventory,4,family,organization,preference));
+        // With two rejected initial candidates there are still enough distinct
+        // replacements for four successful measurements, without reprobing.
+        std::size_t accepted=0,attempted=0;
+        for (auto i:schedule) { (void)i; ++attempted; if(attempted>2) ++accepted; if(accepted==4) break; }
+        assert(accepted==4 && attempted==6);
+        for (std::size_t budget : {0U,1U,2U,4U,100U}) {
+            const auto order=cuntt::detail::bounded_candidate_schedule(inventory,budget,family,organization,preference);
+            assert(order.size()<=cuntt::detail::bounded_probe_limit(inventory.size(),budget));
+            assert(order.front()==0);
+            if(!budget || budget>=inventory.size())
+                for(std::size_t i=0;i<order.size();++i) assert(order[i]==i);
+        }
+    }
+    assert(cuntt::detail::bounded_probe_limit(100,std::numeric_limits<std::size_t>::max())==100);
+    assert(cuntt::detail::bounded_candidate_schedule(std::vector<Geometry>{},4,family,organization,preference).empty());
+}
+
 int main(int argc, char** argv) {
     assert(argc == 2);
     const std::string mode = argv[1];
@@ -164,6 +200,7 @@ int main(int argc, char** argv) {
     else if (mode == "fairness") fairness();
     else if (mode == "deterministic") deterministic();
     else if (mode == "organizations") organization_coverage();
+    else if (mode == "geometry") geometry_and_replacements();
     else return 1;
 }
 """
@@ -186,6 +223,6 @@ def inventory_fixture(tmp_path_factory):
     return binary
 
 
-@pytest.mark.parametrize("mode", ["regression", "boundaries", "families", "fairness", "deterministic", "organizations"])
+@pytest.mark.parametrize("mode", ["regression", "boundaries", "families", "fairness", "deterministic", "organizations", "geometry"])
 def test_bounded_candidate_inventory(inventory_fixture, mode):
     subprocess.run([str(inventory_fixture), mode], check=True, capture_output=True, text=True)

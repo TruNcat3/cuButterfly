@@ -840,7 +840,8 @@ std::vector<ButterflyConfig> portable_butterfly_candidates(const ButterflyConfig
                 }
             }
         }
-        if (base.log_n <= 14 && (base.precision == ButterflyPrecision::Fp32 || base.precision == ButterflyPrecision::Fp64)) {
+        if ((base.precision == ButterflyPrecision::Fp32 && base.log_n <= 14) ||
+            (base.precision == ButterflyPrecision::Fp64 && base.log_n <= 10)) {
             for (const auto threads : {128U, 256U, 512U, 1024U, 64U, 32U}) {
                 auto c = base; c.backend = ButterflyBackend::TemporalTile;
                 c.fft_core = base.log_n <= 10 ? FftCore::CufftDxBlock : FftCore::CufftDxDirect;

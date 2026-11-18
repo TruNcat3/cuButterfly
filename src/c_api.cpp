@@ -1442,13 +1442,40 @@ std::pair<std::string, double> tune_butterfly(const cuntt::ButterflyConfig& base
     const auto disabled_candidate_count = unrestricted_inventory_count - inventory.size();
     require(!inventory.empty(), "search restrictions removed every butterfly candidate");
     const auto budget = search_budget();
-    auto candidates = bounded_search_inventory(inventory, budget);
+    // Capacity projection is CPU-only. Avoid spending a small measurement
+    // budget on mappings already known to exceed the target's resources.
+    const auto hardware = cuntt::query_hardware_resource_model();
+    const auto before_projection = inventory.size();
+    inventory.erase(std::remove_if(inventory.begin(), inventory.end(), [&](const auto& candidate) {
+        try {
+            auto plan = cuntt::make_dataflow_plan(candidate);
+            return !cuntt::validate_plan(plan, hardware);
+        } catch (const std::invalid_argument&) { return true; }
+    }), inventory.end());
+    const auto projection_rejected = before_projection - inventory.size();
+    require(!inventory.empty(), "no butterfly candidate survived capacity projection");
+    // In a two-stage organization, represent the family with a balanced split
+    // before enumerator-order extremes. This is coverage, not a timing model.
+    const auto geometry = [](const cuntt::ButterflyConfig& c) {
+        if ((c.backend == cuntt::ButterflyBackend::OnlineReorder ||
+             c.backend == cuntt::ButterflyBackend::Hierarchical) && c.local_stages < c.log_n) {
+            const auto other = c.log_n - c.local_stages;
+            return std::max(c.local_stages, other) - std::min(c.local_stages, other);
+        }
+        return 0U;
+    };
+    const auto candidates = cuntt::detail::bounded_candidate_schedule(inventory, budget,
+        [](const auto& c) { return search_family_key(c); },
+        [](const auto& c) { return search_organization_key(c); }, geometry);
     trace.event("inventory", [&] {
         nlohmann::json fields = {
             {"candidate_count", full_candidate_count},
             {"restricted_candidate_count", inventory.size()},
             {"disabled_candidate_count", disabled_candidate_count},
-            {"scheduled_candidate_count", candidates.size()}, {"search_budget", budget},
+            {"projection_rejected_candidate_count", projection_rejected},
+            {"scheduled_candidate_count", budget ? std::min(budget, inventory.size()) : inventory.size()},
+            {"probe_limit", candidates.size()}, {"search_budget", budget},
+            {"budget_unit", "accepted-correctness-checked-candidates"},
             {"inventory_truncated", candidates.size() < full_candidate_count},
             {"batch", base.batch}, {"log_n", base.log_n},
             {"overlap_candidate_count", std::count_if(inventory.begin(), inventory.end(),
@@ -1458,10 +1485,14 @@ std::pair<std::string, double> tune_butterfly(const cuntt::ButterflyConfig& base
     });
     std::pair<std::string, double> best{"", std::numeric_limits<double>::infinity()};
     std::size_t candidate_index = 0, accepted = 0, rejected = 0;
-    for (const auto& candidate : candidates) {
+    for (const auto index : candidates) {
+        if (budget && accepted >= budget) break;
+        const auto& candidate = inventory[index];
         trace.context([&] {
             return nlohmann::json{{"search", "butterfly"}, {"candidate_index", candidate_index},
-                {"candidate_count", candidates.size()}, {"batch", candidate.batch}, {"log_n", candidate.log_n},
+                {"candidate_count", candidates.size()}, {"inventory_index", index},
+                {"replacement", budget && candidate_index >= budget},
+                {"batch", candidate.batch}, {"log_n", candidate.log_n},
                 {"element_stride", candidate.element_stride}, {"batch_stride", candidate.batch_stride},
                 {"operator", cuntt::butterfly_operator_name(candidate.op)},
                 {"precision", cuntt::butterfly_precision_name(candidate.precision)},
@@ -1495,14 +1526,17 @@ std::pair<std::string, double> tune_butterfly(const cuntt::ButterflyConfig& base
             if (cudaStreamSynchronize(stream) != cudaSuccess) throw;
             std::clog << "cuButterfly: rejected measured butterfly candidate: " << error.what() << '\n';
         }
-        if ((candidate_index % 64 == 0) || candidate_index == candidates.size())
+        if ((candidate_index % 64 == 0) || candidate_index == candidates.size() || (budget && accepted >= budget))
             std::clog << "cuButterfly: butterfly search progress " << candidate_index << "/"
                       << candidates.size() << " accepted=" << accepted << " rejected=" << rejected << '\n';
     }
     trace.context([&] { return nlohmann::json{{"search", "butterfly"}, {"batch", base.batch}, {"log_n", base.log_n}}; });
     trace.event("summary", [&] {
         return nlohmann::json{{"candidate_count", full_candidate_count},
-            {"scheduled_candidate_count", candidates.size()}, {"search_budget", budget},
+            {"scheduled_candidate_count", budget ? std::min(budget, inventory.size()) : inventory.size()},
+            {"probe_limit", candidates.size()}, {"attempted", candidate_index},
+            {"projection_rejected_candidate_count", projection_rejected},
+            {"budget_unit", "accepted-correctness-checked-candidates"}, {"search_budget", budget},
             {"accepted", accepted},
             {"rejected", rejected}, {"best_kernel_ms", best.second}, {"best_mapping", best.first}};
     });

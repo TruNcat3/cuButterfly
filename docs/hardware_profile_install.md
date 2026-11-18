@@ -58,6 +58,23 @@ use `--resume-search`; these options are mutually exclusive. The manual
 explicit acquisition. `--stage-calibration bounded --search-seconds 300` requests
 a bounded scope; it must not be described as exhaustive calibration.
 
+For runtime MEASURE of butterfly-family operators (FFT, FWHT, zeta and
+structured-2x2), `CUBUTTERFLY_SEARCH_BUDGET` limits successful, correctness-checked
+candidate measurements. CPU capacity projection and known provider precision
+limits exclude unavailable candidates before sampling. Within a two-stage
+execution family, balanced stage splits are represented before enumeration-order
+extremes; this is a coverage heuristic, not a prediction of the fastest mapping.
+The feasible incumbent is retained. Runtime-rejected candidates can be replaced from a
+deterministic reserve, with total attempts capped at four times the budget or
+the available inventory, whichever is smaller. Trace records retain the attempt
+cap, accepted/rejected counts and projection exclusions; exhausting the reserve
+may leave fewer successful measurements. Zero requests exhaustive enumeration.
+NTT retains its separately reported attempt-budget protocol. These rules do not
+make any finite search globally optimal or change numerical acceptance.
+Existing exact-request caches retain their recorded mappings. To refresh a point,
+run public MEASURE explicitly and validate its DEFAULT replay; use a separate
+cache when preserving an earlier benchmark cohort.
+
 Capacity acquisition uses `cubutterfly_plan_probe --hardware-live` and exports
 `hardware_model.json` even when operator calibration is skipped. Ordinary
 `--hardware` reports the capacities actually consumed by the common resource

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <map>
+#include <limits>
 #include <type_traits>
 #include <vector>
 
@@ -77,6 +78,66 @@ template <typename Candidate, typename FamilyKey>
 std::vector<std::size_t> bounded_candidate_indices(
     const std::vector<Candidate>& inventory, std::size_t budget, FamilyKey family_key) {
     return bounded_candidate_indices(inventory, budget, family_key, family_key);
+}
+
+// Reserve the incumbent, then sample family representatives by a caller-supplied
+// structural preference. This prevents a one-slot family from always receiving
+// the first (often extreme) geometry in enumeration order. Exhaustive order and
+// the legacy overloads remain unchanged.
+template <typename Candidate, typename FamilyKey, typename OrganizationKey, typename Preference>
+std::vector<std::size_t> bounded_candidate_indices(
+    const std::vector<Candidate>& inventory, std::size_t budget,
+    FamilyKey family_key, OrganizationKey organization_key, Preference preference) {
+    if (!budget || budget >= inventory.size() || budget == 1)
+        return bounded_candidate_indices(inventory, budget, family_key, organization_key);
+    using Key = std::decay_t<decltype(family_key(inventory.front()))>;
+    std::map<Key, std::size_t> ids;
+    std::vector<std::vector<std::size_t>> families;
+    for (std::size_t i = 1; i < inventory.size(); ++i) {
+        const auto inserted = ids.emplace(family_key(inventory[i]), families.size());
+        if (inserted.second) families.emplace_back();
+        families[inserted.first->second].push_back(i);
+    }
+    std::vector<std::size_t> order;
+    for (auto& family : families) {
+        std::stable_sort(family.begin(), family.end(), [&](auto a, auto b) {
+            return preference(inventory[a]) < preference(inventory[b]);
+        });
+        order.insert(order.end(), family.begin(), family.end());
+    }
+    const auto selected = bounded_candidate_indices(order, budget - 1,
+        [&](auto i) { return family_key(inventory[i]); },
+        [&](auto i) { return organization_key(inventory[i]); });
+    std::vector<std::size_t> result{0};
+    for (auto i : selected) result.push_back(order[i]);
+    std::sort(result.begin(), result.end());
+    return result;
+}
+
+// Successful measurements consume the budget. Rejected candidates may be
+// replaced, but even an entirely invalid inventory must have a finite probe cap.
+inline std::size_t bounded_probe_limit(std::size_t inventory_size, std::size_t budget) {
+    if (!budget) return inventory_size;
+    const auto limit = budget > std::numeric_limits<std::size_t>::max() / 4
+        ? std::numeric_limits<std::size_t>::max() : budget * 4;
+    return std::min(inventory_size, limit);
+}
+
+template <typename Candidate, typename FamilyKey, typename OrganizationKey, typename Preference>
+std::vector<std::size_t> bounded_candidate_schedule(
+    const std::vector<Candidate>& inventory, std::size_t budget,
+    FamilyKey family_key, OrganizationKey organization_key, Preference preference) {
+    auto result = bounded_candidate_indices(inventory, budget, family_key, organization_key, preference);
+    const auto replacements = bounded_candidate_indices(inventory, bounded_probe_limit(inventory.size(), budget),
+        family_key, organization_key, preference);
+    std::vector<bool> seen(inventory.size(), false);
+    for (auto i : result) seen[i] = true;
+    const auto limit = bounded_probe_limit(inventory.size(), budget);
+    for (auto i : replacements) {
+        if (result.size() >= limit) break;
+        if (!seen[i]) { result.push_back(i); seen[i] = true; }
+    }
+    return result;
 }
 
 } // namespace cuntt::detail

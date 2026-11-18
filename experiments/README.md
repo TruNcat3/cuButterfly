@@ -36,3 +36,8 @@ The [PRO6000 raw performance download](reports/PRO6000_RAW_DATA_20261118.md)
 provides CSV tables and 1,729 original timing samples, plus the published raw
 JSON records in a small ZIP with checksums. Large output arrays and binaries
 remain separate on the measurement host; numerical review and failures are retained.
+
+The [bounded-search regression report](reports/PRO6000_SEARCH_FIX_20261118.md)
+records the subsequent FP64 N=4096 diagnosis and new-build automatic-search fix,
+with separate GPU0 paired measurements and original search/timing records.
+These two-request results do not replace the frozen main or extension cohorts.
