@@ -1,5 +1,11 @@
 # Cross-operator research acceptance
 
+> **Historical and bounded workflow.** This page retains the earlier broad
+> acceptance protocol. Its V100 and local-artifact paths are provenance, not
+> current paper evidence. Use the [paper-to-artifact alignment](paper_artifact_alignment.md)
+> and [portable main comparison](../config/paper_portability/README.md) for
+> the current A100/PRO 6000 operator route.
+
 Use the project research principles for the shared
 all-operator claims and three-table evidence contract, including fixed-core
 organization transfer and component-disabled re-search. The finite workflows

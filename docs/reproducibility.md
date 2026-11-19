@@ -1,5 +1,12 @@
 # Reproducibility
 
+> **Historical study note.** The detailed commands below preserve earlier
+> V100 protocols and result paths. They are not the current paper's platform
+> contract. For the current A100/PRO 6000 workflow, start with
+> [paper-to-artifact alignment](paper_artifact_alignment.md),
+> [`config/paper_portability/`](../config/paper_portability/README.md), and
+> the [platform runner](hardware/pro6000_server96.md).
+
 ## 1. Capture The Environment
 
 For a new installation, calibrate the local GPU before reusing any mapping

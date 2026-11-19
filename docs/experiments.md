@@ -1,5 +1,12 @@
 # Experimental Results
 
+> **Historical archive.** This page records the earlier V100 study and its
+> original protocols. It is retained for provenance and is not the authority
+> for the current A100/PRO 6000 evaluation. Use the
+> [paper-to-artifact alignment](paper_artifact_alignment.md) and the
+> [benchmark contract](../benchmark/README.md) for the current experiment
+> routes.
+
 ## 1. Measurement Policy
 
 The checked-in results use resident kernel time unless explicitly labelled
