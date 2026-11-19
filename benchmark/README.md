@@ -193,8 +193,9 @@ quantized sources and diagnostic reference, records exact vendor binding gaps,
 and keeps raw and scaled-input cohorts separate. Preparation establishes no
 GPU performance, fair comparison coverage, or numerical acceptance.
 
-The [external transform extensions](../docs/benchmarks/external-extensions.md)
-cover GPU-FFT, HadaCore and restricted tcFFT contracts, the separate FP16 FWHT
+The [CPU baseline guide](../docs/cpu_external_baselines.md) and
+[NCU profiling guide](../docs/ncu_profiling.md) cover the external transform
+extensions, HadaCore and restricted tcFFT contracts, the separate FP16 FWHT
 population, and CPU preparation, guarded measurement and resume commands.
 
 ## Reproduce archived populations

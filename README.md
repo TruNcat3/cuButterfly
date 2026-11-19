@@ -127,6 +127,11 @@ a valid request from an implemented, compiled, measured or selected realization.
 A request combines operator semantics with precision, direction, normalization,
 input/output order, rank, shape, batch, placement and strides.
 
+The [paper-to-artifact alignment](docs/paper_artifact_alignment.md) maps the
+fixed-kernel, complete operator, end-to-end application, and resource/boundary
+experiment families to reproducibility entry points and records the limits of
+frozen and historical evidence.
+
 The repository contains reproducible software, calibration and experiment tools.
 It does not contain a manuscript or author-identifying release material.
 

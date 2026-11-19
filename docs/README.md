@@ -20,6 +20,7 @@
 
 ## Evaluate and reproduce
 
+- [Paper-to-artifact alignment](paper_artifact_alignment.md)
 - [Benchmark contracts](../benchmark/README.md)
 - [Experiment tools](../experiments/README.md)
 - [Measurement and reporting](reporting_contract.md)
