@@ -125,6 +125,13 @@ def test_run_prepares_then_resumes_then_reports(entry, monkeypatch, resume):
     assert entry.calls[2][1]['env']['CUDA_VISIBLE_DEVICES'] == ''
 
 
+def test_prepare_run_only_binds_without_starting_measurement(entry, monkeypatch):
+    ready(entry, monkeypatch)
+    assert platform.main(['run', *entry.args, '--prepare-run-only']) == 0
+    assert len(entry.calls) == 1
+    assert '--prepare-only' in entry.calls[0][0]
+
+
 def test_changed_prepared_binding_blocks_before_gpu_or_execution(entry, monkeypatch):
     folder = ready(entry, monkeypatch)
     platform.write(folder / 'binding.json', {'old': 'different-library'})

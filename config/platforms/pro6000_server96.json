@@ -4,8 +4,15 @@
   "cuda_arch": 120,
   "device_name_pattern": "RTX PRO 6000.*Blackwell.*Server",
   "memory_mib_range": [90000, 100000],
-  "description": "NVIDIA RTX PRO 6000 Blackwell Server Edition 96GB; no measurements yet",
+  "description": "NVIDIA RTX PRO 6000 Blackwell Server Edition 96GB; target-local calibration and measurements are not bundled",
   "mathdx_version": "25.6.0",
+  "setup": {
+    "python_version": "3.11",
+    "torch_index_url": "https://download.pytorch.org/whl/cu128",
+    "gpuntt_revision": "d03c5eaeadaa780d153496afcb3b6a9b79a13a63",
+    "dao_revision": "e7706faf8d1c3b9f241e36860640ad1dac644ede",
+    "vkfft_revision": "066a17c17068c0f11c9298d848c2976c71fad1c1"
+  },
   "workloads": "config/current_recalibration_workloads.json",
   "scope": "config/paper_portability/scope.json",
   "modes": {

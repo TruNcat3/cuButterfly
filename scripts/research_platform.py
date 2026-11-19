@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """Bind existing CPU preparation and calibrated comparison to a target platform.
 
-plan/doctor/build/prepare are CPU-only. run checks the selected device before
+plan/doctor/build/prepare are CPU-only. all installs and prepares dependencies,
+then waits for selected GPUs and runs independent target-local comparisons.
+run checks the selected device before
 delegating calibration, confirmation and timing to run_full_semantic_refresh.
 This finite operator track is not the entire paper's migration certificate.
 """
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 import hashlib
 import json
@@ -84,9 +87,13 @@ def environment(args, gpu=False):
     env.update(CUBUTTERFLY_TEMPLATE_ROOT=str(ROOT), CUBUTTERFLY_MATHDX_ROOT=str(args.mathdx),
                CUBUTTERFLY_NVCC=str(args.nvcc), CUBUTTERFLY_JIT_CACHE=str(args.output / 'modules'))
     env['CUDA_HOME'] = str(args.nvcc.parent.parent)
-    env['PATH'] = str(args.nvcc.parent) + os.pathsep + env.get('PATH', '')
-    env['LD_LIBRARY_PATH'] = str(args.build_dir) + ':' + str(args.nvcc.parent.parent / 'lib64') + (
-        ':' + env['LD_LIBRARY_PATH'] if env.get('LD_LIBRARY_PATH') else '')
+    paths = [str(args.nvcc.parent)]
+    if getattr(args, 'prefix', None):
+        paths.insert(0, str(args.prefix / 'bin'))
+    env['PATH'] = os.pathsep.join(dict.fromkeys(paths + [p for p in env.get('PATH', '').split(os.pathsep) if p]))
+    libraries = [str(args.build_dir), str(args.nvcc.parent.parent / 'lib64')]
+    env['LD_LIBRARY_PATH'] = os.pathsep.join(dict.fromkeys(libraries +
+        [p for p in env.get('LD_LIBRARY_PATH', '').split(os.pathsep) if p]))
     return env
 
 
@@ -211,19 +218,23 @@ print(json.dumps({'cuda': torch.version.cuda,
 def precompile(args, target):
     from research_compile_requests import compile_request
     from compile_module import compile_mapping
-    modules = {}
+    requests = {}
     for point in read(ROOT / 'config/research_campaign/stage_points.json')['points']:
         request = compile_request(dict(point, mapping_json=point['mapping']), 'research')
         if request is None:
             continue
         key = json.dumps(request, sort_keys=True)
-        if key in modules:
-            continue
+        requests.setdefault(key, request)
+    def compile_one(request):
         module = compile_mapping(request, root=ROOT, mathdx=args.mathdx, nvcc=args.nvcc,
                                  sm=target['cuda_arch'], cache=args.output / 'modules')
-        modules[key] = dict(path=str(module), sha256=sha(module), request=request)
+        return dict(path=str(module), sha256=sha(module), request=request)
+    # compile_mapping owns a per-module cache lock. Only distinct requests are
+    # submitted; executor.map preserves manifest order regardless of completion.
+    with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+        modules = list(pool.map(compile_one, requests.values()))
     write(args.output / args.mode / 'precompiled.json', dict(status='cpu-compiled',
-        cuda_arch=target['cuda_arch'], modules=list(modules.values()),
+        cuda_arch=target['cuda_arch'], modules=modules,
         scope='Declared stage proposals only; generated candidates can require additional CPU compilation'))
 
 
@@ -239,10 +250,10 @@ def validate_precompiled(path, arch):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('plan', 'doctor', 'build', 'prepare', 'run', 'report'))
+    parser.add_argument('action', choices=('plan', 'doctor', 'build', 'prepare', 'precompile', 'run', 'report', 'all'))
     parser.add_argument('--target', type=Path, default=ROOT / 'config/platforms/pro6000_server96.json')
-    parser.add_argument('--mode', choices=('quick', 'full'), default='quick')
-    parser.add_argument('--prefix', type=Path, default=Path(sys.prefix))
+    parser.add_argument('--mode', choices=('quick', 'full'))
+    parser.add_argument('--prefix', type=Path)
     parser.add_argument('--python', type=Path)
     parser.add_argument('--build-dir', type=Path)
     parser.add_argument('--output', type=Path)
@@ -254,10 +265,19 @@ def main(argv=None):
     parser.add_argument('--gpuntt-library', type=Path)
     parser.add_argument('--allow-baseline-gaps', action='store_true')
     parser.add_argument('--gpu')
+    parser.add_argument('--gpus', help='all only: comma-separated physical UUIDs or indices; separate results per GPU')
     parser.add_argument('--jobs', type=int, default=2)
+    parser.add_argument('--prepare-only', action='store_true', help='all only: finish CPU installation/preparation without querying a GPU')
+    parser.add_argument('--dry-run', action='store_true', help='all only: print workflow without creating files or running commands')
+    parser.add_argument('--parallel-prepare', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--prepare-run-only', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--wait-hours', type=float, default=24, help='all: bounded idle-GPU waiting budget (default: 24 hours)')
     args = parser.parse_args(argv)
     args.target = safe_path(args.target)
     target = config(args.target)
+    args.mode = args.mode or ('full' if args.action == 'all' else 'quick')
+    args.prefix = args.prefix or (Path.home() / '.conda/envs' / ('cubutterfly-' + target['id'])
+                                 if args.action == 'all' else Path(sys.prefix))
     args.build_dir = args.build_dir or ROOT / f'build-{target["id"]}-sm{target["cuda_arch"]}'
     args.output = args.output or ROOT / 'results' / target['id']
     args.python = args.python or args.prefix / 'bin/python'
@@ -266,6 +286,13 @@ def main(argv=None):
             setattr(args, key, safe_path(value))
     if args.jobs < 1:
         raise ValueError('--jobs must be positive')
+    if not 0 < args.wait_hours < float('inf'):
+        raise ValueError('--wait-hours must be positive and finite')
+    if args.action != 'all' and (args.gpus or args.prepare_only or args.dry_run):
+        raise ValueError('--gpus, --prepare-only and --dry-run belong to the all action')
+    if args.action == 'all':
+        from platform_workflow import workflow
+        return workflow(args, target)
     plan = commands(args, target)
     if args.action == 'plan':
         print(json.dumps(dict(target=target, commands=plan, gpu_access=False,
@@ -281,6 +308,10 @@ def main(argv=None):
             raise ValueError('prepare the shared conda prefix first')
         for step in ('build', 'python_install'):
             subprocess.run(plan[step], check=True, env=environment(args), cwd=ROOT)
+        return 0
+    if args.action == 'precompile':
+        with process_environment(environment(args)):
+            precompile(args, target)
         return 0
     from run_current_recalibration import validate_build
     if validate_build(args.build_dir) != target['cuda_arch']:
@@ -302,9 +333,21 @@ def main(argv=None):
         validate_fingerprints(manifest, args.build_dir / 'libcuntt.so')
         if manifest['metrics']['unique_cases'] != target['modes'][args.mode]['requests']:
             raise ValueError('prepared request count differs from declared scope')
-        subprocess.run(plan['references'], check=True, env=environment(args), cwd=ROOT)
-        with process_environment(environment(args)):
-            precompile(args, target)
+        if args.parallel_prepare and args.jobs > 1:
+            from platform_workflow import entry_command
+            import copy
+            left = copy.copy(args); left.jobs = max(1, args.jobs // 2)
+            right = copy.copy(args); right.jobs = args.jobs - left.jobs
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                futures = [pool.submit(subprocess.run, command, check=True,
+                                       env=environment(args), cwd=ROOT)
+                           for command in (commands(left, target)['references'], entry_command(right, 'precompile'))]
+                for future in futures:
+                    future.result()
+        else:
+            subprocess.run(plan['references'], check=True, env=environment(args), cwd=ROOT)
+            with process_environment(environment(args)):
+                precompile(args, target)
         return 0
     if not (folder / 'precompiled.json').is_file():
         raise ValueError('run prepare first')
@@ -322,6 +365,8 @@ def main(argv=None):
     if (folder / 'run/status.json').exists():
         refresh += ['--resume']
     subprocess.run(refresh + ['--prepare-only'], check=True, env=environment(args, gpu=True), cwd=ROOT)
+    if args.prepare_run_only:
+        return 0
     if '--resume' not in refresh:
         refresh += ['--resume']
     subprocess.run(refresh, check=True, env=environment(args, gpu=True), cwd=ROOT)

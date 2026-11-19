@@ -80,6 +80,20 @@ missing profiles, and runs configured correctness checks. Calibration requires a
 available GPU. Optional core providers have separate setup instructions in the
 [installation guide](docs/hardware_profile_install.md).
 
+For a declared target, the platform runner separates CPU preparation from
+target-local calibration and GPU measurement. Prepare without a GPU, or run the
+full workflow after a device is available:
+
+```bash
+python3 scripts/research_platform.py all \
+  --target config/platforms/pro6000_server96.json --gpu 0 --mode full --jobs 8
+```
+
+Use `--prepare-only` to finish dependency and CPU work first, and `--gpus 0,1`
+for independent cards. The platform runbook records the target contract,
+resume behavior, output identities and the distinction between the declared
+population and measured coverage.
+
 ## Calibrate, run and benchmark
 
 The [getting-started guide](docs/getting_started.md) explains profile refresh,

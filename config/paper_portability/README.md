@@ -8,11 +8,12 @@ profiles. Preserve the hashes when moving the source package.
 
 The main entry is `scripts/research_platform.py`, configured by
 `config/platforms/pro6000_server96.json`. Follow the
-PRO6000 Server96 runbook for actual
+[PRO6000 Server96 runbook](../../docs/hardware/pro6000_server96.md) for actual
 installation, baseline builds and GPU commands.
 
 | Action | Work | GPU access |
 | --- | --- | --- |
+| `all` | Install dependencies, build, parallel CPU preparation, wait, calibrate, compare and report | After CPU preparation; `--prepare-only` uses none |
 | `plan` | Print exact delegated commands | None |
 | `doctor` | Check environment metadata and compiler target | None |
 | `build` | Build/install shared library and Python API; compile-probe MathDx | None |
@@ -42,5 +43,9 @@ The build installs the library and conda lookup hooks. Research `run` calibratio
 stays under the mode's results directory; it is not published to the conda
 default profile tree. See the runbook's explicit environment binding for subsequent
 applications. A successful report is not evidence of a calibrated default install.
+The `all` entry generates a checked `runtime_environment.sh` per GPU after
+completion. `--gpus` repeats the population independently with separate calibration
+and measurements; CPU artifacts are shared. `--jobs` bounds each preparation
+phase's worker allocation, and `--wait-hours` limits idle waits and new retries.
 `doctor` also checks Torch's compiled-in SM120 target without initializing CUDA;
 an older Torch build without that target blocks migration even with CUDA 12.8 installed.

@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import fcntl
 import json
+import math
 import os
 from pathlib import Path
 import signal
@@ -108,7 +109,11 @@ def stop_driver(child):
 
 
 def watch(root, gpu_uuid, command, poll_seconds=10, idle_seconds=30,
-          max_idle_memory_mib=64, idle_graphics_names=(), cpu_preparation_status=None):
+          max_idle_memory_mib=64, idle_graphics_names=(), cpu_preparation_status=None,
+          wait_hours=None):
+    if wait_hours is not None and (not math.isfinite(wait_hours) or wait_hours <= 0):
+        raise ValueError("wait_hours must be positive and finite")
+    deadline = None if wait_hours is None else time.monotonic() + wait_hours * 3600
     root = Path(root).resolve(strict=True)
     with (root / 'monitor.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -118,6 +123,7 @@ def watch(root, gpu_uuid, command, poll_seconds=10, idle_seconds=30,
                      campaign_root=str(root), gpu_uuid=gpu_uuid, command=command,
                      poll_seconds=poll_seconds, idle_seconds=idle_seconds,
                      max_idle_memory_mib=max_idle_memory_mib, attempts=0,
+                     wait_hours=wait_hours,
                      idle_graphics_names=list(idle_graphics_names),
                      cpu_preparation_status=str(cpu_preparation_status) if cpu_preparation_status else None,
                      policy='resume until finite campaign completes; only GPU interruptions retry')
@@ -150,6 +156,12 @@ def watch(root, gpu_uuid, command, poll_seconds=10, idle_seconds=30,
                 campaign = read_campaign(root)
                 state['campaign'] = {key: campaign.get(key) for key in
                                      ('status', 'phase', 'measured_rows', 'remaining', 'error')}
+                if child is None and deadline is not None and time.monotonic() >= deadline:
+                    if complete(campaign):
+                        record("finished", child_pid=None)
+                        return 0
+                    record("deadline-expired", child_pid=None)
+                    return 124
                 preparation = None
                 if child is None and cpu_preparation_status is not None:
                     path = Path(cpu_preparation_status)
@@ -205,6 +217,9 @@ def watch(root, gpu_uuid, command, poll_seconds=10, idle_seconds=30,
                             elapsed = now - idle_since
                             record('confirming-idle', idle_for_seconds=elapsed)
                             if elapsed >= idle_seconds:
+                                if deadline is not None and time.monotonic() >= deadline:
+                                    record("deadline-expired", child_pid=None)
+                                    return 124
                                 state['attempts'] += 1
                                 state['attempt_started_unix'] = time.time()
                                 with (root / 'monitor_driver.log').open('a') as log:
@@ -215,6 +230,8 @@ def watch(root, gpu_uuid, command, poll_seconds=10, idle_seconds=30,
                                 record('running', child_pid=child.pid)
                 # A received signal wakes this short tick without waiting a full poll.
                 until = time.monotonic() + poll_seconds
+                if child is None and deadline is not None:
+                    until = min(until, deadline)
                 while not received and time.monotonic() < until:
                     time.sleep(min(1, max(0, until - time.monotonic())))
             record('stopping', received_signal=received[0])
@@ -242,15 +259,19 @@ def main():
                         help='Explicit idle display process name from nvidia-smi; only G type, zero utilization and memory limit still required')
     parser.add_argument('--cpu-preparation-status', type=Path,
                         help='Wait for CPU scoring_complete and compile_ready before checking GPU readiness')
+    parser.add_argument('--wait-hours', type=float,
+                        help='Positive finite waiting budget; running measurements may finish after it expires')
     parser.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     command = args.command[1:] if args.command[:1] == ['--'] else args.command
     if (not command or not 0 < args.poll_seconds <= 60 or not 0 <= args.idle_seconds < float('inf')
             or not 0 <= args.max_idle_memory_mib < float('inf')):
         parser.error('command, positive poll <=60s, and finite nonnegative idle/memory limits required')
+    if args.wait_hours is not None and (not math.isfinite(args.wait_hours) or args.wait_hours <= 0):
+        parser.error('--wait-hours must be positive and finite')
     code = watch(args.campaign_dir, args.gpu_uuid, command, args.poll_seconds,
                  args.idle_seconds, args.max_idle_memory_mib, args.idle_graphics_name,
-                 args.cpu_preparation_status)
+                 args.cpu_preparation_status, args.wait_hours)
     return code if code >= 0 else 128 - code
 
 

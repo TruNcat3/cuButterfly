@@ -7,7 +7,7 @@ selecting a device, compiling kernels or running a GPU workload.
 
 `benchmark/` indexes benchmark scope. Workload files and measured results keep
 their original locations; [`scopes/`](scopes/) binds evidence populations to
-specific identities. See frozen results and evidence
+specific identities. See [frozen results and evidence](../docs/benchmarks/results.md)
 for operator comparisons, fixed-core controls, applications and numerical protocols.
 
 For a new campaign, start with [`config/benchmark_quick.json`](../config/benchmark_quick.json)
@@ -17,6 +17,19 @@ manifest, and check runner and baseline support before measurement. Use the
 comparison and the [hardware profile guide](../docs/hardware_profile_install.md)
 for target-local preparation and calibration. A declared population is separate
 from measured coverage and model validation.
+
+For a configured platform, `scripts/research_platform.py all` connects dependency
+installation, parallel CPU preparation, target calibration and comparison:
+
+```bash
+python3 scripts/research_platform.py all --target config/platforms/pro6000_server96.json \
+  --gpu 0 --mode full --jobs 8
+```
+
+Use `--prepare-only` before a GPU is free, or `--gpus 0,1` to measure independent
+cards concurrently. `full` here is the [frozen main operator population](../config/paper_portability/README.md),
+not every benchmark track. See the [platform runbook](../docs/hardware/pro6000_server96.md#one-command-installation-and-comparison)
+for prerequisites, status, resume and output paths.
 
 New reports follow the repository-wide
 [reporting and evidence contract](../docs/reporting_contract.md): scope and
@@ -180,6 +193,10 @@ quantized sources and diagnostic reference, records exact vendor binding gaps,
 and keeps raw and scaled-input cohorts separate. Preparation establishes no
 GPU performance, fair comparison coverage, or numerical acceptance.
 
+The [external transform extensions](../docs/benchmarks/external-extensions.md)
+cover GPU-FFT, HadaCore and restricted tcFFT contracts, the separate FP16 FWHT
+population, and CPU preparation, guarded measurement and resume commands.
+
 ## Reproduce archived populations
 
 [`scopes/a100_80gb_research_v1.json`](scopes/a100_80gb_research_v1.json) records
@@ -198,9 +215,9 @@ Do not substitute a different population. Neither validation mode checks numeric
 contents or proves track completion. For configuration-only preparation without
 historical measurements, use the manifest workflow above.
 
-The results reading guide links frozen cohorts,
+The [results reading guide](../docs/benchmarks/results.md) links frozen cohorts,
 protocols and later corrections. Earlier planning records remain at
-October 17 evidence gaps,
-October 19 convergence and
-October 21 application review; their pending
+[October 17 evidence gaps](research_evidence_gap_20261017.md),
+[October 19 convergence](research_convergence_20261019.md) and
+[October 21 application review](application_gap_review_20261021.md); their pending
 items describe those dated snapshots rather than the completion of later cohorts.
