@@ -1,0 +1,54 @@
+Research-Only Non-Commercial License (RONC-1.0)
+
+Copyright (c) 2026 Anonymous authors
+
+1. Definitions
+
+"Software" means the source code, documentation, data, and other material in
+the repository that is identified as being covered by this license.
+
+"Commercial Use" means any use that is primarily intended for or directed
+toward commercial advantage or monetary compensation, including use in a
+product or service offered for sale, use by a for-profit organization in its
+ordinary business operations, or use to provide a paid service. Use by an
+academic or non-profit organization for non-commercial research or teaching is
+not Commercial Use.
+
+2. Non-Commercial Permission
+
+Permission is granted, free of charge, to any person obtaining a copy of the
+Software to use, reproduce, modify, and redistribute the Software solely for
+non-commercial research, teaching, evaluation, and personal purposes, subject
+to the conditions below.
+
+3. Conditions
+
+  a. Redistributions of the Software or modified versions must retain this
+     license, the copyright notice, and the applicable attribution notices.
+  b. Modified versions must be clearly marked as modified and must not be
+     represented as the original Software.
+  c. You must not use the name, marks, or institutional affiliations of the
+     copyright holder or contributors to endorse or promote a product without
+     prior written permission.
+  d. Commercial Use, sublicensing for Commercial Use, and granting a third
+     party permission to make Commercial Use are prohibited without a separate
+     written license from the copyright holder.
+  e. Material copied from third-party components remains subject to the
+     corresponding third-party license; this license does not relicense those
+     components.
+
+4. Commercial Permission
+
+Commercial Use requires a separate written license. Contact the copyright
+holder to discuss permission. No implied commercial,
+patent, trademark, or other license is granted by this license.
+
+5. Disclaimer
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
+OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

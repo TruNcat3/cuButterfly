@@ -1,0 +1,38 @@
+{
+  "compile": "passed; nvcc -std=c++17 -O3 -arch=sm_80 -lineinfo -Xptxas=-v",
+  "cpu_preparation": "passed; no GPU execution",
+  "all_prepared_files_match_original_campaign": true,
+  "files": [
+    {
+      "file": "shoup.u64",
+      "sha256": "d4369ec8b3abe008067a78cb8cb53c4681e3db6e6ca45ea773b06cacdf006d9f",
+      "matches_measured_campaign": true
+    },
+    {
+      "file": "input.u64",
+      "sha256": "1db742bf20351e41e684919f447ab1dd0d08036d4d990eb3e854f5b2efbada33",
+      "matches_measured_campaign": true
+    },
+    {
+      "file": "reference.u64",
+      "sha256": "2ad7300d805154ac13038d7826682922fb9e57f70574579f02d9e7693e6c0cc1",
+      "matches_measured_campaign": true
+    },
+    {
+      "file": "metadata.json",
+      "sha256": "420048847e314689f95cceb2ba29b3e721a430e55414176a48164463bd0d0746",
+      "matches_measured_campaign": true
+    },
+    {
+      "file": "params.u64",
+      "sha256": "5a50b7d00c5885fe4497bd6ccedc8dc86a3dc44960561ee8e078523406f52056",
+      "matches_measured_campaign": true
+    },
+    {
+      "file": "twiddles.u64",
+      "sha256": "d08d85f6795b2820c91b8dc687579d132a96350d1126e43b14f56ba66a729f08",
+      "matches_measured_campaign": true
+    }
+  ],
+  "gpu_measurement": "not run"
+}

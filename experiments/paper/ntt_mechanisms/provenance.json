@@ -1,0 +1,138 @@
+{
+  "schema": "anonymous-measured-input-provenance-v1",
+  "note": "Original hashes identify unsanitized source bytes; bundled hashes identify sanitized/adapted artifact bytes. No original absolute paths or device UUID are retained. upstream/ paths in historical metadata are provenance labels, not runtime dependencies. Bundled CSV line endings are normalized to LF; numerical CSV fields are unchanged.",
+  "inputs": [
+    {
+      "source": "tools/render_ntt_mechanism_profiles.py",
+      "bundled": "render_ntt_mechanism_profiles.py",
+      "original_input_sha256": "329f743f5ea94d485f94e5ebedf82c36e7ecde6fb324a74a017ba626a6652dd4",
+      "bundled_sanitized_sha256": "ecaa0aa529a292459daed0cb82c8ba51cf3b1c1fc2b128c99241109e6467a742"
+    },
+    {
+      "source": "tools/paper_plot_style.py",
+      "bundled": "paper_plot_style.py",
+      "original_input_sha256": "0a3d1d984aed5151f969fee6ff7c7419971c5da182f315a221f8533a9d611938",
+      "bundled_sanitized_sha256": "0a3d1d984aed5151f969fee6ff7c7419971c5da182f315a221f8533a9d611938"
+    },
+    {
+      "source": "generated/ntt_mechanism_profiles_20261118.csv",
+      "bundled": "data/expected_rows.csv",
+      "original_input_sha256": "589ac156e3690b26bab48040747fbcc7465071d79688ebbe530749e0af8bf97b",
+      "bundled_sanitized_sha256": "354f4367fdaee975491480826dda8fb6f722e76c8d8229c1a3b1b6c2f23fa8d9"
+    },
+    {
+      "source": "generated/ntt_mechanism_profiles_20261118.manifest.json",
+      "bundled": "data/source_figure_manifest.json",
+      "original_input_sha256": "d58e07275a293e974bc394cb6d3e11ada7287685e08aae8ea3ab50a74a0223cd",
+      "bundled_sanitized_sha256": "d58e07275a293e974bc394cb6d3e11ada7287685e08aae8ea3ab50a74a0223cd"
+    },
+    {
+      "source": "generated/ntt_fixed_core_a100_20261118/analysis.json",
+      "bundled": "data/ntt_fixed_core_a100_20261118/analysis.json",
+      "original_input_sha256": "4f44912103cfacd54846c4fbc2708a09fdaf0a62562484616065af23db850829",
+      "bundled_sanitized_sha256": "62b3eb001e8d8ec0feaa298ed51fe542d8133ea6be560729bd7edbc619f5285c"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/analysis.json",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/analysis.json",
+      "original_input_sha256": "e4cc0d4aeefc46462609842d5ab27cb6838c11949af24398c4069f55a0cbb7a6",
+      "bundled_sanitized_sha256": "38d47888650a7c9efa6ad0902e5cd5f70ed151a5983c0a38e8d254f36f63be08"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b4_linear.ncu.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b4_linear.ncu.csv",
+      "original_input_sha256": "26fa655874d95b6d1449195ad5402da5081bfcbfb4fdfe9b504c6dd0e06641e7",
+      "bundled_sanitized_sha256": "bcc0dd5fbe24e4a1d73aa357aef4c6c31f41ca0803201dde835ac5f72276441a"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b16_linear.ncu.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b16_linear.ncu.csv",
+      "original_input_sha256": "d3c1885e3dc879d61b8f6f9c537384925a516321015f43487ed24075cedeb8c1",
+      "bundled_sanitized_sha256": "0788b4d785661961a3f1d1fe64a0cf5c92d3d99ab455c5a3b773f47b6c6fb34a"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b4_hermes-xor.ncu.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b4_hermes-xor.ncu.csv",
+      "original_input_sha256": "7b2273370b0c60de862da28b971bcf955c725102fa40c57c534aa4e7394c5f11",
+      "bundled_sanitized_sha256": "e995d1584d31898ccc407bae759a73eed0657b6780922b4ca34e24f421e1a625"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b16_hermes-xor.ncu.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b16_hermes-xor.ncu.csv",
+      "original_input_sha256": "b81891989f770fb1360198ed8463d9fe4d51968dddda94ffb51722cb5a28b931",
+      "bundled_sanitized_sha256": "5a765ceb8666bffe82cad191eacbc3abebf72493c1d953747ed4f39f1ad296df"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_hermes-xor_1.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_hermes-xor_1.csv",
+      "original_input_sha256": "9a2faa3c9342dc5e254444a1f4034cf8652dc83251d10d4e90f3fd4e1d4d699b",
+      "bundled_sanitized_sha256": "9a2faa3c9342dc5e254444a1f4034cf8652dc83251d10d4e90f3fd4e1d4d699b"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_hermes-xor_0.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_hermes-xor_0.csv",
+      "original_input_sha256": "9548cda29981904a36b330451c7141dfc7b1bbdefbd3e014833635a5017eef93",
+      "bundled_sanitized_sha256": "9548cda29981904a36b330451c7141dfc7b1bbdefbd3e014833635a5017eef93"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_hermes-xor_2.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_hermes-xor_2.csv",
+      "original_input_sha256": "14ab733f585d2f4dc6b63cdbe81b939d16ed6dd6dd6045ef4f59e41bae54205c",
+      "bundled_sanitized_sha256": "14ab733f585d2f4dc6b63cdbe81b939d16ed6dd6dd6045ef4f59e41bae54205c"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_linear_0.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_linear_0.csv",
+      "original_input_sha256": "43a70f6c33a368296a9b4acbaec9f04d351052c3041be4fcc547ce9fcb74a961",
+      "bundled_sanitized_sha256": "43a70f6c33a368296a9b4acbaec9f04d351052c3041be4fcc547ce9fcb74a961"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_linear_1.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_linear_1.csv",
+      "original_input_sha256": "e8a3c4d44cb21a46b0e39269cab0cbe0d66b03d1a44e026b9e11709c07a00e01",
+      "bundled_sanitized_sha256": "e8a3c4d44cb21a46b0e39269cab0cbe0d66b03d1a44e026b9e11709c07a00e01"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_hermes-xor_0.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_hermes-xor_0.csv",
+      "original_input_sha256": "9eec33dfc10fbb8a67ca3475d0f685efd27f412fa1a37e9e00686df7a4bb008c",
+      "bundled_sanitized_sha256": "9eec33dfc10fbb8a67ca3475d0f685efd27f412fa1a37e9e00686df7a4bb008c"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_hermes-xor_2.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_hermes-xor_2.csv",
+      "original_input_sha256": "2d11d579e7e470e8de47db210dd460222cb4943d717f5b73160303e26d472975",
+      "bundled_sanitized_sha256": "2d11d579e7e470e8de47db210dd460222cb4943d717f5b73160303e26d472975"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_linear_1.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_linear_1.csv",
+      "original_input_sha256": "1705d854477baa43ff0e251a67b000ef740d5e69e1cf59e1db8be4ea0619fb82",
+      "bundled_sanitized_sha256": "1705d854477baa43ff0e251a67b000ef740d5e69e1cf59e1db8be4ea0619fb82"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_hermes-xor_1.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_hermes-xor_1.csv",
+      "original_input_sha256": "a3242790715b5f72f013a85f171b408052458df27d868091fe9d36940ba3d9b1",
+      "bundled_sanitized_sha256": "a3242790715b5f72f013a85f171b408052458df27d868091fe9d36940ba3d9b1"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_linear_2.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_linear_2.csv",
+      "original_input_sha256": "ffb0e4a69d2ce5c078404415ab6067063f33e2115fe31118ad32078a69eb9e66",
+      "bundled_sanitized_sha256": "ffb0e4a69d2ce5c078404415ab6067063f33e2115fe31118ad32078a69eb9e66"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_linear_2.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_linear_2.csv",
+      "original_input_sha256": "d62e45e42b8214f41f19844216964753ca18e171dbe0d6f1e60cdfc2db988bc8",
+      "bundled_sanitized_sha256": "d62e45e42b8214f41f19844216964753ca18e171dbe0d6f1e60cdfc2db988bc8"
+    },
+    {
+      "source": "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_linear_0.csv",
+      "bundled": "data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_linear_0.csv",
+      "original_input_sha256": "91130a403db4350169c52d82d64848feade2842e307bd8652770d5493ef87099",
+      "bundled_sanitized_sha256": "91130a403db4350169c52d82d64848feade2842e307bd8652770d5493ef87099"
+    }
+  ]
+}

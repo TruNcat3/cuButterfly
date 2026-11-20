@@ -1,0 +1,34 @@
+{
+  "dimensions_inches": [
+    3.45,
+    3.02
+  ],
+  "minimum_text_pt": 6.5,
+  "source_hashes": {
+    "generated/ntt_fixed_core_a100_20261118/analysis.json": "4f44912103cfacd54846c4fbc2708a09fdaf0a62562484616065af23db850829",
+    "generated/ntt_local_bank_control_a100_20261119_strong/analysis.json": "e4cc0d4aeefc46462609842d5ab27cb6838c11949af24398c4069f55a0cbb7a6"
+  },
+  "renderer_sha256": "329f743f5ea94d485f94e5ebedf82c36e7ecde6fb324a74a017ba626a6652dd4",
+  "chart_csv_sha256": "589ac156e3690b26bab48040747fbcc7465071d79688ebbe530749e0af8bf97b",
+  "panels": {
+    "a": "NTT organization gain",
+    "b": "NTT DRAM traffic",
+    "c": "NTT resident latency",
+    "d": "NTT prefix concurrency",
+    "e": "NTT local layout trade-off",
+    "f": "NTT conflict balance"
+  },
+  "selection": "Panels a-d use three fixed NTT arithmetic primitives and two stage organizations; panels e-f use fixed NTT radix2-shoup shared-iterative local-layout controls at two batch sizes.",
+  "scope": "A100; NTT word64 q576460756061519873, natural cyclic forward. Panels a-d use N=2^16,B=16 and fixed prefixes 256/1024; panels e-f use N=2^20, B=4/16, partition 10+10, and 256 threads. Only dataflow_layout changes in e-f; global I/O, stage partition, threads, arithmetic, and storage allocation remain fixed.",
+  "estimators": "a ratio of three process medians; c same-provider resident median normalized to resident256 median; overlaid points/minmax use corresponding process pairs, not confidence intervals. e ratio of layout process medians; each layout point is its ordinary device latency divided by that batch linear median, with median and min/max; processes are independent, not recorded pairs. b complete-call DRAM byte reduction; d prefix node0 only; f sum of final two stage-kernel conflict counters from separate complete-NTT NCU captures, positive for reduction and negative for increase.",
+  "uncertainty": "e three independent timing processes per layout and batch (12 total); ranges show observed process spread, not confidence intervals. NCU sums two final stage kernels per configuration in separate captures; clocks/cache uncontrolled. No profiler time enters performance.",
+  "counts": {
+    "csv_rows": 82,
+    "ntt_organization_processes": 36,
+    "ntt_organization_profiles": 12,
+    "local_layout_processes": 12,
+    "local_layout_indexwise_diagnostic_ratios": 6,
+    "local_layout_profiles": 4
+  },
+  "alt_text": "Six compact panels show NTT organization gains and resource costs. The lower controls compare linear and XOR shared layouts within one fixed NTT core at N=2^20 and B=4/16: XOR increases complete-call latency by about 4.7\u20137.4 percent, reduces shared-load conflicts by about 87 percent, and increases shared-store conflicts by about 13\u201314 percent."
+}

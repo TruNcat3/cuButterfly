@@ -1,0 +1,143 @@
+{
+  "schema": "cubutterfly-paper-evidence-v1",
+  "evidence_revision": "2026-11-19",
+  "scope": "Frozen measured figures and boundary summary; no manuscript or new GPU measurements",
+  "python_minimum": "3.10",
+  "render_groups": [
+    {
+      "id": "organization_applications",
+      "figures": [
+        "8",
+        "10",
+        "12",
+        "boundary-table"
+      ],
+      "script": "organization_applications/render.py",
+      "expected_outputs": [
+        "cross_operator_attribution.pdf",
+        "current_refresh_applications.pdf",
+        "local_organization_profiles.pdf",
+        "cross_operator_attribution.csv",
+        "local_organization_profile_rows.csv",
+        "boundary_positive_summary_20261119.csv",
+        "manifest.json"
+      ]
+    },
+    {
+      "id": "operator_comparison",
+      "figures": [
+        "9"
+      ],
+      "script": "operator_comparison/render.py",
+      "expected_outputs": [
+        "complete_comparison_platforms.pdf",
+        "complete_comparison_platforms.csv",
+        "complete_comparison_platforms.manifest.json"
+      ]
+    },
+    {
+      "id": "ntt_mechanisms",
+      "figures": [
+        "11"
+      ],
+      "script": "ntt_mechanisms/render_ntt_mechanism_profiles.py",
+      "verify_script": "ntt_mechanisms/verify.py",
+      "expected_outputs": [
+        "ntt_mechanism_profiles_20261118.pdf",
+        "ntt_mechanism_profiles_20261118.csv",
+        "ntt_mechanism_profiles_20261118.manifest.json"
+      ]
+    }
+  ],
+  "files": {
+    "README.md": "a15a33948651268436b3248b9ba61e4d265f34f047290d7d8fd4d0bb392f6b59",
+    "ntt_mechanisms/README.md": "f8fe9a3bee1a55680dbd39bb699788e469f771e416de080413f6716b35795c1b",
+    "ntt_mechanisms/data/expected_rows.csv": "354f4367fdaee975491480826dda8fb6f722e76c8d8229c1a3b1b6c2f23fa8d9",
+    "ntt_mechanisms/data/ntt_fixed_core_a100_20261118/analysis.json": "62b3eb001e8d8ec0feaa298ed51fe542d8133ea6be560729bd7edbc619f5285c",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/analysis.json": "38d47888650a7c9efa6ad0902e5cd5f70ed151a5983c0a38e8d254f36f63be08",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b16_hermes-xor.ncu.csv": "5a765ceb8666bffe82cad191eacbc3abebf72493c1d953747ed4f39f1ad296df",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b16_linear.ncu.csv": "0788b4d785661961a3f1d1fe64a0cf5c92d3d99ab455c5a3b773f47b6c6fb34a",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b4_hermes-xor.ncu.csv": "e995d1584d31898ccc407bae759a73eed0657b6780922b4ca34e24f421e1a625",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b4_linear.ncu.csv": "bcc0dd5fbe24e4a1d73aa357aef4c6c31f41ca0803201dde835ac5f72276441a",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_hermes-xor_0.csv": "9548cda29981904a36b330451c7141dfc7b1bbdefbd3e014833635a5017eef93",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_hermes-xor_1.csv": "9a2faa3c9342dc5e254444a1f4034cf8652dc83251d10d4e90f3fd4e1d4d699b",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_hermes-xor_2.csv": "14ab733f585d2f4dc6b63cdbe81b939d16ed6dd6dd6045ef4f59e41bae54205c",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_linear_0.csv": "91130a403db4350169c52d82d64848feade2842e307bd8652770d5493ef87099",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_linear_1.csv": "1705d854477baa43ff0e251a67b000ef740d5e69e1cf59e1db8be4ea0619fb82",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_linear_2.csv": "ffb0e4a69d2ce5c078404415ab6067063f33e2115fe31118ad32078a69eb9e66",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_hermes-xor_0.csv": "9eec33dfc10fbb8a67ca3475d0f685efd27f412fa1a37e9e00686df7a4bb008c",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_hermes-xor_1.csv": "a3242790715b5f72f013a85f171b408052458df27d868091fe9d36940ba3d9b1",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_hermes-xor_2.csv": "2d11d579e7e470e8de47db210dd460222cb4943d717f5b73160303e26d472975",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_linear_0.csv": "43a70f6c33a368296a9b4acbaec9f04d351052c3041be4fcc547ce9fcb74a961",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_linear_1.csv": "e8a3c4d44cb21a46b0e39269cab0cbe0d66b03d1a44e026b9e11709c07a00e01",
+    "ntt_mechanisms/data/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_linear_2.csv": "d62e45e42b8214f41f19844216964753ca18e171dbe0d6f1e60cdfc2db988bc8",
+    "ntt_mechanisms/data/source_figure_manifest.json": "d58e07275a293e974bc394cb6d3e11ada7287685e08aae8ea3ab50a74a0223cd",
+    "ntt_mechanisms/gpu/LICENSE": "8770ec833da80785113414d7a63590acb9a1370f18325fa346bdab42bc7f9a12",
+    "ntt_mechanisms/gpu/README.md": "630200093e378a9c1c9691dae31a7cd5e5b66e09b82ad7471abb4521e7bd529a",
+    "ntt_mechanisms/gpu/benchmarks/ntt_fixed_core_organization.cu": "f0d80199ee3a9bb98104227023b0e1aaca9a268a98a94b8babc9d1fe7aa14e66",
+    "ntt_mechanisms/gpu/cpu-validation.json": "a0022488a8ade8ae68152ad8e94ff4b751ceeceb6ab7aa7b3e2c7ff6d4ea5e74",
+    "ntt_mechanisms/gpu/include/cuntt/iterative_layout.hpp": "c666060bcf732fabc6054f89757ca15defb6995bb46b0ccfcc14be1340f4b800",
+    "ntt_mechanisms/gpu/resolve_vendors.py": "7078f72387505492990ba8df0ecbbf85c622717887810c10248621947c2a61d5",
+    "ntt_mechanisms/gpu/scripts/analyze_ntt_fixed_core_organization.py": "f0a168a175cb912a299beb5b4bafdb022597ca1f49675d867c5558c62713a8e9",
+    "ntt_mechanisms/gpu/scripts/run_isolated_gpu.py": "61e2b87cc1554147993fc7067463340a7613c4b19aff2b88510bfcadf001e98a",
+    "ntt_mechanisms/gpu/scripts/run_ntt_fixed_core_organization.py": "b25cba85bfff518ac876ce844d14660af7e38e4e6dddc2dc0f17b17c98ac683c",
+    "ntt_mechanisms/gpu/source-provenance.json": "1ab8e6b10dc86006db0fd8ef1b0ffd9b9651d70bbf5da133b6a22a5ea59f39e3",
+    "ntt_mechanisms/gpu/src/ntt_traits.cuh": "bc278ca03c9c49d4d230418ba2385b40ad2b1a604d7aa44d48932d4bc3b3344a",
+    "ntt_mechanisms/gpu/src/shared_iterative.cuh": "5c437b5de77756bd4a9246eed3d704cce5ee516ec814340909c4a6d36aec4880",
+    "ntt_mechanisms/gpu/vendor-lock.json": "b1aca4c56329dd65bce462277f96ab288695f07310c4e5244e4d8206facdaf78",
+    "ntt_mechanisms/paper_plot_style.py": "0a3d1d984aed5151f969fee6ff7c7419971c5da182f315a221f8533a9d611938",
+    "ntt_mechanisms/provenance.json": "3cea88891d73ae8a60940f7ed628bd7671271c1aebe7a0d6215a4a5dbbee55fa",
+    "ntt_mechanisms/render_ntt_mechanism_profiles.py": "ecaa0aa529a292459daed0cb82c8ba51cf3b1c1fc2b128c99241109e6467a742",
+    "ntt_mechanisms/verify.py": "3c48fac073fc36266b0ab9dd57bb60ecb8e5f50bdd2a3d6badff1d2a04370ed2",
+    "operator_comparison/README.md": "2150d5b755424fac2f984ac362961bfb8cfc8dde74107f0932807071aae0e4ef",
+    "operator_comparison/data/a100_order.json": "1b57351d0ab57ee00e7ae730a68593d01dc3773eecad16fdfa7fc95cd3a9d1a4",
+    "operator_comparison/data/a100_population.json": "26e7d1589540e7b769b999229aa34313e0c8bcdd8e204d7af55903c3eff00c48",
+    "operator_comparison/data/cyclic90.json": "b8261895c06f89600cfd2d318d50e7fcd4a883606be95a4ef93dd03797dd0cab",
+    "operator_comparison/data/expected_points.csv": "69bee31618553c05711d1d8bd439fbdd0ade9f13010f833d2780e842cb9545c0",
+    "operator_comparison/data/fft8.json": "ee6b438b2107625eb0faadc3881f1408238a45e1ac853628a5651e49d5de61eb",
+    "operator_comparison/data/fwht9-cpu-adapted.json": "5275fba83d2f3728f8de1c77037a0fed62119ad52174a56bf12e1206f250f937",
+    "operator_comparison/data/main66.json": "9ef2dfb65c6b40c56c992b110794be07ada213b1c691aeaec33d08ca0b5fb777",
+    "operator_comparison/data/pro6000_backends.csv": "eed7233d7fcc467fcea7604c77af12440184e94ea1ee3ce23914bee15c06ee0e",
+    "operator_comparison/data/pro6000_coverage.csv": "c9863b2680f23d6ad36cb1e05a21e79c07d4eb9aac9529ea8c2944b381c619fd",
+    "operator_comparison/data/pro6000_cpu.csv": "8fda9bf2cefc7275af4f921c7fafdeaf423fd023986e40ad20243576e0895762",
+    "operator_comparison/data/pro6000_requests.csv": "6493e1d5035549794ac81fd89c117e5da08529ad491d956d0d30333dd0234614",
+    "operator_comparison/data/pro6000_statistics.csv": "fd7c515ee82116b107871112ded6d6ef8aa0290bea06b8c23b4f414d9f144ab9",
+    "operator_comparison/paper_plot_style.py": "0a3d1d984aed5151f969fee6ff7c7419971c5da182f315a221f8533a9d611938",
+    "operator_comparison/provenance.json": "0aaf51b0cc18b72b0aaed7b5aa4ee8e16ad3d506fcc62e23682868fccc49ec5e",
+    "operator_comparison/render.py": "35a37119e983532905f08583267fe2605cee94d0cef1cd3f9776de456db3cc11",
+    "organization_applications/README.md": "41f25b46cfe976b515e13f7ffea4220b903bb250e142a26fef89e5b04268bd6b",
+    "organization_applications/export_boundary_positive.py": "1d0e295996edfbafcdf849f6375c5cd3ecf99a970a9edc97844af94c47263bbd",
+    "organization_applications/inputs/application_historical_complete_call.json": "3557d23471cf5fc2f8ffb6a53f2e18fd879e8df5a46c556936b793d189b5d61c",
+    "organization_applications/inputs/applications.json": "14bfffcd76b735b193a688166c01d1f47876640c14d74f1073dcf99bb0fb8bdd",
+    "organization_applications/inputs/boundary_positive.json": "ee9c7cab9c8edfeba6bdd1b059548ef1b38e31fa988c74d77cf2aeaeec54fad8",
+    "organization_applications/inputs/motivation_organization_a100.csv": "10d9a6fb4dd3783dc9a3096b6f2404bb653862e7bec7e4b956afa49bd79bc069",
+    "organization_applications/inputs/narrative_scaling_20261027.json": "9bc9406ee5f28d0e6f5e8970aefbf51e3c639111f9d1c273acd0b0c21b810fa5",
+    "organization_applications/inputs/principle_core_organization.csv": "6c503f23b542b6b489ddec884aea0a6380e1a6a73d86602868a569ded885e5fe",
+    "organization_applications/inputs/resource_decisions_20261107.json": "46ce6dc4343bd8c71cac9946de1acd41db55181800a1903cd153dcf6d5b4c4c6",
+    "organization_applications/paper_plot_style.py": "0a3d1d984aed5151f969fee6ff7c7419971c5da182f315a221f8533a9d611938",
+    "organization_applications/render.py": "16c601a270685c82722bb9108e283b788d1eb9bd1efa4435e2f3e3cce1d87d2b",
+    "organization_applications/render_applications.py": "d8003e06dfe94c253604b576c961ec55cea2dc90b3b105e141fda5a01a68ed68",
+    "organization_applications/render_cross_operator_attribution.py": "5481d92b90a7019f31a55308099f0d8c0de05b6f45de7dc7d24082b80e34a852",
+    "organization_applications/render_local_organization_profiles.py": "35e4f8b6eeff3748f89667cce5b598e6030ac6ce18449d62c1fb9d3e930496c7",
+    "organization_applications/source_provenance.json": "b0a9cfe881774f03f718c0d38019dd2bbad572ec8b235619806a02bb03e89e7a",
+    "reproduce.py": "ef32b1fd98a1fd553ab332dd02482c758df839928fb3f7cc17e619dfe6fe4d36",
+    "requirements.txt": "ff663ab0c2708fe63b5896cfa007ce553db624989a9873b9ab56037ab89eea7c"
+  },
+  "checks": {
+    "figure8_rows": 150,
+    "figure9_rows": {
+      "A100": 268,
+      "PRO6000": 143
+    },
+    "figure11_rows": 82,
+    "figure12_records": 18,
+    "ckks_matched_requests": 36,
+    "ckks_geomean": 1.131051975773907,
+    "boundary_process_rows": 6
+  },
+  "gpu_remeasurement": {
+    "figure11_a_d": "ntt_mechanisms/gpu/README.md",
+    "figure11_e_f": "Frozen data and offline rendering; exact GPU replay not yet bundled",
+    "other_figures": "Existing benchmark/application runners with provider dependencies; see README for cohort limits"
+  }
+}

@@ -2,10 +2,18 @@
 
 This directory holds executable experiments independently of the manuscript.
 
+For the current evaluation figures, start with the
+[self-contained evidence bundle](paper/README.md). It reconstructs the
+complete-transform, fixed-kernel, application and resource figures from
+measured inputs without a GPU, and distinguishes these commands from new
+measurement campaigns.
+
 - `workloads/` contains workload definitions, target configurations and application runners. The `e13/` runners cover FFT filtering and QuaRot; the CKKS and TFHE runners use pinned HEonGPU dependencies.
 - `tools/` contains CPU preparation, GPU measurement, mechanism controls, profile analysis, result export and plotting programs.
 - `snapshots/` contains frozen JSON/CSV evidence used by result checks and visualizations.
 - `provenance/` preserves source manifests and historical evidence identifiers. Historical source paths and hashes describe the original measurements; directory relocation does not revalidate or remeasure them.
+- `paper/` maps the current experimental figures to their measured inputs,
+  offline analyses, portable reproduction command and GPU measurement scope.
 
 Start with the public configuration-driven runner in `benchmark/README.md` for operator comparisons. Use `python experiments/tools/prepare_experiments.py --help` for the bounded experiment queue, `prepare_end_to_end.py --help` for application preparation, and `prepare_core_dataflow_ablation.py --help` for controlled mechanism experiments. Preparation and compilation run on the CPU; measurement requires an available GPU. Check each program's help for explicit input and output locations.
 

@@ -1,0 +1,927 @@
+{
+  "records": [
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n256-b1-allow-fp16-mma",
+      "backend": "cuButterfly",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 0.322,
+      "backend_us": 2.5087999179959297,
+      "speedup": 0.1283482184809775,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 1,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          256
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "1902cf309af94af6834a4bf183a3614c1fc24b8f6b57d9c75cffcc3d20d0bc23"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n256-b1-allow-fp16-mma",
+      "backend": "hadacore",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 0.322,
+      "backend_us": 3.532800078392029,
+      "speedup": 0.09114583131082805,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 1,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          256
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "1902cf309af94af6834a4bf183a3614c1fc24b8f6b57d9c75cffcc3d20d0bc23"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n256-b16-allow-fp16-mma",
+      "backend": "cuButterfly",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 4.9421,
+      "backend_us": 2.611199952661991,
+      "speedup": 1.8926547524488768,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 16,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          256
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "ff15dda51f929e3c76c42e7dbd546e543ee0f1542656e61b818d77fa345a3ba3"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n256-b16-allow-fp16-mma",
+      "backend": "hadacore",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 4.9421,
+      "backend_us": 3.942399844527244,
+      "speedup": 1.2535765510595072,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 16,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          256
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "ff15dda51f929e3c76c42e7dbd546e543ee0f1542656e61b818d77fa345a3ba3"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n256-b256-allow-fp16-mma",
+      "backend": "cuButterfly",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 80.2658,
+      "backend_us": 2.969600073993206,
+      "speedup": 27.029161503241408,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 256,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          256
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "c72ca3509af324df85153793d6f57c3a24566430575c0d5ef29f4649896c75ca"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n256-b256-allow-fp16-mma",
+      "backend": "hadacore",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 80.2658,
+      "backend_us": 4.403200000524521,
+      "speedup": 18.228969837944796,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 256,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 256,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 256,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          256
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "c72ca3509af324df85153793d6f57c3a24566430575c0d5ef29f4649896c75ca"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n4096-b1-allow-fp16-mma",
+      "backend": "cuButterfly",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 5.7796,
+      "backend_us": 3.328000009059906,
+      "speedup": 1.7366586491184004,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 1,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "e49ba3cd58584fb051ef5d644c0669b04e35d125c54a30066821fe775609bcf4"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n4096-b1-allow-fp16-mma",
+      "backend": "hadacore",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 5.7796,
+      "backend_us": 4.505600035190582,
+      "speedup": 1.2827592229356704,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 1,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "e49ba3cd58584fb051ef5d644c0669b04e35d125c54a30066821fe775609bcf4"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n4096-b16-allow-fp16-mma",
+      "backend": "cuButterfly",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 94.82665,
+      "backend_us": 3.481600061058998,
+      "speedup": 27.23651434310826,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 16,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "88032ca04147f843ac94eabedecaa9eeeaa8dd859dd016394c6eada9c1edd743"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n4096-b16-allow-fp16-mma",
+      "backend": "hadacore",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 94.82665,
+      "backend_us": 4.864000156521797,
+      "speedup": 19.495609981190807,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 16,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "88032ca04147f843ac94eabedecaa9eeeaa8dd859dd016394c6eada9c1edd743"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n4096-b256-allow-fp16-mma",
+      "backend": "cuButterfly",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 1626.8967,
+      "backend_us": 6.0416001826524734,
+      "speedup": 269.2824170443095,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 256,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "254388180bfabfe41666f449aaa5da1a257783d3eab9be84fcd7715185b00785"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n4096-b256-allow-fp16-mma",
+      "backend": "hadacore",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 1626.8967,
+      "backend_us": 10.291200131177902,
+      "speedup": 158.08619784501167,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 256,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "254388180bfabfe41666f449aaa5da1a257783d3eab9be84fcd7715185b00785"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n32768-b1-allow-fp16-mma",
+      "backend": "cuButterfly",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 53.798199999999994,
+      "backend_us": 12.646399438381195,
+      "speedup": 4.254032957137596,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 1,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 32768,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 32768,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          32768
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "f20528964e988cbf8cf52717d126b59ce9a29322b761be39527154d96ff32c97"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n32768-b1-allow-fp16-mma",
+      "backend": "hadacore",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 53.798199999999994,
+      "backend_us": 14.028799533843994,
+      "speedup": 3.8348398856376624,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 1,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 32768,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 32768,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          32768
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "f20528964e988cbf8cf52717d126b59ce9a29322b761be39527154d96ff32c97"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n32768-b16-allow-fp16-mma",
+      "backend": "cuButterfly",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 882.5039,
+      "backend_us": 14.028799533843994,
+      "speedup": 62.906587115382884,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 16,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 32768,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 32768,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          32768
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "68a18a948a352c7c67176ff04b91ecf41c7fd2a1c49f7f726e44d74a6a8fcab7"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n32768-b16-allow-fp16-mma",
+      "backend": "hadacore",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 882.5039,
+      "backend_us": 16.793599724769592,
+      "speedup": 52.550013961471144,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 16,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 32768,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 32768,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          32768
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "68a18a948a352c7c67176ff04b91ecf41c7fd2a1c49f7f726e44d74a6a8fcab7"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n32768-b256-allow-fp16-mma",
+      "backend": "cuButterfly",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 19813.4733,
+      "backend_us": 40.95999896526337,
+      "speedup": 483.72738770826294,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 256,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 32768,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 32768,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          32768
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "0b6dfe75a82c704cb5f1cac60c7c30192ab163fe06e9f73367546104e1748f92"
+    },
+    {
+      "cohort": "fwht9-cpu-adapted",
+      "operator": "fwht",
+      "precision": "fp16",
+      "case_id": "fwht-fp16-n32768-b256-allow-fp16-mma",
+      "backend": "hadacore",
+      "cpu_backend": "fxt-cpu-t1-fp16-storage-fp32-compute",
+      "cpu_us": 19813.4733,
+      "backend_us": 67.63520240783691,
+      "speedup": 292.94616700524887,
+      "semantics": {
+        "arithmetic_policy": 1,
+        "batch": 256,
+        "compute": 0,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 32768,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 2,
+        "output_batch_stride": 32768,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          32768
+        ],
+        "storage": 0,
+        "word_bits": null
+      },
+      "source_gpu_sha256": "0b6dfe75a82c704cb5f1cac60c7c30192ab163fe06e9f73367546104e1748f92"
+    }
+  ],
+  "qualification": "Shared-host provisional CPU timing; FP16 input/output with FP32 FXT compute; not native FP16 and not MMA instruction/rounding equivalent.",
+  "protocol": {
+    "warmup": 10,
+    "trials": 7,
+    "calls": 20,
+    "clock": "C++ std::chrono::steady_clock",
+    "statistic": "median per-complete-call time",
+    "timed": "Native C++ clock surrounds 20 complete fwht_adapted calls: full-batch FP16-to-FP32 F16C conversion, FXT native batch call including its input/output copy, FP32 scaling, FP16 conversion and full output writeback",
+    "excluded": "Python and ctypes dispatch; compilation, setup allocation, input loading, reference/accuracy calculations, artifact writing",
+    "superseded": "superseded_python_dispatch/manifest.json preserves earlier host-dispatch-inclusive samples as diagnostics; pilot_repeated_pointer_binding preserves earlier pointer-binding pilot",
+    "workspace": "Two full-batch FP32 arrays and caller-owned FP16 output preallocated once per request",
+    "cpu_gpu_boundary": "CPU host wall time vs archived resident-device CUDA Graph timings; initial host/device transfer excluded"
+  },
+  "missing": [],
+  "arithmetic": {
+    "storage": "fp16",
+    "compute": "fp32",
+    "threads": 1,
+    "scale": 1.0,
+    "scale_reason": "All nine requests are unnormalized forward FWHT",
+    "output_rounding": "IEEE FP16 round-to-nearest ties-to-even via F16C",
+    "reference": "original full per-stage-rounded FP16 Sylvester diagnostic; no new acceptance threshold"
+  }
+}

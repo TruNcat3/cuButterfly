@@ -5,16 +5,16 @@
 cuButterfly is a CUDA research library for FFT, NTT, FWHT, structured 2×2,
 and subset/superset zeta transforms. These operators share staged pair
 dependencies, but their useful parallel shape changes with precision, rank,
-batch, layout, direction and hardware resources. A fast arithmetic core alone
+batch, layout, direction and hardware resources. A fast arithmetic kernel alone
 does not determine performance: the execution organization must decide what is
 expanded across independent tiles, what is reused across time, and how each
-stage hands data to its consumers.
+stage exchanges data with its consumers.
 
 ## Method at a glance
 
 cuButterfly expresses that organization as a **hierarchical hybrid tile-dataflow
 graph**. A request is lowered into legal tile subgraphs, matched to a replaceable
-arithmetic core, and checked against the target's measured storage, bandwidth and
+arithmetic kernel, and checked against the target's measured storage, bandwidth and
 concurrency constraints.
 
 1. **Expose dependencies.** Stage relations define local work and the values
@@ -22,7 +22,7 @@ concurrency constraints.
 2. **Choose a hybrid organization.** Independent tiles provide spatial work;
    bounded tile residency and reuse provide temporal work. The number of active
    bands, tile shape, layout and pipeline depth are selected per request.
-3. **Align handoffs.** Producer writes place values in the layout expected by
+3. **Align boundary exchange.** Producer writes place values in the layout expected by
    consumer tiles. Boundary handling and required conversions preserve the
    requested semantics without hiding their cost.
 4. **Prepare and execute.** Hardware calibration produces static profiles and
@@ -45,17 +45,19 @@ one fixed GPU or one fixed tile size.
 
 ## Performance reference
 
-The following frozen comparison is a compact orientation aid. Each box is the
-CPU latency divided by the backend latency for matched requests within one
-operator/precision group; larger values mean more CPU-normalized throughput.
-The exact hardware, population and timing contract are recorded by the benchmark
-manifests and are regenerated for each target.
+The following measured comparison keeps A100 and RTX PRO 6000 populations
+separate. Each box shows CPU time divided by backend complete-call time within
+an operator/precision group. It describes a workload distribution; direct
+GPU/GPU claims use matched requests. Backend coverage and the shared-host CPU
+timing qualification are retained in the evidence bundle.
 
-[![CPU-normalized performance distributions grouped by butterfly operator and precision](figures/cpu_normalized_performance.svg)](figures/cpu_normalized_performance.png)
+[![CPU-normalized performance distributions grouped by butterfly operator, precision and platform](experiments/paper/previews/complete_comparison_platforms.svg)](experiments/paper/previews/complete_comparison_platforms.png)
 
-This image is a public artifact, not a substitute for a new target's
-measurement. Use the [benchmark guide](benchmark/README.md) to regenerate the
-population and keep unavailable comparisons explicit.
+The [evaluation bundle](experiments/paper/README.md) includes the measured
+inputs and offline scripts for all five experimental figures and the boundary
+control table. Rebuild them with
+`python experiments/paper/reproduce.py --output-dir results/paper-figures`.
+Use the [benchmark guide](benchmark/README.md) for new measurements.
 
 ## Install
 

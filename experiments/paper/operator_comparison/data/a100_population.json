@@ -1,0 +1,1154 @@
+{
+  "aggregation": "Separate cohort/operator/precision boxes; all participating GPU backends use common case intersection; no speed-based filtering; unmatched records retained separately",
+  "axis_range": [
+    0.3408022159547933,
+    1786.1656030395798
+  ],
+  "axis_scale": "log",
+  "cohorts": [
+    "cyclic90",
+    "main66"
+  ],
+  "cpu_denominators": {
+    "fft": "fftw-cpu-t8",
+    "fwht": "fxt-cpu-t1",
+    "ntt": "hexl-cpu-t1",
+    "structured-2x2": "butterfly-author-cpu-t1",
+    "subset-zeta": "fxt-cpu-t1",
+    "superset-zeta": "fxt-cpu-t1"
+  },
+  "dimensions_inches": [
+    7.05,
+    2.5
+  ],
+  "display_order": [
+    [
+      "main66",
+      "fft",
+      "fp32"
+    ],
+    [
+      "main66",
+      "fft",
+      "fp64"
+    ],
+    [
+      "main66",
+      "fwht",
+      "fp32"
+    ],
+    [
+      "main66",
+      "fwht",
+      "fp64"
+    ],
+    [
+      "main66",
+      "ntt",
+      "word32"
+    ],
+    [
+      "main66",
+      "ntt",
+      "word64"
+    ],
+    [
+      "cyclic90",
+      "ntt",
+      "word32"
+    ],
+    [
+      "cyclic90",
+      "ntt",
+      "word64"
+    ],
+    [
+      "main66",
+      "subset-zeta",
+      "uint32"
+    ],
+    [
+      "main66",
+      "subset-zeta",
+      "word64"
+    ],
+    [
+      "main66",
+      "superset-zeta",
+      "uint32"
+    ],
+    [
+      "main66",
+      "superset-zeta",
+      "word64"
+    ],
+    [
+      "main66",
+      "structured-2x2",
+      "fp32"
+    ],
+    [
+      "main66",
+      "structured-2x2",
+      "fp64"
+    ]
+  ],
+  "fftw_threads": 8,
+  "group_layout": [
+    {
+      "center": 0.48,
+      "gpu_box_count": 3,
+      "group": [
+        "main66",
+        "fft",
+        "fp32"
+      ],
+      "left": 0.0,
+      "right": 0.96
+    },
+    {
+      "center": 1.5699999999999998,
+      "gpu_box_count": 3,
+      "group": [
+        "main66",
+        "fft",
+        "fp64"
+      ],
+      "left": 1.0899999999999999,
+      "right": 2.05
+    },
+    {
+      "center": 2.5199999999999996,
+      "gpu_box_count": 2,
+      "group": [
+        "main66",
+        "fwht",
+        "fp32"
+      ],
+      "left": 2.1799999999999997,
+      "right": 2.86
+    },
+    {
+      "center": 3.3299999999999996,
+      "gpu_box_count": 1,
+      "group": [
+        "main66",
+        "fwht",
+        "fp64"
+      ],
+      "left": 2.9899999999999998,
+      "right": 3.67
+    },
+    {
+      "center": 4.14,
+      "gpu_box_count": 1,
+      "group": [
+        "main66",
+        "ntt",
+        "word32"
+      ],
+      "left": 3.8,
+      "right": 4.4799999999999995
+    },
+    {
+      "center": 4.949999999999999,
+      "gpu_box_count": 2,
+      "group": [
+        "main66",
+        "ntt",
+        "word64"
+      ],
+      "left": 4.609999999999999,
+      "right": 5.289999999999999
+    },
+    {
+      "center": 5.76,
+      "gpu_box_count": 2,
+      "group": [
+        "cyclic90",
+        "ntt",
+        "word32"
+      ],
+      "left": 5.42,
+      "right": 6.1
+    },
+    {
+      "center": 6.57,
+      "gpu_box_count": 2,
+      "group": [
+        "cyclic90",
+        "ntt",
+        "word64"
+      ],
+      "left": 6.23,
+      "right": 6.91
+    },
+    {
+      "center": 7.380000000000001,
+      "gpu_box_count": 1,
+      "group": [
+        "main66",
+        "subset-zeta",
+        "uint32"
+      ],
+      "left": 7.040000000000001,
+      "right": 7.720000000000001
+    },
+    {
+      "center": 8.190000000000001,
+      "gpu_box_count": 1,
+      "group": [
+        "main66",
+        "subset-zeta",
+        "word64"
+      ],
+      "left": 7.850000000000001,
+      "right": 8.530000000000001
+    },
+    {
+      "center": 9.000000000000002,
+      "gpu_box_count": 1,
+      "group": [
+        "main66",
+        "superset-zeta",
+        "uint32"
+      ],
+      "left": 8.660000000000002,
+      "right": 9.340000000000002
+    },
+    {
+      "center": 9.810000000000002,
+      "gpu_box_count": 1,
+      "group": [
+        "main66",
+        "superset-zeta",
+        "word64"
+      ],
+      "left": 9.470000000000002,
+      "right": 10.150000000000002
+    },
+    {
+      "center": 10.620000000000003,
+      "gpu_box_count": 1,
+      "group": [
+        "main66",
+        "structured-2x2",
+        "fp32"
+      ],
+      "left": 10.280000000000003,
+      "right": 10.960000000000003
+    },
+    {
+      "center": 11.430000000000003,
+      "gpu_box_count": 1,
+      "group": [
+        "main66",
+        "structured-2x2",
+        "fp64"
+      ],
+      "left": 11.090000000000003,
+      "right": 11.770000000000003
+    }
+  ],
+  "groups": [
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963",
+          "2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9",
+          "44b2de6f8d8235eec266bf422af3826442f8250366e2b9fad29ac0576dbce3e3",
+          "b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40",
+          "ba087fb33968396226e0479b872103d845d72ef4d9acbcd3a1d3a5cc191effa7",
+          "c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16",
+          "c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7",
+          "ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86",
+          "ee8b034b194dda38fb15fb59cbc30b48f3ecda99d875b90dcee2ec12956795dc",
+          "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac",
+          "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548"
+        ],
+        "cufft": [
+          "1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963",
+          "2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9",
+          "44b2de6f8d8235eec266bf422af3826442f8250366e2b9fad29ac0576dbce3e3",
+          "b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40",
+          "ba087fb33968396226e0479b872103d845d72ef4d9acbcd3a1d3a5cc191effa7",
+          "c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16",
+          "c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7",
+          "ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86",
+          "ee8b034b194dda38fb15fb59cbc30b48f3ecda99d875b90dcee2ec12956795dc",
+          "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac",
+          "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548"
+        ],
+        "vkfft": [
+          "1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963",
+          "2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9",
+          "44b2de6f8d8235eec266bf422af3826442f8250366e2b9fad29ac0576dbce3e3",
+          "b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40",
+          "ba087fb33968396226e0479b872103d845d72ef4d9acbcd3a1d3a5cc191effa7",
+          "c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16",
+          "c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7",
+          "ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86",
+          "ee8b034b194dda38fb15fb59cbc30b48f3ecda99d875b90dcee2ec12956795dc",
+          "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac",
+          "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548"
+        ]
+      },
+      "backends": [
+        "cuButterfly",
+        "cufft",
+        "vkfft"
+      ],
+      "coverage": {
+        "cuButterfly_total": 11,
+        "plotted": 11
+      },
+      "group": [
+        "main66",
+        "fft",
+        "fp32"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        },
+        "cufft": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        },
+        "vkfft": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "1ffec0c0b5da5987f15a8bf71228a9676f1b2760ec4056f5210aa3b78e7c8963",
+        "2e9d4418fa69d700e5684513cc18b0098a44cb9c2dc046baf5bd5baf33e57ee9",
+        "44b2de6f8d8235eec266bf422af3826442f8250366e2b9fad29ac0576dbce3e3",
+        "b9ec9a4de1a071429577024e910e4086c700056c7c2911d7e3a9584420772e40",
+        "ba087fb33968396226e0479b872103d845d72ef4d9acbcd3a1d3a5cc191effa7",
+        "c00d6050442ad65715bf039a46a9cea569965bde79babbd11bb9c24cc033de16",
+        "c12b6a3a4ce10692a4ec0212974cc0da0ed2a330050765b82e305bd07c3508e7",
+        "ca982faf49a529e96de928ba8171ac758af0c6f43056fd4a4d73a01367d89b86",
+        "ee8b034b194dda38fb15fb59cbc30b48f3ecda99d875b90dcee2ec12956795dc",
+        "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac",
+        "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548"
+      ]
+    },
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a",
+          "5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb",
+          "6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f",
+          "99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0",
+          "cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0",
+          "fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d"
+        ],
+        "cufft": [
+          "31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a",
+          "5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb",
+          "6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f",
+          "99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0",
+          "cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0",
+          "fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d"
+        ],
+        "vkfft": [
+          "31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a",
+          "5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb",
+          "6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f",
+          "99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0",
+          "cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0",
+          "fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d"
+        ]
+      },
+      "backends": [
+        "cuButterfly",
+        "cufft",
+        "vkfft"
+      ],
+      "coverage": {
+        "cuButterfly_total": 6,
+        "plotted": 6
+      },
+      "group": [
+        "main66",
+        "fft",
+        "fp64"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        },
+        "cufft": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        },
+        "vkfft": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a",
+        "5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb",
+        "6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f",
+        "99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0",
+        "cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0",
+        "fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d"
+      ]
+    },
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9",
+          "0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043",
+          "3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485",
+          "4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3",
+          "5e296849a754f51f2c951977f778472f3047e3e65616086309f8d8c873078cb5",
+          "bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c",
+          "db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be",
+          "dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51",
+          "e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2",
+          "eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a",
+          "f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d"
+        ],
+        "daofht": [
+          "0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9",
+          "0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043",
+          "3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485",
+          "4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3",
+          "bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c",
+          "db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be",
+          "dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51",
+          "e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2",
+          "eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a",
+          "f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d"
+        ]
+      },
+      "backends": [
+        "cuButterfly",
+        "daofht"
+      ],
+      "coverage": {
+        "cuButterfly_total": 11,
+        "plotted": 10
+      },
+      "group": [
+        "main66",
+        "fwht",
+        "fp32"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [
+            "5e296849a754f51f2c951977f778472f3047e3e65616086309f8d8c873078cb5"
+          ],
+          "reason": "not in intersection of all participating GPU backends"
+        },
+        "daofht": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "0a5b77638a784f3bda2c044738564a5e3f1f431be060f280214eadff704332f9",
+        "0bfbfc7281900efcb2dfdcb803acb6023a283bfb35791cba98eeb47879c65043",
+        "3d538ac9a0a349ef48027305a79a4827dca83f4c4f944d02ec86e032550b4485",
+        "4dedc8873062a9ac84303ddba9e34856329e551624b272402adb33cb12e1b4e3",
+        "bd0f4fbbd806d5098fe9a7f46241ed6540215e1cb8a8e17c0f1dc612f5a0952c",
+        "db3b70a13037be10acbf60b7d7a81a93ce0b71a7c722a1f0bef44aef6dc2b5be",
+        "dbad6edfd640e16740f5017114c46c537da74f8fe5707dd9559a9f529f5dad51",
+        "e499014265e892231c2c7fe42d925456740737d8ac32761040674bd512cb14f2",
+        "eb9ff73e725c3c70c1134a4f3cd0902818dcaaef27f224b6a92fd35c22a5085a",
+        "f07e58903469df90b20cabdb9696d532cdcf5f0831fe2f84a527db0a17ae1b2d"
+      ]
+    },
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "c669da86891cf10a56120b86d30dd00dd4277774d8da49ce61673f73d6416d32",
+          "d65c1cc9eb23f8609e815cb74f2318e0b8127870aa4b601b61b45ccebcb03a58"
+        ]
+      },
+      "backends": [
+        "cuButterfly"
+      ],
+      "coverage": {
+        "cuButterfly_total": 2,
+        "plotted": 2
+      },
+      "group": [
+        "main66",
+        "fwht",
+        "fp64"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "c669da86891cf10a56120b86d30dd00dd4277774d8da49ce61673f73d6416d32",
+        "d65c1cc9eb23f8609e815cb74f2318e0b8127870aa4b601b61b45ccebcb03a58"
+      ]
+    },
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "16a35eaba8877d371a495169cf5b3493aa69dc97b9acc64616838e7b850a2bec",
+          "474bd15c6b8f88b7d6ccdae7409b0ca2344280481464fd3ac6d1990cd14b3700",
+          "7e8759ca9ea1f2afd2253a35da5a0849774510385e164faa1db09709e43a0dc8",
+          "e1b431aba007644d4adf24c062c794d8b59d7145e0a5c0181ad787c39f2ab7e1"
+        ]
+      },
+      "backends": [
+        "cuButterfly"
+      ],
+      "coverage": {
+        "cuButterfly_total": 4,
+        "plotted": 4
+      },
+      "group": [
+        "main66",
+        "ntt",
+        "word32"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "16a35eaba8877d371a495169cf5b3493aa69dc97b9acc64616838e7b850a2bec",
+        "474bd15c6b8f88b7d6ccdae7409b0ca2344280481464fd3ac6d1990cd14b3700",
+        "7e8759ca9ea1f2afd2253a35da5a0849774510385e164faa1db09709e43a0dc8",
+        "e1b431aba007644d4adf24c062c794d8b59d7145e0a5c0181ad787c39f2ab7e1"
+      ]
+    },
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "168d2b19ad493d5c6927f65758a4aec025a0c7990dfd5e1bbb340d4d0d96e415",
+          "38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e",
+          "5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e",
+          "65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f",
+          "83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b",
+          "a2464b5b52504a97b847b7b8ce5f640a1159307524a148bf594b1bec0b1dc69a",
+          "bc18c585abdad31d5b0fac1ff526b32008cf34009b687e5d9252a0c2e953ccc6",
+          "eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa",
+          "f203848e8822bfdc470ef962d01148ef86b65bf6bbfb3d4c67a348c96a340f94"
+        ],
+        "gpu-ntt": [
+          "38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e",
+          "5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e",
+          "65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f",
+          "83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b",
+          "eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa"
+        ]
+      },
+      "backends": [
+        "cuButterfly",
+        "gpu-ntt"
+      ],
+      "coverage": {
+        "cuButterfly_total": 9,
+        "plotted": 5
+      },
+      "group": [
+        "main66",
+        "ntt",
+        "word64"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [
+            "168d2b19ad493d5c6927f65758a4aec025a0c7990dfd5e1bbb340d4d0d96e415",
+            "a2464b5b52504a97b847b7b8ce5f640a1159307524a148bf594b1bec0b1dc69a",
+            "bc18c585abdad31d5b0fac1ff526b32008cf34009b687e5d9252a0c2e953ccc6",
+            "f203848e8822bfdc470ef962d01148ef86b65bf6bbfb3d4c67a348c96a340f94"
+          ],
+          "reason": "not in intersection of all participating GPU backends"
+        },
+        "gpu-ntt": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "38556e5d55dfe6b061be144c07808ad356e1c611efb81082dfbf776eb7a0a27e",
+        "5efd0f8413634bedd656367729403d68f2cee2ab3dd64e64ac6ede887cd6374e",
+        "65a20b1e396e8dedf43998cf17c5abc6e335e828604cf260440d8bda6fe7ca8f",
+        "83c4cf45fa81604df1644041d4ebf3ae8bc04986d7617340953378b2b961bf4b",
+        "eab91b52d5d9956d6834400a1cbb896cb39a4fe9322928dc8eab4f00eb2623fa"
+      ]
+    },
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "01a6f0ea5e1dfb720e60c2baeb36a83a0c43b9bcbd7c0ac2d00aed5cc14ad2fb",
+          "0522cdd0030d1cbdcc5adb54061eb0d33b4c966f5bfc55342602c3de6f3953e9",
+          "09ca3a61785468abf370d6fadf956fac748f3c29ed2286c938e63fd6dcd73f50",
+          "0a7b7c0b0556aca8a1c36e114424acec0cecd75a84cb76535197db9154882316",
+          "0c8bb1889dcfeb971f62694d757b27f2443dfe73463f118736b8b917968105fa",
+          "16a35eaba8877d371a495169cf5b3493aa69dc97b9acc64616838e7b850a2bec",
+          "218961210e05ca1f0bb1130107b2614b862d50ca6916a07bc98dd0b1d487ad7c",
+          "3cf5ad20f608fca7b3a1cec71d9aaaec586bec167b53bc37f2be20a0077ce565",
+          "481456e69862ac6cddb1260fe706b5ce9626df0c2d6415c3df7e6d38f6c109b3",
+          "486ebac42647c99fe0cdb648ebd9b155f5576bcddb47f23241388cdd5c855707",
+          "4a35e6f4152f1bb86c0afff2c12560b8e7271542f16df0fad90ba551e26ffa0f",
+          "4ac2ea5ef68d7dee39a1eec59f54496508f9a4a794a378f593e180d4835e663a",
+          "4e2a7b29da8c79931713d4768b5a14186fd08c915ded3ff4db1543aa46b38cb1",
+          "4ec5cc3f98a51636fdb44bc39ce6ae9e2a6f110ce55084d50331803cbdddd79a",
+          "5b4dfd800921bc7837f2716b1c6b6fdcfe5d5b4b36646206a8083e2f74b3783d",
+          "6417704a4f1899b80bd64950fcae0c2d9a9fd8f132a4673d29eb9b0b65651f4a",
+          "70d280a9852a82cf961d542471494c14a9fd89d6e93edc358b8f6422660d2893",
+          "7115c38a724bb0dba50ced408106976c432d34de93e77618e03a27ce12039fc5",
+          "74ba46ac4c9ba4994e2d6cfd43ea784dc73dc267c7f86d87a0ef6c5a1cb0a668",
+          "7b45c577d1596523831989a3fe9339c427a32279b45e66a1f89f2ed415e3ed5d",
+          "7f29ea3abb70f61a04fc5571f37b1a2170f202b27017d121ecdf29cb33fd5dd6",
+          "811235523376716cd6e75927810fc9c32ed8c8f974f2c6a272904c24ddfea36c",
+          "8b22dfc010e8d6045a9d2139daffc5e34f5d601ff3b870a6b147866310a7b261",
+          "8bd146b6ce93c83d699ca44d9dfefffc878732ed1470ac9d3483873b5458c337",
+          "8f7842fd1011fbe6ea9146202fa16b47117dc74066e0774b1a028451769da70e",
+          "90a730e9e903b26ae7df47792e7f476d0056f703c1667483948e6b8b728491b6",
+          "92fa440b3b569febcc5db2aacffb7a16dbe806efc235de7e5264064b1b0b8ea1",
+          "96b8f1fb358d8f8b7278c2fe342eaa3e831c17f9d70b60d1bf1b80d108876f9f",
+          "96da9b0e21c720e1b6841f2097a38f261a34b72aeead5a819f36bec0267e0f31",
+          "9e9dfe45e1991f03bd2f12987ed589ef14c5b07f32ff305ba39fa2d3296d15f1",
+          "a703d344feb66ad34a0155a3e63fac5f530f22f5657aa0360554af69ea145a7a",
+          "a83a6b16d80acb238d184362d45988bc86b7df70ceddd2e6d121e7f0636ddb56",
+          "bf1ce58d14418bdaaab2718935993ddbf192db34dd16ec7d4acb9f724c81195d",
+          "ce48a71a8f3a82826f0d65fb6ab844934240f7861b90a141e202d8048c1d3b0c",
+          "d10b25861364fddf503fbd64c59450b1121218fa396fa51a542633278664cafc",
+          "d56345b84fa7f5263cfc2f0172e82475c972af2f4664f56b16bfbb3394ef3610",
+          "da9fda1eff27dce12a0bd322b9122f03559f06aaeb67c0dfe028c37b69688b52",
+          "db05a58bca42b08c97bc72e969e60e8801dee9c31a1f4a195fef31aa5d1b4083",
+          "e1b431aba007644d4adf24c062c794d8b59d7145e0a5c0181ad787c39f2ab7e1",
+          "e2420af94f64bd0716680efb899e557365779d94568ea563b8445a38433ab889",
+          "e4cf7849810104c66d1ddd0ad094c6a1f731aede04ae5c50dbe64fb1f8ca3a24",
+          "fc3fa28fc3518fc3f9a443fc683493b3a400aa933087ec967d562143ff9f840a"
+        ],
+        "gpu-ntt": [
+          "0a7b7c0b0556aca8a1c36e114424acec0cecd75a84cb76535197db9154882316",
+          "3cf5ad20f608fca7b3a1cec71d9aaaec586bec167b53bc37f2be20a0077ce565",
+          "481456e69862ac6cddb1260fe706b5ce9626df0c2d6415c3df7e6d38f6c109b3",
+          "486ebac42647c99fe0cdb648ebd9b155f5576bcddb47f23241388cdd5c855707",
+          "4a35e6f4152f1bb86c0afff2c12560b8e7271542f16df0fad90ba551e26ffa0f",
+          "5b4dfd800921bc7837f2716b1c6b6fdcfe5d5b4b36646206a8083e2f74b3783d",
+          "6417704a4f1899b80bd64950fcae0c2d9a9fd8f132a4673d29eb9b0b65651f4a",
+          "7f29ea3abb70f61a04fc5571f37b1a2170f202b27017d121ecdf29cb33fd5dd6",
+          "8b22dfc010e8d6045a9d2139daffc5e34f5d601ff3b870a6b147866310a7b261",
+          "8bd146b6ce93c83d699ca44d9dfefffc878732ed1470ac9d3483873b5458c337",
+          "9e9dfe45e1991f03bd2f12987ed589ef14c5b07f32ff305ba39fa2d3296d15f1",
+          "a703d344feb66ad34a0155a3e63fac5f530f22f5657aa0360554af69ea145a7a",
+          "a83a6b16d80acb238d184362d45988bc86b7df70ceddd2e6d121e7f0636ddb56",
+          "d56345b84fa7f5263cfc2f0172e82475c972af2f4664f56b16bfbb3394ef3610",
+          "da9fda1eff27dce12a0bd322b9122f03559f06aaeb67c0dfe028c37b69688b52",
+          "db05a58bca42b08c97bc72e969e60e8801dee9c31a1f4a195fef31aa5d1b4083",
+          "e4cf7849810104c66d1ddd0ad094c6a1f731aede04ae5c50dbe64fb1f8ca3a24",
+          "fc3fa28fc3518fc3f9a443fc683493b3a400aa933087ec967d562143ff9f840a"
+        ]
+      },
+      "backends": [
+        "cuButterfly",
+        "gpu-ntt"
+      ],
+      "coverage": {
+        "cuButterfly_total": 42,
+        "plotted": 18
+      },
+      "group": [
+        "cyclic90",
+        "ntt",
+        "word32"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [
+            "01a6f0ea5e1dfb720e60c2baeb36a83a0c43b9bcbd7c0ac2d00aed5cc14ad2fb",
+            "0522cdd0030d1cbdcc5adb54061eb0d33b4c966f5bfc55342602c3de6f3953e9",
+            "09ca3a61785468abf370d6fadf956fac748f3c29ed2286c938e63fd6dcd73f50",
+            "0c8bb1889dcfeb971f62694d757b27f2443dfe73463f118736b8b917968105fa",
+            "16a35eaba8877d371a495169cf5b3493aa69dc97b9acc64616838e7b850a2bec",
+            "218961210e05ca1f0bb1130107b2614b862d50ca6916a07bc98dd0b1d487ad7c",
+            "4ac2ea5ef68d7dee39a1eec59f54496508f9a4a794a378f593e180d4835e663a",
+            "4e2a7b29da8c79931713d4768b5a14186fd08c915ded3ff4db1543aa46b38cb1",
+            "4ec5cc3f98a51636fdb44bc39ce6ae9e2a6f110ce55084d50331803cbdddd79a",
+            "70d280a9852a82cf961d542471494c14a9fd89d6e93edc358b8f6422660d2893",
+            "7115c38a724bb0dba50ced408106976c432d34de93e77618e03a27ce12039fc5",
+            "74ba46ac4c9ba4994e2d6cfd43ea784dc73dc267c7f86d87a0ef6c5a1cb0a668",
+            "7b45c577d1596523831989a3fe9339c427a32279b45e66a1f89f2ed415e3ed5d",
+            "811235523376716cd6e75927810fc9c32ed8c8f974f2c6a272904c24ddfea36c",
+            "8f7842fd1011fbe6ea9146202fa16b47117dc74066e0774b1a028451769da70e",
+            "90a730e9e903b26ae7df47792e7f476d0056f703c1667483948e6b8b728491b6",
+            "92fa440b3b569febcc5db2aacffb7a16dbe806efc235de7e5264064b1b0b8ea1",
+            "96b8f1fb358d8f8b7278c2fe342eaa3e831c17f9d70b60d1bf1b80d108876f9f",
+            "96da9b0e21c720e1b6841f2097a38f261a34b72aeead5a819f36bec0267e0f31",
+            "bf1ce58d14418bdaaab2718935993ddbf192db34dd16ec7d4acb9f724c81195d",
+            "ce48a71a8f3a82826f0d65fb6ab844934240f7861b90a141e202d8048c1d3b0c",
+            "d10b25861364fddf503fbd64c59450b1121218fa396fa51a542633278664cafc",
+            "e1b431aba007644d4adf24c062c794d8b59d7145e0a5c0181ad787c39f2ab7e1",
+            "e2420af94f64bd0716680efb899e557365779d94568ea563b8445a38433ab889"
+          ],
+          "reason": "not in intersection of all participating GPU backends"
+        },
+        "gpu-ntt": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "0a7b7c0b0556aca8a1c36e114424acec0cecd75a84cb76535197db9154882316",
+        "3cf5ad20f608fca7b3a1cec71d9aaaec586bec167b53bc37f2be20a0077ce565",
+        "481456e69862ac6cddb1260fe706b5ce9626df0c2d6415c3df7e6d38f6c109b3",
+        "486ebac42647c99fe0cdb648ebd9b155f5576bcddb47f23241388cdd5c855707",
+        "4a35e6f4152f1bb86c0afff2c12560b8e7271542f16df0fad90ba551e26ffa0f",
+        "5b4dfd800921bc7837f2716b1c6b6fdcfe5d5b4b36646206a8083e2f74b3783d",
+        "6417704a4f1899b80bd64950fcae0c2d9a9fd8f132a4673d29eb9b0b65651f4a",
+        "7f29ea3abb70f61a04fc5571f37b1a2170f202b27017d121ecdf29cb33fd5dd6",
+        "8b22dfc010e8d6045a9d2139daffc5e34f5d601ff3b870a6b147866310a7b261",
+        "8bd146b6ce93c83d699ca44d9dfefffc878732ed1470ac9d3483873b5458c337",
+        "9e9dfe45e1991f03bd2f12987ed589ef14c5b07f32ff305ba39fa2d3296d15f1",
+        "a703d344feb66ad34a0155a3e63fac5f530f22f5657aa0360554af69ea145a7a",
+        "a83a6b16d80acb238d184362d45988bc86b7df70ceddd2e6d121e7f0636ddb56",
+        "d56345b84fa7f5263cfc2f0172e82475c972af2f4664f56b16bfbb3394ef3610",
+        "da9fda1eff27dce12a0bd322b9122f03559f06aaeb67c0dfe028c37b69688b52",
+        "db05a58bca42b08c97bc72e969e60e8801dee9c31a1f4a195fef31aa5d1b4083",
+        "e4cf7849810104c66d1ddd0ad094c6a1f731aede04ae5c50dbe64fb1f8ca3a24",
+        "fc3fa28fc3518fc3f9a443fc683493b3a400aa933087ec967d562143ff9f840a"
+      ]
+    },
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "04a82eaac33704ba5fdbf53f1073fbd197a55b7b84277240ccce58946e244574",
+          "16181e7af374a87a12f399c5356c6c6e1068ca30f780d0d3b31960da3fe82f6e",
+          "2b7cd44867c93dea081b474f8bec49b6fd823caf2067a95e420f33656271effe",
+          "2b9a8d1a58a6a19d12da159012f7b8220a93f46808d20c9c8af6344f0614b689",
+          "2fb4e041f11d8eef28c37876869a72cfe1c9639a0b91da2366739b680ede5d6e",
+          "2fccd6022fc39b356dd3b7c4dffe4b7d09a665f6a377e2f744e2f25990e02280",
+          "32c992c7ae75678ecba8831cfa092156cf84f2854bb767ac48b166ff86c6eecf",
+          "34361fc365399de692d802aba1d9ba0aaeaa4e001cc9cad750cfe7d3ff2e09b0",
+          "34833b35c48bfb4691383c95cfe16b3e480184025adcc66c5c44382e14614412",
+          "35653058801d7910667d76150f66cd67503c44f20cf063b50a04d05eeaed93b8",
+          "3704b295ce1025ce09a5e673b5cc33f36a81f43749512bc36a7c03a9b735e32a",
+          "38253fb6ee7c9b47ade7bc645ff030f63e550a8bb46e906764210eb3dfb0fc47",
+          "437089e797af7d4bc7963cdda5a5d0eb0be69421752b33749b7e413f4f3f62e6",
+          "44e38bb15d846fd2648a633901124086e8529f55f179eeb8a2dac6b0ab31db82",
+          "502c1aab7483bc9c39ae7cd77cb04968729185345b7c48061b630d2d6442083f",
+          "5cfb97d79bdcd91a4beee61b122869ebd4f43798b8c7baf64e3988317fc86eaa",
+          "5d4afdcbaa3e9b89314273c6e2995086033d7454d5a298cec2ed4aeff451c133",
+          "63029c5812985bf21fe51208a84e3464fd80c7bcb599143693cc8de2a2602488",
+          "690a832726ac5c5c84eeccb5259e1e9fc886ae60f9de910616bfc7a9e3af53f7",
+          "6e044322f610f568d2a4f709b8495acc72ace8e5ddc46facafe09bfd0ec97012",
+          "6f769283c01d2a6c39713a0facb53bdf1de4266504258ecab63800ee39b231ae",
+          "706c33c59be03c3c0fc359c954252b42ea91a9d15ebbe9d23aad84c394b2126d",
+          "79a54263f75ccf920c9fc2dcd7084822e14b5afac5a594e7ad8d108630e1b783",
+          "7a5254e82228f6b57d5afed57d6813e35bcee37cb0df8cd97ab87ccc810ef5a9",
+          "7a8f9c144c67f80dcba3b0be324158aa3aafe090f3df30869f8e098b8e525d9b",
+          "7b192562bce7d85d1d75d7d989e84e16f90d62799ca0ebb7bb86187980afea81",
+          "7d31aebd150d1e5c350066291e3bd27599188a105ba58a225ffc213eebdace57",
+          "9112d6ccfcedc8b4c5529dee1caa437c96fb58cc683e85b6dd32e6ed3fb5b64e",
+          "9c1457c85e0410fc34c027f8435ccea856aa7bc4be25aae64f00516139166466",
+          "9ee8546e814f5d35d4cab42cf5d17356de68ae339d521912934f7db244d61555",
+          "9fc21664ecb44cc894d3d80779b737c3c99bcbf1eeb13d68853dc4c06af4f337",
+          "a246c89195e62e458b44ab2a90d250aeae9402158841bfb61f4428bcac9c9647",
+          "ad2b5c2b51d6d420c13d71186772abfa8b4d9e0239bd854a3b929516dc449d81",
+          "aee96eb2c1bbe7807df40a046e97f8d9ee41b20ee3e63459f3222badba30488c",
+          "b63ca69a4ccb443ae48ba4add0a0c0962cf48d6b8d32ea0e7f8509bcd4c93a34",
+          "b981b5eb2072368051a4d2ced1f8fc5d4ed0ccdb32e8e973c436d0d6db680717",
+          "bd5b710873d6ed18b11fc7bc925bcf6466aada111f5816a2944809144970b4d4",
+          "be3bf1d5b984f85480c542eb162ee09bf5a5a08fc507e100b7c4086b1407ef01",
+          "c026c15d2186822017d355ded430a1d735655a5df0de7d182897fbc86bffd43d",
+          "c6243ccc275a73da578ad992e757bfe0e6104abdbe790e70b93e0fff11458ecc",
+          "c8c9b1723d5b5e333f135395796def4db0188c7ea3b65a5a7768e5407a57bef9",
+          "ce7bfff2df954da7ac707f8c9995616a8ec2813507020729868eceba74dd71ea",
+          "d4b0e39341b4b0f05c12a4e2f104181e16f556b019af57b3fa124d2bbb400560",
+          "d4c1f4945f0698da5bde71aa8cb2aca3c22f0571f16912d28e8c056216fd5290",
+          "dec653e30e5b6d8e28649c4d706ec4bbb9a05306b9f1368a4b08a7894d6c884c",
+          "e518706e71026a6e5146b7ba8b8a87aa2896150733e4ec7e416b0f70923be0a6",
+          "e660b48b23f820b9075e6ae590a44d57d31a20f2c1208b645da8094b44b53706",
+          "fc3342a09a2eb6d1727aa64c071b09a4beb78b53434373d8885fb5214626bd88"
+        ],
+        "gpu-ntt": [
+          "04a82eaac33704ba5fdbf53f1073fbd197a55b7b84277240ccce58946e244574",
+          "16181e7af374a87a12f399c5356c6c6e1068ca30f780d0d3b31960da3fe82f6e",
+          "2b7cd44867c93dea081b474f8bec49b6fd823caf2067a95e420f33656271effe",
+          "2b9a8d1a58a6a19d12da159012f7b8220a93f46808d20c9c8af6344f0614b689",
+          "2fb4e041f11d8eef28c37876869a72cfe1c9639a0b91da2366739b680ede5d6e",
+          "2fccd6022fc39b356dd3b7c4dffe4b7d09a665f6a377e2f744e2f25990e02280",
+          "34361fc365399de692d802aba1d9ba0aaeaa4e001cc9cad750cfe7d3ff2e09b0",
+          "34833b35c48bfb4691383c95cfe16b3e480184025adcc66c5c44382e14614412",
+          "35653058801d7910667d76150f66cd67503c44f20cf063b50a04d05eeaed93b8",
+          "3704b295ce1025ce09a5e673b5cc33f36a81f43749512bc36a7c03a9b735e32a",
+          "38253fb6ee7c9b47ade7bc645ff030f63e550a8bb46e906764210eb3dfb0fc47",
+          "437089e797af7d4bc7963cdda5a5d0eb0be69421752b33749b7e413f4f3f62e6",
+          "44e38bb15d846fd2648a633901124086e8529f55f179eeb8a2dac6b0ab31db82",
+          "5cfb97d79bdcd91a4beee61b122869ebd4f43798b8c7baf64e3988317fc86eaa",
+          "63029c5812985bf21fe51208a84e3464fd80c7bcb599143693cc8de2a2602488",
+          "690a832726ac5c5c84eeccb5259e1e9fc886ae60f9de910616bfc7a9e3af53f7",
+          "6e044322f610f568d2a4f709b8495acc72ace8e5ddc46facafe09bfd0ec97012",
+          "6f769283c01d2a6c39713a0facb53bdf1de4266504258ecab63800ee39b231ae",
+          "706c33c59be03c3c0fc359c954252b42ea91a9d15ebbe9d23aad84c394b2126d",
+          "79a54263f75ccf920c9fc2dcd7084822e14b5afac5a594e7ad8d108630e1b783",
+          "7a8f9c144c67f80dcba3b0be324158aa3aafe090f3df30869f8e098b8e525d9b",
+          "7b192562bce7d85d1d75d7d989e84e16f90d62799ca0ebb7bb86187980afea81",
+          "9c1457c85e0410fc34c027f8435ccea856aa7bc4be25aae64f00516139166466",
+          "9ee8546e814f5d35d4cab42cf5d17356de68ae339d521912934f7db244d61555",
+          "9fc21664ecb44cc894d3d80779b737c3c99bcbf1eeb13d68853dc4c06af4f337",
+          "a246c89195e62e458b44ab2a90d250aeae9402158841bfb61f4428bcac9c9647",
+          "ad2b5c2b51d6d420c13d71186772abfa8b4d9e0239bd854a3b929516dc449d81",
+          "b63ca69a4ccb443ae48ba4add0a0c0962cf48d6b8d32ea0e7f8509bcd4c93a34",
+          "be3bf1d5b984f85480c542eb162ee09bf5a5a08fc507e100b7c4086b1407ef01",
+          "c026c15d2186822017d355ded430a1d735655a5df0de7d182897fbc86bffd43d",
+          "c6243ccc275a73da578ad992e757bfe0e6104abdbe790e70b93e0fff11458ecc",
+          "ce7bfff2df954da7ac707f8c9995616a8ec2813507020729868eceba74dd71ea",
+          "d4b0e39341b4b0f05c12a4e2f104181e16f556b019af57b3fa124d2bbb400560",
+          "d4c1f4945f0698da5bde71aa8cb2aca3c22f0571f16912d28e8c056216fd5290",
+          "e518706e71026a6e5146b7ba8b8a87aa2896150733e4ec7e416b0f70923be0a6",
+          "e660b48b23f820b9075e6ae590a44d57d31a20f2c1208b645da8094b44b53706"
+        ]
+      },
+      "backends": [
+        "cuButterfly",
+        "gpu-ntt"
+      ],
+      "coverage": {
+        "cuButterfly_total": 48,
+        "plotted": 36
+      },
+      "group": [
+        "cyclic90",
+        "ntt",
+        "word64"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [
+            "32c992c7ae75678ecba8831cfa092156cf84f2854bb767ac48b166ff86c6eecf",
+            "502c1aab7483bc9c39ae7cd77cb04968729185345b7c48061b630d2d6442083f",
+            "5d4afdcbaa3e9b89314273c6e2995086033d7454d5a298cec2ed4aeff451c133",
+            "7a5254e82228f6b57d5afed57d6813e35bcee37cb0df8cd97ab87ccc810ef5a9",
+            "7d31aebd150d1e5c350066291e3bd27599188a105ba58a225ffc213eebdace57",
+            "9112d6ccfcedc8b4c5529dee1caa437c96fb58cc683e85b6dd32e6ed3fb5b64e",
+            "aee96eb2c1bbe7807df40a046e97f8d9ee41b20ee3e63459f3222badba30488c",
+            "b981b5eb2072368051a4d2ced1f8fc5d4ed0ccdb32e8e973c436d0d6db680717",
+            "bd5b710873d6ed18b11fc7bc925bcf6466aada111f5816a2944809144970b4d4",
+            "c8c9b1723d5b5e333f135395796def4db0188c7ea3b65a5a7768e5407a57bef9",
+            "dec653e30e5b6d8e28649c4d706ec4bbb9a05306b9f1368a4b08a7894d6c884c",
+            "fc3342a09a2eb6d1727aa64c071b09a4beb78b53434373d8885fb5214626bd88"
+          ],
+          "reason": "not in intersection of all participating GPU backends"
+        },
+        "gpu-ntt": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "04a82eaac33704ba5fdbf53f1073fbd197a55b7b84277240ccce58946e244574",
+        "16181e7af374a87a12f399c5356c6c6e1068ca30f780d0d3b31960da3fe82f6e",
+        "2b7cd44867c93dea081b474f8bec49b6fd823caf2067a95e420f33656271effe",
+        "2b9a8d1a58a6a19d12da159012f7b8220a93f46808d20c9c8af6344f0614b689",
+        "2fb4e041f11d8eef28c37876869a72cfe1c9639a0b91da2366739b680ede5d6e",
+        "2fccd6022fc39b356dd3b7c4dffe4b7d09a665f6a377e2f744e2f25990e02280",
+        "34361fc365399de692d802aba1d9ba0aaeaa4e001cc9cad750cfe7d3ff2e09b0",
+        "34833b35c48bfb4691383c95cfe16b3e480184025adcc66c5c44382e14614412",
+        "35653058801d7910667d76150f66cd67503c44f20cf063b50a04d05eeaed93b8",
+        "3704b295ce1025ce09a5e673b5cc33f36a81f43749512bc36a7c03a9b735e32a",
+        "38253fb6ee7c9b47ade7bc645ff030f63e550a8bb46e906764210eb3dfb0fc47",
+        "437089e797af7d4bc7963cdda5a5d0eb0be69421752b33749b7e413f4f3f62e6",
+        "44e38bb15d846fd2648a633901124086e8529f55f179eeb8a2dac6b0ab31db82",
+        "5cfb97d79bdcd91a4beee61b122869ebd4f43798b8c7baf64e3988317fc86eaa",
+        "63029c5812985bf21fe51208a84e3464fd80c7bcb599143693cc8de2a2602488",
+        "690a832726ac5c5c84eeccb5259e1e9fc886ae60f9de910616bfc7a9e3af53f7",
+        "6e044322f610f568d2a4f709b8495acc72ace8e5ddc46facafe09bfd0ec97012",
+        "6f769283c01d2a6c39713a0facb53bdf1de4266504258ecab63800ee39b231ae",
+        "706c33c59be03c3c0fc359c954252b42ea91a9d15ebbe9d23aad84c394b2126d",
+        "79a54263f75ccf920c9fc2dcd7084822e14b5afac5a594e7ad8d108630e1b783",
+        "7a8f9c144c67f80dcba3b0be324158aa3aafe090f3df30869f8e098b8e525d9b",
+        "7b192562bce7d85d1d75d7d989e84e16f90d62799ca0ebb7bb86187980afea81",
+        "9c1457c85e0410fc34c027f8435ccea856aa7bc4be25aae64f00516139166466",
+        "9ee8546e814f5d35d4cab42cf5d17356de68ae339d521912934f7db244d61555",
+        "9fc21664ecb44cc894d3d80779b737c3c99bcbf1eeb13d68853dc4c06af4f337",
+        "a246c89195e62e458b44ab2a90d250aeae9402158841bfb61f4428bcac9c9647",
+        "ad2b5c2b51d6d420c13d71186772abfa8b4d9e0239bd854a3b929516dc449d81",
+        "b63ca69a4ccb443ae48ba4add0a0c0962cf48d6b8d32ea0e7f8509bcd4c93a34",
+        "be3bf1d5b984f85480c542eb162ee09bf5a5a08fc507e100b7c4086b1407ef01",
+        "c026c15d2186822017d355ded430a1d735655a5df0de7d182897fbc86bffd43d",
+        "c6243ccc275a73da578ad992e757bfe0e6104abdbe790e70b93e0fff11458ecc",
+        "ce7bfff2df954da7ac707f8c9995616a8ec2813507020729868eceba74dd71ea",
+        "d4b0e39341b4b0f05c12a4e2f104181e16f556b019af57b3fa124d2bbb400560",
+        "d4c1f4945f0698da5bde71aa8cb2aca3c22f0571f16912d28e8c056216fd5290",
+        "e518706e71026a6e5146b7ba8b8a87aa2896150733e4ec7e416b0f70923be0a6",
+        "e660b48b23f820b9075e6ae590a44d57d31a20f2c1208b645da8094b44b53706"
+      ]
+    },
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "2b9e64d11619319d00c7ae7ce3d2b6df2004af6e068c5f00dd082311a7342d53",
+          "4265f98bd655de47a813b28de672bc4aff8faf03e830f164b24ddbef42c783a9",
+          "98f376d818554db22ad6c24414dd94814ab09083d7841f3bcbbd7f8c89353dcf"
+        ]
+      },
+      "backends": [
+        "cuButterfly"
+      ],
+      "coverage": {
+        "cuButterfly_total": 3,
+        "plotted": 3
+      },
+      "group": [
+        "main66",
+        "subset-zeta",
+        "uint32"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "2b9e64d11619319d00c7ae7ce3d2b6df2004af6e068c5f00dd082311a7342d53",
+        "4265f98bd655de47a813b28de672bc4aff8faf03e830f164b24ddbef42c783a9",
+        "98f376d818554db22ad6c24414dd94814ab09083d7841f3bcbbd7f8c89353dcf"
+      ]
+    },
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "07404144bfa36ce114dc64679c9d5e9381e13967443ea4f841ccdf761df90910",
+          "1321f6f841e2dd85f4881bb95f251a165a2439ba76d9cb05293936ae04a7e54e",
+          "8871006ffb75b4c1ad431cac7d57bf43ac4ae7dbab01f020cf81aa00911b3cfe",
+          "e27f514c699063a6e614453b996470f8cb43b80a3ba78aa5ed04ec5e6f939de0",
+          "f117ce29c648bf2fdc20b14c8eafeb512f561f55f88702be024d6ec94c9016a3"
+        ]
+      },
+      "backends": [
+        "cuButterfly"
+      ],
+      "coverage": {
+        "cuButterfly_total": 5,
+        "plotted": 5
+      },
+      "group": [
+        "main66",
+        "subset-zeta",
+        "word64"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "07404144bfa36ce114dc64679c9d5e9381e13967443ea4f841ccdf761df90910",
+        "1321f6f841e2dd85f4881bb95f251a165a2439ba76d9cb05293936ae04a7e54e",
+        "8871006ffb75b4c1ad431cac7d57bf43ac4ae7dbab01f020cf81aa00911b3cfe",
+        "e27f514c699063a6e614453b996470f8cb43b80a3ba78aa5ed04ec5e6f939de0",
+        "f117ce29c648bf2fdc20b14c8eafeb512f561f55f88702be024d6ec94c9016a3"
+      ]
+    },
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "34d94ef04b5155f2b7ab7ffccc60d6f19dee261754ffa8699c250637c2e09c7b",
+          "6ff0996fdc68791dfac7a07d04200cb7ebbd235012b4224f2d4947614ca865a8",
+          "e268b6b96b5f514d676e324f5e2c5b152b7e491a9e6c1edbd58674974ba02e71"
+        ]
+      },
+      "backends": [
+        "cuButterfly"
+      ],
+      "coverage": {
+        "cuButterfly_total": 3,
+        "plotted": 3
+      },
+      "group": [
+        "main66",
+        "superset-zeta",
+        "uint32"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "34d94ef04b5155f2b7ab7ffccc60d6f19dee261754ffa8699c250637c2e09c7b",
+        "6ff0996fdc68791dfac7a07d04200cb7ebbd235012b4224f2d4947614ca865a8",
+        "e268b6b96b5f514d676e324f5e2c5b152b7e491a9e6c1edbd58674974ba02e71"
+      ]
+    },
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "2b06fa7d9ff2c791936f527661f7032b765e34899140f405f1cdff1b703a9baa",
+          "5afa13b20affe0fe852a5bc6c90745381da9d3a297b1cc86a51b1a9c0931bb87",
+          "749708f24939c6d2b1f191c4c527944e6fb0caa1329430f45938be05ecbbbb30",
+          "9527a8c264ca4a519acc9c5df23642952f7b72c6ac9de8fced7d4ea253842225",
+          "c5950c9acb8c519ffcb9127e8f9bef0e450b5998833448f14df8ac80d89c7938"
+        ]
+      },
+      "backends": [
+        "cuButterfly"
+      ],
+      "coverage": {
+        "cuButterfly_total": 5,
+        "plotted": 5
+      },
+      "group": [
+        "main66",
+        "superset-zeta",
+        "word64"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "2b06fa7d9ff2c791936f527661f7032b765e34899140f405f1cdff1b703a9baa",
+        "5afa13b20affe0fe852a5bc6c90745381da9d3a297b1cc86a51b1a9c0931bb87",
+        "749708f24939c6d2b1f191c4c527944e6fb0caa1329430f45938be05ecbbbb30",
+        "9527a8c264ca4a519acc9c5df23642952f7b72c6ac9de8fced7d4ea253842225",
+        "c5950c9acb8c519ffcb9127e8f9bef0e450b5998833448f14df8ac80d89c7938"
+      ]
+    },
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "53572661c2e954a03ba494ef94872a0ec67581e4305b1ce4f2f1a5f64625c9d9",
+          "fe45e67fcef5f2c4d8817a5347219cadc6bc82e0f18d492e11449ae72f5161ef"
+        ]
+      },
+      "backends": [
+        "cuButterfly"
+      ],
+      "coverage": {
+        "cuButterfly_total": 2,
+        "plotted": 2
+      },
+      "group": [
+        "main66",
+        "structured-2x2",
+        "fp32"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "53572661c2e954a03ba494ef94872a0ec67581e4305b1ce4f2f1a5f64625c9d9",
+        "fe45e67fcef5f2c4d8817a5347219cadc6bc82e0f18d492e11449ae72f5161ef"
+      ]
+    },
+    {
+      "all_case_ids": {
+        "cuButterfly": [
+          "124c1b27b0816609f759c112e1d7c83e7fbf56a2c927c8f2ccf93dfdf5b58e0c",
+          "3042bd7fb43640f328d3b7231edf653e123ef3be26cbac58fc499098d05cdba7",
+          "570cbfc0749bcc7cf88d8699299c9697956d1a36d1687848d234d12a24f0100c",
+          "c54a46f5fa929a3834ef13db0389e4b21ac80ecdd5aabdbdb6f7f99b18dc313a",
+          "e57159fa02783b0d266ebcc670ae9bc4f600ceffc25aab82ecb3ce5469ccec66"
+        ]
+      },
+      "backends": [
+        "cuButterfly"
+      ],
+      "coverage": {
+        "cuButterfly_total": 5,
+        "plotted": 5
+      },
+      "group": [
+        "main66",
+        "structured-2x2",
+        "fp64"
+      ],
+      "omitted": {
+        "cuButterfly": {
+          "case_ids": [],
+          "reason": "not in intersection of all participating GPU backends"
+        }
+      },
+      "panel": "single-axis",
+      "plotted_case_ids": [
+        "124c1b27b0816609f759c112e1d7c83e7fbf56a2c927c8f2ccf93dfdf5b58e0c",
+        "3042bd7fb43640f328d3b7231edf653e123ef3be26cbac58fc499098d05cdba7",
+        "570cbfc0749bcc7cf88d8699299c9697956d1a36d1687848d234d12a24f0100c",
+        "c54a46f5fa929a3834ef13db0389e4b21ac80ecdd5aabdbdb6f7f99b18dc313a",
+        "e57159fa02783b0d266ebcc670ae9bc4f600ceffc25aab82ecb3ce5469ccec66"
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "path": "generated/current_refresh/cpu_normalized.json",
+      "sha256": "b87bc7f85d0fd7f7e9c10eb8aa2f86a567fd65143a603f13efc4c38374e8ff34"
+    },
+    {
+      "path": "generated/current_refresh/cpu_normalized_cyclic90.json",
+      "sha256": "d98621bdd8f043e4681bee1d781c5c582bef99dd47710d1582238fad348e4851"
+    }
+  ],
+  "outputs": {
+    "all-records.csv": {
+      "path": "figures/cpu_normalized_performance.all-records.csv",
+      "sha256": "13f302004f1fe318a6dce516755018b494888dff3b7547a7e438c71133091ba3"
+    },
+    "csv": {
+      "path": "figures/cpu_normalized_performance.csv",
+      "sha256": "a27e5e612ee43c7a20e92eaadb4e8bba5a31a508144588eb90df8196553b01fc"
+    },
+    "pdf": {
+      "path": "figures/cpu_normalized_performance.pdf",
+      "sha256": "ad700316b802ed669c84b7f4c356a421da34b285fc450133e301d44280f4dec6"
+    },
+    "png": {
+      "path": "figures/cpu_normalized_performance.png",
+      "sha256": "9f1e6342a6a30e5f05bd3bb1bd9bab39ddbcbaa5b1c851338ac1ae61897762e7"
+    },
+    "svg": {
+      "path": "figures/cpu_normalized_performance.svg",
+      "sha256": "77dfd44afd2646034636e3b22ddb027c43c7f54e658e1a0b2b1036ccffd23e2f"
+    }
+  },
+  "qualification": "shared-host provisional CPU timings; CPU/GPU timing boundaries are separate",
+  "records": 259,
+  "schema": "cpu-normalized-performance-render-v4",
+  "value_range": [
+    0.46008299153897103,
+    1594.7907169996247
+  ],
+  "width_strategy": {
+    "box_width": 0.2,
+    "group_gap": 0.13,
+    "minimum_group_width": 0.68,
+    "policy": "proportional to participating GPU box count with minimum label width; missing baselines have no slot",
+    "slot": 0.32
+  }
+}

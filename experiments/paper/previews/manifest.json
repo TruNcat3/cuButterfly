@@ -1,0 +1,17 @@
+{
+  "schema": "cubutterfly-evidence-preview-v1",
+  "source": "../manifest.json",
+  "numeric_validation": "Matched against frozen paper source rows during offline regeneration; see ../README.md",
+  "files": {
+    "complete_comparison_platforms.png": "aeccf6302b08087204fe7fb7a6c8a1fd06347dee818dfc0949655d58365cd41e",
+    "complete_comparison_platforms.svg": "10105c3dd6b9639a193902e208adc80957f1398cea58efcc3f020ca500110319",
+    "cross_operator_attribution.png": "fdb880495336bfc461a919148254fd99ace182d6bbebbf34d9da2b7230d6c712",
+    "cross_operator_attribution.svg": "a6cf285877b500c4f0e8145e0a3c1d34c9360ef1eacfb1308cd9cf2b9869fdae",
+    "current_refresh_applications.png": "912476e3cd178518f82e61323f2b2df5d18a6a8a4cc3ab45e1297cb3ec742fa9",
+    "current_refresh_applications.svg": "e6fadb6eb4ce1e9cb271b686d4c716d226ad9fd152e91d98d18cb28de870062f",
+    "local_organization_profiles.png": "baecb2087c62ac97d29c6959c75cd3f94c2edd83e152403b8aa74eb9a882fa62",
+    "local_organization_profiles.svg": "f8742114fe4c81443c31b56cc5de27c8c91143db0fef0da159410fabec9ee361",
+    "ntt_mechanism_profiles_20261118.png": "e00477c26a762ecc9dd6c4a8478e9402d2df91c2dcebf175f80d278e97cdfcc5",
+    "ntt_mechanism_profiles_20261118.svg": "9f515db6e4b995e7d235c8121039130c18611a32a75158a2d2bca7a64f134a9d"
+  }
+}

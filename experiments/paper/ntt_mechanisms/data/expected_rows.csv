@@ -1,0 +1,83 @@
+batch,core,denominator,estimator,kernel_id,kernel_ids,kind,layout,linear_kernel_ids,logN,maximum,metric,minimum,numerator,panel,prefix_points,process,profile_scope,stage_partition,unit,value
+,native,resident complete-call us,ratio of process medians,,,summary,,,,,,,split complete-call us,a,256,,,,,2.8075154685247417
+,native,115.691518784,,,,process,,,,,,,325.232658386,a,256,0,,,speedup,2.8112057115718265
+,native,115.814399719,,,,process,,,,,,,325.150718689,a,256,1,,,speedup,2.8075154685247417
+,native,116.152324677,,,,process,,,,,,,325.150718689,a,256,2,,,speedup,2.7993474912636422
+,native,34522496.0,,,,profile,,,,,complete-call DRAM read+write bytes,,16458880.0,b,256,,,,percent reduction,52.324188841965544
+,native,115.814399719,ratio of process medians,,,summary,,,,,,,115.814399719,c,256,,,,latency / resident256,1.0
+,native,115.691518784,,,,process,,,,,,,115.691518784,c,256,0,,,latency / resident256,1.0
+,native,115.814399719,,,,process,,,,,,,115.814399719,c,256,1,,,latency / resident256,1.0
+,native,116.152324677,,,,process,,,,,,,116.152324677,c,256,2,,,latency / resident256,1.0
+,native,peak sustained active warps,,0,,profile,,,,,sm__warps_active.avg.pct_of_peak_sustained_active,,,d,256,,,,percent peak active warps,84.5
+,native,resident complete-call us,ratio of process medians,,,summary,,,,,,,split complete-call us,a,1024,,,,,1.5624820985995087
+,native,143.093757629,,,,process,,,,,,,223.559684753,a,1024,0,,,speedup,1.5623301006087522
+,native,143.073282242,,,,process,,,,,,,223.539199829,a,1024,1,,,speedup,1.5624105096778074
+,native,143.06303978,,,,process,,,,,,,223.549442291,a,1024,2,,,speedup,1.5625939630163785
+,native,34690560.0,,,,profile,,,,,complete-call DRAM read+write bytes,,16726784.0,b,1024,,,,percent reduction,51.78289425134677
+,native,115.814399719,ratio of process medians,,,summary,,,,,,,143.073282242,c,1024,,,,latency / resident256,1.2353669542745818
+,native,115.691518784,,,,process,,,,,,,143.093757629,c,1024,0,,,latency / resident256,1.2368560732283316
+,native,115.814399719,,,,process,,,,,,,143.073282242,c,1024,1,,,latency / resident256,1.2353669542745818
+,native,116.152324677,,,,process,,,,,,,143.06303978,c,1024,2,,,latency / resident256,1.2316846879977148
+,native,peak sustained active warps,,0,,profile,,,,,sm__warps_active.avg.pct_of_peak_sustained_active,,,d,1024,,,,percent peak active warps,42.83
+,gpuntt,resident complete-call us,ratio of process medians,,,summary,,,,,,,split complete-call us,a,256,,,,,3.0008937001314293
+,gpuntt,114.575357437,,,,process,,,,,,,342.507514954,a,256,0,,,speedup,2.9893645773030206
+,gpuntt,114.503679276,,,,process,,,,,,,343.828468323,a,256,1,,,speedup,3.0027722296524186
+,gpuntt,114.575357437,,,,process,,,,,,,343.838729858,a,256,2,,,speedup,3.0009832615801524
+,gpuntt,35139584.0,,,,profile,,,,,complete-call DRAM read+write bytes,,14180864.0,b,256,,,,percent reduction,59.644189299452144
+,gpuntt,114.575357437,ratio of process medians,,,summary,,,,,,,114.575357437,c,256,,,,latency / resident256,1.0
+,gpuntt,114.575357437,,,,process,,,,,,,114.575357437,c,256,0,,,latency / resident256,1.0
+,gpuntt,114.503679276,,,,process,,,,,,,114.503679276,c,256,1,,,latency / resident256,1.0
+,gpuntt,114.575357437,,,,process,,,,,,,114.575357437,c,256,2,,,latency / resident256,1.0
+,gpuntt,peak sustained active warps,,0,,profile,,,,,sm__warps_active.avg.pct_of_peak_sustained_active,,,d,256,,,,percent peak active warps,83.27
+,gpuntt,resident complete-call us,ratio of process medians,,,summary,,,,,,,split complete-call us,a,1024,,,,,1.5925264655684548
+,gpuntt,149.073915482,,,,process,,,,,,,237.404155731,a,1024,0,,,speedup,1.5925264655684548
+,gpuntt,149.032964706,,,,process,,,,,,,237.404155731,a,1024,1,,,speedup,1.5929640546259778
+,gpuntt,149.084157944,,,,process,,,,,,,237.404155731,a,1024,2,,,speedup,1.5924170549373553
+,gpuntt,34232320.0,,,,profile,,,,,complete-call DRAM read+write bytes,,15476352.0,b,1024,,,,percent reduction,54.790233323362244
+,gpuntt,114.575357437,ratio of process medians,,,summary,,,,,,,149.073915482,c,1024,,,,latency / resident256,1.3010992836218664
+,gpuntt,114.575357437,,,,process,,,,,,,149.073915482,c,1024,0,,,latency / resident256,1.3010992836218664
+,gpuntt,114.503679276,,,,process,,,,,,,149.032964706,c,1024,1,,,latency / resident256,1.3015561215877658
+,gpuntt,114.575357437,,,,process,,,,,,,149.084157944,c,1024,2,,,latency / resident256,1.3011886786037294
+,gpuntt,peak sustained active warps,,0,,profile,,,,,sm__warps_active.avg.pct_of_peak_sustained_active,,,d,1024,,,,percent peak active warps,41.87
+,phantom,resident complete-call us,ratio of process medians,,,summary,,,,,,,split complete-call us,a,256,,,,,2.8604669679370236
+,phantom,120.135679245,,,,process,,,,,,,343.644142151,a,256,0,,,speedup,2.8604669679370236
+,phantom,121.405439377,,,,process,,,,,,,343.654403687,a,256,1,,,speedup,2.8306343228976
+,phantom,120.084476471,,,,process,,,,,,,343.633918762,a,256,2,,,speedup,2.861601506377774
+,phantom,34459520.0,,,,profile,,,,,complete-call DRAM read+write bytes,,15780992.0,b,256,,,,percent reduction,54.20426053525993
+,phantom,120.135679245,ratio of process medians,,,summary,,,,,,,120.135679245,c,256,,,,latency / resident256,1.0
+,phantom,120.135679245,,,,process,,,,,,,120.135679245,c,256,0,,,latency / resident256,1.0
+,phantom,121.405439377,,,,process,,,,,,,121.405439377,c,256,1,,,latency / resident256,1.0
+,phantom,120.084476471,,,,process,,,,,,,120.084476471,c,256,2,,,latency / resident256,1.0
+,phantom,peak sustained active warps,,0,,profile,,,,,sm__warps_active.avg.pct_of_peak_sustained_active,,,d,256,,,,percent peak active warps,83.38
+,phantom,resident complete-call us,ratio of process medians,,,summary,,,,,,,split complete-call us,a,1024,,,,,1.576836092269484
+,phantom,148.930559158,,,,process,,,,,,,235.509757996,a,1024,0,,,speedup,1.5813393794227844
+,phantom,149.329919815,,,,process,,,,,,,235.448322296,a,1024,1,,,speedup,1.5766989133034375
+,phantom,149.329919815,,,,process,,,,,,,235.46880722,a,1024,2,,,speedup,1.576836092269484
+,phantom,34622336.0,,,,profile,,,,,complete-call DRAM read+write bytes,,16864384.0,b,1024,,,,percent reduction,51.29045018799425
+,phantom,120.135679245,ratio of process medians,,,summary,,,,,,,149.329919815,c,1024,,,,latency / resident256,1.2430105756547347
+,phantom,120.135679245,,,,process,,,,,,,148.930559158,c,1024,0,,,latency / resident256,1.2396863287739592
+,phantom,121.405439377,,,,process,,,,,,,149.329919815,c,1024,1,,,latency / resident256,1.2300101262455483
+,phantom,120.084476471,,,,process,,,,,,,149.329919815,c,1024,2,,,latency / resident256,1.2435405824587384
+,phantom,peak sustained active warps,,0,,profile,,,,,sm__warps_active.avg.pct_of_peak_sustained_active,,,d,1024,,,,percent peak active warps,42.01
+4,,0.659139,ratio of layout process medians,,,summary,,,20,,,,0.689889,e,,,,"[10, 10]",XOR / linear latency,1.0466517684433783
+4,,0.659139,layout median / linear median; range of independent processes,,,layout_summary,linear,,20,1.000341354403244,,0.9944381989231406,0.659139,e,,,,,latency / linear median,1.0
+4,,0.659139,,,,process,linear,,20,,,,0.659139,e,,0,,,latency / linear median,1.0
+4,,0.659139,,,,process,linear,,20,,,,0.659364,e,,1,,,latency / linear median,1.000341354403244
+4,,0.659139,,,,process,linear,,20,,,,0.655473,e,,2,,,latency / linear median,0.9944381989231406
+4,,0.659139,layout median / linear median; range of independent processes,,,layout_summary,hermes-xor,,20,1.0746625522082596,,1.0466365971365674,0.689889,e,,,,,latency / linear median,1.0466517684433783
+4,,0.659139,,,,process,hermes-xor,,20,,,,0.689879,e,,0,,,latency / linear median,1.0466365971365674
+4,,0.659139,,,,process,hermes-xor,,20,,,,0.689889,e,,1,,,latency / linear median,1.0466517684433783
+4,,0.659139,,,,process,hermes-xor,,20,,,,0.708352,e,,2,,,latency / linear median,1.0746625522082596
+4,,2396304.0,,,"[2, 3]",profile,,"[2, 3]",20,,shared_load_conflicts,,308539.0,f,,,sum of final two stage kernels covering complete NTT,,conflict reduction (+) / increase (-) percent,87.12437987834598
+4,,3690964.0,,,"[2, 3]",profile,,"[2, 3]",20,,shared_store_conflicts,,4175735.0,f,,,sum of final two stage kernels covering complete NTT,,conflict reduction (+) / increase (-) percent,-13.133994262745441
+16,,2.525092,ratio of layout process medians,,,summary,,,20,,,,2.711143,e,,,,"[10, 10]",XOR / linear latency,1.0736808797461637
+16,,2.525092,layout median / linear median; range of independent processes,,,layout_summary,linear,,20,1.003000682747401,,0.9999754464391793,2.525092,e,,,,,latency / linear median,1.0
+16,,2.525092,,,,process,linear,,20,,,,2.532669,e,,0,,,latency / linear median,1.003000682747401
+16,,2.525092,,,,process,linear,,20,,,,2.525092,e,,1,,,latency / linear median,1.0
+16,,2.525092,,,,process,linear,,20,,,,2.52503,e,,2,,,latency / linear median,0.9999754464391793
+16,,2.525092,layout median / linear median; range of independent processes,,,layout_summary,hermes-xor,,20,1.1364120594417946,,1.0490203921282868,2.711143,e,,,,,latency / linear median,1.0736808797461637
+16,,2.525092,,,,process,hermes-xor,,20,,,,2.648873,e,,0,,,latency / linear median,1.0490203921282868
+16,,2.525092,,,,process,hermes-xor,,20,,,,2.711143,e,,1,,,latency / linear median,1.0736808797461637
+16,,2.525092,,,,process,hermes-xor,,20,,,,2.869545,e,,2,,,latency / linear median,1.1364120594417946
+16,,9563415.0,,,"[2, 3]",profile,,"[2, 3]",20,,shared_load_conflicts,,1213040.0,f,,,sum of final two stage kernels covering complete NTT,,conflict reduction (+) / increase (-) percent,87.3158280802412
+16,,15246646.0,,,"[2, 3]",profile,,"[2, 3]",20,,shared_store_conflicts,,17377310.0,f,,,sum of final two stage kernels covering complete NTT,,conflict reduction (+) / increase (-) percent,-13.974640717702759

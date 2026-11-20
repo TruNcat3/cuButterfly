@@ -1,0 +1,191 @@
+{
+  "groups": [
+    {
+      "center": 0.43499999999999994,
+      "label": "F32",
+      "key": [
+        "main66",
+        "fft",
+        "fp32"
+      ],
+      "n": 11,
+      "total": 11
+    },
+    {
+      "center": 1.4449999999999998,
+      "label": "F64",
+      "key": [
+        "main66",
+        "fft",
+        "fp64"
+      ],
+      "n": 6,
+      "total": 6
+    },
+    {
+      "center": 2.5999999999999996,
+      "label": "F32",
+      "key": [
+        "fft8",
+        "fft",
+        "fp32"
+      ],
+      "n": 2,
+      "total": 2
+    },
+    {
+      "center": 3.8999999999999995,
+      "label": "F64",
+      "key": [
+        "fft8",
+        "fft",
+        "fp64"
+      ],
+      "n": 6,
+      "total": 6
+    },
+    {
+      "center": 4.954999999999999,
+      "label": "w32",
+      "key": [
+        "main66",
+        "ntt",
+        "word32"
+      ],
+      "n": 4,
+      "total": 4
+    },
+    {
+      "center": 5.765,
+      "label": "w64",
+      "key": [
+        "main66",
+        "ntt",
+        "word64"
+      ],
+      "n": 5,
+      "total": 9
+    },
+    {
+      "center": 6.575,
+      "label": "w32",
+      "key": [
+        "cyclic90",
+        "ntt",
+        "word32"
+      ],
+      "n": 18,
+      "total": 42
+    },
+    {
+      "center": 7.385000000000001,
+      "label": "w64",
+      "key": [
+        "cyclic90",
+        "ntt",
+        "word64"
+      ],
+      "n": 36,
+      "total": 48
+    },
+    {
+      "center": 8.195000000000002,
+      "label": "u32",
+      "key": [
+        "main66",
+        "subset-zeta",
+        "uint32"
+      ],
+      "n": 3,
+      "total": 3
+    },
+    {
+      "center": 9.005000000000003,
+      "label": "w64",
+      "key": [
+        "main66",
+        "subset-zeta",
+        "word64"
+      ],
+      "n": 5,
+      "total": 5
+    },
+    {
+      "center": 9.815000000000003,
+      "label": "u32",
+      "key": [
+        "main66",
+        "superset-zeta",
+        "uint32"
+      ],
+      "n": 3,
+      "total": 3
+    },
+    {
+      "center": 10.625000000000004,
+      "label": "w64",
+      "key": [
+        "main66",
+        "superset-zeta",
+        "word64"
+      ],
+      "n": 5,
+      "total": 5
+    },
+    {
+      "center": 11.435000000000004,
+      "label": "F32",
+      "key": [
+        "main66",
+        "structured-2x2",
+        "fp32"
+      ],
+      "n": 2,
+      "total": 2
+    },
+    {
+      "center": 12.245000000000005,
+      "label": "F64",
+      "key": [
+        "main66",
+        "structured-2x2",
+        "fp64"
+      ],
+      "n": 5,
+      "total": 5
+    },
+    {
+      "center": 13.055000000000005,
+      "label": "F32",
+      "key": [
+        "main66",
+        "fwht",
+        "fp32"
+      ],
+      "n": 10,
+      "total": 11
+    },
+    {
+      "center": 13.865000000000006,
+      "label": "F64",
+      "key": [
+        "main66",
+        "fwht",
+        "fp64"
+      ],
+      "n": 2,
+      "total": 2
+    },
+    {
+      "center": 14.675000000000006,
+      "label": "F16",
+      "key": [
+        "fwht9-cpu-adapted",
+        "fwht",
+        "fp16"
+      ],
+      "n": 9,
+      "total": 9
+    }
+  ]
+}

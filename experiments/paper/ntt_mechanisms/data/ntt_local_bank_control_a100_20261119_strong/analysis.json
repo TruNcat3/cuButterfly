@@ -1,0 +1,240 @@
+{
+  "schema": "cubutterfly-ntt-local-bank-control-v3",
+  "estimator": "ratio of layout process medians; index-wise ratios are diagnostics, not recorded pairs",
+  "counts": {
+    "timing_processes": 12,
+    "indexwise_ratios": 6
+  },
+  "exporter_sha256": "a9f363e83213e690f2646c68316b1b3d99e9a1bb5ac22fff06f14daabcfa75ec",
+  "status": "complete",
+  "device": "NVIDIA A100 80GB PCIe",
+  "gpu_uuid": "GPU-ANONYMIZED",
+  "binary": "upstream/build-a100/cuntt_bench",
+  "operator": "ntt",
+  "word_bits": 64,
+  "modulus": 576460756061519873,
+  "backend": "shared-iterative",
+  "core": "radix2-shoup",
+  "control": "Only dataflow_layout changes; stage partition 10+10, 256 threads, natural input/output, arithmetic, global I/O and storage allocation are fixed.",
+  "correctness": "All twelve timing processes verify every requested batch exactly; NCU captures select the final two verified complete-call kernels.",
+  "requests": [
+    {
+      "logN": 20,
+      "batch": 4,
+      "partition": [
+        10,
+        10
+      ],
+      "layouts": {
+        "linear": {
+          "process_kernel_ms": [
+            0.659139,
+            0.659364,
+            0.655473
+          ],
+          "recorded_dataflow_layout": "linear",
+          "recorded_execution_group_shared_layouts": [
+            "linear",
+            "linear"
+          ],
+          "process_end_to_end_throughput_ntt_per_s": [
+            581.514144,
+            589.54722,
+            572.838683
+          ],
+          "median_kernel_ms": 0.659139,
+          "median_end_to_end_throughput_ntt_per_s": 581.514144,
+          "all_exact": true,
+          "verified_batches": [
+            4
+          ],
+          "runtime_fingerprints": [
+            "24e1adaf505057b9a139808abe5e34f286866e669f5cc48afe28916be70e5e13:precompiled"
+          ],
+          "profile": {
+            "kernel_count": 2,
+            "kernel_ids": [
+              2,
+              3
+            ],
+            "gpu_time_ns": 818816.0,
+            "shared_load_conflicts": 2396304.0,
+            "shared_store_conflicts": 3690964.0,
+            "active_warps_pct_mean": 93.49000000000001,
+            "registers_per_thread": 32,
+            "shared_bytes": 16384,
+            "profile_scope": "sum of final two stage kernels covering one complete NTT; separate NCU capture"
+          },
+          "profile_sha256": "26fa655874d95b6d1449195ad5402da5081bfcbfb4fdfe9b504c6dd0e06641e7"
+        },
+        "hermes-xor": {
+          "process_kernel_ms": [
+            0.689879,
+            0.689889,
+            0.708352
+          ],
+          "recorded_dataflow_layout": "hermes-xor",
+          "recorded_execution_group_shared_layouts": [
+            "writer-aligned",
+            "writer-aligned"
+          ],
+          "process_end_to_end_throughput_ntt_per_s": [
+            576.218178,
+            577.89561,
+            569.348993
+          ],
+          "median_kernel_ms": 0.689889,
+          "median_end_to_end_throughput_ntt_per_s": 576.218178,
+          "all_exact": true,
+          "verified_batches": [
+            4
+          ],
+          "runtime_fingerprints": [
+            "24e1adaf505057b9a139808abe5e34f286866e669f5cc48afe28916be70e5e13:precompiled"
+          ],
+          "profile": {
+            "kernel_count": 2,
+            "kernel_ids": [
+              2,
+              3
+            ],
+            "gpu_time_ns": 851904.0,
+            "shared_load_conflicts": 308539.0,
+            "shared_store_conflicts": 4175735.0,
+            "active_warps_pct_mean": 93.145,
+            "registers_per_thread": 32,
+            "shared_bytes": 16384,
+            "profile_scope": "sum of final two stage kernels covering one complete NTT; separate NCU capture"
+          },
+          "profile_sha256": "7b2273370b0c60de862da28b971bcf955c725102fa40c57c534aa4e7394c5f11"
+        }
+      },
+      "process_xor_over_linear": [
+        1.0466365971365674,
+        1.0462946111707645,
+        1.0806730406897005
+      ],
+      "diagnostic_median_indexwise_xor_over_linear": 1.0466365971365674,
+      "linear_over_xor": 0.9554276122680606,
+      "xor_over_linear": 1.0466517684433783
+    },
+    {
+      "logN": 20,
+      "batch": 16,
+      "partition": [
+        10,
+        10
+      ],
+      "layouts": {
+        "linear": {
+          "process_kernel_ms": [
+            2.532669,
+            2.525092,
+            2.52503
+          ],
+          "recorded_dataflow_layout": "linear",
+          "recorded_execution_group_shared_layouts": [
+            "linear",
+            "linear"
+          ],
+          "process_end_to_end_throughput_ntt_per_s": [
+            623.12135,
+            643.154566,
+            648.271975
+          ],
+          "median_kernel_ms": 2.525092,
+          "median_end_to_end_throughput_ntt_per_s": 643.154566,
+          "all_exact": true,
+          "verified_batches": [
+            16
+          ],
+          "runtime_fingerprints": [
+            "24e1adaf505057b9a139808abe5e34f286866e669f5cc48afe28916be70e5e13:precompiled"
+          ],
+          "profile": {
+            "kernel_count": 2,
+            "kernel_ids": [
+              2,
+              3
+            ],
+            "gpu_time_ns": 3177440.0,
+            "shared_load_conflicts": 9563415.0,
+            "shared_store_conflicts": 15246646.0,
+            "active_warps_pct_mean": 98.045,
+            "registers_per_thread": 32,
+            "shared_bytes": 16384,
+            "profile_scope": "sum of final two stage kernels covering one complete NTT; separate NCU capture"
+          },
+          "profile_sha256": "d3c1885e3dc879d61b8f6f9c537384925a516321015f43487ed24075cedeb8c1"
+        },
+        "hermes-xor": {
+          "process_kernel_ms": [
+            2.648873,
+            2.711143,
+            2.869545
+          ],
+          "recorded_dataflow_layout": "hermes-xor",
+          "recorded_execution_group_shared_layouts": [
+            "writer-aligned",
+            "writer-aligned"
+          ],
+          "process_end_to_end_throughput_ntt_per_s": [
+            624.827168,
+            633.075519,
+            632.72856
+          ],
+          "median_kernel_ms": 2.711143,
+          "median_end_to_end_throughput_ntt_per_s": 632.72856,
+          "all_exact": true,
+          "verified_batches": [
+            16
+          ],
+          "runtime_fingerprints": [
+            "24e1adaf505057b9a139808abe5e34f286866e669f5cc48afe28916be70e5e13:precompiled"
+          ],
+          "profile": {
+            "kernel_count": 2,
+            "kernel_ids": [
+              2,
+              3
+            ],
+            "gpu_time_ns": 3336096.0,
+            "shared_load_conflicts": 1213040.0,
+            "shared_store_conflicts": 17377310.0,
+            "active_warps_pct_mean": 98.005,
+            "registers_per_thread": 32,
+            "shared_bytes": 16384,
+            "profile_scope": "sum of final two stage kernels covering one complete NTT; separate NCU capture"
+          },
+          "profile_sha256": "b81891989f770fb1360198ed8463d9fe4d51968dddda94ffb51722cb5a28b931"
+        }
+      },
+      "process_xor_over_linear": [
+        1.0458820319591704,
+        1.0736808797461637,
+        1.1364399630895474
+      ],
+      "diagnostic_median_indexwise_xor_over_linear": 1.0736808797461637,
+      "linear_over_xor": 0.9313754383298852,
+      "xor_over_linear": 1.0736808797461637
+    }
+  ],
+  "source_hashes": {
+    "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_hermes-xor_0.csv": "9548cda29981904a36b330451c7141dfc7b1bbdefbd3e014833635a5017eef93",
+    "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_hermes-xor_1.csv": "9a2faa3c9342dc5e254444a1f4034cf8652dc83251d10d4e90f3fd4e1d4d699b",
+    "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_hermes-xor_2.csv": "14ab733f585d2f4dc6b63cdbe81b939d16ed6dd6dd6045ef4f59e41bae54205c",
+    "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_linear_0.csv": "91130a403db4350169c52d82d64848feade2842e307bd8652770d5493ef87099",
+    "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_linear_1.csv": "1705d854477baa43ff0e251a67b000ef740d5e69e1cf59e1db8be4ea0619fb82",
+    "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b16_linear_2.csv": "ffb0e4a69d2ce5c078404415ab6067063f33e2115fe31118ad32078a69eb9e66",
+    "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_hermes-xor_0.csv": "9eec33dfc10fbb8a67ca3475d0f685efd27f412fa1a37e9e00686df7a4bb008c",
+    "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_hermes-xor_1.csv": "a3242790715b5f72f013a85f171b408052458df27d868091fe9d36940ba3d9b1",
+    "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_hermes-xor_2.csv": "2d11d579e7e470e8de47db210dd460222cb4943d717f5b73160303e26d472975",
+    "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_linear_0.csv": "43a70f6c33a368296a9b4acbaec9f04d351052c3041be4fcc547ce9fcb74a961",
+    "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_linear_1.csv": "e8a3c4d44cb21a46b0e39269cab0cbe0d66b03d1a44e026b9e11709c07a00e01",
+    "generated/ntt_local_bank_control_a100_20261119_strong/timing/n20_b4_linear_2.csv": "d62e45e42b8214f41f19844216964753ca18e171dbe0d6f1e60cdfc2db988bc8",
+    "generated/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b16_hermes-xor.ncu.csv": "b81891989f770fb1360198ed8463d9fe4d51968dddda94ffb51722cb5a28b931",
+    "generated/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b16_linear.ncu.csv": "d3c1885e3dc879d61b8f6f9c537384925a516321015f43487ed24075cedeb8c1",
+    "generated/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b4_hermes-xor.ncu.csv": "7b2273370b0c60de862da28b971bcf955c725102fa40c57c534aa4e7394c5f11",
+    "generated/ntt_local_bank_control_a100_20261119_strong/profiles/n20_b4_linear.ncu.csv": "26fa655874d95b6d1449195ad5402da5081bfcbfb4fdfe9b504c6dd0e06641e7"
+  }
+}

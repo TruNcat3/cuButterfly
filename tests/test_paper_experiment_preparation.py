@@ -22,6 +22,9 @@ def inputs(tmp_path):
     profile["gpu_uuid"] = target["gpu_uuid"]
     for name, value in (("plan.json", plan), ("target.json", target), ("calibration.json", profile)):
         (tmp_path / name).write_text(json.dumps(value))
+    cohort = tmp_path / "experiments/workloads/profile_rc2.json"
+    cohort.parent.mkdir(parents=True)
+    cohort.write_bytes((ROOT / "experiments/workloads/profile_rc2.json").read_bytes())
     return tmp_path
 
 
@@ -89,3 +92,42 @@ def test_changed_protocol_needs_new_preparation_directory(inputs):
     path.write_text(json.dumps(plan))
     with pytest.raises(ValueError, match="inputs changed"):
         prepare.prepare(path, inputs / "target.json", output, root=inputs)
+
+
+def test_e14_preserves_cohort_and_requires_verified_bindings(inputs):
+    output = inputs / "prepared"
+    result = prepare.prepare(inputs / "plan.json", inputs / "target.json", output, root=inputs)
+    protocol = json.loads((output / "profile_protocol.json").read_text())
+    cohort = json.loads((inputs / "experiments/workloads/profile_rc2.json").read_text())
+    assert protocol["cohort"] == cohort
+    assert [c["case"] for c in protocol["cases"]] == cohort["cases"]
+    assert len(protocol["cases"]) == 5
+    assert all(c["status"] == "unbound" and c["normal_timing_journal"] is None
+               and c["baseline_variant_id"] is None and c["treatment_variant_id"] is None
+               for c in protocol["cases"])
+    assert protocol["target_uuid"] == result["target"]["gpu_uuid"]
+    assert "--journal" in protocol["command_template"]
+    assert protocol["source"] in result["sources"]
+    assert "E14" in result["remaining_protocols"]
+    assert not any(c["experiment"] == "E14" for c in result["commands"])
+
+
+def test_changed_profile_cohort_needs_new_preparation_directory(inputs):
+    output = inputs / "prepared"
+    prepare.prepare(inputs / "plan.json", inputs / "target.json", output, root=inputs)
+    path = inputs / "experiments/workloads/profile_rc2.json"
+    cohort = json.loads(path.read_text())
+    cohort["cases"][0]["workload"]["batch"] = 128
+    path.write_text(json.dumps(cohort))
+    with pytest.raises(ValueError, match="inputs changed"):
+        prepare.prepare(inputs / "plan.json", inputs / "target.json", output, root=inputs)
+
+
+def test_e14_remains_optional(inputs):
+    path = inputs / "plan.json"
+    plan = json.loads(path.read_text())
+    plan["experiments"] = [e for e in plan["experiments"] if e["id"] != "E14"]
+    path.write_text(json.dumps(plan))
+    result = prepare.prepare(path, inputs / "target.json", inputs / "prepared", root=inputs)
+    assert "E14" not in result["remaining_protocols"]
+    assert not (inputs / "prepared/profile_protocol.json").exists()

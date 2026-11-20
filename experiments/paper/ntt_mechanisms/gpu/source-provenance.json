@@ -1,0 +1,42 @@
+[
+  {
+    "path": "benchmarks/ntt_fixed_core_organization.cu",
+    "original_sha256": "f0d80199ee3a9bb98104227023b0e1aaca9a268a98a94b8babc9d1fe7aa14e66",
+    "bundled_sha256": "f0d80199ee3a9bb98104227023b0e1aaca9a268a98a94b8babc9d1fe7aa14e66"
+  },
+  {
+    "path": "src/ntt_traits.cuh",
+    "original_sha256": "bc278ca03c9c49d4d230418ba2385b40ad2b1a604d7aa44d48932d4bc3b3344a",
+    "bundled_sha256": "bc278ca03c9c49d4d230418ba2385b40ad2b1a604d7aa44d48932d4bc3b3344a"
+  },
+  {
+    "path": "src/shared_iterative.cuh",
+    "original_sha256": "5c437b5de77756bd4a9246eed3d704cce5ee516ec814340909c4a6d36aec4880",
+    "bundled_sha256": "5c437b5de77756bd4a9246eed3d704cce5ee516ec814340909c4a6d36aec4880"
+  },
+  {
+    "path": "include/cuntt/iterative_layout.hpp",
+    "original_sha256": "c666060bcf732fabc6054f89757ca15defb6995bb46b0ccfcc14be1340f4b800",
+    "bundled_sha256": "c666060bcf732fabc6054f89757ca15defb6995bb46b0ccfcc14be1340f4b800"
+  },
+  {
+    "path": "scripts/run_ntt_fixed_core_organization.py",
+    "original_sha256": "460bf7f0e3245a5a293ae848ed8b1ac4fc1d847482c31b06597a81c55fb3466d",
+    "bundled_sha256": "b25cba85bfff518ac876ce844d14660af7e38e4e6dddc2dc0f17b17c98ac683c"
+  },
+  {
+    "path": "scripts/analyze_ntt_fixed_core_organization.py",
+    "original_sha256": "f0a168a175cb912a299beb5b4bafdb022597ca1f49675d867c5558c62713a8e9",
+    "bundled_sha256": "f0a168a175cb912a299beb5b4bafdb022597ca1f49675d867c5558c62713a8e9"
+  },
+  {
+    "path": "scripts/run_isolated_gpu.py",
+    "original_sha256": "61e2b87cc1554147993fc7067463340a7613c4b19aff2b88510bfcadf001e98a",
+    "bundled_sha256": "61e2b87cc1554147993fc7067463340a7613c4b19aff2b88510bfcadf001e98a"
+  },
+  {
+    "path": "LICENSE",
+    "original_sha256": "3eaf030bfe46fb8dcbc0f91822fbb12d1cdc805dd64ee81a1f68bfa59c4e8134",
+    "bundled_sha256": "8770ec833da80785113414d7a63590acb9a1370f18325fa346bdab42bc7f9a12"
+  }
+]

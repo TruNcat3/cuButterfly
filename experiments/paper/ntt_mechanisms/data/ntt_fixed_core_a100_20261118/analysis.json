@@ -1,0 +1,4604 @@
+{
+  "schema": "ntt-fixed-core-posthoc-v1",
+  "campaign": "upstream/results/fig11_ntt_fixed_core_a100_20261118/campaign.json",
+  "campaign_sha256": "8754595cbdaefc5116469c436a31275c99bd087ec614000abece790de3ea91f2",
+  "gpu_uuid": "GPU-ANONYMIZED",
+  "request": {
+    "log_n": 16,
+    "batch": 16,
+    "modulus": 576460756061519873
+  },
+  "scope": "Unchanged radix2 arithmetic primitives, not complete vendor NTT kernels",
+  "controlled_pair": "Unchanged arithmetic provider and suffix; common shared_iterative template, 128 threads and writer-aligned boundary; grouping changes tile/shared/grid",
+  "partitions": {
+    "8": {
+      "split-prefix": [
+        4,
+        4,
+        8
+      ],
+      "resident-prefix": [
+        8,
+        8
+      ]
+    },
+    "10": {
+      "split-prefix": [
+        5,
+        5,
+        6
+      ],
+      "resident-prefix": [
+        10,
+        6
+      ]
+    }
+  },
+  "file_hashes": {
+    "upstream/.cache/fig11_ntt_sources_20261118/GPU-NTT/src/include/gpuntt/common/common.cuh": "2a0c34111297c920eb7d0594815761b3c46a0268110f4ca7df4dfc8df4a588ab",
+    "upstream/.cache/fig11_ntt_sources_20261118/GPU-NTT/src/include/gpuntt/common/fields.cuh": "77af4a1642462520d67b5c638a9922f3057ecc69a9e241437dffcf7eda3d282a",
+    "upstream/.cache/fig11_ntt_sources_20261118/GPU-NTT/src/include/gpuntt/common/modular_arith.cuh": "734a26e6492538955fc725f4d22d67763c4b2cecf49d21cc580a61c37a37a90b",
+    "upstream/.cache/fig11_ntt_sources_20261118/GPU-NTT/src/include/gpuntt/common/nttparameters.cuh": "893c55c584875e87af95a0d7e0a256f819ec680cd818951a007dd3d4929f4a62",
+    "upstream/.cache/fig11_ntt_sources_20261118/GPU-NTT/src/include/gpuntt/ntt_merge/descriptor.cuh": "d3440b041f919be7f58a772b42a6baafe3c3c5f9b3d22e351f87bb3a8e7650a7",
+    "upstream/.cache/fig11_ntt_sources_20261118/GPU-NTT/src/include/gpuntt/ntt_merge/ntt.cuh": "eb200c234ad23e4a5633bfc0e32ef1df04f100a9cf2de12a34d60d42dbbc7e12",
+    "upstream/.cache/fig11_ntt_sources_20261118/GPU-NTT/src/include/gpuntt/ntt_merge/ntt_cpu.cuh": "508a77c0ea4a6fae7b1ec88c62157301d8215b41e2992853851fb269520bc60c",
+    "upstream/.cache/fig11_ntt_sources_20261118/GPU-NTT/src/include/gpuntt/ntt_merge/ntt_device.cuh": "3321b8604640f6d383c3e12c89ff1412c6845c60d36485210064617e906488dc",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/batchencoder.h": "80ae65c1781c725716882dc2820e226c4c1bcbe63411b17f874cd127bb12a927",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/butterfly.cuh": "d9c06b978d23969cb805721998bb121d4b82536f9a715b5ed0e05b5aecb9cc0c",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/ciphertext.h": "de0b83cacbb1d3d6d35febc4b9749a3283d65b9969fb5f018a0cf43aeeffaa17",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/ckks.h": "b931ab1914650893295b4652a79030af862a71b8223dc09501fc2f923304e8d8",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/common.h": "755fb57e69eccec1a14093e3be25332dc44a6bb3f1f8004dddf1afe90fa2fedd",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/context.cuh": "a5f725f338ee5a95a548a7071efa14c96e27311cc6063c77a8437475d4afa46b",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/cuda_wrapper.cuh": "bb7944e4516912546d5977791c600c29a55637275834446881dc64aa3d32ded6",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/evaluate.cuh": "ab31abf84c9780a679a8a880702975e2b2472c0b137e068994187bba704e81bc",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/fft.h": "b8a3badebc16b4fb7b6e937c0d011b892151994649752d02b4edbcce936ea29d",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/galois.cuh": "bc426bf7ed17ffe014ef9a5d3d40c466efe19e4c87fe3ecf094fbd744ca36074",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/gputype.h": "c668bc6c1c4bc26e7de63bfa0ac73e5792663ddaabf79953a36f2a08df580869",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/blake2-impl.h": "e3f09b88504b4d6f52a700cc92fcb4f66e655b5a3e1ed2045a9b1a507c272bbc",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/blake2.h": "c6df10eb82252b4e7e91d3b02b39b6372e947c6e4468a60008d266db07d39371",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/common.h": "ca43fee233dd9233ce055e67c098ab4b7af7a55c1b280ff6f651c1ec0909d9b1",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/defines.h": "ea9fe1204f579b3b1153b75ae01269e45b44aa4ff7507bdf1bd2aabc7eea3de7",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/encryptionparams.h": "452123ace02242d3a947e2f8753a8985054ab4e45dcccdbfe41732e80b8800d9",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/globals.h": "b007518685bfd7a654e199918432c63101db49572778bedb0ab00feab4f98210",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/hash.h": "7ad24d160f3c721e3647487d78e2b7fd83c350f357499de0ad05932da3f02efe",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/hestdparms.h": "faeaa92b8ade53f4023260db51c8653ceec1dc35738e621e26652acb1087d672",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/modulus.h": "4adee3e2d37e4bd4e51a406305412ff54d3b24aaa99634ed62d23d6a918d0a59",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/ntt.h": "872cfb8f809ec66ee92c57887e52e6c5c229be6f1d9fb218b536422d6bc1d067",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/numth.h": "b36ea339ed521532ee9a8979a8397db030cee0b99bcdac89b64d3bbfb143c276",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/rns.h": "20f37d4c93eb1d6048d48c2013e5206ba7229c3fab4cdbf078ce3a47ad2f1a1d",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/uintarith.h": "1875c484e27355822124a3ad4388d477e0ab07048bb5a3d4d7f44dca5e65baef",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/uintarithmod.h": "4d83fdc13178ddda200aa1016e17128d6947ce04b47323a07d9746992756b8ec",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/uintarithsmallmod.h": "a9140a9b5581180fa9bef2fbc332e4c1d5086b54455ded36201404fcc1a09635",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/host/uintcore.h": "d81531fc6dc219ce11cec96256326a0fee9559407aed35caf4281d0f046d6dc0",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/lock.cuh": "d21c7495cdad0dc195c30c6e64ed6486dcf4edb54d350a27bdc8768bd3a8f53d",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/ntt.cuh": "a5e2a30eb176669f4315336323febe12770368ad01c442b32fd54ea43d6af954",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/phantom.h": "d1c425284c2fcbe0c7ef46c636b3950462f7d3f6ff3d10465488b144af36b7c3",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/plaintext.h": "f7aa6b86b9c7956237188c8f2418851e423d7cb949f352a13b8192649b538752",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/polymath.cuh": "805ccec06e9f77502df41afe6c6b3c1e46779855d4b47327ec844c467b8e8627",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/prng.cuh": "8253d1cef5a9683466c9c75e094dfb7d0a533e6b2041e4911cd02b5626fa8ae8",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/rns.cuh": "3333f1b4b2095241447fcab972be9b0373e4574f13bafc52eb8832dfbfb04c4f",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/rns_base.cuh": "d155e5bbfebf7006741ddc93e2a310c37d318e46e0d8311cf78ff71d324340f6",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/rns_bconv.cuh": "7e938de4fa560b0b3abe80413447130ac6bf903dfeee548d53c38cd854c68d8a",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/scalingvariant.cuh": "6e816e0477b2db3fb926940760d07c17685dd05d52eb537182d97c23d2b48277",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/secretkey.h": "9f8cf98cfc7186f4a82991703e96e216680d9fd87bffe12947c21c5969972eae",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/uintmath.cuh": "70118803eece40598ef9e8808a08c35dcc870bac0d1a13bd401cc8ad4a16e496",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/uintmodmath.cuh": "ffc4a77685b4f261ab0afefedd0cd442dec98f0bba15095cbd49b5cb19e490ed",
+    "upstream/.cache/fig11_ntt_sources_20261118/PhantomFHE/include/util.cuh": "0c212b2c86972ab09b50c61407059063a531f64b58d9749ef85f0ed13b9a5117",
+    "upstream/benchmarks/ntt_fixed_core_organization.cu": "f0d80199ee3a9bb98104227023b0e1aaca9a268a98a94b8babc9d1fe7aa14e66",
+    "upstream/include/cubutterfly/cubutterfly.h": "d35e81073e9f28acb075d086a768c218dc5a613929bd9882fcccfda8114ed014",
+    "upstream/include/cubutterfly/mapping.hpp": "7901061aedbc3bbe660afe933f3a59d50cef5b11170c55474e28ae670137e06d",
+    "upstream/include/cubutterfly/module.h": "640acda80d15d7103a4caa30df16cca58bb6d38a2601dd16d386aa23887fe896",
+    "upstream/include/cubutterfly/plan.hpp": "6e542fc6e4544a612bf296e4bc16644bd757e472e5e075846d41646614fd95cf",
+    "upstream/include/cuntt/appt_layout.hpp": "db753c2dbe4bcfcc430161b65ee7f7acca08861212915f98d723153d19864320",
+    "upstream/include/cuntt/butterfly.hpp": "d527a28d17bf927f80f7460f180637e1d1a37fbe5b26c4cf0579e7a142da4537",
+    "upstream/include/cuntt/iterative_layout.hpp": "c666060bcf732fabc6054f89757ca15defb6995bb46b0ccfcc14be1340f4b800",
+    "upstream/include/cuntt/mixed_dataflow.hpp": "dace0a5ee27f35b1a52f295ae6d7e4be404bb981f2cb84e2ec1e9f24cef43431",
+    "upstream/include/cuntt/ntt.hpp": "1af5269a852c63b6af46fc76ec72078ce5d975354803e6d0488352a27f978009",
+    "upstream/include/cuntt/rns_c_api.h": "2329ad130255ef79f694252cc50713f854f4440d58ba9726e6232ec480e579a3",
+    "upstream/include/cuntt/rns_ntt.hpp": "350121e89ca199bca91ebe38ca8c8f2d1f89e0c7298706cc189392d76e36a956",
+    "upstream/include/cuntt/rns_tuning.hpp": "08af9e738a9c42e83256e7376af0a057827beccf0bd42fb9137b6cf35aa69c6a",
+    "upstream/results/fig11_ntt_fixed_core_a100_20261118/ntt_fixed_core_organization": "19754005e30530cd466835b14a14e3dc9bd36afdee1dbf4512c0cab4196c169a",
+    "upstream/results/fig11_ntt_fixed_core_a100_20261118/prepared/input.u64": "1db742bf20351e41e684919f447ab1dd0d08036d4d990eb3e854f5b2efbada33",
+    "upstream/results/fig11_ntt_fixed_core_a100_20261118/prepared/metadata.json": "420048847e314689f95cceb2ba29b3e721a430e55414176a48164463bd0d0746",
+    "upstream/results/fig11_ntt_fixed_core_a100_20261118/prepared/params.u64": "5a50b7d00c5885fe4497bd6ccedc8dc86a3dc44960561ee8e078523406f52056",
+    "upstream/results/fig11_ntt_fixed_core_a100_20261118/prepared/reference.u64": "2ad7300d805154ac13038d7826682922fb9e57f70574579f02d9e7693e6c0cc1",
+    "upstream/results/fig11_ntt_fixed_core_a100_20261118/prepared/shoup.u64": "d4369ec8b3abe008067a78cb8cb53c4681e3db6e6ca45ea773b06cacdf006d9f",
+    "upstream/results/fig11_ntt_fixed_core_a100_20261118/prepared/twiddles.u64": "d08d85f6795b2820c91b8dc687579d132a96350d1126e43b14f56ba66a729f08",
+    "upstream/scripts/run_ntt_fixed_core_organization.py": "460bf7f0e3245a5a293ae848ed8b1ac4fc1d847482c31b06597a81c55fb3466d",
+    "upstream/src/batch_pipeline.cuh": "7d1a3a8ea7718d33c10a9af4b833aff1c46efda1528f2e64f84dbee978d6a107",
+    "upstream/src/bluestein_fft.cu": "2b044b2d91bf6429348b0e29c6b0181f00773175801712b8c5462e29b98f28b5",
+    "upstream/src/bluestein_fft.hpp": "39f598de9a3d8536569d49259881e84e3e6fc6c4e27d54f1e1aa52916185c03e",
+    "upstream/src/bluestein_ntt.cu": "f3690bd3371c64988d7dccfb91ca73e1eb5bc0bf641f240302bdf838b1ea6a23",
+    "upstream/src/bluestein_ntt.hpp": "8cf4f110a0b6b045a0bff50b0d3c6b22c0befc12f9581ab5458f183b631582e6",
+    "upstream/src/bounded_candidate_inventory.hpp": "5d1317a8851a89776e44be4f2076b7785b23c23de1cb3d2d922db7558110b42e",
+    "upstream/src/butterfly.cu": "ce451f987fd4f4fb2b6de06bb3082bc9baaca5ba9e55c794e72cd310e0775b78",
+    "upstream/src/butterfly_exchange.hpp": "0bafddc20efafa5a96c61150cfa3fe8d0abf19a6b3d2bb7554a1a0fb8ac295c8",
+    "upstream/src/cufftdx_fft.cu": "c8d7ce290e18fb72a4b9c1b04735cb44307bf68c481675b5100cfc8f80449baa",
+    "upstream/src/cufftdx_fft_fp64.cu": "25832e774c09cd082190f8f094fe4f8ae25925914dc0c2cc862e0ef376c6e93f",
+    "upstream/src/cufftdx_low_block.cuh": "b348363681a4b896388cbac93a9909252b49e7a81ff164a3177a70ad2b4e70d8",
+    "upstream/src/cufftdx_provider.hpp": "4a235fa91349227dde3117e3875bc2c1f787205f7d4082adec7ba2c87d6f9a04",
+    "upstream/src/direct_fft.cu": "21a0f4db6d59b20f23b1cedd812efe6c27e2d137f9e417064f3aebaa904d6d73",
+    "upstream/src/direct_fft.hpp": "089490763f25c76aae45f539815c375b0bb7075753a58b61929b2a0eb78e8da7",
+    "upstream/src/direct_real_fft.cu": "73ea70581f2be4e9027c52a1fa05cab1f80f803953afcd6dd5aeb04b7d80f523",
+    "upstream/src/direct_real_fft.hpp": "9ea1a93e91a8e787a804b649549a8cbf4c8fe804ebfda2d37be019d046de27e9",
+    "upstream/src/external_fft_units.cuh": "2d2d7dca53b5ec5123ab8232f2fa58ea0970e298ae7afb17f23bad67eeafed85",
+    "upstream/src/factor_pipeline.cuh": "15745ec3e608d9c8855d3e06dddc88707ab67d9aab93eb38ad0a848a0212fe5d",
+    "upstream/src/fft_factor_native.cuh": "e7f7c38e5e2f7276315624941f09a750059a22dd16402f5c71edab99cdb995a9",
+    "upstream/src/fft_factor_plan.hpp": "4d1a301c8b7d13acba645d5b9abb621408091a145a008e55a50adb26b4aca790",
+    "upstream/src/fft_factor_streamed.cuh": "49e242517e947ef2286eebe4dab2444a997976feea1f11a1f1bb5482acc89fcb",
+    "upstream/src/fft_fixed_roots.cuh": "0168539d051b578e9ee8b1f7a0c8c6f8b6dc39eb2068a13b95310c8245ae5e23",
+    "upstream/src/fft_grouped_suffix.cuh": "95a9e0d1f393ea7e709c40a0f9dbf9638c17a26c1a8a3a3ef838d5bec045b689",
+    "upstream/src/fft_local_core_contract.hpp": "1abcd75a437154788f0ddc23ecd9db67e88017bea624974d1a149ee9593b31c5",
+    "upstream/src/fft_native_block.cuh": "d60b307f04c7bfc3a51b8df7fa1963ba796703b154c3dff0301de7ba06b4a88c",
+    "upstream/src/fft_radix4_codelet.cuh": "76641c3190b030efae3dbe04658ff26caa689498c3b95e0b8386038e4774e8fe",
+    "upstream/src/fft_register_dispatch.cu": "0ea21d9bd86dc9f82ea5356f2d13a12d6d98ea0fc01a1a61bdfb3ca34dff29b5",
+    "upstream/src/fft_register_dispatch.hpp": "6fa4ae54afdcb60cd311cae40bb65bcb42f58103bfd3541668d4208793beb4b6",
+    "upstream/src/fft_register_tile.cuh": "127ee6b77d34ffc03d5b054d10ddb63d1e53c3416b4a89dcb52127a4c1609296",
+    "upstream/src/fft_thread_codelet.cuh": "3b775921a38b743284d16a37e3f0c631d30f2bc1449c3c6d5b18b6310e13e543",
+    "upstream/src/fft_tile_layout.cuh": "ab0db71740764950cb49d3e47a4c9149f7cfdde25d0868a96f1e56fdda887abb",
+    "upstream/src/fwht_contract.hpp": "4edb72d870ea7dd2b495e779e55dd6dcd94a4689439abbd9c0a90750858258a6",
+    "upstream/src/general_kernels.cu": "d37fb6a56312fe78a736ac6734554536c36c28e18e6263b1b692c03114e71500",
+    "upstream/src/general_kernels.hpp": "338f3596dc5d8964d20d53ca109c86ddc2da68dc961cafba55368b47466a75f0",
+    "upstream/src/generated_unit_api.cuh": "8965b4aa634c6170f0c7ce914eff3971583fd4d0322cab3d56ac9e9fbd94d472",
+    "upstream/src/hardware_model.hpp": "831379192b9a8037eec56dbe1e7e7ca591688b03547c7ee6ea4fcafc131f83e6",
+    "upstream/src/hybrid_dataflow.cuh": "01519f54333adbe6c76c9e39d5392dbb20af16e3e09455c6dd4ae3b5d309d98e",
+    "upstream/src/jit_module.hpp": "8b636a2c15c3cd50c6a7976219be3b0e11abfc29ee81bd5413cf7f4c5098993a",
+    "upstream/src/low_fft_reference.hpp": "05b332350dbba56b9e76910b0960eb18c40a925e65859dff848d2e3d10502e9b",
+    "upstream/src/mapping_selector.hpp": "b9c29b9d501e8f81c1e514a2e9ae5658de630109f9cbc99f6cd65039f5172d9c",
+    "upstream/src/ntt.cu": "71049be737d010b6a2658285373787b675d8d40864b450fbb62e15d2f2edfd92",
+    "upstream/src/ntt_capabilities.hpp": "75630c5811eb35e3b0dc4875add3f79a7c16bcb6ea760f547a476c99027b0578",
+    "upstream/src/ntt_hybrid2d.cuh": "a14fdbe26ba4d479d69eba4bbcf8e4a7dad904720356e485c8006f679342c3f5",
+    "upstream/src/ntt_template_candidates.hpp": "79ae28ef355c3ac643774b5236db965454669aca14ce41aa903df70a8d668002",
+    "upstream/src/ntt_traits.cuh": "bc278ca03c9c49d4d230418ba2385b40ad2b1a604d7aa44d48932d4bc3b3344a",
+    "upstream/src/online_reorder_contract.hpp": "20e24bb24a35229c394f3fdd41715f0df4adeaa61f69aa0561b082c9de7d1ccd",
+    "upstream/src/operator_traits.cuh": "a3551769ecbf3ea5ed012f729e0fb5fc39ae58e2ea62ff6b03a788bce5a89975",
+    "upstream/src/partition_space.hpp": "5004f0a7e17a31fa5121190bcfda10bdfc785b0f352f1a3f719f6d135c89be76",
+    "upstream/src/plan_registry.hpp": "87f45c7f79aa31e3a0cb983ffcb70d599634bcf3bb28030aa3f372d46b82c377",
+    "upstream/src/plan_search_trace.hpp": "d2933313da0fb8747591e235bd241fcadd82fec9eaf3e41529a9be2499bb828d",
+    "upstream/src/platform_tuning.hpp": "eb482624f0f37860e096c3cbd458e6bf02963479ff4f50cd8497d3c7d4edecd6",
+    "upstream/src/platforms/legacy_identity.hpp": "b8863faa018c6e6c9762e73fd7b6697725909074445db2aec7aa57dc78d12488",
+    "upstream/src/platforms/ntt_defaults.hpp": "e4ffdae77d0378de0d1647e581773a9e533c5fe07166d6ea719feaccc1ac13a5",
+    "upstream/src/real_fft_adapter.cu": "424bb352dad4c95b6713554c0b86c489e13ecac2e0d63b4b9b307b0e2b4d330a",
+    "upstream/src/register_fwht.cuh": "ffb090b5508ceacdc4fe22a81d876b1ad20d87f053aa98ea0531ac74565ad97c",
+    "upstream/src/resident_mapping.hpp": "8fe79fbf714c20d1246da5c86a911efca1aedb19a726786bd058db0411ecd3fd",
+    "upstream/src/rns_fused_ctgs.cuh": "4f6c1dbcc09833c3c557e264f01e000f04691de8641afa105637404478cc3ce9",
+    "upstream/src/rns_ntt.cu": "bf12edcd26048daea27b3b51147168d0a3e23795e77948827bdbccf4264eaae6",
+    "upstream/src/semantic_contract.hpp": "0bb0323a90a630969bb18a312494a037c12afbd541478b639d9ea3c4415a105d",
+    "upstream/src/semantic_numeric_kernels.cu": "804c542e33080b50ec3f1b5860df70fddd0e55564eaa188b1c8c76dd4757f645",
+    "upstream/src/semantic_numeric_kernels.hpp": "9224ab028887082bab6e88ca774946775d4a84bf2e7ef8fa12ca8ae0d99a194f",
+    "upstream/src/shared_iterative.cuh": "5c437b5de77756bd4a9246eed3d704cce5ee516ec814340909c4a6d36aec4880",
+    "upstream/src/shared_organization_candidates.hpp": "bdaff95da3862e94c32ba7d7093e7c1b30f877d2dfcc6a8a154a62f477053c32",
+    "upstream/src/shared_resident.cuh": "ae891774efa4cb91ae7384f8a169059deccaf1f598dd3b2b391b0e98215fe329",
+    "upstream/src/shared_thread_mapping.hpp": "95b8a991c722566a71e6aaaefe56f1a191644dfb95f2c261f1bd76d46b869551",
+    "upstream/src/shared_tile_contract.hpp": "857ab743320a442fec470e4d7817f1a68c7d8cef8cf4e57150b40e3f406f4dfd",
+    "upstream/src/stage_pipeline.cuh": "8f09357194894261fa918ab68de265b28335d31cc9ca06d3a488b94235d3484a",
+    "upstream/src/stage_probe.hpp": "ea2380229be3c71632318f7d3bf1dd15b9a2fb69762a2b36328466192cda105c",
+    "upstream/src/static_candidate_ranking.hpp": "33d35a83e8af3f4944b9cb10faf5df9e8fd2a0cd6a345fae3d74378f8866a7e1",
+    "upstream/src/temporal_tile_contract.hpp": "505dca8975b5bf22fae6e6b1d38d226b78ad9320c66e5099fc1b868af9f09ad8",
+    "upstream/src/thread_fft.cuh": "8f76fd3c9b2e96f2c1ae03789ae3ec012cb35ff805fb7a80810a23dc3c77fc6f",
+    "upstream/src/turbofft_fft.cu": "0d42864627f548819a5214cc01f09a3ea3d202c6df1750e1a1c2d0e9cb425b13",
+    "upstream/src/wmma_fft.cuh": "762f94aa977dca2871219d34506fbf08cd881239f614ccf76ba14b09ffb703ac",
+    "upstream/src/xd_axis_fft.cu": "bbe6f9f68eb83b6df4146c4c525cf29999fcd3ee8ca774bb7555771b93e753ee",
+    "upstream/src/xd_axis_fft.hpp": "d8cefe33d2b5a57025c1b59c2f0e2572137d018b8df92e5b9f7f6d376598c368",
+    "upstream/src/xd_axis_resources.hpp": "884ba3b266ef9764e740d01e5f582cd13793a157847ee1d83452c647a77434db",
+    "upstream/src/xd_cooperative_codelet.cuh": "409714c07d74a727d9c859e9e35566faef5a1f115208678727f9780278933fd7",
+    "upstream/src/xd_cooperative_pair_fft.cu": "46956c781a307c37c57d28dbfca69df01b022f7e9ef781f6c2de5b580f096e9f",
+    "upstream/src/xd_cooperative_pair_fft.hpp": "a58d60919b538cd905a56b1390400aa20db8d1da8375b4ce9fa008a26778cb7c",
+    "upstream/src/xd_cooperative_roots256.cuh": "05259ed7aa5beb01c1bbbb54828c9944746bb610143dbf709514394f90db30ea",
+    "upstream/src/xd_local_fft.cu": "19b8d06220319baf5c06de56c282f7558d6f9af21f14a388544864d27c162bad",
+    "upstream/src/xd_local_fft.hpp": "c3ded97c2849ddbae2534dd5bb58e3b56ebb8c7aea3dc8455f933e5f1eb4ac5d",
+    "upstream/src/xd_pair_core.hpp": "5299aeb1614c8131e6e89d554daa71d959d720985a88fee56788ac4743526374",
+    "upstream/src/xd_pair_fft.cu": "345f95344c2552f20a50642ea57adeb75ff81300afc77f1e39e756f8a8946848",
+    "upstream/src/xd_pair_fft.hpp": "0741de67858592539048c150b2b56a9c8699f83e6a73366b34731381deb77b6b",
+    "upstream/src/xd_real_fft.cu": "6a6d2359f739ed609466a11ec1e861621d60a5313d96877e14ed84b6a71516e7",
+    "upstream/src/xd_real_fft.hpp": "981534e86d51635e176fce0bc6e6cea43ab204a2cdca9e1940da6e0ada9ad7c9",
+    "upstream/src/xd_register_fft.cu": "ed6658f48a08b7e35e25016b5d19c7dce7cb00f351f2a296db37c9cdda728710",
+    "upstream/src/xd_register_fft.hpp": "42ee6b2d6c13e9a9e9d3c961deb5f63b5386ec2a197fcc0c3c8f5d8edd357c5a",
+    "upstream/src/xd_resident.cu": "92fb28b2d8b00adce85b35a5bb26418c800b383508b5352d0c7cf5f5ea50ea34",
+    "upstream/src/xd_resident.hpp": "0dda62fede8ee6bda9d646281a01d37a280b370329b969901bbfe0234a0a5d12",
+    "upstream/src/xd_stockham_pair_fft.cu": "6ad2b204d60954918fb88221fd17e56cf166e9a9e58bbbc1da336f7dc7380937",
+    "upstream/src/xd_stockham_pair_fft.hpp": "7850395a4d19dee9a67a3e4f53475eb2730303cfe2464de7563df79b790ee2db",
+    "upstream/src/xd_vkfft_axis.hpp": "8560a30e36b28088a22782b837dd84d5daf886d62b774f46585da1b78c2670b1"
+  },
+  "estimator": "Per process median of all seven CUDA-event samples; organization effect = median of three split process medians / median of three resident process medians. Paired process ratios retained independently.",
+  "ordinary": [
+    {
+      "task": {
+        "id": "ordinary-p0-native-l8-split-prefix",
+        "kind": "ordinary",
+        "process": 0,
+        "core": "native",
+        "local_log": 8,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "split-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          325.335044861,
+          325.212173462,
+          325.191688538,
+          325.232658386,
+          325.324783325,
+          325.242881775,
+          325.212173462
+        ],
+        "median_us": 325.232658386,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 4,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "a17d7d2cb4eac7bf6f54739ff6d033a485dead29ab0c90ccae95e59963c7127a",
+      "process_median_us": 325.232658386,
+      "raw_samples_us": [
+        325.335044861,
+        325.212173462,
+        325.191688538,
+        325.232658386,
+        325.324783325,
+        325.242881775,
+        325.212173462
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p0-native-l8-resident-prefix",
+        "kind": "ordinary",
+        "process": 0,
+        "core": "native",
+        "local_log": 8,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "resident-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          115.691518784,
+          115.681276321,
+          115.619840622,
+          115.650558472,
+          116.459522247,
+          116.971521378,
+          116.940803528
+        ],
+        "median_us": 115.691518784,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "487e70f0f58d25b5e7bdabd3e4dc2393f65185bb39de5f69a4c202ab1b48d337",
+      "process_median_us": 115.691518784,
+      "raw_samples_us": [
+        115.691518784,
+        115.681276321,
+        115.619840622,
+        115.650558472,
+        116.459522247,
+        116.971521378,
+        116.940803528
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p0-native-l10-split-prefix",
+        "kind": "ordinary",
+        "process": 0,
+        "core": "native",
+        "local_log": 10,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "split-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          223.641605377,
+          223.580150604,
+          223.549442291,
+          223.569927216,
+          223.508472443,
+          223.518714905,
+          223.559684753
+        ],
+        "median_us": 223.559684753,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 5,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "cb0f7da52b829513647e24e47a08e34364cb8d132047e18cbbb6bc4fde77fb7d",
+      "process_median_us": 223.559684753,
+      "raw_samples_us": [
+        223.641605377,
+        223.580150604,
+        223.549442291,
+        223.569927216,
+        223.508472443,
+        223.518714905,
+        223.559684753
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p0-native-l10-resident-prefix",
+        "kind": "ordinary",
+        "process": 0,
+        "core": "native",
+        "local_log": 10,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "resident-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          143.226881027,
+          143.104000092,
+          143.104000092,
+          143.073282242,
+          143.06303978,
+          143.093757629,
+          143.03232193
+        ],
+        "median_us": 143.093757629,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 10,
+            "blocks": 1024,
+            "threads": 128,
+            "shared_bytes": 16384,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 9
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "98401068d7a98dadb4a48e0b3cc55c40420ca59ee50cfafa1415dd7c5079a0b2",
+      "process_median_us": 143.093757629,
+      "raw_samples_us": [
+        143.226881027,
+        143.104000092,
+        143.104000092,
+        143.073282242,
+        143.06303978,
+        143.093757629,
+        143.03232193
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p0-gpuntt-l8-split-prefix",
+        "kind": "ordinary",
+        "process": 0,
+        "core": "gpuntt",
+        "local_log": 8,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "split-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          344.135665894,
+          344.227828979,
+          342.845458984,
+          342.476806641,
+          342.476806641,
+          342.497291565,
+          342.507514954
+        ],
+        "median_us": 342.507514954,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 4,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "81b21a73f50d737c71dcb4927be9892f5065fb2fd408e9e6e0810b3b71d327ec",
+      "process_median_us": 342.507514954,
+      "raw_samples_us": [
+        344.135665894,
+        344.227828979,
+        342.845458984,
+        342.476806641,
+        342.476806641,
+        342.497291565,
+        342.507514954
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p0-gpuntt-l8-resident-prefix",
+        "kind": "ordinary",
+        "process": 0,
+        "core": "gpuntt",
+        "local_log": 8,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "resident-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          114.575357437,
+          114.595842361,
+          114.513921738,
+          114.544639587,
+          114.55488205,
+          115.78368187,
+          115.916795731
+        ],
+        "median_us": 114.575357437,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "842af93ba3f42a5d43afe540a551e9a16bb8dc4fecb170a901664ad4d20347e4",
+      "process_median_us": 114.575357437,
+      "raw_samples_us": [
+        114.575357437,
+        114.595842361,
+        114.513921738,
+        114.544639587,
+        114.55488205,
+        115.78368187,
+        115.916795731
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p0-gpuntt-l10-split-prefix",
+        "kind": "ordinary",
+        "process": 0,
+        "core": "gpuntt",
+        "local_log": 10,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "split-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          237.598724365,
+          237.404155731,
+          237.434883118,
+          237.404155731,
+          237.44512558,
+          237.342720032,
+          237.404155731
+        ],
+        "median_us": 237.404155731,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 5,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "9b38b5c97acd1a4926ff3a217e137a385a0d30ec89ddfdf06d2813c1d173fddc",
+      "process_median_us": 237.404155731,
+      "raw_samples_us": [
+        237.598724365,
+        237.404155731,
+        237.434883118,
+        237.404155731,
+        237.44512558,
+        237.342720032,
+        237.404155731
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p0-gpuntt-l10-resident-prefix",
+        "kind": "ordinary",
+        "process": 0,
+        "core": "gpuntt",
+        "local_log": 10,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "resident-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          149.217281342,
+          149.094400406,
+          149.084157944,
+          149.022722244,
+          149.063682556,
+          149.00223732,
+          149.073915482
+        ],
+        "median_us": 149.073915482,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 10,
+            "blocks": 1024,
+            "threads": 128,
+            "shared_bytes": 16384,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 9
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "e76ba27c104bdcad0d0f7ca6bb57d9e5f13215e18c026247473eaf53af200aed",
+      "process_median_us": 149.073915482,
+      "raw_samples_us": [
+        149.217281342,
+        149.094400406,
+        149.084157944,
+        149.022722244,
+        149.063682556,
+        149.00223732,
+        149.073915482
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p0-phantom-l8-split-prefix",
+        "kind": "ordinary",
+        "process": 0,
+        "core": "phantom",
+        "local_log": 8,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "split-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          343.674888611,
+          343.705596924,
+          343.582725525,
+          343.603210449,
+          343.644142151,
+          350.627822876,
+          343.623695374
+        ],
+        "median_us": 343.644142151,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 4,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "e2b4785d2168e866da7a606b4c44d0b0cab152c54d7ef5f449a1616332eaf14a",
+      "process_median_us": 343.644142151,
+      "raw_samples_us": [
+        343.674888611,
+        343.705596924,
+        343.582725525,
+        343.603210449,
+        343.644142151,
+        350.627822876,
+        343.623695374
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p0-phantom-l8-resident-prefix",
+        "kind": "ordinary",
+        "process": 0,
+        "core": "phantom",
+        "local_log": 8,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "resident-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          120.104961395,
+          120.115203857,
+          120.125436783,
+          120.135679245,
+          121.466884613,
+          121.487360001,
+          121.169919968
+        ],
+        "median_us": 120.135679245,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "e019fd7592b3c964cf5e477376d6a0d848f4d30360e47bc73f5131da2e9840ac",
+      "process_median_us": 120.135679245,
+      "raw_samples_us": [
+        120.104961395,
+        120.115203857,
+        120.125436783,
+        120.135679245,
+        121.466884613,
+        121.487360001,
+        121.169919968
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p0-phantom-l10-split-prefix",
+        "kind": "ordinary",
+        "process": 0,
+        "core": "phantom",
+        "local_log": 10,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "split-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          235.571193695,
+          235.509757996,
+          235.479030609,
+          235.407352448,
+          235.520000458,
+          235.509757996,
+          235.448322296
+        ],
+        "median_us": 235.509757996,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 5,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "d538a085740182ab76e49b5f321b1d82e92ff4c1f4515cad737a9fe27b4cdfd7",
+      "process_median_us": 235.509757996,
+      "raw_samples_us": [
+        235.571193695,
+        235.509757996,
+        235.479030609,
+        235.407352448,
+        235.520000458,
+        235.509757996,
+        235.448322296
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p0-phantom-l10-resident-prefix",
+        "kind": "ordinary",
+        "process": 0,
+        "core": "phantom",
+        "local_log": 10,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "resident-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          149.442558289,
+          149.299201965,
+          148.920316696,
+          148.910083771,
+          148.930559158,
+          148.951044083,
+          148.848638535
+        ],
+        "median_us": 148.930559158,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 10,
+            "blocks": 1024,
+            "threads": 128,
+            "shared_bytes": 16384,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 9
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "66061d97fde5840b0ff4630e219890adfea45c3697031f1edd6d215d752223df",
+      "process_median_us": 148.930559158,
+      "raw_samples_us": [
+        149.442558289,
+        149.299201965,
+        148.920316696,
+        148.910083771,
+        148.930559158,
+        148.951044083,
+        148.848638535
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p1-native-l8-split-prefix",
+        "kind": "ordinary",
+        "process": 1,
+        "core": "native",
+        "local_log": 8,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "split-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          325.294075012,
+          325.212173462,
+          325.181427002,
+          325.130233765,
+          325.150718689,
+          325.10974884,
+          325.150718689
+        ],
+        "median_us": 325.150718689,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 4,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "eaf597e3d0b5b3a408490596381f997d09bac2aa11c3c852143bc6fc355a3921",
+      "process_median_us": 325.150718689,
+      "raw_samples_us": [
+        325.294075012,
+        325.212173462,
+        325.181427002,
+        325.130233765,
+        325.150718689,
+        325.10974884,
+        325.150718689
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p1-phantom-l10-resident-prefix",
+        "kind": "ordinary",
+        "process": 1,
+        "core": "phantom",
+        "local_log": 10,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "resident-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          149.493761063,
+          149.411840439,
+          149.401597977,
+          149.319677353,
+          149.319677353,
+          149.329919815,
+          149.227523804
+        ],
+        "median_us": 149.329919815,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 10,
+            "blocks": 1024,
+            "threads": 128,
+            "shared_bytes": 16384,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 9
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "832954444859b4d087e9b3af6e8b7c2ef422452bc7797eaff5fd6d151a8efbe1",
+      "process_median_us": 149.329919815,
+      "raw_samples_us": [
+        149.493761063,
+        149.411840439,
+        149.401597977,
+        149.319677353,
+        149.319677353,
+        149.329919815,
+        149.227523804
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p1-phantom-l10-split-prefix",
+        "kind": "ordinary",
+        "process": 1,
+        "core": "phantom",
+        "local_log": 10,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "split-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          235.601921082,
+          235.479030609,
+          235.458564758,
+          235.438079834,
+          235.448322296,
+          235.407352448,
+          235.448322296
+        ],
+        "median_us": 235.448322296,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 5,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "1cac1ef3b337bc1e5cab64dd23dcb5944445b67d3c80dba1b7d1ce522362636f",
+      "process_median_us": 235.448322296,
+      "raw_samples_us": [
+        235.601921082,
+        235.479030609,
+        235.458564758,
+        235.438079834,
+        235.448322296,
+        235.407352448,
+        235.448322296
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p1-phantom-l8-resident-prefix",
+        "kind": "ordinary",
+        "process": 1,
+        "core": "phantom",
+        "local_log": 8,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "resident-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          120.064001083,
+          120.033283234,
+          120.453119278,
+          121.497602463,
+          121.425924301,
+          121.415681839,
+          121.405439377
+        ],
+        "median_us": 121.405439377,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "43ec77c425ebdf2dd75f8979371ea6b6d00c3c6fe4538c8dcc5516ed42d8e5b3",
+      "process_median_us": 121.405439377,
+      "raw_samples_us": [
+        120.064001083,
+        120.033283234,
+        120.453119278,
+        121.497602463,
+        121.425924301,
+        121.415681839,
+        121.405439377
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p1-phantom-l8-split-prefix",
+        "kind": "ordinary",
+        "process": 1,
+        "core": "phantom",
+        "local_log": 8,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "split-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          343.767051697,
+          343.654403687,
+          343.633918762,
+          343.654403687,
+          343.623695374,
+          343.613433838,
+          343.654403687
+        ],
+        "median_us": 343.654403687,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 4,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "368878707050da39b5a34914eb967fb5eab93ed6d97f3e465f03014029c0c69a",
+      "process_median_us": 343.654403687,
+      "raw_samples_us": [
+        343.767051697,
+        343.654403687,
+        343.633918762,
+        343.654403687,
+        343.623695374,
+        343.613433838,
+        343.654403687
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p1-gpuntt-l10-resident-prefix",
+        "kind": "ordinary",
+        "process": 1,
+        "core": "gpuntt",
+        "local_log": 10,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "resident-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          149.094400406,
+          149.043197632,
+          149.032964706,
+          148.97151947,
+          149.053440094,
+          148.97151947,
+          148.97151947
+        ],
+        "median_us": 149.032964706,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 10,
+            "blocks": 1024,
+            "threads": 128,
+            "shared_bytes": 16384,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 9
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "e07000dcd2d08297b2058450555edad0bd4be930f5001f1122d11ccfd4bcf86f",
+      "process_median_us": 149.032964706,
+      "raw_samples_us": [
+        149.094400406,
+        149.043197632,
+        149.032964706,
+        148.97151947,
+        149.053440094,
+        148.97151947,
+        148.97151947
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p1-gpuntt-l10-split-prefix",
+        "kind": "ordinary",
+        "process": 1,
+        "core": "gpuntt",
+        "local_log": 10,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "split-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          237.537288666,
+          237.465591431,
+          237.363204956,
+          237.383670807,
+          237.322235107,
+          237.404155731,
+          237.434883118
+        ],
+        "median_us": 237.404155731,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 5,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "0870075560b4251fd4083903033e3213b2c43b40873b24c75a31c9a37c9076f6",
+      "process_median_us": 237.404155731,
+      "raw_samples_us": [
+        237.537288666,
+        237.465591431,
+        237.363204956,
+        237.383670807,
+        237.322235107,
+        237.404155731,
+        237.434883118
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p1-gpuntt-l8-resident-prefix",
+        "kind": "ordinary",
+        "process": 1,
+        "core": "gpuntt",
+        "local_log": 8,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "resident-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          114.503679276,
+          114.278402328,
+          114.216957092,
+          114.206724167,
+          114.544639587,
+          115.394563675,
+          115.353603363
+        ],
+        "median_us": 114.503679276,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "23fdd1035bba4fbabe6f7003f45499d72ee9dda58119cf660ef1a39f4776b69a",
+      "process_median_us": 114.503679276,
+      "raw_samples_us": [
+        114.503679276,
+        114.278402328,
+        114.216957092,
+        114.206724167,
+        114.544639587,
+        115.394563675,
+        115.353603363
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p1-gpuntt-l8-split-prefix",
+        "kind": "ordinary",
+        "process": 1,
+        "core": "gpuntt",
+        "local_log": 8,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "split-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          343.920631409,
+          343.828468323,
+          343.859214783,
+          343.818244934,
+          343.807983398,
+          343.848953247,
+          343.828468323
+        ],
+        "median_us": 343.828468323,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 4,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "8fbd9ca3d46bfc64154967124de771399a314a26e380bc424c3327ff0aedec18",
+      "process_median_us": 343.828468323,
+      "raw_samples_us": [
+        343.920631409,
+        343.828468323,
+        343.859214783,
+        343.818244934,
+        343.807983398,
+        343.848953247,
+        343.828468323
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p1-native-l10-resident-prefix",
+        "kind": "ordinary",
+        "process": 1,
+        "core": "native",
+        "local_log": 10,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "resident-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          143.155202866,
+          142.991361618,
+          143.06303978,
+          143.042564392,
+          143.073282242,
+          143.114242554,
+          143.104000092
+        ],
+        "median_us": 143.073282242,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 10,
+            "blocks": 1024,
+            "threads": 128,
+            "shared_bytes": 16384,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 9
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "46d4ec964ada47e37c5c728432e01a68dd0b0f4e35476569f71f3bfdb8910c35",
+      "process_median_us": 143.073282242,
+      "raw_samples_us": [
+        143.155202866,
+        142.991361618,
+        143.06303978,
+        143.042564392,
+        143.073282242,
+        143.114242554,
+        143.104000092
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p1-native-l10-split-prefix",
+        "kind": "ordinary",
+        "process": 1,
+        "core": "native",
+        "local_log": 10,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "split-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          223.662071228,
+          223.559684753,
+          223.518714905,
+          223.539199829,
+          223.518714905,
+          223.528957367,
+          223.569927216
+        ],
+        "median_us": 223.539199829,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 5,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "c7f8d9c36da9e30d4dd7c506a791af8941aee1808edc25ffa17f2f1b9dcff9df",
+      "process_median_us": 223.539199829,
+      "raw_samples_us": [
+        223.662071228,
+        223.559684753,
+        223.518714905,
+        223.539199829,
+        223.518714905,
+        223.528957367,
+        223.569927216
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p1-native-l8-resident-prefix",
+        "kind": "ordinary",
+        "process": 1,
+        "core": "native",
+        "local_log": 8,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "resident-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          115.445756912,
+          115.374078751,
+          115.353603363,
+          115.814399719,
+          116.541442871,
+          116.531200409,
+          116.561918259
+        ],
+        "median_us": 115.814399719,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "82b8556d2beb869da2e513c1924c676c740182e1d9f41a5fef1abfdee8844b90",
+      "process_median_us": 115.814399719,
+      "raw_samples_us": [
+        115.445756912,
+        115.374078751,
+        115.353603363,
+        115.814399719,
+        116.541442871,
+        116.531200409,
+        116.561918259
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p2-native-l10-split-prefix",
+        "kind": "ordinary",
+        "process": 2,
+        "core": "native",
+        "local_log": 10,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "split-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          223.67231369,
+          223.580150604,
+          223.549442291,
+          223.559684753,
+          223.518714905,
+          223.518714905,
+          223.528957367
+        ],
+        "median_us": 223.549442291,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 5,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "726ccd4325d5c796111aa7882a0d105752873a53b4c67d689455a42634a3b9a6",
+      "process_median_us": 223.549442291,
+      "raw_samples_us": [
+        223.67231369,
+        223.580150604,
+        223.549442291,
+        223.559684753,
+        223.518714905,
+        223.518714905,
+        223.528957367
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p2-native-l10-resident-prefix",
+        "kind": "ordinary",
+        "process": 2,
+        "core": "native",
+        "local_log": 10,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "resident-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          143.185920715,
+          143.011837006,
+          143.022079468,
+          143.093757629,
+          143.011837006,
+          143.06303978,
+          143.06303978
+        ],
+        "median_us": 143.06303978,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 10,
+            "blocks": 1024,
+            "threads": 128,
+            "shared_bytes": 16384,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 9
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "25d44c332ee06e52ee759796b1a9e34ffb23397a97941d6c1c9fb970094e79d8",
+      "process_median_us": 143.06303978,
+      "raw_samples_us": [
+        143.185920715,
+        143.011837006,
+        143.022079468,
+        143.093757629,
+        143.011837006,
+        143.06303978,
+        143.06303978
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p2-gpuntt-l8-split-prefix",
+        "kind": "ordinary",
+        "process": 2,
+        "core": "gpuntt",
+        "local_log": 8,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "split-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          343.91040802,
+          343.828468323,
+          343.838729858,
+          343.869438171,
+          343.807983398,
+          343.848953247,
+          343.79776001
+        ],
+        "median_us": 343.838729858,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 4,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "1bd238eecf97767e2bf0e551b0f38eb4b1f8c6e4b82ea666836444c84b98063f",
+      "process_median_us": 343.838729858,
+      "raw_samples_us": [
+        343.91040802,
+        343.828468323,
+        343.838729858,
+        343.869438171,
+        343.807983398,
+        343.848953247,
+        343.79776001
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p2-gpuntt-l8-resident-prefix",
+        "kind": "ordinary",
+        "process": 2,
+        "core": "gpuntt",
+        "local_log": 8,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "resident-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          114.575357437,
+          114.565124512,
+          114.585599899,
+          114.55488205,
+          114.5241642,
+          115.425281525,
+          115.445756912
+        ],
+        "median_us": 114.575357437,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "01c8de96acd7938dc4524b0aab35a92268a6f435f2c14764c9b21524254381fd",
+      "process_median_us": 114.575357437,
+      "raw_samples_us": [
+        114.575357437,
+        114.565124512,
+        114.585599899,
+        114.55488205,
+        114.5241642,
+        115.425281525,
+        115.445756912
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p2-gpuntt-l10-split-prefix",
+        "kind": "ordinary",
+        "process": 2,
+        "core": "gpuntt",
+        "local_log": 10,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "split-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          237.537288666,
+          237.352962494,
+          237.393913269,
+          237.404155731,
+          237.404155731,
+          237.424640656,
+          237.414398193
+        ],
+        "median_us": 237.404155731,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 5,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "1d0d8724defbe0207974b0b0fb442ec6028e1c31f130b1c5644ed1fd024f1a57",
+      "process_median_us": 237.404155731,
+      "raw_samples_us": [
+        237.537288666,
+        237.352962494,
+        237.393913269,
+        237.404155731,
+        237.404155731,
+        237.424640656,
+        237.414398193
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p2-gpuntt-l10-resident-prefix",
+        "kind": "ordinary",
+        "process": 2,
+        "core": "gpuntt",
+        "local_log": 10,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "resident-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          149.268484116,
+          149.104642868,
+          149.053440094,
+          149.094400406,
+          149.084157944,
+          148.961277008,
+          149.012479782
+        ],
+        "median_us": 149.084157944,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 10,
+            "blocks": 1024,
+            "threads": 128,
+            "shared_bytes": 16384,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 9
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "b954bc7fc11336bea6ac75499851b32f26790054af3bbed3ed5c40b0d69fb973",
+      "process_median_us": 149.084157944,
+      "raw_samples_us": [
+        149.268484116,
+        149.104642868,
+        149.053440094,
+        149.094400406,
+        149.084157944,
+        148.961277008,
+        149.012479782
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p2-phantom-l8-split-prefix",
+        "kind": "ordinary",
+        "process": 2,
+        "core": "phantom",
+        "local_log": 8,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "split-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          343.695373535,
+          343.623695374,
+          343.592948914,
+          343.654403687,
+          343.633918762,
+          343.592948914,
+          343.633918762
+        ],
+        "median_us": 343.633918762,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 4,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "58d609f0b8e6b47b96aa6ad93975ee591c1606176c7cd835cb892032409f23ce",
+      "process_median_us": 343.633918762,
+      "raw_samples_us": [
+        343.695373535,
+        343.623695374,
+        343.592948914,
+        343.654403687,
+        343.633918762,
+        343.592948914,
+        343.633918762
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p2-phantom-l8-resident-prefix",
+        "kind": "ordinary",
+        "process": 2,
+        "core": "phantom",
+        "local_log": 8,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "resident-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          120.084476471,
+          120.084476471,
+          120.002555847,
+          120.043516159,
+          121.456642151,
+          121.425924301,
+          121.384963989
+        ],
+        "median_us": 120.084476471,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "e82b7dbf048e27f5482a15f987d5000a1d5dcaa94c7a27999f394b2d28a58d92",
+      "process_median_us": 120.084476471,
+      "raw_samples_us": [
+        120.084476471,
+        120.084476471,
+        120.002555847,
+        120.043516159,
+        121.456642151,
+        121.425924301,
+        121.384963989
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p2-phantom-l10-split-prefix",
+        "kind": "ordinary",
+        "process": 2,
+        "core": "phantom",
+        "local_log": 10,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "split-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          235.581436157,
+          235.46880722,
+          235.41759491,
+          235.46880722,
+          235.46880722,
+          235.41759491,
+          235.386886597
+        ],
+        "median_us": 235.46880722,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 5,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "abd5e3449fdc21a76c87c9e273fa002c4607aeab9e32e8428800bed5d53777ef",
+      "process_median_us": 235.46880722,
+      "raw_samples_us": [
+        235.581436157,
+        235.46880722,
+        235.41759491,
+        235.46880722,
+        235.46880722,
+        235.41759491,
+        235.386886597
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p2-phantom-l10-resident-prefix",
+        "kind": "ordinary",
+        "process": 2,
+        "core": "phantom",
+        "local_log": 10,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "resident-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          149.340162277,
+          149.350404739,
+          149.401597977,
+          149.309444427,
+          149.329919815,
+          149.227523804,
+          149.319677353
+        ],
+        "median_us": 149.329919815,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 10,
+            "blocks": 1024,
+            "threads": 128,
+            "shared_bytes": 16384,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 9
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "bca99a75c357ad1528425a4050e2d4204e3cafaa900159a7c7332fbd11162db4",
+      "process_median_us": 149.329919815,
+      "raw_samples_us": [
+        149.340162277,
+        149.350404739,
+        149.401597977,
+        149.309444427,
+        149.329919815,
+        149.227523804,
+        149.319677353
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p2-native-l8-split-prefix",
+        "kind": "ordinary",
+        "process": 2,
+        "core": "native",
+        "local_log": 8,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "split-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          325.324783325,
+          325.181427002,
+          325.1404953,
+          325.150718689,
+          325.150718689,
+          325.130233765,
+          325.212173462
+        ],
+        "median_us": 325.150718689,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 4,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "cc47715589da1dc6fdf764dc3d0db56776b2d304c2a3425cd9e4d47776058339",
+      "process_median_us": 325.150718689,
+      "raw_samples_us": [
+        325.324783325,
+        325.181427002,
+        325.1404953,
+        325.150718689,
+        325.150718689,
+        325.130233765,
+        325.212173462
+      ]
+    },
+    {
+      "task": {
+        "id": "ordinary-p2-native-l8-resident-prefix",
+        "kind": "ordinary",
+        "process": 2,
+        "core": "native",
+        "local_log": 8,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "resident-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": false,
+        "samples_us": [
+          115.742721558,
+          115.742721558,
+          115.660800934,
+          116.152324677,
+          116.98176384,
+          117.032957077,
+          116.910076141
+        ],
+        "median_us": 116.152324677,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "f0b6a3bf5176b15357cfec93b7dcb88892e5f5dc2839bc61a2b27892ba856cab",
+      "process_median_us": 116.152324677,
+      "raw_samples_us": [
+        115.742721558,
+        115.742721558,
+        115.660800934,
+        116.152324677,
+        116.98176384,
+        117.032957077,
+        116.910076141
+      ]
+    }
+  ],
+  "profiles": [
+    {
+      "task": {
+        "id": "ncu-native-l8-split-prefix",
+        "kind": "ncu",
+        "core": "native",
+        "local_log": 8,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "split-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": true,
+        "samples_us": [],
+        "median_us": null,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 4,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "c65bdc482da22e97e64b2ee4e183e1ed253fa517442fa395902f9d7f2e9e9edc",
+      "expected_nodes": 3,
+      "nodes": [
+        {
+          "id": "0",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)0>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 8396672.0,
+            "dram__bytes_write.sum": 10923008.0,
+            "lts__t_sectors_op_read.sum": 1299466.0,
+            "lts__t_sectors_op_write.sum": 393402.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 395.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 6039.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 1280.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 94.17,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 49.03,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 2.14
+          }
+        },
+        {
+          "id": "1",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)0>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 4608.0,
+            "dram__bytes_write.sum": 7107968.0,
+            "lts__t_sectors_op_read.sum": 1201146.0,
+            "lts__t_sectors_op_write.sum": 1570894.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 8358.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 7772.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 1280.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 94.18,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 49.23,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 2.01
+          }
+        },
+        {
+          "id": "2",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)0>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 1046656.0,
+            "dram__bytes_write.sum": 7043584.0,
+            "lts__t_sectors_op_read.sum": 2431078.0,
+            "lts__t_sectors_op_write.sum": 1573465.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 4140.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 350044.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 5120.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 84.52,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 12.7,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 44.88
+          }
+        }
+      ],
+      "gaps": [],
+      "csv_sha256": "8247b60eb5d0709d98bcd0fefbd30ff267cb7b49300ec345827e043a16769376",
+      "complete_call_absolute_counts": {
+        "dram__bytes_read.sum": 9447936.0,
+        "dram__bytes_write.sum": 25074560.0,
+        "lts__t_sectors_op_read.sum": 4931690.0,
+        "lts__t_sectors_op_write.sum": 3537761.0
+      },
+      "dram_read_write_bytes": 34522496.0,
+      "l2_read_write_sectors": 8469451.0
+    },
+    {
+      "task": {
+        "id": "ncu-native-l8-resident-prefix",
+        "kind": "ncu",
+        "core": "native",
+        "local_log": 8,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "resident-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": true,
+        "samples_us": [],
+        "median_us": null,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "1d979474539a042796d7b4b971d39521ad71f3525e47910905fc790d18375499",
+      "expected_nodes": 2,
+      "nodes": [
+        {
+          "id": "0",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)0>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 4046592.0,
+            "dram__bytes_write.sum": 7226880.0,
+            "lts__t_sectors_op_read.sum": 1206635.0,
+            "lts__t_sectors_op_write.sum": 1572877.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 6052.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 334351.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 5120.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 84.5,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 12.53,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 16.99
+          }
+        },
+        {
+          "id": "1",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)0>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 49408.0,
+            "dram__bytes_write.sum": 5136000.0,
+            "lts__t_sectors_op_read.sum": 2407836.0,
+            "lts__t_sectors_op_write.sum": 1573296.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 4103.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 350292.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 5120.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 84.43,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 12.68,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 44.65
+          }
+        }
+      ],
+      "gaps": [],
+      "csv_sha256": "0e81f1e1be58527f9a8a05fb39ce354ab87be8c661d2067e4fd3072e439db9a4",
+      "complete_call_absolute_counts": {
+        "dram__bytes_read.sum": 4096000.0,
+        "dram__bytes_write.sum": 12362880.0,
+        "lts__t_sectors_op_read.sum": 3614471.0,
+        "lts__t_sectors_op_write.sum": 3146173.0
+      },
+      "dram_read_write_bytes": 16458880.0,
+      "l2_read_write_sectors": 6760644.0
+    },
+    {
+      "task": {
+        "id": "ncu-native-l10-split-prefix",
+        "kind": "ncu",
+        "core": "native",
+        "local_log": 10,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "split-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": true,
+        "samples_us": [],
+        "median_us": null,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 5,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "e43f703c949666fd4c5c47ba053ed10deec33af39731e3f0ccb5f9417ce0e3ee",
+      "expected_nodes": 3,
+      "nodes": [
+        {
+          "id": "0",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)0>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 8396544.0,
+            "dram__bytes_write.sum": 10710784.0,
+            "lts__t_sectors_op_read.sum": 1301851.0,
+            "lts__t_sectors_op_write.sum": 393397.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 179.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 343038.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 1536.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 93.68,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 50.97,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 2.46
+          }
+        },
+        {
+          "id": "1",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)0>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 16896.0,
+            "dram__bytes_write.sum": 7412736.0,
+            "lts__t_sectors_op_read.sum": 1298470.0,
+            "lts__t_sectors_op_write.sum": 1573342.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 23489.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 342911.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 1536.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 93.77,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 52.86,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 3.85
+          }
+        },
+        {
+          "id": "2",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)0>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 1033728.0,
+            "dram__bytes_write.sum": 7119872.0,
+            "lts__t_sectors_op_read.sum": 2452927.0,
+            "lts__t_sectors_op_write.sum": 1573499.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 27910.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 360310.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 2048.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 92.1,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 59.64,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 13.72
+          }
+        }
+      ],
+      "gaps": [],
+      "csv_sha256": "aac239cd4d12c27e385fb41da06703d093778eeb6f0701d5c8fbc9bccf20c29d",
+      "complete_call_absolute_counts": {
+        "dram__bytes_read.sum": 9447168.0,
+        "dram__bytes_write.sum": 25243392.0,
+        "lts__t_sectors_op_read.sum": 5053248.0,
+        "lts__t_sectors_op_write.sum": 3540238.0
+      },
+      "dram_read_write_bytes": 34690560.0,
+      "l2_read_write_sectors": 8593486.0
+    },
+    {
+      "task": {
+        "id": "ncu-native-l10-resident-prefix",
+        "kind": "ncu",
+        "core": "native",
+        "local_log": 10,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "native",
+        "organization": "resident-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": true,
+        "samples_us": [],
+        "median_us": null,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 10,
+            "blocks": 1024,
+            "threads": 128,
+            "shared_bytes": 16384,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 9
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "93a9459b0190f342b37b0987d0eac63101fcdead8f5b466f6bd992eb159cdbc5",
+      "expected_nodes": 2,
+      "nodes": [
+        {
+          "id": "0",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)0>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 4097792.0,
+            "dram__bytes_write.sum": 7432192.0,
+            "lts__t_sectors_op_read.sum": 1666612.0,
+            "lts__t_sectors_op_write.sum": 1572877.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 107529.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 366599.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 17408.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 42.83,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 5.31,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 37.47
+          }
+        },
+        {
+          "id": "1",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)0>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 42752.0,
+            "dram__bytes_write.sum": 5154048.0,
+            "lts__t_sectors_op_read.sum": 2426718.0,
+            "lts__t_sectors_op_write.sum": 1573289.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 26630.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 358898.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 2048.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 92.1,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 59.22,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 13.29
+          }
+        }
+      ],
+      "gaps": [],
+      "csv_sha256": "862a54aae85da443eef4c3aa4a94dbf6de4e5afd6af1d9dc8b75c7bf6c2dde1f",
+      "complete_call_absolute_counts": {
+        "dram__bytes_read.sum": 4140544.0,
+        "dram__bytes_write.sum": 12586240.0,
+        "lts__t_sectors_op_read.sum": 4093330.0,
+        "lts__t_sectors_op_write.sum": 3146166.0
+      },
+      "dram_read_write_bytes": 16726784.0,
+      "l2_read_write_sectors": 7239496.0
+    },
+    {
+      "task": {
+        "id": "ncu-gpuntt-l8-split-prefix",
+        "kind": "ncu",
+        "core": "gpuntt",
+        "local_log": 8,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "split-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": true,
+        "samples_us": [],
+        "median_us": null,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 4,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "10d0221eebc7e0d6e04ffb33a4c3bc922c177041e8bd4d52d1cbe912c7ceb90e",
+      "expected_nodes": 3,
+      "nodes": [
+        {
+          "id": "0",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)1>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 8385024.0,
+            "dram__bytes_write.sum": 10629888.0,
+            "lts__t_sectors_op_read.sum": 1298917.0,
+            "lts__t_sectors_op_write.sum": 393419.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 346.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 5595.0,
+            "launch__registers_per_thread": 25.0,
+            "launch__shared_mem_per_block": 1280.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 94.7,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 54.06,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 1.93
+          }
+        },
+        {
+          "id": "1",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)1>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 59648.0,
+            "dram__bytes_write.sum": 7639680.0,
+            "lts__t_sectors_op_read.sum": 1181501.0,
+            "lts__t_sectors_op_write.sum": 1571142.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 8886.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 7899.0,
+            "launch__registers_per_thread": 25.0,
+            "launch__shared_mem_per_block": 1280.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 94.69,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 54.03,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 1.63
+          }
+        },
+        {
+          "id": "2",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)1>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 524160.0,
+            "dram__bytes_write.sum": 7901184.0,
+            "lts__t_sectors_op_read.sum": 1406163.0,
+            "lts__t_sectors_op_write.sum": 1573515.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 6933.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 336417.0,
+            "launch__registers_per_thread": 25.0,
+            "launch__shared_mem_per_block": 5120.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 82.24,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 10.01,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 18.19
+          }
+        }
+      ],
+      "gaps": [],
+      "csv_sha256": "1ae5cc1cf20efb03ea36d586221fdee5c01e3d0fa54fe6407a883a2e9d21dc81",
+      "complete_call_absolute_counts": {
+        "dram__bytes_read.sum": 8968832.0,
+        "dram__bytes_write.sum": 26170752.0,
+        "lts__t_sectors_op_read.sum": 3886581.0,
+        "lts__t_sectors_op_write.sum": 3538076.0
+      },
+      "dram_read_write_bytes": 35139584.0,
+      "l2_read_write_sectors": 7424657.0
+    },
+    {
+      "task": {
+        "id": "ncu-gpuntt-l8-resident-prefix",
+        "kind": "ncu",
+        "core": "gpuntt",
+        "local_log": 8,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "resident-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": true,
+        "samples_us": [],
+        "median_us": null,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "2bc3e8c3de67d92f54e2b4c90fdb5c9f050bde397f8ea6f2f11b6f78d4c8ee6f",
+      "expected_nodes": 2,
+      "nodes": [
+        {
+          "id": "0",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)1>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 2898816.0,
+            "dram__bytes_write.sum": 5835264.0,
+            "lts__t_sectors_op_read.sum": 1153451.0,
+            "lts__t_sectors_op_write.sum": 1572877.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 8517.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 331947.0,
+            "launch__registers_per_thread": 25.0,
+            "launch__shared_mem_per_block": 5120.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 83.27,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 8.92,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 14.62
+          }
+        },
+        {
+          "id": "1",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)1>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 5888.0,
+            "dram__bytes_write.sum": 5440896.0,
+            "lts__t_sectors_op_read.sum": 1392319.0,
+            "lts__t_sectors_op_write.sum": 1573290.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 7276.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 336505.0,
+            "launch__registers_per_thread": 25.0,
+            "launch__shared_mem_per_block": 5120.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 82.04,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 9.6,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 17.46
+          }
+        }
+      ],
+      "gaps": [],
+      "csv_sha256": "7891b90c9a5949f5abf1131f489ea472f67967d0e8e625e20f4ac46fe1ed5dc9",
+      "complete_call_absolute_counts": {
+        "dram__bytes_read.sum": 2904704.0,
+        "dram__bytes_write.sum": 11276160.0,
+        "lts__t_sectors_op_read.sum": 2545770.0,
+        "lts__t_sectors_op_write.sum": 3146167.0
+      },
+      "dram_read_write_bytes": 14180864.0,
+      "l2_read_write_sectors": 5691937.0
+    },
+    {
+      "task": {
+        "id": "ncu-gpuntt-l10-split-prefix",
+        "kind": "ncu",
+        "core": "gpuntt",
+        "local_log": 10,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "split-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": true,
+        "samples_us": [],
+        "median_us": null,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 5,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "d881a1bbcf412d1ad9815dbb425f8a8e130b009f409708b3424ba7485048a535",
+      "expected_nodes": 3,
+      "nodes": [
+        {
+          "id": "0",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)1>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 8400000.0,
+            "dram__bytes_write.sum": 10296064.0,
+            "lts__t_sectors_op_read.sum": 1300214.0,
+            "lts__t_sectors_op_write.sum": 393565.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 248.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 341324.0,
+            "launch__registers_per_thread": 25.0,
+            "launch__shared_mem_per_block": 1536.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 94.15,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 55.23,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 2.1
+          }
+        },
+        {
+          "id": "1",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)1>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 8704.0,
+            "dram__bytes_write.sum": 7917952.0,
+            "lts__t_sectors_op_read.sum": 1222587.0,
+            "lts__t_sectors_op_write.sum": 1573292.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 19986.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 339132.0,
+            "launch__registers_per_thread": 25.0,
+            "launch__shared_mem_per_block": 1536.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 94.21,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 55.84,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 2.51
+          }
+        },
+        {
+          "id": "2",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)1>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 523904.0,
+            "dram__bytes_write.sum": 7085696.0,
+            "lts__t_sectors_op_read.sum": 1408735.0,
+            "lts__t_sectors_op_write.sum": 1573336.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 36821.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 338664.0,
+            "launch__registers_per_thread": 25.0,
+            "launch__shared_mem_per_block": 2048.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 92.06,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 59.42,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 9.77
+          }
+        }
+      ],
+      "gaps": [],
+      "csv_sha256": "6fc17f845b3dde16830316ed5b487eafd4865bcfde276788618205715ab4d568",
+      "complete_call_absolute_counts": {
+        "dram__bytes_read.sum": 8932608.0,
+        "dram__bytes_write.sum": 25299712.0,
+        "lts__t_sectors_op_read.sum": 3931536.0,
+        "lts__t_sectors_op_write.sum": 3540193.0
+      },
+      "dram_read_write_bytes": 34232320.0,
+      "l2_read_write_sectors": 7471729.0
+    },
+    {
+      "task": {
+        "id": "ncu-gpuntt-l10-resident-prefix",
+        "kind": "ncu",
+        "core": "gpuntt",
+        "local_log": 10,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "gpuntt",
+        "organization": "resident-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": true,
+        "samples_us": [],
+        "median_us": null,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 10,
+            "blocks": 1024,
+            "threads": 128,
+            "shared_bytes": 16384,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 9
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 25,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "a7c86f2e263a12a39fb6769d6a252edd2104ab4457e536359942c3bd1a084e6b",
+      "expected_nodes": 2,
+      "nodes": [
+        {
+          "id": "0",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)1>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 3254528.0,
+            "dram__bytes_write.sum": 6683392.0,
+            "lts__t_sectors_op_read.sum": 1361230.0,
+            "lts__t_sectors_op_write.sum": 1572878.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 103376.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 354382.0,
+            "launch__registers_per_thread": 25.0,
+            "launch__shared_mem_per_block": 17408.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 41.87,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 4.33,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 32.51
+          }
+        },
+        {
+          "id": "1",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)1>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 21120.0,
+            "dram__bytes_write.sum": 5517312.0,
+            "lts__t_sectors_op_read.sum": 1390675.0,
+            "lts__t_sectors_op_write.sum": 1573247.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 41544.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 339697.0,
+            "launch__registers_per_thread": 25.0,
+            "launch__shared_mem_per_block": 2048.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 92.01,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 59.06,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 9.2
+          }
+        }
+      ],
+      "gaps": [],
+      "csv_sha256": "b98f829f1bc51cb30f369152fe9d1fa89d9b2285f52d87d39133ed654e12425b",
+      "complete_call_absolute_counts": {
+        "dram__bytes_read.sum": 3275648.0,
+        "dram__bytes_write.sum": 12200704.0,
+        "lts__t_sectors_op_read.sum": 2751905.0,
+        "lts__t_sectors_op_write.sum": 3146125.0
+      },
+      "dram_read_write_bytes": 15476352.0,
+      "l2_read_write_sectors": 5898030.0
+    },
+    {
+      "task": {
+        "id": "ncu-phantom-l8-split-prefix",
+        "kind": "ncu",
+        "core": "phantom",
+        "local_log": 8,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "split-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": true,
+        "samples_us": [],
+        "median_us": null,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 4,
+            "stages": 4,
+            "blocks": 65536,
+            "threads": 128,
+            "shared_bytes": 256,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "0f6e96f49246b595da2a578306a5fc108d5884db671b7649b0ced31a5528c327",
+      "expected_nodes": 3,
+      "nodes": [
+        {
+          "id": "0",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)2>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 8403712.0,
+            "dram__bytes_write.sum": 10694528.0,
+            "lts__t_sectors_op_read.sum": 1300031.0,
+            "lts__t_sectors_op_write.sum": 393061.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 350.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 5777.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 1280.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 94.58,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 51.48,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 1.98
+          }
+        },
+        {
+          "id": "1",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)2>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 4224.0,
+            "dram__bytes_write.sum": 7215616.0,
+            "lts__t_sectors_op_read.sum": 1202757.0,
+            "lts__t_sectors_op_write.sum": 1571355.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 7099.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 7322.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 1280.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 94.55,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 51.52,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 1.72
+          }
+        },
+        {
+          "id": "2",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)2>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 1046272.0,
+            "dram__bytes_write.sum": 7095168.0,
+            "lts__t_sectors_op_read.sum": 2448528.0,
+            "lts__t_sectors_op_write.sum": 1573502.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 3975.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 352345.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 5120.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 84.25,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 13.98,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 40.8
+          }
+        }
+      ],
+      "gaps": [],
+      "csv_sha256": "60ed31de4c79f42a6ad497dc458ca4187590ec4efa48425400151f27ee59842c",
+      "complete_call_absolute_counts": {
+        "dram__bytes_read.sum": 9454208.0,
+        "dram__bytes_write.sum": 25005312.0,
+        "lts__t_sectors_op_read.sum": 4951316.0,
+        "lts__t_sectors_op_write.sum": 3537918.0
+      },
+      "dram_read_write_bytes": 34459520.0,
+      "l2_read_write_sectors": 8489234.0
+    },
+    {
+      "task": {
+        "id": "ncu-phantom-l8-resident-prefix",
+        "kind": "ncu",
+        "core": "phantom",
+        "local_log": 8,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "resident-prefix",
+        "local_log": 8,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": true,
+        "samples_us": [],
+        "median_us": null,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 8,
+            "stages": 8,
+            "blocks": 4096,
+            "threads": 128,
+            "shared_bytes": 4096,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "5ac1fd28b3c4818b2ac259c2ea7fdb2b083893aa2450f7d6be67633cfcb33549",
+      "expected_nodes": 2,
+      "nodes": [
+        {
+          "id": "0",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)2>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 3779968.0,
+            "dram__bytes_write.sum": 6646016.0,
+            "lts__t_sectors_op_read.sum": 1196724.0,
+            "lts__t_sectors_op_write.sum": 1572877.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 6309.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 332230.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 5120.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 83.38,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 12.03,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 14.63
+          }
+        },
+        {
+          "id": "1",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)2>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 18176.0,
+            "dram__bytes_write.sum": 5336832.0,
+            "lts__t_sectors_op_read.sum": 2394828.0,
+            "lts__t_sectors_op_write.sum": 1573291.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 4000.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 350858.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 5120.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 84.27,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 13.92,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 38.96
+          }
+        }
+      ],
+      "gaps": [],
+      "csv_sha256": "f6812e99ed94465c14a147fb88f2fb6cdc7410f9b231d456b0fe92ad01270096",
+      "complete_call_absolute_counts": {
+        "dram__bytes_read.sum": 3798144.0,
+        "dram__bytes_write.sum": 11982848.0,
+        "lts__t_sectors_op_read.sum": 3591552.0,
+        "lts__t_sectors_op_write.sum": 3146168.0
+      },
+      "dram_read_write_bytes": 15780992.0,
+      "l2_read_write_sectors": 6737720.0
+    },
+    {
+      "task": {
+        "id": "ncu-phantom-l10-split-prefix",
+        "kind": "ncu",
+        "core": "phantom",
+        "local_log": 10,
+        "organization": "split-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "split-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 3,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": true,
+        "samples_us": [],
+        "median_us": null,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 5,
+            "stages": 5,
+            "blocks": 32768,
+            "threads": 128,
+            "shared_bytes": 512,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "d7f56e09c52b854ce2d9b73c7b457976ebf3d499cb9fe72ba6feab71e8069e09",
+      "expected_nodes": 3,
+      "nodes": [
+        {
+          "id": "0",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)2>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 8397056.0,
+            "dram__bytes_write.sum": 10414848.0,
+            "lts__t_sectors_op_read.sum": 1299667.0,
+            "lts__t_sectors_op_write.sum": 393525.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 233.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 340872.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 1536.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 94.06,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 52.71,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 2.13
+          }
+        },
+        {
+          "id": "1",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)2>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 34048.0,
+            "dram__bytes_write.sum": 7664256.0,
+            "lts__t_sectors_op_read.sum": 1294087.0,
+            "lts__t_sectors_op_write.sum": 1573591.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 23759.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 341594.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 1536.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 94.07,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 53.77,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 3.02
+          }
+        },
+        {
+          "id": "2",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)2>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 1032320.0,
+            "dram__bytes_write.sum": 7079808.0,
+            "lts__t_sectors_op_read.sum": 2452288.0,
+            "lts__t_sectors_op_write.sum": 1573282.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 27249.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 359366.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 2048.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 92.1,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 59.02,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 12.7
+          }
+        }
+      ],
+      "gaps": [],
+      "csv_sha256": "4e9af1563417c23b79f98f40d69eb23b15c198def3671c03227157ef0c90900e",
+      "complete_call_absolute_counts": {
+        "dram__bytes_read.sum": 9463424.0,
+        "dram__bytes_write.sum": 25158912.0,
+        "lts__t_sectors_op_read.sum": 5046042.0,
+        "lts__t_sectors_op_write.sum": 3540398.0
+      },
+      "dram_read_write_bytes": 34622336.0,
+      "l2_read_write_sectors": 8586440.0
+    },
+    {
+      "task": {
+        "id": "ncu-phantom-l10-resident-prefix",
+        "kind": "ncu",
+        "core": "phantom",
+        "local_log": 10,
+        "organization": "resident-prefix"
+      },
+      "status": "complete",
+      "result": {
+        "schema": "ntt-fixed-core-measurement-v1",
+        "status": "measured",
+        "core": "phantom",
+        "organization": "resident-prefix",
+        "local_log": 10,
+        "N": 65536,
+        "batch": 16,
+        "modulus": 576460756061519873,
+        "root": 207966564069456838,
+        "gpu_name": "NVIDIA A100 80GB PCIe",
+        "gpu_total_bytes": 84974239744,
+        "correctness_exact_mismatches": 0,
+        "checked_values": 1048576,
+        "kernel_count": 2,
+        "warmup": 100,
+        "repeat": 100,
+        "profile_only": true,
+        "samples_us": [],
+        "median_us": null,
+        "kernels": [
+          {
+            "first_stage": 0,
+            "stages": 10,
+            "blocks": 1024,
+            "threads": 128,
+            "shared_bytes": 16384,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 9
+          },
+          {
+            "first_stage": 10,
+            "stages": 6,
+            "blocks": 16384,
+            "threads": 128,
+            "shared_bytes": 1024,
+            "registers_per_thread": 28,
+            "local_bytes_per_thread": 0,
+            "theoretical_active_blocks_per_sm": 16
+          }
+        ]
+      },
+      "result_sha256": "5c46598fdca58209e0299d16798812a5a15cb9125c55401867d04c617a340683",
+      "expected_nodes": 2,
+      "nodes": [
+        {
+          "id": "0",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)2>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 4098944.0,
+            "dram__bytes_write.sum": 7409152.0,
+            "lts__t_sectors_op_read.sum": 1670748.0,
+            "lts__t_sectors_op_write.sum": 1572877.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 111952.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 365042.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 17408.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 42.01,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 4.62,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 35.32
+          }
+        },
+        {
+          "id": "1",
+          "kernel": "void cuntt::detail::shared_iterative_kernel<Arithmetic<(int)2>, (int)16, (int)-1, (int)-1, (int)1, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+          "metrics": {
+            "dram__bytes_read.sum": 41344.0,
+            "dram__bytes_write.sum": 5314944.0,
+            "lts__t_sectors_op_read.sum": 2425622.0,
+            "lts__t_sectors_op_write.sum": 1573411.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum": 26936.0,
+            "l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum": 358575.0,
+            "launch__registers_per_thread": 28.0,
+            "launch__shared_mem_per_block": 2048.0,
+            "sm__warps_active.avg.pct_of_peak_sustained_active": 92.1,
+            "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 58.6,
+            "smsp__warp_issue_stalled_long_scoreboard_per_warp_active.pct": 12.21
+          }
+        }
+      ],
+      "gaps": [],
+      "csv_sha256": "de1cca9cfea0a9e6b86a9134e65c6b750cfced885e891bd8bd36fc83ac3bf97d",
+      "complete_call_absolute_counts": {
+        "dram__bytes_read.sum": 4140288.0,
+        "dram__bytes_write.sum": 12724096.0,
+        "lts__t_sectors_op_read.sum": 4096370.0,
+        "lts__t_sectors_op_write.sum": 3146288.0
+      },
+      "dram_read_write_bytes": 16864384.0,
+      "l2_read_write_sectors": 7242658.0
+    }
+  ],
+  "pairs": [
+    {
+      "core": "native",
+      "local_log": 8,
+      "local_points": 256,
+      "status": "complete",
+      "process_pairs": [
+        {
+          "core": "native",
+          "local_log": 8,
+          "process": 0,
+          "split_median_us": 325.232658386,
+          "resident_median_us": 115.691518784,
+          "speedup": 2.8112057115718265
+        },
+        {
+          "core": "native",
+          "local_log": 8,
+          "process": 1,
+          "split_median_us": 325.150718689,
+          "resident_median_us": 115.814399719,
+          "speedup": 2.8075154685247417
+        },
+        {
+          "core": "native",
+          "local_log": 8,
+          "process": 2,
+          "split_median_us": 325.150718689,
+          "resident_median_us": 116.152324677,
+          "speedup": 2.7993474912636422
+        }
+      ],
+      "split_median_us": 325.150718689,
+      "resident_median_us": 115.814399719,
+      "speedup_ratio_of_medians": 2.8075154685247417
+    },
+    {
+      "core": "native",
+      "local_log": 10,
+      "local_points": 1024,
+      "status": "complete",
+      "process_pairs": [
+        {
+          "core": "native",
+          "local_log": 10,
+          "process": 0,
+          "split_median_us": 223.559684753,
+          "resident_median_us": 143.093757629,
+          "speedup": 1.5623301006087522
+        },
+        {
+          "core": "native",
+          "local_log": 10,
+          "process": 1,
+          "split_median_us": 223.539199829,
+          "resident_median_us": 143.073282242,
+          "speedup": 1.5624105096778074
+        },
+        {
+          "core": "native",
+          "local_log": 10,
+          "process": 2,
+          "split_median_us": 223.549442291,
+          "resident_median_us": 143.06303978,
+          "speedup": 1.5625939630163785
+        }
+      ],
+      "split_median_us": 223.549442291,
+      "resident_median_us": 143.073282242,
+      "speedup_ratio_of_medians": 1.5624820985995087
+    },
+    {
+      "core": "gpuntt",
+      "local_log": 8,
+      "local_points": 256,
+      "status": "complete",
+      "process_pairs": [
+        {
+          "core": "gpuntt",
+          "local_log": 8,
+          "process": 0,
+          "split_median_us": 342.507514954,
+          "resident_median_us": 114.575357437,
+          "speedup": 2.9893645773030206
+        },
+        {
+          "core": "gpuntt",
+          "local_log": 8,
+          "process": 1,
+          "split_median_us": 343.828468323,
+          "resident_median_us": 114.503679276,
+          "speedup": 3.0027722296524186
+        },
+        {
+          "core": "gpuntt",
+          "local_log": 8,
+          "process": 2,
+          "split_median_us": 343.838729858,
+          "resident_median_us": 114.575357437,
+          "speedup": 3.0009832615801524
+        }
+      ],
+      "split_median_us": 343.828468323,
+      "resident_median_us": 114.575357437,
+      "speedup_ratio_of_medians": 3.0008937001314293
+    },
+    {
+      "core": "gpuntt",
+      "local_log": 10,
+      "local_points": 1024,
+      "status": "complete",
+      "process_pairs": [
+        {
+          "core": "gpuntt",
+          "local_log": 10,
+          "process": 0,
+          "split_median_us": 237.404155731,
+          "resident_median_us": 149.073915482,
+          "speedup": 1.5925264655684548
+        },
+        {
+          "core": "gpuntt",
+          "local_log": 10,
+          "process": 1,
+          "split_median_us": 237.404155731,
+          "resident_median_us": 149.032964706,
+          "speedup": 1.5929640546259778
+        },
+        {
+          "core": "gpuntt",
+          "local_log": 10,
+          "process": 2,
+          "split_median_us": 237.404155731,
+          "resident_median_us": 149.084157944,
+          "speedup": 1.5924170549373553
+        }
+      ],
+      "split_median_us": 237.404155731,
+      "resident_median_us": 149.073915482,
+      "speedup_ratio_of_medians": 1.5925264655684548
+    },
+    {
+      "core": "phantom",
+      "local_log": 8,
+      "local_points": 256,
+      "status": "complete",
+      "process_pairs": [
+        {
+          "core": "phantom",
+          "local_log": 8,
+          "process": 0,
+          "split_median_us": 343.644142151,
+          "resident_median_us": 120.135679245,
+          "speedup": 2.8604669679370236
+        },
+        {
+          "core": "phantom",
+          "local_log": 8,
+          "process": 1,
+          "split_median_us": 343.654403687,
+          "resident_median_us": 121.405439377,
+          "speedup": 2.8306343228976
+        },
+        {
+          "core": "phantom",
+          "local_log": 8,
+          "process": 2,
+          "split_median_us": 343.633918762,
+          "resident_median_us": 120.084476471,
+          "speedup": 2.861601506377774
+        }
+      ],
+      "split_median_us": 343.644142151,
+      "resident_median_us": 120.135679245,
+      "speedup_ratio_of_medians": 2.8604669679370236
+    },
+    {
+      "core": "phantom",
+      "local_log": 10,
+      "local_points": 1024,
+      "status": "complete",
+      "process_pairs": [
+        {
+          "core": "phantom",
+          "local_log": 10,
+          "process": 0,
+          "split_median_us": 235.509757996,
+          "resident_median_us": 148.930559158,
+          "speedup": 1.5813393794227844
+        },
+        {
+          "core": "phantom",
+          "local_log": 10,
+          "process": 1,
+          "split_median_us": 235.448322296,
+          "resident_median_us": 149.329919815,
+          "speedup": 1.5766989133034375
+        },
+        {
+          "core": "phantom",
+          "local_log": 10,
+          "process": 2,
+          "split_median_us": 235.46880722,
+          "resident_median_us": 149.329919815,
+          "speedup": 1.576836092269484
+        }
+      ],
+      "split_median_us": 235.46880722,
+      "resident_median_us": 149.329919815,
+      "speedup_ratio_of_medians": 1.576836092269484
+    }
+  ],
+  "gaps": [],
+  "status": "complete"
+}

@@ -1,0 +1,19 @@
+{
+  "note": "SHA256 of original manuscript sources before sanitization; these are not bundle hashes.",
+  "original_source_sha256": {
+    "generated/motivation_organization_a100.csv": "55f90d495c54968a0df940e526e6d32c5ae2cc42e32c9df8c6c99854fb12b66e",
+    "generated/principle_core_organization.csv": "d906f8576ff0197c0a8c7edcad260bc0bbf05dcf240d0516071a634159758fd0",
+    "generated/resource_decisions_20261107.json": "3b7f361e4f8b5a87a98899400601ef3786049b9f91a7151eca594777b1efb3bb",
+    "generated/narrative_scaling_20261027.json": "ea65d01d04c28ed9af7c89ee5027b363a4c32992f2e402ccf6b226072be95ffa",
+    "generated/current_refresh/snapshot.json": "8af841214c03793fc9455c512517341151337b3c4f9c61f16241a8d1c9051e91",
+    "generated/application_historical_complete_call.json": "c4f5d2f74474e7698b10cbac8e85bf9a6878460f47befe18c680600a60b8c81a",
+    "generated/current_refresh/application_closeout.json": "156277b1865c9cb2111e9c5eadc8060b76671586a25231c81af45fd17a67f8aa",
+    "generated/current_refresh/quarot_fused_e2e.json": "e9ef94b60c34a9aab45f99bcd4333c0bf348362dc4a4cb81c22c2caf9debb9c4",
+    "tools/paper_plot_style.py": "0a3d1d984aed5151f969fee6ff7c7419971c5da182f315a221f8533a9d611938",
+    "tools/render_cross_operator_attribution.py": "efc967e9c3051776bbd8773d67abb6e862874743e14afaf8002a9bdc286fd44c",
+    "tools/render_local_organization_profiles.py": "bd9ebfb275b7907119427664d35512443531daea632d389eaf4f672be91405eb",
+    "tools/render_current_refresh.py": "f4320958e35f029ce2a442718ad4450c60f123930902541796e4c5705c412fe6",
+    "generated/boundary_io_control_20261109.json": "db45a9d8e0f84b94a48ee91a26487fc87614c7340809f5b58d5501f4f0875751",
+    "tools/prepare_boundary_positive_summary_20261119.py": "d4fc2a55efe5f576d3938b2300c038b6d2f9d321eb3fa3700a2bcd9b5ca16800"
+  }
+}

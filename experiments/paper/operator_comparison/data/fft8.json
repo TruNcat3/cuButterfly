@@ -1,0 +1,2319 @@
+{
+  "records": [
+    {
+      "backend": "cuButterfly",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 25.600001215934753,
+      "batch": 1,
+      "case_id": "31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        554.2071,
+        681.1995499999999,
+        662.8421999999999,
+        652.09695,
+        619.4078000000001,
+        566.92935,
+        677.40695
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 652.09695,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 262144,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 262144,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          262144
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        262144
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a.json",
+      "speedup": 25.472535899494467
+    },
+    {
+      "backend": "cufft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 23.09119999408722,
+      "batch": 1,
+      "case_id": "31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        554.2071,
+        681.1995499999999,
+        662.8421999999999,
+        652.09695,
+        619.4078000000001,
+        566.92935,
+        677.40695
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 652.09695,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 262144,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 262144,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          262144
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        262144
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a.json",
+      "speedup": 28.24006332139418
+    },
+    {
+      "backend": "vkfft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 23.603199422359467,
+      "batch": 1,
+      "case_id": "31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        554.2071,
+        681.1995499999999,
+        662.8421999999999,
+        652.09695,
+        619.4078000000001,
+        566.92935,
+        677.40695
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 652.09695,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 262144,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 262144,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          262144
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        262144
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a.json",
+      "speedup": 27.62748127197808
+    },
+    {
+      "backend": "gpu-fft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 36.96640133857727,
+      "batch": 1,
+      "case_id": "31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        554.2071,
+        681.1995499999999,
+        662.8421999999999,
+        652.09695,
+        619.4078000000001,
+        566.92935,
+        677.40695
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 652.09695,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 262144,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 262144,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          262144
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        262144
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/31e0dd44bdfed66508a3c9ec25d8d628c88211517d73cb82ef63ba77ca709a7a.json",
+      "speedup": 17.640260517311617
+    },
+    {
+      "backend": "cuButterfly",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 24.934400618076324,
+      "batch": 1,
+      "case_id": "5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        850.37075,
+        931.3592999999998,
+        910.3614,
+        917.9290500000001,
+        929.0677499999999,
+        915.3454999999999,
+        944.78805
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 917.9290500000001,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 262144,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 262144,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          262144
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        262144
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb.json",
+      "speedup": 36.813760397133535
+    },
+    {
+      "backend": "cufft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 29.183998703956604,
+      "batch": 1,
+      "case_id": "5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        850.37075,
+        931.3592999999998,
+        910.3614,
+        917.9290500000001,
+        929.0677499999999,
+        915.3454999999999,
+        944.78805
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 917.9290500000001,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 262144,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 262144,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          262144
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        262144
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb.json",
+      "speedup": 31.45316237543392
+    },
+    {
+      "backend": "vkfft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 23.705600202083588,
+      "batch": 1,
+      "case_id": "5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        850.37075,
+        931.3592999999998,
+        910.3614,
+        917.9290500000001,
+        929.0677499999999,
+        915.3454999999999,
+        944.78805
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 917.9290500000001,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 262144,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 262144,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          262144
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        262144
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb.json",
+      "speedup": 38.7220337040578
+    },
+    {
+      "backend": "gpu-fft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 37.06879913806915,
+      "batch": 1,
+      "case_id": "5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        850.37075,
+        931.3592999999998,
+        910.3614,
+        917.9290500000001,
+        929.0677499999999,
+        915.3454999999999,
+        944.78805
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 917.9290500000001,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 262144,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 262144,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          262144
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        262144
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/5c09a1355eabc46ca0291cafd6b01dcaaf0137199991a0a38641441b920eb6fb.json",
+      "speedup": 24.76284830757572
+    },
+    {
+      "backend": "cuButterfly",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 12.646399438381195,
+      "batch": 1,
+      "case_id": "6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        288.66800000000006,
+        258.94845,
+        309.64140000000003,
+        300.95475,
+        268.5861,
+        257.4829,
+        310.1239
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 288.66800000000006,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        65536
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f.json",
+      "speedup": 22.826101722195094
+    },
+    {
+      "backend": "cufft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 15.20639955997467,
+      "batch": 1,
+      "case_id": "6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        288.66800000000006,
+        258.94845,
+        309.64140000000003,
+        300.95475,
+        268.5861,
+        257.4829,
+        310.1239
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 288.66800000000006,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        65536
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f.json",
+      "speedup": 18.983323360765414
+    },
+    {
+      "backend": "vkfft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 15.769599378108976,
+      "batch": 1,
+      "case_id": "6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        288.66800000000006,
+        258.94845,
+        309.64140000000003,
+        300.95475,
+        268.5861,
+        257.4829,
+        310.1239
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 288.66800000000006,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        65536
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f.json",
+      "speedup": 18.305347718644196
+    },
+    {
+      "backend": "gpu-fft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 15.820799767971037,
+      "batch": 1,
+      "case_id": "6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        288.66800000000006,
+        258.94845,
+        309.64140000000003,
+        300.95475,
+        268.5861,
+        257.4829,
+        310.1239
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 288.66800000000006,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        65536
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/6ed5d1e5230369aadd6f63320fdbd49a164198f84484b2992d40f47182aaf02f.json",
+      "speedup": 18.246106659184445
+    },
+    {
+      "backend": "cuButterfly",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 10.649599879980087,
+      "batch": 1,
+      "case_id": "99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        74.06095,
+        84.5491,
+        61.61215,
+        57.205600000000004,
+        57.741600000000005,
+        57.4041,
+        58.80615
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 58.80615,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0.json",
+      "speedup": 5.521911683325135
+    },
+    {
+      "backend": "cufft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 12.031999975442886,
+      "batch": 1,
+      "case_id": "99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        74.06095,
+        84.5491,
+        61.61215,
+        57.205600000000004,
+        57.741600000000005,
+        57.4041,
+        58.80615
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 58.80615,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0.json",
+      "speedup": 4.887479232049733
+    },
+    {
+      "backend": "vkfft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 10.393600165843964,
+      "batch": 1,
+      "case_id": "99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        74.06095,
+        84.5491,
+        61.61215,
+        57.205600000000004,
+        57.741600000000005,
+        57.4041,
+        58.80615
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 58.80615,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0.json",
+      "speedup": 5.6579192062103845
+    },
+    {
+      "backend": "gpu-fft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 10.342399775981903,
+      "batch": 1,
+      "case_id": "99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        74.06095,
+        84.5491,
+        61.61215,
+        57.205600000000004,
+        57.741600000000005,
+        57.4041,
+        58.80615
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 58.80615,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/99731d7be53b82c257baba0770b8c57b2a15d9c10d532ed43c1c020c262ac5e0.json",
+      "speedup": 5.6859289211160835
+    },
+    {
+      "backend": "cuButterfly",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 10.598400235176086,
+      "batch": 1,
+      "case_id": "cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        50.24195,
+        51.198449999999994,
+        51.3055,
+        49.40395,
+        54.757,
+        52.235,
+        49.90795
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 51.198449999999994,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0.json",
+      "speedup": 4.8307715187120746
+    },
+    {
+      "backend": "cufft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 9.881599992513657,
+      "batch": 1,
+      "case_id": "cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        50.24195,
+        51.198449999999994,
+        51.3055,
+        49.40395,
+        54.757,
+        52.235,
+        49.90795
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 51.198449999999994,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0.json",
+      "speedup": 5.18119029699524
+    },
+    {
+      "backend": "vkfft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 9.984000027179718,
+      "batch": 1,
+      "case_id": "cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        50.24195,
+        51.198449999999994,
+        51.3055,
+        49.40395,
+        54.757,
+        52.235,
+        49.90795
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 51.198449999999994,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0.json",
+      "speedup": 5.12804986584746
+    },
+    {
+      "backend": "gpu-fft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 10.13759970664978,
+      "batch": 1,
+      "case_id": "cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        50.24195,
+        51.198449999999994,
+        51.3055,
+        49.40395,
+        54.757,
+        52.235,
+        49.90795
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 51.198449999999994,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/cb1d0fc216b8505f745ed631de1fcabf32b8eedae0cb9a34266e2ceb7bc512f0.json",
+      "speedup": 5.050352300497352
+    },
+    {
+      "backend": "cuButterfly",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 6.50240033864975,
+      "batch": 32,
+      "case_id": "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        180.09990000000002,
+        197.8693,
+        200.88984999999997,
+        185.23704999999998,
+        189.42159999999998,
+        177.45785,
+        173.85685
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 185.23704999999998,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp32",
+      "semantics": {
+        "batch": 32,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac.json",
+      "speedup": 28.487487751094886
+    },
+    {
+      "backend": "cufft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 8.448000252246857,
+      "batch": 32,
+      "case_id": "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        180.09990000000002,
+        197.8693,
+        200.88984999999997,
+        185.23704999999998,
+        189.42159999999998,
+        177.45785,
+        173.85685
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 185.23704999999998,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp32",
+      "semantics": {
+        "batch": 32,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac.json",
+      "speedup": 21.926733483552365
+    },
+    {
+      "backend": "vkfft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 6.400000303983688,
+      "batch": 32,
+      "case_id": "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        180.09990000000002,
+        197.8693,
+        200.88984999999997,
+        185.23704999999998,
+        189.42159999999998,
+        177.45785,
+        173.85685
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 185.23704999999998,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp32",
+      "semantics": {
+        "batch": 32,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac.json",
+      "speedup": 28.9432876877676
+    },
+    {
+      "backend": "gpu-fft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 14.38719928264618,
+      "batch": 32,
+      "case_id": "f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        180.09990000000002,
+        197.8693,
+        200.88984999999997,
+        185.23704999999998,
+        189.42159999999998,
+        177.45785,
+        173.85685
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 185.23704999999998,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac.json",
+      "inverse": true,
+      "operator": "fft",
+      "precision": "fp32",
+      "semantics": {
+        "batch": 32,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 1,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": true,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f87de0e4a2c8e9aed2701e7b4be4026d908eb63a082b178ed08a537d3991f3ac.json",
+      "speedup": 12.875129228482479
+    },
+    {
+      "backend": "cuButterfly",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 6.400000303983688,
+      "batch": 32,
+      "case_id": "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        91.37775,
+        92.29925,
+        96.83085,
+        98.26835,
+        96.75935,
+        95.78135,
+        98.72339999999998
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 96.75935,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp32",
+      "semantics": {
+        "batch": 32,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548.json",
+      "speedup": 15.118647719402766
+    },
+    {
+      "backend": "cufft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 6.553599983453751,
+      "batch": 32,
+      "case_id": "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        91.37775,
+        92.29925,
+        96.83085,
+        98.26835,
+        96.75935,
+        95.78135,
+        98.72339999999998
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 96.75935,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp32",
+      "semantics": {
+        "batch": 32,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548.json",
+      "speedup": 14.76430515202238
+    },
+    {
+      "backend": "vkfft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 6.297600269317627,
+      "batch": 32,
+      "case_id": "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        91.37775,
+        92.29925,
+        96.83085,
+        98.26835,
+        96.75935,
+        95.78135,
+        98.72339999999998
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 96.75935,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp32",
+      "semantics": {
+        "batch": 32,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548.json",
+      "speedup": 15.364479462346743
+    },
+    {
+      "backend": "gpu-fft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 14.284799993038177,
+      "batch": 32,
+      "case_id": "f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        91.37775,
+        92.29925,
+        96.83085,
+        98.26835,
+        96.75935,
+        95.78135,
+        98.72339999999998
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 96.75935,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp32",
+      "semantics": {
+        "batch": 32,
+        "compute": 1,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 4096,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 4096,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          4096
+        ],
+        "storage": 6,
+        "word_bits": null
+      },
+      "shape": [
+        4096
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/f9d6a78a86c67f2a3ee252bcd52dc3d0786ca6918fdd09cda77045d1dd931548.json",
+      "speedup": 6.773588012933784
+    },
+    {
+      "backend": "cuButterfly",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 12.697599828243256,
+      "batch": 1,
+      "case_id": "fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        201.49285,
+        205.22645,
+        201.78985,
+        246.84270000000004,
+        222.98775,
+        311.25539999999995,
+        225.43734999999998
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 222.98775,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        65536
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d.json",
+      "speedup": 17.561409480239615
+    },
+    {
+      "backend": "cufft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 12.544000148773193,
+      "batch": 1,
+      "case_id": "fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        201.49285,
+        205.22645,
+        201.78985,
+        246.84270000000004,
+        222.98775,
+        311.25539999999995,
+        225.43734999999998
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 222.98775,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        65536
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d.json",
+      "speedup": 17.776446696057178
+    },
+    {
+      "backend": "vkfft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 15.667200088500977,
+      "batch": 1,
+      "case_id": "fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        201.49285,
+        205.22645,
+        201.78985,
+        246.84270000000004,
+        222.98775,
+        311.25539999999995,
+        225.43734999999998
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 222.98775,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        65536
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d.json",
+      "speedup": 14.23277603786161
+    },
+    {
+      "backend": "gpu-fft",
+      "backend_status": "accuracy-review-required",
+      "backend_timing_contract": {
+        "boundary": "Complete GPU execute including required conversions; excludes setup, allocation, compilation, warmup and host-device transfers. CUDA event timing; source protocols preserved per backend.",
+        "protocol": "20 complete calls per CUDA graph; 7 replays; 10 warmup"
+      },
+      "backend_us": 15.872000157833098,
+      "batch": 1,
+      "case_id": "fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d",
+      "cohort": "fft8",
+      "cpu_backend": "fftw-cpu-t8",
+      "cpu_samples_us": [
+        201.49285,
+        205.22645,
+        201.78985,
+        246.84270000000004,
+        222.98775,
+        311.25539999999995,
+        225.43734999999998
+      ],
+      "cpu_status": "accuracy-review-required",
+      "cpu_timing_contract": {},
+      "cpu_us": 222.98775,
+      "gpu_pair_source": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d.json",
+      "inverse": false,
+      "operator": "fft",
+      "precision": "fp64",
+      "semantics": {
+        "batch": 1,
+        "compute": 2,
+        "fft_output_scale": 1.0,
+        "fft_type": 0,
+        "input_batch_stride": 65536,
+        "input_orders": [
+          0
+        ],
+        "input_strides": [
+          1
+        ],
+        "inverse": 0,
+        "length_mode": 0,
+        "matrices": [
+          []
+        ],
+        "modulus": null,
+        "normalize_inverse": false,
+        "ntt_input_layout": 0,
+        "ntt_output_layout": 0,
+        "operator": 0,
+        "output_batch_stride": 65536,
+        "output_orders": [
+          0
+        ],
+        "output_strides": [
+          1
+        ],
+        "placement": 0,
+        "schema": "cubutterfly-semantic-v1",
+        "shape": [
+          65536
+        ],
+        "storage": 7,
+        "word_bits": null
+      },
+      "shape": [
+        65536
+      ],
+      "source_cpu": "results/install_compare_20261013/cpu_external_v2/results.json (external CPU evidence)",
+      "source_gpu": "[source-root]/results/fft_core_coverage_20261115/calibration/paired/rows/fd324c6b82a7222b9c010d1bf5c31aeb7e510dc01622e906ecdab4dc2730492d.json",
+      "speedup": 14.049127254446997
+    }
+  ],
+  "qualification": "shared-host provisional CPU timings; CPU and GPU are separately measured; exact full-semantics match; independent supplementary cohort; old main66/cyclic90 unchanged",
+  "protocol": {
+    "fft": "fftw-cpu-t8",
+    "fwht": "fxt-cpu-t1",
+    "ntt": "hexl-cpu-t1",
+    "structured-2x2": "butterfly-author-cpu-t1",
+    "subset-zeta": "fxt-cpu-t1",
+    "superset-zeta": "fxt-cpu-t1"
+  },
+  "missing": [],
+  "arithmetic": null
+}

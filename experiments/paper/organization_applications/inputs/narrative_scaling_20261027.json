@@ -1,0 +1,204 @@
+{
+  "profile_records": [
+    {
+      "operator": "fft",
+      "variant": "local0",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_iterative_kernel<cuntt::traits::FftOperator<cuntt::Complex64, double>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+      "metrics": {
+        "launch__registers_per_thread": 32.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 49.33,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 13.03
+      }
+    },
+    {
+      "operator": "fft",
+      "variant": "local0",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_iterative_kernel<cuntt::traits::FftOperator<cuntt::Complex64, double>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+      "metrics": {
+        "launch__registers_per_thread": 27.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 49.05,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 14.26
+      }
+    },
+    {
+      "operator": "fft",
+      "variant": "local2",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FftOperator<cuntt::Complex64, double>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 42.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 49.16,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 14.22
+      }
+    },
+    {
+      "operator": "fft",
+      "variant": "local2",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FftOperator<cuntt::Complex64, double>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 40.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 48.86,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 12.24
+      }
+    },
+    {
+      "operator": "fft",
+      "variant": "local4",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FftOperator<cuntt::Complex64, double>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)4, (unsigned int)4, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 106.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 24.46,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 42.72
+      }
+    },
+    {
+      "operator": "fft",
+      "variant": "local4",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FftOperator<cuntt::Complex64, double>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)4, (unsigned int)4, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 104.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 24.4,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 50.17
+      }
+    },
+    {
+      "operator": "fwht",
+      "variant": "local0",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_iterative_kernel<cuntt::traits::FwhtOperator<double>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+      "metrics": {
+        "launch__registers_per_thread": 20.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 97.22,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 18.55
+      }
+    },
+    {
+      "operator": "fwht",
+      "variant": "local0",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_iterative_kernel<cuntt::traits::FwhtOperator<double>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+      "metrics": {
+        "launch__registers_per_thread": 20.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 97.48,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 21.87
+      }
+    },
+    {
+      "operator": "fwht",
+      "variant": "local2",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FwhtOperator<double>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 26.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 96.67,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 16.51
+      }
+    },
+    {
+      "operator": "fwht",
+      "variant": "local2",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FwhtOperator<double>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 26.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 97.27,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 20.72
+      }
+    },
+    {
+      "operator": "fwht",
+      "variant": "local4",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FwhtOperator<double>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)4, (unsigned int)4, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 55.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 48.71,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 39.64
+      }
+    },
+    {
+      "operator": "fwht",
+      "variant": "local4",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::FwhtOperator<double>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)4, (unsigned int)4, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 55.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 47.61,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 27.32
+      }
+    },
+    {
+      "operator": "ntt",
+      "variant": "local0",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_iterative_kernel<cuntt::traits::NttStageOperatorT<unsigned long>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+      "metrics": {
+        "launch__registers_per_thread": 28.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 98.0,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 11.52
+      }
+    },
+    {
+      "operator": "ntt",
+      "variant": "local0",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_iterative_kernel<cuntt::traits::NttStageOperatorT<unsigned long>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)1>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool, bool, bool, unsigned int, unsigned int)",
+      "metrics": {
+        "launch__registers_per_thread": 32.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 97.93,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 18.19
+      }
+    },
+    {
+      "operator": "ntt",
+      "variant": "local2",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::NttStageOperatorT<unsigned long>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 36.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 73.39,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 10.81
+      }
+    },
+    {
+      "operator": "ntt",
+      "variant": "local2",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::NttStageOperatorT<unsigned long>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 32.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 97.69,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 19.26
+      }
+    },
+    {
+      "operator": "ntt",
+      "variant": "local4",
+      "group": 0,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::NttStageOperatorT<unsigned long>, (int)20, (int)0, (int)10, (int)0, (int)0, (unsigned int)4, (unsigned int)4, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 124.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 24.5,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 52.94
+      }
+    },
+    {
+      "operator": "ntt",
+      "variant": "local4",
+      "group": 1,
+      "kernel": "void cuntt::detail::shared_resident_kernel<cuntt::traits::NttStageOperatorT<unsigned long>, (int)20, (int)10, (int)10, (int)0, (int)0, (unsigned int)4, (unsigned int)4, (unsigned int)2>(const T1::Value *, T1::Value *, unsigned int, unsigned int, unsigned int, unsigned long, unsigned long, bool, unsigned int, unsigned int, T1, bool)",
+      "metrics": {
+        "launch__registers_per_thread": 166.0,
+        "sm__warps_active.avg.pct_of_peak_sustained_active": 12.28,
+        "smsp__warp_issue_stalled_barrier_per_warp_active.pct": 42.66
+      }
+    }
+  ],
+  "profile_scope": "Three N2^20 B16 workloads, nine organizations, 18 main kernel instances; one NCU capture each",
+  "profile_statistic": "Two individual main-kernel points joined by their observed range, not trial uncertainty; no profiler timing used"
+}

@@ -1,0 +1,1307 @@
+{
+  "prospective_measured_selection": {
+    "schema": "prospective-resource-constrained-measured-selection-v1",
+    "source_root": "results/nonfft_endpoint_control_20261107",
+    "status": "complete",
+    "frozen_sha256": "711953e9327fbccbc5a65750de98c1c809efe5d72552053202e6023a1b32104c",
+    "winners_sha256": "026da323e8e23bbea4f7f067b0e0c7ebdf84c0805fcdd86b3f8ee58139de1a7e",
+    "identity": {
+      "binaries": {
+        "cubutterfly_bench": {
+          "path": "redacted historical location",
+          "sha256": "40d52d296fa2b3c5416361a1cdea2599aea85798973d20911e8766ca2332c43d"
+        },
+        "cuntt_bench": {
+          "path": "redacted historical location",
+          "sha256": "df6c80d65acaeecf964dd62406b5f1be463aa7c420521c4753d9f8986f6ce7bb"
+        },
+        "libcuntt.so": {
+          "path": "redacted historical location",
+          "sha256": "775a85c8f76e44bbfee886fd90489e7c309bd097b60e968183e446aa006177b2"
+        }
+      },
+      "controlled_sources": {
+        "calibration_space.py": "ac8ccc4b7c2e4a4442988729ecf50fba8a30c4e279276568912d1ce27a752b23",
+        "hardware_registry.py": "b05c1a481c04a0c42cb8f21e60ed897373eaef0c31a18548434cd41f6184d51c",
+        "run_comprehensive_suite.py": "6c0bd28939e96061734fdf8dae86c44981d789b4d4c351730e95e5e5c789fa79",
+        "run_controlled_experiment.py": "c134afa83078c4f0dabddbb5bf4763459328cff544fdc94097aa29df97b48063"
+      },
+      "dynamic_links": {
+        "cubutterfly_bench": "redacted historical location",
+        "cuntt_bench": "redacted historical location"
+      },
+      "environment": {
+        "CUBUTTERFLY_COMPILE_MODE": "research",
+        "LD_LIBRARY_PATH": "redacted historical location",
+        "MKL_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1"
+      }
+    },
+    "protocol": {
+      "repeat": 100,
+      "trials": 1,
+      "verify_batches": 0,
+      "warmup": 100
+    },
+    "timing_boundary": "C++ CUDA events around repeat full device execution calls / repeat, excludes H2D/D2H, setup, CPU correctness and public Plan oracle; may include host submission gaps; not CUDA Graph or pure arithmetic-only timing",
+    "chronology": {
+      "basis": "hash-bound frozen runner prepares freeze before screen; screen selects winners before hash-bound independent holdouts; guard completion receipts ordered",
+      "guard_completion_receipts": [
+        {
+          "state": "complete",
+          "updated": "2026-11-07T21:57:05.712691+08:00",
+          "deadline": "2026-11-07T15:24:48.727306+00:00",
+          "release": "redacted historical location"
+        },
+        {
+          "state": "complete",
+          "updated": "2026-11-07T21:57:46.867386+08:00",
+          "deadline": "2026-11-07T15:24:48.727306+00:00",
+          "release": "redacted historical location"
+        },
+        {
+          "state": "complete",
+          "updated": "2026-11-07T21:58:32.279353+08:00",
+          "deadline": "2026-11-07T15:24:48.727306+00:00",
+          "release": "redacted historical location"
+        },
+        {
+          "state": "complete",
+          "updated": "2026-11-07T21:59:13.141182+08:00",
+          "deadline": "2026-11-07T15:24:48.727306+00:00",
+          "release": "redacted historical location"
+        }
+      ]
+    },
+    "budget": {
+      "ceiling_per_side_per_core": 6,
+      "counts": {
+        "fwht-radix2": {
+          "conventional": 2,
+          "extended": 6
+        },
+        "fwht-radix4": {
+          "conventional": 2,
+          "extended": 6
+        },
+        "ntt-homogeneous-radix4": {
+          "conventional": 1,
+          "extended": 3
+        },
+        "ntt-homogeneous-warp-radix2": {
+          "conventional": 1,
+          "extended": 3
+        }
+      },
+      "no_repeat_padding": true,
+      "pool_shared_between_sides": true
+    },
+    "numerical_policy": "mandatory existing full-batch C++ verification; NTT exact; FWHT retain existing correct/max_error semantics with no new threshold, plus full-output public Plan FP32 CPU-oracle errors saved separately without threshold",
+    "rows": [
+      {
+        "cell": "fwht-radix2",
+        "workload": {
+          "accumulation": "native",
+          "batch": 16,
+          "direction": "forward",
+          "logN": 16,
+          "normalization": "none",
+          "operator": "fwht",
+          "placement": "out-of-place",
+          "precision": "fp32"
+        },
+        "leaf": "radix2",
+        "shape": [
+          65536
+        ],
+        "resource_expectations_lower_bounds": [
+          {
+            "cell": "fwht-radix2",
+            "cta_organization": "prefix CTAs=4096; suffix CTAs=4096; each suffix CTA groups 1 columns",
+            "expected_launches": 2,
+            "full_array_bytes": 4194304,
+            "logical_data_path_bytes": 16777216,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 1,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 1024,
+            "threads": 128,
+            "wrapper": "same prefix/suffix templates with runtime column grouping"
+          },
+          {
+            "cell": "fwht-radix2",
+            "cta_organization": "prefix CTAs=4096; suffix CTAs=2048; each suffix CTA groups 2 columns",
+            "expected_launches": 2,
+            "full_array_bytes": 4194304,
+            "logical_data_path_bytes": 16777216,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 2,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 2048,
+            "threads": 128,
+            "wrapper": "same prefix/suffix templates with runtime column grouping"
+          },
+          {
+            "cell": "fwht-radix2",
+            "cta_organization": "prefix CTAs=4096; suffix CTAs=1024; each suffix CTA groups 4 columns",
+            "expected_launches": 2,
+            "full_array_bytes": 4194304,
+            "logical_data_path_bytes": 16777216,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 4,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 4096,
+            "threads": 128,
+            "wrapper": "same prefix/suffix templates with runtime column grouping"
+          },
+          {
+            "cell": "fwht-radix2",
+            "cta_organization": "prefix CTAs=4096; suffix CTAs=4096; each suffix CTA groups 1 columns",
+            "expected_launches": 2,
+            "full_array_bytes": 4194304,
+            "logical_data_path_bytes": 16777216,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 1,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 1024,
+            "threads": 256,
+            "wrapper": "same prefix/suffix templates with runtime column grouping"
+          },
+          {
+            "cell": "fwht-radix2",
+            "cta_organization": "prefix CTAs=4096; suffix CTAs=2048; each suffix CTA groups 2 columns",
+            "expected_launches": 2,
+            "full_array_bytes": 4194304,
+            "logical_data_path_bytes": 16777216,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 2,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 2048,
+            "threads": 256,
+            "wrapper": "same prefix/suffix templates with runtime column grouping"
+          },
+          {
+            "cell": "fwht-radix2",
+            "cta_organization": "prefix CTAs=4096; suffix CTAs=1024; each suffix CTA groups 4 columns",
+            "expected_launches": 2,
+            "full_array_bytes": 4194304,
+            "logical_data_path_bytes": 16777216,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 4,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 4096,
+            "threads": 256,
+            "wrapper": "same prefix/suffix templates with runtime column grouping"
+          }
+        ],
+        "choices": {
+          "conventional": {
+            "id": "t128-o1",
+            "mapping": {
+              "backend": "online-reorder",
+              "batch_tile_count": 1,
+              "boundaries": [
+                {
+                  "layout": "direct-strided",
+                  "residency": "global-scratch",
+                  "twiddle": "table"
+                }
+              ],
+              "complex_multiply": "four-mul",
+              "compute_unit": "radix2",
+              "cross_twiddle": "table",
+              "data_tiles_per_cta": 1,
+              "direct_boundary": "direct-strided",
+              "exchange_chunks": [],
+              "execution_group_mappings": [
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                },
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                }
+              ],
+              "factor_columns": 8,
+              "factor_ept": 16,
+              "factor_io_policies": [],
+              "factor_overlap": false,
+              "factor_partition": [],
+              "factor_slices": 1,
+              "fft_core": "scalar",
+              "kind": "butterfly",
+              "local_exchange": "shared",
+              "local_stage_partitions": [],
+              "local_stages": 8,
+              "pipeline_warps": 0,
+              "prefetch_depth": 0,
+              "prefix_codelet": "native",
+              "prefix_codelet_lanes": 1,
+              "prefix_ept": 8,
+              "prefix_shared_layout": "linear",
+              "prefix_threads": 0,
+              "prefix_twiddle": "runtime",
+              "prefix_units_per_cta": 0,
+              "register_threads": 0,
+              "reorder_columns": 1,
+              "schema_version": 1,
+              "segment_mappings": [
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                },
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                }
+              ],
+              "shared_layout": "linear",
+              "stage_handoff": "named-barrier",
+              "stage_overlap": false,
+              "stage_partition": [
+                8,
+                8
+              ],
+              "stage_space": 0,
+              "suffix_ept": 8,
+              "suffix_threads": 0,
+              "suffix_units_per_cta": 0,
+              "tile_threads": 128,
+              "warp_stages": 0
+            },
+            "screen_kernel_ms_selection_only": 0.060375
+          },
+          "extended": {
+            "id": "t256-o4",
+            "mapping": {
+              "backend": "online-reorder",
+              "batch_tile_count": 1,
+              "boundaries": [
+                {
+                  "layout": "direct-strided",
+                  "residency": "global-scratch",
+                  "twiddle": "table"
+                }
+              ],
+              "complex_multiply": "four-mul",
+              "compute_unit": "radix2",
+              "cross_twiddle": "table",
+              "data_tiles_per_cta": 1,
+              "direct_boundary": "direct-strided",
+              "exchange_chunks": [],
+              "execution_group_mappings": [
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                },
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                }
+              ],
+              "factor_columns": 8,
+              "factor_ept": 16,
+              "factor_io_policies": [],
+              "factor_overlap": false,
+              "factor_partition": [],
+              "factor_slices": 1,
+              "fft_core": "scalar",
+              "kind": "butterfly",
+              "local_exchange": "shared",
+              "local_stage_partitions": [],
+              "local_stages": 8,
+              "pipeline_warps": 0,
+              "prefetch_depth": 0,
+              "prefix_codelet": "native",
+              "prefix_codelet_lanes": 1,
+              "prefix_ept": 8,
+              "prefix_shared_layout": "linear",
+              "prefix_threads": 0,
+              "prefix_twiddle": "runtime",
+              "prefix_units_per_cta": 0,
+              "register_threads": 0,
+              "reorder_columns": 4,
+              "schema_version": 1,
+              "segment_mappings": [
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                },
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                }
+              ],
+              "shared_layout": "linear",
+              "stage_handoff": "named-barrier",
+              "stage_overlap": false,
+              "stage_partition": [
+                8,
+                8
+              ],
+              "stage_space": 0,
+              "suffix_ept": 8,
+              "suffix_threads": 0,
+              "suffix_units_per_cta": 0,
+              "tile_threads": 256,
+              "warp_stages": 0
+            },
+            "screen_kernel_ms_selection_only": 0.045804
+          }
+        },
+        "attempted_unique": 6,
+        "accepted_unique": 6,
+        "same_winner": false,
+        "holdout_pairs": [
+          {
+            "process": 0,
+            "conventional_ms": 0.060344,
+            "extended_ms": 0.045875,
+            "ratio": 1.3154005449591282
+          },
+          {
+            "process": 1,
+            "conventional_ms": 0.060447,
+            "extended_ms": 0.045875,
+            "ratio": 1.3176457765667575
+          },
+          {
+            "process": 2,
+            "conventional_ms": 0.060467,
+            "extended_ms": 0.045885,
+            "ratio": 1.3177944862155389
+          }
+        ],
+        "median_paired_ratio": 1.3176457765667575,
+        "conventional_median_ms": 0.060447,
+        "extended_median_ms": 0.045875,
+        "cost_prediction_ms": null
+      },
+      {
+        "cell": "fwht-radix4",
+        "workload": {
+          "accumulation": "native",
+          "batch": 16,
+          "direction": "forward",
+          "logN": 16,
+          "normalization": "none",
+          "operator": "fwht",
+          "placement": "out-of-place",
+          "precision": "fp32"
+        },
+        "leaf": "radix4",
+        "shape": [
+          65536
+        ],
+        "resource_expectations_lower_bounds": [
+          {
+            "cell": "fwht-radix4",
+            "cta_organization": "prefix CTAs=4096; suffix CTAs=4096; each suffix CTA groups 1 columns",
+            "expected_launches": 2,
+            "full_array_bytes": 4194304,
+            "logical_data_path_bytes": 16777216,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 1,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 1024,
+            "threads": 128,
+            "wrapper": "same prefix/suffix templates with runtime column grouping"
+          },
+          {
+            "cell": "fwht-radix4",
+            "cta_organization": "prefix CTAs=4096; suffix CTAs=2048; each suffix CTA groups 2 columns",
+            "expected_launches": 2,
+            "full_array_bytes": 4194304,
+            "logical_data_path_bytes": 16777216,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 2,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 2048,
+            "threads": 128,
+            "wrapper": "same prefix/suffix templates with runtime column grouping"
+          },
+          {
+            "cell": "fwht-radix4",
+            "cta_organization": "prefix CTAs=4096; suffix CTAs=1024; each suffix CTA groups 4 columns",
+            "expected_launches": 2,
+            "full_array_bytes": 4194304,
+            "logical_data_path_bytes": 16777216,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 4,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 4096,
+            "threads": 128,
+            "wrapper": "same prefix/suffix templates with runtime column grouping"
+          },
+          {
+            "cell": "fwht-radix4",
+            "cta_organization": "prefix CTAs=4096; suffix CTAs=4096; each suffix CTA groups 1 columns",
+            "expected_launches": 2,
+            "full_array_bytes": 4194304,
+            "logical_data_path_bytes": 16777216,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 1,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 1024,
+            "threads": 256,
+            "wrapper": "same prefix/suffix templates with runtime column grouping"
+          },
+          {
+            "cell": "fwht-radix4",
+            "cta_organization": "prefix CTAs=4096; suffix CTAs=2048; each suffix CTA groups 2 columns",
+            "expected_launches": 2,
+            "full_array_bytes": 4194304,
+            "logical_data_path_bytes": 16777216,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 2,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 2048,
+            "threads": 256,
+            "wrapper": "same prefix/suffix templates with runtime column grouping"
+          },
+          {
+            "cell": "fwht-radix4",
+            "cta_organization": "prefix CTAs=4096; suffix CTAs=1024; each suffix CTA groups 4 columns",
+            "expected_launches": 2,
+            "full_array_bytes": 4194304,
+            "logical_data_path_bytes": 16777216,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 4,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 4096,
+            "threads": 256,
+            "wrapper": "same prefix/suffix templates with runtime column grouping"
+          }
+        ],
+        "choices": {
+          "conventional": {
+            "id": "t128-o1",
+            "mapping": {
+              "backend": "online-reorder",
+              "batch_tile_count": 1,
+              "boundaries": [
+                {
+                  "layout": "direct-strided",
+                  "residency": "global-scratch",
+                  "twiddle": "table"
+                }
+              ],
+              "complex_multiply": "four-mul",
+              "compute_unit": "radix4",
+              "cross_twiddle": "table",
+              "data_tiles_per_cta": 1,
+              "direct_boundary": "direct-strided",
+              "exchange_chunks": [],
+              "execution_group_mappings": [
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                },
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                }
+              ],
+              "factor_columns": 8,
+              "factor_ept": 16,
+              "factor_io_policies": [],
+              "factor_overlap": false,
+              "factor_partition": [],
+              "factor_slices": 1,
+              "fft_core": "scalar",
+              "kind": "butterfly",
+              "local_exchange": "shared",
+              "local_stage_partitions": [],
+              "local_stages": 8,
+              "pipeline_warps": 0,
+              "prefetch_depth": 0,
+              "prefix_codelet": "native",
+              "prefix_codelet_lanes": 1,
+              "prefix_ept": 8,
+              "prefix_shared_layout": "linear",
+              "prefix_threads": 0,
+              "prefix_twiddle": "runtime",
+              "prefix_units_per_cta": 0,
+              "register_threads": 0,
+              "reorder_columns": 1,
+              "schema_version": 1,
+              "segment_mappings": [
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                },
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                }
+              ],
+              "shared_layout": "linear",
+              "stage_handoff": "named-barrier",
+              "stage_overlap": false,
+              "stage_partition": [
+                8,
+                8
+              ],
+              "stage_space": 0,
+              "suffix_ept": 8,
+              "suffix_threads": 0,
+              "suffix_units_per_cta": 0,
+              "tile_threads": 128,
+              "warp_stages": 0
+            },
+            "screen_kernel_ms_selection_only": 0.059771
+          },
+          "extended": {
+            "id": "t256-o4",
+            "mapping": {
+              "backend": "online-reorder",
+              "batch_tile_count": 1,
+              "boundaries": [
+                {
+                  "layout": "direct-strided",
+                  "residency": "global-scratch",
+                  "twiddle": "table"
+                }
+              ],
+              "complex_multiply": "four-mul",
+              "compute_unit": "radix4",
+              "cross_twiddle": "table",
+              "data_tiles_per_cta": 1,
+              "direct_boundary": "direct-strided",
+              "exchange_chunks": [],
+              "execution_group_mappings": [
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                },
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                }
+              ],
+              "factor_columns": 8,
+              "factor_ept": 16,
+              "factor_io_policies": [],
+              "factor_overlap": false,
+              "factor_partition": [],
+              "factor_slices": 1,
+              "fft_core": "scalar",
+              "kind": "butterfly",
+              "local_exchange": "shared",
+              "local_stage_partitions": [],
+              "local_stages": 8,
+              "pipeline_warps": 0,
+              "prefetch_depth": 0,
+              "prefix_codelet": "native",
+              "prefix_codelet_lanes": 1,
+              "prefix_ept": 8,
+              "prefix_shared_layout": "linear",
+              "prefix_threads": 0,
+              "prefix_twiddle": "runtime",
+              "prefix_units_per_cta": 0,
+              "register_threads": 0,
+              "reorder_columns": 4,
+              "schema_version": 1,
+              "segment_mappings": [
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                },
+                {
+                  "core": "cufftdx-block",
+                  "ept": 8,
+                  "exchange": "shared",
+                  "threads": 0
+                }
+              ],
+              "shared_layout": "linear",
+              "stage_handoff": "named-barrier",
+              "stage_overlap": false,
+              "stage_partition": [
+                8,
+                8
+              ],
+              "stage_space": 0,
+              "suffix_ept": 8,
+              "suffix_threads": 0,
+              "suffix_units_per_cta": 0,
+              "tile_threads": 256,
+              "warp_stages": 0
+            },
+            "screen_kernel_ms_selection_only": 0.043786
+          }
+        },
+        "attempted_unique": 6,
+        "accepted_unique": 6,
+        "same_winner": false,
+        "holdout_pairs": [
+          {
+            "process": 0,
+            "conventional_ms": 0.059894,
+            "extended_ms": 0.043807,
+            "ratio": 1.3672244161891935
+          },
+          {
+            "process": 1,
+            "conventional_ms": 0.059884,
+            "extended_ms": 0.043878,
+            "ratio": 1.3647841743014721
+          },
+          {
+            "process": 2,
+            "conventional_ms": 0.059914,
+            "extended_ms": 0.043889,
+            "ratio": 1.3651256579097268
+          }
+        ],
+        "median_paired_ratio": 1.3651256579097268,
+        "conventional_median_ms": 0.059894,
+        "extended_median_ms": 0.043878,
+        "cost_prediction_ms": null
+      },
+      {
+        "cell": "ntt-homogeneous-radix4",
+        "workload": {
+          "batch": 16,
+          "direction": "forward",
+          "input_order": "natural",
+          "logN": 20,
+          "modulus": 576460756061519873,
+          "normalization": "none",
+          "operator": "ntt",
+          "output_order": "natural",
+          "placement": "out-of-place",
+          "precision": "word64"
+        },
+        "leaf": "homogeneous-radix4",
+        "shape": [
+          1048576
+        ],
+        "resource_expectations_lower_bounds": [
+          {
+            "cell": "ntt-homogeneous-radix4",
+            "cta_organization": "cooperative persistent producer/consumer grid capped by occupancy and target_ctas_per_sm; each role processes up to 1 transforms per packet; launch grid is not simply batch/data_time",
+            "expected_launches": 1,
+            "full_array_bytes": 134217728,
+            "logical_data_path_bytes": 536870912,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 1,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 32800,
+            "threads": 256,
+            "wrapper": "dt1 mature specialized 10x10; dt>1 homogeneous packet-loop wrapper; same arithmetic leaf"
+          },
+          {
+            "cell": "ntt-homogeneous-radix4",
+            "cta_organization": "cooperative persistent producer/consumer grid capped by occupancy and target_ctas_per_sm; each role processes up to 2 transforms per packet; launch grid is not simply batch/data_time",
+            "expected_launches": 1,
+            "full_array_bytes": 134217728,
+            "logical_data_path_bytes": 536870912,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 2,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 32800,
+            "threads": 256,
+            "wrapper": "dt1 mature specialized 10x10; dt>1 homogeneous packet-loop wrapper; same arithmetic leaf"
+          },
+          {
+            "cell": "ntt-homogeneous-radix4",
+            "cta_organization": "cooperative persistent producer/consumer grid capped by occupancy and target_ctas_per_sm; each role processes up to 4 transforms per packet; launch grid is not simply batch/data_time",
+            "expected_launches": 1,
+            "full_array_bytes": 134217728,
+            "logical_data_path_bytes": 536870912,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 4,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 32800,
+            "threads": 256,
+            "wrapper": "dt1 mature specialized 10x10; dt>1 homogeneous packet-loop wrapper; same arithmetic leaf"
+          }
+        ],
+        "choices": {
+          "conventional": {
+            "id": "t256-o1",
+            "mapping": {
+              "appt_role_mapping": {
+                "data_time_role_mask": 7,
+                "fragment_width": 0,
+                "producer_weight": 0,
+                "tail_weight": 0,
+                "writer_tiles_per_cta": 0,
+                "writer_weight": 0
+              },
+              "backend": "hierarchical-dataflow",
+              "batch_tile_count": 1,
+              "boundary_mappings": [
+                {
+                  "buffers": 1,
+                  "storage": "full-scratch"
+                }
+              ],
+              "compute_unit": "radix4",
+              "cross_twiddle_placement": "fused",
+              "data_space": 0,
+              "data_time": 0,
+              "dataflow_layout": "hermes-xor",
+              "dataflow_state_mode": "inplace",
+              "exchange_chunks": [],
+              "execution_group_mappings": [
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-radix4",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 4
+                },
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-radix4",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 4
+                }
+              ],
+              "flow_tile_log_n": 0,
+              "hierarchical_core": "dataflow-radix4",
+              "kind": "ntt",
+              "local_stage_partitions": [],
+              "modular_multiply": "shoup",
+              "n1_log": 0,
+              "packet_compute_layout": "interleaved-rows",
+              "packet_fold_wave_barriers": false,
+              "packet_readiness_mode": "per-packet",
+              "pipeline_buffers": 0,
+              "profile_appt_roles": false,
+              "ready_window": 8,
+              "role_stages": 0,
+              "rows_per_block": 0,
+              "schema_version": 1,
+              "stage_handoff": "named-barrier",
+              "stage_overlap": false,
+              "stage_partition": [
+                10,
+                10
+              ],
+              "stage_space": 0,
+              "subgraph_mappings": [
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-radix4",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 4
+                },
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-radix4",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 4
+                }
+              ],
+              "target_ctas_per_sm": 2,
+              "threads_per_block": 0,
+              "token_interleave": 0
+            },
+            "screen_kernel_ms_selection_only": 1.587364
+          },
+          "extended": {
+            "id": "t256-o1",
+            "mapping": {
+              "appt_role_mapping": {
+                "data_time_role_mask": 7,
+                "fragment_width": 0,
+                "producer_weight": 0,
+                "tail_weight": 0,
+                "writer_tiles_per_cta": 0,
+                "writer_weight": 0
+              },
+              "backend": "hierarchical-dataflow",
+              "batch_tile_count": 1,
+              "boundary_mappings": [
+                {
+                  "buffers": 1,
+                  "storage": "full-scratch"
+                }
+              ],
+              "compute_unit": "radix4",
+              "cross_twiddle_placement": "fused",
+              "data_space": 0,
+              "data_time": 0,
+              "dataflow_layout": "hermes-xor",
+              "dataflow_state_mode": "inplace",
+              "exchange_chunks": [],
+              "execution_group_mappings": [
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-radix4",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 4
+                },
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-radix4",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 4
+                }
+              ],
+              "flow_tile_log_n": 0,
+              "hierarchical_core": "dataflow-radix4",
+              "kind": "ntt",
+              "local_stage_partitions": [],
+              "modular_multiply": "shoup",
+              "n1_log": 0,
+              "packet_compute_layout": "interleaved-rows",
+              "packet_fold_wave_barriers": false,
+              "packet_readiness_mode": "per-packet",
+              "pipeline_buffers": 0,
+              "profile_appt_roles": false,
+              "ready_window": 8,
+              "role_stages": 0,
+              "rows_per_block": 0,
+              "schema_version": 1,
+              "stage_handoff": "named-barrier",
+              "stage_overlap": false,
+              "stage_partition": [
+                10,
+                10
+              ],
+              "stage_space": 0,
+              "subgraph_mappings": [
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-radix4",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 4
+                },
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-radix4",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 4
+                }
+              ],
+              "target_ctas_per_sm": 2,
+              "threads_per_block": 0,
+              "token_interleave": 0
+            },
+            "screen_kernel_ms_selection_only": 1.587364
+          }
+        },
+        "attempted_unique": 3,
+        "accepted_unique": 3,
+        "same_winner": true,
+        "holdout_pairs": [
+          {
+            "process": 0,
+            "conventional_ms": 1.584179,
+            "extended_ms": 1.584179,
+            "ratio": 1.0
+          },
+          {
+            "process": 1,
+            "conventional_ms": 1.585418,
+            "extended_ms": 1.585418,
+            "ratio": 1.0
+          },
+          {
+            "process": 2,
+            "conventional_ms": 1.585398,
+            "extended_ms": 1.585398,
+            "ratio": 1.0
+          }
+        ],
+        "median_paired_ratio": 1.0,
+        "conventional_median_ms": 1.585398,
+        "extended_median_ms": 1.585398,
+        "cost_prediction_ms": null
+      },
+      {
+        "cell": "ntt-homogeneous-warp-radix2",
+        "workload": {
+          "batch": 16,
+          "direction": "forward",
+          "input_order": "natural",
+          "logN": 20,
+          "modulus": 576460756061519873,
+          "normalization": "none",
+          "operator": "ntt",
+          "output_order": "natural",
+          "placement": "out-of-place",
+          "precision": "word64"
+        },
+        "leaf": "homogeneous-warp-radix2",
+        "shape": [
+          1048576
+        ],
+        "resource_expectations_lower_bounds": [
+          {
+            "cell": "ntt-homogeneous-warp-radix2",
+            "cta_organization": "cooperative persistent producer/consumer grid capped by occupancy and target_ctas_per_sm; each role processes up to 1 transforms per packet; launch grid is not simply batch/data_time",
+            "expected_launches": 1,
+            "full_array_bytes": 134217728,
+            "logical_data_path_bytes": 536870912,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 1,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 0,
+            "threads": 256,
+            "wrapper": "same homogeneous warp wrapper for every dt"
+          },
+          {
+            "cell": "ntt-homogeneous-warp-radix2",
+            "cta_organization": "cooperative persistent producer/consumer grid capped by occupancy and target_ctas_per_sm; each role processes up to 2 transforms per packet; launch grid is not simply batch/data_time",
+            "expected_launches": 1,
+            "full_array_bytes": 134217728,
+            "logical_data_path_bytes": 536870912,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 2,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 0,
+            "threads": 256,
+            "wrapper": "same homogeneous warp wrapper for every dt"
+          },
+          {
+            "cell": "ntt-homogeneous-warp-radix2",
+            "cta_organization": "cooperative persistent producer/consumer grid capped by occupancy and target_ctas_per_sm; each role processes up to 4 transforms per packet; launch grid is not simply batch/data_time",
+            "expected_launches": 1,
+            "full_array_bytes": 134217728,
+            "logical_data_path_bytes": 536870912,
+            "logical_data_path_note": "two logical regions, input-read/boundary-write then boundary-read/output-write; excludes coefficient/ready metadata and cache behavior; NOT measured HBM traffic",
+            "logical_regions": 2,
+            "organization": 4,
+            "shared_memory_note": "source-derived tile allocation lower bound, not measured allocated/shared residency",
+            "shared_memory_static_lower_bound_bytes": 0,
+            "threads": 256,
+            "wrapper": "same homogeneous warp wrapper for every dt"
+          }
+        ],
+        "choices": {
+          "conventional": {
+            "id": "t256-o1",
+            "mapping": {
+              "appt_role_mapping": {
+                "data_time_role_mask": 7,
+                "fragment_width": 0,
+                "producer_weight": 0,
+                "tail_weight": 0,
+                "writer_tiles_per_cta": 0,
+                "writer_weight": 0
+              },
+              "backend": "hierarchical-dataflow",
+              "batch_tile_count": 1,
+              "boundary_mappings": [
+                {
+                  "buffers": 1,
+                  "storage": "full-scratch"
+                }
+              ],
+              "compute_unit": "radix4",
+              "cross_twiddle_placement": "fused",
+              "data_space": 0,
+              "data_time": 0,
+              "dataflow_layout": "hermes-xor",
+              "dataflow_state_mode": "inplace",
+              "exchange_chunks": [],
+              "execution_group_mappings": [
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-warp-radix2",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 8
+                },
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-warp-radix2",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 8
+                }
+              ],
+              "flow_tile_log_n": 0,
+              "hierarchical_core": "dataflow-radix4",
+              "kind": "ntt",
+              "local_stage_partitions": [],
+              "modular_multiply": "shoup",
+              "n1_log": 0,
+              "packet_compute_layout": "interleaved-rows",
+              "packet_fold_wave_barriers": false,
+              "packet_readiness_mode": "per-packet",
+              "pipeline_buffers": 0,
+              "profile_appt_roles": false,
+              "ready_window": 8,
+              "role_stages": 0,
+              "rows_per_block": 0,
+              "schema_version": 1,
+              "stage_handoff": "named-barrier",
+              "stage_overlap": false,
+              "stage_partition": [
+                10,
+                10
+              ],
+              "stage_space": 0,
+              "subgraph_mappings": [
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-warp-radix2",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 8
+                },
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-warp-radix2",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 8
+                }
+              ],
+              "target_ctas_per_sm": 2,
+              "threads_per_block": 0,
+              "token_interleave": 0
+            },
+            "screen_kernel_ms_selection_only": 3.707536
+          },
+          "extended": {
+            "id": "t256-o1",
+            "mapping": {
+              "appt_role_mapping": {
+                "data_time_role_mask": 7,
+                "fragment_width": 0,
+                "producer_weight": 0,
+                "tail_weight": 0,
+                "writer_tiles_per_cta": 0,
+                "writer_weight": 0
+              },
+              "backend": "hierarchical-dataflow",
+              "batch_tile_count": 1,
+              "boundary_mappings": [
+                {
+                  "buffers": 1,
+                  "storage": "full-scratch"
+                }
+              ],
+              "compute_unit": "radix4",
+              "cross_twiddle_placement": "fused",
+              "data_space": 0,
+              "data_time": 0,
+              "dataflow_layout": "hermes-xor",
+              "dataflow_state_mode": "inplace",
+              "exchange_chunks": [],
+              "execution_group_mappings": [
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-warp-radix2",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 8
+                },
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-warp-radix2",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 8
+                }
+              ],
+              "flow_tile_log_n": 0,
+              "hierarchical_core": "dataflow-radix4",
+              "kind": "ntt",
+              "local_stage_partitions": [],
+              "modular_multiply": "shoup",
+              "n1_log": 0,
+              "packet_compute_layout": "interleaved-rows",
+              "packet_fold_wave_barriers": false,
+              "packet_readiness_mode": "per-packet",
+              "pipeline_buffers": 0,
+              "profile_appt_roles": false,
+              "ready_window": 8,
+              "role_stages": 0,
+              "rows_per_block": 0,
+              "schema_version": 1,
+              "stage_handoff": "named-barrier",
+              "stage_overlap": false,
+              "stage_partition": [
+                10,
+                10
+              ],
+              "stage_space": 0,
+              "subgraph_mappings": [
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-warp-radix2",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 8
+                },
+                {
+                  "coefficient_reuse_stages": 0,
+                  "core": "homogeneous-warp-radix2",
+                  "cta_weight": 1,
+                  "data_space": 1,
+                  "data_time": 1,
+                  "role_stages": 1,
+                  "threads_per_block": 256,
+                  "token_interleave": 1,
+                  "units_per_cta": 8
+                }
+              ],
+              "target_ctas_per_sm": 2,
+              "threads_per_block": 0,
+              "token_interleave": 0
+            },
+            "screen_kernel_ms_selection_only": 3.707536
+          }
+        },
+        "attempted_unique": 3,
+        "accepted_unique": 3,
+        "same_winner": true,
+        "holdout_pairs": [
+          {
+            "process": 0,
+            "conventional_ms": 3.706778,
+            "extended_ms": 3.706778,
+            "ratio": 1.0
+          },
+          {
+            "process": 1,
+            "conventional_ms": 3.707238,
+            "extended_ms": 3.707238,
+            "ratio": 1.0
+          },
+          {
+            "process": 2,
+            "conventional_ms": 3.704473,
+            "extended_ms": 3.704473,
+            "ratio": 1.0
+          }
+        ],
+        "median_paired_ratio": 1.0,
+        "conventional_median_ms": 3.706778,
+        "extended_median_ms": 3.706778,
+        "cost_prediction_ms": null
+      }
+    ],
+    "interpretation": "prospective resource expectations -> bounded accepted pool -> measured screen choice -> three independent holdouts; no numeric cost-model forecast",
+    "limitations": [
+      "Frozen resource expectations are lower bounds, not full compiler legality or measured HBM/residency.",
+      "NTT dt1 is retained as both winners: ratios equal one by identical mapping, not two independent timing arms.",
+      "NTT radix4 dt1 has a specialized wrapper; same leaf does not isolate pure traversal effects.",
+      "NTT stage-service cost prediction remains uncovered; Nov3 three rows remain FFT/FWHT only."
+    ]
+  }
+}

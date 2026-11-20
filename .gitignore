@@ -33,3 +33,12 @@
 # Manuscripts are maintained outside the software repository.
 /paper/
 /APPT26/
+
+# Offline figure regeneration and local GPU preparation products.
+/experiments/paper/output/
+/experiments/paper/*/output/
+/experiments/paper/ntt_mechanisms/gpu/_validation/
+
+/experiments/paper/ntt_mechanisms/gpu/vendors/
+/experiments/paper/ntt_mechanisms/gpu/archives/
+/experiments/paper/ntt_mechanisms/gpu/campaign/

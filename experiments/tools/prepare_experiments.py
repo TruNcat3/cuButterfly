@@ -134,11 +134,11 @@ def prepare(plan_path, target_path, output, root=ROOT):
         raise ValueError("unsupported plan/target schema")
     experiment_ids = [x["id"] for x in plan["experiments"]]
     required_ids = {f"E{i}" for i in range(1, 11)}
-    supported_ids = required_ids | {"E11", "E12", "E13"}
+    supported_ids = required_ids | {"E11", "E12", "E13", "E14"}
     if (len(set(experiment_ids)) != len(experiment_ids)
             or not required_ids.issubset(experiment_ids)
             or not set(experiment_ids).issubset(supported_ids)):
-        raise ValueError("plan must contain E1 through E10 once, with optional E11/E12/E13 entries")
+        raise ValueError("plan must contain E1 through E10 once, with optional E11/E12/E13/E14 entries")
     if target.get("compile_mode") not in ("research", "auto", "precompiled") or not target.get("gpu_uuid"):
         raise ValueError("target must specify UUID and compile mode")
     for name in ("trials", "repeat"):
@@ -151,11 +151,21 @@ def prepare(plan_path, target_path, output, root=ROOT):
         raise ValueError("refusing to write into an acceptance directory")
     run_identity = dict(plan_sha256=plan_source["sha256"], target_sha256=target_source["sha256"],
                         generator_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
+    profile_cohort = profile_source = None
+    if "E14" in experiment_ids:
+        experiment = next(e for e in plan["experiments"] if e["id"] == "E14")
+        profile_cohort, profile_source = read(resolve(experiment["workloads"], root))
+        if (profile_cohort.get("schema") != "cubutterfly-profile-cohort-v1"
+                or profile_cohort.get("experiment_id") != "E14"):
+            raise ValueError("unsupported E14 profile cohort")
+        run_identity["profile_cohort_sha256"] = profile_source["sha256"]
     previous = output / "execution_plan.json"
     if previous.exists() and read(previous)[0].get("preparation_identity") != run_identity:
         raise ValueError("preparation inputs changed; choose a new output directory")
     profile_path = resolve(target["profile"], root)
     provenance = [plan_source, target_source]
+    if profile_source:
+        provenance.append(profile_source)
     warnings = []
     if profile_path.exists():
         profile, source = read(profile_path)
@@ -218,6 +228,25 @@ def prepare(plan_path, target_path, output, root=ROOT):
     modules = module_manifest(studies, target)
     write(output / "control_precompile/modules.json", modules)
     py = target["python"]
+    if profile_cohort is not None:
+        write(output / "profile_protocol.json", dict(
+            schema="cubutterfly-paper-profile-protocol-v1", experiment="E14",
+            status="needs-matched-normal-timing-journals", target_uuid=target["gpu_uuid"],
+            source=profile_source, cohort=profile_cohort,
+            cases=[dict(case=case, status="unbound", normal_timing_journal=None,
+                        journal_case_id=None, baseline_variant_id=None, treatment_variant_id=None)
+                   for case in profile_cohort["cases"]],
+            command_template=[py, str(root / experiment["entry"]), "--journal", "<verified-journal>",
+                              "--case", "<journal-case-id>", "--variant", "<variant-id>",
+                              "--tools", *profile_cohort["protocol"]["profile_tools"],
+                              "--output-dir", "<new-case-output-directory>"],
+            rules=[*profile_cohort["claim_rules"],
+                   "Bind both baseline and treatment to accepted normal timing and full-batch correctness before profiling.",
+                   "For each case, set normal_timing_journal to a controlled-experiment journal path, journal_case_id to its cases[].id, and baseline_variant_id/treatment_variant_id to that case's variants[].id. Confirm workload, resolved mapping, source, binary and device identities match the declared comparison; names alone are not bindings.",
+                   "Verify the declared cohort and workload match this target; keep other hardware cohorts separate.",
+                   "Substitute each bound variant into command_template separately with a fresh output directory. The wrapper requires an accepted variant preflight and an unchanged benchmark binary; independently verify accepted normal timing before invocation.",
+                   "Verify profiler kernel coverage and metric collection before execution: current NCU collection filters shared_iterative_kernel and requests SM throughput, DRAM throughput and registers per thread only. NSYS captures CUDA/NVTX traces; neither tool output is normalized into the full E14 metric table by this wrapper.",
+                   "Unbound or unsupported cases remain missing; this protocol is not an executable profile queue."]))
     environment = dict(CUDA_VISIBLE_DEVICES=target["gpu_uuid"], CUBUTTERFLY_COMPILE_MODE=target["compile_mode"])
     commands = []
 
@@ -274,9 +303,17 @@ def prepare(plan_path, target_path, output, root=ROOT):
                      "E7": "Matched current-version V100/A100 execution and preparation-cost accounting remain pending.",
                      "E9": "Freeze an independent candidate pool and prior predictions for equal-budget policy comparison.",
                      "E10": "Audit adapter/code reuse and handwritten changes; prepared or compiled counts do not establish GPU correctness."})
+    if profile_cohort is not None:
+        queue["remaining_protocols"]["E14"] = (
+            "Bind every profile_protocol.json case to matched normal timing journals and accepted correctness; "
+            "verify kernel and metric coverage before running each variant. Unavailable cases remain explicit.")
     write(output / "execution_plan.json", queue)
     lines = ["# Generated paper experiment queue", "", "Commands are recipes, not executed jobs. GPU recipes wait for the existing E1 writer to exit.",
              "CPU prepare/compile does not certify target execution. Frozen paper evidence is unchanged.", ""]
+    if profile_cohort is not None:
+        lines += ["## E14 hardware profile bindings", "",
+                  "Read profile_protocol.json before profiling. Its cases retain the cohort definitions and require a verified normal timing journal, journal case ID, and baseline/treatment variant IDs. Follow its binding rules and substitute each variant into command_template separately.",
+                  "The current collector has limited kernel/counter coverage. Missing bindings or unsupported counters remain missing evidence; preparation does not establish E14 completion.", ""]
     for item in commands:
         lines += [f"## {item['id']} ({item['experiment']}; {'GPU' if item['requires_gpu'] else 'CPU'})", ""]
         lines += [f"- {condition}" for condition in item["prerequisites"]]
